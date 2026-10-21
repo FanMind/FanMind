@@ -1,3 +1,4 @@
+import * as currentFactsPolicy from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
 import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -70,7 +71,9 @@ test("actual authority rejects a Member even when the capability store would ret
 function harness(change, abortController, options = {}) {
   let revoked = false;
   let providerFinished=false;
-  let persisted=[];
+  let persisted=options.previous??[];
+  let fanNotes=options.notes??"kein Druck";
+  let currentFacts=options.currentFacts??[];
   let character = {
     id: characterId, workspace_id: workspaceId, revision: 1, status: "active",
     display_name: "Synthetic Ada", public_age: 25, bio: "Synthetische Testpersona",
@@ -86,16 +89,28 @@ function harness(change, abortController, options = {}) {
   if (change === "context-price-en") character.sales_playbook.offers[0].name = "Private Photo";
   if (change === "context-price-collision") Object.assign(character.sales_playbook.offers[0], {id:"appreciation",name:"Nicht schlecht",category:"custom"});
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, memoryWrites: [] };
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, currentFactWrites: [], memoryWrites: [] };
   const dependencies = {
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
+      isChatAdminCurrentFactsEnabled:()=>options.currentFactsEnabled===true,
+      applyChatAdminCurrentInterests:async(...args)=>{
+       assert.deepEqual(args.slice(0,4),[workspaceId,characterId,fanId,conversationId]);
+       if(change==="current-facts-error")throw new Error("synthetic_store_failure");
+       const row=persisted.find(row=>row.direction==="fan_inbound");
+       const tuple={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
+       const source={...row,...tuple,id:`message-${row.sequence}`,generation_id:args[6]};
+       let next=currentFacts;
+       for(const claim of currentFactsPolicy.extractCurrentInterestAssertions(source,tuple))next=currentFactsPolicy.applyCurrentInterestAssertion(next,claim,source,tuple);
+       const changed=JSON.stringify(next)!==JSON.stringify(currentFacts);
+       currentFacts=next;calls.currentFactWrites.push({args,facts:currentFacts,changed});return changed;
+      },
       isChatAdminFanRuntimeEnabled: () => true,
       requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
-      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:options.notes??"kein Druck", ...options.fan }),
+      getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:fanNotes, ...(options.currentFactsEnabled?{current_facts:currentFacts}:{}), ...options.fan }),
       getLatestChatAdminConfirmedReply: async()=>change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => options.history ?? (change==="offer-follow-up" ? [
@@ -106,8 +121,8 @@ function harness(change, abortController, options = {}) {
         { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
       ]),
       getChatAdminGeneration: async () => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persisted,
-      updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; persisted=[{direction:"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:args[8]}]; return args.at(-1); },
+      updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); fanNotes=args[4].notes; return {}; },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))]; return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -522,4 +537,123 @@ for(const persistedSequence of [null,1.5,Number.MAX_SAFE_INTEGER+1])test(`actual
  const response=await h.route(h.request(1,"https://fanmind.invalid","Ohne Emojis."));
  assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+function positiveMusicNotes(manual="") {
+ const quote="Ich mag Musik.";
+ return knowledgePolicy.learnChatAdminKnowledge(manual,knowledgePolicy.extractChatAdminFacts(quote,"old"),[{id:"old",direction:"fan_inbound",sequence:5,content:quote}]);
+}
+for(const quote of ["Ich mag Musik nicht mehr.","I do not like music anymore.","Ich mag Katzen. Ich mag Hunde. Ich mag Reisen. Ich mag Musik nicht mehr."])test(`actual route persists explicit withdrawal then supplies it without old dialogue: ${quote}`,async()=>{
+ const h=harness(undefined,undefined,{notes:positiveMusicNotes(),history:[]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",quote));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"saved");
+ assert.equal(h.calls.memoryWrites.length,1);const args=h.calls.memoryWrites[0];
+ assert.deepEqual(args.slice(0,4),[workspaceId,characterId,fanId,1]);
+ const facts=knowledgePolicy.readChatAdminKnowledge(args[4].notes).facts;
+ assert.ok(facts.some(f=>/nicht mehr|not like/u.test(f.quote)));assert.ok(!facts.some(f=>f.quote==="Ich mag Musik."));
+ assert.ok(facts.every(f=>f.source==="66666666-6666-4666-8666-666666666666"&&f.source_sequence===10));
+ // A different request sends persisted knowledge with no historical dialogue.
+ const next=harness(undefined,undefined,{notes:args[4].notes,history:[]});
+ assert.equal((await next.route(next.request(1,"https://fanmind.invalid","Wie geht es dir?"))).status,200);
+ const context=JSON.parse(next.calls.providerBody.input[1].content);
+ assert.deepEqual(context.fan.learned_preferences,facts);assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ // Same saved generation retries without provider or further notes mutation.
+ const retry=await h.route(h.request(1,"https://fanmind.invalid",quote));
+ assert.equal(retry.status,200);assert.equal((await retry.json()).memory_status,"unchanged");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.memoryWrites.length,1);
+});
+
+for(const [change,options,status] of [
+ ["persist-failed",{},503], ["memory-race",{},200],
+ [undefined,{persistedSequence:null},200], [undefined,{persistedSequence:1.5},200],
+ [undefined,{savedDirection:"suggested_reply"},200], [undefined,{savedContent:"foreign content"},200],
+ [undefined,{notes:positiveMusicNotes("x".repeat(3711))},200],
+])test(`actual withdrawal reports unsuccessful storage (${change??JSON.stringify(options)})`,async()=>{
+ const h=harness(change,undefined,{notes:positiveMusicNotes(),...options});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.equal(response.status,status);const body=await response.json();
+ if(status===200)assert.equal(body.memory_status,"not_saved");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ assert.equal(h.calls.memoryWrites.length,change==="memory-race"?1:0);
+});
+for(const change of ["revoke","revision","workspace","memory-revoked","quality-stuck"])test(`withdrawal respects existing authority and quality rejection: ${change}`,async()=>{
+ const h=harness(change,undefined,{notes:positiveMusicNotes()});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.notEqual(response.status,200);assert.equal((await response.json()).replies,undefined);
+ assert.equal(h.calls.memoryWrites.length,change==="memory-revoked"?1:0);
+});
+for(const [field,value] of [["workspace_id","foreign"],["character_id","foreign"],["id","foreign"]])test(`withdrawal cannot learn into foreign fan context: ${field}`,async()=>{
+ const h=harness(undefined,undefined,{notes:positiveMusicNotes(),fan:{[field]:value}});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.notEqual(response.status,200);assert.equal(h.calls.provider,0);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+
+for(const quote of ["Ich mag Musik nicht mehr.","I do not like music anymore.","Ich mag Musik. Ich mag Musik nicht mehr.","Bitte keine Angebote. Ich mag Musik nicht mehr.","Ich mag kurze Antworten. Ich mag Musik nicht mehr."])test(`dedicated route replaces one current topic despite 4000 manual characters: ${quote}`,async()=>{
+ const tuple={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
+ const source={...tuple,id:"old",generation_id:"old-generation",direction:"fan_inbound",sequence:5,content:"Ich liebe Musik."};
+ const current=currentFactsPolicy.extractCurrentInterestAssertions(source,tuple);
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:current,notes:"x".repeat(4000),history:[],persistedSequence:20});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",quote));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"saved");
+ assert.equal(h.calls.memoryWrites.length,0,"no interest writes to legacy notes");
+ const facts=h.calls.currentFactWrites[0].facts;assert.equal(facts.length,1);assert.equal(facts[0].polarity,"negative");assert.equal(facts[0].source_sequence,20);
+ const next=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:facts,notes:"x".repeat(4000),history:[]});
+ assert.equal((await next.route(next.request(1,"https://fanmind.invalid","Wie geht es dir?"))).status,200);
+ const context=JSON.parse(next.calls.providerBody.input[1].content);
+ assert.equal(context.fan.notes,"x".repeat(4000));assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.deepEqual(context.fan.learned_preferences.filter(f=>f.kind==="interest").map(f=>f.polarity),["negative"]);
+ const retry=await h.route(h.request(1,"https://fanmind.invalid",quote));assert.equal((await retry.json()).memory_status,"unchanged");assert.equal(h.calls.provider,1);
+});
+
+test("dedicated reader preserves an independent sourced legacy topic during transition",async()=>{
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:[],notes:positiveMusicNotes(),history:[]});
+ assert.equal((await h.route(h.request(1,"https://fanmind.invalid","Danke!"))).status,200);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);assert.deepEqual(context.fan.learned_preferences.map(f=>f.quote),["Ich mag Musik."]);assert.equal(context.fan.learned_preferences[0].provenance,"legacy_opaque");
+});
+
+test("dedicated storage failure is explicit, with no fallback to the legacy interest writer",async()=>{
+ const h=harness("current-facts-error",undefined,{currentFactsEnabled:true,notes:"x".repeat(4000)});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Ich mag Musik nicht mehr."));
+ assert.equal(response.status,200);assert.equal((await response.json()).memory_status,"not_saved");assert.equal(h.calls.memoryWrites.length,0);
+});
+
+test("dedicated reader retains unrelated legacy interests and suppresses only the replaced topic",async()=>{
+ let notes=positiveMusicNotes();const q="Ich liebe Katzen.";
+ notes=knowledgePolicy.learnChatAdminKnowledge(notes,knowledgePolicy.extractChatAdminFacts(q,"cats"),[{id:"cats",direction:"fan_inbound",sequence:6,content:q}]);
+ const tuple={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
+ const source={...tuple,id:"new",generation_id:"new-generation",direction:"fan_inbound",sequence:20,content:"Ich mag Musik nicht mehr."};
+ const facts=currentFactsPolicy.extractCurrentInterestAssertions(source,tuple);
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:facts,notes,history:[]});
+ assert.equal((await h.route(h.request(1,"https://fanmind.invalid","Danke!"))).status,200);
+ const current=JSON.parse(h.calls.providerBody.input[1].content).fan.learned_preferences;
+ assert.deepEqual(current.map(f=>f.topic).sort(),["cats","music"]);
+ assert.equal(current.find(f=>f.topic==="cats").quote,q);
+ assert.equal(current.find(f=>f.topic==="music").polarity,"negative");
+ assert.ok(!current.some(f=>f.quote==="Ich mag Musik."));
+});
+
+for(const mode of ["off","on","cutover-off","missing-schema"])test(`actual store adapter preserves the default-off/cutover/schema boundary: ${mode}`,async()=>{
+ const calls=[];const exported={};
+ const dependencies={
+  "next/headers":{cookies:async()=>({get:()=>({value:"synthetic-session"})})},
+  "@/lib/supabase/config":{getSupabaseHeaders:()=>({}),getSupabaseRestUrl:path=>`https://database.invalid/${path}`,SUPABASE_ACCESS_TOKEN_COOKIE:"synthetic"},
+  "@/lib/workspaceAuthorization":{WorkspaceAuthorizationError,requireActiveAuthorizedWorkspace:async()=>({})},
+ };
+ runInNewContext(ts.transpileModule(readFileSync("src/lib/chatAdmin.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
+  exports:exported,URL,process:{env:{FANMIND_CHAT_ADMIN_CURRENT_FACTS_ENABLED:mode==="on"||mode==="missing-schema"?"true":"false"}},
+  require(name){assert.ok(Object.hasOwn(dependencies,name),name);return dependencies[name];},
+  fetch:async url=>{
+   calls.push(String(url));
+   if(String(url).includes("chat_character_current_facts"))return mode==="missing-schema"?Response.json({},{status:404}):Response.json([]);
+   return Response.json([{id:fanId,workspace_id:workspaceId,character_id:characterId,current_facts_version:mode==="cutover-off"?1:0}]);
+  },
+ });
+ const request=exported.getChatFan(workspaceId,characterId,fanId);
+ if(mode==="missing-schema"||mode==="cutover-off")await assert.rejects(request,/current_facts_cutover_required|chat_admin_store_404/u);
+ else {const fan=await request;assert.equal(Object.hasOwn(fan,"current_facts"),mode==="on");}
+ assert.equal(calls.length,mode==="off"||mode==="cutover-off"?1:2);
+ if(calls.length===2)for(const [key,value] of [["workspace_id",workspaceId],["character_id",characterId],["fan_id",fanId]])assert.equal(new URL(calls[1]).searchParams.get(key),`eq.${value}`);
 });

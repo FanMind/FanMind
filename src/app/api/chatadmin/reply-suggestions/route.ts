@@ -1,6 +1,6 @@
 import { ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
-import { getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
+import { applyChatAdminCurrentInterests, isChatAdminCurrentFactsEnabled, getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
 import { assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext, ChatAdminPolicyError } from "@/lib/chatAdminPolicy.mjs";
 import { recordAiUsageEvent } from "@/lib/aiUsage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
@@ -104,7 +104,7 @@ export async function POST(request:NextRequest){
 
 async function saveGenerationKnowledge(workspaceId:string,userId:string,characterId:string,characterRevision:number,fanId:string,conversationId:string,generationId:string,incoming:string):Promise<"unchanged"|"saved"|"not_saved"> {
  const proposed=extractChatAdminFacts(incoming,generationId);
- if (!proposed.length) return "unchanged";
+ if (!proposed.length && !isChatAdminCurrentFactsEnabled()) return "unchanged";
  const checkAuthority=async()=>{
   const authority=await requireChatAdminCapability();
   if(authority.workspace.id!==workspaceId||authority.user.id!==userId)throw new WorkspaceAuthorizationError("Kontext geändert","resource_forbidden");
@@ -112,13 +112,26 @@ async function saveGenerationKnowledge(workspaceId:string,userId:string,characte
   if(character.status!=="active"||character.revision!==characterRevision)throw new WorkspaceAuthorizationError("Character geändert","resource_forbidden");
  };
  await checkAuthority();
- const fan=await getChatFan(workspaceId,characterId,fanId);
+ let fan=await getChatFan(workspaceId,characterId,fanId);
  if(fan.status!=="active")throw new WorkspaceAuthorizationError("Fan geändert","resource_forbidden");
  const saved=await getChatAdminGeneration(workspaceId,characterId,fanId,conversationId,generationId);
  const inbound=saved.find(message=>message.direction==="fan_inbound" && message.content===incoming);
  if(!inbound || !Number.isSafeInteger(inbound.sequence))return "not_saved";
- const notes=learnChatAdminKnowledge(fan.notes,proposed,[{id:generationId,direction:"fan_inbound",content:incoming,sequence:inbound.sequence}]);
- if(notes===fan.notes)return "unchanged";
+ let interestChanged=false;
+ if(isChatAdminCurrentFactsEnabled()){
+  try {interestChanged=await applyChatAdminCurrentInterests(workspaceId,characterId,fanId,conversationId,characterRevision,fan.revision,generationId);}
+  catch {await checkAuthority();return "not_saved";}
+  await checkAuthority();
+  // Exactly one authority for interests. Legacy notes remain intact; independent
+  // boundaries/communication can still use the existing notes path.
+  if(!proposed.some(fact=>fact.kind!=="interest"))return interestChanged?"saved":"unchanged";
+  fan=await getChatFan(workspaceId,characterId,fanId);
+ }
+
+ let notes:string;
+ try { notes=learnChatAdminKnowledge(fan.notes,isChatAdminCurrentFactsEnabled()?proposed.filter(fact=>fact.kind!=="interest"):proposed,[{id:generationId,direction:"fan_inbound",content:incoming,sequence:inbound.sequence}]); }
+ catch { return "not_saved"; }
+ if(notes===fan.notes)return interestChanged?"saved":"unchanged";
  let status:"saved"|"not_saved"="saved";
  try { await updateChatFan(workspaceId,characterId,fanId,fan.revision,{notes}); }
  catch { status="not_saved"; }

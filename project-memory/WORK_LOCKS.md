@@ -1355,3 +1355,38 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018
+- Task: FM-CHATADMIN-INTEREST-REVOCATION-20261018; Status: RELEASED_FOR_PR_PARTIAL; Holder: Codex; Risk: R3 source-only.
+- Existing PR #1342 / branch fix/chatadmin-interest-revocation-20261018; live baseline cb01c2ee8923b94829a010baf5448625bd8b9899, main f36e630c73d3820a61aef593a705d241600e7f47. Separate1341 is diagnostic only; no duplicate source writer found. Retained target locks are unexecuted.
+- Scope: existing v1 interest path, deterministic and synthetic actual-route regressions, directly related docs/memory. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-STORAGE-001. Existing notes/revision/auth/tenant/manual-send and8/4000 limits remain.
+- Recovery: reviewed source revert; no external data, SQL, provider, workflow, merge or deploy action. Separate Guardian and final exact-head CI required. Global BLOCK and FM-DEC-031 deferrals retained.
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-20261018; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 source-only.
+- Owner request: independent PR1345 helper review, then additive durable current facts independent of manual4000 notes. Existing1345branch only; headff38d5e93e781ad144aca039dcb5c43c25bb7503, stacked1344->1343->1342, mainf36e630c73d3820a61aef593a705d241600e7f47. Tree/blob identities verified; source no competing reservation; historical protected target locks unexecuted.
+- Missing tail of Owner message: Owner says derive from existing tests; use1343product contract+1344storage design and existing schema as scope. No real DB apply, runtime activation, merge/deploy/provider or other deferred actions.
+- FM-CONTRACT-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-AI-001/STORAGE-001; disclosure/delete consumers must follow same scoped rows. Recovery source revert only. Independent Guardian mandatory; no JavaScript-only DB-security claim.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018; Status: BLOCKED; Holder: Codex; Risk: R3.
+- Explicit Owner task: fresh GitHub/source/CI binding, existing canonical Staging read-only capability/schema/data/install-profile/backup/restore assessment; no new implementation PR or architecture. Existing1345 branch only, head a7db84654b422262bee4fd81f68e432c7b34851c, main f36e630c73d3820a61aef593a705d241600e7f47.
+- Target: only FanMind Staging vshyhvgcmrlagvfnvomc. Metadata and aggregate counts only; no message contents, contact notes or Production database query. Historical harness/live-repair locks must be reconciled before any later writer. Independent Guardian required.
+- No target SQL apply, temporary DB fixtures, runtime/flag/capability write, model/provider call, workflow dispatch, merge or deploy. Disposable local PG17 synthetic testing only. Unknown prerequisites mean BLOCKED; recovery here is source revert only.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## LOCK-FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Task: FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018; Status: RELEASED_FOR_PR; Holder: Codex; Risk: R3 offline only.
+- Owner explicitly requests strict checksum-bound profile and synthetic disposable PG17 dump/restore on existing1345 only. Baseline3471b1d6e80fc38679e0914d572a9de6976f417a; SQL a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947 unchanged.
+- Coordination before writes: Current-Facts holder is this Codex continuation; separate Guardian confirms no concrete overlap for new scripts/operations/chat-admin-current-facts-* artifacts, profile reference, separate cases/fixture and one static cases import in our existing current-facts PG17 suite. Existing Harness/LIVE-REPAIR source holders remain Codex; their reserved files/contracts/runtime are excluded and not edited. Existing Base/Fan/Offers/Tier/Harness/Backup-Contract/SQL/package/workflow files remain byte-identical. No old lock released or protected permission reused.
+- Offline catalog/reference verification and isolated full dump/restore only. No Staging/Production connection, target SQL APPLY, deployment, merge, workflow dispatch, capability/flag write or real Fan data. New profile does not attest real host/backup state. Recovery: source revert and remove disposable synthetic test containers. Independent adversarial review and exact-head CI required.
+
+- Handoff: OFFLINE_PROFILE_READY; registered native44/44 under canonical ICU with40 mutations and independent golden regeneration PASS. Existing target locks untouched; exact final CI/commit binding remains on existing Draft1345. No live installation permission.
+
+- Same-task correction: align own isolated container initialization with existing PG17 ICU fixture; same reserved new files only, no legacy workflow/harness changes. Independent Guardian notified before source edits.
+
+- Final ICU handoff: independent45/45 with43 native mutations, own registered44/44 with40 mutations,0skip; exact ICU golden328/413 PASS. Target/host/backup blockers remain unchanged and protected. Final head/CI in Draft1345 metadata.

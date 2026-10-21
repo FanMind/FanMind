@@ -1352,3 +1352,27 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## FM-CHATADMIN-INTEREST-REVOCATION-20261018 — PR1342 continuation
+- Owner-selected existing Draft only; R3 source; lock LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018. Current GitHub main/head verified, five blobs and complete tree reconstructed identically through Connector after shell proxy failed.
+- Baseline174/174 focused tests PASS. New independently reproduced overflow, extraction-cap and eviction/replay failures require narrow correction. Separate Guardian active. Capacity checksum failure caused by package.json registration; use the already registered Knowledge suite without modifying protected controls.
+- No external/runtime/model-quality acceptance or activation; reviewed revert is recovery.
+
+- Source handoff:306/306 focused, independent204/204 +7/7 own probes and killed in-memory sequence mutation. Lock released for existing Draft PARTIAL handoff. Storage-overflow stale-positive and max3/8 limitations remain; final exact-head CI tracked in PR1342. No protected action.
+
+## FM-CHATADMIN-CURRENT-FACTS-20261018
+- Explicit Owner durable-storage task on existing1345branch. Canonical main and allfourPRheads unchanged as freshly read; stacked dependencies preserved. Preflight baseline167/167 Knowledge+API testsPASS.
+- Independent Helper review finds duplicate-topic replay, missing full-source ordinal/tenantbinding and incompletecurrent validation; tests first. Additive storage requires nativePG17,RLS/grants,atomic provenance/order and fan cascade/export. No live target authorization.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Owner requests preparation only, no install or activation. Fresh main/1342–1345 unchanged; final1345 source checksum and14 terminal success records confirmed. Read-only Staging identity/catalog/count assessment plus isolated tests and independent review; exact prerequisites may block installation preparation.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Explicit Owner bounded offline continuation on1345; coordination recorded in matching work lock. New strict profile and full synthetic dump/restore plus mutations, preserving all previous verifier source files and pinned SQL. Host/autogrant/real-backup blockers remain separate; no remote database connection authorized.
+
+- Offline handoff: OFFLINE_PROFILE_READY, native44/44 registered under canonical ICU and independent full recovery recorded in receipt. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.

@@ -1,3 +1,4 @@
+import { applyCurrentInterestAssertion as applyBoundCurrentInterestAssertion } from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { extractChatAdminFacts, readChatAdminKnowledge, writeChatAdminKnowledge, learnChatAdminKnowledge, deriveChatAdminStrategy } from "../src/lib/chatAdminKnowledge.mjs";
@@ -284,4 +285,242 @@ test("identical communication wording cannot demote a stored protective emoji bo
  notes=learn(notes,"Bitte keine Emojis.",20);
  notes=learn(notes,"Mit Emojis.",30);
  assert.deepEqual(readChatAdminKnowledge(notes).facts.filter(f=>f.kind==="boundary"),[boundary]);
+});
+
+// PR1342: explicit revocation regression; kept in this required CI suite.
+const inbound = (id, sequence, content, direction = "fan_inbound") => ({ id, sequence, content, direction });
+const apply = (notes, event) => learnChatAdminKnowledge(notes, extractChatAdminFacts(event.content, event.id), [event]);
+const learned = (notes) => readChatAdminKnowledge(notes).facts;
+
+test("explicit DE/EN interest withdrawal is extracted only with a named bounded subject", () => {
+ for (const quote of ["Ich mag Musik nicht mehr.", "Ich mag keine Musik mehr.", "I don't like music anymore.", "I no longer like music."]) {
+  assert.deepEqual(extractChatAdminFacts(quote,"new"),[{kind:"interest",quote,source:"new"}]);
+ }
+ for (const quote of ["Das stimmt inzwischen nicht mehr.", "I changed my mind.", "Ich mag Musik nicht mehr wegen meiner Religion.", "Ich mag keine Angebote mehr.", "Ich mag Musik nicht mehr?"]) {
+  assert.deepEqual(extractChatAdminFacts(quote,"new"),[]);
+ }
+});
+
+test("newer explicit withdrawal persists instead of the superseded positive interest", () => {
+ const first = apply("Manuelle Notiz",inbound("old",10,"Ich liebe Musik."));
+ const next = apply(first,inbound("new",20,"Ich mag Musik nicht mehr."));
+ assert.equal(readChatAdminKnowledge(next).manual,"Manuelle Notiz");
+ assert.deepEqual(learned(next),[{kind:"interest",quote:"Ich mag Musik nicht mehr.",source:"new",source_sequence:20}]);
+ assert.equal(writeChatAdminKnowledge(readChatAdminKnowledge(next)),next);
+ assert.equal(apply(next,inbound("old",10,"Ich liebe Musik.")),next,"delayed replay must not resurrect the old preference");
+ assert.equal(apply(next,inbound("new",20,"Ich mag Musik nicht mehr.")),next,"duplicate generation stays idempotent");
+});
+
+test("later explicit re-confirmation may supersede a withdrawal without inventing a preference", () => {
+ const withdrawn=apply(apply("",inbound("old",10,"Ich liebe Musik.")),inbound("new",20,"Ich mag Musik nicht mehr."));
+ const restored=apply(withdrawn,inbound("latest",30,"Ich liebe Musik."));
+ assert.deepEqual(learned(restored),[{kind:"interest",quote:"Ich liebe Musik.",source:"latest",source_sequence:30}]);
+});
+
+test("withdrawal does not touch unrelated interests, communication preferences or boundaries", () => {
+ let notes=apply("Manuell",inbound("music",10,"Ich mag Musik."));
+ notes=apply(notes,inbound("cat",11,"Ich liebe Katzen."));
+ notes=apply(notes,inbound("communication",12,"Ich mag kurze Antworten."));
+ notes=apply(notes,inbound("boundary",13,"Bitte keine Angebote."));
+ notes=apply(notes,inbound("withdraw",20,"Ich mag keine Musik mehr."));
+ assert.ok(learned(notes).some(f=>f.kind==="interest"&&f.quote==="Ich mag keine Musik mehr."));
+ assert.ok(learned(notes).some(f=>f.quote==="Ich liebe Katzen."));
+ assert.ok(learned(notes).some(f=>f.quote==="Ich mag kurze Antworten."));
+ assert.ok(learned(notes).some(f=>f.quote==="Bitte keine Angebote."));
+ assert.equal(readChatAdminKnowledge(notes).manual,"Manuell");
+});
+
+test("an unsupported, unsaved or missing-order withdrawal never changes notes", () => {
+ const first=apply("",inbound("old",10,"Ich mag Musik."));
+ for(const event of [inbound("wrong",20,"Ich mag Musik nicht mehr.","suggested_reply"),inbound("no-order",undefined,"Ich mag Musik nicht mehr."),inbound("older",5,"Ich mag Musik nicht mehr.")]){
+  assert.equal(apply(first,event),first);
+ }
+ assert.equal(learnChatAdminKnowledge(first,[{kind:"interest",quote:"Ich mag Musik nicht mehr.",source:"invented"}],[inbound("real",20,"Ich mag Musik nicht mehr.")]),first);
+});
+
+test("late withdrawal takes precedence over a compound positive claim without fabricating remaining clauses",()=>{
+ const first=apply("",inbound("old",10,"Ich mag Musik und Reisen."));
+ const next=apply(first,inbound("new",20,"Ich mag Musik nicht mehr."));
+ assert.equal(learned(next).length,1);
+ assert.equal(learned(next)[0].quote,"Ich mag Musik nicht mehr.");
+});
+
+test("withdrawal survives historical message trimming because it is in durable fan facts",()=>{
+ const notes=apply(apply("",inbound("old",10,"Ich liebe Musik.")),inbound("new",20,"Ich mag Musik nicht mehr."));
+ const knowledge=readChatAdminKnowledge(notes);
+ assert.deepEqual(knowledge.facts.map(f=>f.quote),["Ich mag Musik nicht mehr."]);
+ assert.equal(knowledge.facts.some(f=>f.quote==="Ich liebe Musik."),false);
+});
+
+for (const quote of ["I do not like music anymore.", "I don’t like music anymore.", "Ich liebe Musik nicht mehr."]) test(`explicit literal negation is supported: ${quote}`,()=>{
+ const notes=apply(apply("",inbound("old",10,"Ich mag Musik.")),inbound("new",20,quote));
+ assert.deepEqual(learned(notes).map(f=>f.quote),[quote]);
+});
+
+test("later clauses within one generation resolve the topic without losing retry idempotency",()=>{
+ for(const content of ["Ich mag Musik. Ich mag Musik nicht mehr.","Ich mag Musik nicht mehr. Ich mag Musik."]){
+  const event=inbound("generation",20,content);const notes=apply("",event);
+  assert.deepEqual(learned(notes).map(f=>f.quote),[content.split(". ").at(-1)]);
+  assert.equal(apply(notes,event),notes);
+ }
+});
+
+test("explicit withdrawal is not discarded behind three unrelated positive sentences",()=>{
+ const notes=apply(apply("",inbound("old",10,"Ich mag Musik.")),inbound("new",20,"Ich mag Katzen. Ich mag Hunde. Ich mag Reisen. Ich mag Musik nicht mehr."));
+ assert.ok(learned(notes).some(f=>f.quote==="Ich mag Musik nicht mehr."));
+ assert.ok(!learned(notes).some(f=>f.quote==="Ich mag Musik."));
+});
+
+test("an evicted withdrawal does not allow an older interest generation back into full memory",()=>{
+ let notes="";
+ for(const [i,topic] of ["Musik","Fotos","Videos","Katzen","Hunde","Sport","Reisen","Kochen"].entries())notes=apply(notes,inbound(`withdraw-${i}`,20+i,`Ich mag ${topic} nicht mehr.`));
+ notes=apply(notes,inbound("communication",30,"Ich mag kurze Antworten."));
+ notes=apply(notes,inbound("renew",40,"Ich mag Fotos."));
+ assert.equal(apply(notes,inbound("old",10,"Ich mag Musik.")),notes);
+ assert.equal(learned(notes).length,8);
+ assert.ok(learned(notes).some(f=>f.quote==="Ich mag kurze Antworten."));
+});
+
+test("interest provenance requires a full literal source statement, never a substring",()=>{
+ const first=apply("",inbound("old",10,"Ich mag Musik."));
+ const next=learnChatAdminKnowledge(first,[{kind:"interest",quote:"Ich mag Musik nicht mehr.",source:"new"}],[inbound("new",20,"Wenn ich sage: Ich mag Musik nicht mehr.")]);
+ assert.equal(next,first);
+});
+
+test("insufficient space for a withdrawal is explicit and preserves the original notes",()=>{
+ const notes=apply("x".repeat(3711),inbound("old",10,"Ich mag Musik."));
+ assert.ok(notes.length<=4000);
+ assert.throws(()=>apply(notes,inbound("new",20,"Ich mag Musik nicht mehr.")),/knowledge_too_large/u);
+ assert.equal(readChatAdminKnowledge(notes).manual.length,3711);
+});
+
+for(const [positive,negative] of [["I love sports.","Ich mag Sport nicht mehr."],["Ich mag Reisen.","I no longer like travel."]])test(`topic aliases use one source ordering: ${positive}`,()=>{
+ const first=apply("",inbound("old",10,positive));assert.equal(learned(first).length,1);
+ const notes=apply(first,inbound("new",20,negative));assert.deepEqual(learned(notes).map(f=>f.quote),[negative]);
+ assert.equal(apply(notes,inbound("old",10,positive)),notes);
+});
+
+test("bounded extraction preserves protective boundaries ahead of competing withdrawals",()=>{
+ const facts=extractChatAdminFacts("Bitte keine Angebote. Ich mag Musik nicht mehr. Ich mag Fotos nicht mehr. Ich mag Videos nicht mehr.","new");
+ assert.equal(facts.length,3);assert.ok(facts.some(f=>f.kind==="boundary"&&f.quote==="Bitte keine Angebote."));
+});
+
+test("independent delayed interests are conservatively declined after newer retained knowledge",()=>{
+ const current=apply("",inbound("new",20,"Ich mag Musik nicht mehr."));
+ assert.equal(apply(current,inbound("old",10,"Ich mag Katzen.")),current);
+ assert.equal(apply(current,inbound("missing",undefined,"Ich mag Musik.")),current);
+});
+
+// Offline storage projection contract; not wired to production.
+const currentBinding={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+const applyCurrentInterestAssertion=(current,proposed,saved,binding=currentBinding)=>applyBoundCurrentInterestAssertion(current,proposed,saved,binding);
+{
+const source=(id,sequence,content,direction="fan_inbound")=>({...currentBinding,id,generation_id:`generation-${id}`,sequence,content,direction});
+const claim=(quote,src,topic="music")=>({...currentBinding,topic,quote,source_message_id:src.id,source_sequence:src.sequence,source_statement_index:src.content.split(/(?<=[.!?])\s+|\n/u).map(s=>s.trim()).filter(Boolean).indexOf(quote)});
+
+test("newer explicitly sourced withdrawal replaces one current topic, not appends",()=>{
+ const old=source("older",10,"Ich liebe Musik.");
+ const newer=source("newer",20,"Ich mag Musik nicht mehr.");
+ const a=applyCurrentInterestAssertion([],claim("Ich liebe Musik.",old),old);
+ const b=applyCurrentInterestAssertion(a,claim("Ich mag Musik nicht mehr.",newer),newer);
+ assert.equal(b.length,1);
+ assert.equal(b[0].quote,"Ich mag Musik nicht mehr.");
+ assert.equal(b[0].polarity,"negative");
+ assert.equal(b[0].source_sequence,20);
+ assert.equal(applyCurrentInterestAssertion(b,claim("Ich liebe Musik.",old),old),b);
+ assert.equal(applyCurrentInterestAssertion(b,claim("Ich mag Musik nicht mehr.",newer),newer),b);
+});
+
+test("later reconfirmation reverses an earlier withdrawal",()=>{
+ const a=source("a",10,"Ich mag Musik nicht mehr.");
+ const b=source("b",30,"Ich liebe Musik.");
+ const existing=applyCurrentInterestAssertion([],claim(a.content,a),a);
+ assert.deepEqual(applyCurrentInterestAssertion(existing,claim(b.content,b),b).map(x=>x.polarity),["positive"]);
+});
+
+test("unrelated topics stay independent",()=>{
+ const a=source("a",10,"Ich mag Musik.");
+ const b=source("b",11,"Ich liebe Katzen.");
+ const c=source("c",20,"Ich mag Musik nicht mehr.");
+ const first=applyCurrentInterestAssertion([],claim(a.content,a),a);
+ const second=applyCurrentInterestAssertion(first,claim(b.content,b,"cats"),b);
+ const third=applyCurrentInterestAssertion(second,claim(c.content,c),c);
+ assert.equal(third.length,2);
+ assert.equal(third.find(x=>x.topic==="cats").quote,"Ich liebe Katzen.");
+});
+
+test("reject unsaved, outbound, mismatched, incomplete and unclear claims",()=>{
+ const good=source("good",20,"Ich mag Musik nicht mehr.");
+ for(const [c,s] of [
+  [claim(good.content,good),source("good",20,good.content,"suggested_reply")],
+  [claim(good.content,good),source("other",20,good.content)],
+  [claim(good.content,good),source("good",20,"Wenn ich sage: Ich mag Musik nicht mehr.")],
+  [claim("Das stimmt nicht mehr.",good),source("good",20,"Das stimmt nicht mehr.")],
+  [claim("Ich mag Musik nicht mehr.",good,"cats"),good],
+  [claim("Ich mag Musik nicht mehr.",good),source("good",undefined,good.content)],
+ ])assert.throws(()=>applyCurrentInterestAssertion([],c,s),/invalid_interest_source|invalid_interest_claim/u);
+});
+
+test("same-sequence contradictory claims fail closed, not overwrite",()=>{
+ const src=source("same",20,"Ich mag Musik. Ich mag Musik nicht mehr.");
+ const one=source("one",20,"Ich mag Musik.");
+ const a=applyCurrentInterestAssertion([],claim(one.content,one),one);
+ assert.throws(()=>applyCurrentInterestAssertion(a,claim("Ich mag Musik nicht mehr.",src),src),/interest_order_conflict/u);
+});
+
+test("a current fact without valid order cannot be silently superseded",()=>{
+ const incoming=source("new",20,"Ich mag Musik nicht mehr.");
+ assert.throws(()=>applyCurrentInterestAssertion([{topic:"music",quote:"Ich mag Musik.",polarity:"positive",source_message_id:"legacy",source_sequence:null}],claim(incoming.content,incoming),incoming),/interest_order_conflict/u);
+});
+
+test("input current-facts collection stays untouched; only bounded topics and immutable original claims",()=>{
+ const event=source("new",100,"I do not like music anymore.");
+ const old=Object.freeze([{...currentBinding,source_statement_index:0,topic:"cats",quote:"Ich liebe Katzen.",polarity:"positive",source_message_id:"cat",source_sequence:4}]);
+ const newFacts=applyCurrentInterestAssertion(old,claim(event.content,event),event);
+ assert.equal(old.length,1);
+ assert.equal(newFacts.length,2);
+ assert.equal(newFacts.find(x=>x.topic==="music").quote,event.content);
+});
+
+}
+
+// Adversarial review of PR1345, before durable-store integration.
+{
+ const tuple={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+ const src=(sequence,content)=>({...tuple,id:`message-${sequence}`,generation_id:`generation-${sequence}`,sequence,content,direction:"fan_inbound"});
+ const claim=(s,quote=s.content)=>({...tuple,topic:"music",quote,source_message_id:s.id,source_sequence:s.sequence,source_statement_index:0});
+ const row=(sequence,quote="Ich mag Musik.")=>({...tuple,topic:"music",quote,polarity:quote.includes("nicht")?"negative":"positive",source_message_id:`message-${sequence}`,source_sequence:sequence,source_statement_index:0});
+ test("offline contract rejects duplicate current topics before a stale update",()=>{
+  const source=src(20,"Ich mag Musik.");
+  assert.throws(()=>applyCurrentInterestAssertion([row(10),row(100,"Ich mag Musik nicht mehr.")],claim(source),source,tuple),/interest_order_conflict/u);
+ });
+ test("offline contract accepts only the last validated statement for a topic",()=>{
+  const source=src(20,"Ich mag Musik. Ich mag Musik nicht mehr.");
+  assert.throws(()=>applyCurrentInterestAssertion([],claim(source,"Ich mag Musik."),source,tuple),/invalid_interest_claim/u);
+ });
+ test("offline contract rejects cross-tenant proposed and current records",()=>{
+  const source=src(20,"Ich mag Musik.");
+  for(const key of Object.keys(tuple)){
+   assert.throws(()=>applyCurrentInterestAssertion([],{...claim(source),[key]:"foreign"},source,tuple),/invalid_interest_source/u);
+   assert.throws(()=>applyCurrentInterestAssertion([{...row(10),[key]:"foreign"}],claim(source),source,tuple),/interest_order_conflict/u);
+  }
+ });
+ test("offline contract rejects malformed existing facts rather than legitimizing them",()=>{
+  const source=src(20,"Ich mag Musik.");
+  for(const bad of [{source_sequence:-1},{polarity:"unknown"},{quote:"Vielleicht mag er Musik."},{topic:"private-medical-inference"}])assert.throws(()=>applyCurrentInterestAssertion([{...row(10),...bad}],claim(source),source,tuple),/interest_order_conflict/u);
+ });
+}
+
+test("offline current facts refuse quoted and hypothetical multi-line assertions",()=>{
+ const content='Wenn ich einmal sage:\nIch mag Musik nicht mehr.\nmeine ich das hypothetisch.';
+ const tuple={workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a",conversation_id:"conversation-a"};
+ const src={...tuple,id:"new",generation_id:"generation",direction:"fan_inbound",sequence:20,content};
+ assert.throws(()=>applyCurrentInterestAssertion([],{...tuple,topic:"music",quote:"Ich mag Musik nicht mehr.",source_message_id:"new",source_sequence:20,source_statement_index:1},src,tuple),/invalid_interest_claim/u);
+});
+
+test("dedicated current-facts SQL remains checksum-bound, default-off and unapplied", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const result = spawnSync(process.execPath, ["scripts/operations/chat-admin-current-facts-check.mjs"], { cwd: new URL("..", import.meta.url), encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "CHAT_ADMIN_CURRENT_FACTS_CHECK=verified_unapplied");
 });
