@@ -228,3 +228,9 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: until complete company details including ATU/UID and necessary external registrations exist, defer every dependent action. No Mobile/Store approval, Stripe/Billing activation, external Social app registration, tax or company verification. Preserve tasks, accepted artifacts and all unfinished gates; do not delete or mark deferred work completed.
 - Scope: reinforces FM-DEC-021 and the paid-activation limits of FM-DEC-015; narrows earlier Social work permission only for company-dependent external registration/approval. Repository-based Creator Intelligence, ChatAdmin, Sales Playbooks and conversation-control completion continues with synthetic tests.
 - Boundaries: no live data/provider calls, protected deployments, migrations or automatic merges. This decision supplies no target/provider authorization and creates no second queue.
+
+## FM-DEC-ROADMAP-SEPARATION-20261021
+- Date: 2026-10-21; Status: CONFIRMED; Source: explicit Owner instruction for PR #1349.
+- Decision: Public FanMind landing roadmap contains only FanMind product features. ChatAdmin development status belongs to a separate internal roadmap. The two workstreams retain their shared repository, existing authorized code access, interfaces and reusable components; this is planning/documentation separation, not technical isolation.
+- Evidence: PR #1349 changes `AGENTS.md` and `docs/roadmaps/PRODUCT_ROADMAP_SEPARATION_2026-10-21.md`. Track completion independently as implemented, tested, live and sales-ready; do not infer public FanMind completion from ChatAdmin changes.
+- Boundary: No Production activation, schema, permissions, provider, billing, deployment or customer-data change authorized by this decision.
