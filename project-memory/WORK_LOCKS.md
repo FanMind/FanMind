@@ -1355,3 +1355,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018
+- Task: FM-CHATADMIN-INTEREST-REVOCATION-20261018; Status: RELEASED_FOR_PR_PARTIAL; Holder: Codex; Risk: R3 source-only.
+- Existing PR #1342 / branch fix/chatadmin-interest-revocation-20261018; live baseline cb01c2ee8923b94829a010baf5448625bd8b9899, main f36e630c73d3820a61aef593a705d241600e7f47. Separate1341 is diagnostic only; no duplicate source writer found. Retained target locks are unexecuted.
+- Scope: existing v1 interest path, deterministic and synthetic actual-route regressions, directly related docs/memory. FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-STORAGE-001. Existing notes/revision/auth/tenant/manual-send and8/4000 limits remain.
+- Recovery: reviewed source revert; no external data, SQL, provider, workflow, merge or deploy action. Separate Guardian and final exact-head CI required. Global BLOCK and FM-DEC-031 deferrals retained.

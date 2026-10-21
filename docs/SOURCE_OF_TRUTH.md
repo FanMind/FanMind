@@ -1,5 +1,17 @@
 # FanMind Source of Truth
 
+ChatAdmin-Interessenwiderruf (18.10.2026, Draft/PARTIAL): Explizite deutsche/englische
+Widerrufe werden im vorhandenen v1-Fanwissen quellengeordnet gespeichert und nach
+History-Kürzung an den Modellkontext übergeben. Ältere Interessen-Generationen werden
+konservativ gegenüber der höchsten erhaltenen Faktensequenz verworfen, auch bei
+unabhängigen Themen. Spätere ausdrückliche Neubestätigung bleibt möglich.
+Schutzgrenzen haben im begrenzten Extractor Vorrang, danach Widerrufe; höchstens drei
+Fakten je Nachricht und acht gespeicherte Fakten. Reicht der 4.000-Zeichen-Speicher
+nicht, meldet die Route `not_saved`; der alte Stand bleibt bestehen. Das ist eine
+offene funktionale Grenze, keine vollständige Persistenzabnahme. Keine Aktivierung,
+keine neue Speicherarchitektur; echte Modellqualität und Zielabnahme bleiben offen.
+
+
 ChatAdmin-Fanpräferenzen (17.10.2026): Beim bestehenden Acht-Fakten-Limit
 bleiben Schutzgrenzen zuerst und bestätigte Kommunikationspräferenzen vor
 weiteren Interessen erhalten. Länge, Stil und Emojis werden getrennt

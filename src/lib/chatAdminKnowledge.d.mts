@@ -4,6 +4,7 @@ export type ChatAdminKnowledge = {manual:string;facts:ChatAdminLearnedFact[];com
 export function readChatAdminKnowledge(notes:unknown):ChatAdminKnowledge;
 export function normalizeChatAdminCommercial(value?:unknown):ChatAdminCommercial;
 export function writeChatAdminKnowledge(value:ChatAdminKnowledge):string;
+/** Throws on an unpersistable explicit withdrawal; callers must report not_saved. */
 export function learnChatAdminKnowledge(notes:string,proposed:unknown,sources:Array<{id:string;direction:string;content:string;memory_source?:string;sequence?:number}>):string;
 export function deriveChatAdminStrategy(playbook:import("./creatorIntelligencePolicy.mjs").CreatorPlaybook,fan:Record<string,unknown>,requestedOffer:Record<string,unknown>|null,now?:number):Record<string,unknown> & {sellNow:boolean};
 
