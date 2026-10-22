@@ -15,6 +15,7 @@ export function WorkspaceHelpLauncher() {
   const [open, setOpen] = useState(false);
   const [diagnosticState, setDiagnosticState] = useState<DiagnosticState>("idle");
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -30,6 +31,7 @@ export function WorkspaceHelpLauncher() {
     const controller = new AbortController();
     setDiagnosticState("loading");
     setConnections([]);
+    setSelectedProvider(null);
     fetch("/api/support/diagnostics", {
       method: "GET",
       credentials: "same-origin",
@@ -77,12 +79,22 @@ export function WorkspaceHelpLauncher() {
                 {connections.map((connection) => (
                   <li key={connection.platform}>
                     <strong>{providerNames[connection.platform]}</strong>: {connection.status === "connected" ? "Verbunden" : "Verbindung prüfen"}
+                    {connection.status === "attention_required" ? <button type="button" onClick={() => setSelectedProvider(connection.platform)}>Hilfe anzeigen</button> : null}
                   </li>
                 ))}
               </ul>
             ) : <p role="status">Keine unterstützten Verbindungen gefunden.</p>
           ) : null}
-          <p>Wenn eine Verbindung überprüft werden muss, öffne die Kanäle-Einstellungen. Automatische Reparaturen sind noch nicht verfügbar.</p>
+          {selectedProvider ? (
+            <section aria-label="Geführte Fehlerbehebung" role="status">
+              <h3>{providerNames[selectedProvider]} überprüfen</h3>
+              <p>Die Verbindung benötigt Aufmerksamkeit. Der genaue Grund ist noch nicht bekannt. Prüfe zuerst in den Kanäle-Einstellungen, ob eine erneute Anmeldung angeboten wird.</p>
+              <p>Eine erneute Anmeldung kann Berechtigungen aktualisieren. Sie darf nur durch deine bewusste Aktion gestartet werden. Diese Hilfe führt selbst keine Reparatur aus.</p>
+              <a href="/channels">Verbindung selbst prüfen</a>
+              <div><button type="button" onClick={() => setSelectedProvider(null)}>Zurück zur Übersicht</button></div>
+            </section>
+          ) : null}
+          <p>Automatische Reparaturen sind noch nicht verfügbar. Keine Verbindung wird ohne deine ausdrückliche Bestätigung geändert.</p>
           <a href="/channels">Kanäle öffnen</a>
           <div style={{ marginTop: 12 }}><button type="button" onClick={() => setOpen(false)}>Schließen</button></div>
         </section>
