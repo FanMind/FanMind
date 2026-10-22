@@ -1,8 +1,8 @@
 import Stripe from "stripe";
 export { createStripeIntegrationIdentifier } from "@/lib/stripeIntegrationIdentifierPolicy.mjs";
 
-export const STRIPE_OUTBOUND_API_VERSION = "2026-07-29.dahlia" as const;
-export const STRIPE_SDK_VERSION = "22.4.0" as const;
+export const STRIPE_OUTBOUND_API_VERSION = "2026-09-30.endive" as const;
+export const STRIPE_SDK_VERSION = "23.0.0" as const;
 
 let cachedClient: Stripe | null = null;
 let cachedSecretKey: string | null = null;

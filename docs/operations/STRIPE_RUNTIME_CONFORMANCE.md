@@ -2,9 +2,9 @@
 
 ## Accepted repository boundary
 
-FanMind production server modules use Stripe Node SDK `22.4.0` through the
+FanMind production server modules use Stripe Node SDK `23.0.0` through the
 single client factory in `src/lib/stripeClient.ts`. Outbound SDK requests are
-pinned to API version `2026-07-29.dahlia`, use bounded network retries and a
+pinned to API version `2026-09-30.endive`, use bounded network retries and a
 12-second timeout. Checkout leaves eligible payment-method selection to the
 Stripe Dashboard and sends a `fanmind_checkout_` integration identifier with
 a fresh eight-letter suffix for every Session creation.

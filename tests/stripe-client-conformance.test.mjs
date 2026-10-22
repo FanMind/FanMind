@@ -18,12 +18,12 @@ const { createStripeIntegrationIdentifier } = await import(
 );
 
 test("Stripe runtime uses the reviewed SDK and outbound API version", () => {
-  assert.equal(packageJson.dependencies.stripe, "22.4.0");
+  assert.equal(packageJson.dependencies.stripe, "23.0.0");
   assert.match(
     stripeClientSource,
-    /STRIPE_OUTBOUND_API_VERSION = "2026-07-29\.dahlia"/u,
+    /STRIPE_OUTBOUND_API_VERSION = "2026-09-30\.endive"/u,
   );
-  assert.match(stripeClientSource, /STRIPE_SDK_VERSION = "22\.4\.0"/u);
+  assert.match(stripeClientSource, /STRIPE_SDK_VERSION = "23\.0\.0"/u);
   assert.match(stripeClientSource, /new Stripe\(secretKey/u);
   assert.match(stripeClientSource, /apiVersion: STRIPE_OUTBOUND_API_VERSION/u);
   assert.match(stripeClientSource, /maxNetworkRetries: 2/u);
@@ -99,12 +99,12 @@ test("verified inbound Staging webhook pin remains an explicit external migratio
     stagingWebhookSource,
     /STRIPE_API_VERSION = "2026-06-24\.dahlia"/u,
   );
-  assert.notEqual("2026-06-24.dahlia", "2026-07-29.dahlia");
+  assert.notEqual("2026-06-24.dahlia", "2026-09-30.endive");
   const runbook = readFileSync(
     "docs/operations/STRIPE_RUNTIME_CONFORMANCE.md",
     "utf8",
   );
-  assert.match(runbook, /2026-07-29\.dahlia/u);
+  assert.match(runbook, /2026-09-30\.endive/u);
   assert.match(runbook, /2026-06-24\.dahlia/u);
   assert.match(runbook, /provider-side migration/iu);
   assert.match(runbook, /no provider mutation/iu);
