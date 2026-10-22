@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { saveRepairAuditEvent } from "@/lib/supportRepairAuditServer";
 import {
   getSupabaseServerUser,
   getUserWorkspaceDashboard,
@@ -52,8 +53,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "no_repair_needed" }, { status: 409, headers });
   }
 
-  // No repair or audit claim: durable consent logging is NOT yet implemented.
+  // Persist the customer-confirmed manual handoff before acknowledging it.
+  // A failed audit write must never be reported as a successful request.
+  const requestId = crypto.randomUUID();
+  try {
+    await saveRepairAuditEvent({
+      workspace_id: workspaceResult.workspace.id,
+      actor_user_id: data.user.id,
+      platform: body.platform as "instagram" | "facebook" | "whatsapp",
+      action: "request_reconnect",
+      consent_required: true,
+      consent_given: true,
+      status: "manual_action_required",
+      request_id: requestId,
+      completed_at: new Date().toISOString(),
+    });
+  } catch {
+    return NextResponse.json({ error: "repair_audit_unavailable" }, { status: 503, headers });
+  }
   return NextResponse.json({
+    requestId,
     status: "manual_action_required",
     repairExecuted: false,
     nextStepUrl: "/channels",
