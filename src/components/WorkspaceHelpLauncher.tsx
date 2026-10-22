@@ -49,10 +49,6 @@ export function WorkspaceHelpLauncher() {
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    setDiagnosticState("loading");
-    setConnections([]);
-    setSelectedProvider(null);
-    setRepairConsent(false);
     fetch("/api/support/diagnostics", {
       method: "GET",
       credentials: "same-origin",
@@ -138,7 +134,7 @@ export function WorkspaceHelpLauncher() {
         type="button"
         aria-expanded={open}
         aria-controls="fanmind-inapp-help-panel"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => { if (!open) { setDiagnosticState("loading"); setConnections([]); setSelectedProvider(null); setRepairConsent(false); setCheckState("idle"); } setOpen((current) => !current); }}
         style={{ background: "#0877d9", color: "#fff", border: 0, borderRadius: 24, padding: "12px 18px", fontWeight: 700, cursor: "pointer" }}
       >
         {open ? "Hilfe schließen" : "Hilfe"}
