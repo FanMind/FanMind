@@ -42,7 +42,19 @@ export function buildWebsiteChatWidgetScript() {
   const handoffConsent = root.querySelector(".handoff-consent input");
   const handoffButton = root.querySelector(".handoff-button");
   const handoffStatus = root.querySelector(".handoff-status");
-  toggle.addEventListener("click", () => { const open = !panel.classList.contains("open"); panel.classList.toggle("open", open); toggle.setAttribute("aria-expanded", String(open)); if (open) textarea.focus(); });
+  function setPanelOpen(open) {
+    panel.classList.toggle("open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) textarea.focus();
+    else toggle.focus();
+  }
+  toggle.addEventListener("click", () => setPanelOpen(!panel.classList.contains("open")));
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setPanelOpen(false);
+    }
+  });
   async function ensureSession() {
     if (sessionToken) return sessionToken;
     const response = await fetch(endpoint("/api/website-chat/session"), { method:"POST", headers:{"content-type":"application/json","${WEBSITE_CHAT_INSTALLATION_HEADER}":installationId}, body:JSON.stringify({ consent:{ granted:true, version:consentVersion } }), credentials:"omit", cache:"no-store" });
