@@ -605,3 +605,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
 - Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
 - Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
+
+## FM-CR-060 — Website support repair postcheck tests
+- Date: 2026-10-22
+- Status: IN_PROGRESS; exact-head CI pending
+- Risk: R2 (source-only)
+- Scope: PR #1351 adds a fail-closed connection postcheck helper and five unit tests. It does not execute provider repair, change credentials, or write customer data.
+- Evidence: commits f94424ff59ed4424dccbb6dde853a158d60841fa and 02e6e5496067437dd9b6c63ec9aa12c7dfb543e5. Project Memory Guard run 39745713612 failed because this memory update was missing.
+- Acceptance: run exact-head tests and security checks; separately validate authenticated staging write and provider repair before any production activation.
