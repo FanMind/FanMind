@@ -5,6 +5,7 @@ import {
   getWorkspaceSocialConnections,
 } from "@/lib/supabase/server";
 import { getSupportRepairPolicy } from "@/lib/supportRepairPolicy";
+import { verifyConnectionAfterRepair } from "@/lib/supportRepairPostcheck";
 
 const supported = new Set(["instagram", "facebook", "whatsapp"]);
 
@@ -46,14 +47,13 @@ export async function POST(request: NextRequest) {
   if (connections.error) {
     return NextResponse.json({ error: "diagnostics_unavailable" }, { status: 503, headers });
   }
-  const matching = connections.connections.filter((connection) => connection.platform === input.platform);
+  const check = verifyConnectionAfterRepair(connections.connections, input.platform as "instagram" | "facebook" | "whatsapp");
   return NextResponse.json({
     action,
     platform: input.platform,
-    status: matching.length === 0 ? "not_configured" :
-      matching.some((connection) => connection.status === "connected") ? "connected" : "attention_required",
+    status: check.status,
     performed: "read_only_check",
     changed: false,
-    verified: true,
+    verified: check.verified,
   }, { headers });
 }
