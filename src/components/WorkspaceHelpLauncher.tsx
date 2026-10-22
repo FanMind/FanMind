@@ -16,6 +16,7 @@ export function WorkspaceHelpLauncher() {
   const [diagnosticState, setDiagnosticState] = useState<DiagnosticState>("idle");
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [repairConsent, setRepairConsent] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -32,6 +33,7 @@ export function WorkspaceHelpLauncher() {
     setDiagnosticState("loading");
     setConnections([]);
     setSelectedProvider(null);
+    setRepairConsent(false);
     fetch("/api/support/diagnostics", {
       method: "GET",
       credentials: "same-origin",
@@ -79,7 +81,7 @@ export function WorkspaceHelpLauncher() {
                 {connections.map((connection) => (
                   <li key={connection.platform}>
                     <strong>{providerNames[connection.platform]}</strong>: {connection.status === "connected" ? "Verbunden" : "Verbindung prüfen"}
-                    {connection.status === "attention_required" ? <button type="button" onClick={() => setSelectedProvider(connection.platform)}>Hilfe anzeigen</button> : null}
+                    {connection.status === "attention_required" ? <button type="button" onClick={() => { setSelectedProvider(connection.platform); setRepairConsent(false); }}>Hilfe anzeigen</button> : null}
                   </li>
                 ))}
               </ul>
@@ -90,7 +92,16 @@ export function WorkspaceHelpLauncher() {
               <h3>{providerNames[selectedProvider]} überprüfen</h3>
               <p>Die Verbindung benötigt Aufmerksamkeit. Der genaue Grund ist noch nicht bekannt. Prüfe zuerst in den Kanäle-Einstellungen, ob eine erneute Anmeldung angeboten wird.</p>
               <p>Eine erneute Anmeldung kann Berechtigungen aktualisieren. Sie darf nur durch deine bewusste Aktion gestartet werden. Diese Hilfe führt selbst keine Reparatur aus.</p>
-              <a href="/channels">Verbindung selbst prüfen</a>
+              <label style={{ display: "block", marginBottom: 8 }}>
+                <input type="checkbox" checked={repairConsent} onChange={(event) => setRepairConsent(event.target.checked)} />
+                Ich möchte die Verbindung selbst erneut einrichten und verstehe, dass dabei eine neue Anmeldung erforderlich sein kann.
+              </label>
+              {repairConsent ? (
+                <a href="/channels">Zu den Verbindungseinstellungen wechseln</a>
+              ) : (
+                <p>Bestätige zuerst, dass du die erneute Einrichtung selbst starten möchtest.</p>
+              )}
+              <p>Diese Bestätigung startet keine Änderung. Eine automatische Reparatur wird erst nach gesonderter serverseitiger Freigabe implementiert.</p>
               <div><button type="button" onClick={() => setSelectedProvider(null)}>Zurück zur Übersicht</button></div>
             </section>
           ) : null}
