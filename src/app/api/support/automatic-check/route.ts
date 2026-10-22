@@ -4,8 +4,8 @@ import {
   getUserWorkspaceDashboard,
   getWorkspaceSocialConnections,
 } from "@/lib/supabase/server";
+import { executeSafeSupportRepair } from "@/lib/supportRepairExecution";
 import { getSupportRepairPolicy } from "@/lib/supportRepairPolicy";
-import { verifyConnectionAfterRepair } from "@/lib/supportRepairPostcheck";
 
 const supported = new Set(["instagram", "facebook", "whatsapp"]);
 
@@ -43,11 +43,14 @@ export async function POST(request: NextRequest) {
   if (!workspace.workspace || workspace.error) {
     return NextResponse.json({ error: "workspace_unavailable" }, { status: 403, headers });
   }
-  const connections = await getWorkspaceSocialConnections(workspace.workspace.id);
-  if (connections.error) {
+  const check = await executeSafeSupportRepair(action, input.platform as "instagram" | "facebook" | "whatsapp", async () => {
+    const connections = await getWorkspaceSocialConnections(workspace.workspace!.id);
+    if (connections.error) throw new Error("diagnostics_unavailable");
+    return connections.connections;
+  });
+  if (check.status === "diagnostics_unavailable") {
     return NextResponse.json({ error: "diagnostics_unavailable" }, { status: 503, headers });
   }
-  const check = verifyConnectionAfterRepair(connections.connections, input.platform as "instagram" | "facebook" | "whatsapp");
   return NextResponse.json({
     action,
     platform: input.platform,
