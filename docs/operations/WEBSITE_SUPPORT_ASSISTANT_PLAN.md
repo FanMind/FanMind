@@ -35,3 +35,14 @@ Status: development specification only; no production activation.
 4. All features default off until security, privacy and release review; no production deploy or provider mutation without distinct authorization.
 
 Owner authorization: start development, 2026-10-22. This document does not authorize live repair operations.
+
+## Staging acceptance checklist (prepared 2026-10-22; NOT EXECUTED)
+- Deploy exact reviewed PR head to isolated staging only after required CI and security checks pass.
+- Keep `FANMIND_INAPP_HELP_REPAIR_ENABLED` disabled until audit storage, RLS and consent checks are verified. Read-only checks may be enabled separately for the test workspace.
+- Authenticated test user: GET diagnostics returns only own workspace connections; unauthenticated request returns 401; unrelated workspace data never appears.
+- POST automatic-check: reject absent/cross-origin Origin (403), invalid input (400), and mutating actions (403); check Instagram, Facebook and WhatsApp read-only.
+- Mixed connected/expired records for one platform must report attention_required, not verified. Missing records must not report connected. Diagnostic backend errors must return 503.
+- In-app launcher: recheck button has loading, confirmed, attention-required and unavailable states; no tokens or sensitive provider details appear.
+- Repair request: without explicit consent reject; with consent write durable audit before returning manual_action_required, never claim a provider repair. Verify failure of audit storage yields 503.
+- Confirm feature flags default off, no provider mutation or production change, and collect exact-head CI, staging deploy and browser-test evidence before acceptance.
+- Current status: preparation only. This checklist is not evidence of a completed staging run or provider recovery.
