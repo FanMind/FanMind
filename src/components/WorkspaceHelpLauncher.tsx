@@ -17,6 +17,25 @@ export function WorkspaceHelpLauncher() {
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [repairConsent, setRepairConsent] = useState(false);
+  const [checkState, setCheckState] = useState<"idle" | "loading" | "connected" | "attention_required" | "unavailable">("idle");
+
+  async function recheckConnection(platform: string) {
+    setCheckState("loading");
+    try {
+      const response = await fetch("/api/support/automatic-check", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "check_connection", platform }),
+      });
+      if (!response.ok) throw new Error("check_unavailable");
+      const result: unknown = await response.json();
+      if (!result || typeof result !== "object") throw new Error("invalid_result");
+      const data = result as Record<string, unknown>;
+      setCheckState(data.verified === true && data.status === "connected" ? "connected" : "attention_required");
+    } catch {
+      setCheckState("unavailable");
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -81,7 +100,7 @@ export function WorkspaceHelpLauncher() {
                 {connections.map((connection) => (
                   <li key={connection.platform}>
                     <strong>{providerNames[connection.platform]}</strong>: {connection.status === "connected" ? "Verbunden" : "Verbindung prüfen"}
-                    {connection.status === "attention_required" ? <button type="button" onClick={() => { setSelectedProvider(connection.platform); setRepairConsent(false); }}>Hilfe anzeigen</button> : null}
+                    {connection.status === "attention_required" ? <button type="button" onClick={() => { setSelectedProvider(connection.platform); setRepairConsent(false); setCheckState("idle"); }}>Hilfe anzeigen</button> : null}
                   </li>
                 ))}
               </ul>
@@ -91,6 +110,11 @@ export function WorkspaceHelpLauncher() {
             <section aria-label="Geführte Fehlerbehebung" role="status">
               <h3>{providerNames[selectedProvider]} überprüfen</h3>
               <p>Die Verbindung benötigt Aufmerksamkeit. Der genaue Grund ist noch nicht bekannt. Prüfe zuerst in den Kanäle-Einstellungen, ob eine erneute Anmeldung angeboten wird.</p>
+              <button type="button" disabled={checkState === "loading"} onClick={() => void recheckConnection(selectedProvider)}>Verbindung erneut prüfen (ohne Änderungen)</button>
+              {checkState === "loading" ? <p role="status">Verbindung wird geprüft …</p> : null}
+              {checkState === "connected" ? <p role="status">Verbindung bestätigt. Es wurden keine Einstellungen geändert.</p> : null}
+              {checkState === "attention_required" ? <p role="status">Verbindung weiterhin nicht bestätigt. Bitte die Verbindungseinstellungen prüfen.</p> : null}
+              {checkState === "unavailable" ? <p role="status">Die automatische Prüfung ist derzeit nicht verfügbar. Bitte später erneut versuchen.</p> : null}
               <p>Eine erneute Anmeldung kann Berechtigungen aktualisieren. Sie darf nur durch deine bewusste Aktion gestartet werden. Diese Hilfe führt selbst keine Reparatur aus.</p>
               <label style={{ display: "block", marginBottom: 8 }}>
                 <input type="checkbox" checked={repairConsent} onChange={(event) => setRepairConsent(event.target.checked)} />
