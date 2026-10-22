@@ -6,6 +6,7 @@ import dashboardStyles from "../app/dashboard/dashboard.module.css";
 import sidebarStyles from "./WorkspaceSidebar.module.css";
 import responsiveStyles from "./WorkspaceSidebarResponsive.module.css";
 import { FanMindLogo } from "./FanMindLogo";
+import { WorkspaceHelpLauncher } from "./WorkspaceHelpLauncher";
 import {
   FanMindFunctionIcon,
   resolveFanMindFunctionIcon,
@@ -352,6 +353,7 @@ export function WorkspaceShell({
           {children}
         </div>
       </div>
+      {process.env.NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED === "true" ? <WorkspaceHelpLauncher /> : null}
     </div>
   );
 }
