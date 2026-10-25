@@ -9,6 +9,7 @@ Status: repository-only R3 preparation. This runbook does not authorize executio
 - Repair PR: #1352, original reported head `2e866b8485b92b763d0eaf64fed6cc5c99db03fc`, base `feature/website-support-1350-foundation`; the Browser E2E increment is commit `a379a343d4f730476d7316f8e0b58c9f9858dc52`.
 - Protected execution must use a new exact reviewed commit after #1351 and #1352 are merged in order and that exact `main` is deployed to isolated Staging.
 - A later commit, rebase, base change, schema change, authorization change or flag change invalidates prior source evidence and requires a fresh review.
+- For combined merge-candidate CI only, #1352 may temporarily target `main` long enough for an exact-head `synchronize` event; restore its base to `feature/website-support-1350-foundation` before release. This metadata-only maneuver authorizes neither merge nor deployment.
 
 ## Boundary
 
