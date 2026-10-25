@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 52162)
-Total output lines: 1377
+Warning: truncated output (original token count: 52436)
+Total output lines: 1387
 
 ## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
@@ -412,16 +412,7 @@ Total output lines: 1377
 - Scope: Bernd resumed the four non-Social completion blocks and confirmed existing prices are finished. Preserve the installed catalog; no price creation or repricing.
 - Work lock: LOCK-FINISHLINE-REVALIDATE-20260908 for read-only evidence and repository reconciliation only. Existing LOCK-FINISHLINE-RESUME-20260906 retains its narrower unfinished runtime scope.
 - Completed so far: exact main/Production baseline a1bde3877b8f233004cb6e903f4c0b4fb68cdf3e; drift/freshness/selector preflight inspected; both FanMind Supabase targets healthy. Fresh security advisors still show Production trigger/Auth gaps and now two constrained Staging RPC warnings.
-- Completed evidence: FM-EV-038 records successful shared rollout, exact Staging deploy and Stripe Test webhook verification; independent counters a…22162 tokens truncated…h CI correction
-- Date: 2026-09-16
-- Status: ACCEPTED
-- Risk: R2
-- Work lock: `LOCK-FM-MOB-001-EXPO-PATCH-CI-20260916`
-- Baseline: current main `afcd6f53b2f3bf8c93b70b74076bac1c14df5306`; PR #1132 Mobile CI run `35034370024`, job `104599960180` proves Expo Doctor requires `expo ~57.0.23` and `expo-notifications ~57.0.19` while the remaining Mobile checks pass.
-- Scope: compatible dependency and lockfile correction only. No Mobile behavior change, Production mutation, provider action, signing, artifact publication or Store submission.
-- Completed so far: deterministic install resolves `expo@57.0.23` and `expo-notifications@57.0.19`; the complete local Mobile check, Android/iOS JavaScript exports, bounded dependency-audit policy and Project Memory controls pass.
-- Exact next step: none for this already accepted source/CI patch. Preserve PR #1134 evidence; remaining Mobile work stays under FM-MOB-001 and is deferred by FM-DEC-021 until company registration plus explicit owner resume.
-- Acceptance boundary: source/CI can close this bounded correction; a newer signed artifact and real-device/Store acceptance remain open under FM-MOB-001.
+- Completed evidence: FM-EV-038 records successful shared rollout, exact Staging deploy and Stripe Test webhook verification; independent counters a…22436 tokens truncated…evice/Store acceptance remain open under FM-MOB-001.
 - Fourth review continuation 2026-09-18: integrated current main `9d6f2c6` (PR #1133) into the existing PR #1132 branch. The four current findings are corrected in source: rollout-order-independent Creator RPC/RLS entitlement enforcement, minimal inactive Workspace projection and stable `/workspace/access-paused` routing, Mobile cache validity capped at temporary Admin-CRM expiry, and an in-transaction rejection of memberships in any other Workspace. No Production SQL, deployment, payment, provider or live-user mutation occurred. Fresh exact-head CI and independent review remain required.
 - PR #1134 closeout 2026-09-19: final head `65b8c34913db214ada3588fdcdd69e09b7f37e69` passed required PR checks/review and merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` passed. With explicit owner authorization, exact Admin-CRM migration SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd` applied once as `20260919081945 admin_crm_access`. Independent postflight proves service-role-only mutation RPC and 19 restrictive entitlement policies. No real user/payment/provider mutation occurred.
 
@@ -821,4 +812,14 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Result: reproducible source/mock matrix, fail-closed read-only schema classifier and target/commit-bound Staging acceptance runbook prepared in PR #1352. Local Node 24 harness passed 16/16 on source head `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`; both emitted exact-source-head governance workflows passed; independent R3 countercheck found P0/P1/P2/P3 = 0/0/0.
 - Negative evidence: registered repository test was not run locally because dependencies were not installed; this stacked PR emitted no full FanMind CI workflow. PostgreSQL, browser, Staging and provider tests remain NOT_RUN. No schema, flag, target, provider or customer state was changed.
 - Exact next step: merge #1351 then #1352 through normal review, deploy the resulting exact main to isolated Staging, then obtain distinct target/commit/checksum-bound approvals for read-only classification, schema APPLY and temporary no-provider runtime-negative acceptance. Provider-positive acceptance remains separate.
+
+## FM-SUPPORT-1350-COMBINED-CI-20261025 — combined support merge-candidate verification
+- Date: 2026-10-25
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-COMBINED-CI-20261025
+- Scope: verify the exact combined PR #1351/#1352 source, add missing local synthetic Browser E2E for the authenticated help/diagnosis/consent/result flow, run the complete applicable merge-candidate CI against main, restore the stacked PR chain and prepare the executable Staging acceptance plan.
+- Boundary: no merge, deployment, database execution, feature activation outside isolated CI, provider/customer action, secret or permission change. A temporary PR-base change may be used only to obtain exact-head combined CI and must be restored to #1351 before closeout.
+- Completion gate: full applicable exact-head CI, focused negative tests, restored #1351 -> #1352 dependency, independent R3 countercheck, exact checksums/rollback/approval boundaries and honest NOT_RUN classification.
+- Exact next step: implement the bounded Browser E2E increment and trigger the combined main-target CI without merging.
 

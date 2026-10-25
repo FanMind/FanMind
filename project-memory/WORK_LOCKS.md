@@ -1,5 +1,5 @@
-Warning: truncated output (original token count: 39816)
-Total output lines: 1382
+Warning: truncated output (original token count: 40177)
+Total output lines: 1394
 
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
@@ -551,10 +551,7 @@ Total output lines: 1382
 - Holder: Codex
 - Risk: R4
 - Acquired: 2026-09-06
-- Narrowed: 2026-09-07 after the isolated…9816 tokens truncated…dependent reference/recovery/idle/reboot evidence. Branch fix/production-runner-versioned-layout-20260913; no host link or startup mutation.
-- Current continuation: #1115 is closed by final receipt 5652891341 on reviewed/deployed main 1bdf55838208788b361f48d8cc45a92c4571173a. Owner confirms corrected file modes, byte-identical migrated registration, absent migrated credentials and both protected PATH lists after guarded /snap/bin creation. The active bounded source work corrects the observed opaque Pipelines path and binds migration alternatives; exact-head CI/review, normal rollout, independent reference and fresh recovery/idle/boot evidence remain required.
-- Current 2026-09-13 continuation: reviewed/deployed main 41d2547806fc7f8288268c45446c3467b268f150, #1114 final receipt 5652605280. No competing Operations PR. Owner readout proves the exact official nginx condition is wrongly rejected. This bounded correction retains current-head review/CI/normal rollout, external reference and all host/recovery gates. Owner admin access and retained PM2 0600 are proven; runner 0664, registration unavailable and separate PM2 all-directory PATH failure remain open. Both Production and Staging runners share the host and need fresh idle proof before reboot.
-- Refreshed 2026-09-13 against current main 62fecd108d1d0157652ac0a293a7eb738d402a83 and #1113 final receipt 5645657817. No competing Operations PR exists. Existing owner authorization continues for the demonstrated systemd empty-array read defect; authenticated owner corrected PM2 dump mode to 0600 and directly confirmed all four hooks empty. Source/CI/review/deploy correction retains this lock for the remaining independent reference/recovery and real reboot proof.
+- Narrowed: 2026-09-07 after the isolated…10177 tokens truncated…zation continues for the demonstrated systemd empty-array read defect; authenticated owner corrected PM2 dump mode to 0600 and directly confirmed all four hooks empty. Source/CI/review/deploy correction retains this lock for the remaining independent reference/recovery and real reboot proof.
 - Continuation 2026-09-12 11:18 UTC: Bernd explicitly says "ok mach das bitte" to the remaining PM2 startup, independent reference and recovery prerequisites. PR #1112 is already merged/deployed as ce9b842cf0f18dcd0d34d5232ad4ab6e2c25f9f3 (tree b555270cf95b83645aa4432039aafbffc9769a08); final receipt https://github.com/FanMind/FanMind/pull/1112#issuecomment-5645444721 supersedes its historical pending notes. Installed audit 34689543073 / 103542269118 at 10:51:34 UTC passes all eight runtime components, but boot readiness is false; PM2_STARTUP, PM2_SAVED_APP and BOOT_NODE need bounded reason diagnostics, and independent reference/recovery remain unverified. No competing open PR found. Current continuation adds read-only fixed diagnostic codes with unchanged acceptance rules, then requires exact-head review/CI and normal installed readout before any demonstrated host correction.
 - Third review continuation: four further findings corrected in source; renewed current-head CI/review required. Installation of an independently confirmed private boot reference and authenticated host recovery remain concrete external prerequisites, never automatic deploy side effects.
 - Review continuation: PR #1112 remains open under this lock. Both completed reviews are addressed in bounded source corrections; the second correction still requires its own completed review and green CI before merge. No Production startup or reboot mutation has occurred.
@@ -1000,4 +997,16 @@ Total output lines: 1382
 - Evidence: source head `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`; focused Node 24 harness 16/16 PASS; Project Memory Quality run 40188902434 PASS; FanMind God Mode Gate run 40188902423 PASS; independent R3 countercheck PASS with P0/P1/P2/P3 = 0/0/0. Exact PostgreSQL/Staging/browser/provider evidence remains NOT_RUN.
 - Release reason: repository-only preflight and repair hardening are review-ready. This release does not authorize or claim schema installation, feature activation, Staging runtime or provider repair.
 - Recovery: source-only revert before any later activation. A later protected run must use isolated synthetic data, preserve the previous flag/schema state and prove cleanup/reconciliation.
+
+## LOCK-FM-SUPPORT-COMBINED-CI-20261025
+- Task: FM-SUPPORT-1350-COMBINED-CI-20261025 / Issue #1350 / PRs #1351 and #1352
+- Status: ACTIVE_SOURCE_PREPARATION
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`; starting PR #1352 head `2e866b8485b92b763d0eaf64fed6cc5c99db03fc`.
+- Scope: one combined support merge-candidate verification with local synthetic Browser E2E, full applicable main-target CI, task-scoped repair and final release-chain/Staging-plan reconciliation.
+- Allowed PR metadata action: temporarily retarget #1352 from its exact #1351 head branch to `main` solely to trigger combined exact-head CI, then restore the original base before release.
+- Forbidden: merge/auto-merge, workflow dispatch, deploy, SQL/schema execution, feature activation outside isolated CI, provider/customer mutation, OAuth/credential/permission action, WhatsApp repair, external send, secret access and direct main write.
+- Evidence required: exact combined head/full applicable CI, Browser E2E with zero provider egress, audit/tenant/replay/rate regression tests, independent R3 countercheck, restored stacked dependency and executable target/checksum/rollback preflight.
+- Recovery: restore #1352 base to `feature/website-support-1350-foundation`; source-only revert for test regressions; no external runtime state is touched.
 
