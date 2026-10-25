@@ -1367,3 +1367,15 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; focused orchestrator/audit checks PASS; both emitted exact-head workflows PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
 - Release reason: source is review-ready and remains default-off. Isolated Staging schema/runtime acceptance is not part of this released source lock and needs a separate protected preflight.
 - Recovery: ordinary repository revert before activation. Any later Staging test must use synthetic data, exact reviewed commit and cleanup/reconciliation evidence.
+
+## LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
+- Task: FM-SUPPORT-1350-STAGING-PREFLIGHT / Issue #1350 / PR #1352
+- Status: ACTIVE_SOURCE_PREPARATION
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; stacked PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`; starting PR #1352 head `7b7f4f2902f5acac3244b7e0f64efa27fb1b605c`.
+- Scope: repository-only current-state review, synthetic mock/integration coverage and exact protected Staging acceptance preparation for the existing confirmed Facebook/Instagram message-sync repair.
+- Forbidden: merge, workflow dispatch, SQL/schema APPLY, flag activation, Staging/Production/provider/customer mutation, OAuth/credential/permission action, WhatsApp repair, external send, secret access and direct main write.
+- Evidence required: relevant negative/mutation tests, audit/replay/tenant/authorization/recovery coverage, UI safety review, exact-head applicable CI, independent R3 countercheck and a target/commit-bound recovery/rollback preflight.
+- Recovery: source-only revert before any later activation. A later protected run must use isolated synthetic data, preserve the previous flag/schema state and prove cleanup/reconciliation.
+

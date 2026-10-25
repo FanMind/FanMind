@@ -608,7 +608,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-060 — Website support confirmed message-sync repair
 - Date: 2026-10-22; Updated: 2026-10-25
-- Status: IMPLEMENTED_NOT_VERIFIED; source review complete, isolated Staging runtime acceptance pending
+- Status: IN_PROGRESS; source review remains complete, repository-only synthetic Staging preflight preparation active
 - Risk: R3 (Auth/workspace/provider-read and audit-schema source)
 - Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
 - Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
