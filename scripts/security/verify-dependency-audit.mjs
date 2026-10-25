@@ -5,19 +5,20 @@ import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const ROOT_REVIEWED_AT = "2026-10-01T10:00:00.000Z";
-const ROOT_REVIEWED_FRAMEWORK_VERSION = "16.3.8";
+const ROOT_REVIEWED_AT = "2026-10-25T12:40:47.000Z";
+const ROOT_REVIEWED_FRAMEWORK_VERSION = "16.4.3";
 const ROOT_REVIEW_HIGH_MAXIMUM = 0;
 const ROOT_REVIEW_MODERATE_MAXIMUM = 0;
 const REVIEWED_ROOT_PACKAGES = Object.freeze([]);
-const MOBILE_REVIEWED_AT = "2026-09-18T20:06:29.000Z";
-const MOBILE_REVIEW_EXPIRES_AT = "2026-10-02T20:06:29.000Z";
-const MOBILE_REVIEW_HIGH_MAXIMUM = 4;
+const MOBILE_REVIEWED_AT = "2026-10-25T12:40:47.000Z";
+const MOBILE_REVIEW_EXPIRES_AT = "2026-11-08T12:40:47.000Z";
+const MOBILE_REVIEW_HIGH_MAXIMUM = 6;
 const MOBILE_REVIEW_MODERATE_MAXIMUM = 14;
 const MOBILE_REVIEW_LOW_MAXIMUM = 0;
 const MOBILE_ENFORCEMENT_MODES = Object.freeze(["strict", "deferred-owner"]);
 const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@expo/cli",
+  "@expo/code-signing-certificates",
   "@expo/config",
   "@expo/config-plugins",
   "@expo/inline-modules",
@@ -33,9 +34,13 @@ const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "metro",
   "metro-config",
   "metro-transform-worker",
+  "node-forge",
   "query-string",
+  "sharp",
+  "shell-quote",
   "uuid",
   "xcode",
+  "zod",
 ]);
 
 function parseArgument(name, fallback = null) {
@@ -316,3 +321,4 @@ if (
     process.exit(1);
   });
 }
+
