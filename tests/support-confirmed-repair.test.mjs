@@ -392,8 +392,15 @@ test("staging schema verifier is read-only and classifies absent or drifted stat
   assert.match(verifier, /ABSENT/u);
   assert.match(verifier, /INSTALLED/u);
   assert.match(verifier, /DRIFT/u);
+  assert.match(verifier, /column_default is not distinct from e\.column_default/u);
+  assert.match(verifier, /pg_get_constraintdef\(c\.oid\) = e\.definition/u);
+  assert.match(verifier, /i\.indexdef = e\.definition/u);
+  assert.match(verifier, /support_repair_audit_platform_check/u);
+  assert.match(verifier, /support_repair_audit_status_check/u);
+  assert.match(verifier, /SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER/u);
   assert.doesNotMatch(
     verifier,
     /^\s*(create|alter|drop|insert|update|delete|grant|revoke|truncate)\b/imu,
   );
 });
+
