@@ -25,11 +25,11 @@ async function prepareSupportFlow(page: Page, mode: RepairMode) {
 
   page.on("request", (request) => {
     const url = request.url();
-    if (/graph\.(?:facebook|instagram)\.com/iu.test(url)) {
+    if (/^https:\/\/graph\.(?:facebook|instagram)\.com(?:\/|$)/iu.test(url)) {
       providerRequests.push(url);
     }
   });
-  await page.route(/https:\/\/graph\.(?:facebook|instagram)\.com\/.*/iu, (route) =>
+  await page.route(/^https:\/\/graph\.(?:facebook|instagram)\.com\/.*$/iu, (route) =>
     route.abort("blockedbyclient"),
   );
   await page.route("**/api/support/diagnostics", async (route) => {
