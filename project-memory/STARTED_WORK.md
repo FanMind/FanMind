@@ -1298,6 +1298,19 @@ new queue or target authorization. Receipt:
 receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 
+## FM-AI-001 / FM-CR-052 — Capacity Staging baseline classification — 2026-10-25
+
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Context: repository diagnostic under the existing R4 Capacity lock.
+- Baseline: exact main `7368305db778165d6a6dd8f83265445a6863a25b`; failed read-only run `40224444403` reported only `schema_md5` and `capacity_generic_migration_marker_absent`.
+- Scope: add boolean-only checks for the three approved budget defaults and separate known foundation, activation-gate and lifecycle markers from unknown Capacity markers. Preserve the aggregate schema fingerprint, generic marker and all fail-closed boundaries.
+- Evidence: local preparation tests 2/2 pass with PostgreSQL 17 cases deferred to CI; transport, redaction and negative harness 44/44 passes. Exact-head CI and independent countercheck remain required.
+- Boundary: no database read/write, migration, baseline-value change, workflow dispatch, merge, deployment, provider or Production action. A later Staging read-only retry requires a new Owner decision.
+- Exact next step: complete exact-head CI and the independent countercheck, then return the Draft PR to the Owner without dispatch or merge.
+- Receipt: `project-memory/receipts/capacity-v2-baseline-diagnostics-20261025.md`.
+
+
 ## FM-CREATOR-001 — existing Sales Playbook price boundary completion — 2026-10-17
 - Baseline: main174eaa44; explicit Owner repository-only Phase7b continuation, company-dependent external work deferred by FM-DEC-031.
 - Finding: Creator free-text validation accepted normal forms such as20 Euro,twenty dollars,25.– and100 JPY while the existing ChatAdmin validator already rejected them without an allowed offer. Finish that integration without new sales logic, regex rules, schema or provider access.

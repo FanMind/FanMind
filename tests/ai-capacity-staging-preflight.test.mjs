@@ -95,6 +95,9 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       ["unexpected policy","create policy leaked on public.ai_capacity_grants for select to authenticated using(true);","schema_md5"],
       ["missing immutable trigger","drop trigger ai_capacity_ledger_immutable_update_delete on public.ai_capacity_ledger_events;","schema_md5"],
       ["function body drift","create or replace function public.ai_capacity_ledger_immutable() returns trigger language plpgsql as $$ begin return new; end $$;","schema_md5"],
+      ["package 99 default drift","alter table public.ai_capacity_admin_policy alter column package_99_budget_eur_microcents drop default;","policy_package_99_budget_default_matches"],
+      ["package 199 default drift","alter table public.ai_capacity_admin_policy alter column package_199_budget_eur_microcents drop default;","policy_package_199_budget_default_matches"],
+      ["package 312 default drift","alter table public.ai_capacity_admin_policy alter column package_312_budget_eur_microcents drop default;","policy_package_312_budget_default_matches"],
       ["legacy Reserve overload","create function public.ai_capacity_reserve(uuid,text) returns boolean language sql as $$ select true $$;","lifecycle_functions_absent"],
       ["partial projection","create table public.ai_capacity_workspace_entitlements(workspace_id uuid);","projection_absent"],
       ["unexpected Capacity relation","create table public.ai_capacity_unknown(id integer);","unexpected_capacity_relations_absent"],
@@ -106,7 +109,15 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       ["budget drift","update public.ai_capacity_admin_policy set package_99_budget_eur_microcents=1;","policy_package_99_budget_eur_microcents"],
       ["workspace parent drift","alter table public.workspaces disable row level security;","workspace_parent_valid"],
       ["browser CREATE","grant create on schema public to authenticated;","browser_schema_create_denied"],
-      ["unexpected generic migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_reserve_settle');","capacity_generic_migration_marker_absent"],
+      ["known foundation migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');","capacity_foundation_migration_marker_absent"],
+      ["known activation-gate migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000001','ai_capacity_billing_v2_activation_gates');","capacity_activation_gate_migration_marker_absent"],
+      ["known lifecycle migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000002','ai_capacity_reserve_settle');","capacity_lifecycle_migration_marker_absent"],
+      ["unknown generic migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000003','capacity_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown foundation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000004','ai_capacity_billing_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown activation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000005','ai_capacity_billing_v2_activation_gates_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown lifecycle-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000006','ai_capacity_reserve_settle_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown version beside known name","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_v2_unreviewed','ai_capacity_billing_v2');","capacity_unknown_migration_marker_absent"],
+      ["unknown name beside known version","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_billing_v2','ai_capacity_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
     ]) await t.test(`blocks ${name}`,()=>{
       fresh(); sql(mutation); const result=evaluate(); assert.equal(result.state,"BLOCK"); assert.ok(result.failures.includes(key),JSON.stringify(result));
     });
