@@ -1355,10 +1355,11 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 ## FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR — confirmed automatic sync repair
 - Date: 2026-10-25
-- Status: IN_PROGRESS
+- Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Lock: LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
 - Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
 - Boundary: no database APPLY, runtime flag activation, provider execution, Production/Staging mutation, credentials, permissions, disconnect, WhatsApp repair or automatic external message.
-- Completion gate: exact-head CI plus independent R3 countercheck. Isolated Staging schema/runtime acceptance is a later separately authorized protected step.
-- Exact next step: complete exact-head CI and independent R3 countercheck for PR #1352; if both pass, keep runtime/schema activation blocked pending a separately authorized isolated-Staging preflight.
+- Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; Project Memory Quality run 40184228818 PASS; God Mode Gate run 40184228898 PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
+- Remaining verification: the SQL draft is unapplied and runtime/provider behavior is not accepted. Isolated Staging schema/runtime acceptance requires a later separately authorized protected preflight.
+- Exact next step: prepare a separate protected-boundary preflight for isolated synthetic Staging schema/runtime acceptance; do not apply schema, activate flags or execute provider work under this source authorization.

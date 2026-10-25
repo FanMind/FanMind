@@ -1358,11 +1358,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
 - Task: FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR / Issue #1350
-- Status: ACTIVE_SOURCE_REVIEW
+- Status: RELEASED_FOR_PR
 - Risk: R3
 - Holder: FanMind Builder / connected GitHub
 - Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; stacked source base PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`.
 - Scope: source-only confirmed Facebook/Instagram message-sync restart with server-derived tenant binding, durable pre-action audit, replay protection, shared rate limit and exact postcheck.
 - Forbidden: schema APPLY, feature-flag activation, Staging/Production/provider execution, OAuth/permission/credential mutation, disconnect, WhatsApp repair, automatic send, secret access and direct main writes.
-- Evidence required: focused negative tests, all exact-head workflows, independent R3 countercheck, zero unresolved P0/P1/P2 and later separately authorized isolated-Staging schema/runtime acceptance.
+- Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; focused orchestrator/audit checks PASS; both emitted exact-head workflows PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
+- Release reason: source is review-ready and remains default-off. Isolated Staging schema/runtime acceptance is not part of this released source lock and needs a separate protected preflight.
 - Recovery: ordinary repository revert before activation. Any later Staging test must use synthetic data, exact reviewed commit and cleanup/reconciliation evidence.
