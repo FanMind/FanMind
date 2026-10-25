@@ -66,6 +66,11 @@ with table_profiles as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(profile order by relname) from table_profiles),
     'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
+), capacity_migration_markers as (
+  select lower(concat_ws(' ',version,coalesce(name,''))) marker
+  from supabase_migrations.schema_migrations
+  where coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
+     or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
 )
 select jsonb_build_object(
   'version',1,
@@ -73,6 +78,21 @@ select jsonb_build_object(
   'rls_filtering_disabled',current_setting('row_security')='off',
   'postgres_major',current_setting('server_version_num')::integer/10000,
   'schema_md5',(select md5(profile::text) from schema_profile),
+  'policy_package_99_budget_default_matches',exists(
+    select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
+    where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
+      and a.attname='package_99_budget_eur_microcents'
+      and pg_get_expr(d.adbin,d.adrelid)='1500000000'),
+  'policy_package_199_budget_default_matches',exists(
+    select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
+    where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
+      and a.attname='package_199_budget_eur_microcents'
+      and pg_get_expr(d.adbin,d.adrelid)='3000000000'),
+  'policy_package_312_budget_default_matches',exists(
+    select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
+    where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
+      and a.attname='package_312_budget_eur_microcents'
+      and pg_get_expr(d.adbin,d.adrelid)='5000000000'),
   'foundation_table_count',(select count(*) from table_profiles),
   'unexpected_capacity_relations_absent',not exists(select 1 from pg_class c
     join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
@@ -111,6 +131,21 @@ select jsonb_build_object(
     select 1 from supabase_migrations.schema_migrations
     where coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
        or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'),
+  'capacity_foundation_migration_marker_absent',not exists(
+    select 1 from capacity_migration_markers
+    where marker ~ 'ai[_ -]?capacity.*billing.*v2'
+      and marker !~ 'activation.*gates?'),
+  'capacity_activation_gate_migration_marker_absent',not exists(
+    select 1 from capacity_migration_markers
+    where marker ~ 'ai[_ -]?capacity.*billing.*v2.*activation.*gates?'),
+  'capacity_lifecycle_migration_marker_absent',not exists(
+    select 1 from capacity_migration_markers
+    where marker ~ 'ai[_ -]?capacity.*reserve.*settle'),
+  'capacity_unknown_migration_marker_absent',not exists(
+    select 1 from capacity_migration_markers
+    where not (marker ~ 'ai[_ -]?capacity.*billing.*v2' and marker !~ 'activation.*gates?')
+      and marker !~ 'ai[_ -]?capacity.*billing.*v2.*activation.*gates?'
+      and marker !~ 'ai[_ -]?capacity.*reserve.*settle'),
   'policy_row_count',(select count(*) from public.ai_capacity_admin_policy),
   'policy',(select jsonb_build_object('singleton_id',singleton_id,'revision',revision,
     'package_99_budget_eur_microcents',package_99_budget_eur_microcents,

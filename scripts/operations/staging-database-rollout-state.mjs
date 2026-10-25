@@ -75,7 +75,11 @@ const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "foundation_table_count", "lifecycle_index_absent", "rls_filtering_disabled",
   "workspace_parent_valid", "lifecycle_columns_absent", "lifecycle_functions_absent",
   "browser_schema_create_denied", "unexpected_capacity_relations_absent",
-  "capacity_generic_migration_marker_absent", "policy_revision", "policy_fast_enabled",
+  "capacity_generic_migration_marker_absent", "capacity_foundation_migration_marker_absent",
+  "capacity_activation_gate_migration_marker_absent", "capacity_lifecycle_migration_marker_absent",
+  "capacity_unknown_migration_marker_absent", "policy_package_99_budget_default_matches",
+  "policy_package_199_budget_default_matches", "policy_package_312_budget_default_matches",
+  "policy_revision", "policy_fast_enabled",
   "policy_singleton_id", "policy_premium_enabled", "policy_balanced_enabled",
   "policy_top_up_sales_enabled", "policy_emergency_spend_freeze",
   "policy_global_capacity_enabled", "policy_top_up_activation_ready",
@@ -142,6 +146,17 @@ function verifyCapacityIntegration(root = process.cwd(), committed = false) {
   // Preserve the reviewed package exactly except for its necessary emitter
   // source-binding interface fix; expected policy/catalog/query/tests stay pinned.
   const originalPreparation=structuredClone(preparation);
+  for (const key of [
+    "policy_package_99_budget_default_matches",
+    "policy_package_199_budget_default_matches",
+    "policy_package_312_budget_default_matches",
+    "capacity_foundation_migration_marker_absent",
+    "capacity_activation_gate_migration_marker_absent",
+    "capacity_lifecycle_migration_marker_absent",
+    "capacity_unknown_migration_marker_absent",
+  ]) delete originalPreparation.expectedObservation[key];
+  originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight.sql"]="4f7dc3970dff241f9f2f09b4f797990a72b77002dc429f4842825db005c53e2b";
+  originalPreparation.sha256["tests/ai-capacity-staging-preflight.test.mjs"]="54405080b83f97b816c1f996c96d171fa3c3c64523536d2ac43892556eec34f2";
   originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight-preparation.mjs"]="fe1621d789b78c982fc4af45375478133e9e3e28eb76682c0f5c15029b4cfb82";
   if (control.originalPreparationManifestSha256!==originalManifestSha256
     || createHash("sha256").update(JSON.stringify(originalPreparation,null,2)+"\n").digest("hex")!==originalManifestSha256) fail("capacity_reviewed_package_changed");

@@ -147,6 +147,7 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       ["wrong-target-label","match",{...observation,requested_target_project:prepared.productionProject}],
       ["wrong-recovery-label","match",{...observation,recovery_sha256:"0".repeat(64)}],
       ["extra-fields","match",{...observation,extra:true}],["schema-drift","match",{...observation,schema_md5:"0".repeat(32)}],
+      ["boolean-diagnostic-drift","match",{...observation,policy_package_99_budget_default_matches:false}],
       ["error","error",null],["oversize","oversize",null],
       ["connection","connection",null],["sql-error","sql-error",null],
       ["signal","signal",null],
@@ -156,11 +157,11 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
     ])await t.test(`blocks ${name} output and removes snapshot`,()=>{
       const expected={empty:"RESPONSE_PARSING:RESPONSE_CARDINALITY",multiline:"RESPONSE_PARSING:RESPONSE_CARDINALITY",
         malformed:"RESPONSE_PARSING:INVALID_JSON","extra-fields":"RESPONSE_PARSING:RESPONSE_SHAPE",null:"RESPONSE_PARSING:RESPONSE_SHAPE","secret-field":"RESPONSE_PARSING:RESPONSE_SHAPE",
-        "schema-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "schema-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","boolean-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         "multiple-secret-values":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         error:"UNKNOWN_BLOCK:UNCLASSIFIED",signal:"UNKNOWN_BLOCK:UNCLASSIFIED",oversize:"QUERY_EXECUTION:OUTPUT_LIMIT",connection:"CONNECTION_TLS:CONNECTION_FAILED",
         "sql-error":"QUERY_EXECUTION:SQL_SCRIPT_FAILED"}[name]??"RESPONSE_BINDING:LABEL_MISMATCH";
-      const fields=name==="schema-drift"?["schema_md5"]:name==="secret-value"?["policy_revision"]:name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
+      const fields=name==="schema-drift"?["schema_md5"]:name==="boolean-diagnostic-drift"?["policy_package_99_budget_default_matches"]:name==="secret-value"?["policy_revision"]:name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
       fake(mode,value);blocked(run(),true,expected,fields);
     });
     await t.test("unclassified manifest exception with secret canary stays unknown before credentials",()=>{
