@@ -67,7 +67,8 @@ export async function POST(request: NextRequest) {
   if (!data.user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
   }
-  const workspaceResult = await getUserWorkspaceDashboard(data.user);
+  const user = data.user;
+  const workspaceResult = await getUserWorkspaceDashboard(user);
   if (!workspaceResult.workspace || workspaceResult.error) {
     return NextResponse.json(
       { error: "workspace_unavailable" },
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
   }
   const workspaceId = workspaceResult.workspace.id;
   if (
-    areDemoConnectionsDisabled(data.user, workspaceResult.workspace) ||
+    areDemoConnectionsDisabled(user, workspaceResult.workspace) ||
     !canManageMetaConnections(workspaceResult.workspace.role)
   ) {
     return NextResponse.json(
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
       startAudit: () =>
         startRepairAuditEvent({
           workspace_id: workspaceId,
-          actor_user_id: data.user.id,
+          actor_user_id: user.id,
           connection_id: connection.id,
           platform,
           action: "restart_message_sync",
@@ -157,7 +158,7 @@ export async function POST(request: NextRequest) {
       completeAudit: (status) =>
         completeRepairAuditEvent({
           workspace_id: workspaceId,
-          actor_user_id: data.user.id,
+          actor_user_id: user.id,
           connection_id: connection.id,
           platform,
           action: "restart_message_sync",
@@ -227,3 +228,4 @@ export async function POST(request: NextRequest) {
     { headers },
   );
 }
+
