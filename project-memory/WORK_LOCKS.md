@@ -1394,3 +1394,16 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence: support code/test defects and the two Browser-test URL-anchor review findings were corrected through source head `9b6508f0787d0d1d434fb916244e777121298914`; Browser E2E, build, focused support tests, CodeQL, Landing and governance gates pass. Full CI remains red only for unrelated Capacity checksum drift and time-dependent dependency advisories.
 - Resume condition: separate bounded fixes for both independent blockers, then fresh full combined CI and independent R3 readback on the unchanged/restored PR chain. No merge is approved from this lock.
 
+
+
+## LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025
+- Task: prepare one cumulative integration candidate for PRs #1351, #1352, #1353 and #1354.
+- Status: RELEASED_FOR_PR
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; branch `integration/support-release-20261025`; PR #1355.
+- Scope: preserve the reviewed cumulative Support, Capacity and Supply-Chain tree; add only the integration security-decision template, exact Staging preflight binding and required R3 coordination/receipt evidence.
+- Forbidden: merge or auto-merge, deployment, SQL/schema APPLY, feature-flag activation, provider/customer action, secret or permission access, Mobile-risk acceptance, direct main write, predecessor PR closure or branch deletion.
+- Evidence required: current main/head comparison; exact-head FanMind CI, Supply Chain, Browser E2E, CodeQL, Mobile CI, Mobile Native CI and governance workflows; independent R3 countercheck; explicit human Mobile-risk decision bound to the unchanged final head before any separately authorized merge.
+- Release reason: the candidate is isolated in Draft PR #1355 and no protected action is performed. The exact final receipt commit and workflow results are bound externally in PR metadata/review because a repository file cannot self-reference the commit that contains it.
+- Recovery: before merge, close or supersede PR #1355 and leave main unchanged; after a separately authorized merge, use a reviewed revert of the exact merge commit. No schema, flag, Staging, Production, provider or customer state is changed by this lock.
