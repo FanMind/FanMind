@@ -86,6 +86,7 @@ jobs:
       FANMIND_ENABLE_TELEGRAM_SEND: "false"
       FANMIND_ADMIN_EMAILS: admin@example.com
       SUPABASE_SERVICE_ROLE_KEY: fanmind-local-core-flow-service-role-key
+      NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED: "true"
       CI: "1"
 
     steps:
@@ -124,3 +125,4 @@ jobs:
           if-no-files-found: warn
           include-hidden-files: false
           retention-days: 7
+

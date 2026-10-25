@@ -382,6 +382,33 @@ test("support UI requires consent, explains the repair, and exposes no secrets",
   assert.doesNotMatch(diagnostics, /last_messenger_sync_error\s*[,}]/u);
 });
 
+test("browser support flow keeps consent explicit and provider traffic synthetic", () => {
+  const browserTest = readFileSync(
+    "e2e-core-flow/support-repair.spec.ts",
+    "utf8",
+  );
+  const workflow = readFileSync(".github/workflows/browser-e2e.yml", "utf8");
+
+  assert.match(
+    workflow,
+    /regular-user-core-flow-local:[\s\S]*NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED:\s*"true"/u,
+  );
+  assert.match(browserTest, /\*\*\/api\/support\/diagnostics/u);
+  assert.match(browserTest, /\*\*\/api\/support\/repair-request/u);
+  assert.match(browserTest, /toBeDisabled\(\)/u);
+  assert.match(browserTest, /einmaligen Neustart ausdrücklich zu/u);
+  assert.match(browserTest, /toBeEnabled\(\)/u);
+  assert.match(browserTest, /confirmed:\s*true/u);
+  assert.match(browserTest, /not\.toHaveProperty\("workspaceId"\)/u);
+  assert.match(browserTest, /not\.toHaveProperty\("connectionId"\)/u);
+  assert.match(browserTest, /graph\\\.\(\?:facebook\|instagram\)\\\.com/u);
+  assert.match(browserTest, /providerRequests\)\.toEqual\(\[\]\)/u);
+  assert.match(browserTest, /verified synthetic success/u);
+  assert.match(browserTest, /fails closed without provider egress/u);
+  assert.doesNotMatch(browserTest, /page_access_token_encrypted/u);
+  assert.doesNotMatch(browserTest, /SUPABASE_SERVICE_ROLE_KEY/u);
+});
+
 test("staging schema verifier is read-only and classifies absent or drifted state", () => {
   const verifier = readFileSync(
     "docs/operations/sql/support_repair_audit_verify.sql",
