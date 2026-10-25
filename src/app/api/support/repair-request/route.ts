@@ -108,27 +108,7 @@ export async function POST(request: NextRequest) {
   }
   const connection = repairCandidates[0];
   const requestId = body.requestId;
-
-  try {
-    await startRepairAuditEvent({
-      workspace_id: workspaceId,
-      actor_user_id: data.user.id,
-      platform,
-      action: "restart_message_sync",
-      consent_required: true,
-      consent_given: true,
-      status: "started",
-      request_id: requestId,
-      completed_at: null,
-    });
-  } catch (error) {
-    const replayed =
-      error instanceof Error && error.message === "repair_request_replayed";
-    return NextResponse.json(
-      { error: replayed ? "repair_request_replayed" : "repair_audit_unavailable" },
-      { status: replayed ? 409 : 503, headers },
-    );
-  }
+  let auditCompletedAt: string | null = null;
 
   const result = await executeConfirmedMessageSyncRepair(
     { platform, connectionId: connection.id },
@@ -140,6 +120,30 @@ export async function POST(request: NextRequest) {
           maxRequests: 1,
           windowMs: 15 * 60 * 1000,
         }),
+      startAudit: () =>
+        startRepairAuditEvent({
+          workspace_id: workspaceId,
+          actor_user_id: data.user.id,
+          platform,
+          action: "restart_message_sync",
+          consent_required: true,
+          consent_given: true,
+          status: "started",
+          request_id: requestId,
+          completed_at: null,
+        }).then(() => undefined),
+      completeAudit: (status) =>
+        completeRepairAuditEvent({
+          workspace_id: workspaceId,
+          actor_user_id: data.user.id,
+          platform,
+          action: "restart_message_sync",
+          consent_required: true,
+          consent_given: true,
+          status,
+          request_id: requestId,
+          completed_at: (auditCompletedAt ??= new Date().toISOString()),
+        }).then(() => undefined),
       syncMessages: async (selectedPlatform) => {
         const sync =
           selectedPlatform === "facebook"
@@ -160,31 +164,18 @@ export async function POST(request: NextRequest) {
     },
   );
 
-  const auditStatus =
-    result.status === "succeeded"
-      ? "succeeded"
-      : result.status === "partial"
-        ? "partial"
-        : "failed";
-  try {
-    await completeRepairAuditEvent({
-      workspace_id: workspaceId,
-      actor_user_id: data.user.id,
-      platform,
-      action: "restart_message_sync",
-      consent_required: true,
-      consent_given: true,
-      status: auditStatus,
-      request_id: requestId,
-      completed_at: new Date().toISOString(),
-    });
-  } catch {
+  if (result.status === "replayed") {
     return NextResponse.json(
-      { error: "repair_audit_unavailable" },
+      { error: "repair_request_replayed" },
+      { status: 409, headers },
+    );
+  }
+  if (result.status === "unavailable" || result.status === "audit_incomplete") {
+    return NextResponse.json(
+      { error: "repair_audit_unavailable", status: result.status },
       { status: 503, headers },
     );
   }
-
   if (result.status === "rate_limited") {
     return NextResponse.json(
       { requestId, status: result.status, repairExecuted: false, verified: false },

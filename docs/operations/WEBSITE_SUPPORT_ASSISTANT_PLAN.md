@@ -51,7 +51,7 @@ Owner authorization: start development, 2026-10-22. This document does not autho
 
 - Scope: one explicitly confirmed, rate-limited restart of an existing Facebook or Instagram message synchronization when the stored coarse diagnostic shows a sync error.
 - The server derives actor, workspace and connection; the browser supplies no workspace or connection identifier.
-- A durable `started` audit row is required before the provider read/import call. The request UUID is unique for replay protection, and a terminal `succeeded`, `partial` or `failed` transition is required afterward.
+- The shared rate limit is consumed before storage or provider work. A durable `started` audit row is then required before the provider read/import call. The request UUID is unique for replay protection; the terminal transition is idempotent and retried three times. If storage remains unavailable, the API fails closed and leaves `started` as explicit reconciliation evidence.
 - Success requires a fresh exact-connection postcheck: connected status, cleared sync error and a sync timestamp not older than the repair start.
 - OAuth login, permission changes, credential replacement, disconnects, WhatsApp repair, automatic sends and provider configuration remain excluded.
 - Both diagnostics and repair flags remain default-off. The SQL file is an unapplied draft; no Staging or Production repair is authorized by this source increment.
