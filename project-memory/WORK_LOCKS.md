@@ -1397,13 +1397,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 
 ## LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025
-- Task: prepare one cumulative integration candidate for PRs #1351, #1352, #1353 and #1354.
-- Status: RELEASED_FOR_PR
+- Task: cumulative Support/Capacity/Supply-Chain integration and post-merge Staging preflight.
+- Status: MERGED_VERIFIED_SOURCE; STAGING_BLOCKED_PENDING_AUTHORIZATION
 - Risk: R3
-- Holder: FanMind Builder / connected GitHub
-- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; branch `integration/support-release-20261025`; PR #1355.
-- Scope: preserve the reviewed cumulative Support, Capacity and Supply-Chain tree; add only the integration security-decision template, exact Staging preflight binding and required R3 coordination/receipt evidence.
-- Forbidden: merge or auto-merge, deployment, SQL/schema APPLY, feature-flag activation, provider/customer action, secret or permission access, Mobile-risk acceptance, direct main write, predecessor PR closure or branch deletion.
-- Evidence required: current main/head comparison; exact-head FanMind CI, Supply Chain, Browser E2E, CodeQL, Mobile CI, Mobile Native CI and governance workflows; independent R3 countercheck; explicit human Mobile-risk decision bound to the unchanged final head before any separately authorized merge.
-- Release reason: the candidate is isolated in Draft PR #1355 and no protected action is performed. The exact final receipt commit and workflow results are bound externally in PR metadata/review because a repository file cannot self-reference the commit that contains it.
-- Recovery: before merge, close or supersede PR #1355 and leave main unchanged; after a separately authorized merge, use a reviewed revert of the exact merge commit. No schema, flag, Staging, Production, provider or customer state is changed by this lock.
+- Holder: no active source writer; protected Staging continuation requires a new exact authorization.
+- Original base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; final reviewed #1356 head `4b4e5edd97842aa79225b2a8052f954f85667f57`.
+- Completion: PR #1356 merged as current `main` `7368305db778165d6a6dd8f83265445a6863a25b`. Merge and reviewed-head tree are both `ce4c21b994a15e4b21ee363cd408ecd33b8128a7`; all #1351-#1356 heads are ancestors. Complete exact-head CI and independent QA passed; four push-triggered post-merge checks passed.
+- Security: root zero; Mobile 0 critical / 5 high / 3 moderate / 0 low. Owner acceptance is limited to H1-H5/M1-M3 until `2026-11-08T12:40:47Z`; no extension or target acceptance exists.
+- Supersession: #1351, #1355 and #1356 are merged/closed. #1352-#1354 remain open and may be commented/labelled/closed only by a separately authorized GitHub action; no branch deletion.
+- Protected boundary: no deployment, target read, SQL/schema APPLY, flag activation, provider/customer action, signing, Production action or exception renewal is authorized. Checked-in God Mode release decision remains `BLOCK`; social/CRM and registration/entitlement gates remain `REGISTERED` without target evidence.
+- Recovery: source recovery is a separately reviewed revert of exact merge `7368305db778165d6a6dd8f83265445a6863a25b`. A later Staging run must first preserve deployed-release, initial flag and schema-classifier evidence; then use the runbook's reverse flag order and synthetic cleanup. No automatic audit-table drop is authorized.
