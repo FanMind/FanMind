@@ -120,6 +120,10 @@ security_state as (
   select
     coalesce(c.relrowsecurity, false) as rls_enabled,
     not coalesce(c.relforcerowsecurity, false) as force_rls_unchanged,
+    not exists (
+      select 1 from pg_policy p
+      where p.polrelid = (select relation from table_state)
+    ) as no_policies,
     exists (select 1 from pg_roles where rolname = 'anon') as anon_exists,
     exists (select 1 from pg_roles where rolname = 'authenticated') as authenticated_exists,
     coalesce(not has_table_privilege(
@@ -143,6 +147,7 @@ classification as (
       and coalesce(idx.valid, false)
       and coalesce(sec.rls_enabled, false)
       and coalesce(sec.force_rls_unchanged, false)
+      and coalesce(sec.no_policies, false)
       and coalesce(sec.anon_exists, false)
       and coalesce(sec.authenticated_exists, false)
       and coalesce(sec.anon_denied, false)
@@ -158,6 +163,7 @@ classification as (
     'indexes_valid', coalesce(idx.valid, false),
     'rls_enabled', coalesce(sec.rls_enabled, false),
     'force_rls_unchanged', coalesce(sec.force_rls_unchanged, false),
+    'no_policies', coalesce(sec.no_policies, false),
     'anon_denied', coalesce(sec.anon_denied, false),
     'authenticated_denied', coalesce(sec.authenticated_denied, false)
   ) as details
