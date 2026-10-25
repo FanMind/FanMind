@@ -606,10 +606,11 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
 - Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
 
-## FM-CR-060 — Website support repair postcheck tests
-- Date: 2026-10-22
-- Status: IN_PROGRESS; exact-head CI pending
-- Risk: R2 (source-only)
-- Scope: PR #1351 adds a fail-closed connection postcheck helper and five unit tests. It does not execute provider repair, change credentials, or write customer data.
-- Evidence: commits f94424ff59ed4424dccbb6dde853a158d60841fa and 02e6e5496067437dd9b6c63ec9aa12c7dfb543e5. Project Memory Guard run 39745713612 failed because this memory update was missing.
-- Acceptance: run exact-head tests and security checks; separately validate authenticated staging write and provider repair before any production activation.
+## FM-CR-060 — Website support confirmed message-sync repair
+- Date: 2026-10-22; Updated: 2026-10-25
+- Status: IN_PROGRESS; exact-head CI and independent R3 countercheck pending
+- Risk: R3 (Auth/workspace/provider-read and audit-schema source)
+- Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
+- Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
+- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all nine workflows before this increment. New exact-head CI, negative tests, independent countercheck and isolated Staging acceptance remain required.
+- Acceptance: source tests and all required exact-head checks pass; independent review confirms tenant/auth/audit ordering and negative paths; later isolated Staging installs the reviewed audit schema and validates one synthetic confirmed repair before any activation claim.

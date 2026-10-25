@@ -1,9 +1,11 @@
-import { buildRepairAuditEvent, type RepairAuditEvent } from "./supportRepairAudit";
+import {
+  buildRepairAuditEvent,
+  type RepairAuditEvent,
+} from "./supportRepairAudit";
 
 /**
- * Inject a server-side database writer; never accept this dependency from
- * a browser request. A failed write rejects, so callers must fail closed.
- * No service-role key is handled in this module.
+ * Inject server-side database writers; never accept these dependencies from a
+ * browser request. Failed writes reject, so callers must fail closed.
  */
 export type RepairAuditWriter = (record: RepairAuditEvent) => Promise<void>;
 
@@ -12,6 +14,18 @@ export async function persistRepairAuditEvent(
   writer: RepairAuditWriter,
 ): Promise<RepairAuditEvent> {
   const record = buildRepairAuditEvent(input);
+  await writer(record);
+  return record;
+}
+
+export async function persistRepairAuditCompletion(
+  input: RepairAuditEvent,
+  writer: RepairAuditWriter,
+): Promise<RepairAuditEvent> {
+  const record = buildRepairAuditEvent(input);
+  if (!["succeeded", "failed", "partial"].includes(record.status)) {
+    throw new Error("repair_terminal_status_required");
+  }
   await writer(record);
   return record;
 }

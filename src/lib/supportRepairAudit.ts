@@ -4,7 +4,7 @@
  */
 export type RepairAuditStatus =
   | "requested" | "denied" | "started" | "succeeded"
-  | "failed" | "manual_action_required";
+  | "failed" | "partial" | "manual_action_required";
 
 export type RepairAuditEvent = {
   workspace_id: string;
@@ -19,7 +19,7 @@ export type RepairAuditEvent = {
 };
 
 const statuses = new Set<RepairAuditStatus>([
-  "requested", "denied", "started", "succeeded", "failed", "manual_action_required",
+  "requested", "denied", "started", "succeeded", "failed", "partial", "manual_action_required",
 ]);
 const platforms = new Set(["instagram", "facebook", "whatsapp"]);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -34,7 +34,7 @@ export function buildRepairAuditEvent(input: RepairAuditEvent): RepairAuditEvent
       !["requested", "denied"].includes(input.status)) {
     throw new Error("repair_consent_missing");
   }
-  if (["succeeded", "failed", "manual_action_required"].includes(input.status) &&
+  if (["succeeded", "failed", "partial", "manual_action_required"].includes(input.status) &&
       (!input.completed_at || !Number.isFinite(Date.parse(input.completed_at)))) {
     throw new Error("repair_completion_timestamp_missing");
   }

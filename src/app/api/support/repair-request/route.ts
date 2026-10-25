@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveRepairAuditEvent } from "@/lib/supportRepairAuditServer";
+import { syncFacebookMessengerHistory } from "@/app/channels/facebookWebhookActions";
+import { syncInstagramMessengerHistory } from "@/app/channels/instagramWebhookActions";
+import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
+import {
+  executeConfirmedMessageSyncRepair,
+  type ConfirmedRepairPlatform,
+} from "@/lib/supportConfirmedRepair";
+import {
+  completeRepairAuditEvent,
+  startRepairAuditEvent,
+} from "@/lib/supportRepairAuditServer";
 import {
   getSupabaseServerUser,
   getUserWorkspaceDashboard,
   getWorkspaceSocialConnections,
 } from "@/lib/supabase/server";
 
-const supported = new Set(["instagram", "facebook", "whatsapp"]);
+const supported = new Set<ConfirmedRepairPlatform>(["instagram", "facebook"]);
+const uuid =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 /**
- * Validate an explicit, authenticated customer repair request.
- * This endpoint deliberately performs NO provider mutation. A future repair
- * executor must add CSRF protection, durable audit storage, authorization,
- * idempotency, provider-specific preconditions and post-action verification.
+ * Runs one allowlisted message-sync restart after explicit customer consent.
+ * OAuth, credentials, permissions, disconnects and provider configuration are
+ * never changed by this endpoint.
  */
 export async function POST(request: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
@@ -23,58 +34,176 @@ export async function POST(request: NextRequest) {
   if (!origin || origin !== request.nextUrl.origin) {
     return NextResponse.json({ error: "invalid_origin" }, { status: 403, headers });
   }
+
   let input: unknown;
-  try { input = await request.json(); }
-  catch { return NextResponse.json({ error: "invalid_request" }, { status: 400, headers }); }
+  try {
+    input = await request.json();
+  } catch {
+    return NextResponse.json({ error: "invalid_request" }, { status: 400, headers });
+  }
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400, headers });
   }
   const body = input as Record<string, unknown>;
-  if (!supported.has(String(body.platform)) || body.confirmed !== true ||
-      body.action !== "request_reconnect") {
-    return NextResponse.json({ error: "explicit_consent_required" }, { status: 400, headers });
+  if (
+    body.confirmed !== true ||
+    body.action !== "restart_message_sync" ||
+    typeof body.platform !== "string" ||
+    !supported.has(body.platform as ConfirmedRepairPlatform) ||
+    typeof body.requestId !== "string" ||
+    !uuid.test(body.requestId)
+  ) {
+    return NextResponse.json(
+      { error: "explicit_consent_required" },
+      { status: 400, headers },
+    );
   }
+  const platform = body.platform as ConfirmedRepairPlatform;
 
   const { data } = await getSupabaseServerUser();
-  if (!data.user) return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
+  if (!data.user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401, headers });
+  }
   const workspaceResult = await getUserWorkspaceDashboard(data.user);
   if (!workspaceResult.workspace || workspaceResult.error) {
-    return NextResponse.json({ error: "workspace_unavailable" }, { status: 403, headers });
+    return NextResponse.json(
+      { error: "workspace_unavailable" },
+      { status: 403, headers },
+    );
   }
-  // Validate membership through the authenticated workspace resolution,
-  // never a client-supplied workspace identifier.
-  const result = await getWorkspaceSocialConnections(workspaceResult.workspace.id);
-  if (result.error) {
-    return NextResponse.json({ error: "diagnostics_unavailable" }, { status: 503, headers });
-  }
-  const match = result.connections.some((connection) =>
-    connection.platform === body.platform && connection.status !== "connected");
-  if (!match) {
-    return NextResponse.json({ error: "no_repair_needed" }, { status: 409, headers });
+  const workspaceId = workspaceResult.workspace.id;
+  const connections = await getWorkspaceSocialConnections(workspaceId);
+  if (connections.error) {
+    return NextResponse.json(
+      { error: "diagnostics_unavailable" },
+      { status: 503, headers },
+    );
   }
 
-  // Persist the customer-confirmed manual handoff before acknowledging it.
-  // A failed audit write must never be reported as a successful request.
-  const requestId = crypto.randomUUID();
+  const repairCandidates = connections.connections.filter(
+    (connection) =>
+      connection.platform === platform &&
+      connection.status === "connected" &&
+      Boolean(connection.last_messenger_sync_error?.trim()),
+  );
+  if (repairCandidates.length === 0) {
+    const requiresLogin = connections.connections.some(
+      (connection) =>
+        connection.platform === platform && connection.status !== "connected",
+    );
+    return NextResponse.json(
+      {
+        error: requiresLogin
+          ? "manual_reauthorization_required"
+          : "no_repair_needed",
+      },
+      { status: 409, headers },
+    );
+  }
+  if (repairCandidates.length !== 1) {
+    return NextResponse.json(
+      { error: "ambiguous_connection_state" },
+      { status: 409, headers },
+    );
+  }
+  const connection = repairCandidates[0];
+  const requestId = body.requestId;
+
   try {
-    await saveRepairAuditEvent({
-      workspace_id: workspaceResult.workspace.id,
+    await startRepairAuditEvent({
+      workspace_id: workspaceId,
       actor_user_id: data.user.id,
-      platform: body.platform as "instagram" | "facebook" | "whatsapp",
-      action: "request_reconnect",
+      platform,
+      action: "restart_message_sync",
       consent_required: true,
       consent_given: true,
-      status: "manual_action_required",
+      status: "started",
+      request_id: requestId,
+      completed_at: null,
+    });
+  } catch (error) {
+    const replayed =
+      error instanceof Error && error.message === "repair_request_replayed";
+    return NextResponse.json(
+      { error: replayed ? "repair_request_replayed" : "repair_audit_unavailable" },
+      { status: replayed ? 409 : 503, headers },
+    );
+  }
+
+  const result = await executeConfirmedMessageSyncRepair(
+    { platform, connectionId: connection.id },
+    {
+      acquireRateLimit: () =>
+        consumeSharedRateLimit({
+          scope: "support.repair.message-sync",
+          subject: `${workspaceId}:${platform}:${connection.id}`,
+          maxRequests: 1,
+          windowMs: 15 * 60 * 1000,
+        }),
+      syncMessages: async (selectedPlatform) => {
+        const sync =
+          selectedPlatform === "facebook"
+            ? await syncFacebookMessengerHistory({ revalidate: true })
+            : await syncInstagramMessengerHistory({ revalidate: true });
+        return {
+          ok: sync.ok,
+          continuationPending: sync.continuationPending,
+        };
+      },
+      readConnections: () => getWorkspaceSocialConnections(workspaceId),
+    },
+  );
+
+  const auditStatus =
+    result.status === "succeeded"
+      ? "succeeded"
+      : result.status === "partial"
+        ? "partial"
+        : "failed";
+  try {
+    await completeRepairAuditEvent({
+      workspace_id: workspaceId,
+      actor_user_id: data.user.id,
+      platform,
+      action: "restart_message_sync",
+      consent_required: true,
+      consent_given: true,
+      status: auditStatus,
       request_id: requestId,
       completed_at: new Date().toISOString(),
     });
   } catch {
-    return NextResponse.json({ error: "repair_audit_unavailable" }, { status: 503, headers });
+    return NextResponse.json(
+      { error: "repair_audit_unavailable" },
+      { status: 503, headers },
+    );
   }
-  return NextResponse.json({
-    requestId,
-    status: "manual_action_required",
-    repairExecuted: false,
-    nextStepUrl: "/channels",
-  }, { status: 202, headers });
+
+  if (result.status === "rate_limited") {
+    return NextResponse.json(
+      { requestId, status: result.status, repairExecuted: false, verified: false },
+      { status: 429, headers },
+    );
+  }
+  if (!result.verified) {
+    return NextResponse.json(
+      {
+        requestId,
+        status: result.status,
+        repairExecuted: result.repairExecuted,
+        verified: false,
+        nextStepUrl: "/channels",
+      },
+      { status: 409, headers },
+    );
+  }
+  return NextResponse.json(
+    {
+      requestId,
+      status: "succeeded",
+      repairExecuted: true,
+      verified: true,
+    },
+    { headers },
+  );
 }

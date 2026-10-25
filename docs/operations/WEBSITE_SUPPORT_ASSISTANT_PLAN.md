@@ -46,3 +46,12 @@ Owner authorization: start development, 2026-10-22. This document does not autho
 - Repair request: without explicit consent reject; with consent write durable audit before returning manual_action_required, never claim a provider repair. Verify failure of audit storage yields 503.
 - Confirm feature flags default off, no provider mutation or production change, and collect exact-head CI, staging deploy and browser-test evidence before acceptance.
 - Current status: preparation only. This checklist is not evidence of a completed staging run or provider recovery.
+
+## Confirmed automatic repair source increment (2026-10-25)
+
+- Scope: one explicitly confirmed, rate-limited restart of an existing Facebook or Instagram message synchronization when the stored coarse diagnostic shows a sync error.
+- The server derives actor, workspace and connection; the browser supplies no workspace or connection identifier.
+- A durable `started` audit row is required before the provider read/import call. The request UUID is unique for replay protection, and a terminal `succeeded`, `partial` or `failed` transition is required afterward.
+- Success requires a fresh exact-connection postcheck: connected status, cleared sync error and a sync timestamp not older than the repair start.
+- OAuth login, permission changes, credential replacement, disconnects, WhatsApp repair, automatic sends and provider configuration remain excluded.
+- Both diagnostics and repair flags remain default-off. The SQL file is an unapplied draft; no Staging or Production repair is authorized by this source increment.

@@ -1352,3 +1352,12 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR — confirmed automatic sync repair
+- Date: 2026-10-25
+- Status: IN_PROGRESS
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
+- Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
+- Boundary: no database APPLY, runtime flag activation, provider execution, Production/Staging mutation, credentials, permissions, disconnect, WhatsApp repair or automatic external message.
+- Completion gate: exact-head CI plus independent R3 countercheck. Isolated Staging schema/runtime acceptance is a later separately authorized protected step.

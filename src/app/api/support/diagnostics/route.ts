@@ -11,26 +11,46 @@ export async function GET() {
     return NextResponse.json({ error: "not_available" }, { status: 404 });
   }
   const { data } = await getSupabaseServerUser();
-  if (!data.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!data.user) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const result = await getUserWorkspaceDashboard(data.user);
   if (!result.workspace || result.error) {
-    return NextResponse.json({ error: "workspace_unavailable" }, { status: 403 });
+    return NextResponse.json(
+      { error: "workspace_unavailable" },
+      { status: 403 },
+    );
   }
 
   const connections = await getWorkspaceSocialConnections(result.workspace.id);
   if (connections.error) {
-    return NextResponse.json({ error: "diagnostics_unavailable" }, { status: 503 });
+    return NextResponse.json(
+      { error: "diagnostics_unavailable" },
+      { status: 503 },
+    );
   }
 
-  // Deliberately expose only platform and coarse status. No tokens, IDs,
-  // account names, scopes, errors, or other private integration metadata.
+  // Expose only a coarse problem class. Never return tokens, provider errors,
+  // account identifiers, scopes or other private integration metadata.
   const safe = connections.connections
-    .filter((connection) => ["facebook", "instagram", "whatsapp"].includes(connection.platform))
-    .map((connection) => ({
-      platform: connection.platform,
-      status: connection.status === "connected" ? "connected" : "attention_required",
-    }));
+    .filter((connection) =>
+      ["facebook", "instagram", "whatsapp"].includes(connection.platform),
+    )
+    .map((connection) => {
+      const messageSyncNeedsAttention =
+        ["facebook", "instagram"].includes(connection.platform) &&
+        connection.status === "connected" &&
+        Boolean(connection.last_messenger_sync_error?.trim());
+      return {
+        platform: connection.platform,
+        status:
+          connection.status === "connected" && !messageSyncNeedsAttention
+            ? "connected"
+            : "attention_required",
+        issue: messageSyncNeedsAttention ? "message_sync" : "connection",
+      };
+    });
 
   return NextResponse.json(
     { ok: true, connections: safe },

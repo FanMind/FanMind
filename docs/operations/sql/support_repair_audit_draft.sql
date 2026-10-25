@@ -8,11 +8,29 @@ create table if not exists public.support_repair_audit (
   action text not null,
   consent_required boolean not null,
   consent_given boolean not null default false,
-  status text not null check (status in ('requested', 'denied', 'started', 'succeeded', 'failed', 'manual_action_required')),
+  status text not null check (
+    status in (
+      'requested',
+      'denied',
+      'started',
+      'succeeded',
+      'failed',
+      'partial',
+      'manual_action_required'
+    )
+  ),
   request_id uuid not null unique,
   created_at timestamptz not null default now(),
   completed_at timestamptz,
-  constraint support_repair_audit_consent check (not consent_required or consent_given or status in ('requested', 'denied'))
+  constraint support_repair_audit_consent check (
+    not consent_required or consent_given or status in ('requested', 'denied')
+  ),
+  constraint support_repair_audit_completion check (
+    (status in ('requested', 'started') and completed_at is null)
+    or
+    (status in ('denied', 'succeeded', 'failed', 'partial', 'manual_action_required')
+      and completed_at is not null)
+  )
 );
 create index if not exists support_repair_audit_workspace_created
   on public.support_repair_audit (workspace_id, created_at desc);

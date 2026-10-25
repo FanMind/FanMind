@@ -1355,3 +1355,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
+- Task: FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR / Issue #1350
+- Status: ACTIVE_SOURCE_REVIEW
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; stacked source base PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`.
+- Scope: source-only confirmed Facebook/Instagram message-sync restart with server-derived tenant binding, durable pre-action audit, replay protection, shared rate limit and exact postcheck.
+- Forbidden: schema APPLY, feature-flag activation, Staging/Production/provider execution, OAuth/permission/credential mutation, disconnect, WhatsApp repair, automatic send, secret access and direct main writes.
+- Evidence required: focused negative tests, all exact-head workflows, independent R3 countercheck, zero unresolved P0/P1/P2 and later separately authorized isolated-Staging schema/runtime acceptance.
+- Recovery: ordinary repository revert before activation. Any later Staging test must use synthetic data, exact reviewed commit and cleanup/reconciliation evidence.
