@@ -1,6 +1,6 @@
 # Support Integration Security Decision
 
-Status: `OWNER_DECISION_REQUIRED`. This document records evidence and choices; it does not accept risk or authorize merge.
+Status: `OWNER_DECISION_REQUIRED`. This document is an immutable decision template: it records evidence and choices, but it is not edited to accept risk and does not authorize merge.
 
 ## Candidate
 
@@ -8,7 +8,7 @@ Status: `OWNER_DECISION_REQUIRED`. This document records evidence and choices; i
 - Branch: `integration/support-release-20261025`
 - Base: `main` at preparation SHA `109c0274c867d5ff8128196b50c585fb9833972f`
 - Reviewed cumulative source baseline: #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`
-- Final candidate SHA: read from PR #1355 after the documentation binding commit; any later head change invalidates this decision.
+- Final candidate SHA: read from PR #1355 after the documentation binding commit. The decision must be recorded outside the candidate tree in a PR #1355 review or comment and quote this exact SHA; any later head change invalidates that external decision.
 - Included development chain: #1351, #1352, #1353 and #1354.
 
 ## Verified remediation
@@ -39,13 +39,13 @@ Expected exact-head audit budget: `0 critical`, `6 high`, `4 moderate`, `0 low`,
 
 ## Human decision
 
-Select exactly one outcome and bind it to the exact PR #1355 head:
+An authorized human Security decider must select exactly one outcome in a PR #1355 review or comment and bind that external record to the exact PR head. Do not fill this template in the repository: editing it would change the candidate SHA and invalidate the binding.
 
 - [ ] `ACCEPT_UNTIL_EXPIRY`: accept only the documented residual risk until `2026-11-08T12:40:47Z`, with no Production/provider authorization implied.
 - [ ] `REQUIRE_REMEDIATION`: keep the PR unmerged until named findings are remediated and exact-head CI is repeated.
 - [ ] `REJECT`: do not release this candidate.
 
-Required record:
+Required fields in that PR review or comment:
 
 - Decider and role: `<REQUIRED>`
 - Decision timestamp: `<REQUIRED>`
@@ -54,7 +54,7 @@ Required record:
 - Selected outcome and rationale: `<REQUIRED>`
 - Required follow-up owner and due date: `<REQUIRED>`
 
-An unfilled record means `OWNER_DECISION_REQUIRED`, never acceptance.
+Until the required external PR record exists for the unchanged exact head, status remains `OWNER_DECISION_REQUIRED`, never acceptance. CI success, this template, or a decision attached to an earlier head cannot substitute for that record.
 
 ## Supersession after an authorized merge
 
