@@ -116,6 +116,8 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       ["unknown foundation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000004','ai_capacity_billing_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
       ["unknown activation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000005','ai_capacity_billing_v2_activation_gates_unreviewed');","capacity_unknown_migration_marker_absent"],
       ["unknown lifecycle-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000006','ai_capacity_reserve_settle_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown version beside known name","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_v2_unreviewed','ai_capacity_billing_v2');","capacity_unknown_migration_marker_absent"],
+      ["unknown name beside known version","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_billing_v2','ai_capacity_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
     ]) await t.test(`blocks ${name}`,()=>{
       fresh(); sql(mutation); const result=evaluate(); assert.equal(result.state,"BLOCK"); assert.ok(result.failures.includes(key),JSON.stringify(result));
     });
