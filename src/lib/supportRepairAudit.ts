@@ -9,6 +9,7 @@ export type RepairAuditStatus =
 export type RepairAuditEvent = {
   workspace_id: string;
   actor_user_id: string;
+  connection_id: string;
   platform: "instagram" | "facebook" | "whatsapp";
   action: string;
   consent_required: boolean;
@@ -26,7 +27,7 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 
 export function buildRepairAuditEvent(input: RepairAuditEvent): RepairAuditEvent {
   if (!uuid.test(input.workspace_id) || !uuid.test(input.actor_user_id) ||
-      !uuid.test(input.request_id) || !platforms.has(input.platform) ||
+      !uuid.test(input.connection_id) || !uuid.test(input.request_id) || !platforms.has(input.platform) ||
       !statuses.has(input.status) || !/^[a-z_]{3,64}$/.test(input.action)) {
     throw new Error("invalid_repair_audit_event");
   }
@@ -43,6 +44,7 @@ export function buildRepairAuditEvent(input: RepairAuditEvent): RepairAuditEvent
   return {
     workspace_id: input.workspace_id,
     actor_user_id: input.actor_user_id,
+    connection_id: input.connection_id,
     platform: input.platform,
     action: input.action,
     consent_required: input.consent_required,

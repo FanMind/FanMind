@@ -50,7 +50,7 @@ Owner authorization: start development, 2026-10-22. This document does not autho
 ## Confirmed automatic repair source increment (2026-10-25)
 
 - Scope: one explicitly confirmed, rate-limited restart of an existing Facebook or Instagram message synchronization when the stored coarse diagnostic shows a sync error.
-- The server derives actor, workspace and connection; the browser supplies no workspace or connection identifier.
+- The server derives actor, workspace and connection; the browser supplies no workspace or connection identifier. Owner/Admin role, demo exclusion and processing entitlement are checked before rate-limit or audit consumption, and the exact server-derived connection ID is recorded in the audit.
 - The shared rate limit is consumed before storage or provider work. A durable `started` audit row is then required before the provider read/import call. The request UUID is unique for replay protection; the terminal transition is idempotent and retried three times. If storage remains unavailable, the API fails closed and leaves `started` as explicit reconciliation evidence.
 - Success requires a fresh exact-connection postcheck: connected status, cleared sync error and a sync timestamp not older than the repair start.
 - OAuth login, permission changes, credential replacement, disconnects, WhatsApp repair, automatic sends and provider configuration remain excluded.

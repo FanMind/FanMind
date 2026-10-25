@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { syncFacebookMessengerHistory } from "@/app/channels/facebookWebhookActions";
 import { syncInstagramMessengerHistory } from "@/app/channels/instagramWebhookActions";
+import { areDemoConnectionsDisabled } from "@/lib/demoMode";
+import { canManageMetaConnections } from "@/lib/metaIntegrationPolicy.mjs";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import {
   executeConfirmedMessageSyncRepair,
@@ -13,6 +15,7 @@ import {
 import {
   getSupabaseServerUser,
   getUserWorkspaceDashboard,
+  getWorkspaceProcessingEntitlement,
   getWorkspaceSocialConnections,
 } from "@/lib/supabase/server";
 
@@ -72,6 +75,23 @@ export async function POST(request: NextRequest) {
     );
   }
   const workspaceId = workspaceResult.workspace.id;
+  if (
+    areDemoConnectionsDisabled(data.user, workspaceResult.workspace) ||
+    !canManageMetaConnections(workspaceResult.workspace.role)
+  ) {
+    return NextResponse.json(
+      { error: "repair_not_authorized" },
+      { status: 403, headers },
+    );
+  }
+  const entitlement = await getWorkspaceProcessingEntitlement(workspaceId);
+  if (entitlement.error || !entitlement.allowed) {
+    return NextResponse.json(
+      { error: "workspace_processing_not_allowed" },
+      { status: 403, headers },
+    );
+  }
+
   const connections = await getWorkspaceSocialConnections(workspaceId);
   if (connections.error) {
     return NextResponse.json(
@@ -124,6 +144,7 @@ export async function POST(request: NextRequest) {
         startRepairAuditEvent({
           workspace_id: workspaceId,
           actor_user_id: data.user.id,
+          connection_id: connection.id,
           platform,
           action: "restart_message_sync",
           consent_required: true,
@@ -136,6 +157,7 @@ export async function POST(request: NextRequest) {
         completeRepairAuditEvent({
           workspace_id: workspaceId,
           actor_user_id: data.user.id,
+          connection_id: connection.id,
           platform,
           action: "restart_message_sync",
           consent_required: true,

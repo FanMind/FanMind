@@ -5,6 +5,7 @@ import { persistRepairAuditEvent } from "./supportRepairAuditPersistence";
 const valid = {
   workspace_id: "11111111-1111-4111-8111-111111111111",
   actor_user_id: "22222222-2222-4222-8222-222222222222",
+  connection_id: "44444444-4444-4444-8444-444444444444",
   request_id: "33333333-3333-4333-8333-333333333333",
   platform: "instagram" as const,
   action: "request_reconnect",
@@ -33,6 +34,18 @@ describe("repair audit persistence", () => {
         async () => { writes += 1; },
       ),
       /repair_consent_missing/,
+    );
+    assert.equal(writes, 0);
+  });
+
+  it("rejects an audit event without exact target identity", async () => {
+    let writes = 0;
+    await assert.rejects(
+      persistRepairAuditEvent(
+        { ...valid, connection_id: undefined } as unknown as typeof valid,
+        async () => { writes += 1; },
+      ),
+      /invalid_repair_audit_event/,
     );
     assert.equal(writes, 0);
   });

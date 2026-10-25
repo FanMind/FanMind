@@ -225,15 +225,26 @@ test("route audits before execution and keeps protected actions out", () => {
     "src/app/api/support/repair-request/route.ts",
     "utf8",
   );
+  const role = route.indexOf("!canManageMetaConnections(");
+  const entitlement = route.indexOf(
+    "const entitlement = await getWorkspaceProcessingEntitlement(",
+  );
   const acquire = route.indexOf("acquireRateLimit:");
   const audit = route.indexOf("startAudit:");
   const execute = route.indexOf("syncMessages:");
-  assert.ok(acquire >= 0 && audit > acquire && execute > audit);
+  assert.ok(
+    role >= 0 &&
+      entitlement > role &&
+      acquire > entitlement &&
+      audit > acquire &&
+      execute > audit,
+  );
   assert.match(route, /FANMIND_INAPP_HELP_REPAIR_ENABLED/u);
   assert.match(route, /body\.confirmed !== true/u);
   assert.match(route, /body\.requestId/u);
   assert.match(route, /restart_message_sync/u);
   assert.match(route, /expectedConnectionId: connection\.id/u);
+  assert.equal(route.match(/connection_id: connection\.id/gu)?.length, 2);
   assert.doesNotMatch(route, /renew_authorization|replace_credentials/u);
   assert.match(route, /maxRequests:\s*1/u);
   assert.match(route, /windowMs:\s*15 \* 60 \* 1000/u);
@@ -267,6 +278,7 @@ test("audit transition and draft schema block replay", () => {
   assert.match(server, /in\.\(started,\$\{record\.status\}\)/u);
   assert.match(server, /response\.status === 409/u);
   assert.match(sql, /request_id uuid not null unique/u);
+  assert.match(sql, /connection_id uuid not null/u);
   assert.match(sql, /alter table public\.support_repair_audit enable row level security/u);
   assert.match(sql, /revoke all .* from anon, authenticated/u);
 });

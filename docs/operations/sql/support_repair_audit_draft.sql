@@ -4,6 +4,7 @@ create table if not exists public.support_repair_audit (
   id uuid primary key default gen_random_uuid(),
   workspace_id uuid not null,
   actor_user_id uuid not null,
+  connection_id uuid not null,
   platform text not null check (platform in ('instagram', 'facebook', 'whatsapp')),
   action text not null,
   consent_required boolean not null,
@@ -34,6 +35,8 @@ create table if not exists public.support_repair_audit (
 );
 create index if not exists support_repair_audit_workspace_created
   on public.support_repair_audit (workspace_id, created_at desc);
+create index if not exists support_repair_audit_connection_created
+  on public.support_repair_audit (connection_id, created_at desc);
 alter table public.support_repair_audit enable row level security;
 -- No user-facing RLS policies: service-role-only writes/reads until a
 -- reviewed tenant-scoped read policy and audited write path are implemented.
