@@ -58,7 +58,7 @@ test("confirmed repair is rate limited before audit and provider work", async ()
       now: () => now,
     },
   );
-  assert.deepEqual(result, {
+  assert.deepEqual({ ...result }, {
     status: "rate_limited",
     repairExecuted: false,
     verified: false,
@@ -130,7 +130,7 @@ test("terminal audit retries fail closed without claiming success", async () => 
     },
   );
   assert.equal(completionCalls, 3);
-  assert.deepEqual(result, {
+  assert.deepEqual({ ...result }, {
     status: "audit_incomplete",
     repairExecuted: true,
     verified: false,
@@ -151,7 +151,7 @@ test("confirmed repair requires exact post-action connection evidence", async ()
       now: () => now,
     },
   );
-  assert.deepEqual(result, {
+  assert.deepEqual({ ...result }, {
     status: "verification_failed",
     repairExecuted: true,
     verified: false,
@@ -209,7 +209,7 @@ test("provider timeout is recorded as failed and never verified", async () => {
     },
   );
   assert.deepEqual(completions, ["failed"]);
-  assert.deepEqual(result, {
+  assert.deepEqual({ ...result }, {
     status: "failed",
     repairExecuted: true,
     verified: false,
@@ -286,7 +286,7 @@ test("successful repair is bound to a fresh exact postcheck", async () => {
       now: () => now,
     },
   );
-  assert.deepEqual(result, {
+  assert.deepEqual({ ...result }, {
     status: "succeeded",
     repairExecuted: true,
     verified: true,
