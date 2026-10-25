@@ -12,8 +12,8 @@ const ROOT_REVIEW_MODERATE_MAXIMUM = 0;
 const REVIEWED_ROOT_PACKAGES = Object.freeze([]);
 const MOBILE_REVIEWED_AT = "2026-10-25T12:40:47.000Z";
 const MOBILE_REVIEW_EXPIRES_AT = "2026-11-08T12:40:47.000Z";
-const MOBILE_REVIEW_HIGH_MAXIMUM = 6;
-const MOBILE_REVIEW_MODERATE_MAXIMUM = 4;
+const MOBILE_REVIEW_HIGH_MAXIMUM = 5;
+const MOBILE_REVIEW_MODERATE_MAXIMUM = 3;
 const MOBILE_REVIEW_LOW_MAXIMUM = 0;
 const MOBILE_ENFORCEMENT_MODES = Object.freeze(["strict", "deferred-owner"]);
 const REVIEWED_MOBILE_PACKAGES = Object.freeze([
@@ -22,10 +22,8 @@ const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "decode-uri-component",
   "expo",
   "expo-router",
-  "image-size",
   "node-forge",
   "query-string",
-  "uuid",
   "zod",
 ]);
 

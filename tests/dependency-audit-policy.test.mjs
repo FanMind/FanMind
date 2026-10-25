@@ -82,6 +82,57 @@ test("clean root audit passes without a review exception", () => {
   assert.equal(result.mobile.lowMaximum, MOBILE_REVIEW_LOW_MAXIMUM);
 });
 
+test("Mobile review contracts the exact residual set after supported remediations", async () => {
+  assert.equal(MOBILE_REVIEW_HIGH_MAXIMUM, 5);
+  assert.equal(MOBILE_REVIEW_MODERATE_MAXIMUM, 3);
+  assert.deepEqual(REVIEWED_MOBILE_PACKAGES, [
+    "@expo/cli",
+    "@expo/code-signing-certificates",
+    "decode-uri-component",
+    "expo",
+    "expo-router",
+    "node-forge",
+    "query-string",
+    "zod",
+  ]);
+
+  const lock = JSON.parse(
+    await readFile(
+      new URL("../apps/mobile/package-lock.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  for (const packageName of [
+    "metro",
+    "metro-babel-transformer",
+    "metro-cache",
+    "metro-cache-key",
+    "metro-config",
+    "metro-core",
+    "metro-file-map",
+    "metro-minify-terser",
+    "metro-resolver",
+    "metro-runtime",
+    "metro-source-map",
+    "metro-symbolicate",
+    "metro-transform-plugins",
+    "metro-transform-worker",
+    "ob1",
+  ]) {
+    assert.equal(
+      lock.packages[`node_modules/${packageName}`].version,
+      "0.84.5",
+    );
+    assert.equal(
+      lock.packages[`node_modules/@expo/metro/node_modules/${packageName}`],
+      undefined,
+    );
+  }
+  assert.equal(lock.packages["node_modules/image-size"], undefined);
+  assert.equal(lock.packages["node_modules/queue"], undefined);
+  assert.equal(lock.packages["node_modules/uuid"], undefined);
+});
+
 test("every root high, moderate or unreviewed package fails closed", () => {
   const highFailure = evaluateDependencyAudit({
     rootPayload: auditPayload({
