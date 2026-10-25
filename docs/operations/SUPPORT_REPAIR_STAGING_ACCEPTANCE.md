@@ -221,6 +221,32 @@ Do not automatically drop an installed audit table after a runtime failure. If r
 | Provider requests | integer, expected zero in no-provider phase |
 | Cleanup | PASS/FAIL/NOT_APPLICABLE |
 
+## Executed repository evidence (2026-10-25)
+
+Tested source commit: `49e04c6dee58282c2758b14b482e116e195d2d97`.
+Environment: local isolated checkout, Node `v24.19.0`, no database, browser, Staging target or provider network. The registered test imports the repository `typescript` dev dependency, which was unavailable in this checkout. Therefore the identical test body was executed through Node 24 native type stripping; the only harness substitution was the TypeScript loader. Command/log: `node --experimental-strip-types --test tests/support-confirmed-repair.node24.test.mjs`, 16 passed, 0 failed, duration 98 ms. The temporary harness is not committed.
+
+| Test name and purpose | Class | Synthetic input | Expected / actual | Result |
+| --- | --- | --- | --- | --- |
+| rate limited before side effects | MOCK_TEST | limiter denies | zero audit/provider calls / observed | PASS |
+| audit start failure blocks repair | MOCK_TEST | start insert throws | zero provider calls / observed | PASS |
+| duplicate request blocks repair | MOCK_TEST | replay conflict | zero provider calls / observed | PASS |
+| terminal audit retries fail closed | MOCK_TEST | three update failures | `audit_incomplete`, no success / observed | PASS |
+| exact connection postcheck | MOCK_TEST | different connection ID | `verification_failed` / observed | PASS |
+| invalid postcheck variants | MOCK_TEST | stale, error, disconnected, duplicate, wrong platform/workspace | every variant rejected / observed | PASS |
+| role authorization matrix | INTEGRATION_TEST | owner, admin, member, viewer, empty, null, platform_admin | only owner/admin allowed / observed | PASS |
+| provider timeout handling | MOCK_TEST | adapter throws | terminal failed, never verified / observed | PASS |
+| successful operation ordering | MOCK_TEST | deterministic successful dependencies | rate → started → provider → postcheck → succeeded / observed | PASS |
+| failure and partial continuation | MOCK_TEST | failed and continuation responses | failed/partial, never verified / observed | PASS |
+| fresh exact success postcheck | MOCK_TEST | matching fresh connection | verified success / observed | PASS |
+| route authorization and boundary order | SOURCE_REVIEW | route source | consent/auth/entitlement before rate/audit/provider; exclusions retained / observed | PASS |
+| exact provider target binding | SOURCE_REVIEW | Facebook/Instagram entrypoints | selected connection ID required / observed | PASS |
+| audit replay and terminal binding | SOURCE_REVIEW | persistence and draft SQL | request uniqueness plus exact transition filters / observed | PASS |
+| UI consent and disclosure | SOURCE_REVIEW | launcher/diagnostic source | explicit consent, clear action, no secrets/raw errors / observed | PASS |
+| read-only classifier safety | SOURCE_REVIEW | verifier SQL | classifier only; no DDL/DML/grants / observed | PASS |
+
+Direct registered-test result: `NOT_RUN` locally because the checkout had no installed `typescript` package. Exact-head GitHub CI remains required. Schema execution, database integration, browser E2E, Staging runtime and provider execution were `NOT_RUN` and must not be inferred from this table.
+
 ## Current preparation conclusion
 
 Repository source and mock evidence may establish implementation readiness. It cannot establish that the schema is installed, flags are active, the deployed Staging release is current or a provider repair succeeds.
