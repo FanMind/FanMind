@@ -13,33 +13,19 @@ const REVIEWED_ROOT_PACKAGES = Object.freeze([]);
 const MOBILE_REVIEWED_AT = "2026-10-25T12:40:47.000Z";
 const MOBILE_REVIEW_EXPIRES_AT = "2026-11-08T12:40:47.000Z";
 const MOBILE_REVIEW_HIGH_MAXIMUM = 6;
-const MOBILE_REVIEW_MODERATE_MAXIMUM = 14;
+const MOBILE_REVIEW_MODERATE_MAXIMUM = 4;
 const MOBILE_REVIEW_LOW_MAXIMUM = 0;
 const MOBILE_ENFORCEMENT_MODES = Object.freeze(["strict", "deferred-owner"]);
 const REVIEWED_MOBILE_PACKAGES = Object.freeze([
   "@expo/cli",
   "@expo/code-signing-certificates",
-  "@expo/config",
-  "@expo/config-plugins",
-  "@expo/inline-modules",
-  "@expo/local-build-cache-provider",
-  "@expo/metro-config",
-  "@expo/prebuild-config",
-  "brace-expansion",
   "decode-uri-component",
   "expo",
   "expo-router",
-  "expo-splash-screen",
   "image-size",
-  "metro",
-  "metro-config",
-  "metro-transform-worker",
   "node-forge",
   "query-string",
-  "sharp",
-  "shell-quote",
   "uuid",
-  "xcode",
   "zod",
 ]);
 

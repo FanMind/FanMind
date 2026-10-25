@@ -55,7 +55,7 @@ test("clean root audit passes without a review exception", () => {
   const result = evaluateDependencyAudit({
     rootPayload: auditPayload(),
     mobilePayload: auditPayload({
-      moderate: 10,
+      moderate: MOBILE_REVIEW_MODERATE_MAXIMUM,
       packages: [REVIEWED_MOBILE_PACKAGES[0]],
     }),
     rootManifest: patchedManifest,
