@@ -42,6 +42,9 @@ const updateRepairAuditInSupabase: RepairAuditWriter = async (record) => {
   url.searchParams.set("request_id", `eq.${record.request_id}`);
   url.searchParams.set("workspace_id", `eq.${record.workspace_id}`);
   url.searchParams.set("actor_user_id", `eq.${record.actor_user_id}`);
+  url.searchParams.set("connection_id", `eq.${record.connection_id}`);
+  url.searchParams.set("platform", `eq.${record.platform}`);
+  url.searchParams.set("action", `eq.${record.action}`);
   url.searchParams.set("status", `in.(started,${record.status})`);
   const response = await fetch(url, {
     method: "PATCH",

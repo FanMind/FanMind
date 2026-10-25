@@ -55,3 +55,9 @@ Owner authorization: start development, 2026-10-22. This document does not autho
 - Success requires a fresh exact-connection postcheck: connected status, cleared sync error and a sync timestamp not older than the repair start.
 - OAuth login, permission changes, credential replacement, disconnects, WhatsApp repair, automatic sends and provider configuration remain excluded.
 - Both diagnostics and repair flags remain default-off. The SQL file is an unapplied draft; no Staging or Production repair is authorized by this source increment.
+
+
+## Synthetic Staging preflight (prepared 2026-10-25; NOT EXECUTED)
+
+- The reproducible evidence matrix, read-only schema classifier, negative runtime procedure, recovery and rollback prerequisites are defined in [SUPPORT_REPAIR_STAGING_ACCEPTANCE.md](./SUPPORT_REPAIR_STAGING_ACCEPTANCE.md).
+- Repository mock evidence does not constitute Staging acceptance. Schema application, repair-flag activation and external provider execution each require a separate explicit authorization and exact-target preflight.

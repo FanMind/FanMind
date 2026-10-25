@@ -2,6 +2,7 @@ export type ConfirmedRepairPlatform = "facebook" | "instagram";
 
 export type SupportRepairConnection = {
   id: string;
+  workspace_id: string;
   platform: string;
   status: string;
   last_messenger_sync_at: string | null;
@@ -75,6 +76,7 @@ async function completeWithRetry(
 export async function executeConfirmedMessageSyncRepair(
   input: {
     platform: ConfirmedRepairPlatform;
+    workspaceId: string;
     connectionId: string;
   },
   dependencies: ConfirmedRepairDependencies,
@@ -126,6 +128,7 @@ export async function executeConfirmedMessageSyncRepair(
         : observed.connections.filter(
             (connection) =>
               connection.id === input.connectionId &&
+              connection.workspace_id === input.workspaceId &&
               connection.platform === input.platform,
           );
       const connection = matching.length === 1 ? matching[0] : null;

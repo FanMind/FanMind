@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
 
   const repairCandidates = connections.connections.filter(
     (connection) =>
+      connection.workspace_id === workspaceId &&
       connection.platform === platform &&
       connection.status === "connected" &&
       Boolean(connection.last_messenger_sync_error?.trim()),
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
   let auditCompletedAt: string | null = null;
 
   const result = await executeConfirmedMessageSyncRepair(
-    { platform, connectionId: connection.id },
+    { platform, workspaceId, connectionId: connection.id },
     {
       acquireRateLimit: () =>
         consumeSharedRateLimit({

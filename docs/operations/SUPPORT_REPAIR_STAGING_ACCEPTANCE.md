@@ -1,0 +1,237 @@
+# Support Repair Staging Acceptance
+
+Status: repository-only R3 preparation. This runbook does not authorize execution.
+
+## Exact source chain
+
+- Canonical `main` observed at preparation start: `109c0274c867d5ff8128196b50c585fb9833972f`.
+- Foundation PR: #1351, head `556ec86488ccd9cc815804e23fb4c6761c792bfa`, base `main`.
+- Repair PR: #1352, starting head `7b7f4f2902f5acac3244b7e0f64efa27fb1b605c`, base `feature/website-support-1350-foundation`.
+- Protected execution must use a new exact reviewed commit after #1351 and #1352 are merged in order and that exact `main` is deployed to isolated Staging.
+- A later commit, rebase, base change, schema change, authorization change or flag change invalidates prior source evidence and requires a fresh review.
+
+## Boundary
+
+Allowed in repository preparation:
+
+- source and schema review;
+- deterministic mock tests;
+- read-only source classification;
+- exact commands, evidence templates, recovery and rollback planning.
+
+Not authorized by this document:
+
+- workflow dispatch;
+- database or migration execution;
+- Staging or Production SQL writes;
+- feature-flag activation;
+- provider network calls;
+- OAuth, credential, permission or connection changes;
+- customer data or real customer connections;
+- external messages;
+- secret reads or disclosure.
+
+## Evidence classes
+
+Every result must be labelled as exactly one of:
+
+- `SOURCE_REVIEW`: static source, schema or diff inspection.
+- `MOCK_TEST`: deterministic injected dependency test without Staging or provider state.
+- `INTEGRATION_TEST`: repository test that crosses real internal modules but no external target.
+- `STAGING_RUNTIME`: observation or mutation on the exact isolated Staging target.
+- `PROVIDER_TEST`: an actual Meta request. This is excluded from the prepared no-provider phase.
+
+Green repository CI is not `STAGING_RUNTIME` or `PROVIDER_TEST` evidence.
+
+## Required environment and target
+
+The later protected run must bind all evidence to:
+
+- target: FanMind isolated Staging Supabase project `vshyhvgcmrlagvfnvomc`;
+- application: `https://staging.fanmind.ch`;
+- release: `<EXACT_MERGED_MAIN_SHA>`;
+- SQL source: `docs/operations/sql/support_repair_audit_draft.sql`;
+- read-only classifier: `docs/operations/sql/support_repair_audit_verify.sql`;
+- feature flags, initially and finally:
+  - `FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED=false`;
+  - `FANMIND_INAPP_HELP_REPAIR_ENABLED=false`.
+
+Do not print connection strings, service keys, access tokens, cookies or provider payloads. Protected credentials must be supplied only by the approved environment.
+
+## Source and mock acceptance matrix
+
+| ID | Class | Purpose | Input | Expected |
+| --- | --- | --- | --- | --- |
+| SRC-01 | SOURCE_REVIEW | PR dependency | #1352 base/head and #1351 head | #1352 is mergeable and based on the exact #1351 head |
+| SRC-02 | SOURCE_REVIEW | Browser privacy | diagnostics and help UI source | no token, raw provider error, account ID or service-role value reaches the browser |
+| AUTH-01 | INTEGRATION_TEST | Owner | role `owner`, entitled workspace | repair preflight may continue |
+| AUTH-02 | INTEGRATION_TEST | Admin | role `admin`, entitled workspace | repair preflight may continue |
+| AUTH-03 | INTEGRATION_TEST | Member denial | role `member` | no rate-limit, audit or provider call |
+| AUTH-04 | SOURCE_REVIEW | Invalid session | missing authenticated user | HTTP 401 before workspace/rate/audit/provider |
+| AUTH-05 | SOURCE_REVIEW | Missing entitlement | denied or failed entitlement lookup | HTTP 403 before rate/audit/provider |
+| TENANT-01 | MOCK_TEST | Foreign workspace postcheck | matching connection ID/platform but different workspace | `verification_failed`, never success |
+| TARGET-01 | MOCK_TEST | Connection swap | selected connection replaced before postcheck | `verification_failed`, never success |
+| FLOW-01 | MOCK_TEST | Verified success | explicit consent, rate allowed, audit started, exact fresh postcheck | exactly one provider adapter call and terminal `succeeded` |
+| FLOW-02 | MOCK_TEST | Provider failure | adapter returns failure | terminal `failed`, user never sees success |
+| FLOW-03 | MOCK_TEST | Timeout | adapter throws timeout | terminal `failed`, user never sees success |
+| FLOW-04 | MOCK_TEST | Partial continuation | adapter reports continuation | terminal `partial`, user never sees verified success |
+| AUDIT-01 | MOCK_TEST | Start write failure | audit insert rejects | zero provider calls |
+| AUDIT-02 | MOCK_TEST | Terminal write failure | all three updates reject | `audit_incomplete`, never success |
+| REPLAY-01 | MOCK_TEST | Duplicate request UUID | audit insert reports conflict | zero provider calls |
+| RATE-01 | MOCK_TEST | Shared limit denied | limiter denies | zero audit and provider calls |
+| UI-01 | SOURCE_REVIEW | Explicit consent | unchecked and checked UI states | request is possible only after checkbox confirmation |
+| UI-02 | SOURCE_REVIEW | Customer explanation | error, action, success and failure copy | clear coarse text without secrets or raw provider diagnostics |
+
+The exact test name, commit, environment, input, expected result, actual result, log reference and `PASS|FAIL|INCONCLUSIVE|NOT_RUN` must be recorded for each row.
+
+## Read-only schema classification
+
+This step is external target observation and may run only when the exact read-only target access is configured and authorized.
+
+Command shape:
+
+```bash
+psql -X --set=ON_ERROR_STOP=1 \
+  --file docs/operations/sql/support_repair_audit_verify.sql
+```
+
+Required output:
+
+- `ABSENT`: table is not installed. APPLY remains a separate protected action.
+- `INSTALLED`: expected columns, constraints, indexes, RLS and browser-role denial match.
+- `DRIFT`: stop. Do not apply over the existing object. Record the redacted classifier details and prepare a separate remediation review.
+
+The classifier begins a read-only transaction and contains no DDL, DML or grant operation.
+
+## Protected schema step
+
+This step is not authorized by the preparation task.
+
+Required owner action must name:
+
+- operation: one controlled Staging-only schema APPLY;
+- target: `vshyhvgcmrlagvfnvomc`;
+- exact merged/deployed main SHA;
+- exact SQL SHA-256;
+- precondition: read-only classification is `ABSENT`;
+- Production exclusion proof;
+- expected postcondition: classifier returns `INSTALLED`;
+- stop conditions: `DRIFT`, wrong target, wrong release, checksum mismatch, missing RLS/denials or any unexpected object.
+
+The SQL must execute transactionally through the repository-approved protected path. A normal web deployment must not apply it.
+
+## Rollback-only database acceptance
+
+After an authorized APPLY and a fresh `INSTALLED` readback, a separately authorized rollback-only transaction should verify:
+
+1. valid `started` row accepts exact workspace, actor, connection, platform, action and request UUID;
+2. duplicate request UUID is rejected;
+3. consent-required without consent is rejected;
+4. `started` with `completed_at` is rejected;
+5. terminal state without `completed_at` is rejected;
+6. the same terminal transition is idempotent;
+7. a different second terminal transition affects zero rows;
+8. browser roles cannot read or write the table;
+9. the transaction rolls back and row count is unchanged.
+
+Use only generated synthetic UUIDs. Do not use real users, customer workspaces, customer connections or provider credentials.
+
+## Protected runtime-negative acceptance
+
+This is a later, separately authorized Staging action. It must start with both flags off and use marked synthetic identities only.
+
+Required fixtures:
+
+- one synthetic owner;
+- one synthetic admin;
+- one synthetic ordinary member;
+- one foreign synthetic workspace;
+- one synthetic Facebook or Instagram connection with no provider token and a coarse sync-error marker;
+- processing entitlement allowed only for the intended synthetic workspace.
+
+Allowed no-provider checks after temporary flag activation:
+
+1. missing/invalid session returns 401;
+2. ordinary member returns 403 and does not consume the repair rate-limit;
+3. missing entitlement returns 403 and does not consume the repair rate-limit;
+4. foreign-workspace and client-supplied target data cannot select a connection;
+5. missing consent returns 400;
+6. first valid synthetic request reaches the expected missing-token failure without network egress and records `started -> failed`;
+7. repeated UUID is rejected without a second provider adapter invocation;
+8. browser responses contain no token, raw provider error or internal database detail.
+
+Positive `succeeded` runtime evidence is not available in the no-provider phase. It remains `NOT_RUN` until a separately approved Meta sandbox/provider test or a separately reviewed staging-only provider adapter exists. Mock success must never be relabelled as Staging success.
+
+## Network and log controls
+
+For the no-provider phase:
+
+- deny or observe outbound Meta Graph traffic at the controlled test boundary;
+- expected Meta request count is zero;
+- redact cookies, authorization headers, database URLs and payloads;
+- log only request UUID, coarse outcome, exact release, target identifier and test ID;
+- abort immediately if any real account, token or provider request is observed.
+
+## Aborted and uncertain operations
+
+A durable `started` row without a terminal status is an explicit unknown, never success.
+
+- API completion persistence is retried three times with the same terminal state.
+- After persistent failure the API returns `audit_incomplete`/503 and does not report success.
+- Do not automatically replay provider work for an orphaned `started` row.
+- Read-only reconciliation identifies stale `started` rows by request, workspace, actor, connection and creation time.
+- Any later terminal reconciliation write is a separate controlled action. Mark it `failed` unless independent exact-target evidence proves another terminal state.
+- Preserve the original row and evidence; never delete it merely to make the acceptance green.
+
+## Recovery and rollback
+
+Before any protected run, capture:
+
+- exact deployed release;
+- classifier state and redacted details;
+- both feature-flag states;
+- synthetic fixture identifiers;
+- baseline audit row count for the synthetic workspace;
+- expected zero provider egress.
+
+Recovery order:
+
+1. disable both support flags and restart only the approved Staging application service;
+2. verify the exact release endpoint and both support endpoints return the disabled response;
+3. stop all fixture use and verify zero external provider requests/messages;
+4. remove only marked synthetic fixtures through the approved cleanup path;
+5. re-run the read-only schema classifier;
+6. reconcile any stale `started` audit row without replaying provider work;
+7. independently verify zero synthetic residue.
+
+Do not automatically drop an installed audit table after a runtime failure. If rollback to `ABSENT` is required, it needs separate destructive authorization, zero non-synthetic rows and an independently reviewed rollback statement.
+
+## Evidence record template
+
+| Field | Required value |
+| --- | --- |
+| Test ID and name | stable matrix identifier |
+| Exact commit | immutable tested SHA |
+| Environment | local mock, CI, or exact Staging target |
+| Inputs | synthetic IDs and coarse state only |
+| Expected | deterministic expected status and side-effect count |
+| Actual | redacted observed status and counts |
+| Log | workflow run/job or local command |
+| Result | PASS, FAIL, INCONCLUSIVE or NOT_RUN |
+| Provider requests | integer, expected zero in no-provider phase |
+| Cleanup | PASS/FAIL/NOT_APPLICABLE |
+
+## Current preparation conclusion
+
+Repository source and mock evidence may establish implementation readiness. It cannot establish that the schema is installed, flags are active, the deployed Staging release is current or a provider repair succeeds.
+
+Open protected prerequisites:
+
+- merge #1351 and then #1352 through their normal reviewed paths;
+- deploy the resulting exact main to isolated Staging;
+- obtain explicit target/commit/checksum-bound authorization for read-only target classification if current access is unavailable;
+- obtain a distinct authorization for schema APPLY;
+- obtain a distinct authorization for temporary flag activation and synthetic Staging runtime-negative acceptance;
+- retain provider-positive acceptance as a separate action.
+
+Until those prerequisites are satisfied, Staging runtime and provider rows remain `NOT_RUN`.

@@ -230,9 +230,11 @@ export function WorkspaceHelpLauncher() {
               {selectedConnection.issue === "message_sync" ? (
                 <>
                   <p>
-                    FanMind kann die Nachrichtensynchronisierung einmal sicher
-                    neu starten. Dabei werden keine Zugangsdaten,
-                    Berechtigungen oder Provider-Einstellungen geändert.
+                    FanMind hat einen Fehler bei der Nachrichtensynchronisierung
+                    erkannt. Mit deiner Zustimmung kann FanMind genau diese
+                    Synchronisierung einmal neu starten. Dabei werden keine
+                    Zugangsdaten, Berechtigungen oder Provider-Einstellungen
+                    geändert.
                   </p>
                   <label style={{ display: "block", marginBottom: 8 }}>
                     <input
