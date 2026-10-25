@@ -1352,3 +1352,43 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR — confirmed automatic sync repair
+- Date: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
+- Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
+- Boundary: no database APPLY, runtime flag activation, provider execution, Production/Staging mutation, credentials, permissions, disconnect, WhatsApp repair or automatic external message.
+- Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; Project Memory Quality run 40184228818 PASS; God Mode Gate run 40184228898 PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
+- Remaining verification: the SQL draft is unapplied and runtime/provider behavior is not accepted. Isolated Staging schema/runtime acceptance requires a later separately authorized protected preflight.
+- Exact next step: prepare a separate protected-boundary preflight for isolated synthetic Staging schema/runtime acceptance; do not apply schema, activate flags or execute provider work under this source authorization.
+
+## FM-SUPPORT-1350-STAGING-PREFLIGHT — synthetic repair acceptance preparation
+- Date: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
+- Scope: verify current PR #1351/#1352 source and prepare reproducible repository-only synthetic authorization, audit, repair-flow and UI acceptance evidence plus an exact isolated-Staging runbook.
+- Boundary: no SQL APPLY, migration execution, feature-flag activation, Staging/Production/provider mutation, OAuth/credential/permission change, customer connection access, external message or secret read.
+- Result: reproducible source/mock matrix, fail-closed read-only schema classifier and target/commit-bound Staging acceptance runbook prepared in PR #1352. Local Node 24 harness passed 16/16 on source head `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`; both emitted exact-source-head governance workflows passed; independent R3 countercheck found P0/P1/P2/P3 = 0/0/0.
+- Negative evidence: registered repository test was not run locally because dependencies were not installed; this stacked PR emitted no full FanMind CI workflow. PostgreSQL, browser, Staging and provider tests remain NOT_RUN. No schema, flag, target, provider or customer state was changed.
+- Exact next step: do not merge #1351 through #1354 base-first. Complete exact-head CI, independent R3 countercheck and the human Mobile-risk decision on cumulative PR #1355; any merge remains a separate explicit authorization. Only after an authorized #1355 merge and post-merge tree verification may deployment of that exact main to isolated Staging be considered under distinct target/commit/checksum-bound approvals. Schema APPLY, flag activation and provider-positive acceptance remain separate protected actions.
+
+## FM-SUPPORT-1350-COMBINED-CI-20261025 — combined support merge-candidate verification
+- Date: 2026-10-25
+- Status: BLOCKED
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-COMBINED-CI-20261025
+- Scope: verify the exact combined PR #1351/#1352 source, add missing local synthetic Browser E2E for the authenticated help/diagnosis/consent/result flow, run the complete applicable merge-candidate CI against main, restore the stacked PR chain and prepare the executable Staging acceptance plan.
+- Boundary: no merge, deployment, database execution, feature activation outside isolated CI, provider/customer action, secret or permission change. A temporary PR-base change may be used only to obtain exact-head combined CI and must be restored to #1351 before closeout.
+- Completion gate: full applicable exact-head CI, focused negative tests, restored #1351 -> #1352 dependency, independent R3 countercheck, exact checksums/rollback/approval boundaries and honest NOT_RUN classification.
+- Result: PR #1352 support source head `9b6508f0787d0d1d434fb916244e777121298914`; synthetic authenticated Browser E2E, support mock/integration tests, build, lint, CodeQL, Landing and all governance gates pass. The two CodeQL review comments on the Browser-test URL matcher were corrected with exact start/host/path anchors. No provider, schema, flag, Staging or customer action occurred.
+- Negative evidence: full combined CI exposed two independent current-baseline blockers outside this support scope: Capacity source checksum drift causes 37 fail-closed Operations follow-on failures, and Supply Chain reports a new root `next` critical plus an expired Mobile review with unrelated packages. The support PRs change no lockfile/framework/Mobile or Capacity source/pin.
+- Merge recommendation: NOT_READY until both independent blockers are repaired under their own tasks and this exact support chain receives fresh full CI. Staging runtime and provider tests remain NOT_RUN.
+- Exact next step: restore #1352 base to `feature/website-support-1350-foundation`; repair the Capacity checksum and dependency audit separately, then rerun complete combined main-target CI without changing support semantics.
+
+- 2026-10-25 — Blocker: Der Capacity-Source-/Schema-CI-Blocker der Support-PR-Kette ist behoben; die kombinierte Kette bleibt ausschließlich wegen des separat zu bearbeitenden Supply-Chain-Blockers nicht mergebereit. Evidence: PR #1353 Source-Head `107c5cc68f5f76684f976e86e1f5d4f53d80fbab`, FanMind CI `40192860638` PASS einschließlich Operations, Test-Coverage und PostgreSQL-17-Capacity-Lifecycle.
+
+- 2026-10-25 — Blocker: Der separate Supply-Chain-Blocker der Support-PR-Kette ist durch echte Root-/Mobile-Dependency-Patches und eine neue auditgebundene Mobile-Sicherheitsprüfung behoben; die Kette #1351 → #1352 → #1353 → #1354 ist technisch verifiziert und wartet auf reguläre Review-/Mergefreigabe. Evidence: PR #1354 Functional Head `da1bbb5f3495db553b407ba29f76dc4296b3c290`; Supply Chain `40195165377`, FanMind CI `40195165393`, Browser E2E `40195165361`, CodeQL `40195165397` und Mobile CI `40195165373` PASS; kein Merge, Deployment oder geschützter Zustand wurde verändert.
+- 2026-10-25 — Integrationsstatus: Draft-PR #1355 bündelt die vollständig geprüfte Support-Kette #1351–#1354 aus dem kumulativen Baseline-Head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc` direkt gegen `main`; vor jeder Mergefreigabe bleiben vollständige Exact-Head-CI, unabhängiger R3-Gegencheck und eine explizite menschliche Entscheidung zur bis `2026-11-08T12:40:47Z` befristeten Mobile-Ausnahme erforderlich. Kein Merge, Deployment oder geschützter Zustandswechsel wurde autorisiert.

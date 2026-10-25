@@ -298,8 +298,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     playFeatureGraphic,
   };
 
-  assert.equal(mobilePackage.devDependencies.sharp, "0.35.4");
-  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.4");
+  assert.equal(mobilePackage.devDependencies.sharp, "0.35.5");
+  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.5");
   assert.equal(playIcon[25], 6);
   assert.equal(playFeatureGraphic[25], 2);
 
@@ -477,3 +477,4 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     /store_play_assets_not_confirmed/u,
   );
 });
+

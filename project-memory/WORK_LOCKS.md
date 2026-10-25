@@ -1355,3 +1355,55 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Source handoff:268/268 focused plus coverage269/269; independent291/291 +1296 dimension pairs/stale retries/current retries +9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Source lock released; final Draft/head/Required CI and independent CI readback in PR metadata. Receipt receipts/chatadmin-communication-dimensions-20261017.md.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
+- Task: FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR / Issue #1350
+- Status: RELEASED_FOR_PR
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; stacked source base PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`.
+- Scope: source-only confirmed Facebook/Instagram message-sync restart with server-derived tenant binding, durable pre-action audit, replay protection, shared rate limit and exact postcheck.
+- Forbidden: schema APPLY, feature-flag activation, Staging/Production/provider execution, OAuth/permission/credential mutation, disconnect, WhatsApp repair, automatic send, secret access and direct main writes.
+- Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; focused orchestrator/audit checks PASS; both emitted exact-head workflows PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
+- Release reason: source is review-ready and remains default-off. Isolated Staging schema/runtime acceptance is not part of this released source lock and needs a separate protected preflight.
+- Recovery: ordinary repository revert before activation. Any later Staging test must use synthetic data, exact reviewed commit and cleanup/reconciliation evidence.
+
+## LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
+- Task: FM-SUPPORT-1350-STAGING-PREFLIGHT / Issue #1350 / PR #1352
+- Status: RELEASED_FOR_PR
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; stacked PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`; starting PR #1352 head `7b7f4f2902f5acac3244b7e0f64efa27fb1b605c`.
+- Scope: repository-only current-state review, synthetic mock/integration coverage and exact protected Staging acceptance preparation for the existing confirmed Facebook/Instagram message-sync repair.
+- Forbidden: merge, workflow dispatch, SQL/schema APPLY, flag activation, Staging/Production/provider/customer mutation, OAuth/credential/permission action, WhatsApp repair, external send, secret access and direct main write.
+- Evidence: source head `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`; focused Node 24 harness 16/16 PASS; Project Memory Quality run 40188902434 PASS; FanMind God Mode Gate run 40188902423 PASS; independent R3 countercheck PASS with P0/P1/P2/P3 = 0/0/0. Exact PostgreSQL/Staging/browser/provider evidence remains NOT_RUN.
+- Release reason: repository-only preflight and repair hardening are review-ready. This release does not authorize or claim schema installation, feature activation, Staging runtime or provider repair.
+- Recovery: source-only revert before any later activation. A later protected run must use isolated synthetic data, preserve the previous flag/schema state and prove cleanup/reconciliation.
+
+## LOCK-FM-SUPPORT-COMBINED-CI-20261025
+- Task: FM-SUPPORT-1350-COMBINED-CI-20261025 / Issue #1350 / PRs #1351 and #1352
+- Status: SUPERSEDED by LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025 / PR #1355
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`; starting PR #1352 head `2e866b8485b92b763d0eaf64fed6cc5c99db03fc`.
+- Scope: one combined support merge-candidate verification with local synthetic Browser E2E, full applicable main-target CI, task-scoped repair and final release-chain/Staging-plan reconciliation.
+- Allowed PR metadata action: temporarily retarget #1352 from its exact #1351 head branch to `main` solely to trigger combined exact-head CI, then restore the original base before release.
+- Forbidden: merge/auto-merge, workflow dispatch, deploy, SQL/schema execution, feature activation outside isolated CI, provider/customer mutation, OAuth/credential/permission action, WhatsApp repair, external send, secret access and direct main write.
+- Evidence required: exact combined head/full applicable CI, Browser E2E with zero provider egress, audit/tenant/replay/rate regression tests, independent R3 countercheck, restored stacked dependency and executable target/checksum/rollback preflight.
+- Recovery: restore #1352 base to `feature/website-support-1350-foundation`; source-only revert for test regressions; no external runtime state is touched.
+- Evidence: support code/test defects and the two Browser-test URL-anchor review findings were corrected through source head `9b6508f0787d0d1d434fb916244e777121298914`; Browser E2E, build, focused support tests, CodeQL, Landing and governance gates pass. Full CI remains red only for unrelated Capacity checksum drift and time-dependent dependency advisories.
+- Disposition: the Capacity and Supply-Chain blockers were repaired in #1353 and #1354. Their cumulative reviewed head is carried forward only through PR #1355 under LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025; the old base-first merge path is not resumed. No merge or protected action is approved from this historical lock.
+
+
+
+## LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025
+- Task: prepare one cumulative integration candidate for PRs #1351, #1352, #1353 and #1354.
+- Status: RELEASED_FOR_PR
+- Risk: R3
+- Holder: FanMind Builder / connected GitHub
+- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; branch `integration/support-release-20261025`; PR #1355.
+- Scope: preserve the reviewed cumulative Support, Capacity and Supply-Chain tree; add only the integration security-decision template, exact Staging preflight binding and required R3 coordination/receipt evidence.
+- Forbidden: merge or auto-merge, deployment, SQL/schema APPLY, feature-flag activation, provider/customer action, secret or permission access, Mobile-risk acceptance, direct main write, predecessor PR closure or branch deletion.
+- Evidence required: current main/head comparison; exact-head FanMind CI, Supply Chain, Browser E2E, CodeQL, Mobile CI, Mobile Native CI and governance workflows; independent R3 countercheck; explicit human Mobile-risk decision bound to the unchanged final head before any separately authorized merge.
+- Release reason: the candidate is isolated in Draft PR #1355 and no protected action is performed. The exact final receipt commit and workflow results are bound externally in PR metadata/review because a repository file cannot self-reference the commit that contains it.
+- Recovery: before merge, close or supersede PR #1355 and leave main unchanged; after a separately authorized merge, use a reviewed revert of the exact merge commit. No schema, flag, Staging, Production, provider or customer state is changed by this lock.

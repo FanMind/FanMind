@@ -605,3 +605,13 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
 - Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
 - Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
+
+## FM-CR-060 — Website support confirmed message-sync repair
+- Date: 2026-10-22; Updated: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Risk: R3 (Auth/workspace/provider-read and audit-schema source)
+- Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
+- Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
+- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all emitted workflows. PR #1352 source head 44a9cd9e2a1313df0c5a90be8ceafe831dc0684e passed its two emitted governance workflows, a 16/16 focused Node 24 harness and independent R3 countercheck with P0/P1/P2/P3 = 0/0/0. No full stacked-PR CI, PostgreSQL, browser, Staging or provider run was available; the audit schema remains unapplied and both flags remain off.
+- Acceptance: source preflight is complete but runtime acceptance remains open. Merge #1351 then #1352 normally, deploy the resulting exact main, classify the isolated Staging schema read-only, and obtain separate target/commit/checksum-bound approvals for schema APPLY, temporary no-provider runtime-negative acceptance and any later provider-positive test.
+
