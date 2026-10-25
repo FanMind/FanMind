@@ -197,7 +197,7 @@ Activation order for the authorized runtime window is fail-closed: first verify 
 | --- | --- | --- |
 | Mobile risk decision | Owner record on PR #1356, exact head `4b4e5edd97842aa79225b2a8052f954f85667f57`, eight residual paths and expiry `2026-11-08T12:40:47Z` | renewal after expiry, Staging or Production acceptance |
 | Source merge | completed merge `7368305db778165d6a6dd8f83265445a6863a25b` with tree equality to reviewed #1356 head | deploy, schema, flags or provider action |
-| Support God Mode preflight | affected contracts/gates, exact target/release, protected producer attestation and recovery; expected protected result `OWNER_REQUIRED`, never inferred `ALLOW` | deployment or later protected steps |
+| Cumulative Staging God Mode preflight | `FM-CONTRACT-SOCIAL-CRM-001` / `FM-IGATE-SOCIAL-CRM-001` and `FM-CONTRACT-REG-ENTITLEMENT-001` / `FM-IGATE-REG-ENTITLEMENT-001`, exact target/release, protected producer attestation and recovery; expected protected result `OWNER_REQUIRED`, never inferred `ALLOW` | deployment or later protected steps |
 | Staging deploy | isolated target and exact merged `main` SHA | database or runtime acceptance |
 | Read-only classification | target, verifier checksum and read-only command | schema APPLY |
 | Schema APPLY | target, deployed SHA, draft checksum and `ABSENT` precondition | feature activation |
@@ -280,6 +280,24 @@ Do not automatically drop an installed audit table after a runtime failure. If r
 
 The post-merge audit reports root zero and Mobile 0 critical, 5 high, 3 moderate, 0 low; the reviewed set is exactly `@expo/cli`, `@expo/code-signing-certificates`, `decode-uri-component`, `expo`, `expo-router`, `node-forge`, `query-string` and `zod`. It reports no unknown package or error. The SBOM contains neither `image-size` nor `uuid` and contains exactly `metro@0.84.5` and `ob1@0.84.5`.
 
+## Capacity registration and lifecycle preflight
+
+Capacity is bound to `FM-CONTRACT-REG-ENTITLEMENT-001` and `FM-IGATE-REG-ENTITLEMENT-001`. Both remain `REGISTERED`; this is registry presence, not target acceptance. The gate requires permanent, future-temporary and blocked lifecycle evidence, login/direct-read authorization countercheck and cleanup/recovery proof.
+
+The checked-in manifest `docs/operations/ai-capacity-staging-integration.json` has `apply: disabled` and pins the controlled Capacity SQL, activation gates, reserve/settle SQL, Staging preflight, recovery document, workflow, policy and tests by SHA-256. None of those files is changed by this post-merge documentation PR.
+
+| ID | Evidence / phase | Class | Exact evidence | Result | Remaining requirement |
+| --- | --- | --- | --- | --- | --- |
+| CAP-REG-01 | Contract and gate registration | SOURCE_REVIEW | `FM-CONTRACT-REG-ENTITLEMENT-001`; `FM-IGATE-REG-ENTITLEMENT-001` | PASS for presence | Still requires target-bound `VERIFIED` evidence before acceptance |
+| CAP-CI-01 | Capacity operations and policy regression | INTEGRATION_TEST | exact-head FanMind CI `40214706476`, job `121233223530`, Operations tests PASS | PASS | Not Staging runtime evidence |
+| CAP-PG-01 | grant → reserve → settle → release → reconciliation | INTEGRATION_TEST | exact-head FanMind CI `40214706476`, PostgreSQL 17 job `121233223781`, Capacity lifecycle step PASS | PASS | Isolated CI database only |
+| CAP-AUTH-01 | permanent, future-temporary and blocked entitlement; login/direct-read denial | STAGING_RUNTIME | exact deployed release and synthetic identities | NOT_RUN | target-bound countercheck with no customer identity |
+| CAP-REC-01 | cleanup and recovery | STAGING_RUNTIME | baseline counts, exact synthetic IDs, released reservations/grants, zero residue and `docs/operations/AI_CAPACITY_STAGING_RECOVERY.md` | NOT_RUN | independent cleanup/recovery proof |
+| CAP-SCHEMA-01 | controlled Capacity SQL or activation gate | STAGING_RUNTIME | pinned manifest and exact target | NOT_RUN / APPLY_DISABLED | distinct schema authorization; never bundled with Support audit APPLY |
+| CAP-PROVIDER-01 | provider or Billing-positive behavior | PROVIDER_TEST | separately reviewed sandbox plan | NOT_RUN | excluded from this phase |
+
+A later cumulative Staging preflight must carry both the Social/CRM and Registration/Entitlement contracts and gates. Repository PASS rows cannot satisfy CAP-AUTH-01 or CAP-REC-01. Any Capacity schema change, activation or real entitlement/customer mutation is a separate protected action with its own exact checksum, target, recovery and human authorization.
+
 ## Earlier repository evidence (2026-10-25)
 
 Tested source commit: `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`.
@@ -322,6 +340,6 @@ Open protected prerequisites:
 - retain provider-positive acceptance as a separate action using a reviewed Meta sandbox identity;
 - reassess H1-H5 and M1-M3 before `2026-11-08T12:40:47Z`; no automatic extension is allowed.
 
-Current blockers are Support-specific protected authorization and target evidence, not repository-source ambiguity. The checked-in `RELEASE_DECISION.json` is a conservative `BLOCK` for the separate `FM-CREATOR-001` disclosure/delete scope; it is neither a Support authorization nor an unrelated Support veto. Before any Support Staging action, a fresh Support-specific God Mode evaluation must bind the affected contracts and gates, exact release, exact target, protected-producer attestation, negative evidence and recovery. Because deployment is protected, the technically complete expected result is `OWNER_REQUIRED`, not inferred `ALLOW`. Staging runtime, schema state, flag state, rollback execution and provider behavior remain `NOT_RUN`.
+Current blockers are Support-specific protected authorization and target evidence, not repository-source ambiguity. The checked-in `RELEASE_DECISION.json` is a conservative `BLOCK` for the separate `FM-CREATOR-001` disclosure/delete scope; it is neither a Support authorization nor an unrelated Support veto. Before any cumulative Staging action, a fresh target-specific God Mode evaluation must bind both `FM-CONTRACT-SOCIAL-CRM-001` / `FM-IGATE-SOCIAL-CRM-001` and `FM-CONTRACT-REG-ENTITLEMENT-001` / `FM-IGATE-REG-ENTITLEMENT-001`, the exact release, exact target, protected-producer attestation, negative evidence and recovery. Because deployment is protected, the technically complete expected result is `OWNER_REQUIRED`, not inferred `ALLOW`. Staging runtime, schema state, flag state, rollback execution and provider behavior remain `NOT_RUN`.
 
 The next safe step is to prepare and obtain human authorization for that exact Support God Mode preflight and deployment boundary. Only after its requirements are satisfied may exact `7368305db778165d6a6dd8f83265445a6863a25b` be deployed to isolated Staging, followed by release/flag verification and the separately authorized read-only classifier. No schema APPLY or flag activation is bundled with deployment.
