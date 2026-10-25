@@ -1388,3 +1388,4 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Merge recommendation: NOT_READY until both independent blockers are repaired under their own tasks and this exact support chain receives fresh full CI. Staging runtime and provider tests remain NOT_RUN.
 - Exact next step: restore #1352 base to `feature/website-support-1350-foundation`; repair the Capacity checksum and dependency audit separately, then rerun complete combined main-target CI without changing support semantics.
 
+- 2026-10-25 — Blocker: Der Capacity-Source-/Schema-CI-Blocker der Support-PR-Kette ist behoben; die kombinierte Kette bleibt ausschließlich wegen des separat zu bearbeitenden Supply-Chain-Blockers nicht mergebereit. Evidence: PR #1353 Source-Head `107c5cc68f5f76684f976e86e1f5d4f53d80fbab`, FanMind CI `40192860638` PASS einschließlich Operations, Test-Coverage und PostgreSQL-17-Capacity-Lifecycle.
