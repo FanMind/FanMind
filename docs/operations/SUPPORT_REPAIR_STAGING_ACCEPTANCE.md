@@ -10,7 +10,7 @@ Status: repository-only R3 preparation. This runbook does not authorize executio
 - #1353 Capacity correction head: `8c8e904abf82421c1be9c9e93c884639c7e43d36`.
 - #1354 independently reviewed cumulative head: `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`.
 - Integration PR #1355 branch: `integration/support-release-20261025`, based byte-for-byte on the reviewed #1354 head before this documentation-only binding commit and targeting `main`.
-- The exact final integration head must be read from PR #1355 after this commit and must have complete exact-head CI plus an independent R3 countercheck. The PR body is the immutable head/evidence binding; a source file cannot self-reference the SHA of the commit that contains it.
+- The exact final integration head must be read from PR #1355 after this commit and must have complete exact-head CI plus an independent R3 countercheck. Immutable evidence is the workflow run head SHA plus a commit-bound human review or comment; the mutable PR body is descriptive metadata and cannot substitute for that binding. A source file cannot self-reference the SHA of the commit that contains it.
 - The former base-first merge sequence is prohibited because #1351 through #1353 would expose known vulnerable or red intermediate trees on `main`. Only the cumulative integration candidate may proceed to human merge review.
 - Protected execution must use the exact authorized merge result from PR #1355 after that exact `main` is deployed to isolated Staging.
 - A later commit, rebase, base change, schema change, authorization change, Mobile audit change or flag change invalidates prior evidence and requires a fresh review.

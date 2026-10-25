@@ -1382,7 +1382,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-SUPPORT-COMBINED-CI-20261025
 - Task: FM-SUPPORT-1350-COMBINED-CI-20261025 / Issue #1350 / PRs #1351 and #1352
-- Status: BLOCKED
+- Status: SUPERSEDED by LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025 / PR #1355
 - Risk: R3
 - Holder: FanMind Builder / connected GitHub
 - Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; PR #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`; starting PR #1352 head `2e866b8485b92b763d0eaf64fed6cc5c99db03fc`.
@@ -1392,7 +1392,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Evidence required: exact combined head/full applicable CI, Browser E2E with zero provider egress, audit/tenant/replay/rate regression tests, independent R3 countercheck, restored stacked dependency and executable target/checksum/rollback preflight.
 - Recovery: restore #1352 base to `feature/website-support-1350-foundation`; source-only revert for test regressions; no external runtime state is touched.
 - Evidence: support code/test defects and the two Browser-test URL-anchor review findings were corrected through source head `9b6508f0787d0d1d434fb916244e777121298914`; Browser E2E, build, focused support tests, CodeQL, Landing and governance gates pass. Full CI remains red only for unrelated Capacity checksum drift and time-dependent dependency advisories.
-- Resume condition: separate bounded fixes for both independent blockers, then fresh full combined CI and independent R3 readback on the unchanged/restored PR chain. No merge is approved from this lock.
+- Disposition: the Capacity and Supply-Chain blockers were repaired in #1353 and #1354. Their cumulative reviewed head is carried forward only through PR #1355 under LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025; the old base-first merge path is not resumed. No merge or protected action is approved from this historical lock.
 
 
 
