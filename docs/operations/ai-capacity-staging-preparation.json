@@ -11,7 +11,7 @@
     "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
     "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
     "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
-    "scripts/operations/ai-capacity-staging-preflight.sql": "b512a0411b9298f7baa1fd4de75b5283c278390aeb42310041e7a5b87287e2e6",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "425534149472e5fc6bfabd1cd8fc8bf35bb6078dc425d2a4fba3aa24c7ede286",
     "scripts/operations/ai-capacity-staging-preflight-preparation.mjs": "8a97817f383393c14674cd7b189bfd7a5d9c979c2500faff9545cdd9af434b6d",
     "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md": "97f1029afd1fb906dbec578f7b60032136022002c9030cb246776a012f1a5f65",
     "src/lib/stagingDatabaseRolloutStatePolicy.mjs": "123dcae82803d3c33834e617006f28d854760384c2275cb214a4afe79fdcb463",

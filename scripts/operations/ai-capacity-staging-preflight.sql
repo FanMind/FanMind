@@ -91,12 +91,12 @@ select jsonb_build_object(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
       and a.attname='package_199_budget_eur_microcents'
-      and pg_get_expr(d.adbin,d.adrelid)='3000000000::bigint'),
+      and pg_get_expr(d.adbin,d.adrelid)='''3000000000''::bigint'),
   'policy_package_312_budget_default_matches',exists(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
       and a.attname='package_312_budget_eur_microcents'
-      and pg_get_expr(d.adbin,d.adrelid)='5000000000::bigint'),
+      and pg_get_expr(d.adbin,d.adrelid)='''5000000000''::bigint'),
   'foundation_table_count',(select count(*) from table_profiles),
   'unexpected_capacity_relations_absent',not exists(select 1 from pg_class c
     join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
