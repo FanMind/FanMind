@@ -1361,4 +1361,4 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
 - Boundary: no database APPLY, runtime flag activation, provider execution, Production/Staging mutation, credentials, permissions, disconnect, WhatsApp repair or automatic external message.
 - Completion gate: exact-head CI plus independent R3 countercheck. Isolated Staging schema/runtime acceptance is a later separately authorized protected step.
-- Next: complete exact-head CI and independent R3 countercheck for PR #1352; if both pass, keep runtime/schema activation blocked pending a separately authorized isolated-Staging preflight.
+- Exact next step: complete exact-head CI and independent R3 countercheck for PR #1352; if both pass, keep runtime/schema activation blocked pending a separately authorized isolated-Staging preflight.
