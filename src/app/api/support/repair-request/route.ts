@@ -143,8 +143,14 @@ export async function POST(request: NextRequest) {
       syncMessages: async (selectedPlatform) => {
         const sync =
           selectedPlatform === "facebook"
-            ? await syncFacebookMessengerHistory({ revalidate: true })
-            : await syncInstagramMessengerHistory({ revalidate: true });
+            ? await syncFacebookMessengerHistory({
+                revalidate: true,
+                expectedConnectionId: connection.id,
+              })
+            : await syncInstagramMessengerHistory({
+                revalidate: true,
+                expectedConnectionId: connection.id,
+              });
         return {
           ok: sync.ok,
           continuationPending: sync.continuationPending,

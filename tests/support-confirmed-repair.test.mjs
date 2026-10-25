@@ -122,9 +122,25 @@ test("route audits before execution and keeps protected actions out", () => {
   assert.match(route, /body\.confirmed !== true/u);
   assert.match(route, /body\.requestId/u);
   assert.match(route, /restart_message_sync/u);
+  assert.match(route, /expectedConnectionId: connection\.id/u);
   assert.doesNotMatch(route, /renew_authorization|replace_credentials/u);
   assert.match(route, /maxRequests:\s*1/u);
   assert.match(route, /windowMs:\s*15 \* 60 \* 1000/u);
+});
+
+test("sync entrypoints bind provider work to the exact connection", () => {
+  const facebook = readFileSync(
+    "src/app/channels/facebookWebhookActions.ts",
+    "utf8",
+  );
+  const instagram = readFileSync(
+    "src/app/channels/instagramWebhookActions.ts",
+    "utf8",
+  );
+  for (const source of [facebook, instagram]) {
+    assert.match(source, /input\?\.expectedConnectionId/u);
+    assert.match(source, /entry\.id === expectedConnectionId/u);
+  }
 });
 
 test("audit transition and draft schema block replay", () => {

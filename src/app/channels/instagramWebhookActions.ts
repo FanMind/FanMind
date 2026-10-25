@@ -49,11 +49,14 @@ export type InstagramMessengerSyncResult = SocialSyncResult & {
 
 export async function syncInstagramMessengerHistory(input?: {
   contactId?: string;
+  expectedConnectionId?: string;
   markInboundSeen?: boolean;
   revalidate?: boolean;
 }): Promise<InstagramMessengerSyncResult> {
   const syncedAt = new Date().toISOString();
-  const { connection, error } = await getCurrentInstagramConnection();
+  const { connection, error } = await getCurrentInstagramConnection(
+    input?.expectedConnectionId,
+  );
   if (error || !connection)
     return syncError(syncedAt, error ?? "Instagram-Verbindung fehlt.");
   return syncInstagramMessengerHistoryForConnection(connection, {
@@ -344,7 +347,7 @@ function syncError(
   };
 }
 
-async function getCurrentInstagramConnection() {
+async function getCurrentInstagramConnection(expectedConnectionId?: string) {
   const { data } = await getSupabaseServerUser();
   if (!data.user) return { connection: null, error: "Nicht angemeldet." };
   const workspaceResult = await getUserWorkspaceDashboard(data.user);
@@ -385,7 +388,9 @@ async function getCurrentInstagramConnection() {
     connection:
       connectionsResult.connections.find(
         (entry) =>
-          entry.platform === "instagram" && entry.status === "connected",
+          entry.platform === "instagram" &&
+          entry.status === "connected" &&
+          (!expectedConnectionId || entry.id === expectedConnectionId),
       ) ?? null,
     error: null,
   };

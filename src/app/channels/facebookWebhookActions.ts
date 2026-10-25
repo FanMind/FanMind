@@ -627,11 +627,14 @@ function normalizeFacebookCommentAttachmentType(
 
 export async function syncFacebookMessengerHistory(input?: {
   contactId?: string;
+  expectedConnectionId?: string;
   markInboundSeen?: boolean;
   revalidate?: boolean;
 }): Promise<FacebookMessengerSyncResult> {
   const syncedAt = new Date().toISOString();
-  const { connection, error } = await getCurrentFacebookConnection();
+  const { connection, error } = await getCurrentFacebookConnection(
+    input?.expectedConnectionId,
+  );
   if (error || !connection)
     return syncError(syncedAt, error ?? "Facebook-Verbindung fehlt.");
   return syncFacebookMessengerHistoryForConnection(connection, {
@@ -1251,7 +1254,7 @@ async function getSafeTokenScopeNames(token: string | null): Promise<string[]> {
   }
 }
 
-async function getCurrentFacebookConnection() {
+async function getCurrentFacebookConnection(expectedConnectionId?: string) {
   const { data } = await getSupabaseServerUser();
   if (!data.user) return { connection: null, error: "Nicht angemeldet." };
   const workspaceResult = await getUserWorkspaceDashboard(data.user);
@@ -1291,7 +1294,9 @@ async function getCurrentFacebookConnection() {
     connection:
       connectionsResult.connections.find(
         (entry) =>
-          entry.platform === "facebook" && entry.status === "connected",
+          entry.platform === "facebook" &&
+          entry.status === "connected" &&
+          (!expectedConnectionId || entry.id === expectedConnectionId),
       ) ?? null,
     error: null,
   };
