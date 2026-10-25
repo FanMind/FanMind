@@ -608,9 +608,10 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-060 — Website support confirmed message-sync repair
 - Date: 2026-10-22; Updated: 2026-10-25
-- Status: IN_PROGRESS; source review remains complete, repository-only synthetic Staging preflight preparation active
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
 - Risk: R3 (Auth/workspace/provider-read and audit-schema source)
 - Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
 - Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
-- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all nine workflows before this increment. PR #1352 head a78282257d6b8a11aba7be7675716db340c9eb49 passed both emitted exact-head workflows and an independent R3 countercheck with P0/P1/P2 = 0/0/0. The audit schema remains unapplied and no runtime/provider action was executed.
-- Acceptance: source tests and all required exact-head checks pass; independent review confirms tenant/auth/audit ordering and negative paths; later isolated Staging installs the reviewed audit schema and validates one synthetic confirmed repair before any activation claim.
+- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all emitted workflows. PR #1352 source head 44a9cd9e2a1313df0c5a90be8ceafe831dc0684e passed its two emitted governance workflows, a 16/16 focused Node 24 harness and independent R3 countercheck with P0/P1/P2/P3 = 0/0/0. No full stacked-PR CI, PostgreSQL, browser, Staging or provider run was available; the audit schema remains unapplied and both flags remain off.
+- Acceptance: source preflight is complete but runtime acceptance remains open. Merge #1351 then #1352 normally, deploy the resulting exact main, classify the isolated Staging schema read-only, and obtain separate target/commit/checksum-bound approvals for schema APPLY, temporary no-provider runtime-negative acceptance and any later provider-positive test.
+
