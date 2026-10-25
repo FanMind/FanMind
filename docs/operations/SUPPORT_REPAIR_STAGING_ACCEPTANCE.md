@@ -197,6 +197,7 @@ Activation order for the authorized runtime window is fail-closed: first verify 
 | --- | --- | --- |
 | Mobile risk decision | Owner record on PR #1356, exact head `4b4e5edd97842aa79225b2a8052f954f85667f57`, eight residual paths and expiry `2026-11-08T12:40:47Z` | renewal after expiry, Staging or Production acceptance |
 | Source merge | completed merge `7368305db778165d6a6dd8f83265445a6863a25b` with tree equality to reviewed #1356 head | deploy, schema, flags or provider action |
+| Support God Mode preflight | affected contracts/gates, exact target/release, protected producer attestation and recovery; expected protected result `OWNER_REQUIRED`, never inferred `ALLOW` | deployment or later protected steps |
 | Staging deploy | isolated target and exact merged `main` SHA | database or runtime acceptance |
 | Read-only classification | target, verifier checksum and read-only command | schema APPLY |
 | Schema APPLY | target, deployed SHA, draft checksum and `ABSENT` precondition | feature activation |
@@ -321,6 +322,6 @@ Open protected prerequisites:
 - retain provider-positive acceptance as a separate action using a reviewed Meta sandbox identity;
 - reassess H1-H5 and M1-M3 before `2026-11-08T12:40:47Z`; no automatic extension is allowed.
 
-Current blockers are external target evidence and authorization, not repository-source ambiguity. God Mode's checked-in `RELEASE_DECISION.json` remains `BLOCK`; the relevant social/CRM and registration/entitlement gates remain `REGISTERED` without target evidence. Staging runtime, schema state, flag state, rollback execution and provider behavior therefore remain `NOT_RUN`.
+Current blockers are Support-specific protected authorization and target evidence, not repository-source ambiguity. The checked-in `RELEASE_DECISION.json` is a conservative `BLOCK` for the separate `FM-CREATOR-001` disclosure/delete scope; it is neither a Support authorization nor an unrelated Support veto. Before any Support Staging action, a fresh Support-specific God Mode evaluation must bind the affected contracts and gates, exact release, exact target, protected-producer attestation, negative evidence and recovery. Because deployment is protected, the technically complete expected result is `OWNER_REQUIRED`, not inferred `ALLOW`. Staging runtime, schema state, flag state, rollback execution and provider behavior remain `NOT_RUN`.
 
-The next safe protected step is a separately authorized deployment of the exact merge to isolated Staging, followed by release/flag verification and the read-only classifier. No schema APPLY or flag activation is bundled with that step.
+The next safe step is to prepare and obtain human authorization for that exact Support God Mode preflight and deployment boundary. Only after its requirements are satisfied may exact `7368305db778165d6a6dd8f83265445a6863a25b` be deployed to isolated Staging, followed by release/flag verification and the separately authorized read-only classifier. No schema APPLY or flag activation is bundled with deployment.
