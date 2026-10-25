@@ -113,6 +113,8 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       ["known activation-gate migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000001','ai_capacity_billing_v2_activation_gates');","capacity_activation_gate_migration_marker_absent"],
       ["known lifecycle migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000002','ai_capacity_reserve_settle');","capacity_lifecycle_migration_marker_absent"],
       ["unknown generic migration marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000003','capacity_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown foundation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000004','ai_capacity_billing_v2_unreviewed');","capacity_unknown_migration_marker_absent"],
+      ["unknown activation-prefix marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000005','ai_capacity_billing_v2_activation_gates_unreviewed');","capacity_unknown_migration_marker_absent"],
     ]) await t.test(`blocks ${name}`,()=>{
       fresh(); sql(mutation); const result=evaluate(); assert.equal(result.state,"BLOCK"); assert.ok(result.failures.includes(key),JSON.stringify(result));
     });

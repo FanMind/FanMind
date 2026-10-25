@@ -67,7 +67,9 @@ with table_profiles as (
     'tables',(select jsonb_agg(profile order by relname) from table_profiles),
     'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
 ), capacity_migration_markers as (
-  select lower(concat_ws(' ',version,coalesce(name,''))) marker
+  select
+    regexp_replace(regexp_replace(lower(coalesce(name,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_name,
+    regexp_replace(regexp_replace(lower(coalesce(version,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_version
   from supabase_migrations.schema_migrations
   where coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
      or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
@@ -133,19 +135,20 @@ select jsonb_build_object(
        or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'),
   'capacity_foundation_migration_marker_absent',not exists(
     select 1 from capacity_migration_markers
-    where marker ~ 'ai[_ -]?capacity.*billing.*v2'
-      and marker !~ 'activation.*gates?'),
+    where marker_name='ai_capacity_billing_v2' or marker_version='ai_capacity_billing_v2'),
   'capacity_activation_gate_migration_marker_absent',not exists(
     select 1 from capacity_migration_markers
-    where marker ~ 'ai[_ -]?capacity.*billing.*v2.*activation.*gates?'),
+    where marker_name='ai_capacity_billing_v2_activation_gates'
+       or marker_version='ai_capacity_billing_v2_activation_gates'),
   'capacity_lifecycle_migration_marker_absent',not exists(
     select 1 from capacity_migration_markers
-    where marker ~ 'ai[_ -]?capacity.*reserve.*settle'),
+    where marker_name='ai_capacity_reserve_settle' or marker_version='ai_capacity_reserve_settle'),
   'capacity_unknown_migration_marker_absent',not exists(
     select 1 from capacity_migration_markers
-    where not (marker ~ 'ai[_ -]?capacity.*billing.*v2' and marker !~ 'activation.*gates?')
-      and marker !~ 'ai[_ -]?capacity.*billing.*v2.*activation.*gates?'
-      and marker !~ 'ai[_ -]?capacity.*reserve.*settle'),
+    where marker_name not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+        'ai_capacity_reserve_settle')
+      and marker_version not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+        'ai_capacity_reserve_settle')),
   'policy_row_count',(select count(*) from public.ai_capacity_admin_policy),
   'policy',(select jsonb_build_object('singleton_id',singleton_id,'revision',revision,
     'package_99_budget_eur_microcents',package_99_budget_eur_microcents,
