@@ -223,8 +223,8 @@ Do not automatically drop an installed audit table after a runtime failure. If r
 
 ## Executed repository evidence (2026-10-25)
 
-Tested source commit: `64311c6512b5da6a33dbed7b17cd2b10d54cf51a`.
-Environment: local isolated checkout, Node `v24.19.0`, no database, browser, Staging target or provider network. The registered test imports the repository `typescript` dev dependency, which was unavailable in this checkout. Therefore the identical test body was executed through Node 24 native type stripping; the only harness substitution was the TypeScript loader. Command/log: `node --experimental-strip-types --test tests/support-confirmed-repair.node24.test.mjs`, 16 passed, 0 failed, duration 117 ms. The temporary harness is not committed.
+Tested source commit: `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`.
+Environment: local isolated checkout, Node `v24.19.0`, no database, browser, Staging target or provider network. The registered test imports the repository `typescript` dev dependency, which was unavailable in this checkout. Therefore the identical test body was executed through Node 24 native type stripping; the only harness substitution was the TypeScript loader. Command/log: `node --experimental-strip-types --test tests/support-confirmed-repair.node24.test.mjs`, 16 passed, 0 failed, duration 100 ms. The temporary harness is not committed.
 
 | Test name and purpose | Class | Synthetic input | Expected / actual | Result |
 | --- | --- | --- | --- | --- |
