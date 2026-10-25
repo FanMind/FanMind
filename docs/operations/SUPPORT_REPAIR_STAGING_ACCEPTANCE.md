@@ -6,7 +6,7 @@ Status: repository-only R3 preparation. This runbook does not authorize executio
 
 - Canonical `main` observed at preparation start: `109c0274c867d5ff8128196b50c585fb9833972f`.
 - Foundation PR: #1351, head `556ec86488ccd9cc815804e23fb4c6761c792bfa`, base `main`.
-- Repair PR: #1352, starting head `7b7f4f2902f5acac3244b7e0f64efa27fb1b605c`, base `feature/website-support-1350-foundation`.
+- Repair PR: #1352, original reported head `2e866b8485b92b763d0eaf64fed6cc5c99db03fc`, base `feature/website-support-1350-foundation`; the Browser E2E increment is commit `a379a343d4f730476d7316f8e0b58c9f9858dc52`.
 - Protected execution must use a new exact reviewed commit after #1351 and #1352 are merged in order and that exact `main` is deployed to isolated Staging.
 - A later commit, rebase, base change, schema change, authorization change or flag change invalidates prior source evidence and requires a fresh review.
 
@@ -53,8 +53,31 @@ The later protected run must bind all evidence to:
 - SQL source: `docs/operations/sql/support_repair_audit_draft.sql`;
 - read-only classifier: `docs/operations/sql/support_repair_audit_verify.sql`;
 - feature flags, initially and finally:
+  - `NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=false`;
   - `FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED=false`;
   - `FANMIND_INAPP_HELP_REPAIR_ENABLED=false`.
+
+The isolated Browser E2E build is the only prepared environment where `NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true`; its diagnostics and repair endpoints are intercepted and Meta Graph requests are blocked. This build-time test setting is not a Staging activation.
+
+## Exact SQL artifacts
+
+Before any protected target action, recompute with `sha256sum` and stop on any mismatch:
+
+| Artifact | Reviewed SHA-256 |
+| --- | --- |
+| `docs/operations/sql/support_repair_audit_draft.sql` | `6afedb605fbe71e99f0d1c1b53bd088f7011da6f4e7d1d96cdc5182067dc661a` |
+| `docs/operations/sql/support_repair_audit_verify.sql` | `87918c38dd8ca31ef72c982d4f01ea17a0dd07ca897e18bfd21d081af3219168` |
+
+The APPLY checksum authorizes only the exact draft SQL on the named isolated Staging project. It grants no authority for Production, a different project or a modified file.
+
+## Release and merge sequence
+
+1. Confirm #1351 still has head `556ec86488ccd9cc815804e23fb4c6761c792bfa`, targets the current `main`, has no unresolved review or conflict, and has green exact-head required CI.
+2. Confirm #1352 targets `feature/website-support-1350-foundation` at that exact #1351 head, has no unresolved review or conflict, and its final exact head has green combined main-target CI plus independent R3 countercheck.
+3. With a separate owner merge approval, merge #1351 first. Record the resulting immutable `main` SHA.
+4. Rebase or retarget #1352 only if GitHub requires it after #1351; any content-changing head invalidates the prior exact-head CI/review and requires both again.
+5. With a separate owner merge approval and current green evidence, merge #1352 second. Record `<EXACT_MERGED_MAIN_SHA>`.
+6. Stop. Deployment, schema APPLY and flag activation remain three separately controlled actions; merging does not authorize any of them.
 
 Do not print connection strings, service keys, access tokens, cookies or provider payloads. Protected credentials must be supplied only by the approved environment.
 
@@ -81,6 +104,9 @@ Do not print connection strings, service keys, access tokens, cookies or provide
 | RATE-01 | MOCK_TEST | Shared limit denied | limiter denies | zero audit and provider calls |
 | UI-01 | SOURCE_REVIEW | Explicit consent | unchecked and checked UI states | request is possible only after checkbox confirmation |
 | UI-02 | SOURCE_REVIEW | Customer explanation | error, action, success and failure copy | clear coarse text without secrets or raw provider diagnostics |
+| UI-E2E-01 | INTEGRATION_TEST | Explicit browser consent | local authenticated fixture, mocked Instagram sync error | action disabled before checkbox; one minimal repair request after confirmation |
+| UI-E2E-02 | INTEGRATION_TEST | Verified browser result | mocked `{verified:true,status:succeeded}` response | success copy shown only for verified success; zero Meta requests |
+| UI-E2E-03 | INTEGRATION_TEST | Unverified browser result | mocked `verification_failed` response | failure guidance shown and success absent; zero Meta requests and no sensitive text |
 
 The exact test name, commit, environment, input, expected result, actual result, log reference and `PASS|FAIL|INCONCLUSIVE|NOT_RUN` must be recorded for each row.
 
@@ -138,7 +164,7 @@ Use only generated synthetic UUIDs. Do not use real users, customer workspaces, 
 
 ## Protected runtime-negative acceptance
 
-This is a later, separately authorized Staging action. It must start with both flags off and use marked synthetic identities only.
+This is a later, separately authorized Staging action. It must start with all three flags off and use marked synthetic identities only.
 
 Required fixtures:
 
@@ -159,6 +185,20 @@ Allowed no-provider checks after temporary flag activation:
 6. first valid synthetic request reaches the expected missing-token failure without network egress and records `started -> failed`;
 7. repeated UUID is rejected without a second provider adapter invocation;
 8. browser responses contain no token, raw provider error or internal database detail.
+
+Activation order for the authorized runtime window is fail-closed: first verify the deployed SHA and installed schema, then enable diagnostics, then the browser launcher, and only then the repair endpoint. After the checks, disable the repair endpoint first, then the launcher and diagnostics. Any unexpected release, flag state, schema state, outbound request or non-synthetic identifier stops the run immediately and starts recovery.
+
+## Required owner approvals
+
+| Boundary | Approval must bind | Not implied |
+| --- | --- | --- |
+| Merge #1351 | PR number, exact head and current CI/review | merge #1352 or deploy |
+| Merge #1352 | PR number, exact head and current combined CI/review | deploy, schema or flags |
+| Staging deploy | isolated target and exact merged `main` SHA | database or runtime acceptance |
+| Read-only classification | target, verifier checksum and read-only command | schema APPLY |
+| Schema APPLY | target, deployed SHA, draft checksum and `ABSENT` precondition | feature activation |
+| Runtime-negative window | target, deployed SHA, synthetic fixtures, three exact flags and zero-provider control | real provider repair |
+| Provider-positive test | separately reviewed Meta sandbox identity and exact request plan | any customer connection or Production action |
 
 Positive `succeeded` runtime evidence is not available in the no-provider phase. It remains `NOT_RUN` until a separately approved Meta sandbox/provider test or a separately reviewed staging-only provider adapter exists. Mock success must never be relabelled as Staging success.
 
@@ -189,14 +229,14 @@ Before any protected run, capture:
 
 - exact deployed release;
 - classifier state and redacted details;
-- both feature-flag states;
+- all three feature-flag states;
 - synthetic fixture identifiers;
 - baseline audit row count for the synthetic workspace;
 - expected zero provider egress.
 
 Recovery order:
 
-1. disable both support flags and restart only the approved Staging application service;
+1. disable all three support flags and restart only the approved Staging application service;
 2. verify the exact release endpoint and both support endpoints return the disabled response;
 3. stop all fixture use and verify zero external provider requests/messages;
 4. remove only marked synthetic fixtures through the approved cleanup path;
@@ -246,6 +286,8 @@ Environment: local isolated checkout, Node `v24.19.0`, no database, browser, Sta
 | read-only classifier safety | SOURCE_REVIEW | verifier SQL | classifier only; no DDL/DML/grants / observed | PASS |
 
 Direct registered-test result: `NOT_RUN` locally because the checkout had no installed `typescript` package. Exact-head GitHub CI remains required. Schema execution, database integration, browser E2E, Staging runtime and provider execution were `NOT_RUN` and must not be inferred from this table.
+
+The added Browser E2E source and workflow guard passed local syntax/static validation at commit `a379a343d4f730476d7316f8e0b58c9f9858dc52`. Actual Playwright execution remains `NOT_RUN` locally and must be evidenced by the exact-head Browser E2E workflow. This distinction prevents source inspection from being presented as browser runtime evidence.
 
 ## Current preparation conclusion
 
