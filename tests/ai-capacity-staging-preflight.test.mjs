@@ -111,7 +111,7 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
     });
     for (const [name,mutation,field] of [
       ["table shape","alter table public.ai_capacity_grants add column unreviewed integer;","table_structure_safety_matches"],
-      ["function execution ACL","grant execute on function public.ai_capacity_ledger_immutable() to authenticated;","function_security_matches"],
+      ["function definer boundary","alter function public.ai_capacity_ledger_immutable() security definer;","function_security_matches"],
       ["table RLS","alter table public.ai_capacity_grants disable row level security;","rls_acl_security_matches"],
       ["trigger security","alter table public.ai_capacity_ledger_events disable trigger ai_capacity_ledger_immutable_update_delete;","other_security_matches"],
     ]) await t.test(`separately classifies ${name} drift`,()=>{

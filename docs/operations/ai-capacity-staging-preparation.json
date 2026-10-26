@@ -11,16 +11,16 @@
     "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
     "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
     "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
-    "scripts/operations/ai-capacity-staging-preflight.sql": "4b1584e744c49c05fe1fd7bee6da7a4b31c2f2692e0d1ef5517403a902802822",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "5c119c077af9dcbd39710d008df6f4791cdf6e17990ec182ac8223b79f7ebc0e",
     "scripts/operations/ai-capacity-staging-preflight-preparation.mjs": "8a97817f383393c14674cd7b189bfd7a5d9c979c2500faff9545cdd9af434b6d",
     "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md": "97f1029afd1fb906dbec578f7b60032136022002c9030cb246776a012f1a5f65",
     "src/lib/stagingDatabaseRolloutStatePolicy.mjs": "123dcae82803d3c33834e617006f28d854760384c2275cb214a4afe79fdcb463",
     "src/lib/metaContentStagingMigrationPolicy.mjs": "ad6e72b6d050bcec058f4515ea21534b122ba866a7b9be8a1ce321a9d0b59a2c",
     "src/lib/environmentBoundaryPolicy.mjs": "ca1cd97162cacb043fda84d76f5fc1a4f152b2f0488a9a5e66f3c063a36f066e",
     "config/certificates/supabase-root-2021-ca.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7",
-    "tests/ai-capacity-staging-preflight.test.mjs": "7f3309c6146803e5c983358241b0c86341ec0f6b39cf497b79b6f13f6c6bc552",
-    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "d639d12644629857e267dcb25d44048a323af0ff50eff4abf8f0649da330d8cd",
-    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "ceb43b773e3dd8df47f8c67ee463e9faa4138c826038373d2e73899e5ba54a99"
+    "tests/ai-capacity-staging-preflight.test.mjs": "3ff6746a9680094323930fa33eefac031dc58cf90904ddbc9dddb84f1012f2f4",
+    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "8b7c2b9f33c81d94b5f66958ab2236731da15802cce636b801886b09befcf7b3",
+    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "a0eb5e8d7fb6229935118a4dbc4a922f76905133385e1f116ddaa0300e91a4e5"
   },
   "expectedObservation": {
     "version": 1,

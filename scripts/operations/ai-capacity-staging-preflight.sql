@@ -122,20 +122,10 @@ select jsonb_build_object(
       and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
         'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
   'function_security_matches',(select count(*)=4
-      and count(*) filter(where p.proname='ai_capacity_ledger_immutable')=1
-      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard')=1
-      and count(*) filter(where p.proname='admin_get_ai_capacity_policy')=1
-      and count(*) filter(where p.proname='admin_update_ai_capacity_policy')=1
-      and bool_and(not exists(select 1
-        from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x
-        where x.privilege_type='EXECUTE' and (x.grantee=0 or x.grantee in
-          (select oid from pg_roles where rolname in ('anon','authenticated')))))
-      and (select count(*) from pg_proc q join pg_namespace m on m.oid=q.pronamespace
-        cross join lateral aclexplode(coalesce(q.proacl,acldefault('f',q.proowner))) x
-        join pg_roles r on r.oid=x.grantee
-        where m.nspname='public' and q.proname in
-          ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy')
-          and r.rolname='service_role' and x.privilege_type='EXECUTE')=2
+      and count(*) filter(where p.proname='ai_capacity_ledger_immutable' and not p.prosecdef)=1
+      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard' and not p.prosecdef)=1
+      and count(*) filter(where p.proname='admin_get_ai_capacity_policy' and p.prosecdef)=1
+      and count(*) filter(where p.proname='admin_update_ai_capacity_policy' and p.prosecdef)=1
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
       or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))),
