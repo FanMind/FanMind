@@ -127,8 +127,9 @@ select jsonb_build_object(
       and count(*) filter(where p.proname='admin_get_ai_capacity_policy')=1
       and count(*) filter(where p.proname='admin_update_ai_capacity_policy')=1
       and bool_and(not has_function_privilege('anon',p.oid,'EXECUTE')
-        and not has_function_privilege('authenticated',p.oid,'EXECUTE')
-        and has_function_privilege('service_role',p.oid,'EXECUTE')=(p.proname like 'admin\_%' escape '\'))
+        and not has_function_privilege('authenticated',p.oid,'EXECUTE'))
+      and count(*) filter(where p.proname like 'admin\_%' escape '\'
+        and has_function_privilege('service_role',p.oid,'EXECUTE'))=2
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
       or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))),
