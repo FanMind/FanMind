@@ -1450,3 +1450,11 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Scope: integrate exact #1345 head 6307861c78460283cd471d89417c0442537cad09 and its linear #1342-#1344 ancestry onto exact main 9d1937ab3895e3a18a34fdafce4f693d8eae9726; keep #1341 diagnostic separate. No competing source writer identified.
 - Recovery: revert the integration merge commit before any later protected action. No external cleanup is required because deployment, schema APPLY, feature activation, provider access and customer-data mutation are excluded.
 - Handoff: source lock released for Draft PR and exact-head R3 verification. Existing installation/runtime locks and fail-closed gates remain authoritative.
+
+## LOCK-FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026
+- Task: FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026; Status: ACTIVE_SOURCE; Holder: FanMind Builder; Risk: R3 repository-only.
+- Base: main `fead9f756a88c59baab6f5d4b1c6d5af5cc00e87`; source diagnostic PR #1341 head `d38670ec73fdbbe4d005ad933ea3f0440dc993c3`; branch `test/chatadmin-known-facts-quality-20261026`.
+- Scope: tests/docs/receipt only for known-fact currentness, explicit withdrawal, redundant broad questions, legitimate detail questions and context-free reply-quality behavior. Existing #1371 current-facts source remains byte-identical.
+- Coordination: #1341 is the explicitly assigned diagnostic input, not a competing implementation. All #1342-#1345 source locks are released; protected install/runtime locks stay untouched.
+- Recovery: reviewed revert of this repository-only handoff. Exact-head CI and independent R3 countercheck are mandatory before merge.
+- Forbidden: runtime source, storage/schema/RLS/ACL changes, migration or SQL APPLY, Current-Facts activation, provider/model call, Staging/Production/customer-data mutation, deployment and direct main write.
