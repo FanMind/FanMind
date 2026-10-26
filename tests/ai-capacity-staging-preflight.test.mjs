@@ -108,6 +108,12 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(observation.rls_acl_security_matches_after_supabase_default_acl_normalization,true);
       sql("create policy provider_defaults_plus_drift on public.ai_capacity_grants for select to authenticated using(true);");
       assert.equal(observe().rls_acl_security_matches_after_supabase_default_acl_normalization,false);
+      fresh({supabaseDefaults:true});
+      sql("grant select on public.ai_capacity_grants to service_role with grant option;");
+      assert.equal(observe().rls_acl_security_matches_after_supabase_default_acl_normalization,false);
+      fresh({supabaseDefaults:true});
+      sql("grant execute on function public.ai_capacity_ledger_immutable() to anon with grant option;");
+      assert.equal(observe().function_security_matches_after_supabase_default_acl_normalization,false);
     });
     await t.test("only the three historical missing defaults normalize to the canonical fingerprint",()=>{
       fresh();

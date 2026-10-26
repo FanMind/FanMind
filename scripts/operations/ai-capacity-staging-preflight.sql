@@ -88,9 +88,12 @@ with table_profiles as (
   select jsonb_agg(profile order by proname,args) profile from function_profiles
 ), provider_normalized_function_profiles as (
   select proname,args,case when proname='ai_capacity_ledger_immutable' and args=''
-    and (select array_agg(value->>0 order by value->>0) from jsonb_array_elements(profile->'acl') value
+    and (select jsonb_agg(value order by value->>0,value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value
       where value->>0 in ('anon','authenticated','service_role'))
-      =array['anon','authenticated','service_role']
+      =jsonb_build_array(jsonb_build_array('anon','EXECUTE',false),
+        jsonb_build_array('authenticated','EXECUTE',false),
+        jsonb_build_array('service_role','EXECUTE',false))
     then jsonb_set(profile,'{acl}',coalesce((select jsonb_agg(value order by value->>0,value->>1,value->>2)
       from jsonb_array_elements(profile->'acl') value
       where value->>0 not in ('anon','authenticated','service_role')),'[]'::jsonb))
@@ -106,9 +109,16 @@ with table_profiles as (
   from table_profiles
 ), provider_normalized_rls_table_profiles as (
   select relname,case when
-    (select array_agg(value->>1 order by value->>1) from jsonb_array_elements(profile->'acl') value
-      where value->>0='service_role' and value->>2='false')
-      =array['DELETE','INSERT','MAINTAIN','REFERENCES','SELECT','TRIGGER','TRUNCATE','UPDATE']
+    (select jsonb_agg(value order by value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value where value->>0='service_role')
+      =jsonb_build_array(jsonb_build_array('service_role','DELETE',false),
+        jsonb_build_array('service_role','INSERT',false),
+        jsonb_build_array('service_role','MAINTAIN',false),
+        jsonb_build_array('service_role','REFERENCES',false),
+        jsonb_build_array('service_role','SELECT',false),
+        jsonb_build_array('service_role','TRIGGER',false),
+        jsonb_build_array('service_role','TRUNCATE',false),
+        jsonb_build_array('service_role','UPDATE',false))
     then jsonb_set(jsonb_set(jsonb_set(profile,'{acl}',
       (select jsonb_agg(value order by value->>0,value->>1,value->>2) from (
         select value from jsonb_array_elements(profile->'acl') value where value->>0<>'service_role'
