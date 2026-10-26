@@ -82,6 +82,16 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
   assert.equal(sql("select current_setting('server_version_num')::int/10000;","postgres"),"17");
   sql("do $$ begin if not exists(select from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists(select from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; if not exists(select from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;","postgres");
   try {
+    await t.test("derive source-pinned component profiles",()=>{
+      fresh();
+      const prefix=query.slice(0,query.indexOf("\nselect jsonb_build_object("));
+      const digests=sql(`${prefix}\nselect jsonb_build_object(
+        'table',(select md5(profile::text) from table_structure_profile),
+        'function',(select md5(profile::text) from function_security_profile),
+        'rls_acl',(select md5(profile::text) from rls_acl_security_profile),
+        'other',(select md5(profile::text) from other_security_profile));\nrollback;`);
+      assert.fail(`component profiles: ${digests}`);
+    });
     await t.test("source-defined baseline matches, repeated observation remains read-only and unchanged",()=>{
       fresh(); const a=observe(),b=observe(); assert.deepEqual(a,b);
       assert.deepEqual(evaluateObservation(a,control),{state:"READONLY_BASELINE_MATCH",apply:"disabled",failures:[]});

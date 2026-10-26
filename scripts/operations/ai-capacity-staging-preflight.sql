@@ -79,6 +79,28 @@ with table_profiles as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(profile order by relname) from normalized_table_profiles),
     'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
+), table_structure_profile as (
+  select jsonb_agg(jsonb_build_object(
+    'name',profile->'name','kind',profile->'kind','columns',profile->'columns',
+    'constraints',profile->'constraints','indexes',profile->'indexes') order by relname) profile
+  from normalized_table_profiles
+), function_security_profile as (
+  select jsonb_agg(profile order by proname,args) profile from function_profiles
+), rls_acl_security_profile as (
+  select jsonb_agg(jsonb_build_object(
+    'name',profile->'name','rls',profile->'rls','force_rls',profile->'force_rls',
+    'policies',profile->'policies','acl',profile->'acl','column_acl',profile->'column_acl',
+    'effective',profile->'effective','effective_columns',profile->'effective_columns') order by relname) profile
+  from table_profiles
+), other_security_profile as (
+  select jsonb_build_object(
+    'tables',(select jsonb_agg(jsonb_build_object('name',profile->'name','owner',profile->'owner',
+      'triggers',profile->'triggers') order by relname) from table_profiles),
+    'schema_create',jsonb_build_array(has_schema_privilege('anon','public','CREATE'),
+      has_schema_privilege('authenticated','public','CREATE')),
+    'browser_roles',(select jsonb_agg(jsonb_build_array(rolname,rolsuper,rolbypassrls,
+      pg_has_role(rolname,'service_role','MEMBER')) order by rolname)
+      from pg_roles where rolname in ('anon','authenticated'))) profile
 ), capacity_migration_markers as (
   select
     regexp_replace(regexp_replace(lower(coalesce(name,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_name,
@@ -109,54 +131,14 @@ select jsonb_build_object(
   'schema_md5',(select md5(profile::text) from schema_profile),
   'schema_matches_after_budget_default_normalization',(select md5(profile::text) from normalized_schema_profile)
     ='e3b71e6b343c161ebabf1fc34739a837',
-  'table_structure_safety_matches',(select count(*)=5
-      and bool_and(c.relkind='r')
-      and bool_and((select count(*) from pg_attribute a where a.attrelid=c.oid
-        and a.attnum>0 and not a.attisdropped)=case c.relname
-          when 'ai_capacity_admin_policy' then 19 when 'ai_capacity_grants' then 13
-          when 'ai_capacity_reservations' then 11 when 'ai_capacity_reservation_allocations' then 4
-          when 'ai_capacity_ledger_events' then 19 end)
-      and bool_and(not exists(select 1 from pg_constraint k where k.conrelid=c.oid and not k.convalidated))
-      and bool_and(not exists(select 1 from pg_index i where i.indrelid=c.oid and (not i.indisvalid or not i.indisready)))
-    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
-      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
-        'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
-  'function_security_matches',(select count(*)=4
-      and count(*) filter(where p.proname='ai_capacity_ledger_immutable' and not p.prosecdef)=1
-      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard' and not p.prosecdef)=1
-      and count(*) filter(where p.proname='admin_get_ai_capacity_policy' and p.prosecdef)=1
-      and count(*) filter(where p.proname='admin_update_ai_capacity_policy' and p.prosecdef)=1
-    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
-      or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))),
-  'rls_acl_security_matches',(select count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)
-      and bool_and(not exists(select 1 from pg_policy p where p.polrelid=c.oid))
-      and bool_and(not has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-        and not has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
-        and has_table_privilege('service_role',c.oid,'SELECT')
-        and not has_table_privilege('service_role',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
-      and bool_and(not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attnum>0
-        and not a.attisdropped and a.attacl is not null))
-    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
-      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
-        'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
-  'other_security_matches',(select count(*)=5 and count(distinct c.relowner)=1
-      and bool_and(pg_get_userbyid(c.relowner) not in ('anon','authenticated','service_role'))
-    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
-      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
-        'ai_capacity_reservation_allocations','ai_capacity_ledger_events']))
-    and (select count(*)=2 and count(*) filter(where t.tgname='ai_capacity_admin_activation_guard'
-        and c.relname='ai_capacity_admin_policy' and t.tgenabled='O')=1
-      and count(*) filter(where t.tgname='ai_capacity_ledger_immutable_update_delete'
-        and c.relname='ai_capacity_ledger_events' and t.tgenabled='O')=1
-      from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
-      where n.nspname='public' and not t.tgisinternal and c.relname=any(array[
-        'ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
-        'ai_capacity_reservation_allocations','ai_capacity_ledger_events']))
-    and not has_schema_privilege('anon','public','CREATE')
-    and not has_schema_privilege('authenticated','public','CREATE')
-    and not exists(select 1 from pg_roles where rolname in ('anon','authenticated')
-      and (rolsuper or rolbypassrls)),
+  'table_structure_safety_matches',(select md5(profile::text) from table_structure_profile)
+    ='TABLE_STRUCTURE_PROFILE_MD5',
+  'function_security_matches',(select md5(profile::text) from function_security_profile)
+    ='FUNCTION_SECURITY_PROFILE_MD5',
+  'rls_acl_security_matches',(select md5(profile::text) from rls_acl_security_profile)
+    ='RLS_ACL_SECURITY_PROFILE_MD5',
+  'other_security_matches',(select md5(profile::text) from other_security_profile)
+    ='OTHER_SECURITY_PROFILE_MD5',
   'policy_package_99_budget_default_matches',exists(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
