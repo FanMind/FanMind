@@ -87,6 +87,8 @@ const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "capacity_unknown_migration_marker_count", "capacity_unknown_marker_name_only_count",
   "capacity_unknown_marker_version_only_count", "capacity_unknown_marker_name_and_version_count",
   "capacity_unknown_marker_with_statements_count",
+  "capacity_migration_marker_count_equals_one", "capacity_all_markers_unknown",
+  "capacity_all_markers_unknown_name_only", "capacity_all_markers_have_statements",
   "capacity_single_unknown_name_only_marker_with_statements_present",
   "policy_revision", "policy_fast_enabled",
   "policy_singleton_id", "policy_premium_enabled", "policy_balanced_enabled",
@@ -177,6 +179,10 @@ function verifyCapacityIntegration(root = process.cwd(), committed = false) {
     "capacity_unknown_marker_version_only_count",
     "capacity_unknown_marker_name_and_version_count",
     "capacity_unknown_marker_with_statements_count",
+    "capacity_migration_marker_count_equals_one",
+    "capacity_all_markers_unknown",
+    "capacity_all_markers_unknown_name_only",
+    "capacity_all_markers_have_statements",
     "capacity_single_unknown_name_only_marker_with_statements_present",
   ]) delete originalPreparation.expectedObservation[key];
   originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight.sql"]="4f7dc3970dff241f9f2f09b4f797990a72b77002dc429f4842825db005c53e2b";

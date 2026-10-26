@@ -284,6 +284,19 @@ select jsonb_build_object(
     where marker_name_is_unknown and marker_version_is_unknown),
   'capacity_unknown_marker_with_statements_count',(select count(*) from classified_capacity_migration_markers
     where (marker_name_is_unknown or marker_version_is_unknown) and marker_has_statements),
+  'capacity_migration_marker_count_equals_one',(
+    select count(*)=1 from classified_capacity_migration_markers),
+  'capacity_all_markers_unknown',(
+    select count(*)>0 and count(*)=count(*) filter(
+      where marker_name_is_unknown or marker_version_is_unknown)
+    from classified_capacity_migration_markers),
+  'capacity_all_markers_unknown_name_only',(
+    select count(*)>0 and count(*)=count(*) filter(
+      where marker_name_is_unknown and not marker_version_is_unknown)
+    from classified_capacity_migration_markers),
+  'capacity_all_markers_have_statements',(
+    select count(*)>0 and count(*)=count(*) filter(where marker_has_statements)
+    from classified_capacity_migration_markers),
   'capacity_single_unknown_name_only_marker_with_statements_present',(
     select count(*)=1 and count(*) filter(where marker_name_is_unknown and not marker_version_is_unknown
       and marker_has_statements)=1 from classified_capacity_migration_markers),
