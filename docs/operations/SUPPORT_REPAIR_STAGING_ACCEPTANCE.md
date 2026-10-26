@@ -4,7 +4,9 @@ Status: post-merge R3 preparation for Support merge anchor `7368305db778165d6a6d
 
 ## Exact source chain
 
-- Current reconciliation base: `99fb8b1420758fa2a77c01d76b960feffde90da8`.\n- Verified cumulative Support merge anchor: `7368305db778165d6a6dd8f83265445a6863a25b`, an ancestor of the reconciliation base.\n- Support runtime source and root/Mobile package manifests and lockfiles are byte-identical between the merge anchor and the reconciliation base. Later Capacity and default-off ChatAdmin changes do not alter this Support source or dependency evidence.
+- Current reconciliation base: `99fb8b1420758fa2a77c01d76b960feffde90da8`.
+- Verified cumulative Support merge anchor: `7368305db778165d6a6dd8f83265445a6863a25b`, an ancestor of the reconciliation base.
+- Support runtime source and root/Mobile package manifests and lockfiles are byte-identical between the merge anchor and the reconciliation base. Later Capacity and default-off ChatAdmin changes do not alter this Support source or dependency evidence.
 - The merge has parents `109c0274c867d5ff8128196b50c585fb9833972f` and reviewed PR #1356 head `4b4e5edd97842aa79225b2a8052f954f85667f57`.
 - The merge and reviewed head have the identical tree `ce4c21b994a15e4b21ee363cd408ecd33b8128a7`; their compare contains zero changed files. No merge-only conflict resolution or unreviewed file change exists.
 - #1351 head `556ec86488ccd9cc815804e23fb4c6761c792bfa`, #1352 head `4fe1a43afc28f7706afe626e5f9768c0eb544e0c`, #1353 head `8c8e904abf82421c1be9c9e93c884639c7e43d36`, #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`, #1355 head `47c4f437a98ddc4b7990de8195af54c08223da29` and #1356 head `4b4e5edd97842aa79225b2a8052f954f85667f57` are all ancestors of the merge.
