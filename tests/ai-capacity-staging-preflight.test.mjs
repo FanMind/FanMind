@@ -143,7 +143,7 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(observation.schema_matches_after_budget_default_normalization,false);
       assert.equal(observation[field],false);
     });
-    for (const [name,mutation,fields] of [
+    for (const [name,mutation,fields,cleanup] of [
       ["function SECURITY attribute","alter function public.ai_capacity_ledger_immutable() security definer;",["function_attribute_boundary_matches"]],
       ["function owner","create role capacity_function_detail_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_detail_owner;",["function_owner_boundary_matches"]],
       ["all function owners","create role capacity_function_all_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_all_owner; alter function public.ai_capacity_admin_activation_guard() owner to capacity_function_all_owner; alter function public.admin_get_ai_capacity_policy() owner to capacity_function_all_owner; alter function public.admin_update_ai_capacity_policy(uuid,text,bigint,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,bigint,bigint,bigint) owner to capacity_function_all_owner;",["function_owner_boundary_matches"]],
@@ -154,11 +154,14 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       ["table ACL","grant update on public.ai_capacity_grants to service_role;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
       ["table grant option","grant select on public.ai_capacity_grants to service_role with grant option;",["table_explicit_acl_matches"]],
       ["column ACL","grant select(grant_key) on public.ai_capacity_grants to authenticated;",["column_acl_boundary_matches","effective_column_privileges_match"]],
-      ["inherited service ACL","create role capacity_inherited_writer nologin; grant update on public.ai_capacity_grants to capacity_inherited_writer; grant capacity_inherited_writer to service_role with inherit true;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
+      ["inherited service ACL","create role capacity_inherited_writer nologin; grant update on public.ai_capacity_grants to capacity_inherited_writer; grant capacity_inherited_writer to service_role with inherit true;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"],"revoke capacity_inherited_writer from service_role;"],
     ]) await t.test(`subclassifies ${name} without emitting catalog contents`,()=>{
-      fresh();sql(mutation);const observation=observe();
-      for(const field of fields) assert.equal(observation[field],false,field);
-      assert.equal(JSON.stringify(observation).includes("capacity_inherited_writer"),false);
+      fresh();
+      try {
+        sql(mutation);const observation=observe();
+        for(const field of fields) assert.equal(observation[field],false,field);
+        assert.equal(JSON.stringify(observation).includes("capacity_inherited_writer"),false);
+      } finally { if(cleanup) sql(cleanup); }
     });
     for (const [name,mutation,expected] of [
       ["known marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:0}],
