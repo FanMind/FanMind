@@ -510,6 +510,36 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Next: exact-head CI, merge, exact Staging deployment and fresh full acceptance. No product, schema or protected Production change.
 
 
+## FM-FAIL-CHATADMIN-INTEREST-REGISTRATION-20261018
+- Existing PR1342 cb01c2ee registered its standalone test by changing checksum-pinned package.json. Both current Required Truth and PG17 jobs fail capacity_checksum_invalid (117653064810 /117653065071), not a need to loosen the controls.
+- Correction: consolidate the executed revocation regressions into existing registered tests/chat-admin-knowledge.test.mjs and restore package.json from live GitHub main f36e630c (SHA25608ebfb3daacdda0be46b6db1a73a93cfbd94eaa52b6b4559c43e4cfcf0e03991). No control/pin/workflow edits. Local origin/main was older d739797; it was not used as current truth. Fresh GitHub main content and final registration test verified.
+- Independent failures: fourth-clause withdrawal lost, same-source later correction ignored, eviction+old replay resurrected interest, overflow reported unchanged. Regressions now cover the repairs; overflow is honest not_saved, with remaining functional persistence gap. Do not claim full acceptance from green tests.
+- Local environment: Node child-process spawnSync returns EPERM/empty output. Build compiles then TypeScript --showConfig fails; manual-flow child CLI assertions similarly unavailable. Use final exact-head GitHub CI, never label those local checks passed.
+
+
+## FM-FAIL-CHATADMIN-CURRENT-FACTS-20261018
+- Initial1345helper167green tests missed duplicate-topic stale overwrite, first-clause contradiction, tenant mismatch, malformed current facts and multi-line quoted/hypothetical statements. Observed test-first4/94 failures plus quoted-source negative before repair; this is not DB evidence.
+- Native new SQL first accepted a positive prefix of a negative because its regex end anchor was missing. Corrected anchor/dollar quoting, then native tests passed; JavaScript grammar green had not proved SQL semantics.
+- Separate Guardian natively reproduced source race: FOR KEY SHARE admitted concurrent content update before fact commit. FOR SHARE fixes it; bounded mutation back to KEY SHARE recreates corruption. Keep regression; identity-only FK is insufficient for literal provenance.
+- Guardian found equal opaque legacy order could be overwritten during first cutover. Existing legacy cutoff now includes equality; native regression preserves the negative legacy state with no invented FK/positive.
+- Whole-message validation must still allow already supported boundary/communication companions. Dual-read must retain valid independent legacy topics; never concatenate contradictory topic states or drop all unrelated legacy interests silently.
+- No target apply/runtime activation. Old strict parent verifier/backup topology and old-binary rollback need separate protected rollout reconciliation; a green local/CI SQL test is not target approval.
+
+
+## FM-BLOCK-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Fresh read-only empty Staging tables/capabilities do not prove installation safety: configured Staging preview can automatically recreate a capability on authenticated access. Appflagoff is not a direct-RPC gate; protected deployed-release/preview exclusion proof is missing.
+- Existing strict Fan profile rejects new source objects; do not patch counts or bypass the locked composed harness. Backup captures private schema generally, but explicit definer safety checks filter public, leaving new private functions without a dedicated topology admission proof. No native full backup/restore contract roundtrip or verified target backup is claimed.
+- Source and isolated tests remain green; status BLOCKED for install preparation. Stop at the unknown protected prerequisites, preserve active historical locks and original SQL; no target write or unchanged failed workflow retry.
+
+## FM-FAIL-CHATADMIN-OFFLINE-PROFILE-BLIND-SPOTS-20261018
+- Task FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018; Risk R3, synthetic only. No target connection or protected action.
+- Independent native mutations exposed false greens in early catalog candidates: neutral-name dependent views, incoming service_role grantees, public schema CREATE and effective pg_database_owner ownership, and the omitted chat_characters parent caused by a singular-prefix seed. Closure: dependency/rule bridges, bidirectional transitive membership, exact public/private ACL/effective privileges and database owner, plus explicit canonical Character seed. Native regression probes now reject each case; no original Base/Fan/Offers/Tier checker was weakened.
+- Full dump/reparse changes one named quote CHECK rendering. Admit only its two exact observed equivalent strings; 239-limit and OR mutations fail. Do not broadly normalize expressions or update the reference from observed target state. Initial diagnostics guessed dropped-column numbering; subsequent source/restore diff established the actual CHECK cause.
+- Test plumbing corrections: replacement callbacks preserve SQL dollar quoting; failed child counters must fail the parent before PASS output; no-op nullability mutation revealed the omitted parent and was replaced by an actual NOT NULL change. Failures were not accepted as database-security evidence. Early runs are superseded only by complete final native and independent runs in the receipt.
+
+- Same-task architecture correction: the first successful disposable runs used image-default libc. Existing FanMind PG17 CI initializes ICU/en-US; final synthetic source/target/reference now use those exact unchanged initialization arguments and bind ICU locale/rules/collation version. Earlier libc proofs are superseded for architecture binding; no claim of real hosted locale inspection.
+
+
 ## FM-FAIL-CAPACITY-V2-STAGING-BASELINE-20261026
 2026-10-26 — Blocker: Capacity-v2 Staging run 40329502489 remains read-only blocked after confirming the three historical budget defaults; table structure otherwise matches, while aggregate function-security, RLS/ACL and migration-marker attribution is still insufficient to distinguish expected Supabase provider defaults plus one historical name-only marker from independent drift. Evidence: exact-main run 40329502489, repository-pinned provider initial-schema defaults, and Draft PR #1369 add bounded source-normalized/negative diagnostics; no Staging or Production write, migration, baseline change or dispatch occurred. Exact-head CI and independent countercheck are required before any later separately authorized read-only rerun.
 

@@ -72,6 +72,7 @@ export type DisclosureMetaDataset = {
     | "chat_characters"
     | "chat_character_fans"
     | "chat_character_conversations"
+    | "chat_character_current_facts"
     | "chat_character_messages"
     | "pilot_inquiries"
     | "referral_membership"
@@ -136,6 +137,7 @@ const DATASETS: DatasetDefinition[] = [
   { key: "chat_characters", table: "chat_characters", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_fans", table: "chat_character_fans", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_conversations", table: "chat_character_conversations", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
+  { key: "chat_character_current_facts", table: "chat_character_current_facts", scope: "workspace", order: "character_id.asc,fan_id.asc,topic.asc", optionalUntilInstalled: true },
   { key: "chat_character_messages", table: "chat_character_messages", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
 ];
 

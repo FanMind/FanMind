@@ -1,3 +1,4 @@
+import { classifyCurrentInterestQuote, validateCurrentInterestFacts } from "./chatAdminCurrentFactsPolicy.mjs";
 import { assertChatAdminReplyPrices, defaultChatAdminSalesPlaybook, normalizeChatAdminSalesPlaybook, resolveChatAdminRequestedOffer } from "./chatAdminSalesPlaybook.mjs";
 import { deriveChatAdminStrategy, readChatAdminKnowledge } from "./chatAdminKnowledge.mjs";
 import { CHAT_ADMIN_DIALOGUE_GUIDANCE } from "./chatAdminDialogueGuidance.mjs";
@@ -144,10 +145,23 @@ export function buildChatAdminFanContext(character, fan, conversation, messages,
   const followUp = !base.sales_playbook.requested_offer ? resolveConfirmedOfferFollowUp(character.sales_playbook ?? defaultChatAdminSalesPlaybook(), messages, incomingMessage) : null;
   if (followUp) base.sales_playbook = { ...followUp.playbook, requested_offer: followUp.requestedOffer };
   const knowledge = readChatAdminKnowledge(fan.notes);
+  let facts=knowledge.facts;
+  if(fan.current_facts!==undefined){
+   const current=validateCurrentInterestFacts(fan.current_facts,{workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id,conversation_id:conversation.id});
+   const legacy=new Map();
+   for(const fact of knowledge.facts.filter(fact=>fact.kind==="interest")){
+    const parsed=classifyCurrentInterestQuote(fact.quote);
+    if(!parsed || !Number.isSafeInteger(fact.source_sequence) || fact.source_sequence<=0 || current.some(row=>row.topic===parsed.topic))continue;
+    const old=legacy.get(parsed.topic);
+    if(old && old.source_sequence===fact.source_sequence && old.quote!==fact.quote)throw new ChatAdminPolicyError("legacy_interest_order_conflict");
+    if(!old || fact.source_sequence>old.source_sequence)legacy.set(parsed.topic,{...fact,topic:parsed.topic,polarity:parsed.polarity,provenance:"legacy_opaque"});
+   }
+   facts=[...knowledge.facts.filter(fact=>fact.kind!=="interest"),...legacy.values(),...current.map(fact=>({...fact,kind:"interest",source:fact.source_message_id}))];
+  }
   const strategy = deriveChatAdminStrategy(base.sales_playbook, fan, base.sales_playbook.requested_offer, now);
   if (!strategy.sellNow) { base.sales_playbook.requested_offer = null; base.sales_playbook.offers = []; }
   base.sales_strategy = strategy;
-  base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, customer_tier: fan.customer_tier ?? "red", summary: fan.summary, notes: knowledge.manual, learned_preferences: knowledge.facts };
+  base.fan = { id: fan.id, display_name: fan.display_name, handle: fan.handle, platform: fan.platform, language: fan.language, customer_tier: fan.customer_tier ?? "red", summary: fan.summary, notes: knowledge.manual, learned_preferences: facts };
   base.conversation = { id: conversation.id, recent_messages: [] };
   // Unused alternatives were never said by the Character. Keep them out of the
   // model's dialogue while retaining the full history for persistence checks.

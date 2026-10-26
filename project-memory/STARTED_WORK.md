@@ -1407,3 +1407,32 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 - 2026-10-25 — Blocker: Der separate Supply-Chain-Blocker der Support-PR-Kette ist durch echte Root-/Mobile-Dependency-Patches und eine neue auditgebundene Mobile-Sicherheitsprüfung behoben; die Kette #1351 → #1352 → #1353 → #1354 ist technisch verifiziert und wartet auf reguläre Review-/Mergefreigabe. Evidence: PR #1354 Functional Head `da1bbb5f3495db553b407ba29f76dc4296b3c290`; Supply Chain `40195165377`, FanMind CI `40195165393`, Browser E2E `40195165361`, CodeQL `40195165397` und Mobile CI `40195165373` PASS; kein Merge, Deployment oder geschützter Zustand wurde verändert.
 - 2026-10-25 — Integrationsstatus: Draft-PR #1355 bündelt die vollständig geprüfte Support-Kette #1351–#1354 aus dem kumulativen Baseline-Head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc` direkt gegen `main`; vor jeder Mergefreigabe bleiben vollständige Exact-Head-CI, unabhängiger R3-Gegencheck und eine explizite menschliche Entscheidung zur bis `2026-11-08T12:40:47Z` befristeten Mobile-Ausnahme erforderlich. Kein Merge, Deployment oder geschützter Zustandswechsel wurde autorisiert.
+
+## FM-CHATADMIN-INTEREST-REVOCATION-20261018 — PR1342 continuation
+- Owner-selected existing Draft only; R3 source; lock LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018. Current GitHub main/head verified, five blobs and complete tree reconstructed identically through Connector after shell proxy failed.
+- Baseline174/174 focused tests PASS. New independently reproduced overflow, extraction-cap and eviction/replay failures require narrow correction. Separate Guardian active. Capacity checksum failure caused by package.json registration; use the already registered Knowledge suite without modifying protected controls.
+- No external/runtime/model-quality acceptance or activation; reviewed revert is recovery.
+
+- Source handoff:306/306 focused, independent204/204 +7/7 own probes and killed in-memory sequence mutation. Lock released for existing Draft PARTIAL handoff. Storage-overflow stale-positive and max3/8 limitations remain; final exact-head CI tracked in PR1342. No protected action.
+
+## FM-CHATADMIN-CURRENT-FACTS-20261018
+- Explicit Owner durable-storage task on existing1345branch. Canonical main and allfourPRheads unchanged as freshly read; stacked dependencies preserved. Preflight baseline167/167 Knowledge+API testsPASS.
+- Independent Helper review finds duplicate-topic replay, missing full-source ordinal/tenantbinding and incompletecurrent validation; tests first. Additive storage requires nativePG17,RLS/grants,atomic provenance/order and fan cascade/export. No live target authorization.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Owner requests preparation only, no install or activation. Fresh main/1342–1345 unchanged; final1345 source checksum and14 terminal success records confirmed. Read-only Staging identity/catalog/count assessment plus isolated tests and independent review; exact prerequisites may block installation preparation.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Explicit Owner bounded offline continuation on1345; coordination recorded in matching work lock. New strict profile and full synthetic dump/restore plus mutations, preserving all previous verifier source files and pinned SQL. Host/autogrant/real-backup blockers remain separate; no remote database connection authorized.
+
+- Offline handoff: OFFLINE_PROFILE_READY, native44/44 registered under canonical ICU and independent full recovery recorded in receipt. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.
+
+## FM-CHATADMIN-CONSOLIDATION-20261026
+- Owner-selected bounded R3 repository integration of the linear #1342 -> #1343 -> #1344 -> #1345 source chain onto exact main 9d1937ab3895e3a18a34fdafce4f693d8eae9726. PR #1341 remains a separate diagnostic and is not silently promoted into the product correction.
+- The integration preserves default-off behavior and performs no deployment, SQL APPLY, feature activation, provider access or customer-data mutation. Exact-head full CI, native PostgreSQL 17 and independent R3 countercheck are required before merge.
+- Source handoff: merge-tree construction preserves every #1345 source blob; only the three append-only Project-Memory files are reconciled with later main history. Status RELEASED_FOR_PR; protected installation/runtime blockers remain open.
