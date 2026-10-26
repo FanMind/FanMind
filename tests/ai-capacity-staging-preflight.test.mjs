@@ -81,6 +81,9 @@ const observe=()=>JSON.parse(sql(query));
 const evaluate=()=>evaluateObservation(observe(),control);
 const functionSecuritySummary=()=>JSON.parse(sql(`select jsonb_agg(jsonb_build_object(
   'name',p.proname,'args',pg_get_function_identity_arguments(p.oid),
+  'security_definer',p.prosecdef,'volatility',p.provolatile,
+  'config',coalesce(to_jsonb(p.proconfig),'[]'::jsonb),
+  'owner',pg_get_userbyid(p.proowner),'definition',md5(pg_get_functiondef(p.oid)),
   'acl',(select jsonb_agg(jsonb_build_array(case when x.grantee=0 then 'PUBLIC'
     else pg_get_userbyid(x.grantee) end,x.privilege_type,x.is_grantable)
     order by x.grantee::regrole::text,x.privilege_type,x.is_grantable)
@@ -111,13 +114,15 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(a.capacity_single_unknown_name_only_marker_with_statements_present,false);
     });
     await t.test("attributes Supabase provider defaults without hiding other catalog drift",()=>{
+      fresh();
+      const sourceFunctionSecurity=functionSecuritySummary();
       fresh({supabaseDefaults:true});
       const observation=observe();
       assert.equal(observation.function_security_matches,false);
       assert.equal(observation.rls_acl_security_matches,false);
       assert.equal(observation.schema_matches_after_budget_default_normalization,false);
       assert.equal(observation.function_security_matches_after_supabase_default_acl_normalization,true,
-        JSON.stringify(functionSecuritySummary()));
+        JSON.stringify({source:sourceFunctionSecurity,provider:functionSecuritySummary()}));
       assert.equal(observation.rls_acl_security_matches_after_supabase_default_acl_normalization,true);
       sql("create policy provider_defaults_plus_drift on public.ai_capacity_grants for select to authenticated using(true);");
       assert.equal(observe().rls_acl_security_matches_after_supabase_default_acl_normalization,false);
