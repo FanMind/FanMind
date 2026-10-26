@@ -101,8 +101,12 @@ with table_profiles as (
       and (select jsonb_agg(value order by value->>0,value->>1,value->>2)
         from jsonb_array_elements(profile->'acl') value where value->>0='service_role')
         =jsonb_build_array(jsonb_build_array('service_role','EXECUTE',false))
-    then jsonb_set(profile,'{acl}',coalesce((select jsonb_agg(value order by value->>0,value->>1,value->>2)
-      from jsonb_array_elements(profile->'acl') value where value->>0<>'service_role'),'[]'::jsonb))
+      and profile->'effective'=jsonb_build_array(jsonb_build_array('anon',false),
+        jsonb_build_array('authenticated',false),jsonb_build_array('service_role',true))
+    then jsonb_set(jsonb_set(profile,'{acl}',coalesce((select jsonb_agg(value order by value->>0,value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value where value->>0<>'service_role'),'[]'::jsonb)),
+      '{effective}',jsonb_build_array(jsonb_build_array('anon',false),
+        jsonb_build_array('authenticated',false),jsonb_build_array('service_role',false)))
     else profile end profile
   from function_profiles
 ), provider_normalized_function_security_profile as (
