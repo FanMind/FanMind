@@ -86,6 +86,49 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       fresh(); const a=observe(),b=observe(); assert.deepEqual(a,b);
       assert.deepEqual(evaluateObservation(a,control),{state:"READONLY_BASELINE_MATCH",apply:"disabled",failures:[]});
       assert.equal(a.read_only,true);
+      for (const field of ["schema_matches_after_budget_default_normalization",
+        "table_structure_safety_matches","function_security_matches",
+        "rls_acl_security_matches","other_security_matches"]) assert.equal(a[field],true,field);
+      for (const field of ["capacity_migration_marker_count","capacity_known_migration_marker_count",
+        "capacity_unknown_migration_marker_count","capacity_unknown_marker_name_only_count",
+        "capacity_unknown_marker_version_only_count","capacity_unknown_marker_name_and_version_count",
+        "capacity_unknown_marker_with_statements_count"]) assert.equal(a[field],0,field);
+    });
+    await t.test("only the three historical missing defaults normalize to the canonical fingerprint",()=>{
+      fresh();
+      sql("alter table public.ai_capacity_admin_policy alter column package_99_budget_eur_microcents drop default, alter column package_199_budget_eur_microcents drop default, alter column package_312_budget_eur_microcents drop default;");
+      const observation=observe(),result=evaluateObservation(observation,control);
+      assert.equal(result.state,"BLOCK");
+      assert.notEqual(observation.schema_md5,control.expectedObservation.schema_md5);
+      assert.equal(observation.schema_matches_after_budget_default_normalization,true);
+      assert.equal(observation.table_structure_safety_matches,true);
+      assert.equal(observation.function_security_matches,true);
+      assert.equal(observation.rls_acl_security_matches,true);
+      assert.equal(observation.other_security_matches,true);
+      for (const field of ["policy_package_99_budget_default_matches",
+        "policy_package_199_budget_default_matches","policy_package_312_budget_default_matches"])
+        assert.ok(result.failures.includes(field),field);
+    });
+    for (const [name,mutation,field] of [
+      ["table shape","alter table public.ai_capacity_grants add column unreviewed integer;","table_structure_safety_matches"],
+      ["function execution ACL","grant execute on function public.ai_capacity_ledger_immutable() to authenticated;","function_security_matches"],
+      ["table RLS","alter table public.ai_capacity_grants disable row level security;","rls_acl_security_matches"],
+      ["trigger security","alter table public.ai_capacity_ledger_events disable trigger ai_capacity_ledger_immutable_update_delete;","other_security_matches"],
+    ]) await t.test(`separately classifies ${name} drift`,()=>{
+      fresh();sql(mutation);const observation=observe();
+      assert.equal(observation.schema_matches_after_budget_default_normalization,false);
+      assert.equal(observation[field],false);
+    });
+    for (const [name,mutation,expected] of [
+      ["known marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:0}],
+      ["unknown name-only marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000001','capacity_v2_unreviewed');",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_only_count:1}],
+      ["unknown version-only marker","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_v2_unreviewed','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_version_only_count:1}],
+      ["unknown name-and-version marker with statements","insert into supabase_migrations.schema_migrations(version,name,statements) values('ai_capacity_v2_unreviewed','capacity_v2_unreviewed',array['protected']);",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_and_version_count:1,capacity_unknown_marker_with_statements_count:1}],
+    ]) await t.test(`reports protected counts for ${name}`,()=>{
+      fresh();sql(mutation);const observation=observe();
+      for (const [field,value] of Object.entries(expected)) assert.equal(observation[field],value,field);
+      assert.equal(JSON.stringify(observation).includes("unreviewed"),false);
+      assert.equal(JSON.stringify(observation).includes("protected"),false);
     });
     for (const [name,mutation,key] of [
       ["browser table ACL","grant select on public.ai_capacity_grants to authenticated;","schema_md5"],

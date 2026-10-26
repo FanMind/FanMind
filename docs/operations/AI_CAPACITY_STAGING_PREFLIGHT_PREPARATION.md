@@ -130,6 +130,21 @@ Required observations, ALL conjunctive:
    Capacity marker by version/name. This is controlled SQL, not a generic
    timestamp migration. Missing relation/columns/privilege or markers BLOCK.
 
+The read-only diagnostic extension does not relax any item above. It additionally
+computes exact canonical fingerprint equality after an in-memory normalization of
+only the three reviewed budget defaults. It reports separate safety booleans for
+table structure, functions, RLS/ACL and remaining trigger/ownership/browser-role
+boundaries. Capacity migration history is exposed only through bounded counts for
+known/unknown and name/version/statement-presence classes. No marker identity,
+version, statement, database definition or observed hash is emitted.
+
+Interpretation is strict: a true normalized-fingerprint field with the original
+digest and all three default fields mismatching supports baseline reconciliation
+as the complete schema explanation. A false normalized field means a separate
+schema cause remains and no default-only correction may be proposed. The three
+defaults themselves may later be restored only by a separately authorized,
+reviewed transactional schema change; this package contains no executable repair.
+
 The query's schema digest covers security and structure, not customer data.
 Runtime/deployment wiring and flags are a separate read-only release evidence
 class: exact current Staging release, source route import audit, existing gates

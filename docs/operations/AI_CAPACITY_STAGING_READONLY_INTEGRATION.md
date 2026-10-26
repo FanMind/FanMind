@@ -113,10 +113,29 @@ Unknown errors cannot self-declare diagnostics through message, stage, reason,
 fields or stack properties. Only private internally created diagnostic records
 are rendered. Raw exceptions and child stdout/stderr remain suppressed.
 
+The follow-up diagnostic fields remain source-defined and additive. The original
+schema digest and three budget-default booleans are unchanged. A second boolean
+rebuilds the same complete catalog profile after replacing only those three
+default expressions in memory with the reviewed source expressions. `true`
+therefore proves that those defaults completely explain the aggregate digest
+difference; `false` proves that at least one additional catalog difference
+exists. It never changes a catalog or learns an expected value from Staging.
+
+Separate booleans cover table shape plus validated constraints/indexes, function
+security configuration and effective EXECUTE grants, table RLS/ACL, and remaining
+trigger/owner/browser-role safeguards. These are diagnostic partitions; the
+normalized complete-profile boolean remains the exact canonical equality proof.
+Migration evidence is limited to counts for all Capacity-like markers, known or
+unknown classification, unknown name-only/version-only/name-and-version classes,
+and whether an unknown record has stored statements. Marker identifiers,
+versions, statement text, catalog definitions and observed hash values are never
+rendered. Every source-baseline count is zero and every safety boolean is true;
+any deviation remains `BLOCK` and prints only allowlisted field identifiers.
+
 BLOCK still exits1; baseline match still emits only the original decision line.
-No retry, Skip, Apply or repair is added. Query, expected policy/monetary state,
-recovery, workflow, CA, limits and passfile transport remain byte-identical.
-Only runner/test pins in the existing integration manifest are refreshed.
+No retry, Skip, Apply or repair is added. Expected policy/monetary state,
+recovery, workflow, CA, limits and passfile transport remain unchanged. Query,
+runner, tests, documentation and their existing manifest pins are refreshed.
 
 Before any future execution: review exact PR head and Required CI, independent
 countercheck, actual merged main, integration-manifest/controller/query/recovery

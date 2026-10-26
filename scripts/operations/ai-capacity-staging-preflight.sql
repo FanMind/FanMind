@@ -66,15 +66,40 @@ with table_profiles as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(profile order by relname) from table_profiles),
     'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
+), normalized_table_profiles as (
+  select relname, case when relname<>'ai_capacity_admin_policy' then profile else
+    jsonb_set(profile,'{columns}',(select jsonb_agg(case column_value->>0
+      when 'package_99_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('1500000000'::text))
+      when 'package_199_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('''3000000000''::bigint'::text))
+      when 'package_312_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('''5000000000''::bigint'::text))
+      else column_value end order by ordinal)
+      from jsonb_array_elements(profile->'columns') with ordinality columns(column_value,ordinal))) end profile
+  from table_profiles
+), normalized_schema_profile as (
+  select jsonb_build_object(
+    'tables',(select jsonb_agg(profile order by relname) from normalized_table_profiles),
+    'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
 ), capacity_migration_markers as (
   select
     regexp_replace(regexp_replace(lower(coalesce(name,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_name,
     regexp_replace(regexp_replace(lower(coalesce(version,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_version,
     coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_name_is_capacity,
-    version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_version_is_capacity
+    version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_version_is_capacity,
+    cardinality(coalesce(statements,array[]::text[]))>0 marker_has_statements
   from supabase_migrations.schema_migrations
   where coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
      or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
+), classified_capacity_migration_markers as (
+  select *,
+    marker_name in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+      'ai_capacity_reserve_settle') marker_name_is_known,
+    marker_version in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+      'ai_capacity_reserve_settle') marker_version_is_known,
+    (marker_name_is_capacity and marker_name not in ('ai_capacity_billing_v2',
+      'ai_capacity_billing_v2_activation_gates','ai_capacity_reserve_settle')) marker_name_is_unknown,
+    (marker_version_is_capacity and marker_version not in ('ai_capacity_billing_v2',
+      'ai_capacity_billing_v2_activation_gates','ai_capacity_reserve_settle')) marker_version_is_unknown
+  from capacity_migration_markers
 )
 select jsonb_build_object(
   'version',1,
@@ -82,6 +107,65 @@ select jsonb_build_object(
   'rls_filtering_disabled',current_setting('row_security')='off',
   'postgres_major',current_setting('server_version_num')::integer/10000,
   'schema_md5',(select md5(profile::text) from schema_profile),
+  'schema_matches_after_budget_default_normalization',(select md5(profile::text) from normalized_schema_profile)
+    ='e3b71e6b343c161ebabf1fc34739a837',
+  'table_structure_safety_matches',(select count(*)=5
+      and bool_and(c.relkind='r')
+      and bool_and((select count(*) from pg_attribute a where a.attrelid=c.oid
+        and a.attnum>0 and not a.attisdropped)=case c.relname
+          when 'ai_capacity_admin_policy' then 18 when 'ai_capacity_grants' then 13
+          when 'ai_capacity_reservations' then 11 when 'ai_capacity_reservation_allocations' then 4
+          when 'ai_capacity_ledger_events' then 19 end)
+      and bool_and(not exists(select 1 from pg_constraint k where k.conrelid=c.oid and not k.convalidated))
+      and bool_and(not exists(select 1 from pg_index i where i.indrelid=c.oid and (not i.indisvalid or not i.indisready)))
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
+      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
+        'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
+  'function_security_matches',(select count(*)=4
+      and count(*) filter(where p.proname='ai_capacity_ledger_immutable' and not p.prosecdef
+        and l.lanname='plpgsql' and p.proconfig @> array['search_path=pg_catalog, public, pg_temp'])=1
+      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard' and not p.prosecdef
+        and l.lanname='plpgsql' and p.proconfig @> array['search_path=pg_catalog, public, pg_temp'])=1
+      and count(*) filter(where p.proname='admin_get_ai_capacity_policy' and p.prosecdef
+        and l.lanname='sql' and p.provolatile='s' and p.proconfig @> array[
+          'search_path=pg_catalog, public, pg_temp','row_security=off'])=1
+      and count(*) filter(where p.proname='admin_update_ai_capacity_policy' and p.prosecdef
+        and l.lanname='plpgsql' and p.proconfig @> array[
+          'search_path=pg_catalog, public, pg_temp','row_security=off'])=1
+      and bool_and(not has_function_privilege('anon',p.oid,'EXECUTE')
+        and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+        and has_function_privilege('service_role',p.oid,'EXECUTE')=(p.proname like 'admin\_%' escape '\'))
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang
+    where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
+      or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))),
+  'rls_acl_security_matches',(select count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)
+      and bool_and(not exists(select 1 from pg_policy p where p.polrelid=c.oid))
+      and bool_and(not has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        and not has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+        and has_table_privilege('service_role',c.oid,'SELECT')
+        and not has_table_privilege('service_role',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
+      and bool_and(not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attnum>0
+        and not a.attisdropped and a.attacl is not null))
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
+      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
+        'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
+  'other_security_matches',(select count(*)=5 and count(distinct c.relowner)=1
+      and bool_and(pg_get_userbyid(c.relowner) not in ('anon','authenticated','service_role'))
+    from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public'
+      and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
+        'ai_capacity_reservation_allocations','ai_capacity_ledger_events']))
+    and (select count(*)=2 and count(*) filter(where t.tgname='ai_capacity_admin_activation_guard'
+        and c.relname='ai_capacity_admin_policy' and t.tgenabled='O')=1
+      and count(*) filter(where t.tgname='ai_capacity_ledger_immutable_update_delete'
+        and c.relname='ai_capacity_ledger_events' and t.tgenabled='O')=1
+      from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace
+      where n.nspname='public' and not t.tgisinternal and c.relname=any(array[
+        'ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
+        'ai_capacity_reservation_allocations','ai_capacity_ledger_events']))
+    and not has_schema_privilege('anon','public','CREATE')
+    and not has_schema_privilege('authenticated','public','CREATE')
+    and not exists(select 1 from pg_roles where rolname in ('anon','authenticated')
+      and (rolsuper or rolbypassrls)),
   'policy_package_99_budget_default_matches',exists(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
@@ -146,13 +230,21 @@ select jsonb_build_object(
     select 1 from capacity_migration_markers
     where marker_name='ai_capacity_reserve_settle' or marker_version='ai_capacity_reserve_settle'),
   'capacity_unknown_migration_marker_absent',not exists(
-    select 1 from capacity_migration_markers
-    where (marker_name_is_capacity
-        and marker_name not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
-          'ai_capacity_reserve_settle'))
-      or (marker_version_is_capacity
-        and marker_version not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
-          'ai_capacity_reserve_settle'))),
+    select 1 from classified_capacity_migration_markers
+    where marker_name_is_unknown or marker_version_is_unknown),
+  'capacity_migration_marker_count',(select count(*) from classified_capacity_migration_markers),
+  'capacity_known_migration_marker_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_known or marker_version_is_known),
+  'capacity_unknown_migration_marker_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown or marker_version_is_unknown),
+  'capacity_unknown_marker_name_only_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown and not marker_version_is_unknown),
+  'capacity_unknown_marker_version_only_count',(select count(*) from classified_capacity_migration_markers
+    where marker_version_is_unknown and not marker_name_is_unknown),
+  'capacity_unknown_marker_name_and_version_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown and marker_version_is_unknown),
+  'capacity_unknown_marker_with_statements_count',(select count(*) from classified_capacity_migration_markers
+    where (marker_name_is_unknown or marker_version_is_unknown) and marker_has_statements),
   'policy_row_count',(select count(*) from public.ai_capacity_admin_policy),
   'policy',(select jsonb_build_object('singleton_id',singleton_id,'revision',revision,
     'package_99_budget_eur_microcents',package_99_budget_eur_microcents,
