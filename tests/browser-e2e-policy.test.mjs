@@ -9,7 +9,7 @@ async function read(path) {
 test("Playwright stays exactly pinned and exposes separate public and staging commands", async () => {
   const manifest = JSON.parse(await read("package.json"));
 
-  assert.equal(manifest.devDependencies?.["@playwright/test"], "1.62.1");
+  assert.equal(manifest.devDependencies?.["@playwright/test"], "1.64.1");
   assert.equal(
     manifest.scripts?.["test:e2e"],
     "playwright test --config=playwright.config.mts",
