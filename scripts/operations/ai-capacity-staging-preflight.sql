@@ -86,12 +86,72 @@ with table_profiles as (
   from normalized_table_profiles
 ), function_security_profile as (
   select jsonb_agg(profile order by proname,args) profile from function_profiles
+), provider_normalized_function_profiles as (
+  select proname,args,case when proname='ai_capacity_ledger_immutable' and args=''
+    and (select jsonb_agg(value order by value->>0,value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value
+      where value->>0 in ('anon','authenticated','service_role'))
+      =jsonb_build_array(jsonb_build_array('anon','EXECUTE',false),
+        jsonb_build_array('authenticated','EXECUTE',false),
+        jsonb_build_array('service_role','EXECUTE',false))
+    then jsonb_set(profile,'{acl}',coalesce((select jsonb_agg(value
+      order by (value->>0='PUBLIC') desc,value->>0,value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value
+      where value->>0 not in ('anon','authenticated','service_role')),'[]'::jsonb))
+    when proname='ai_capacity_admin_activation_guard' and args=''
+      and (select jsonb_agg(value order by value->>0,value->>1,value->>2)
+        from jsonb_array_elements(profile->'acl') value where value->>0='service_role')
+        =jsonb_build_array(jsonb_build_array('service_role','EXECUTE',false))
+      and profile->'effective'=jsonb_build_array(jsonb_build_array('anon',false),
+        jsonb_build_array('authenticated',false),jsonb_build_array('service_role',true))
+    then jsonb_set(jsonb_set(profile,'{acl}',coalesce((select jsonb_agg(value
+      order by (value->>0='PUBLIC') desc,value->>0,value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value where value->>0<>'service_role'),'[]'::jsonb)),
+      '{effective}',jsonb_build_array(jsonb_build_array('anon',false),
+        jsonb_build_array('authenticated',false),jsonb_build_array('service_role',false)))
+    else profile end profile
+  from function_profiles
+), provider_normalized_function_security_profile as (
+  select jsonb_agg(profile order by proname,args) profile from provider_normalized_function_profiles
 ), rls_acl_security_profile as (
   select jsonb_agg(jsonb_build_object(
     'name',profile->'name','rls',profile->'rls','force_rls',profile->'force_rls',
     'policies',profile->'policies','acl',profile->'acl','column_acl',profile->'column_acl',
     'effective',profile->'effective','effective_columns',profile->'effective_columns') order by relname) profile
   from table_profiles
+), provider_normalized_rls_table_profiles as (
+  select relname,case when
+    (select jsonb_agg(value order by value->>1,value->>2)
+      from jsonb_array_elements(profile->'acl') value where value->>0='service_role')
+      =jsonb_build_array(jsonb_build_array('service_role','DELETE',false),
+        jsonb_build_array('service_role','INSERT',false),
+        jsonb_build_array('service_role','MAINTAIN',false),
+        jsonb_build_array('service_role','REFERENCES',false),
+        jsonb_build_array('service_role','SELECT',false),
+        jsonb_build_array('service_role','TRIGGER',false),
+        jsonb_build_array('service_role','TRUNCATE',false),
+        jsonb_build_array('service_role','UPDATE',false))
+    then jsonb_set(jsonb_set(jsonb_set(profile,'{acl}',
+      (select jsonb_agg(value order by value->>0,value->>1,value->>2) from (
+        select value from jsonb_array_elements(profile->'acl') value where value->>0<>'service_role'
+        union all select jsonb_build_array('service_role','SELECT',false)) entries)),
+      '{effective}',(select jsonb_agg(value order by value->>0,value->>1) from (
+        select value from jsonb_array_elements(profile->'effective') value where value->>0<>'service_role'
+        union all select jsonb_build_array('service_role',privilege,privilege='SELECT')
+          from unnest(array['SELECT','INSERT','UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER']) privilege) entries)),
+      '{effective_columns}',(select jsonb_agg(value order by value->>0,value->>1,value->>2) from (
+        select value from jsonb_array_elements(profile->'effective_columns') value where value->>0<>'service_role'
+        union all select jsonb_build_array('service_role',column_value->>0,privilege,privilege='SELECT')
+          from jsonb_array_elements(profile->'columns') column_value
+          cross join unnest(array['SELECT','INSERT','UPDATE','REFERENCES']) privilege) entries))
+    else profile end profile
+  from table_profiles
+), provider_normalized_rls_acl_security_profile as (
+  select jsonb_agg(jsonb_build_object(
+    'name',profile->'name','rls',profile->'rls','force_rls',profile->'force_rls',
+    'policies',profile->'policies','acl',profile->'acl','column_acl',profile->'column_acl',
+    'effective',profile->'effective','effective_columns',profile->'effective_columns') order by relname) profile
+  from provider_normalized_rls_table_profiles
 ), other_security_profile as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(jsonb_build_object('name',profile->'name','owner',profile->'owner',
@@ -135,8 +195,14 @@ select jsonb_build_object(
     ='85829956879e59d8e93e18a7da0c2ef5',
   'function_security_matches',(select md5(profile::text) from function_security_profile)
     ='407b36567309369b7247dc4dd8ee2106',
+  'function_security_matches_after_supabase_default_acl_normalization',
+    (select md5(profile::text) from provider_normalized_function_security_profile)
+      ='407b36567309369b7247dc4dd8ee2106',
   'rls_acl_security_matches',(select md5(profile::text) from rls_acl_security_profile)
     ='a5115f4181a17f2d287e39d48782139d',
+  'rls_acl_security_matches_after_supabase_default_acl_normalization',
+    (select md5(profile::text) from provider_normalized_rls_acl_security_profile)
+      ='a5115f4181a17f2d287e39d48782139d',
   'other_security_matches',(select md5(profile::text) from other_security_profile)
     ='c724cd4f599d34f7d96f5cc4ffb99683',
   'policy_package_99_budget_default_matches',exists(
@@ -218,6 +284,9 @@ select jsonb_build_object(
     where marker_name_is_unknown and marker_version_is_unknown),
   'capacity_unknown_marker_with_statements_count',(select count(*) from classified_capacity_migration_markers
     where (marker_name_is_unknown or marker_version_is_unknown) and marker_has_statements),
+  'capacity_single_unknown_name_only_marker_with_statements_present',(
+    select count(*)=1 and count(*) filter(where marker_name_is_unknown and not marker_version_is_unknown
+      and marker_has_statements)=1 from classified_capacity_migration_markers),
   'policy_row_count',(select count(*) from public.ai_capacity_admin_policy),
   'policy',(select jsonb_build_object('singleton_id',singleton_id,'revision',revision,
     'package_99_budget_eur_microcents',package_99_budget_eur_microcents,

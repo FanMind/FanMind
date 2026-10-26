@@ -132,6 +132,18 @@ versions, statement text, catalog definitions and observed hash values are never
 rendered. Every source-baseline count is zero and every safety boolean is true;
 any deviation remains `BLOCK` and prints only allowlisted field identifiers.
 
+The provider-default attribution is narrower than a baseline exception. Two
+additional booleans project only the repository-pinned Supabase initial-schema
+grants: direct `anon`/`authenticated`/`service_role` EXECUTE entries on the
+immutable trigger function, direct `service_role` EXECUTE on the activation
+guard and `service_role` ALL on the five Capacity tables.
+They compare the resulting complete function and RLS/ACL profiles to the same
+original source hashes. A match can therefore attribute those two aggregate
+profile failures without hiding a different function body, owner, policy, RLS,
+column ACL or browser privilege. A separate boolean proves only the bounded
+shape "exactly one unknown name-only Capacity marker with stored statements";
+it emits no marker identity, version or statement.
+
 BLOCK still exits1; baseline match still emits only the original decision line.
 No retry, Skip, Apply or repair is added. Expected policy/monetary state,
 recovery, workflow, CA, limits and passfile transport remain unchanged. Query,

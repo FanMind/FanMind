@@ -80,11 +80,14 @@ const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "capacity_unknown_migration_marker_absent", "policy_package_99_budget_default_matches",
   "policy_package_199_budget_default_matches", "policy_package_312_budget_default_matches",
   "schema_matches_after_budget_default_normalization", "table_structure_safety_matches",
-  "function_security_matches", "rls_acl_security_matches", "other_security_matches",
+  "function_security_matches", "function_security_matches_after_supabase_default_acl_normalization",
+  "rls_acl_security_matches", "rls_acl_security_matches_after_supabase_default_acl_normalization",
+  "other_security_matches",
   "capacity_migration_marker_count", "capacity_known_migration_marker_count",
   "capacity_unknown_migration_marker_count", "capacity_unknown_marker_name_only_count",
   "capacity_unknown_marker_version_only_count", "capacity_unknown_marker_name_and_version_count",
   "capacity_unknown_marker_with_statements_count",
+  "capacity_single_unknown_name_only_marker_with_statements_present",
   "policy_revision", "policy_fast_enabled",
   "policy_singleton_id", "policy_premium_enabled", "policy_balanced_enabled",
   "policy_top_up_sales_enabled", "policy_emergency_spend_freeze",
@@ -163,7 +166,9 @@ function verifyCapacityIntegration(root = process.cwd(), committed = false) {
     "schema_matches_after_budget_default_normalization",
     "table_structure_safety_matches",
     "function_security_matches",
+    "function_security_matches_after_supabase_default_acl_normalization",
     "rls_acl_security_matches",
+    "rls_acl_security_matches_after_supabase_default_acl_normalization",
     "other_security_matches",
     "capacity_migration_marker_count",
     "capacity_known_migration_marker_count",
@@ -172,6 +177,7 @@ function verifyCapacityIntegration(root = process.cwd(), committed = false) {
     "capacity_unknown_marker_version_only_count",
     "capacity_unknown_marker_name_and_version_count",
     "capacity_unknown_marker_with_statements_count",
+    "capacity_single_unknown_name_only_marker_with_statements_present",
   ]) delete originalPreparation.expectedObservation[key];
   originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight.sql"]="4f7dc3970dff241f9f2f09b4f797990a72b77002dc429f4842825db005c53e2b";
   originalPreparation.sha256["tests/ai-capacity-staging-preflight.test.mjs"]="54405080b83f97b816c1f996c96d171fa3c3c64523536d2ac43892556eec34f2";
