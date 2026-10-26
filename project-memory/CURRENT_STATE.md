@@ -1,3 +1,7 @@
+## Known-fact question diagnosis reconciled on Current Facts — 2026-10-26
+- PR #1341's unique finding is revalidated against merged Current Facts: source currentness and explicit withdrawal are distinguishable when the default-off store is enabled, but the shared reply-quality gate remains fact-context-free and can accept a redundant broad question. Legitimate detail questions remain allowed; manual/unconfirmed notes remain non-authoritative.
+- This is a repository diagnostic baseline, not model-frequency evidence or runtime acceptance. No production source, schema/RLS/ACL, feature flag, provider, database or deployment change. Exact-head CI and independent R3 countercheck belong to the integration PR metadata.
+
 ## Current facts offline profile — OFFLINE_PROFILE_READY — 2026-10-18
 - Task FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018, existing Draft1345 only; continuation base3471b1d6e80fc38679e0914d572a9de6976f417a, mainf36e630c73d3820a61aef593a705d241600e7f47. SQL unchanged SHA256 a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947.
 - Fixed offline PG17 catalog328baseline/413current binds query/reference/SQL/parent-verifier hashes; exact scoped object/ACL/private-function/role/default/owner comparison. Four old Base/Fan/Offers/Tier checkers unchanged; full original exports pass baseline and separately restored inverse copy. No backup-worker, workflow, package or runtime changes.

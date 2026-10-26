@@ -151,6 +151,7 @@ function harness(change, abortController, options = {}) {
       let replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
       if (change === "ambiguous-offer") replies=["Welchen der beiden Artikel meinst du?","Soll es das Foto oder das private Foto sein?","Bitte wähle zuerst einen Artikel aus."];
       if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
+      if (options.replies) replies=options.replies;
 
       if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("context-price")) replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
@@ -656,4 +657,53 @@ for(const mode of ["off","on","cutover-off","missing-schema"])test(`actual store
  else {const fan=await request;assert.equal(Object.hasOwn(fan,"current_facts"),mode==="on");}
  assert.equal(calls.length,mode==="off"||mode==="cutover-off"?1:2);
  if(calls.length===2)for(const [key,value] of [["workspace_id",workspaceId],["character_id",characterId],["fan_id",fanId]])assert.equal(new URL(calls[1]).searchParams.get(key),`eq.${value}`);
+});
+
+// PR1341 reconciliation: storage currentness and semantic answer quality are
+// separate contracts. These characterize the remaining gate limitation without
+// duplicating the default-off current-facts implementation.
+function boundMusicCurrentFacts(quote,sequence=20){
+ const binding={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
+ const source={...binding,id:`known-${sequence}`,generation_id:`generation-${sequence}`,direction:"fan_inbound",sequence,content:quote};
+ return currentFactsPolicy.extractCurrentInterestAssertions(source,binding);
+}
+
+test("diagnostic: default-off legacy knowledge still cannot reject a redundant broad question",async()=>{
+ const question="Magst du Musik?";
+ const h=harness(undefined,undefined,{notes:positiveMusicNotes(),history:[],replies:[question,"Was machst du gerne?","Erzähl mir etwas von dir."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);const body=await response.json();assert.equal(body.replies[0],question);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.ok(context.fan.learned_preferences.some(fact=>fact.quote==="Ich mag Musik."));
+ assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const [quote,polarity] of [["Ich liebe Musik.","positive"],["Ich mag Musik nicht mehr.","negative"]])test(`diagnostic: current ${polarity} fact is accurate while the context-free gate accepts a broad music question`,async()=>{
+ const question="Magst du Musik?";
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts(quote),notes:polarity==="negative"?positiveMusicNotes():"Manuell",history:[],replies:[question,"Was machst du gerne?","Erzähl mir etwas von dir."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);const body=await response.json();assert.equal(body.replies[0],question);
+ const context=JSON.parse(h.calls.providerBody.input[1].content);
+ const music=context.fan.learned_preferences.filter(fact=>fact.topic==="music");
+ assert.equal(music.length,1);assert.equal(music[0].quote,quote);assert.equal(music[0].polarity,polarity);
+ if(polarity==="negative")assert.ok(!context.fan.learned_preferences.some(fact=>fact.quote==="Ich mag Musik."));
+ assert.deepEqual(context.conversation.recent_messages,[]);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const notes of ["Ich mag Musik.","Vielleicht mag der Fan Musik.","Unbestätigt: Fan kauft bestimmt morgen."])test(`manual or uncertain notes stay outside confirmed-interest authority (${notes})`,async()=>{
+ const question="Magst du Musik?";
+ const h=harness(undefined,undefined,{notes,summary:"Unbestätigte Vermutung: mag Musik.",history:[],replies:[question,"Was machst du gerne?","Erzähl mir etwas von dir."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);const context=JSON.parse(h.calls.providerBody.input[1].content);
+ assert.deepEqual(context.fan.learned_preferences,[]);assert.equal(context.fan.notes,notes);
+ assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.sellNow,false);
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+for(const question of ["Welche Musik hörst du gerne?","Welche Musikrichtung magst du?","What kind of music do you like?"])test(`a current broad interest still permits an unknown detail question (${question})`,async()=>{
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],replies:[question,"Welche Künstler hörst du am liebsten?","Hast du gerade ein Lieblingslied?"]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+ assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
 });

@@ -70,3 +70,15 @@ test("different numbers and negations are not collapsed into the same long factu
  assert.deepEqual(assessReplyQuality([base+" ohne Zusatzkosten.",base+" mit Zusatzkosten.","Ich kläre die Kosten." ]),[]);
  assert.deepEqual(assessReplyQuality([base+" in 10 Tagen.",base+" in 20 Tagen.","Ich kläre den Termin." ]),[]);
 });
+
+for(const question of ["Magst du Musik?","Magst du Reisen?","Do you like music?","Welche Musik hörst du gerne?","What kind of music do you like?"])test(`shared quality remains context-free for known-fact questions (${question})`,()=>{
+ const replies=[question,"Was machst du gerne?","Erzähl mir etwas von dir."];
+ assert.deepEqual(assessReplyQuality(replies),[]);
+ assert.deepEqual(assessReplyQuality(replies,["Ein anderer bestätigter Dialogbeitrag."]),[]);
+});
+
+test("known-fact question diagnostics add no provider attempt to the shared quality gate",async()=>{
+ const replies=["Magst du Musik?","Was machst du gerne?","Erzähl mir etwas von dir."];
+ const h=gateHarness([replies]);assert.equal(await h.run(),replies);
+ assert.equal(h.calls.length,1);assert.equal(h.events.length,1);assert.equal(h.events[0].error,null);
+});

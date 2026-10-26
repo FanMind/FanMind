@@ -1436,3 +1436,10 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Owner-selected bounded R3 repository integration of the linear #1342 -> #1343 -> #1344 -> #1345 source chain onto exact main 9d1937ab3895e3a18a34fdafce4f693d8eae9726. PR #1341 remains a separate diagnostic and is not silently promoted into the product correction.
 - The integration preserves default-off behavior and performs no deployment, SQL APPLY, feature activation, provider access or customer-data mutation. Exact-head full CI, native PostgreSQL 17 and independent R3 countercheck are required before merge.
 - Source handoff: merge-tree construction preserves every #1345 source blob; only the three append-only Project-Memory files are reconciled with later main history. Status RELEASED_FOR_PR; protected installation/runtime blockers remain open.
+
+## FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026
+- Owner-selected bounded R3 repository diagnosis handoff for PR #1341 on exact main fead9f756a88c59baab6f5d4b1c6d5af5cc00e87; lock LOCK-FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026.
+- Scope: port only still-relevant known-fact/currentness/false-question/detail-question diagnostics to the integrated default-off Current-Facts implementation; no duplicate storage or revocation implementation.
+- Required: focused negative/regression tests, exact-head CI, independent R3 countercheck and honest separation between current-state correctness and model/quality-gate semantics.
+- Boundary: repository tests/docs only; no SQL APPLY, migration, flag/capability activation, provider call, Staging/Production/customer-data action or deployment. Recovery is reviewed repository revert.
+- Source handoff: current-main route and shared-quality characterization tests plus #1341 historical receipt/docs integrated; no runtime implementation duplicated. Lock released for Draft PR; exact-head CI and independent R3 countercheck required.

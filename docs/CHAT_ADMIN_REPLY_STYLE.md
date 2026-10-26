@@ -409,3 +409,18 @@ frisch überprüften GitHub-main. Geschützte Capacity-Prüfsummen/Workflows ble
 unverändert. Synthetische tatsächliche Routeprüfungen belegen autorisierte
 Persistenz, Replay/CAS/Fehlerpfade und den nächsten Modellkontext ohne History.
 Sie belegen keine tatsächliche Modellbefolgung oder Production-/Staging-Abnahme.
+
+## Bekannte Angaben: aktueller Diagnoseabschluss — 26. Oktober 2026
+
+Die in #1341 beobachtete Datenambiguität ist für den vorbereiteten Current-Facts-Pfad
+behoben: positive und ausdrücklich widerrufene Interessen sind quellgebunden,
+geordnet und im Modellkontext unterscheidbar; ein aktueller Topic-Fakt verdrängt dort
+einen älteren Legacy-Fakt desselben Themas. Die Funktion bleibt jedoch default-off
+und uninstalled.
+
+Davon unabhängig prüft der gemeinsame Antwortqualitätswächter Wiederholung und Form,
+aber keine semantische Übereinstimmung einer Rückfrage mit Current Facts. Aktuelle
+synthetische Routefälle charakterisieren daher weiterhin die Akzeptanz einer
+redundanten breiten Frage. Zulässige Detailfragen und manuelle/unbestätigte Notizen
+bilden die Gegenkontrollen. Keine neue Laufzeitregel, kein Provideraufruf, kein
+automatisches Senden und keine Aktivierung werden aus dieser Diagnose abgeleitet.
