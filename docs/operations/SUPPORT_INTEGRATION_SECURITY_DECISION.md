@@ -1,6 +1,10 @@
 # Support Integration Security Decision
 
-Status: `OWNER_ACCEPTED_UNTIL_EXISTING_EXPIRY` for the eight residual Mobile findings on reviewed head `4b4e5edd97842aa79225b2a8052f954f85667f57`. The acceptance ends at `2026-11-08T12:40:47Z`; this record does not renew it.\n\n## Repository reconciliation\n\nRevalidated on repository base `99fb8b1420758fa2a77c01d76b960feffde90da8`. The Support source files and root/Mobile package manifests and lockfiles are byte-identical to cumulative merge `7368305db778165d6a6dd8f83265445a6863a25b`; later Capacity and ChatAdmin repository changes neither alter the reviewed dependency graph nor renew this acceptance. Fresh exact-head Supply-Chain CI remains required for the integration PR.
+Status: `OWNER_ACCEPTED_UNTIL_EXISTING_EXPIRY` for the eight residual Mobile findings on reviewed head `4b4e5edd97842aa79225b2a8052f954f85667f57`. The acceptance ends at `2026-11-08T12:40:47Z`; this record does not renew it.
+
+## Repository reconciliation
+
+Revalidated on repository base `99fb8b1420758fa2a77c01d76b960feffde90da8`. The Support source files and root/Mobile package manifests and lockfiles are byte-identical to cumulative merge `7368305db778165d6a6dd8f83265445a6863a25b`; later Capacity and ChatAdmin repository changes neither alter the reviewed dependency graph nor renew this acceptance. Fresh exact-head Supply-Chain CI remains required for the integration PR.
 
 ## Binding evidence
 
