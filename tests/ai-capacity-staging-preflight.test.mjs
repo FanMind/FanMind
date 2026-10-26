@@ -79,6 +79,18 @@ function fresh({supabaseDefaults=false}={}) {
 }
 const observe=()=>JSON.parse(sql(query));
 const evaluate=()=>evaluateObservation(observe(),control);
+const functionSecuritySummary=()=>JSON.parse(sql(`select jsonb_agg(jsonb_build_object(
+  'name',p.proname,'args',pg_get_function_identity_arguments(p.oid),
+  'acl',(select jsonb_agg(jsonb_build_array(case when x.grantee=0 then 'PUBLIC'
+    else pg_get_userbyid(x.grantee) end,x.privilege_type,x.is_grantable)
+    order by x.grantee::regrole::text,x.privilege_type,x.is_grantable)
+    from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x),
+  'effective',(select jsonb_agg(jsonb_build_array(r,has_function_privilege(r,p.oid,'EXECUTE'))
+    order by r) from unnest(array['anon','authenticated','service_role']) r))
+  order by p.proname,pg_get_function_identity_arguments(p.oid))
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  where n.nspname='public' and (p.proname like 'ai\\_capacity\\_%' escape '\\'
+    or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))`));
 test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects real drift",{skip:!required},async t=>{
   assert.equal(sql("select current_setting('server_version_num')::int/10000;","postgres"),"17");
   sql("do $$ begin if not exists(select from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists(select from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; if not exists(select from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;","postgres");
@@ -104,7 +116,8 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(observation.function_security_matches,false);
       assert.equal(observation.rls_acl_security_matches,false);
       assert.equal(observation.schema_matches_after_budget_default_normalization,false);
-      assert.equal(observation.function_security_matches_after_supabase_default_acl_normalization,true);
+      assert.equal(observation.function_security_matches_after_supabase_default_acl_normalization,true,
+        JSON.stringify(functionSecuritySummary()));
       assert.equal(observation.rls_acl_security_matches_after_supabase_default_acl_normalization,true);
       sql("create policy provider_defaults_plus_drift on public.ai_capacity_grants for select to authenticated using(true);");
       assert.equal(observe().rls_acl_security_matches_after_supabase_default_acl_normalization,false);
