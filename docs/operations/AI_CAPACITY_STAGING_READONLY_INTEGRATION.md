@@ -135,7 +135,8 @@ any deviation remains `BLOCK` and prints only allowlisted field identifiers.
 The provider-default attribution is narrower than a baseline exception. Two
 additional booleans project only the repository-pinned Supabase initial-schema
 grants: direct `anon`/`authenticated`/`service_role` EXECUTE entries on the
-immutable trigger function and `service_role` ALL on the five Capacity tables.
+immutable trigger function, direct `service_role` EXECUTE on the activation
+guard and `service_role` ALL on the five Capacity tables.
 They compare the resulting complete function and RLS/ACL profiles to the same
 original source hashes. A match can therefore attribute those two aggregate
 profile failures without hiding a different function body, owner, policy, RLS,
