@@ -1459,3 +1459,11 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed revert of this repository-only handoff. Exact-head CI and independent R3 countercheck are mandatory before merge.
 - Forbidden: runtime source, storage/schema/RLS/ACL changes, migration or SQL APPLY, Current-Facts activation, provider/model call, Staging/Production/customer-data mutation, deployment and direct main write.
 - Handoff: test/docs/receipt-only reconciliation complete; production source remains byte-identical. Exact-head required CI and independent R3 review remain mandatory in PR metadata.
+
+## LOCK-FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026
+- Task: FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026; Status: ACTIVE; Holder: FanMind Builder; Risk: R3 repository-only.
+- Base: main `99fb8b1420758fa2a77c01d76b960feffde90da8`; source evidence PR #1357 head `84514d3e74358479302cdf65ac369c560f0a5d0f`; branch `docs/support-postmerge-reconcile-20261026`.
+- Scope: four existing Support documentation/Project-Memory paths only; preserve historical support merge proof while requiring a fresh exact authorized deployment SHA at the protected Staging boundary.
+- Coordination: #1352-#1354 are already closed as superseded; later Capacity and ChatAdmin changes do not alter Support source or root/Mobile dependency blobs. No competing Support source writer identified.
+- Recovery: reviewed revert of this repository-only reconciliation; no external cleanup because all target, database, provider, flag and deployment actions are excluded.
+- Forbidden: application/runtime/dependency/workflow/schema/RLS/ACL changes, migration or SQL APPLY, target read, feature activation, provider/customer action, Staging/Production action, deployment and direct main write.
