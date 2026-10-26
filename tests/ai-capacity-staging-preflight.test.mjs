@@ -111,7 +111,11 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
         "capacity_unknown_migration_marker_count","capacity_unknown_marker_name_only_count",
         "capacity_unknown_marker_version_only_count","capacity_unknown_marker_name_and_version_count",
         "capacity_unknown_marker_with_statements_count"]) assert.equal(a[field],0,field);
-      assert.equal(a.capacity_single_unknown_name_only_marker_with_statements_present,false);
+      for (const field of ["capacity_migration_marker_count_equals_one",
+        "capacity_all_markers_unknown","capacity_all_markers_unknown_name_only",
+        "capacity_all_markers_have_statements",
+        "capacity_single_unknown_name_only_marker_with_statements_present"])
+        assert.equal(a[field],false,field);
     });
     await t.test("attributes Supabase provider defaults without hiding other catalog drift",()=>{
       fresh();
@@ -173,22 +177,37 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(observation[field],false);
     });
     for (const [name,mutation,expected] of [
-      ["known marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:0}],
-      ["unknown name-only marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000001','capacity_v2_unreviewed');",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_only_count:1}],
-      ["unknown version-only marker","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_v2_unreviewed','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_version_only_count:1}],
-      ["unknown name-and-version marker with statements","insert into supabase_migrations.schema_migrations(version,name,statements) values('ai_capacity_v2_unreviewed','capacity_v2_unreviewed',array['protected']);",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_and_version_count:1,capacity_unknown_marker_with_statements_count:1}],
-    ]) await t.test(`reports protected counts for ${name}`,()=>{
+      ["known marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:0,capacity_migration_marker_count_equals_one:true,capacity_all_markers_unknown:false,capacity_all_markers_unknown_name_only:false,capacity_all_markers_have_statements:false,capacity_single_unknown_name_only_marker_with_statements_present:false}],
+      ["unknown name-only marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000001','capacity_v2_unreviewed');",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_only_count:1,capacity_migration_marker_count_equals_one:true,capacity_all_markers_unknown:true,capacity_all_markers_unknown_name_only:true,capacity_all_markers_have_statements:false,capacity_single_unknown_name_only_marker_with_statements_present:false}],
+      ["unknown version-only marker","insert into supabase_migrations.schema_migrations(version,name) values('ai_capacity_v2_unreviewed','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_version_only_count:1,capacity_migration_marker_count_equals_one:true,capacity_all_markers_unknown:true,capacity_all_markers_unknown_name_only:false,capacity_all_markers_have_statements:false,capacity_single_unknown_name_only_marker_with_statements_present:false}],
+      ["unknown name-and-version marker with statements","insert into supabase_migrations.schema_migrations(version,name,statements) values('ai_capacity_v2_unreviewed','capacity_v2_unreviewed',array['protected']);",{capacity_migration_marker_count:1,capacity_unknown_migration_marker_count:1,capacity_unknown_marker_name_and_version_count:1,capacity_unknown_marker_with_statements_count:1,capacity_migration_marker_count_equals_one:true,capacity_all_markers_unknown:true,capacity_all_markers_unknown_name_only:false,capacity_all_markers_have_statements:true,capacity_single_unknown_name_only_marker_with_statements_present:false}],
+    ]) await t.test(`reports protected counts and shape for ${name}`,()=>{
       fresh();sql(mutation);const observation=observe();
       for (const [field,value] of Object.entries(expected)) assert.equal(observation[field],value,field);
       assert.equal(JSON.stringify(observation).includes("unreviewed"),false);
       assert.equal(JSON.stringify(observation).includes("protected"),false);
     });
-    await t.test("proves only an exact single unknown name-only marker with statements",()=>{
+    await t.test("separates marker cardinality, classification and statement coverage",()=>{
       fresh();
       sql("insert into supabase_migrations.schema_migrations(version,name,statements) values('20990101000001','capacity_v2_historical',array['protected']);");
-      assert.equal(observe().capacity_single_unknown_name_only_marker_with_statements_present,true);
+      let observation=observe();
+      for (const field of ["capacity_migration_marker_count_equals_one",
+        "capacity_all_markers_unknown","capacity_all_markers_unknown_name_only",
+        "capacity_all_markers_have_statements",
+        "capacity_single_unknown_name_only_marker_with_statements_present"])
+        assert.equal(observation[field],true,field);
       sql("insert into supabase_migrations.schema_migrations(version,name,statements) values('20990101000002','capacity_v2_second',array['protected']);");
-      assert.equal(observe().capacity_single_unknown_name_only_marker_with_statements_present,false);
+      observation=observe();
+      assert.equal(observation.capacity_migration_marker_count_equals_one,false);
+      assert.equal(observation.capacity_all_markers_unknown,true);
+      assert.equal(observation.capacity_all_markers_unknown_name_only,true);
+      assert.equal(observation.capacity_all_markers_have_statements,true);
+      assert.equal(observation.capacity_single_unknown_name_only_marker_with_statements_present,false);
+      sql("update supabase_migrations.schema_migrations set statements=null where version='20990101000002';");
+      observation=observe();
+      assert.equal(observation.capacity_all_markers_unknown,true);
+      assert.equal(observation.capacity_all_markers_unknown_name_only,true);
+      assert.equal(observation.capacity_all_markers_have_statements,false);
     });
     for (const [name,mutation,key] of [
       ["browser table ACL","grant select on public.ai_capacity_grants to authenticated;","schema_md5"],

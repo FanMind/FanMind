@@ -140,9 +140,11 @@ guard and `service_role` ALL on the five Capacity tables.
 They compare the resulting complete function and RLS/ACL profiles to the same
 original source hashes. A match can therefore attribute those two aggregate
 profile failures without hiding a different function body, owner, policy, RLS,
-column ACL or browser privilege. A separate boolean proves only the bounded
-shape "exactly one unknown name-only Capacity marker with stored statements";
-it emits no marker identity, version or statement.
+column ACL or browser privilege. The marker attribution is split into bounded
+booleans for exact-one cardinality, whether every matched marker is unknown,
+whether every matched marker is name-only, and whether every matched marker has
+stored statements. The existing conjunction remains as a consistency check.
+None emits a marker identity, version, statement or exact count.
 
 BLOCK still exits1; baseline match still emits only the original decision line.
 No retry, Skip, Apply or repair is added. Expected policy/monetary state,

@@ -151,6 +151,10 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       ["normalized-diagnostic-drift","match",{...observation,schema_matches_after_budget_default_normalization:false}],
       ["provider-normalized-diagnostic-drift","match",{...observation,function_security_matches_after_supabase_default_acl_normalization:false}],
       ["count-diagnostic-drift","match",{...observation,capacity_unknown_migration_marker_count:78421}],
+      ["marker-count-one-diagnostic-drift","match",{...observation,capacity_migration_marker_count_equals_one:true}],
+      ["marker-all-unknown-diagnostic-drift","match",{...observation,capacity_all_markers_unknown:true}],
+      ["marker-all-name-only-diagnostic-drift","match",{...observation,capacity_all_markers_unknown_name_only:true}],
+      ["marker-all-statements-diagnostic-drift","match",{...observation,capacity_all_markers_have_statements:true}],
       ["marker-shape-diagnostic-drift","match",{...observation,capacity_single_unknown_name_only_marker_with_statements_present:true}],
       ["error","error",null],["oversize","oversize",null],
       ["connection","connection",null],["sql-error","sql-error",null],
@@ -163,14 +167,21 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
         malformed:"RESPONSE_PARSING:INVALID_JSON","extra-fields":"RESPONSE_PARSING:RESPONSE_SHAPE",null:"RESPONSE_PARSING:RESPONSE_SHAPE","secret-field":"RESPONSE_PARSING:RESPONSE_SHAPE",
         "schema-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","boolean-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         "normalized-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","provider-normalized-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
-        "count-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","marker-shape-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "count-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","marker-count-one-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "marker-all-unknown-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","marker-all-name-only-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "marker-all-statements-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","marker-shape-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         "multiple-secret-values":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         error:"UNKNOWN_BLOCK:UNCLASSIFIED",signal:"UNKNOWN_BLOCK:UNCLASSIFIED",oversize:"QUERY_EXECUTION:OUTPUT_LIMIT",connection:"CONNECTION_TLS:CONNECTION_FAILED",
         "sql-error":"QUERY_EXECUTION:SQL_SCRIPT_FAILED"}[name]??"RESPONSE_BINDING:LABEL_MISMATCH";
       const fields=name==="schema-drift"?["schema_md5"]:name==="boolean-diagnostic-drift"?["policy_package_99_budget_default_matches"]:
         name==="normalized-diagnostic-drift"?["schema_matches_after_budget_default_normalization"]:
         name==="provider-normalized-diagnostic-drift"?["function_security_matches_after_supabase_default_acl_normalization"]:
-        name==="count-diagnostic-drift"?["capacity_unknown_migration_marker_count"]:name==="secret-value"?["policy_revision"]:
+        name==="count-diagnostic-drift"?["capacity_unknown_migration_marker_count"]:
+        name==="marker-count-one-diagnostic-drift"?["capacity_migration_marker_count_equals_one"]:
+        name==="marker-all-unknown-diagnostic-drift"?["capacity_all_markers_unknown"]:
+        name==="marker-all-name-only-diagnostic-drift"?["capacity_all_markers_unknown_name_only"]:
+        name==="marker-all-statements-diagnostic-drift"?["capacity_all_markers_have_statements"]:name==="secret-value"?["policy_revision"]:
           name==="marker-shape-diagnostic-drift"?["capacity_single_unknown_name_only_marker_with_statements_present"]:
           name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
       fake(mode,value);const result=run();blocked(result,true,expected,fields);
