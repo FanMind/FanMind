@@ -66,15 +66,62 @@ with table_profiles as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(profile order by relname) from table_profiles),
     'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
+), normalized_table_profiles as (
+  select relname, case when relname<>'ai_capacity_admin_policy' then profile else
+    jsonb_set(profile,'{columns}',(select jsonb_agg(case column_value->>0
+      when 'package_99_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('1500000000'::text))
+      when 'package_199_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('''3000000000''::bigint'::text))
+      when 'package_312_budget_eur_microcents' then jsonb_set(column_value,'{5}',to_jsonb('''5000000000''::bigint'::text))
+      else column_value end order by ordinal)
+      from jsonb_array_elements(profile->'columns') with ordinality columns(column_value,ordinal))) end profile
+  from table_profiles
+), normalized_schema_profile as (
+  select jsonb_build_object(
+    'tables',(select jsonb_agg(profile order by relname) from normalized_table_profiles),
+    'functions',(select jsonb_agg(profile order by proname,args) from function_profiles)) profile
+), table_structure_profile as (
+  select jsonb_agg(jsonb_build_object(
+    'name',profile->'name','kind',profile->'kind','columns',profile->'columns',
+    'constraints',profile->'constraints','indexes',profile->'indexes') order by relname) profile
+  from normalized_table_profiles
+), function_security_profile as (
+  select jsonb_agg(profile order by proname,args) profile from function_profiles
+), rls_acl_security_profile as (
+  select jsonb_agg(jsonb_build_object(
+    'name',profile->'name','rls',profile->'rls','force_rls',profile->'force_rls',
+    'policies',profile->'policies','acl',profile->'acl','column_acl',profile->'column_acl',
+    'effective',profile->'effective','effective_columns',profile->'effective_columns') order by relname) profile
+  from table_profiles
+), other_security_profile as (
+  select jsonb_build_object(
+    'tables',(select jsonb_agg(jsonb_build_object('name',profile->'name','owner',profile->'owner',
+      'triggers',profile->'triggers') order by relname) from table_profiles),
+    'schema_create',jsonb_build_array(has_schema_privilege('anon','public','CREATE'),
+      has_schema_privilege('authenticated','public','CREATE')),
+    'browser_roles',(select jsonb_agg(jsonb_build_array(rolname,rolsuper,rolbypassrls,
+      pg_has_role(rolname,'service_role','MEMBER')) order by rolname)
+      from pg_roles where rolname in ('anon','authenticated'))) profile
 ), capacity_migration_markers as (
   select
     regexp_replace(regexp_replace(lower(coalesce(name,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_name,
     regexp_replace(regexp_replace(lower(coalesce(version,'')),'^[0-9]{14}[_ -]*',''),'[ -]+','_','g') marker_version,
     coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_name_is_capacity,
-    version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_version_is_capacity
+    version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)' marker_version_is_capacity,
+    cardinality(coalesce(statements,array[]::text[]))>0 marker_has_statements
   from supabase_migrations.schema_migrations
   where coalesce(name,'') ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
      or version ~* 'ai[_ -]?capacity|capacity[_ -]?(billing|reserve|v2)'
+), classified_capacity_migration_markers as (
+  select *,
+    marker_name in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+      'ai_capacity_reserve_settle') marker_name_is_known,
+    marker_version in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
+      'ai_capacity_reserve_settle') marker_version_is_known,
+    (marker_name_is_capacity and marker_name not in ('ai_capacity_billing_v2',
+      'ai_capacity_billing_v2_activation_gates','ai_capacity_reserve_settle')) marker_name_is_unknown,
+    (marker_version_is_capacity and marker_version not in ('ai_capacity_billing_v2',
+      'ai_capacity_billing_v2_activation_gates','ai_capacity_reserve_settle')) marker_version_is_unknown
+  from capacity_migration_markers
 )
 select jsonb_build_object(
   'version',1,
@@ -82,6 +129,16 @@ select jsonb_build_object(
   'rls_filtering_disabled',current_setting('row_security')='off',
   'postgres_major',current_setting('server_version_num')::integer/10000,
   'schema_md5',(select md5(profile::text) from schema_profile),
+  'schema_matches_after_budget_default_normalization',(select md5(profile::text) from normalized_schema_profile)
+    ='e3b71e6b343c161ebabf1fc34739a837',
+  'table_structure_safety_matches',(select md5(profile::text) from table_structure_profile)
+    ='85829956879e59d8e93e18a7da0c2ef5',
+  'function_security_matches',(select md5(profile::text) from function_security_profile)
+    ='407b36567309369b7247dc4dd8ee2106',
+  'rls_acl_security_matches',(select md5(profile::text) from rls_acl_security_profile)
+    ='a5115f4181a17f2d287e39d48782139d',
+  'other_security_matches',(select md5(profile::text) from other_security_profile)
+    ='c724cd4f599d34f7d96f5cc4ffb99683',
   'policy_package_99_budget_default_matches',exists(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
@@ -146,13 +203,21 @@ select jsonb_build_object(
     select 1 from capacity_migration_markers
     where marker_name='ai_capacity_reserve_settle' or marker_version='ai_capacity_reserve_settle'),
   'capacity_unknown_migration_marker_absent',not exists(
-    select 1 from capacity_migration_markers
-    where (marker_name_is_capacity
-        and marker_name not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
-          'ai_capacity_reserve_settle'))
-      or (marker_version_is_capacity
-        and marker_version not in ('ai_capacity_billing_v2','ai_capacity_billing_v2_activation_gates',
-          'ai_capacity_reserve_settle'))),
+    select 1 from classified_capacity_migration_markers
+    where marker_name_is_unknown or marker_version_is_unknown),
+  'capacity_migration_marker_count',(select count(*) from classified_capacity_migration_markers),
+  'capacity_known_migration_marker_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_known or marker_version_is_known),
+  'capacity_unknown_migration_marker_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown or marker_version_is_unknown),
+  'capacity_unknown_marker_name_only_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown and not marker_version_is_unknown),
+  'capacity_unknown_marker_version_only_count',(select count(*) from classified_capacity_migration_markers
+    where marker_version_is_unknown and not marker_name_is_unknown),
+  'capacity_unknown_marker_name_and_version_count',(select count(*) from classified_capacity_migration_markers
+    where marker_name_is_unknown and marker_version_is_unknown),
+  'capacity_unknown_marker_with_statements_count',(select count(*) from classified_capacity_migration_markers
+    where (marker_name_is_unknown or marker_version_is_unknown) and marker_has_statements),
   'policy_row_count',(select count(*) from public.ai_capacity_admin_policy),
   'policy',(select jsonb_build_object('singleton_id',singleton_id,'revision',revision,
     'package_99_budget_eur_microcents',package_99_budget_eur_microcents,

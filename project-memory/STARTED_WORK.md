@@ -1310,6 +1310,8 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Exact next step: complete exact-head CI and the independent countercheck, then return the Draft PR to the Owner without dispatch or merge.
 - Receipt: `project-memory/receipts/capacity-v2-baseline-diagnostics-20261025.md`.
 
+2026-10-26 — Capacity-v2-Diagnose: Die additive Read-only-Attribution fuer historische Budget-Defaults, getrennte Sicherheitsklassen und ausschliesslich aggregierte unbekannte Marker ist als R3-Quellpaket vorbereitet; Baseline, Datenbanken, Marker und geschuetzte Ziele bleiben unveraendert. Evidence: Draft-PR #1367, lokaler Transport-/Redaktionslauf gruen; Exact-Head-CI und unabhaengiger Countercheck bleiben Abschlussgates.
+
 
 ## FM-CREATOR-001 — existing Sales Playbook price boundary completion — 2026-10-17
 - Baseline: main174eaa44; explicit Owner repository-only Phase7b continuation, company-dependent external work deferred by FM-DEC-031.
