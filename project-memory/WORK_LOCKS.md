@@ -1399,16 +1399,17 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 
 ## LOCK-FM-SUPPORT-CUMULATIVE-INTEGRATION-20261025
-- Task: prepare one cumulative integration candidate for PRs #1351, #1352, #1353 and #1354.
-- Status: RELEASED_FOR_PR
-- Risk: R3
-- Holder: FanMind Builder / connected GitHub
-- Base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; branch `integration/support-release-20261025`; PR #1355.
-- Scope: preserve the reviewed cumulative Support, Capacity and Supply-Chain tree; add only the integration security-decision template, exact Staging preflight binding and required R3 coordination/receipt evidence.
-- Forbidden: merge or auto-merge, deployment, SQL/schema APPLY, feature-flag activation, provider/customer action, secret or permission access, Mobile-risk acceptance, direct main write, predecessor PR closure or branch deletion.
-- Evidence required: current main/head comparison; exact-head FanMind CI, Supply Chain, Browser E2E, CodeQL, Mobile CI, Mobile Native CI and governance workflows; independent R3 countercheck; explicit human Mobile-risk decision bound to the unchanged final head before any separately authorized merge.
-- Release reason: the candidate is isolated in Draft PR #1355 and no protected action is performed. The exact final receipt commit and workflow results are bound externally in PR metadata/review because a repository file cannot self-reference the commit that contains it.
-- Recovery: before merge, close or supersede PR #1355 and leave main unchanged; after a separately authorized merge, use a reviewed revert of the exact merge commit. No schema, flag, Staging, Production, provider or customer state is changed by this lock.
+- Task: cumulative Support/Capacity/Supply-Chain integration and post-merge Staging preflight.
+- Status: MERGED_VERIFIED_SOURCE; STAGING_BLOCKED_PENDING_AUTHORIZATION.
+- Risk: R3.
+- Holder: no active source writer; protected Staging continuation requires a new exact authorization.
+- Original base: main `109c0274c867d5ff8128196b50c585fb9833972f`; reviewed cumulative baseline #1354 `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc`; final reviewed #1356 head `4b4e5edd97842aa79225b2a8052f954f85667f57`.
+- Completion: PR #1356 merged as `7368305db778165d6a6dd8f83265445a6863a25b`. Merge and reviewed-head tree are both `ce4c21b994a15e4b21ee363cd408ecd33b8128a7`; all #1351-#1356 heads are ancestors. Complete exact-head CI, independent QA and four push-triggered post-merge checks passed.
+- Current repository reconciliation: base `99fb8b1420758fa2a77c01d76b960feffde90da8` contains the Support merge. Support runtime source and root/Mobile package manifests and lockfiles remain byte-identical; later Capacity and default-off ChatAdmin work does not renew target or Mobile-risk acceptance.
+- Security: root zero; Mobile 0 critical / 5 high / 3 moderate / 0 low. Owner acceptance is limited to H1-H5/M1-M3 until `2026-11-08T12:40:47Z`; no extension or target acceptance exists.
+- Supersession: #1351, #1355 and #1356 are merged/closed. #1352, #1353 and #1354 were separately ancestry/omission-checked and closed as `SUPERSEDED` on 2026-10-26; no branch deletion.
+- Protected boundary: no deployment, target read, SQL/schema APPLY, flag activation, provider/customer action, signing, Production action or exception renewal is authorized. A later Support Staging continuation must bind the then-current reviewed main as `<EXACT_AUTHORIZED_DEPLOYMENT_SHA>`, exact target/contracts/gates, protected producer attestation and recovery; expected protected result is `OWNER_REQUIRED`.
+- Recovery: source recovery is a separately reviewed revert of exact merge `7368305db778165d6a6dd8f83265445a6863a25b`. A later Staging run must first preserve deployed-release, initial flag and schema-classifier evidence; then use the runbook's reverse flag order and synthetic cleanup. No automatic audit-table drop is authorized.
 
 ## LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018
 - Task: FM-CHATADMIN-INTEREST-REVOCATION-20261018; Status: RELEASED_FOR_PR_PARTIAL; Holder: Codex; Risk: R3 source-only.
@@ -1459,3 +1460,12 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed revert of this repository-only handoff. Exact-head CI and independent R3 countercheck are mandatory before merge.
 - Forbidden: runtime source, storage/schema/RLS/ACL changes, migration or SQL APPLY, Current-Facts activation, provider/model call, Staging/Production/customer-data mutation, deployment and direct main write.
 - Handoff: test/docs/receipt-only reconciliation complete; production source remains byte-identical. Exact-head required CI and independent R3 review remain mandatory in PR metadata.
+
+## LOCK-FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026
+- Task: FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026; Status: RELEASED_FOR_PR; Holder: FanMind Builder; Risk: R3 repository-only.
+- Base: main `99fb8b1420758fa2a77c01d76b960feffde90da8`; source evidence PR #1357 head `84514d3e74358479302cdf65ac369c560f0a5d0f`; branch `docs/support-postmerge-reconcile-20261026`.
+- Scope: four existing Support documentation/Project-Memory paths only; preserve historical support merge proof while requiring a fresh exact authorized deployment SHA at the protected Staging boundary.
+- Coordination: #1352-#1354 are already closed as superseded; later Capacity and ChatAdmin changes do not alter Support source or root/Mobile dependency blobs. No competing Support source writer identified.
+- Recovery: reviewed revert of this repository-only reconciliation; no external cleanup because all target, database, provider, flag and deployment actions are excluded.
+- Forbidden: application/runtime/dependency/workflow/schema/RLS/ACL changes, migration or SQL APPLY, target read, feature activation, provider/customer action, Staging/Production action, deployment and direct main write.
+- Handoff: four-file documentation/Project-Memory reconciliation complete. The stale fixed deployment SHA is removed; exact-head CI and independent R3 review remain required before merge. Protected Staging state remains unchanged and blocked.
