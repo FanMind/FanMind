@@ -22,7 +22,7 @@
     "docs/operations/ai-capacity-staging-preparation.json": "f1f0ba2976a1ebf6506bc72ad2019d1896c2e33f1faa2307b1c06df269c5370a",
     "scripts/operations/staging-database-rollout-state.mjs": "f4bdd16da3a5418677a7930340bdd69e7fd2a827610f9b03e5c2bc31d024d28e",
     ".github/workflows/staging-database-rollout-state.yml": "a9a59ebd355a3caa71caa0778321c6adb78a421162a2eb606407a36f67ac3a8c",
-    "package.json": "12c48c3273402eb18dae36ad67a097c56267ffc6f4f78e9a9e619a51e170b654",
+    "package.json": "a8b75fb01a5435e328c51e7d173c4abb97d7fecf4f9f47312ae5b74dea43442e",
     "tests/ai-capacity-staging-integration.test.mjs": "eef34bf9bb120729c344663684e4341bc983a0c3b740d9b81b608e0d8e41bb03",
     "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "49c12d65149c323d9ae314c592ea0fce831f4376e0c3f57aea0929bef938d375",
     "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "0124f5a526ecf9cb144a865292690d5e7fad16f97d536683ed8405980d68be00"
