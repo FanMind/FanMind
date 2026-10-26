@@ -1451,3 +1451,10 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Required: exact-head full applicable CI, Security/Governance gates, independent R3 countercheck, reviewed repository revert recovery, and unchanged main/head immediately before any merge.
 - Reconciliation result: #1357 is partially necessary, not directly mergeable. Its Support merge/security evidence is retained; its stale hard-coded deployment SHA is replaced by `<EXACT_AUTHORIZED_DEPLOYMENT_SHA>`, which must be bound only in a later protected preflight. Support source plus root/Mobile package manifests and lockfiles are byte-identical from merge `7368305db778165d6a6dd8f83265445a6863a25b` through base `99fb8b1420758fa2a77c01d76b960feffde90da8`.
 - Source handoff: documentation/Project-Memory reconciliation complete; status `RELEASED_FOR_PR`. #1352-#1354 are already closed as `SUPERSEDED`; Staging remains `BLOCKED_PENDING_AUTHORIZATION_AND_TARGET_EVIDENCE`. Exact-head CI and independent R3 countercheck remain required in PR metadata.
+
+## FM-WEB-PRODUCTION-PATCHES-1359-20261026
+- Owner-selected bounded R2 consolidation of PR #1359 on main `b5a95069b4036d0c250bc4641bc1317f097cc7f3`; branch `deps/web-production-patches-1359-20261026`.
+- Scope: update only root React and React DOM from 19.3.0 to 19.3.1 with the corresponding minimal npm lockfile resolutions. No Next.js, Playwright, Node types, pdfnative, Mobile, schema, database, deployment or Production change.
+- Dependency coordination: #1360 (Playwright), #1361 (Node types) and #1300 (pdfnative) remain independent open tasks; their versions are intentionally unchanged.
+- Historical CI finding: #1359's React-compatible install, lint, build, Browser E2E, CodeQL and Supply-Chain checks passed. Its Project Memory Guard failure came from the repository's broad memory-update workflow, while FanMind CI failed in unrelated Capacity checksum/source validation already outside this dependency diff.
+- Handoff: exact-head relevant CI, security audit, full diff countercheck and merge eligibility remain required. After verified merge, close #1359 as superseded by the integration PR and resume with exactly one remaining dependency PR.
