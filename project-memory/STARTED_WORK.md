@@ -1443,3 +1443,9 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Required: focused negative/regression tests, exact-head CI, independent R3 countercheck and honest separation between current-state correctness and model/quality-gate semantics.
 - Boundary: repository tests/docs only; no SQL APPLY, migration, flag/capability activation, provider call, Staging/Production/customer-data action or deployment. Recovery is reviewed repository revert.
 - Source handoff: current-main route and shared-quality characterization tests plus #1341 historical receipt/docs integrated; no runtime implementation duplicated. Lock released for Draft PR; exact-head CI and independent R3 countercheck required.
+
+## FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026
+- Owner-selected bounded R3 repository reconciliation for PR #1357 on exact main `99fb8b1420758fa2a77c01d76b960feffde90da8`; lock `LOCK-FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026`.
+- Scope: preserve the still-required Support post-merge security and Staging-preflight evidence, reconcile #1352-#1354 supersession, and remove the stale assumption that historical merge `7368305db778165d6a6dd8f83265445a6863a25b` is automatically the later deployment SHA.
+- Boundary: documentation and Project Memory only. No source, dependency, workflow, schema/RLS/ACL, SQL APPLY, flag activation, target/provider/customer access, Staging/Production action or deployment.
+- Required: exact-head full applicable CI, Security/Governance gates, independent R3 countercheck, reviewed repository revert recovery, and unchanged main/head immediately before any merge.
