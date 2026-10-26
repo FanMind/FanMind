@@ -67,10 +67,11 @@ function sql(input,database=db) {
     "psql","-XqAt","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1"],
     {input,encoding:"utf8",timeout:30000,stdio:["pipe","pipe","pipe"]}).trim();
 }
-function fresh() {
+function fresh({supabaseDefaults=false}={}) {
   sql(`drop database if exists ${db}; create database ${db};`,"postgres");
   sql("create schema auth; create function auth.role() returns text language sql stable as $$ select current_setting('request.jwt.claim.role',true) $$; create table public.workspaces(id uuid primary key); alter table public.workspaces enable row level security;");
   sql("create schema supabase_migrations; create table supabase_migrations.schema_migrations(version text primary key,name text,statements text[]);");
+  if (supabaseDefaults) sql("alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role; alter default privileges in schema public grant all on functions to postgres, anon, authenticated, service_role;");
   for (const name of ["ai_capacity_billing_v2.sql","ai_capacity_billing_v2_activation_gates.sql"]) {
     sql(readFileSync(resolve(root,"supabase/controlled",name),"utf8"));
   }
@@ -88,11 +89,25 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(a.read_only,true);
       for (const field of ["schema_matches_after_budget_default_normalization",
         "table_structure_safety_matches","function_security_matches",
-        "rls_acl_security_matches","other_security_matches"]) assert.equal(a[field],true,field);
+        "function_security_matches_after_supabase_default_acl_normalization",
+        "rls_acl_security_matches","rls_acl_security_matches_after_supabase_default_acl_normalization",
+        "other_security_matches"]) assert.equal(a[field],true,field);
       for (const field of ["capacity_migration_marker_count","capacity_known_migration_marker_count",
         "capacity_unknown_migration_marker_count","capacity_unknown_marker_name_only_count",
         "capacity_unknown_marker_version_only_count","capacity_unknown_marker_name_and_version_count",
         "capacity_unknown_marker_with_statements_count"]) assert.equal(a[field],0,field);
+      assert.equal(a.capacity_single_unknown_name_only_marker_with_statements_present,false);
+    });
+    await t.test("attributes Supabase provider defaults without hiding other catalog drift",()=>{
+      fresh({supabaseDefaults:true});
+      const observation=observe();
+      assert.equal(observation.function_security_matches,false);
+      assert.equal(observation.rls_acl_security_matches,false);
+      assert.equal(observation.schema_matches_after_budget_default_normalization,false);
+      assert.equal(observation.function_security_matches_after_supabase_default_acl_normalization,true);
+      assert.equal(observation.rls_acl_security_matches_after_supabase_default_acl_normalization,true);
+      sql("create policy provider_defaults_plus_drift on public.ai_capacity_grants for select to authenticated using(true);");
+      assert.equal(observe().rls_acl_security_matches_after_supabase_default_acl_normalization,false);
     });
     await t.test("only the three historical missing defaults normalize to the canonical fingerprint",()=>{
       fresh();
@@ -140,6 +155,13 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       for (const [field,value] of Object.entries(expected)) assert.equal(observation[field],value,field);
       assert.equal(JSON.stringify(observation).includes("unreviewed"),false);
       assert.equal(JSON.stringify(observation).includes("protected"),false);
+    });
+    await t.test("proves only an exact single unknown name-only marker with statements",()=>{
+      fresh();
+      sql("insert into supabase_migrations.schema_migrations(version,name,statements) values('20990101000001','capacity_v2_historical',array['protected']);");
+      assert.equal(observe().capacity_single_unknown_name_only_marker_with_statements_present,true);
+      sql("insert into supabase_migrations.schema_migrations(version,name,statements) values('20990101000002','capacity_v2_second',array['protected']);");
+      assert.equal(observe().capacity_single_unknown_name_only_marker_with_statements_present,false);
     });
     for (const [name,mutation,key] of [
       ["browser table ACL","grant select on public.ai_capacity_grants to authenticated;","schema_md5"],

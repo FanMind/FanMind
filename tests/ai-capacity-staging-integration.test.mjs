@@ -149,7 +149,9 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       ["extra-fields","match",{...observation,extra:true}],["schema-drift","match",{...observation,schema_md5:"0".repeat(32)}],
       ["boolean-diagnostic-drift","match",{...observation,policy_package_99_budget_default_matches:false}],
       ["normalized-diagnostic-drift","match",{...observation,schema_matches_after_budget_default_normalization:false}],
+      ["provider-normalized-diagnostic-drift","match",{...observation,function_security_matches_after_supabase_default_acl_normalization:false}],
       ["count-diagnostic-drift","match",{...observation,capacity_unknown_migration_marker_count:78421}],
+      ["marker-shape-diagnostic-drift","match",{...observation,capacity_single_unknown_name_only_marker_with_statements_present:true}],
       ["error","error",null],["oversize","oversize",null],
       ["connection","connection",null],["sql-error","sql-error",null],
       ["signal","signal",null],
@@ -160,13 +162,16 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       const expected={empty:"RESPONSE_PARSING:RESPONSE_CARDINALITY",multiline:"RESPONSE_PARSING:RESPONSE_CARDINALITY",
         malformed:"RESPONSE_PARSING:INVALID_JSON","extra-fields":"RESPONSE_PARSING:RESPONSE_SHAPE",null:"RESPONSE_PARSING:RESPONSE_SHAPE","secret-field":"RESPONSE_PARSING:RESPONSE_SHAPE",
         "schema-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","boolean-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
-        "normalized-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","count-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "normalized-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","provider-normalized-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH",
+        "count-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","marker-shape-diagnostic-drift":"BASELINE_COMPARISON:BASELINE_MISMATCH","secret-value":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         "multiple-secret-values":"BASELINE_COMPARISON:BASELINE_MISMATCH",
         error:"UNKNOWN_BLOCK:UNCLASSIFIED",signal:"UNKNOWN_BLOCK:UNCLASSIFIED",oversize:"QUERY_EXECUTION:OUTPUT_LIMIT",connection:"CONNECTION_TLS:CONNECTION_FAILED",
         "sql-error":"QUERY_EXECUTION:SQL_SCRIPT_FAILED"}[name]??"RESPONSE_BINDING:LABEL_MISMATCH";
       const fields=name==="schema-drift"?["schema_md5"]:name==="boolean-diagnostic-drift"?["policy_package_99_budget_default_matches"]:
         name==="normalized-diagnostic-drift"?["schema_matches_after_budget_default_normalization"]:
+        name==="provider-normalized-diagnostic-drift"?["function_security_matches_after_supabase_default_acl_normalization"]:
         name==="count-diagnostic-drift"?["capacity_unknown_migration_marker_count"]:name==="secret-value"?["policy_revision"]:
+          name==="marker-shape-diagnostic-drift"?["capacity_single_unknown_name_only_marker_with_statements_present"]:
           name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
       fake(mode,value);const result=run();blocked(result,true,expected,fields);
       assert.doesNotMatch(result.stdout,/78421|secret-schema-canary|secret-policy-canary/u);
