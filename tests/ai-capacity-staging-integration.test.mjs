@@ -97,9 +97,10 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
       : ["scripts/operations/staging-database-rollout-state.mjs","--run"];
     return spawnSync(process.execPath,args,{cwd:repo,env:{...env,...change},encoding:"utf8",timeout:10000,maxBuffer:200000});
   }
-  function blocked(r,queryExpected=false,diagnostic="ENVIRONMENT_MAIN:ENVIRONMENT_REJECTED",fields=[]) {
+  function blocked(r,queryExpected=false,diagnostic="ENVIRONMENT_MAIN:ENVIRONMENT_REJECTED",fields=[],markerCounts=false) {
     const expected=["STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK",`STAGING_DATABASE_ROLLOUT_CAPACITY_DIAGNOSTIC=${diagnostic}`];
     if(fields.length)expected.push(`STAGING_DATABASE_ROLLOUT_CAPACITY_FIELDS=${fields.join(",")}`);
+    if(markerCounts)expected.push("STAGING_DATABASE_ROLLOUT_CAPACITY_MARKER_COUNTS=migration_marker:0,known_migration_marker:0,unknown_migration_marker:78421,unknown_marker_name_only:0,unknown_marker_version_only:0,unknown_marker_name_and_version:0,unknown_marker_with_statements:0");
     assert.equal(r.status,1,r.stderr); assert.deepEqual(r.stdout.trim().split("\n"),expected);
     assert.equal(r.stderr,""); assert.equal(existsSync(capture),queryExpected);
     if(queryExpected)assert.equal(existsSync(JSON.parse(read(capture)).passfile),false,"private snapshot must be removed");
@@ -168,8 +169,9 @@ else {process.stderr.write('secret-stderr-canary');process.stdout.write(${JSON.s
         name==="normalized-diagnostic-drift"?["schema_matches_after_budget_default_normalization"]:
         name==="count-diagnostic-drift"?["capacity_unknown_migration_marker_count"]:name==="secret-value"?["policy_revision"]:
           name==="multiple-secret-values"?["schema_md5","policy_revision"]:[];
-      fake(mode,value);const result=run();blocked(result,true,expected,fields);
-      assert.doesNotMatch(result.stdout,/78421|secret-schema-canary|secret-policy-canary/u);
+      fake(mode,value);const result=run();blocked(result,true,expected,fields,name==="count-diagnostic-drift");
+      assert.doesNotMatch(result.stdout,/secret-schema-canary|secret-policy-canary/u);
+      if(name!=="count-diagnostic-drift")assert.doesNotMatch(result.stdout,/78421/u);
     });
     await t.test("unclassified manifest exception with secret canary stays unknown before credentials",()=>{
       fake();const path=join(repo,"docs/operations/ai-capacity-staging-integration.json"),before=read(path);

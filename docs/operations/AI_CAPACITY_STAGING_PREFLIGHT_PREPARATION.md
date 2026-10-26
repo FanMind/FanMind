@@ -135,8 +135,11 @@ computes exact canonical fingerprint equality after an in-memory normalization o
 only the three reviewed budget defaults. It reports separate exact, source-pinned
 catalog-profile booleans for normalized table structure, complete function
 definition/owner/ACL security, table RLS/ACL and remaining
-trigger/ownership/browser-role boundaries. Capacity migration history is exposed only through bounded counts for
-known/unknown and name/version/statement-presence classes. No marker identity,
+trigger/ownership/browser-role boundaries. Additional semantic booleans separate
+function owner, security attributes, explicit ACL and effective EXECUTE from RLS
+flags/policies, explicit table ACL, column ACL and effective table/column
+privileges. Capacity migration history is exposed only through nonnegative counts
+for known/unknown and name/version/statement-presence classes. No marker identity,
 version, statement, database definition or observed hash is emitted.
 
 Interpretation is strict: a true normalized-fingerprint field with the original

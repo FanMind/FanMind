@@ -68,6 +68,12 @@ const CAPACITY_MAX_OUTPUT_BYTES = 64 * 1024;
 // Only errors created at known control points carry diagnostic authority.
 // Never render exception text, child output, arbitrary object fields or SQLSTATEs.
 const capacityDiagnostics = new WeakMap();
+const CAPACITY_MARKER_COUNT_FIELDS = Object.freeze([
+  "capacity_migration_marker_count", "capacity_known_migration_marker_count",
+  "capacity_unknown_migration_marker_count", "capacity_unknown_marker_name_only_count",
+  "capacity_unknown_marker_version_only_count", "capacity_unknown_marker_name_and_version_count",
+  "capacity_unknown_marker_with_statements_count",
+]);
 const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "version", "read_only", "schema_md5", "grants_empty", "ledger_empty",
   "function_count", "postgres_major", "policy_row_count", "allocations_empty",
@@ -81,6 +87,10 @@ const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "policy_package_199_budget_default_matches", "policy_package_312_budget_default_matches",
   "schema_matches_after_budget_default_normalization", "table_structure_safety_matches",
   "function_security_matches", "rls_acl_security_matches", "other_security_matches",
+  "function_owner_boundary_matches", "function_attribute_boundary_matches",
+  "function_explicit_acl_matches", "function_effective_execute_matches",
+  "rls_policy_boundary_matches", "table_explicit_acl_matches", "column_acl_boundary_matches",
+  "effective_table_privileges_match", "effective_column_privileges_match",
   "capacity_migration_marker_count", "capacity_known_migration_marker_count",
   "capacity_unknown_migration_marker_count", "capacity_unknown_marker_name_only_count",
   "capacity_unknown_marker_version_only_count", "capacity_unknown_marker_name_and_version_count",
@@ -95,10 +105,15 @@ const CAPACITY_BASELINE_FIELDS = Object.freeze([
   "policy_package_199_budget_eur_microcents", "policy_package_312_budget_eur_microcents",
 ]);
 
-function capacityBlock(stage, reason, fields = []) {
+function capacityBlock(stage, reason, fields = [], markerCounts = undefined) {
   const error = new Error("Capacity preflight blocked");
+  const counts = markerCounts && Object.fromEntries(CAPACITY_MARKER_COUNT_FIELDS.map(field => {
+    const value=markerCounts[field];
+    return [field,Number.isSafeInteger(value) && value>=0 ? value : null];
+  }));
   capacityDiagnostics.set(error, Object.freeze({ stage, reason,
-    fields: Object.freeze(CAPACITY_BASELINE_FIELDS.filter(field => fields.includes(field))) }));
+    fields: Object.freeze(CAPACITY_BASELINE_FIELDS.filter(field => fields.includes(field))),
+    markerCounts: counts && Object.values(counts).every(value => value!==null) ? Object.freeze(counts) : undefined }));
   throw error;
 }
 
@@ -114,6 +129,10 @@ function writeCapacityBlock(error, log = console.log) {
   log(`STAGING_DATABASE_ROLLOUT_CAPACITY_DIAGNOSTIC=${diagnostic.stage}:${diagnostic.reason}`);
   if (diagnostic.fields.length) {
     log(`STAGING_DATABASE_ROLLOUT_CAPACITY_FIELDS=${diagnostic.fields.join(",")}`);
+  }
+  if (diagnostic.markerCounts) {
+    log(`STAGING_DATABASE_ROLLOUT_CAPACITY_MARKER_COUNTS=${CAPACITY_MARKER_COUNT_FIELDS
+      .map(field => `${field.replace(/^capacity_|_count$/gu,"")}:${diagnostic.markerCounts[field]}`).join(",")}`);
   }
 }
 
@@ -163,7 +182,16 @@ function verifyCapacityIntegration(root = process.cwd(), committed = false) {
     "schema_matches_after_budget_default_normalization",
     "table_structure_safety_matches",
     "function_security_matches",
+    "function_owner_boundary_matches",
+    "function_attribute_boundary_matches",
+    "function_explicit_acl_matches",
+    "function_effective_execute_matches",
     "rls_acl_security_matches",
+    "rls_policy_boundary_matches",
+    "table_explicit_acl_matches",
+    "column_acl_boundary_matches",
+    "effective_table_privileges_match",
+    "effective_column_privileges_match",
     "other_security_matches",
     "capacity_migration_marker_count",
     "capacity_known_migration_marker_count",
@@ -833,7 +861,10 @@ function inspectCapacityDatabase(environment, root = process.cwd(), { timeoutMs 
       || observation?.reviewed_lifecycle_commit!==preparation.reviewedLifecycleHead
       || observation?.recovery_sha256!==preparation.sha256[preparation.recoveryPath]) capacityBlock("RESPONSE_BINDING", "LABEL_MISMATCH");
     const comparison = evaluateCapacityObservation(observation,preparation);
-    if (comparison.state !== "READONLY_BASELINE_MATCH") capacityBlock("BASELINE_COMPARISON", "BASELINE_MISMATCH", comparison.failures);
+    if (comparison.state !== "READONLY_BASELINE_MATCH") capacityBlock(
+      "BASELINE_COMPARISON", "BASELINE_MISMATCH", comparison.failures,
+      comparison.failures.some(field => CAPACITY_MARKER_COUNT_FIELDS.includes(field)) ? observation : undefined,
+    );
     return comparison.state;
   } finally {
     rmSync(snapshotDirectory,{recursive:true,force:true});

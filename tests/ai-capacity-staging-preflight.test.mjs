@@ -88,7 +88,11 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(a.read_only,true);
       for (const field of ["schema_matches_after_budget_default_normalization",
         "table_structure_safety_matches","function_security_matches",
-        "rls_acl_security_matches","other_security_matches"]) assert.equal(a[field],true,field);
+        "function_owner_boundary_matches","function_attribute_boundary_matches",
+        "function_explicit_acl_matches","function_effective_execute_matches",
+        "rls_acl_security_matches","rls_policy_boundary_matches","table_explicit_acl_matches",
+        "column_acl_boundary_matches","effective_table_privileges_match",
+        "effective_column_privileges_match","other_security_matches"]) assert.equal(a[field],true,field);
       for (const field of ["capacity_migration_marker_count","capacity_known_migration_marker_count",
         "capacity_unknown_migration_marker_count","capacity_unknown_marker_name_only_count",
         "capacity_unknown_marker_version_only_count","capacity_unknown_marker_name_and_version_count",
@@ -103,7 +107,16 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       assert.equal(observation.schema_matches_after_budget_default_normalization,true);
       assert.equal(observation.table_structure_safety_matches,true);
       assert.equal(observation.function_security_matches,true);
+      assert.equal(observation.function_owner_boundary_matches,true);
+      assert.equal(observation.function_attribute_boundary_matches,true);
+      assert.equal(observation.function_explicit_acl_matches,true);
+      assert.equal(observation.function_effective_execute_matches,true);
       assert.equal(observation.rls_acl_security_matches,true);
+      assert.equal(observation.rls_policy_boundary_matches,true);
+      assert.equal(observation.table_explicit_acl_matches,true);
+      assert.equal(observation.column_acl_boundary_matches,true);
+      assert.equal(observation.effective_table_privileges_match,true);
+      assert.equal(observation.effective_column_privileges_match,true);
       assert.equal(observation.other_security_matches,true);
       for (const field of ["policy_package_99_budget_default_matches",
         "policy_package_199_budget_default_matches","policy_package_312_budget_default_matches"])
@@ -129,6 +142,20 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
       fresh();sql(mutation);const observation=observe();
       assert.equal(observation.schema_matches_after_budget_default_normalization,false);
       assert.equal(observation[field],false);
+    });
+    for (const [name,mutation,fields] of [
+      ["function SECURITY attribute","alter function public.ai_capacity_ledger_immutable() security definer;",["function_attribute_boundary_matches"]],
+      ["function owner","create role capacity_function_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_owner;",["function_owner_boundary_matches"]],
+      ["function ACL","grant execute on function public.ai_capacity_admin_activation_guard() to authenticated;",["function_explicit_acl_matches","function_effective_execute_matches"]],
+      ["RLS flag","alter table public.ai_capacity_grants disable row level security;",["rls_policy_boundary_matches"]],
+      ["RLS policy","create policy component_detail on public.ai_capacity_grants for select to authenticated using(true);",["rls_policy_boundary_matches"]],
+      ["table ACL","grant update on public.ai_capacity_grants to service_role;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
+      ["column ACL","grant select(grant_key) on public.ai_capacity_grants to authenticated;",["column_acl_boundary_matches","effective_column_privileges_match"]],
+      ["inherited service ACL","create role capacity_inherited_writer nologin; grant update on public.ai_capacity_grants to capacity_inherited_writer; grant capacity_inherited_writer to service_role;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
+    ]) await t.test(`subclassifies ${name} without emitting catalog contents`,()=>{
+      fresh();sql(mutation);const observation=observe();
+      for(const field of fields) assert.equal(observation[field],false,field);
+      assert.equal(JSON.stringify(observation).includes("capacity_inherited_writer"),false);
     });
     for (const [name,mutation,expected] of [
       ["known marker","insert into supabase_migrations.schema_migrations(version,name) values('20990101000000','ai_capacity_billing_v2');",{capacity_migration_marker_count:1,capacity_known_migration_marker_count:1,capacity_unknown_migration_marker_count:0}],

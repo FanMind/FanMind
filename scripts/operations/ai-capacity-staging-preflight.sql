@@ -86,12 +86,90 @@ with table_profiles as (
   from normalized_table_profiles
 ), function_security_profile as (
   select jsonb_agg(profile order by proname,args) profile from function_profiles
+), function_security_details as (
+  select
+    count(*)=4
+      and count(distinct p.proowner)=1
+      and bool_and(pg_get_userbyid(p.proowner) not in ('anon','authenticated','service_role')) owner_matches,
+    count(*) filter(where p.oid=to_regprocedure('public.ai_capacity_ledger_immutable()')
+        and p.prorettype='trigger'::regtype and not p.prosecdef and p.provolatile='v'
+        and l.lanname='plpgsql'
+        and p.proconfig=array['search_path=pg_catalog, public, pg_temp'])=1
+      and count(*) filter(where p.oid=to_regprocedure('public.ai_capacity_admin_activation_guard()')
+        and p.prorettype='trigger'::regtype and not p.prosecdef and p.provolatile='v'
+        and l.lanname='plpgsql'
+        and p.proconfig=array['search_path=pg_catalog, public, pg_temp'])=1
+      and count(*) filter(where p.oid=to_regprocedure('public.admin_get_ai_capacity_policy()')
+        and p.prorettype='record'::regtype and p.prosecdef and p.provolatile='s'
+        and l.lanname='sql'
+        and p.proconfig=array['search_path=pg_catalog, public, pg_temp','row_security=off'])=1
+      and count(*) filter(where p.oid=to_regprocedure(
+        'public.admin_update_ai_capacity_policy(uuid,text,bigint,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,bigint,bigint,bigint)')
+        and p.prorettype='bigint'::regtype and p.prosecdef and p.provolatile='v'
+        and l.lanname='plpgsql'
+        and p.proconfig=array['search_path=pg_catalog, public, pg_temp','row_security=off'])=1
+      attributes_match,
+    bool_and(case p.proname
+      when 'ai_capacity_ledger_immutable' then p.proacl is null
+      when 'ai_capacity_admin_activation_guard' then
+        (select count(*)=1 and bool_and(x.grantee=p.proowner and x.privilege_type='EXECUTE')
+          from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x)
+      else (select count(*)=2
+          and count(*) filter(where x.grantee=p.proowner and x.privilege_type='EXECUTE')=1
+          and count(*) filter(where x.grantee=to_regrole('service_role')::oid
+            and x.privilege_type='EXECUTE' and not x.is_grantable)=1
+        from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x) end) explicit_acl_matches,
+    bool_and(case p.proname
+      when 'ai_capacity_ledger_immutable' then
+        has_function_privilege('anon',p.oid,'EXECUTE')
+          and has_function_privilege('authenticated',p.oid,'EXECUTE')
+          and has_function_privilege('service_role',p.oid,'EXECUTE')
+      when 'ai_capacity_admin_activation_guard' then
+        not has_function_privilege('anon',p.oid,'EXECUTE')
+          and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+          and not has_function_privilege('service_role',p.oid,'EXECUTE')
+      else not has_function_privilege('anon',p.oid,'EXECUTE')
+        and not has_function_privilege('authenticated',p.oid,'EXECUTE')
+        and has_function_privilege('service_role',p.oid,'EXECUTE') end) effective_execute_matches
+  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+  join pg_language l on l.oid=p.prolang
+  where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
+    or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))
 ), rls_acl_security_profile as (
   select jsonb_agg(jsonb_build_object(
     'name',profile->'name','rls',profile->'rls','force_rls',profile->'force_rls',
     'policies',profile->'policies','acl',profile->'acl','column_acl',profile->'column_acl',
     'effective',profile->'effective','effective_columns',profile->'effective_columns') order by relname) profile
   from table_profiles
+), rls_acl_security_details as (
+  select
+    count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)
+      and bool_and(not exists(select 1 from pg_policy p where p.polrelid=c.oid)) rls_policy_matches,
+    bool_and((select count(*)=8
+        and count(*) filter(where x.grantee=c.relowner)=7
+        and count(*) filter(where x.grantee=to_regrole('service_role')::oid
+          and x.privilege_type='SELECT' and not x.is_grantable)=1
+      from aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) x)) explicit_table_acl_matches,
+    bool_and(not exists(select 1 from pg_attribute a where a.attrelid=c.oid and a.attnum>0
+      and not a.attisdropped and a.attacl is not null)) column_acl_matches,
+    bool_and(not has_table_privilege('anon',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      and not has_table_privilege('authenticated',c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
+      and has_table_privilege('service_role',c.oid,'SELECT')
+      and not has_table_privilege('service_role',c.oid,'INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
+      effective_table_privileges_match,
+    bool_and(not exists(select 1 from pg_attribute a
+      cross join unnest(array['anon','authenticated']) r
+      where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+        and has_column_privilege(r,c.oid,a.attnum,'SELECT,INSERT,UPDATE,REFERENCES'))
+      and not exists(select 1 from pg_attribute a
+      where a.attrelid=c.oid and a.attnum>0 and not a.attisdropped
+        and (not has_column_privilege('service_role',c.oid,a.attnum,'SELECT')
+          or has_column_privilege('service_role',c.oid,a.attnum,'INSERT,UPDATE,REFERENCES'))))
+      effective_column_privileges_match
+  from pg_class c join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relname=any(array[
+    'ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
+    'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])
 ), other_security_profile as (
   select jsonb_build_object(
     'tables',(select jsonb_agg(jsonb_build_object('name',profile->'name','owner',profile->'owner',
@@ -135,8 +213,17 @@ select jsonb_build_object(
     ='85829956879e59d8e93e18a7da0c2ef5',
   'function_security_matches',(select md5(profile::text) from function_security_profile)
     ='407b36567309369b7247dc4dd8ee2106',
+  'function_owner_boundary_matches',(select owner_matches from function_security_details),
+  'function_attribute_boundary_matches',(select attributes_match from function_security_details),
+  'function_explicit_acl_matches',(select explicit_acl_matches from function_security_details),
+  'function_effective_execute_matches',(select effective_execute_matches from function_security_details),
   'rls_acl_security_matches',(select md5(profile::text) from rls_acl_security_profile)
     ='a5115f4181a17f2d287e39d48782139d',
+  'rls_policy_boundary_matches',(select rls_policy_matches from rls_acl_security_details),
+  'table_explicit_acl_matches',(select explicit_table_acl_matches from rls_acl_security_details),
+  'column_acl_boundary_matches',(select column_acl_matches from rls_acl_security_details),
+  'effective_table_privileges_match',(select effective_table_privileges_match from rls_acl_security_details),
+  'effective_column_privileges_match',(select effective_column_privileges_match from rls_acl_security_details),
   'other_security_matches',(select md5(profile::text) from other_security_profile)
     ='c724cd4f599d34f7d96f5cc4ffb99683',
   'policy_package_99_budget_default_matches',exists(

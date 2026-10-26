@@ -11,20 +11,20 @@
     "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
     "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
     "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
-    "scripts/operations/ai-capacity-staging-preflight.sql": "1ab3366f29848fc6eb10eb7ddac062b89fcaf31f8cda03e135dc5bea654f01c8",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "790a9ccf1ff9a7bfe9508607028e192ca0b7c92f0e09637772fd8354687af360",
     "scripts/operations/ai-capacity-staging-preflight-preparation.mjs": "8a97817f383393c14674cd7b189bfd7a5d9c979c2500faff9545cdd9af434b6d",
     "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md": "97f1029afd1fb906dbec578f7b60032136022002c9030cb246776a012f1a5f65",
     "src/lib/stagingDatabaseRolloutStatePolicy.mjs": "123dcae82803d3c33834e617006f28d854760384c2275cb214a4afe79fdcb463",
     "src/lib/metaContentStagingMigrationPolicy.mjs": "ad6e72b6d050bcec058f4515ea21534b122ba866a7b9be8a1ce321a9d0b59a2c",
     "src/lib/environmentBoundaryPolicy.mjs": "ca1cd97162cacb043fda84d76f5fc1a4f152b2f0488a9a5e66f3c063a36f066e",
     "config/certificates/supabase-root-2021-ca.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7",
-    "tests/ai-capacity-staging-preflight.test.mjs": "ab26224e4ccbf2f8b6b0a23a769c157e8b9bb2fd24c24488536b41747f1b14b6",
-    "docs/operations/ai-capacity-staging-preparation.json": "e54e133c2431289026ce11907e72e5d319499534df64bcb3431ceffd58a552ca",
-    "scripts/operations/staging-database-rollout-state.mjs": "53e784248245502c3a3afb8343ad73b37e41f50f4f6d1599f561b9792a6bf1a6",
+    "tests/ai-capacity-staging-preflight.test.mjs": "0534382f8014957997a9262a37b3125a91260912208b0a7a76e59269818df6a8",
+    "docs/operations/ai-capacity-staging-preparation.json": "15fa0f4e8ce3e9101bc70cb23fd49e1302cce722e8d9ec5a95560a2f3858941a",
+    "scripts/operations/staging-database-rollout-state.mjs": "d27d9345d0ad99c32e48038dd4e7ca75a286572684295fa2f18e5c56dcabca6d",
     ".github/workflows/staging-database-rollout-state.yml": "a9a59ebd355a3caa71caa0778321c6adb78a421162a2eb606407a36f67ac3a8c",
     "package.json": "12c48c3273402eb18dae36ad67a097c56267ffc6f4f78e9a9e619a51e170b654",
-    "tests/ai-capacity-staging-integration.test.mjs": "29fa30c69e7a48c6f428c9cef8f7b1630a16f95ea799ac40f09ce8ef186527a9",
-    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "f8a5f7f4d6bf7976e14cc2b90bb7062cd3addc17579ed364285fdcdc90d3f926",
-    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "0124f5a526ecf9cb144a865292690d5e7fad16f97d536683ed8405980d68be00"
+    "tests/ai-capacity-staging-integration.test.mjs": "f7921c3debd86eb960ed9e974216193a0106c4183ad080b414c87f2c8462276d",
+    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "447511650027368277271d02beebe6e4dc243b27d166fc78dd22be053ee69851",
+    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "ea00fe17d6055980712a26410054644f820990091ca7ed764a74ea0e10194148"
   }
 }

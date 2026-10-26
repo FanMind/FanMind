@@ -125,12 +125,17 @@ Separate exact, source-pinned catalog profiles cover normalized columns,
 constraints and indexes; complete function definitions, owners, ACLs and effective
 execution rights; table RLS/ACL; and remaining trigger/owner/browser-role safeguards. These are diagnostic partitions; the
 normalized complete-profile boolean remains the exact canonical equality proof.
+Semantic subfields separately report function owner, security attributes, explicit
+ACL and effective EXECUTE plus RLS/policy, explicit table ACL, column ACL and
+effective table/column privileges. They expose booleans only and do not weaken the
+exact aggregate profiles.
 Migration evidence is limited to counts for all Capacity-like markers, known or
 unknown classification, unknown name-only/version-only/name-and-version classes,
 and whether an unknown record has stored statements. Marker identifiers,
 versions, statement text, catalog definitions and observed hash values are never
-rendered. Every source-baseline count is zero and every safety boolean is true;
-any deviation remains `BLOCK` and prints only allowlisted field identifiers.
+rendered. When a marker count differs, the block output additionally renders only
+the seven allowlisted nonnegative integer counts. Every source-baseline count is
+zero and every safety boolean is true; any deviation remains `BLOCK`.
 
 BLOCK still exits1; baseline match still emits only the original decision line.
 No retry, Skip, Apply or repair is added. Expected policy/monetary state,
