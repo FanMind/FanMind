@@ -147,8 +147,21 @@ with table_profiles as (
   select
     count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)
       and bool_and(not exists(select 1 from pg_policy p where p.polrelid=c.oid)) rls_policy_matches,
-    bool_and((select count(*)=8
-        and count(*) filter(where x.grantee=c.relowner)=7
+    bool_and((select count(*) filter(where x.grantee<>c.relowner)=1
+        and not exists(
+          (select x.privilege_type,x.is_grantable from aclexplode(acldefault('r',c.relowner)) x
+            where x.grantee=c.relowner
+           except
+           select x.privilege_type,x.is_grantable
+            from aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) x
+            where x.grantee=c.relowner)
+          union all
+          (select x.privilege_type,x.is_grantable
+            from aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) x
+            where x.grantee=c.relowner
+           except
+           select x.privilege_type,x.is_grantable from aclexplode(acldefault('r',c.relowner)) x
+            where x.grantee=c.relowner))
         and count(*) filter(where x.grantee=to_regrole('service_role')::oid
           and x.privilege_type='SELECT' and not x.is_grantable)=1
       from aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) x)) explicit_table_acl_matches,
