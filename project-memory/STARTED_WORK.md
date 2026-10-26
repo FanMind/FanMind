@@ -1442,3 +1442,4 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Scope: port only still-relevant known-fact/currentness/false-question/detail-question diagnostics to the integrated default-off Current-Facts implementation; no duplicate storage or revocation implementation.
 - Required: focused negative/regression tests, exact-head CI, independent R3 countercheck and honest separation between current-state correctness and model/quality-gate semantics.
 - Boundary: repository tests/docs only; no SQL APPLY, migration, flag/capability activation, provider call, Staging/Production/customer-data action or deployment. Recovery is reviewed repository revert.
+- Source handoff: current-main route and shared-quality characterization tests plus #1341 historical receipt/docs integrated; no runtime implementation duplicated. Lock released for Draft PR; exact-head CI and independent R3 countercheck required.

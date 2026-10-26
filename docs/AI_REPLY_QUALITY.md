@@ -143,3 +143,27 @@ keine neue Memory und kein zusätzlicher Provideraufruf. Vertrag und Grenzen:
 [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
 Synthetische Tests beweisen Kontextübergabe und Schutzregeln, keine semantische
 Befolgung durch ein reales Modell. Echte Mehrturn-Qualitätsabnahme bleibt offen.
+
+## Bekannte Fanangaben: Revalidierung nach Current Facts — 26. Oktober 2026
+
+PR #1341 belegte auf dem früheren Legacy-Speicher, dass der gemeinsame
+Antwortqualitätswächter eine redundante Grundsatzfrage wie „Magst du Musik?“ trotz
+gespeicherter Angabe akzeptiert. Nach Integration von #1371 sind zwei Verträge
+getrennt zu bewerten:
+
+- Bei strikt deaktivierten Current Facts bleibt die historische Legacy-Grenze bestehen.
+- Bei aktivierter, installierter Funktion kann der Modellkontext eine aktuelle positive
+  oder negative, quellgebundene Aussage korrekt unterscheiden und einen älteren
+  Legacy-Fakt desselben Themas unterdrücken.
+- Der gemeinsame Qualitätswächter erhält weiterhin keinen Faktenkontext. Synthetische
+  Routeprüfungen zeigen deshalb, dass er dieselbe breite Rückfrage auch bei einem
+  korrekten positiven oder widerrufenen Current Fact mechanisch akzeptiert.
+- Eine Detailfrage nach Musikrichtung oder Künstlern bleibt bei einem bekannten
+  allgemeinen Musikinteresse zulässig. Manuelle oder unbestätigte Notizen werden
+  nicht zu bestätigten Interessen erhoben.
+
+Dies ist eine grüne Diagnose- und Regressionsbaseline, keine Behauptung, dass reale
+Modelle die falsche Frage regelmäßig stellen, und keine Abnahme einer neuen
+semantischen Sperre. Current Facts bleiben default-off und unangewendet. Providerzahl,
+Retry-Grenze, Preis-/Angebotsregeln, manuelles Senden und alle Daten-/Isolationsgrenzen
+bleiben unverändert.
