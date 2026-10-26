@@ -38,8 +38,10 @@ for this reviewed bundle. Full-file SHA-256 enforcement is unchanged.
 - New SHA-256:
   `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c`
 
-No other controlled source, verifier, workflow, SQL, baseline or security test is
-changed.
+No other controlled source, verifier, workflow, SQL, baseline or security
+assertion is changed. The only test delta updates the hard-coded Playwright pin
+expectation from 1.62.1 to 1.64.1; all no-write and security assertions remain
+unchanged.
 
 ## Verification and recovery
 
