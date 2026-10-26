@@ -90,6 +90,8 @@ with table_profiles as (
   select
     count(*)=4
       and count(distinct p.proowner)=1
+      and bool_and(p.proowner=(select relowner from pg_class
+        where oid='public.ai_capacity_admin_policy'::regclass))
       and bool_and(pg_get_userbyid(p.proowner) not in ('anon','authenticated','service_role')) owner_matches,
     count(*) filter(where p.oid=to_regprocedure('public.ai_capacity_ledger_immutable()')
         and p.prorettype='trigger'::regtype and not p.prosecdef and p.provolatile='v'
@@ -112,10 +114,12 @@ with table_profiles as (
     bool_and(case p.proname
       when 'ai_capacity_ledger_immutable' then p.proacl is null
       when 'ai_capacity_admin_activation_guard' then
-        (select count(*)=1 and bool_and(x.grantee=p.proowner and x.privilege_type='EXECUTE')
+        (select count(*)=1 and bool_and(x.grantee=p.proowner and x.privilege_type='EXECUTE'
+          and x.is_grantable)
           from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x)
       else (select count(*)=2
-          and count(*) filter(where x.grantee=p.proowner and x.privilege_type='EXECUTE')=1
+          and count(*) filter(where x.grantee=p.proowner and x.privilege_type='EXECUTE'
+            and x.is_grantable)=1
           and count(*) filter(where x.grantee=to_regrole('service_role')::oid
             and x.privilege_type='EXECUTE' and not x.is_grantable)=1
         from aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x) end) explicit_acl_matches,
@@ -146,7 +150,7 @@ with table_profiles as (
     count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)
       and bool_and(not exists(select 1 from pg_policy p where p.polrelid=c.oid)) rls_policy_matches,
     bool_and((select count(*)=8
-        and count(*) filter(where x.grantee=c.relowner)=7
+        and count(*) filter(where x.grantee=c.relowner and x.is_grantable)=7
         and count(*) filter(where x.grantee=to_regrole('service_role')::oid
           and x.privilege_type='SELECT' and not x.is_grantable)=1
       from aclexplode(coalesce(c.relacl,acldefault('r',c.relowner))) x)) explicit_table_acl_matches,

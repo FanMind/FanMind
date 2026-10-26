@@ -146,10 +146,13 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
     for (const [name,mutation,fields] of [
       ["function SECURITY attribute","alter function public.ai_capacity_ledger_immutable() security definer;",["function_attribute_boundary_matches"]],
       ["function owner","create role capacity_function_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_owner;",["function_owner_boundary_matches"]],
+      ["all function owners","create role capacity_function_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_owner; alter function public.ai_capacity_admin_activation_guard() owner to capacity_function_owner; alter function public.admin_get_ai_capacity_policy() owner to capacity_function_owner; alter function public.admin_update_ai_capacity_policy(uuid,text,bigint,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,boolean,bigint,bigint,bigint) owner to capacity_function_owner;",["function_owner_boundary_matches"]],
       ["function ACL","grant execute on function public.ai_capacity_admin_activation_guard() to authenticated;",["function_explicit_acl_matches","function_effective_execute_matches"]],
+      ["function grant option","grant execute on function public.admin_get_ai_capacity_policy() to service_role with grant option;",["function_explicit_acl_matches"]],
       ["RLS flag","alter table public.ai_capacity_grants disable row level security;",["rls_policy_boundary_matches"]],
       ["RLS policy","create policy component_detail on public.ai_capacity_grants for select to authenticated using(true);",["rls_policy_boundary_matches"]],
       ["table ACL","grant update on public.ai_capacity_grants to service_role;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
+      ["table grant option","grant select on public.ai_capacity_grants to service_role with grant option;",["table_explicit_acl_matches"]],
       ["column ACL","grant select(grant_key) on public.ai_capacity_grants to authenticated;",["column_acl_boundary_matches","effective_column_privileges_match"]],
       ["inherited service ACL","create role capacity_inherited_writer nologin; grant update on public.ai_capacity_grants to capacity_inherited_writer; grant capacity_inherited_writer to service_role;",["table_explicit_acl_matches","effective_table_privileges_match","effective_column_privileges_match"]],
     ]) await t.test(`subclassifies ${name} without emitting catalog contents`,()=>{
