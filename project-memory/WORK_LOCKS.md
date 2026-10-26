@@ -1469,3 +1469,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed revert of this repository-only reconciliation; no external cleanup because all target, database, provider, flag and deployment actions are excluded.
 - Forbidden: application/runtime/dependency/workflow/schema/RLS/ACL changes, migration or SQL APPLY, target read, feature activation, provider/customer action, Staging/Production action, deployment and direct main write.
 - Handoff: four-file documentation/Project-Memory reconciliation complete. The stale fixed deployment SHA is removed; exact-head CI and independent R3 review remain required before merge. Protected Staging state remains unchanged and blocked.
+
+## LOCK-FM-WEB-PRODUCTION-PATCHES-1359-20261026
+- Task: FM-WEB-PRODUCTION-PATCHES-1359-20261026; Status: RELEASED_FOR_PR; Holder: FanMind Builder; Risk: R3 controlled repository source.
+- Base: main `b5a95069b4036d0c250bc4641bc1317f097cc7f3`; PR #1374; branch `deps/web-production-patches-1359-20261026`.
+- Scope: React and React DOM 19.3.0 -> 19.3.1, minimal matching root lockfile changes, and the exact `package.json` SHA-256 update in `docs/operations/ai-capacity-staging-integration.json`. Full-file source verification remains unchanged.
+- Authorization: Owner approved only this exact controlled source rebaseline on 2026-10-26. No additional dependency update or Capacity verifier/control weakening is authorized.
+- Coordination: #1360, #1361 and #1300 are independent and excluded. No competing writer for this exact dependency/Capacity-manifest scope was identified.
+- Required evidence: 18/18 controlled sources consistent on exact head; PostgreSQL 17/Capacity, Truth, lint, build, Browser E2E, CodeQL, Supply Chain and Project Memory gates green; independent R3 countercheck; unchanged main/head before merge.
+- Recovery: separately reviewed repository revert of React/React-DOM, lockfile and manifest hash as one source unit. No external cleanup because no database, target, provider, activation or deployment action is allowed.
+- Forbidden: verifier/workflow/SQL/baseline changes, weakening or removing the full `package.json` pin, unrelated dependencies, migrations, database writes, Staging/Production activation, deployment and direct main write.
+- Handoff: bounded source update prepared in PR #1374. Final exact-head CI and independent R3 review decide merge eligibility.
