@@ -95,7 +95,8 @@ const functionSecuritySummary=()=>JSON.parse(sql(`select jsonb_agg(jsonb_build_o
   where n.nspname='public' and (p.proname like 'ai\\_capacity\\_%' escape '\\'
     or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))`));
 const normalizedFunctionSecuritySummary=()=>{
-  const ctes=query.slice(query.indexOf("with table_profiles"),query.lastIndexOf("select jsonb_build_object("));
+  const ctes=query.slice(query.indexOf("with table_profiles"),
+    query.indexOf("\nselect jsonb_build_object(\n  'version'"));
   return JSON.parse(sql(`${ctes} select jsonb_build_object(
     'raw',(select profile from function_security_profile),
     'normalized',(select profile from provider_normalized_function_security_profile));`));
