@@ -1480,3 +1480,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: separately reviewed repository revert of React/React-DOM, lockfile and manifest hash as one source unit. No external cleanup because no database, target, provider, activation or deployment action is allowed.
 - Forbidden: verifier/workflow/SQL/baseline changes, weakening or removing the full `package.json` pin, unrelated dependencies, migrations, database writes, Staging/Production activation, deployment and direct main write.
 - Handoff: bounded source update prepared in PR #1374. Final exact-head CI and independent R3 review decide merge eligibility.
+
+## LOCK-FM-WEB-DEPENDENCY-CONSOLIDATION-20261026
+- Task: FM-WEB-DEPENDENCY-CONSOLIDATION-20261026; Status: RELEASED_FOR_PR; Holder: FanMind Builder; Risk: R3 controlled repository source.
+- Base: main `fcaf7bd85801c35332d0725a833defafac23f23b`; branch `deps/web-consolidation-1360-1361-1300-20261026`; source PRs #1360, #1361 and #1300.
+- Scope: exact Playwright 1.64.1, @types/node 26.6.5 plus undici-types 8.9.0, pdfnative 1.8.0, their minimal root lockfile state, and one exact full-file Capacity `package.json` hash update.
+- Coordination: the three source diffs are structurally disjoint and share the same manifest/lock/control surface. Mobile, Actions, Stripe and all other dependency PRs are excluded; no competing exact-scope writer identified.
+- Authorization: Owner approved only the verified package-source rebaseline for this bundle. No additional upgrade or verifier/control weakening is authorized.
+- Required evidence: 18/18 controlled sources; full exact-head CI including PostgreSQL 17/Capacity, Browser E2E, pdfnative disclosure coverage, Truth/lint/Operations/build, CodeQL, Supply Chain, Project Memory/God Mode; independent R3 review; unchanged main/head before merge.
+- Recovery: separately reviewed repository revert of the complete three-dependency bundle and matching manifest hash. No external cleanup because no database, target, activation or deployment action is allowed.
+- Handoff: bounded source update prepared for one integration PR. Exact-head CI and independent R3 review decide merge eligibility; originals may close as SUPERSEDED only after verified merge.
