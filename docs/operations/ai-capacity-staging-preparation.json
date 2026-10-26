@@ -11,7 +11,7 @@
     "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
     "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
     "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
-    "scripts/operations/ai-capacity-staging-preflight.sql": "10a362086d90e574907cea814acd6c484a43eeacb5d9ab2c25f96757ea468912",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "bdfbd6c7ced2fb73f7d1e4f3bcfd2b2c1c973911eb649341de71b904ec150b9d",
     "scripts/operations/ai-capacity-staging-preflight-preparation.mjs": "8a97817f383393c14674cd7b189bfd7a5d9c979c2500faff9545cdd9af434b6d",
     "docs/operations/AI_CAPACITY_STAGING_RECOVERY.md": "97f1029afd1fb906dbec578f7b60032136022002c9030cb246776a012f1a5f65",
     "src/lib/stagingDatabaseRolloutStatePolicy.mjs": "123dcae82803d3c33834e617006f28d854760384c2275cb214a4afe79fdcb463",
@@ -19,8 +19,8 @@
     "src/lib/environmentBoundaryPolicy.mjs": "ca1cd97162cacb043fda84d76f5fc1a4f152b2f0488a9a5e66f3c063a36f066e",
     "config/certificates/supabase-root-2021-ca.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7",
     "tests/ai-capacity-staging-preflight.test.mjs": "7f3309c6146803e5c983358241b0c86341ec0f6b39cf497b79b6f13f6c6bc552",
-    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "d121a68dc80ef9112ba953ef1f69bae20bac02bb19e54befb723b3e207963fe0",
-    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "560cb707f8395efc3d296357100f3bfacbf92de46a3aa35d553fb698bf2210b4"
+    "docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md": "d639d12644629857e267dcb25d44048a323af0ff50eff4abf8f0649da330d8cd",
+    "docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md": "ceb43b773e3dd8df47f8c67ee463e9faa4138c826038373d2e73899e5ba54a99"
   },
   "expectedObservation": {
     "version": 1,

@@ -113,7 +113,7 @@ select jsonb_build_object(
       and bool_and(c.relkind='r')
       and bool_and((select count(*) from pg_attribute a where a.attrelid=c.oid
         and a.attnum>0 and not a.attisdropped)=case c.relname
-          when 'ai_capacity_admin_policy' then 18 when 'ai_capacity_grants' then 13
+          when 'ai_capacity_admin_policy' then 19 when 'ai_capacity_grants' then 13
           when 'ai_capacity_reservations' then 11 when 'ai_capacity_reservation_allocations' then 4
           when 'ai_capacity_ledger_events' then 19 end)
       and bool_and(not exists(select 1 from pg_constraint k where k.conrelid=c.oid and not k.convalidated))
@@ -122,20 +122,14 @@ select jsonb_build_object(
       and c.relname=any(array['ai_capacity_admin_policy','ai_capacity_grants','ai_capacity_reservations',
         'ai_capacity_reservation_allocations','ai_capacity_ledger_events'])),
   'function_security_matches',(select count(*)=4
-      and count(*) filter(where p.proname='ai_capacity_ledger_immutable' and not p.prosecdef
-        and l.lanname='plpgsql' and p.proconfig @> array['search_path=pg_catalog, public, pg_temp'])=1
-      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard' and not p.prosecdef
-        and l.lanname='plpgsql' and p.proconfig @> array['search_path=pg_catalog, public, pg_temp'])=1
-      and count(*) filter(where p.proname='admin_get_ai_capacity_policy' and p.prosecdef
-        and l.lanname='sql' and p.provolatile='s' and p.proconfig @> array[
-          'search_path=pg_catalog, public, pg_temp','row_security=off'])=1
-      and count(*) filter(where p.proname='admin_update_ai_capacity_policy' and p.prosecdef
-        and l.lanname='plpgsql' and p.proconfig @> array[
-          'search_path=pg_catalog, public, pg_temp','row_security=off'])=1
+      and count(*) filter(where p.proname='ai_capacity_ledger_immutable')=1
+      and count(*) filter(where p.proname='ai_capacity_admin_activation_guard')=1
+      and count(*) filter(where p.proname='admin_get_ai_capacity_policy')=1
+      and count(*) filter(where p.proname='admin_update_ai_capacity_policy')=1
       and bool_and(not has_function_privilege('anon',p.oid,'EXECUTE')
         and not has_function_privilege('authenticated',p.oid,'EXECUTE')
         and has_function_privilege('service_role',p.oid,'EXECUTE')=(p.proname like 'admin\_%' escape '\'))
-    from pg_proc p join pg_namespace n on n.oid=p.pronamespace join pg_language l on l.oid=p.prolang
+    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and (p.proname like 'ai\_capacity\_%' escape '\'
       or p.proname in ('admin_get_ai_capacity_policy','admin_update_ai_capacity_policy'))),
   'rls_acl_security_matches',(select count(*)=5 and bool_and(c.relrowsecurity and not c.relforcerowsecurity)

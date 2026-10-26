@@ -133,7 +133,7 @@ Required observations, ALL conjunctive:
 The read-only diagnostic extension does not relax any item above. It additionally
 computes exact canonical fingerprint equality after an in-memory normalization of
 only the three reviewed budget defaults. It reports separate safety booleans for
-table structure, functions, RLS/ACL and remaining trigger/ownership/browser-role
+table structure, function inventory/ACL, table RLS/ACL and remaining trigger/ownership/browser-role
 boundaries. Capacity migration history is exposed only through bounded counts for
 known/unknown and name/version/statement-presence classes. No marker identity,
 version, statement, database definition or observed hash is emitted.
