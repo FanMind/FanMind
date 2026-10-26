@@ -121,9 +121,9 @@ therefore proves that those defaults completely explain the aggregate digest
 difference; `false` proves that at least one additional catalog difference
 exists. It never changes a catalog or learns an expected value from Staging.
 
-Separate booleans cover table shape plus validated constraints/indexes, function
-inventory and SECURITY-DEFINER boundaries, table RLS/ACL, and remaining
-trigger/owner/browser-role safeguards. These are diagnostic partitions; the
+Separate exact, source-pinned catalog profiles cover normalized columns,
+constraints and indexes; complete function definitions, owners, ACLs and effective
+execution rights; table RLS/ACL; and remaining trigger/owner/browser-role safeguards. These are diagnostic partitions; the
 normalized complete-profile boolean remains the exact canonical equality proof.
 Migration evidence is limited to counts for all Capacity-like markers, known or
 unknown classification, unknown name-only/version-only/name-and-version classes,

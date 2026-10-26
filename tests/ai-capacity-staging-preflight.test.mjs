@@ -82,16 +82,6 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
   assert.equal(sql("select current_setting('server_version_num')::int/10000;","postgres"),"17");
   sql("do $$ begin if not exists(select from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists(select from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; if not exists(select from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if; end $$;","postgres");
   try {
-    await t.test("derive source-pinned component profiles",()=>{
-      fresh();
-      const prefix=query.slice(0,query.indexOf("\nselect jsonb_build_object("));
-      const digests=sql(`${prefix}\nselect jsonb_build_object(
-        'table',(select md5(profile::text) from table_structure_profile),
-        'function',(select md5(profile::text) from function_security_profile),
-        'rls_acl',(select md5(profile::text) from rls_acl_security_profile),
-        'other',(select md5(profile::text) from other_security_profile));\nrollback;`);
-      assert.fail(`component profiles: ${digests}`);
-    });
     await t.test("source-defined baseline matches, repeated observation remains read-only and unchanged",()=>{
       fresh(); const a=observe(),b=observe(); assert.deepEqual(a,b);
       assert.deepEqual(evaluateObservation(a,control),{state:"READONLY_BASELINE_MATCH",apply:"disabled",failures:[]});
@@ -121,9 +111,20 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
     });
     for (const [name,mutation,field] of [
       ["table shape","alter table public.ai_capacity_grants add column unreviewed integer;","table_structure_safety_matches"],
+      ["same-count column type","alter table public.ai_capacity_grants alter column metadata drop default, alter column metadata type text using metadata::text;","table_structure_safety_matches"],
+      ["constraint definition","alter table public.ai_capacity_admin_policy drop constraint ai_capacity_budget_99_positive, add constraint ai_capacity_budget_99_positive check (package_99_budget_eur_microcents is null or package_99_budget_eur_microcents >= 0);","table_structure_safety_matches"],
+      ["index definition","drop index public.ai_capacity_grants_workspace_idx; create index ai_capacity_grants_workspace_idx on public.ai_capacity_grants(workspace_id,id);","table_structure_safety_matches"],
       ["function definer boundary","alter function public.ai_capacity_ledger_immutable() security definer;","function_security_matches"],
+      ["function body","create or replace function public.ai_capacity_ledger_immutable() returns trigger language plpgsql set search_path=pg_catalog,public,pg_temp as $$ begin return new; end $$;","function_security_matches"],
+      ["function owner","create role capacity_function_owner nologin; alter function public.ai_capacity_ledger_immutable() owner to capacity_function_owner;","function_security_matches"],
+      ["function ACL","grant execute on function public.ai_capacity_ledger_immutable() to authenticated;","function_security_matches"],
+      ["function config","alter function public.ai_capacity_ledger_immutable() set work_mem='64kB';","function_security_matches"],
       ["table RLS","alter table public.ai_capacity_grants disable row level security;","rls_acl_security_matches"],
+      ["table policy","create policy component_drift on public.ai_capacity_grants for select to authenticated using(true);","rls_acl_security_matches"],
+      ["column ACL","grant select(grant_key) on public.ai_capacity_grants to authenticated;","rls_acl_security_matches"],
       ["trigger security","alter table public.ai_capacity_ledger_events disable trigger ai_capacity_ledger_immutable_update_delete;","other_security_matches"],
+      ["trigger definition","drop trigger ai_capacity_ledger_immutable_update_delete on public.ai_capacity_ledger_events; create trigger ai_capacity_ledger_immutable_update_delete before update on public.ai_capacity_ledger_events for each row execute function public.ai_capacity_ledger_immutable();","other_security_matches"],
+      ["table owner","create role capacity_table_owner nologin; alter table public.ai_capacity_grants owner to capacity_table_owner;","other_security_matches"],
     ]) await t.test(`separately classifies ${name} drift`,()=>{
       fresh();sql(mutation);const observation=observe();
       assert.equal(observation.schema_matches_after_budget_default_normalization,false);

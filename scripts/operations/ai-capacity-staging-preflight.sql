@@ -132,13 +132,13 @@ select jsonb_build_object(
   'schema_matches_after_budget_default_normalization',(select md5(profile::text) from normalized_schema_profile)
     ='e3b71e6b343c161ebabf1fc34739a837',
   'table_structure_safety_matches',(select md5(profile::text) from table_structure_profile)
-    ='TABLE_STRUCTURE_PROFILE_MD5',
+    ='85829956879e59d8e93e18a7da0c2ef5',
   'function_security_matches',(select md5(profile::text) from function_security_profile)
-    ='FUNCTION_SECURITY_PROFILE_MD5',
+    ='407b36567309369b7247dc4dd8ee2106',
   'rls_acl_security_matches',(select md5(profile::text) from rls_acl_security_profile)
-    ='RLS_ACL_SECURITY_PROFILE_MD5',
+    ='a5115f4181a17f2d287e39d48782139d',
   'other_security_matches',(select md5(profile::text) from other_security_profile)
-    ='OTHER_SECURITY_PROFILE_MD5',
+    ='c724cd4f599d34f7d96f5cc4ffb99683',
   'policy_package_99_budget_default_matches',exists(
     select 1 from pg_attribute a join pg_attrdef d on d.adrelid=a.attrelid and d.adnum=a.attnum
     where a.attrelid='public.ai_capacity_admin_policy'::regclass and a.attnum>0 and not a.attisdropped
