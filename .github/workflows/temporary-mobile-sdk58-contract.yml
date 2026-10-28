@@ -24,7 +24,7 @@ jobs:
           cache-dependency-path: apps/mobile/package-lock.json
       - name: Generate official SDK 58 package contract
         run: |
-          npm install --package-lock-only
+          npm install
           npx expo install --fix
           npm ci
           npx expo-doctor
