@@ -63,8 +63,9 @@ acceptance; this source task does not claim signed-device proof.
   36. The strict generated-template assertion now validates compile SDK 37.
 - Full FanMind CI then exposed four stale strict test expectations for the
   already validated SDK-58 tree: Expo 58, Metro 0.87.1, the React Native 0.88
-  `undefined` empty component value and compile SDK 37. Only those exact
-  expectations were aligned; audit budgets and validation paths stay intact.
+  `undefined` empty component value and compile SDK 37. The lock review then
+  refined Metro into its exact SDK-58 package matrix (`0.87.1`/`0.87.2`). Only
+  exact expectations were aligned; audit budgets and validation paths stay intact.
 
 ## Required final evidence
 
