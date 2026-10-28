@@ -49,6 +49,7 @@ acceptance; this source task does not claim signed-device proof.
 
 ## Required final evidence
 
+The task lock is released for PR #1378; release does not imply acceptance.
 Merge eligibility requires fresh exact-head Mobile/Doctor/type/native/export
 and unsigned Android/iOS native builds, full FanMind/Browser/Security/
 PostgreSQL 17/Governance checks, full diff review and an independent R3
