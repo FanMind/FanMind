@@ -283,7 +283,7 @@ try {
   assert.match(androidGradle, /applicationId 'ch\.fanmind\.app'/u);
   assert.match(androidGradle, /compileSdk rootProject\.ext\.compileSdkVersion/u);
   assert.match(androidGradle, /targetSdkVersion rootProject\.ext\.targetSdkVersion/u);
-  assert.match(reactNativeAndroidVersions, /^compileSdk = "36"$/mu);
+  assert.match(reactNativeAndroidVersions, /^compileSdk = "37"$/mu);
   assert.match(reactNativeAndroidVersions, /^targetSdk = "36"$/mu);
   assert.match(androidManifest, /android:scheme="fanmind"/u);
   assert.match(androidManifest, /android:allowBackup="true"/u);

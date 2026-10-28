@@ -58,6 +58,9 @@ acceptance; this source task does not claim signed-device proof.
   still pinned SDK-57 Dev Client/System UI versions after successfully
   generating both native projects. The two strict assertions now match
   `~58.0.17` and `~58.0.7`; no check was weakened.
+- The following exact-head prebuild reached the SDK-58 Android template and
+  exposed its expected compile SDK change from 36 to 37 while target SDK stays
+  36. The strict generated-template assertion now validates compile SDK 37.
 
 ## Required final evidence
 
