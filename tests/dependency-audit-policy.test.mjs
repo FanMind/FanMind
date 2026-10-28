@@ -121,7 +121,7 @@ test("Mobile review contracts the exact residual set after supported remediation
   ]) {
     assert.equal(
       lock.packages[`node_modules/${packageName}`].version,
-      "0.84.5",
+      "0.87.1",
     );
     assert.equal(
       lock.packages[`node_modules/@expo/metro/node_modules/${packageName}`],

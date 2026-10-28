@@ -411,7 +411,7 @@ test("Mobile contact detail loads a bounded RLS-protected message history", asyn
   assert.match(dashboard, /wichtigsten 20 von \{todayFollowupCount\}/u);
   assert.match(
     followups,
-    /ListEmptyComponent=\{error \? null : \([\s\S]*Keine offenen Follow-ups/u,
+    /ListEmptyComponent=\{error \? undefined : \([\s\S]*Keine offenen Follow-ups/u,
   );
 });
 

@@ -71,7 +71,7 @@ const runtimeSource = await Promise.all(runtimeFiles.map(async (file) => ({
 test("mobile is a separate Expo package and not a Next application", () => {
   assert.equal(packageJson.name, "@fanmind/mobile");
   assert.equal(packageJson.main, "expo-router/entry");
-  assert.match(packageJson.dependencies.expo, /^~57\./);
+  assert.match(packageJson.dependencies.expo, /^~58\./);
   assert.equal(packageJson.dependencies.next, undefined);
   assert.equal(packageJson.dependencies["react-dom"], packageJson.dependencies.react);
   assert.equal(packageJson.engines.node, ">=22.13.0");
