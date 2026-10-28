@@ -47,6 +47,18 @@ Foreground notification default behavior is explicitly treated as a runtime
 change requiring the existing notification-policy tests and later real-device
 acceptance; this source task does not claim signed-device proof.
 
+## Repair cycles
+
+- Initial PR run `40750754347` proved deterministic install and Expo Doctor
+  20/20, then exposed the React Native 0.88 strict component type at
+  `followups.tsx`: `ListEmptyComponent` no longer accepts `null`. The
+  optional value now uses `undefined`; the next exact-head typecheck passed.
+- Exact-head run `40751289267` then passed typecheck, Doctor, Store, Android
+  and iOS JavaScript exports and the Mobile boundary. Its prebuild assertion
+  still pinned SDK-57 Dev Client/System UI versions after successfully
+  generating both native projects. The two strict assertions now match
+  `~58.0.17` and `~58.0.7`; no check was weakened.
+
 ## Required final evidence
 
 The task lock is released for PR #1378; release does not imply acceptance.
