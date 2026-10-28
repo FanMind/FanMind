@@ -1471,3 +1471,12 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Owner authorization: exact controlled `package.json` SHA-256 rebaseline for only these verified dependency changes. Full-file source verification remains unchanged; old hash `a8b75fb01a5435e328c51e7d173c4abb97d7fecf4f9f47312ae5b74dea43442e`, new hash `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c`.
 - Required: 18/18 controlled hashes, deterministic install/lock integrity, pdfnative disclosure regressions, Playwright Browser E2E, TypeScript/lint/Truth/Operations/build, PostgreSQL 17/Capacity, CodeQL, Supply Chain, Project Memory/God Mode and independent R3 countercheck on one exact head.
 - Boundary/recovery: repository source only; no database/migration, target/provider/customer action, activation or deployment. Recovery is one separately reviewed revert of the three dependency updates, lockfile and matching manifest hash.
+## FM-MOBILE-DEPENDENCY-CONSOLIDATION-20261026
+- Status: RELEASED_FOR_PR
+- Risk: R3 repository-only dependency reconciliation.
+- Base: main `ab7b9dd0a3d8061b771740bc202892f2c225cc61`; branch `deps/mobile-consolidation-1362-1366-20261026`; source PRs #1362-#1366.
+- Integrated scope: only the SDK-57-compatible `react-native-web` lock resolution 0.21.2 -> 0.21.4 from #1362. The existing `~0.21.0` manifest declaration remains unchanged.
+- Isolated scope: #1363-#1366 are not integrated because their requested Worklets, Notifications, Safe Area and Screens versions are the Expo SDK 58 bundle while FanMind remains on Expo 57 / React Native 0.86.3. Existing CI independently reproduces peer, Doctor and native build failures.
+- Controlled source: root `package.json` and all 18 Capacity-bound sources remain byte-identical; no Capacity hash rebaseline is necessary or authorized by this diff.
+- Recovery: reviewed repository revert of the single Mobile lockfile resolution and task evidence. No database, provider, signing, Store, Staging/Production or deployment cleanup is required.
+- Handoff: exact-head full CI, Mobile/native Android+iOS, Browser, Security, PostgreSQL 17/Governance and independent R3 countercheck decide merge eligibility. Fully covered #1362 may close only after verified merge; #1363-#1366 remain isolated.
