@@ -65,3 +65,5 @@ Memory/God Mode and an independent R3 countercheck.
 Recovery is a separately reviewed repository revert of the single Mobile
 lockfile resolution and these evidence records. No database, provider, signing,
 Store, Staging/Production activation or deployment action is included.
+
+2026-10-28 — Project status: `FM-MOBILE-DEPENDENCY-CONSOLIDATION-20261026` is merged and independently counterchecked; the earlier `RELEASED_FOR_PR` labels are the historical pre-merge state. Evidence: PR #1376 head `98d38adb2ad730f388eecd83a6a41582ae4d08ee` passed all 11 required workflows and merged unchanged as main `832c1f8b452586c1206d1868e2188fc0959a3778`; the independent R3 review returned PASS.
