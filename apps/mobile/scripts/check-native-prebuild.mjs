@@ -273,8 +273,8 @@ try {
     sourcePackage.scripts,
     "Expo prebuild must not rewrite the checked-in Mobile scripts.",
   );
-  assert.equal(sourcePackage.dependencies["expo-dev-client"], "~57.0.20");
-  assert.equal(sourcePackage.dependencies["expo-system-ui"], "~57.0.4");
+  assert.equal(sourcePackage.dependencies["expo-dev-client"], "~58.0.17");
+  assert.equal(sourcePackage.dependencies["expo-system-ui"], "~58.0.7");
   assert.ok(appConfig.expo.plugins.includes("expo-dev-client"));
   assert.ok(appConfig.expo.plugins.includes("expo-system-ui"));
   assert.equal(appConfig.expo.extra?.eas?.projectId, undefined);
@@ -283,7 +283,7 @@ try {
   assert.match(androidGradle, /applicationId 'ch\.fanmind\.app'/u);
   assert.match(androidGradle, /compileSdk rootProject\.ext\.compileSdkVersion/u);
   assert.match(androidGradle, /targetSdkVersion rootProject\.ext\.targetSdkVersion/u);
-  assert.match(reactNativeAndroidVersions, /^compileSdk = "36"$/mu);
+  assert.match(reactNativeAndroidVersions, /^compileSdk = "37"$/mu);
   assert.match(reactNativeAndroidVersions, /^targetSdk = "36"$/mu);
   assert.match(androidManifest, /android:scheme="fanmind"/u);
   assert.match(androidManifest, /android:allowBackup="true"/u);

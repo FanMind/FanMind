@@ -102,30 +102,39 @@ test("Mobile review contracts the exact residual set after supported remediation
       "utf8",
     ),
   );
-  for (const packageName of [
-    "metro",
-    "metro-babel-transformer",
-    "metro-cache",
-    "metro-cache-key",
-    "metro-config",
-    "metro-core",
-    "metro-file-map",
-    "metro-minify-terser",
-    "metro-resolver",
-    "metro-runtime",
-    "metro-source-map",
-    "metro-symbolicate",
-    "metro-transform-plugins",
-    "metro-transform-worker",
-    "ob1",
-  ]) {
+  const expectedMetroVersions = {
+    metro: "0.87.1",
+    "metro-babel-transformer": "0.87.1",
+    "metro-cache": "0.87.1",
+    "metro-cache-key": "0.87.1",
+    "metro-config": "0.87.2",
+    "metro-core": "0.87.1",
+    "metro-file-map": "0.87.1",
+    "metro-minify-terser": "0.87.1",
+    "metro-resolver": "0.87.1",
+    "metro-runtime": "0.87.2",
+    "metro-source-map": "0.87.1",
+    "metro-symbolicate": "0.87.1",
+    "metro-transform-plugins": "0.87.1",
+    "metro-transform-worker": "0.87.1",
+    ob1: "0.87.1",
+  };
+  const expectedNestedMetroVersions = {
+    "metro-config": "0.87.1",
+    "metro-runtime": "0.87.1",
+  };
+  for (const [packageName, expectedVersion] of Object.entries(
+    expectedMetroVersions,
+  )) {
     assert.equal(
       lock.packages[`node_modules/${packageName}`].version,
-      "0.84.5",
+      expectedVersion,
     );
     assert.equal(
-      lock.packages[`node_modules/@expo/metro/node_modules/${packageName}`],
-      undefined,
+      lock.packages[
+        `node_modules/@expo/metro/node_modules/${packageName}`
+      ]?.version,
+      expectedNestedMetroVersions[packageName],
     );
   }
   assert.equal(lock.packages["node_modules/image-size"], undefined);

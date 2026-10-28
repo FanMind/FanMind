@@ -664,6 +664,21 @@ Prevents two agents/sessions from independently working the same task.
 
 ## Active locks
 
+## LOCK-FM-MOBILE-SDK58-20261028
+- Task: FM-MOBILE-SDK58-20261028
+- Status: RELEASED_FOR_PR
+- Holder: FanMind Builder
+- Acquired: 2026-10-28 Europe/Vienna
+- Risk: R3 repository-only dependency/platform migration.
+- Base/branch: main `a1437c394eac1b6204b30ebfbad14cbb124a2825`; `deps/mobile-sdk58-20261028`.
+- Scope: Expo SDK 58 bundle alignment, consolidated #1363-#1366 dependency changes, official lock generation, SDK-bound tests/docs and exact-head validation.
+- Evidence so far: temporary run `40750215688` passed official SDK alignment, deterministic npm install and Expo Doctor and published the package-only artifact `sha256:f43a63089d8aaee96703e9e18ab9e34562767d3518f2a4d5226e75fffa51ab6f`; the temporary workflow is excluded from the final tree.
+- Evidence plan: TypeScript; boundary/store/FCM/native prebuild; Android/iOS export; unsigned Android debug and iOS Simulator builds; Browser/full CI/Security/PG17/Governance; independent R3 review.
+- Recovery: reviewed source revert only. No external state is changed.
+- Released: 2026-10-28 after the bounded source candidate and recovery evidence were committed to PR #1378; exact-head CI and independent R3 review remain acceptance gates.
+- Forbidden: legacy/forced peer resolution, validation exclusions, signing, Store publication, provider/account/secret changes, database/migration, Staging/Production mutation or deployment.
+
+
 
 # LOCK-FM-MOB-001-ANDROID-STORE-20260830
 - Task: FM-MOB-001 / FM-CR-006 / FM-CR-007 / FM-CR-010

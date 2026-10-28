@@ -73,7 +73,7 @@ test("native prebuild enforces store API, privacy and least-permission boundarie
   const appConfig = JSON.parse(appConfigSource);
 
   assert.match(source, /PrivacyInfo\.xcprivacy/u);
-  assert.match(source, /\^compileSdk = "36"\$/u);
+  assert.match(source, /\^compileSdk = "37"\$/u);
   assert.match(source, /\^targetSdk = "36"\$/u);
   assert.match(source, /NSPrivacyAccessedAPICategoryUserDefaults/u);
   assert.match(source, /NSPrivacyAccessedAPICategoryFileTimestamp/u);

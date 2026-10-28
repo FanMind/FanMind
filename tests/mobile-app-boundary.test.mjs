@@ -71,7 +71,7 @@ const runtimeSource = await Promise.all(runtimeFiles.map(async (file) => ({
 test("mobile is a separate Expo package and not a Next application", () => {
   assert.equal(packageJson.name, "@fanmind/mobile");
   assert.equal(packageJson.main, "expo-router/entry");
-  assert.match(packageJson.dependencies.expo, /^~57\./);
+  assert.match(packageJson.dependencies.expo, /^~58\./);
   assert.equal(packageJson.dependencies.next, undefined);
   assert.equal(packageJson.dependencies["react-dom"], packageJson.dependencies.react);
   assert.equal(packageJson.engines.node, ">=22.13.0");
@@ -114,7 +114,7 @@ test("mobile uses the square FM-over-wordmark splash and dedicated high-resoluti
   );
 
   assert.ok(splashPlugin);
-  assert.equal(packageJson.dependencies["expo-splash-screen"], "~57.0.10");
+  assert.equal(packageJson.dependencies["expo-splash-screen"], "~58.0.12");
   assert.equal(splashPlugin[1].image, "./assets/branding/fanmind-splash.png");
   assert.equal(splashPlugin[1].dark, undefined);
   assert.equal(splashPlugin[1].resizeMode, "contain");
