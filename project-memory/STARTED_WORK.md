@@ -477,7 +477,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-MOBILE-SDK58-20261028
 - Started: 2026-10-28
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: RELEASED_FOR_PR
 - Risk: R3 repository-only Expo platform upgrade.
 - Scope: migrate FanMind Mobile from Expo SDK 57 / React Native 0.86 to the current official Expo SDK 58 bundle, consolidate the compatible requests from #1363-#1366, refresh the npm lockfile through vendor-authenticated CI, update only SDK-bound tests/docs, and require complete exact-head Mobile/native plus repository CI.
 - Base/branch: main `a1437c394eac1b6204b30ebfbad14cbb124a2825`; `deps/mobile-sdk58-20261028`.
