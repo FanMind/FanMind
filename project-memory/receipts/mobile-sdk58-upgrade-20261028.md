@@ -64,8 +64,11 @@ acceptance; this source task does not claim signed-device proof.
 - Full FanMind CI then exposed four stale strict test expectations for the
   already validated SDK-58 tree: Expo 58, Metro 0.87.1, the React Native 0.88
   `undefined` empty component value and compile SDK 37. The lock review then
-  refined Metro into its exact SDK-58 package matrix (`0.87.1`/`0.87.2`). Only
-  exact expectations were aligned; audit budgets and validation paths stay intact.
+  refined Metro into its exact SDK-58 package matrix (`0.87.1`/`0.87.2`).
+  Full CI additionally proved that `metro-config` and `metro-runtime` retain
+  exact nested `0.87.1` copies under `@expo/metro`; every other entry must stay
+  deduplicated. Only exact expectations were aligned; audit budgets and
+  validation paths stay intact.
 
 ## Required final evidence
 

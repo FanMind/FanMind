@@ -119,6 +119,10 @@ test("Mobile review contracts the exact residual set after supported remediation
     "metro-transform-worker": "0.87.1",
     ob1: "0.87.1",
   };
+  const expectedNestedMetroVersions = {
+    "metro-config": "0.87.1",
+    "metro-runtime": "0.87.1",
+  };
   for (const [packageName, expectedVersion] of Object.entries(
     expectedMetroVersions,
   )) {
@@ -127,8 +131,10 @@ test("Mobile review contracts the exact residual set after supported remediation
       expectedVersion,
     );
     assert.equal(
-      lock.packages[`node_modules/@expo/metro/node_modules/${packageName}`],
-      undefined,
+      lock.packages[
+        `node_modules/@expo/metro/node_modules/${packageName}`
+      ]?.version,
+      expectedNestedMetroVersions[packageName],
     );
   }
   assert.equal(lock.packages["node_modules/image-size"], undefined);
