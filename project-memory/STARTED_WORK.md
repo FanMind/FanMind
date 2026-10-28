@@ -484,7 +484,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Source evidence: official Expo SDK 58 bundle and upgrade guide; open Dependabot PRs #1363-#1366; the prior SDK-57 isolation receipt.
 - Safety: no forced peer resolution, Doctor suppression, signing, Store action, provider/account mutation, database/migration, Staging/Production activation or deployment.
 - Recovery: reviewed repository revert of the SDK-bound manifest, lockfile, tests, docs and evidence. No external cleanup is required.
-- Exact next step: generate the vendor-compatible lock in a temporary contents-read workflow, remove that workflow from the final tree, then run all required exact-head gates and an independent R3 countercheck.
+- Completed so far: official contract generation run `40750215688` passed npm install, `expo install --fix`, deterministic `npm ci` and Expo Doctor; its artifact digest is `sha256:f43a63089d8aaee96703e9e18ab9e34562767d3518f2a4d5226e75fffa51ab6f`. The first run `40750063764` failed before artifact publication because dependencies were not installed before invoking Expo CLI; the corrected approach installed them first.
+- Exact next step: commit only the generated package contract, remove the temporary workflow from the final tree, then run all required exact-head gates and an independent R3 countercheck.
 
 
 ## FM-GOV-BUILDER-MANAGER-002 — non-running slot accounting — 2026-09-24
