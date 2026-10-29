@@ -477,7 +477,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-MOBILE-SDK58-20261028
 - Started: 2026-10-28
-- Status: RELEASED_FOR_PR
+- Status: RELEASED_MERGED_VERIFIED
 - Risk: R3 repository-only Expo platform upgrade.
 - Scope: migrate FanMind Mobile from Expo SDK 57 / React Native 0.86 to the current official Expo SDK 58 bundle, consolidate the compatible requests from #1363-#1366, refresh the npm lockfile through vendor-authenticated CI, update only SDK-bound tests/docs, and require complete exact-head Mobile/native plus repository CI.
 - Base/branch: main `a1437c394eac1b6204b30ebfbad14cbb124a2825`; `deps/mobile-sdk58-20261028`.
@@ -485,7 +485,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Safety: no forced peer resolution, Doctor suppression, signing, Store action, provider/account mutation, database/migration, Staging/Production activation or deployment.
 - Recovery: reviewed repository revert of the SDK-bound manifest, lockfile, tests, docs and evidence. No external cleanup is required.
 - Completed so far: official contract generation run `40750215688` passed npm install, `expo install --fix`, deterministic `npm ci` and Expo Doctor; its artifact digest is `sha256:f43a63089d8aaee96703e9e18ab9e34562767d3518f2a4d5226e75fffa51ab6f`. The first run `40750063764` failed before artifact publication because dependencies were not installed before invoking Expo CLI; the corrected approach installed them first.
-- Exact next step: commit only the generated package contract, remove the temporary workflow from the final tree, then run all required exact-head gates and an independent R3 countercheck.
+- Final repository result: PR #1378 head `89e7f3b737b2dd10ef28e9b913dbf9982772595d` passed all 11 exact-head workflows, including Project Memory Guard `40754966645`, Project Memory Quality `40754966683`, FanMind God Mode Gate `40754966781`, Mobile CI `40754966689` and Mobile Native CI `40754966698`, then squash-merged on 2026-10-28T20:10:37Z as `37b64e1672260a8bf886af5ea07a220dbd9dec74`. No separate workflow run exists for the squash merge SHA.
+- Closed: 2026-10-29 repository source reconciliation only. Signed Android/device acceptance, real Recovery, Push/Store and iOS/TestFlight remain unverified external work under FM-MOB-001; no protected or external action is implied.
 
 
 ## FM-GOV-BUILDER-MANAGER-002 — non-running slot accounting — 2026-09-24
