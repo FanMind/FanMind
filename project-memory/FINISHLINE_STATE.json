@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27",
+  "updated": "2026-10-29",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -34,7 +34,14 @@
       "task": "FM-MOB-001",
       "risk": "R3",
       "state": "IMPLEMENTED_NOT_VERIFIED",
-      "required_for_sales": true
+      "required_for_sales": true,
+      "source_state": "MERGED_VERIFIED",
+      "source_evidence": "Expo SDK 58 repository source merged via PR #1378: exact head 89e7f3b737b2dd10ef28e9b913dbf9982772595d passed all 11 exact-head workflows; squash merge 37b64e1672260a8bf886af5ea07a220dbd9dec74 at 2026-10-28T20:10:37Z has no separate workflow run.",
+      "open_external_gates": [
+        "signed_android_device_acceptance",
+        "real_device_recovery",
+        "push_delivery_and_store_acceptance"
+      ]
     },
     "ai_billing": {
       "task": "FM-AI-001",
@@ -174,7 +181,7 @@
   ],
   "notes": {
     "phase4": "Production/Billing base only; never sales handoff.",
-    "phase6": "Existing Android artifacts and acceptance remain valid; FM-DEC-021 defers every remaining Mobile/Handy step until company registration is complete and the owner explicitly resumes Mobile. Creator/Social completion alone must not restart builds, device work, Push, Play cohort, Store or TestFlight.",
+    "phase6": "Expo SDK 58 repository source is merged and exact-head CI-verified via PR #1378, while the aggregate Mobile gate remains IMPLEMENTED_NOT_VERIFIED. Existing signed artifacts predate SDK 58; signed Android/device acceptance, real-device Recovery, Push/Store evidence and Play cohort remain open and deferred by FM-DEC-021 until company registration plus explicit owner resume. iOS/TestFlight remains separate Phase 8 work.",
     "phase3": "Facebook, Instagram, WhatsApp.",
     "phase7": "FM-DEC-015 keeps Phase 7b Creator and selected Social engineering active. One Creator per independent account/Workspace. Actual Phase 3/7a acceptance still precedes technical Sales Handoff; Creator is not required_for_sales. FM-DEC-021 separately defers all remaining Mobile/Handy work until company registration plus explicit owner resume; Creator/Social completion alone does not restart Mobile.",
     "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus dormant consent-bound email handoff are retained. FM-DEC-015 resumes selected AI-draft/human-handoff engineering now; target acceptance, visitor dialog, uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and other later platforms remain separate."
