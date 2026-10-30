@@ -714,3 +714,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Boundary: this is diagnostic evidence, not product, language-model, sales, safety or production acceptance. Actual naturalness, humor, verified product/availability integration and stable model behavior remain unproved; no runtime guard, external provider, live/customer data, sale, checkout, send, deploy or merge is authorized.
 - Publication: exact-head relevant CI and final countercheck remain required. Exactly one proposed follow-up remains `FM-CHATADMIN-ADULT-SAFETY-GUARD-01`, which is not started by this entry.
 
+## FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01 — pure style-example lifecycle contract
+- Date: 2026-10-30
+- Status: IMPLEMENTED_FOR_PR; Risk: R2.
+- Requirement source: Draft PR #1384 at exact reviewed head `eacc883e177b9809dddccf6455d0bbd1276ceeee`; its requirements document is not duplicated by this task.
+- Result: a repository-only, side-effect-free policy contract binds manually curated non-explicit style examples to exact Workspace, Character, revision, preview fingerprint, human reviewer, review time and declaration. Corrections create a new draft revision; revoked/deleted examples cannot compile; person-, conversation-, message-, memory- and purchase-scoped fields fail closed.
+- Boundary: no UI, route, prompt, schema, persistence, provider, real-chat import, training, runtime activation, deployment, merge or cost is included. The separate adult-safety guard and privacy/authorization evidence remain prerequisites before any later runtime wiring.
+- Publication: focused synthetic tests, exact-head CI and a final bounded diff countercheck remain required before this repository contract is accepted.
