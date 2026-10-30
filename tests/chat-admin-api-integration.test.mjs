@@ -199,6 +199,43 @@ test("real reply route includes bounded teaching examples without turning them i
   assert.throws(() => chatPolicy.assertChatAdminReplySemantics(["Für 25 EUR.", "Hallo", "Danke"], context.incoming_message, null), /reply_price_not_permitted/u);
 });
 
+test("adult safety policy blocks only direct DE/EN minor self-disclosure", () => {
+  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin erst 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am only 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old.", "Ich bin 17 Jahre.", "Hallo, ich bin erst 16 Jahre."];
+  for (const message of blocked) assert.throws(() => chatPolicy.assertChatAdminAdultSafety(message), error => error instanceof chatPolicy.ChatAdminPolicyError && error.code === "minor_self_disclosure", message);
+  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late.", "I'm a minor shareholder.", "I'm a minor character in the play.", "Ich bin unter 18 Minuten geblieben.", "I'm under 18 minutes late.", "Ich bin noch nicht 18 Minuten hier."];
+  for (const message of allowed) assert.doesNotThrow(() => chatPolicy.assertChatAdminAdultSafety(message), message);
+});
+
+test("actual ChatAdmin route blocks direct minor self-disclosure before context, rate limit, provider, usage and persistence", async () => {
+  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old.", "Ich bin 17 Jahre.", "Hallo, ich bin erst 16 Jahre."];
+  for (const [index, message] of blocked.entries()) {
+    const h = harness();
+    const response = await h.route(h.request(1, "https://fanmind.invalid", message, `66666666-6666-4666-8666-${String(index + 1).padStart(12, "0")}`));
+    assert.equal(response.status, 400, message);
+    assert.deepEqual(await response.json(), { error: "minor_self_disclosure" }, message);
+    assert.equal(h.calls.character, 0, message);
+    assert.equal(h.calls.rateLimitCalls, 0, message);
+    assert.equal(h.calls.provider, 0, message);
+    assert.equal(h.calls.usage, 0, message);
+    assert.equal(h.calls.persistedHistoryIds, null, message);
+    assert.equal(h.calls.persistedGenerations.length, 0, message);
+    assert.equal(h.calls.currentFactWrites.length, 0, message);
+    assert.equal(h.calls.memoryWrites.length, 0, message);
+  }
+});
+
+test("actual ChatAdmin route permits quotes, hypotheticals, unknown age and adult self-disclosure to reach the local provider stub", async () => {
+  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late.", "I'm a minor shareholder.", "I'm a minor character in the play.", "Ich bin unter 18 Minuten geblieben.", "I'm under 18 minutes late.", "Ich bin noch nicht 18 Minuten hier."];
+  for (const [index, message] of allowed.entries()) {
+    const h = harness();
+    const response = await h.route(h.request(1, "https://fanmind.invalid", message, `66666666-6666-4666-8666-${String(index + 101).padStart(12, "0")}`));
+    assert.equal(response.status, 200, message);
+    assert.equal(h.calls.provider, 1, message);
+    assert.equal(h.calls.usage, 1, message);
+    assert.equal(h.calls.persistedGenerations.length, 1, message);
+  }
+});
+
 test("actual ChatAdmin route returns exactly three suggestions bound to the current authorized Character", async () => {
   const h = harness(); const response = await h.route(h.request()); const body = await response.json();
   assert.equal(response.status, 200); assert.equal(body.replies.length, 3);
@@ -848,16 +885,19 @@ test("multiturn baseline PASS pause/resume: seven sequential turns block, resume
   assert.equal(h.calls.persistedGenerations.length, 3);
 });
 
-test("multiturn baseline RED safety: four sequential turns do not stop a minority disclosure before provider execution", async () => {
+test("multiturn baseline PASS safety: direct minority disclosure stops before provider execution", async () => {
   const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
     ["Wir können gern respektvoll schreiben.", "Erzähl mir, wie dein Tag war.", "Was möchtest du besprechen?"],
     ["Dabei flirte ich nicht mit dir.", "Wir bleiben bei einem neutralen Gespräch.", "Darauf gehe ich nicht ein."],
   ] });
   await runBaselineTurn(h, 171, "Lass uns ein bisschen schreiben.");
-  const safety = await runBaselineTurn(h, 172, "Ich bin 17, flirtest du trotzdem mit mir?", { confirm: false });
-  assert.equal(safety.context.persona.public_age, 25);
-  assert.equal(h.calls.provider, 2, "the second turn reaches the local provider stub instead of stopping before it");
-  assert.equal(h.calls.persistedGenerations.length, 2);
-  assert.equal(h.calls.confirmations.length, 1, "neutral refusal drafts are not treated as confirmed fan delivery");
+  const safety = await runBaselineTurn(h, 172, "Ich bin 17, flirtest du trotzdem mit mir?", { status: 400, confirm: false });
+  assert.equal(safety.body.error, "minor_self_disclosure");
+  assert.equal(h.calls.provider, 1, "the disclosure is rejected before a second local provider call");
+  assert.equal(h.calls.usage, 1, "the blocked turn creates no additional usage event");
+  assert.equal(h.calls.persistedGenerations.length, 1, "the blocked turn is not persisted");
+  assert.equal(h.calls.confirmations.length, 1);
+  assert.equal(h.calls.currentFactWrites.length, 0);
+  assert.equal(h.calls.memoryWrites.length, 0);
 });
 

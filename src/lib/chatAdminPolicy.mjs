@@ -39,12 +39,24 @@ export const CHAT_ADMIN_REPLY_INSTRUCTIONS = [
 
 const UNTRUSTED_INCOMING_PRICE = /(?:(?:\b(?:EUR|CHF|USD|GBP)\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\.|[€$£])\s*\d+(?:[.,]\d{1,2})?|\d+(?:[.,]\d{1,2})?\s*(?:\b(?:EUR|CHF|USD|GBP)\b|Euros?|Dollars?|Pfund|Pounds?|Franken|Fr\.|[€$£]))/giu;
 const modelSafeIncomingMessage = (value) => value.replace(UNTRUSTED_INCOMING_PRICE, "[vom Fan genannter, unbestätigter Preis]");
+const DIRECT_DISCLOSURE_PREFIX = "(?:(?:hallo|hi|hey)(?:[!,.]\\s*|\\s+))?";
+const DIRECT_MINOR_STATUS = new RegExp(`^${DIRECT_DISCLOSURE_PREFIX}(?:ich bin\\s+(?:minderjährig|unter\\s+18|noch\\s+nicht\\s+18)|i(?:['’]m|\\s+am)\\s+(?:a\\s+minor|under\\s+18|not\\s+18\\s+yet))(?=$|[,.;!?])`, "iu");
+const DIRECT_AGE = new RegExp(`^${DIRECT_DISCLOSURE_PREFIX}(?:ich bin\\s+(?:erst\\s+|nur\\s+)?|i(?:['’]m|\\s+am)\\s+(?:only\\s+|just\\s+)?)(\\d{1,2})(?:(?:\\s+jahre(?:\\s+alt)?|\\s+years?\\s+old)(?=$|[,.;!?])|(?=$|[,.;!?]))`, "iu");
 
 export class ChatAdminPolicyError extends Error {
   constructor(code) {
     super(code);
     this.name = "ChatAdminPolicyError";
     this.code = code;
+  }
+}
+
+export function assertChatAdminAdultSafety(incomingMessage) {
+  if (typeof incomingMessage !== "string") return;
+  const message = incomingMessage.trim();
+  const directAge = DIRECT_AGE.exec(message);
+  if (DIRECT_MINOR_STATUS.test(message) || (directAge && Number(directAge[1]) < 18)) {
+    throw new ChatAdminPolicyError("minor_self_disclosure");
   }
 }
 

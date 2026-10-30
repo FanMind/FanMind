@@ -1,6 +1,7 @@
 import { ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { applyChatAdminCurrentInterests, isChatAdminCurrentFactsEnabled, getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
+import * as chatAdminPolicy from "@/lib/chatAdminPolicy.mjs";
 import { assertChatAdminReplySemantics, buildChatAdminCharacterContext, buildChatAdminFanContext, ChatAdminPolicyError } from "@/lib/chatAdminPolicy.mjs";
 import { recordAiUsageEvent } from "@/lib/aiUsage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
@@ -18,6 +19,7 @@ export async function POST(request:NextRequest){
   const parsed=await readBoundedJsonRequest(request,16_000);if(!parsed.ok||!parsed.value||typeof parsed.value!=="object")return NextResponse.json({error:"invalid_body"},{status:400});
   const body=parsed.value as Record<string,unknown>;if(typeof body.character_id!=="string"||!Number.isInteger(body.character_revision))return NextResponse.json({error:"invalid_context_binding"},{status:400});
   if(fanMode&&(typeof body.fan_id!=="string"||typeof body.conversation_id!=="string"||typeof body.generation_id!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(body.generation_id)))return NextResponse.json({error:"invalid_context_binding"},{status:400});
+  (chatAdminPolicy as typeof chatAdminPolicy & { assertChatAdminAdultSafety: (incomingMessage: unknown) => void }).assertChatAdminAdultSafety(body.incoming_message);
   const character=await getChatCharacter(workspace.id,body.character_id);if(character.revision!==body.character_revision)return NextResponse.json({error:"stale_character_revision"},{status:409});
   const fan=fanMode?await getChatFan(workspace.id,character.id,body.fan_id as string):null;const conversation=fanMode?await getChatConversation(workspace.id,character.id,fan!.id,body.conversation_id as string):null;const history=fanMode?await listRecentChatMessages(workspace.id,character.id,fan!.id,conversation!.id):[];
   const lastConfirmed=fanMode?await getLatestChatAdminConfirmedReply(workspace.id,character.id,fan!.id,conversation!.id):null;
