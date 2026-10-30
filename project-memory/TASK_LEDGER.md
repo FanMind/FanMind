@@ -706,3 +706,11 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Goal/result: Restore independent Character-editor scrolling and reachability of Character-bound offer/price rules; combine copy and existing manual-confirmation in one action; make existing Character, Fan, learned preference and conversation context drive three semantically relevant reply strategies.
 - Scope: Repository-only UI, prompt, validation and regression tests. Reuses Character `sales_rules`, canonical fan analysis, the existing confirmation path and used-suggestion marker; no new learning store, schema, database apply, external send, Production, Billing, Stripe, provider or social-platform mutation.
 - Verification: Focused policy, syntax and whitespace checks passed locally. Exact-head FanMind CI, Browser E2E, CodeQL and Project Memory checks remain required before merge.
+
+## FM-CHATADMIN-MULTITURN-QUALITY-BASELINE-01 — synthetic sequential quality characterization
+- Date: 2026-10-30
+- Status: IMPLEMENTED_FOR_PR; Risk: R2; Draft PR: #1383.
+- Result: eight repository-only synthetic Admin Chat scenarios now exercise four-to-seven sequential turns through the real reply-suggestions route with local provider/persistence stubs, unique generation persistence and selected confirmed replies. Deterministic PASS: topic switch/resumption, bound price, explicit refusal and pause/resume. Characterization RED: humor/naturalness, redundant questioning after a memory correction, manipulative flirt semantics and missing pre-provider stop after explicit fan minority disclosure.
+- Boundary: this is diagnostic evidence, not product, language-model, sales, safety or production acceptance. Actual naturalness, humor, verified product/availability integration and stable model behavior remain unproved; no runtime guard, external provider, live/customer data, sale, checkout, send, deploy or merge is authorized.
+- Publication: exact-head relevant CI and final countercheck remain required. Exactly one proposed follow-up remains `FM-CHATADMIN-ADULT-SAFETY-GUARD-01`, which is not started by this entry.
+
