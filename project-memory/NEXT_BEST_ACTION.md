@@ -24,8 +24,8 @@ owner/platform action required
 - Effective worker limit: `3`
 - Hard maximum worker limit: `5`
 - SAFE READY SET: `NONE`
-- Worker slots reserved by active/ready work: `2`
-- Active task continuations reserving slots: `TASK:FM-ADMINCHAT-STAGING-HARNESS-20261011-01`, `TASK:FM-CHATADMIN-LIVE-REPAIR-20261014`
+- Worker slots reserved by active/ready work: `0`
+- Active task continuations reserving slots: `NONE`
 - Serialized due to conflict/limit: `NONE`
 - Blocked by action dependencies: `NONE`
 - Parallel execution is fail-closed: a second concurrent action requires `parallel_safe=true` plus complete non-overlapping scope metadata; missing/unknown scope serializes.
