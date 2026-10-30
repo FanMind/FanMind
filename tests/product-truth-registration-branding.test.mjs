@@ -213,9 +213,19 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.doesNotMatch(roadmap, /TagFilter-Snapshot[\s\S]{0,120}state: "done"/u);
   assert.match(phase15, /Segmente & Listen[\s\S]*Segment-Ansichten[\s\S]*Listenlogik[\s\S]*Filter & Tags[\s\S]*CSV-Import für Segmente nutzen/u);
   assert.doesNotMatch(phase15, /Filter & Tags[\s\S]{0,120}state: "done"/u);
+  const websiteSupportTruth =
+    sourceOfTruth.split("Issue #1350")[1]?.split("- Meta-Content-Staging:")[0] ?? "";
   assert.match(
+    websiteSupportTruth,
+    /WEBSITE_SUPPORT_ASSISTANT_PLAN\.md[\s\S]*nicht[\s\S]*neu gebaut[\s\S]*Web-\/Staging-Zielabnahme[\s\S]*Schema-Installation[\s\S]*Feature-Flag[\s\S]*Provider-[\s\S]*Rechts-[\s\S]*Datenschutzabnahme/u,
+  );
+  assert.match(
+    websiteSupportTruth,
+    /Support-Gates[\s\S]*Mobile-Geräte-[\s\S]*Store-Abnahmen getrennt[\s\S]*kein Mobile- oder Store-Gate blockiert Websupport/u,
+  );
+  assert.doesNotMatch(
     sourceOfTruth,
-    /vorhandene Support-Source ist integriert[\s\S]*Abnahme am[\s\S]*Ziel[\s\S]*realen Geräten[\s\S]*Store[\s\S]*weder ein[\s\S]*Neubau noch ein Auslieferungsnachweis/u,
+    /Support-Source ist integriert[\s\S]{0,180}(?:Geräte|Store)/u,
   );
   assert.match(
     sourceOfTruth,
@@ -254,3 +264,4 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.match(conversationsSchema, /assigned_user_id[\s\S]*noch nicht zum aktuellen Production-[\s\S]*Schema/u);
   assert.match(conversationsSchema, /RLS- und Spaltenrechte[\s\S]*Staging/u);
 });
+

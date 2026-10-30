@@ -447,9 +447,6 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
   Apple Developer / App Store Connect, iOS-Build, Gerätenachweis und TestFlight
   folgen erst in der bewusst nach Phase 7 verschobenen Phase 8.
-- Die vorhandene Support-Source ist integriert. Offen bleiben ihre Abnahme am
-  Ziel, auf realen Geräten und im jeweiligen Store; daraus folgt weder ein
-  Neubau noch ein Auslieferungsnachweis.
 
 Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
 
@@ -785,6 +782,13 @@ zwingende externe Freigabe noch fehlt.
   sendet je Nachricht eine Client-UUID. Es stellt keinen Zweiweg-Chat dar;
   Besucher-KI, automatische Antworten und Outbound-Versand bleiben
   unverdrahtet.
+- Die vorhandene Source für öffentlichen Website-Support und authentifizierte
+  In-App-Hilfe wird gemäß Issue #1350 und
+  `docs/operations/WEBSITE_SUPPORT_ASSISTANT_PLAN.md` weiterverwendet, nicht
+  neu gebaut. Offen bleiben die Web-/Staging-Zielabnahme, kontrollierte
+  Schema-Installation, Feature-Flag-Freigaben sowie Provider-, Rechts- und
+  Datenschutzabnahme. Diese Support-Gates sind von Mobile-Geräte- und
+  Store-Abnahmen getrennt; kein Mobile- oder Store-Gate blockiert Websupport.
 - Meta-Content-Staging: Die zwei Migrationen
   `20260803120000_meta_content_intelligence_foundation.sql` und
   `20260803210000_preserve_incremental_conversation_history.sql` sind
@@ -1585,3 +1589,4 @@ oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jed
 möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+

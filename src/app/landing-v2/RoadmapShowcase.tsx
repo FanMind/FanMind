@@ -112,11 +112,11 @@ export default function RoadmapShowcase({ phases, ariaLabel }: { phases: Roadmap
       <div className={styles.roadmapMarquee} aria-label={ariaLabel}>
         <div className={styles.roadmapGrid}>
           {phases.map((phase) => {
-            const contentFitPhase = ["05", "06", "07", "08"].includes(phase.number);
+            const contentFitPhase = ["05", "06", "07", "08", "10"].includes(phase.number);
 
             return (
               <article
-                className={`${styles.roadmapCard} ${phase.availability === "done" ? "" : styles.cardWithComingSoon} ${contentFitPhase ? fitStyles.contentFitCard : ""}`}
+                className={`${styles.roadmapCard} ${phase.availability === "upcoming" ? styles.cardWithComingSoon : ""} ${contentFitPhase ? fitStyles.contentFitCard : ""}`}
                 data-tone={phase.tone}
                 key={phase.phase}
                 id={`roadmap-phase-${phase.number}`}
@@ -144,7 +144,7 @@ export default function RoadmapShowcase({ phases, ariaLabel }: { phases: Roadmap
                     </li>
                   ))}
                 </ul>
-                {phase.availability === "done" ? null : <ComingSoonMark size="medium" className={styles.comingSoonImage} />}
+                {phase.availability === "upcoming" ? <ComingSoonMark size="medium" className={styles.comingSoonImage} /> : null}
               </article>
             );
           })}
@@ -153,3 +153,4 @@ export default function RoadmapShowcase({ phases, ariaLabel }: { phases: Roadmap
     </>
   );
 }
+

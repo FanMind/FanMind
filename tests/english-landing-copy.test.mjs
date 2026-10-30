@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 
 const pagePath = "src/app/landing-v2/page.tsx";
+const roadmapShowcasePath = "src/app/landing-v2/RoadmapShowcase.tsx";
 const rootPagePath = "src/app/page.tsx";
 const footerFormPath = "src/components/landing/FooterInquiryForm.tsx";
 const wrapperPath = "src/lib/fanmindCopyComplete.ts";
@@ -95,8 +96,9 @@ test("English landing uses the complete translation wrapper", async () => {
 });
 
 test("remaining static landing copy is passed through the translator", async () => {
-  const [page, footerForm, rootPage] = await Promise.all([
+  const [page, roadmapShowcase, footerForm, rootPage] = await Promise.all([
     read(pagePath),
+    read(roadmapShowcasePath),
     read(footerFormPath),
     read(rootPagePath),
   ]);
@@ -119,6 +121,18 @@ test("remaining static landing copy is passed through the translator", async () 
   );
   assert.match(page, /<FooterInquiryForm language=\{language\} \/>/);
   assert.doesNotMatch(page, /<FooterInquiryForm \/>/);
+  assert.match(
+    roadmapShowcase,
+    /const contentFitPhase = \["05", "06", "07", "08", "10"\]\.includes\(phase\.number\)/u,
+  );
+  assert.match(
+    roadmapShowcase,
+    /phase\.availability === "upcoming" \? <ComingSoonMark/u,
+  );
+  assert.doesNotMatch(
+    roadmapShowcase,
+    /phase\.availability === "done" \? null : <ComingSoonMark/u,
+  );
 
   assert.match(footerForm, /language === "en"/);
   assert.match(footerForm, /Request consultation/);
@@ -130,3 +144,4 @@ test("remaining static landing copy is passed through the translator", async () 
   assert.match(rootPage, /export async function generateMetadata/);
   assert.match(rootPage, /FanMind \| AI CRM for creators, clubs and events/);
 });
+
