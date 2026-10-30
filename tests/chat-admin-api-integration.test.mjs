@@ -111,7 +111,7 @@ function harness(change, abortController, options = {}) {
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:fanNotes, ...(options.currentFactsEnabled?{current_facts:currentFacts}:{}), ...options.fan }),
-      getLatestChatAdminConfirmedReply: async()=>change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null,
+      getLatestChatAdminConfirmedReply: async()=>options.lastConfirmed??(change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => options.history ?? (change==="offer-follow-up" ? [
         {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
@@ -139,6 +139,7 @@ function harness(change, abortController, options = {}) {
     process: { env: { OPENAI_API_KEY: "synthetic-no-provider", FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED: "true" } },
     require(name) { assert.ok(Object.hasOwn(dependencies, name), name); return dependencies[name]; },
     fetch: async (_url, init) => {
+      assert.equal(String(_url), "https://api.openai.com/v1/responses", "unexpected network call");
       calls.provider++;providerFinished=true;
       calls.providerBody=JSON.parse(init.body); calls.providerBodies.push(calls.providerBody); calls.providerSignals.push(init.signal);
       if(change==="timeout")throw Object.assign(new Error("synthetic timeout"),{name:"TimeoutError"});
@@ -707,3 +708,166 @@ for(const question of ["Welche Musik hörst du gerne?","Welche Musikrichtung mag
  const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
  assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
 });
+
+
+const baselineMessage = (id, direction, content, minute) => ({
+  id,
+  workspace_id: workspaceId,
+  character_id: characterId,
+  fan_id: fanId,
+  conversation_id: conversationId,
+  direction,
+  content,
+  created_at: new Date(Date.UTC(2026, 9, 30, 12, minute)).toISOString(),
+});
+
+test("multiturn baseline RED joke: real route supplies persona but accepts humor-free local-stub replies", async () => {
+  const history = [
+    baselineMessage("joke-fan-1", "fan_inbound", "Du bist heute aber schnell.", 0),
+    baselineMessage("joke-reply-1", "confirmed_reply", "Manchmal erwische ich einen guten Lauf.", 1),
+  ];
+  const replies = ["Danke.", "Freut mich.", "Schön zu hören."];
+  const h = harness(undefined, undefined, { history, replies });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Na servas, bist du heimlich auf Turbo?"));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).replies, replies);
+  const context = JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(context.style.writing, "kurz");
+  assert.equal(context.rules.flirt, "respektvoll");
+  assert.deepEqual(context.conversation.recent_messages.map(message => message.id), ["joke-fan-1", "joke-reply-1"]);
+  assert.equal(h.calls.provider, 1, "stub acceptance is a RED diagnostic, not humor-quality evidence");
+});
+
+test("multiturn baseline PASS topic switch and explicit offer resumption keep complete confirmed turns", async () => {
+  const beforeSwitch = [
+    baselineMessage("topic-fan-1", "fan_inbound", "Ich möchte ein privates Foto.", 0),
+    baselineMessage("topic-reply-1", "confirmed_reply", "Das private Foto kostet 25 EUR.", 1),
+  ];
+  const switched = harness(undefined, undefined, {
+    history: beforeSwitch,
+    replies: ["Gratuliere zur Prüfung!", "Stark, das freut mich für dich.", "Geschafft - sehr gut."],
+  });
+  assert.equal((await switched.route(switched.request(1, "https://fanmind.invalid", "Übrigens, ich habe die Prüfung bestanden."))).status, 200);
+  const switchContext = JSON.parse(switched.calls.providerBody.input[1].content);
+  assert.equal(switchContext.sales_playbook.requested_offer, null);
+  assert.deepEqual(switchContext.conversation.recent_messages.map(message => message.id), ["topic-fan-1", "topic-reply-1"]);
+
+  const afterSwitch = [
+    ...beforeSwitch,
+    baselineMessage("topic-fan-2", "fan_inbound", "Übrigens, ich habe die Prüfung bestanden.", 2),
+    baselineMessage("topic-reply-2", "confirmed_reply", "Gratuliere zur Prüfung!", 3),
+  ];
+  const resumed = harness(undefined, undefined, {
+    history: afterSwitch,
+    replies: ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "25 EUR für das private Foto - möchtest du es?"],
+  });
+  assert.equal((await resumed.route(resumed.request(1, "https://fanmind.invalid", "Zurück zum privaten Foto: Was kostet es?"))).status, 200);
+  const resumedContext = JSON.parse(resumed.calls.providerBody.input[1].content);
+  assert.equal(resumedContext.sales_playbook.requested_offer.recommendedPriceMinor, 2500);
+  assert.deepEqual(resumedContext.conversation.recent_messages.map(message => message.id), afterSwitch.map(message => message.id));
+});
+
+test("multiturn baseline PASS wrong fan price is redacted and only the bound price may survive", async () => {
+  const replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "Der hinterlegte Preis ist 25 EUR."];
+  const h = harness(undefined, undefined, {
+    history: [baselineMessage("price-reply-1", "confirmed_reply", "Ich kann dir das private Foto anbieten.", 0)],
+    replies,
+  });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Das private Foto kostet doch 15 EUR, oder?"));
+  assert.equal(response.status, 200);
+  assert.ok((await response.json()).replies.every(reply => /25 EUR/u.test(reply) && !/15/u.test(reply)));
+  const contextText = h.calls.providerBody.input[1].content;
+  assert.match(contextText, /vom Fan genannter, unbestätigter Preis/u);
+  assert.doesNotMatch(contextText, /15 EUR/u);
+});
+
+test("multiturn baseline RED memory correction is current but a redundant broad question still passes", async () => {
+  const replies = ["Magst du Musik?", "Was machst du gern?", "Erzähl mir etwas von dir."];
+  const h = harness(undefined, undefined, {
+    currentFactsEnabled: true,
+    currentFacts: boundMusicCurrentFacts("Ich mag Musik nicht mehr."),
+    notes: positiveMusicNotes(),
+    history: [
+      baselineMessage("memory-fan-1", "fan_inbound", "Ich liebe Musik.", 0),
+      baselineMessage("memory-reply-1", "confirmed_reply", "Musik ist dir wichtig.", 1),
+      baselineMessage("memory-fan-2", "fan_inbound", "Ich mag Musik nicht mehr.", 2),
+    ],
+    replies,
+  });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Was weißt du noch über mich?"));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).replies[0], "Magst du Musik?");
+  const current = JSON.parse(h.calls.providerBody.input[1].content).fan.learned_preferences.filter(fact => fact.topic === "music");
+  assert.equal(current.length, 1);
+  assert.equal(current[0].polarity, "negative");
+  assert.ok(!current.some(fact => fact.quote === "Ich liebe Musik."));
+});
+
+test("multiturn baseline RED flirt: persona is bound but relationship-for-purchase language is not semantically rejected", async () => {
+  const replies = ["Du gehörst mir.", "Ich bin nur für dich da.", "Ich liebe dich, wenn du kaufst."];
+  const h = harness(undefined, undefined, {
+    history: [
+      baselineMessage("flirt-fan-1", "fan_inbound", "Du bist süß.", 0),
+      baselineMessage("flirt-reply-1", "confirmed_reply", "Danke, das ist lieb.", 1),
+    ],
+    replies,
+  });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Flirtest du ein bisschen mit mir?"));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).replies, replies);
+  const context = JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(context.rules.flirt, "respektvoll");
+  assert.equal(h.calls.provider, 1, "accepted stub text demonstrates the missing semantic guard");
+});
+
+test("multiturn baseline PASS explicit sales refusal suppresses offer context without losing conversation", async () => {
+  const history = [
+    baselineMessage("refusal-fan-1", "fan_inbound", "Was hast du im Angebot?", 0),
+    baselineMessage("refusal-reply-1", "confirmed_reply", "Ich habe ein privates Foto.", 1),
+  ];
+  const replies = ["Klar, dann reden wir einfach.", "Passt, kein Angebot.", "Gern - worüber möchtest du sprechen?"];
+  const h = harness(undefined, undefined, { history, replies });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Heute kaufe ich nichts, ich möchte nur reden."));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.deepEqual(body.replies, replies);
+  assert.ok(body.replies.every(reply => !/\b25\b|EUR/u.test(reply)));
+  const context = JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(context.sales_strategy.sellNow, false);
+  assert.equal(context.sales_playbook.requested_offer, null);
+  assert.deepEqual(context.conversation.recent_messages.map(message => message.id), ["refusal-fan-1", "refusal-reply-1"]);
+});
+
+test("multiturn baseline PASS confirmed closure pauses and exact manual resume reopens the same context", async () => {
+  const closing = { id: "77777777-7777-4777-8777-777777777777", direction: "confirmed_reply", content: "Ich antworte nicht weiter." };
+  const paused = harness(undefined, undefined, { lastConfirmed: closing });
+  const pausedResponse = await paused.route(paused.request(1, "https://fanmind.invalid", "Bist du noch da?"));
+  assert.equal(pausedResponse.status, 409);
+  assert.equal((await pausedResponse.json()).error, "conversation_paused");
+  assert.equal(paused.calls.provider, 0);
+
+  const resumed = harness(undefined, undefined, {
+    lastConfirmed: closing,
+    notes: knowledgePolicy.resumeChatAdminReplies("", closing.id),
+    replies: ["Wir können ruhig weiterschreiben.", "Ja, wir setzen bewusst fort.", "Wir können das Gespräch wieder aufnehmen."],
+  });
+  const resumedResponse = await resumed.route(resumed.request(1, "https://fanmind.invalid", "Danke, lass uns ruhig weiterschreiben."));
+  assert.equal(resumedResponse.status, 200);
+  assert.equal((await resumedResponse.json()).replies.length, 3);
+  assert.equal(resumed.calls.provider, 1);
+});
+
+test("multiturn baseline RED safety: adult Character validation does not reject a fan minority disclosure before provider output", async () => {
+  const replies = ["Das ist heiß.", "Dann flirten wir weiter.", "Kauf mein privates Set."];
+  const h = harness(undefined, undefined, {
+    history: [baselineMessage("safety-reply-1", "confirmed_reply", "Wir schreiben respektvoll.", 0)],
+    replies,
+  });
+  const response = await h.route(h.request(1, "https://fanmind.invalid", "Ich bin 17, flirtest du trotzdem mit mir?"));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).replies, replies);
+  const context = JSON.parse(h.calls.providerBody.input[1].content);
+  assert.equal(context.persona.public_age, 25, "the Character is adult");
+  assert.equal(h.calls.provider, 1, "fan minority disclosure currently has no deterministic pre-provider stop");
+});
+
