@@ -158,6 +158,9 @@ function normalizedExample(value) {
     if ([result.reviewer_id, result.reviewed_at, result.reviewer_declaration, result.preview_fingerprint].some((item) => item !== null)) {
       fail("draft_has_review_metadata");
     }
+  } else if (status === "deleted" && [result.reviewer_id, result.reviewed_at, result.reviewer_declaration, result.preview_fingerprint].every((item) => item === null)) {
+    // A draft may be deleted before review. The tombstone carries no invented
+    // approval metadata and remains unusable.
   } else {
     result.reviewer_id = identifier(result.reviewer_id, "invalid_reviewer_id");
     result.reviewed_at = reviewedAt(result.reviewed_at, Date.now());
@@ -207,7 +210,7 @@ export function approveChatAdminStyleExample(value, now = Date.now()) {
   const suppliedPreview = record(input.preview, "preview_required");
   assertNoForbiddenFields(suppliedPreview);
   assertExactKeys(suppliedPreview, PREVIEW_KEYS, "preview_mismatch");
-  if (JSON.stringify(suppliedPreview) !== JSON.stringify(expectedPreview)) fail("preview_mismatch");
+  if (PREVIEW_KEYS.some((key) => suppliedPreview[key] !== expectedPreview[key])) fail("preview_mismatch");
   if (input.reviewer_declaration !== CHAT_ADMIN_STYLE_EXAMPLE_REVIEW_DECLARATION) fail("reviewer_declaration_required");
   return {
     ...example,
@@ -242,7 +245,6 @@ export function revokeChatAdminStyleExample(value) {
 
 export function deleteChatAdminStyleExample(value) {
   const example = normalizedExample(value);
-  if (example.status === "draft") fail("deletion_requires_reviewed_example");
   return { ...example, status: "deleted" };
 }
 

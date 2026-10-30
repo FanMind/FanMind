@@ -77,8 +77,20 @@ test("approval binds exact preview, scope, current revision and human review met
 test("missing or altered preview fails closed", () => {
   const example = draft();
   expectCode("preview_required", () => approve(example, { preview: null }));
+  const preview = previewChatAdminStyleExample(example);
+  assert.equal(approve(example, {
+    preview: {
+      preview_fingerprint: preview.preview_fingerprint,
+      status: preview.status,
+      text: preview.text,
+      revision: preview.revision,
+      character_id: preview.character_id,
+      workspace_id: preview.workspace_id,
+      example_id: preview.example_id,
+    },
+  }).status, "approved");
   expectCode("preview_mismatch", () => approve(example, {
-    preview: { ...previewChatAdminStyleExample(example), text: "Ein anderer Text" },
+    preview: { ...preview, text: "Ein anderer Text" },
   }));
 });
 
@@ -106,8 +118,10 @@ test("revoked and deleted examples are never compiled", () => {
   const originalPreview = previewChatAdminStyleExample(originalDraft);
   const approved = approve(originalDraft);
   const revoked = revokeChatAdminStyleExample(approved);
+  const deletedDraft = deleteChatAdminStyleExample(originalDraft);
   const deleted = deleteChatAdminStyleExample(approved);
   assert.deepEqual(compileChatAdminStyleExamples({ ...scope, examples: [revoked] }), []);
+  assert.deepEqual(compileChatAdminStyleExamples({ ...scope, examples: [deletedDraft] }), []);
   assert.deepEqual(compileChatAdminStyleExamples({ ...scope, examples: [deleted] }), []);
   expectCode("invalid_style_example_status", () => compileChatAdminStyleExamples({
     ...scope,
