@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 
 export const CHAT_ADMIN_STYLE_EXAMPLE_REVIEW_DECLARATION = "non_explicit_role_style_confirmed";
 export const CHAT_ADMIN_STYLE_EXAMPLE_STATUSES = Object.freeze(["draft", "approved", "revoked", "deleted"]);
+export const CHAT_ADMIN_CONTEXT_SEGMENT_SELECTION_DECLARATION = "synthetic_non_explicit_context_selected";
+export const CHAT_ADMIN_CONTEXT_SEGMENT_SANITIZATION_DECLARATION = "synthetic_context_person_data_removed";
+export const CHAT_ADMIN_CONTEXT_SEGMENT_REVIEW_DECLARATION = "synthetic_non_explicit_context_approved";
+export const CHAT_ADMIN_CONTEXT_SEGMENT_STATUSES = CHAT_ADMIN_STYLE_EXAMPLE_STATUSES;
 
 const MAX_ID_LENGTH = 128;
 const MAX_EXAMPLE_LENGTH = 1_000;
@@ -37,6 +41,64 @@ const APPROVAL_INPUT_KEYS = Object.freeze([
   "reviewed_at",
   "reviewer_declaration",
 ]);
+const CONTEXT_SEGMENT_KEYS = Object.freeze([
+  "segment_id",
+  "workspace_id",
+  "character_id",
+  "revision",
+  "context_turns",
+  "selected_response_ordinals",
+  "provenance",
+  "status",
+  "selector_id",
+  "selected_at",
+  "selection_declaration",
+  "sanitizer_id",
+  "sanitized_at",
+  "sanitization_declaration",
+  "reviewer_id",
+  "reviewed_at",
+  "reviewer_declaration",
+  "preview_fingerprint",
+]);
+const CONTEXT_SEGMENT_DRAFT_INPUT_KEYS = Object.freeze([
+  "segment_id",
+  "workspace_id",
+  "character_id",
+  "revision",
+  "context_turns",
+  "selected_response_ordinals",
+  "provenance",
+]);
+const CONTEXT_SEGMENT_PREVIEW_KEYS = Object.freeze([
+  "segment_id",
+  "workspace_id",
+  "character_id",
+  "revision",
+  "context_turns",
+  "selected_response_ordinals",
+  "provenance",
+  "status",
+  "preview_fingerprint",
+]);
+const CONTEXT_SEGMENT_APPROVAL_INPUT_KEYS = Object.freeze([
+  "segment",
+  "preview",
+  "workspace_id",
+  "character_id",
+  "current_revision",
+  "selector_id",
+  "selected_at",
+  "selection_declaration",
+  "sanitizer_id",
+  "sanitized_at",
+  "sanitization_declaration",
+  "reviewer_id",
+  "reviewed_at",
+  "reviewer_declaration",
+]);
+const CONTEXT_TURN_KEYS = Object.freeze(["ordinal", "speaker", "text"]);
+const CONTEXT_PROVENANCE_KEYS = Object.freeze(["source_type", "source_reference"]);
 const FORBIDDEN_FIELD_NAMES = new Set([
   "fan",
   "fanid",
@@ -58,6 +120,15 @@ const FORBIDDEN_FIELD_NAMES = new Set([
   "paymentid",
   "customer",
   "customerid",
+  "account",
+  "accountid",
+  "accounts",
+  "secret",
+  "secrets",
+  "credential",
+  "credentials",
+  "token",
+  "accesstoken",
 ]);
 
 export class ChatAdminStyleExamplePolicyError extends Error {
@@ -120,6 +191,19 @@ function reviewedAt(value, now) {
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp) || timestamp > now) fail("invalid_reviewed_at");
   return new Date(timestamp).toISOString();
+}
+
+function eventAt(value, now, code) {
+  if (typeof value !== "string") fail(code);
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed) || parsed > now) fail(code);
+  return new Date(parsed).toISOString();
+}
+
+function assertContextReviewOrder(selectedAt, sanitizedAt, approvedAt) {
+  if (Date.parse(selectedAt) > Date.parse(sanitizedAt) || Date.parse(sanitizedAt) > Date.parse(approvedAt)) {
+    fail("invalid_context_review_order");
+  }
 }
 
 function previewPayload(example) {
@@ -271,3 +355,249 @@ export function compileChatAdminStyleExamples(value) {
   }
   return compiled;
 }
+
+function normalizedContextTurns(value) {
+  if (!Array.isArray(value) || value.length < 2 || value.length > 20) fail("invalid_context_turns");
+  const turns = value.map((raw, index) => {
+    const turn = record(raw, "invalid_context_turn");
+    assertExactKeys(turn, CONTEXT_TURN_KEYS, "invalid_context_turn_field");
+    if (turn.ordinal !== index + 1) fail("invalid_context_turn_order");
+    if (turn.speaker !== "counterpart" && turn.speaker !== "character") fail("invalid_context_turn_speaker");
+    return {
+      ordinal: turn.ordinal,
+      speaker: turn.speaker,
+      text: boundedText(turn.text, MAX_EXAMPLE_LENGTH, "invalid_context_turn_text"),
+    };
+  });
+  if (!turns.some(({ speaker }) => speaker === "counterpart") || !turns.some(({ speaker }) => speaker === "character")) {
+    fail("incomplete_context_segment");
+  }
+  return turns;
+}
+
+function normalizedSelectedResponseOrdinals(value, turns) {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 10) fail("invalid_selected_responses");
+  let previous = 0;
+  return value.map((item) => {
+    if (!Number.isSafeInteger(item) || item <= previous) fail("invalid_selected_response_order");
+    const turn = turns[item - 1];
+    if (!turn || turn.speaker !== "character") fail("selected_response_must_be_character_turn");
+    previous = item;
+    return item;
+  });
+}
+
+function normalizedContextProvenance(value) {
+  const provenance = record(value, "invalid_context_provenance");
+  assertExactKeys(provenance, CONTEXT_PROVENANCE_KEYS, "invalid_context_provenance_field");
+  if (provenance.source_type !== "synthetic") fail("synthetic_context_required");
+  return {
+    source_type: "synthetic",
+    source_reference: identifier(provenance.source_reference, "invalid_context_source_reference"),
+  };
+}
+
+function contextSegmentPreviewPayload(segment) {
+  return {
+    segment_id: segment.segment_id,
+    workspace_id: segment.workspace_id,
+    character_id: segment.character_id,
+    revision: segment.revision,
+    context_turns: segment.context_turns,
+    selected_response_ordinals: segment.selected_response_ordinals,
+    provenance: segment.provenance,
+    status: "draft",
+  };
+}
+
+function normalizedContextSegment(value) {
+  const input = record(value, "invalid_context_segment");
+  assertNoForbiddenFields(input);
+  assertExactKeys(input, CONTEXT_SEGMENT_KEYS, "invalid_context_segment_field");
+  const status = CHAT_ADMIN_CONTEXT_SEGMENT_STATUSES.includes(input.status) ? input.status : fail("invalid_context_segment_status");
+  const contextTurns = normalizedContextTurns(input.context_turns);
+  const result = {
+    segment_id: identifier(input.segment_id, "invalid_segment_id"),
+    workspace_id: identifier(input.workspace_id, "invalid_workspace_id"),
+    character_id: identifier(input.character_id, "invalid_character_id"),
+    revision: revision(input.revision, "invalid_context_segment_revision"),
+    context_turns: contextTurns,
+    selected_response_ordinals: normalizedSelectedResponseOrdinals(input.selected_response_ordinals, contextTurns),
+    provenance: normalizedContextProvenance(input.provenance),
+    status,
+    selector_id: input.selector_id,
+    selected_at: input.selected_at,
+    selection_declaration: input.selection_declaration,
+    sanitizer_id: input.sanitizer_id,
+    sanitized_at: input.sanitized_at,
+    sanitization_declaration: input.sanitization_declaration,
+    reviewer_id: input.reviewer_id,
+    reviewed_at: input.reviewed_at,
+    reviewer_declaration: input.reviewer_declaration,
+    preview_fingerprint: input.preview_fingerprint,
+  };
+  const reviewMetadata = [
+    result.selector_id,
+    result.selected_at,
+    result.selection_declaration,
+    result.sanitizer_id,
+    result.sanitized_at,
+    result.sanitization_declaration,
+    result.reviewer_id,
+    result.reviewed_at,
+    result.reviewer_declaration,
+    result.preview_fingerprint,
+  ];
+  if (status === "draft") {
+    if (reviewMetadata.some((item) => item !== null)) fail("draft_has_review_metadata");
+  } else if (status === "deleted" && reviewMetadata.every((item) => item === null)) {
+    // A never-approved draft may be deleted without inventing review metadata.
+  } else {
+    result.selector_id = identifier(result.selector_id, "invalid_selector_id");
+    result.selected_at = eventAt(result.selected_at, Date.now(), "invalid_selected_at");
+    result.sanitizer_id = identifier(result.sanitizer_id, "invalid_sanitizer_id");
+    result.sanitized_at = eventAt(result.sanitized_at, Date.now(), "invalid_sanitized_at");
+    result.reviewer_id = identifier(result.reviewer_id, "invalid_reviewer_id");
+    result.reviewed_at = eventAt(result.reviewed_at, Date.now(), "invalid_reviewed_at");
+    assertContextReviewOrder(result.selected_at, result.sanitized_at, result.reviewed_at);
+    if (result.selection_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_SELECTION_DECLARATION) fail("selection_declaration_required");
+    if (result.sanitization_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_SANITIZATION_DECLARATION) fail("sanitization_declaration_required");
+    if (result.reviewer_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_REVIEW_DECLARATION) fail("reviewer_declaration_required");
+    if (typeof result.preview_fingerprint !== "string" || !/^[a-f0-9]{64}$/u.test(result.preview_fingerprint)) fail("invalid_preview_fingerprint");
+  }
+  return result;
+}
+
+export function createChatAdminContextSegmentDraft(value) {
+  const input = record(value, "invalid_context_segment");
+  assertNoForbiddenFields(input);
+  assertExactKeys(input, CONTEXT_SEGMENT_DRAFT_INPUT_KEYS, "invalid_context_segment_field");
+  const contextTurns = normalizedContextTurns(input.context_turns);
+  return {
+    segment_id: identifier(input.segment_id, "invalid_segment_id"),
+    workspace_id: identifier(input.workspace_id, "invalid_workspace_id"),
+    character_id: identifier(input.character_id, "invalid_character_id"),
+    revision: revision(input.revision, "invalid_context_segment_revision"),
+    context_turns: contextTurns,
+    selected_response_ordinals: normalizedSelectedResponseOrdinals(input.selected_response_ordinals, contextTurns),
+    provenance: normalizedContextProvenance(input.provenance),
+    status: "draft",
+    selector_id: null,
+    selected_at: null,
+    selection_declaration: null,
+    sanitizer_id: null,
+    sanitized_at: null,
+    sanitization_declaration: null,
+    reviewer_id: null,
+    reviewed_at: null,
+    reviewer_declaration: null,
+    preview_fingerprint: null,
+  };
+}
+
+export function previewChatAdminContextSegment(value) {
+  const segment = normalizedContextSegment(value);
+  if (segment.status !== "draft") fail("preview_requires_draft");
+  const payload = contextSegmentPreviewPayload(segment);
+  return { ...payload, preview_fingerprint: fingerprint(payload) };
+}
+
+export function approveChatAdminContextSegment(value, now = Date.now()) {
+  const input = record(value, "invalid_context_segment_approval");
+  assertNoForbiddenFields(input);
+  assertExactKeys(input, CONTEXT_SEGMENT_APPROVAL_INPUT_KEYS, "invalid_context_segment_approval_field");
+  const segment = normalizedContextSegment(input.segment);
+  if (segment.status !== "draft") fail("approval_requires_draft");
+  const workspaceId = identifier(input.workspace_id, "invalid_workspace_id");
+  const characterId = identifier(input.character_id, "invalid_character_id");
+  const currentRevision = revision(input.current_revision, "invalid_current_revision");
+  if (segment.workspace_id !== workspaceId || segment.character_id !== characterId) fail("context_segment_scope_mismatch");
+  if (segment.revision !== currentRevision) fail("stale_context_segment_revision");
+  const expectedPreview = previewChatAdminContextSegment(segment);
+  const suppliedPreview = record(input.preview, "preview_required");
+  assertNoForbiddenFields(suppliedPreview);
+  assertExactKeys(suppliedPreview, CONTEXT_SEGMENT_PREVIEW_KEYS, "preview_mismatch");
+  if (CONTEXT_SEGMENT_PREVIEW_KEYS.some((key) => JSON.stringify(suppliedPreview[key]) !== JSON.stringify(expectedPreview[key]))) {
+    fail("preview_mismatch");
+  }
+  if (input.selection_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_SELECTION_DECLARATION) fail("selection_declaration_required");
+  if (input.sanitization_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_SANITIZATION_DECLARATION) fail("sanitization_declaration_required");
+  if (input.reviewer_declaration !== CHAT_ADMIN_CONTEXT_SEGMENT_REVIEW_DECLARATION) fail("reviewer_declaration_required");
+  const selectedAt = eventAt(input.selected_at, now, "invalid_selected_at");
+  const sanitizedAt = eventAt(input.sanitized_at, now, "invalid_sanitized_at");
+  const approvedAt = eventAt(input.reviewed_at, now, "invalid_reviewed_at");
+  assertContextReviewOrder(selectedAt, sanitizedAt, approvedAt);
+  return {
+    ...segment,
+    status: "approved",
+    selector_id: identifier(input.selector_id, "invalid_selector_id"),
+    selected_at: selectedAt,
+    selection_declaration: input.selection_declaration,
+    sanitizer_id: identifier(input.sanitizer_id, "invalid_sanitizer_id"),
+    sanitized_at: sanitizedAt,
+    sanitization_declaration: input.sanitization_declaration,
+    reviewer_id: identifier(input.reviewer_id, "invalid_reviewer_id"),
+    reviewed_at: approvedAt,
+    reviewer_declaration: input.reviewer_declaration,
+    preview_fingerprint: expectedPreview.preview_fingerprint,
+  };
+}
+
+export function correctChatAdminContextSegment(value, correction) {
+  const segment = normalizedContextSegment(value);
+  if (segment.status === "deleted") fail("deleted_context_segment");
+  const input = record(correction, "invalid_context_segment_correction");
+  assertNoForbiddenFields(input);
+  assertExactKeys(input, ["context_turns", "selected_response_ordinals", "provenance"], "invalid_context_segment_correction_field");
+  return createChatAdminContextSegmentDraft({
+    segment_id: segment.segment_id,
+    workspace_id: segment.workspace_id,
+    character_id: segment.character_id,
+    revision: segment.revision + 1,
+    context_turns: input.context_turns,
+    selected_response_ordinals: input.selected_response_ordinals,
+    provenance: input.provenance,
+  });
+}
+
+export function revokeChatAdminContextSegment(value) {
+  const segment = normalizedContextSegment(value);
+  if (segment.status !== "approved") fail("revocation_requires_approval");
+  return { ...segment, status: "revoked" };
+}
+
+export function deleteChatAdminContextSegment(value) {
+  const segment = normalizedContextSegment(value);
+  return { ...segment, status: "deleted" };
+}
+
+export function compileChatAdminContextSegments(value) {
+  const input = record(value, "invalid_context_segment_collection");
+  assertNoForbiddenFields(input);
+  assertExactKeys(input, ["workspace_id", "character_id", "current_revision", "segments"], "invalid_context_segment_collection_field");
+  const workspaceId = identifier(input.workspace_id, "invalid_workspace_id");
+  const characterId = identifier(input.character_id, "invalid_character_id");
+  const currentRevision = revision(input.current_revision, "invalid_current_revision");
+  if (!Array.isArray(input.segments)) fail("invalid_context_segments");
+  const compiled = [];
+  const ids = new Set();
+  for (const raw of input.segments) {
+    const segment = normalizedContextSegment(raw);
+    if (segment.workspace_id !== workspaceId || segment.character_id !== characterId) fail("context_segment_scope_mismatch");
+    if (segment.revision !== currentRevision) fail("stale_context_segment_revision");
+    if (ids.has(segment.segment_id)) fail("duplicate_context_segment");
+    ids.add(segment.segment_id);
+    if (segment.status !== "approved") continue;
+    const expectedFingerprint = fingerprint(contextSegmentPreviewPayload({ ...segment, status: "draft" }));
+    if (segment.preview_fingerprint !== expectedFingerprint) fail("preview_mismatch");
+    compiled.push({
+      segment_id: segment.segment_id,
+      revision: segment.revision,
+      context_turns: segment.context_turns,
+      selected_response_ordinals: segment.selected_response_ordinals,
+      provenance: segment.provenance,
+    });
+  }
+  return compiled;
+}
+
