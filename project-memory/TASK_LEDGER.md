@@ -714,3 +714,11 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Boundary: this is diagnostic evidence, not product, language-model, sales, safety or production acceptance. Actual naturalness, humor, verified product/availability integration and stable model behavior remain unproved; no runtime guard, external provider, live/customer data, sale, checkout, send, deploy or merge is authorized.
 - Publication: exact-head relevant CI and final countercheck remain required. Exactly one proposed follow-up remains `FM-CHATADMIN-ADULT-SAFETY-GUARD-01`, which is not started by this entry.
 
+
+
+## FM-CHATADMIN-STYLE-MEMORY-REQUIREMENTS-20261030-01 — bounded style/memory requirements
+- Date: 2026-10-30
+- Status: IMPLEMENTED_FOR_PR; Risk: R2; Draft PR: #1384.
+- Durable requirement: manual ChatAdmin suggestions may use only an explicitly approved non-explicit style profile scoped to one Workspace/Character; fan/conversation memory remains separately scoped to Workspace/Character/Fan and Conversation where applicable. Example selection, preview, correction, revocation and deletion require human control; no automatic history ingestion or model training is authorized.
+- Open requirement: possible use of real histories remains unapproved until Model authority/consent, counterpart legal basis, minimization, provider/processing location, storage/retention/deletion/backup effects and costs are independently resolved. Owner statements about Model consent and platform disclosure are not independently verified.
+- Boundary/next: no runtime, schema, provider, real data, deployment or erotic-generation capability is added. Exactly one proposed repository-only continuation is `FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01`; later runtime wiring remains dependent on the separate adult-safety guard and privacy/authorization evidence.
