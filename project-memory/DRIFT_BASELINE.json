@@ -4,8 +4,8 @@
   "captured": "2026-10-17",
   "last_source_of_truth_review": "2026-10-17 communication dimensions on maincb572 after merged1339: existing source-backed length/style/emoji semantics merge by dimension, literal residual quotes keep original provenance; same v1 fields/eight facts/4000 chars, boundaries first, interests yield; same global replay veto, commercial/quality/isolation/manual-send gates. Source-only, global release/target/FM-DEC-031 unchanged.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "eda62a8e0e7df6e735eed563561f3ae6ae25eeba",
-    "src/config/roadmap.ts": "08ffb0ff2d647db929e97b876f151a402b4b9c28",
+    "docs/SOURCE_OF_TRUTH.md": "119e794c8ad5ac9232b319ea3d96be72644dc6ce",
+    "src/config/roadmap.ts": "7179da112c26e357fb2d8f17e20aabf1b530c675",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",
