@@ -714,12 +714,21 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Boundary: this is diagnostic evidence, not product, language-model, sales, safety or production acceptance. Actual naturalness, humor, verified product/availability integration and stable model behavior remain unproved; no runtime guard, external provider, live/customer data, sale, checkout, send, deploy or merge is authorized.
 - Publication: exact-head relevant CI and final countercheck remain required. Exactly one proposed follow-up remains `FM-CHATADMIN-ADULT-SAFETY-GUARD-01`, which is not started by this entry.
 
+
+
+## FM-CHATADMIN-STYLE-MEMORY-REQUIREMENTS-20261030-01 — bounded style/memory requirements
+- Date: 2026-10-30
+- Status: IMPLEMENTED_FOR_PR; Risk: R2; Draft PR: #1384.
+- Durable requirement: manual ChatAdmin suggestions may use only an explicitly approved non-explicit style profile scoped to one Workspace/Character; fan/conversation memory remains separately scoped to Workspace/Character/Fan and Conversation where applicable. Example selection, preview, correction, revocation and deletion require human control; no automatic history ingestion or model training is authorized.
+- Open requirement: possible use of real histories remains unapproved until Model authority/consent, counterpart legal basis, minimization, provider/processing location, storage/retention/deletion/backup effects and costs are independently resolved. Owner statements about Model consent and platform disclosure are not independently verified.
+- Boundary/next: no runtime, schema, provider, real data, deployment or erotic-generation capability is added. Exactly one proposed repository-only continuation is `FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01`; later runtime wiring remains dependent on the separate adult-safety guard and privacy/authorization evidence.
+
 ## FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01 — pure style-example lifecycle contract
 - Date: 2026-10-30
-- Status: BLOCKED_AT_CONTROLLED_SOURCE_REBASELINE; Risk: R3 for the controlled `package.json` source binding (the local policy contract remains R2).
+- Status: IMPLEMENTED_FOR_R3_REVIEW; Risk: R3 for the controlled `package.json` source binding (the local policy contract remains R2).
 - Requirement source: Draft PR #1384 at exact reviewed head `eacc883e177b9809dddccf6455d0bbd1276ceeee`; its requirements document is not duplicated by this task.
 - Result: a repository-only, side-effect-free policy contract binds manually curated non-explicit style examples to exact Workspace, Character, revision, preview fingerprint, human reviewer, review time and declaration. Corrections create a new draft revision; revoked/deleted examples cannot compile; person-, conversation-, message-, memory- and purchase-scoped fields fail closed.
-- Evidence/blocker: exact-head run `41069520671`, job `124110251567`, executed and passed all eight lifecycle tests after direct `test:operations` registration, then failed closed with `capacity_checksum_invalid`. The controlled binding remains unchanged at `docs/operations/ai-capacity-staging-integration.json` → `sha256.package.json` = `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c`; the exact candidate `package.json` SHA-256 is `39c01cf1b102334cf1c46b57667cc823ddc4dbd45ec26912049bef64d0d00059`.
-- Resume condition: explicit Owner authorization for only that controlled hash rebaseline, followed by the required independent R3 exact-head countercheck. No verifier, workflow, SQL, other controlled hash or guard may change.
+- Authorization/evidence: Owner authorized at 2026-10-30 14:18 UTC only the `sha256.package.json` rebaseline from `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c` to the independently read-back candidate `39c01cf1b102334cf1c46b57667cc823ddc4dbd45ec26912049bef64d0d00059`; no other controlled artifact, verifier, workflow or SQL may change.
+- Verification gate: exact-head offline checks, full required CI and an independent R3 countercheck must pass before the separately authorized conditional merge; no bypass is allowed.
 - Boundary: no UI, route, prompt, schema, persistence, provider, real-chat import, training, runtime activation, deployment, merge or cost is included. The separate adult-safety guard and privacy/authorization evidence remain prerequisites before any later runtime wiring.
 - Open follow-up: `FM-CHATADMIN-CONTEXTUAL-STYLE-SEGMENTS-01` — Status `OPEN_AGENDA / NOT_STARTED`. After PR #1384 requirements and PR #1385 lifecycle dependencies are resolved, define non-explicit, reviewed, sanitized and explicitly approved conversation segments with context as style examples; acceptance requires traceable provenance, selection, approval, revocation/deletion and Character isolation. Data rights, service/provider, storage/deletion and costs must be resolved before any real import or training; bulk chat upload, real training and runtime wiring remain unauthorized.
