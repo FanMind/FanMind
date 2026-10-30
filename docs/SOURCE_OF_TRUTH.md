@@ -547,6 +547,15 @@ Push-Zustellung. Die dokumentierte Google-Play-Testveröffentlichung bedeutet
 keine öffentliche Store-Freigabe. Die Roadmap-Korrektur aktualisiert keine
 Provider-Abnahme und aktiviert keine Funktion; die Gesamt-Gates bleiben offen.
 
+Phasen 9 und 10 sind ausschließlich später geplante Roadmap-Richtungen; weder
+"In Arbeit", "In Kürze" noch eine unmittelbare Verfügbarkeit sind dafür belegt.
+Issue #1259 ordnet eine spätere read-only KI-Analyse und Dashboard-Erklärung ein.
+Sie setzt kanonische Analytics-Daten, Tenant-Isolation und AuthZ,
+Datenminimierung, Auditierbarkeit, Capacity-/Kostenkontrolle sowie separate
+Providerfreigaben voraus und aktiviert aktuell keine Funktion. Ein
+TagFilter-Snapshot ist nicht ausgeliefert. ChatAdmin-Fortschritt und
+-Abnahmen bleiben aus der öffentlichen FanMind-Roadmap ausgeschlossen.
+
 Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme
 der erforderlichen Phase-3- und Phase-7-Kanäle. Phase 4 ist deshalb keine
 Verkaufsfreigabe mehr, sondern ausschließlich die abgeschlossene technische
@@ -773,6 +782,13 @@ zwingende externe Freigabe noch fehlt.
   sendet je Nachricht eine Client-UUID. Es stellt keinen Zweiweg-Chat dar;
   Besucher-KI, automatische Antworten und Outbound-Versand bleiben
   unverdrahtet.
+- Die vorhandene Source für öffentlichen Website-Support und authentifizierte
+  In-App-Hilfe wird gemäß Issue #1350 und
+  `docs/operations/WEBSITE_SUPPORT_ASSISTANT_PLAN.md` weiterverwendet, nicht
+  neu gebaut. Offen bleiben die Web-/Staging-Zielabnahme, kontrollierte
+  Schema-Installation, Feature-Flag-Freigaben sowie Provider-, Rechts- und
+  Datenschutzabnahme. Diese Support-Gates sind von Mobile-Geräte- und
+  Store-Abnahmen getrennt; kein Mobile- oder Store-Gate blockiert Websupport.
 - Meta-Content-Staging: Die zwei Migrationen
   `20260803120000_meta_content_intelligence_foundation.sql` und
   `20260803210000_preserve_incremental_conversation_history.sql` sind
@@ -1573,3 +1589,4 @@ oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jed
 möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+
