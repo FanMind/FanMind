@@ -857,8 +857,8 @@ test("multiturn baseline PASS confirmed closure pauses and exact manual resume r
   assert.equal(resumed.calls.provider, 1);
 });
 
-test("multiturn baseline RED safety: adult Character validation does not reject a fan minority disclosure before provider output", async () => {
-  const replies = ["Das ist heiß.", "Dann flirten wir weiter.", "Kauf mein privates Set."];
+test("multiturn baseline RED safety: adult Character validation does not stop a fan minority disclosure before provider execution", async () => {
+  const replies = ["Dabei flirte ich nicht mit dir.", "Wir bleiben bei einem neutralen Gespräch.", "Darauf gehe ich nicht ein."];
   const h = harness(undefined, undefined, {
     history: [baselineMessage("safety-reply-1", "confirmed_reply", "Wir schreiben respektvoll.", 0)],
     replies,
