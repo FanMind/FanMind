@@ -3,6 +3,9 @@
 Task: `FM-CHATADMIN-MULTITURN-QUALITY-BASELINE-01`  
 Baseline: FanMind main `6dd16f934c1409c0d396b789513e1c676cc6b536`  
 Scope: repository-only diagnostics using the existing real reply route harness and a local provider stub.
+Flirt/sensuality criteria apply only to the manual Admin Chat surface and only to non-explicit,
+adult, consensual written communication with clear refusal and age boundaries. They do not transfer to
+other surfaces, authorize erotic generation examples or introduce arousal-oriented mechanics.
 
 ## Evidence boundary
 
@@ -54,7 +57,7 @@ a documented product-source gap rather than an implemented capability.
 | Flirt | RED | Character flirt rule and confirmed history are bound | Relationship-for-purchase, affection-withdrawal and dependency language are not deterministically rejected |
 | Explicit refusal | PASS | Current refusal removes offer context and price while preserving dialogue | Empathy and conversational warmth are not evaluated; no sale or payment is executed |
 | Pause / resume | PASS | Confirmed closure blocks before provider; exact manual resume reopens the same bound conversation | Quality after resume is not evaluated |
-| Adult safety | RED | Adult Character age remains present | A fan minority disclosure has no deterministic pre-provider stop or output rejection |
+| Adult safety | RED | Adult Character age remains present; neutral refusal stubs are used | A fan minority disclosure has no deterministic pre-provider stop |
 
 All eight cases use synthetic identities and messages. RED cases are characterization tests: the Node
 test process passes only when the documented gap remains reproducible. They must not be relabeled as
