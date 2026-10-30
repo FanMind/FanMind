@@ -40,6 +40,12 @@ intrusive or constantly sales-led. Interest and anticipation may come from fitti
 never invented exclusivity, withdrawal of affection, purchase as a condition of personal closeness,
 dependency mechanics or simulated human feelings.
 
+The owner states that participating Models want the writing to stay in their role and that the staged
+entertainment is announced in the description; this baseline did not independently verify that description,
+the affected Models' approvals or the disclosure experience. The Admin Chat target is therefore personal,
+charming, playful and non-explicit within a recognizable role, with no declarations of love, real
+relationship or exclusivity promises, or purchase pressure.
+
 Where the conversation shows genuine interest or need, a useful draft may introduce a suitable product
 that the specific Creator actually offers, explain its relevant benefit and propose a proportionate next
 purchase step. Product, price and availability must come only from verified product sources. A draft must
