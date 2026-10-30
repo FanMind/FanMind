@@ -200,14 +200,14 @@ test("real reply route includes bounded teaching examples without turning them i
 });
 
 test("adult safety policy blocks only direct DE/EN minor self-disclosure", () => {
-  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin erst 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am only 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old."];
+  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin erst 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am only 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old.", "Ich bin 17 Jahre.", "Hallo, ich bin erst 16 Jahre."];
   for (const message of blocked) assert.throws(() => chatPolicy.assertChatAdminAdultSafety(message), error => error instanceof chatPolicy.ChatAdminPolicyError && error.code === "minor_self_disclosure", message);
-  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late."];
+  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late.", "I'm a minor shareholder.", "I'm a minor character in the play.", "Ich bin unter 18 Minuten geblieben.", "I'm under 18 minutes late.", "Ich bin noch nicht 18 Minuten hier."];
   for (const message of allowed) assert.doesNotThrow(() => chatPolicy.assertChatAdminAdultSafety(message), message);
 });
 
 test("actual ChatAdmin route blocks direct minor self-disclosure before context, rate limit, provider, usage and persistence", async () => {
-  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old."];
+  const blocked = ["Ich bin 17.", "Ich bin minderjährig.", "Ich bin 16 Jahre alt.", "Ich bin unter 18.", "I'm 17.", "I'm a minor.", "I am 15 years old.", "I'm under 18.", "Hallo, ich bin 17 Jahre alt.", "Hi, I'm 17 years old.", "Ich bin 17 Jahre.", "Hallo, ich bin erst 16 Jahre."];
   for (const [index, message] of blocked.entries()) {
     const h = harness();
     const response = await h.route(h.request(1, "https://fanmind.invalid", message, `66666666-6666-4666-8666-${String(index + 1).padStart(12, "0")}`));
@@ -225,7 +225,7 @@ test("actual ChatAdmin route blocks direct minor self-disclosure before context,
 });
 
 test("actual ChatAdmin route permits quotes, hypotheticals, unknown age and adult self-disclosure to reach the local provider stub", async () => {
-  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late."];
+  const allowed = ["Er sagte: „Ich bin 17.“", "My friend said “I'm 17”", "Wenn ich 17 wäre, würde ich reisen.", "If I were 17, I would travel.", "Ich nenne mein Alter nicht.", "I won't say my age.", "Ich bin 18.", "I'm 21.", "Ich bin 17 Jahre verheiratet.", "I'm 17 minutes late.", "I'm a minor shareholder.", "I'm a minor character in the play.", "Ich bin unter 18 Minuten geblieben.", "I'm under 18 minutes late.", "Ich bin noch nicht 18 Minuten hier."];
   for (const [index, message] of allowed.entries()) {
     const h = harness();
     const response = await h.route(h.request(1, "https://fanmind.invalid", message, `66666666-6666-4666-8666-${String(index + 101).padStart(12, "0")}`));
