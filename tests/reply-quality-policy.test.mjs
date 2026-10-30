@@ -82,3 +82,25 @@ test("known-fact question diagnostics add no provider attempt to the shared qual
  const h=gateHarness([replies]);assert.equal(await h.run(),replies);
  assert.equal(h.calls.length,1);assert.equal(h.events.length,1);assert.equal(h.events[0].error,null);
 });
+
+test("validated positive and negative interests reject only the finite DE/EN broad-question set",async()=>{
+ const replies=["Magst du Musik?","Was machst du gerne?","Erzähl mir etwas von dir."];
+ for(const polarity of ["positive","negative"]){
+  assert.ok(assessReplyQuality(replies,[],[{topic:"music",polarity}]).includes("known_interest_question"));
+  const h=gateHarness([replies, fresh],{knownInterests:[{topic:"music",polarity}]});
+  await assert.rejects(h.run,ReplyQualityError);assert.equal(h.calls.length,1);assert.equal(h.events.length,1);
+ }
+ assert.ok(assessReplyQuality(["Do you like music?","What do you enjoy?","Tell me about yourself."],[],[{topic:"music",polarity:"positive"}]).includes("known_interest_question"));
+});
+
+test("known-interest guard preserves detail, reconfirmation, quotations, hypotheticals and unknown topics",()=>{
+ const known=[{topic:"music",polarity:"positive"}];
+ for(const replies of [
+  ["Welche Musik hörst du gerne?","Welche Künstler magst du?","Hast du ein Lieblingslied?"],
+  ["Magst du Musik immer noch?","Hat sich dein Musikgeschmack geändert?","Soll ich Musik weiter als Interesse behandeln?"],
+  ['Du hast gefragt: "Magst du Musik?"',"Wenn ich fragen würde, ob du Musik magst, wäre das zu direkt?","Hypothetisch: Magst du Musik?"],
+  ["Magst du Filme?","Magst du Bücher?","Magst du Kunst?"],
+ ])assert.ok(!assessReplyQuality(replies,[],known).includes("known_interest_question"));
+ assert.ok(!assessReplyQuality(["Magst du Musik?","Was machst du gerne?","Erzähl mir etwas von dir."]).includes("known_interest_question"),"calls without facts stay unchanged");
+});
+

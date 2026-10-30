@@ -115,7 +115,7 @@ function harness(change, abortController, options = {}) {
        const changed=JSON.stringify(next)!==JSON.stringify(currentFacts);
        currentFacts=next;calls.currentFactWrites.push({args,facts:currentFacts,changed});return changed;
       },
-      isChatAdminFanRuntimeEnabled: () => true,
+      isChatAdminFanRuntimeEnabled: () => options.fanMode !== false,
       requireChatAdminFanRuntime: () => undefined,
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
@@ -727,17 +727,16 @@ test("diagnostic: default-off legacy knowledge still cannot reject a redundant b
  assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
 });
 
-for(const [quote,polarity] of [["Ich liebe Musik.","positive"],["Ich mag Musik nicht mehr.","negative"]])test(`diagnostic: current ${polarity} fact is accurate while the context-free gate accepts a broad music question`,async()=>{
- const question="Magst du Musik?";
+for(const [quote,polarity,question] of [
+ ["Ich liebe Musik.","positive","Magst du Musik?"],
+ ["Ich mag Musik nicht mehr.","negative","Do you like music?"],
+])test(`current ${polarity} fact terminally rejects a redundant broad music question`,async()=>{
  const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts(quote),notes:polarity==="negative"?positiveMusicNotes():"Manuell",history:[],replies:[question,"Was machst du gerne?","Erzähl mir etwas von dir."]});
  const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
- assert.equal(response.status,200);const body=await response.json();assert.equal(body.replies[0],question);
- const context=JSON.parse(h.calls.providerBody.input[1].content);
- const music=context.fan.learned_preferences.filter(fact=>fact.topic==="music");
- assert.equal(music.length,1);assert.equal(music[0].quote,quote);assert.equal(music[0].polarity,polarity);
- if(polarity==="negative")assert.ok(!context.fan.learned_preferences.some(fact=>fact.quote==="Ich mag Musik."));
- assert.deepEqual(context.conversation.recent_messages,[]);
- assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+ assert.equal(response.status,502);assert.equal((await response.json()).error,"reply_quality_rejected");
+ assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.usageEvents[0].status,"error");
+ assert.equal(h.calls.persistedHistoryIds,null);assert.equal(h.calls.persistedGenerations.length,0);
+ assert.equal(h.calls.currentFactWrites.length,0);assert.equal(h.calls.memoryWrites.length,0);
 });
 
 for(const notes of ["Ich mag Musik.","Vielleicht mag der Fan Musik.","Unbestätigt: Fan kauft bestimmt morgen."])test(`manual or uncertain notes stay outside confirmed-interest authority (${notes})`,async()=>{
@@ -754,6 +753,45 @@ for(const question of ["Welche Musik hörst du gerne?","Welche Musikrichtung mag
  const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],replies:[question,"Welche Künstler hörst du am liebsten?","Hast du gerade ein Lieblingslied?"]});
  const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
  assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+});
+
+test("explicit reconfirmation, quotations, hypotheticals and unknown topics remain eligible",async()=>{
+ for(const replies of [
+  ["Magst du Musik immer noch?","Hat sich dein Musikgeschmack geändert?","Soll ich Musik weiter als Interesse behandeln?"],
+  ['Du hast gefragt: "Magst du Musik?"',"Wenn ich fragen würde, ob du Musik magst, wäre das zu direkt?","Hypothetisch: Magst du Musik?"],
+  ["Magst du Filme?","Magst du Bücher?","Magst du Kunst?"],
+ ]){
+  const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],replies});
+  const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
+  assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+  assert.equal(h.calls.persistedGenerations.length,1);assert.equal(h.calls.memoryWrites.length,0);
+ }
+});
+
+test("flag-off and Character-only paths do not acquire a facts guard",async()=>{
+ for(const options of [
+  {currentFactsEnabled:false,currentFacts:boundMusicCurrentFacts("Ich liebe Musik.")},
+  {fanMode:false,currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik.")},
+ ]){
+  const h=harness(undefined,undefined,{...options,replies:["Magst du Musik?","Was machst du gerne?","Erzähl mir etwas von dir."]});
+  const response=await h.route(h.request());
+  assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.memoryWrites.length,0);
+ }
+});
+
+test("cached generation replay applies the guard without provider, usage, persistence or memory",async()=>{
+ const incoming="Was machst du am Wochenende?";
+ const previous=[
+  {direction:"fan_inbound",content:incoming},
+  {direction:"suggested_reply",content:"Magst du Musik?"},
+  {direction:"suggested_reply",content:"Was machst du gerne?"},
+  {direction:"suggested_reply",content:"Erzähl mir etwas von dir."},
+ ];
+ const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],previous});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ assert.equal(response.status,502);assert.equal((await response.json()).error,"reply_quality_rejected");
+ assert.equal(h.calls.provider,0);assert.equal(h.calls.usage,0);assert.equal(h.calls.persistedHistoryIds,null);
+ assert.equal(h.calls.persistedGenerations.length,0);assert.equal(h.calls.currentFactWrites.length,0);assert.equal(h.calls.memoryWrites.length,0);
 });
 
 
@@ -822,7 +860,7 @@ test("multiturn baseline PASS wrong price: four sequential turns retain only the
   assert.equal(corrected.context.conversation.recent_messages.length, 2);
 });
 
-test("multiturn baseline RED memory correction: six sequential turns keep the correction but permit a redundant question", async () => {
+test("multiturn baseline PASS memory correction rejects the redundant known-interest question", async () => {
   const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, currentFactsEnabled: true, notes: positiveMusicNotes(), replySets: [
     ["Musik ist dir also wichtig.", "Welche Musik hörst du gern?", "Das merke ich mir."],
     ["Verstanden, Musik passt für dich nicht mehr.", "Danke für die Korrektur.", "Dann lassen wir Musik außen vor."],
@@ -830,12 +868,10 @@ test("multiturn baseline RED memory correction: six sequential turns keep the co
   ] });
   await runBaselineTurn(h, 131, "Ich liebe Musik.");
   await runBaselineTurn(h, 132, "Ich mag Musik nicht mehr.");
-  const recalled = await runBaselineTurn(h, 133, "Was weißt du noch über mich?", { confirm: false });
-  assert.equal(recalled.body.replies[0], "Magst du Musik?");
-  const current = recalled.context.fan.learned_preferences.filter(fact => fact.topic === "music");
-  assert.equal(current.length, 1);
-  assert.equal(current[0].polarity, "negative");
-  assert.ok(!current.some(fact => fact.quote === "Ich liebe Musik."));
+  const recalled = await runBaselineTurn(h, 133, "Was weißt du noch über mich?", { confirm: false, status: 502 });
+  assert.equal(recalled.body.error, "reply_quality_rejected");
+  assert.equal(h.calls.provider, 3);assert.equal(h.calls.usage, 3);
+  assert.equal(h.calls.persistedGenerations.length, 2);assert.equal(h.calls.memoryWrites.length, 0);
   assert.equal(h.calls.currentFactWrites.filter(write => write.changed).length, 2);
 });
 

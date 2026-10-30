@@ -21,6 +21,18 @@ export class ReplyQualityError extends Error {
   constructor() { super("reply_quality_rejected"); this.code = "reply_quality_rejected"; }
 }
 const normalize = value => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+const exactQuestion = value => value.normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
+const knownInterestQuestions = new Map();
+for (const [topic, de, en] of [
+  ["music", "Musik", "music"], ["cats", "Katzen", "cats"], ["dogs", "Hunde", "dogs"],
+  ["travel", "Reisen", "travel"], ["sports", "Sport", "sports"], ["photos", "Fotos", "photos"],
+  ["videos", "Videos", "videos"], ["cooking", "Kochen", "cooking"],
+]) {
+  for (const question of [
+    `Magst du ${de}?`, `Liebst du ${de}?`, `Interessierst du dich für ${de}?`,
+    `Do you like ${en}?`, `Do you love ${en}?`, `Are you interested in ${en}?`,
+  ]) knownInterestQuestions.set(exactQuestion(question), topic);
+}
 const stockOpening = value => normalize(value).match(/^(?:ich verstehe|ich kann verstehen|i understand|danke für deine nachricht|thank you for your message|thank you for reaching out|du bist direkt)\b/u)?.[0];
 const substantial = value => value.length >= 80 && value.split(" ").length >= 12;
 function nearCopy(left, right) {
@@ -33,7 +45,7 @@ function nearCopy(left, right) {
   const common = [...a].filter(word => b.has(word)).length;
   return common / (a.size + b.size - common) >= 0.90;
 }
-export function assessReplyQuality(replies, recentReplies = []) {
+export function assessReplyQuality(replies, recentReplies = [], knownInterests = []) {
   if (!Array.isArray(replies) || replies.length !== 3 || replies.some(value => typeof value !== "string" || !value.trim() || value.length > 4_000)) return ["invalid_replies"];
   const normalized = replies.map(normalize);
   const history = recentReplies.filter(value => typeof value === "string").slice(-6).map(value => normalize(value.slice(0, 4_000)));
@@ -46,6 +58,10 @@ export function assessReplyQuality(replies, recentReplies = []) {
     const opening = stockOpening(replies[index]);
     if (opening && history.filter(previous => stockOpening(previous) === opening).length >= 2) issues.add("repeated_opening");
   }
+  const currentTopics = new Set(Array.isArray(knownInterests) ? knownInterests
+    .filter(fact => fact && (fact.polarity === "positive" || fact.polarity === "negative"))
+    .map(fact => fact.topic) : []);
+  if (replies.some(reply => currentTopics.has(knownInterestQuestions.get(exactQuestion(reply))))) issues.add("known_interest_question");
   return [...issues];
 }
 
@@ -65,21 +81,21 @@ export function fitRecentDialogueContext(profileContext, lines, maximum) {
 
 // One optional rewrite only; no retry on provider/validation/transport failure.
 // Caller supplies one absolute timeout/abort signal shared by both attempts.
-export async function runReplyQualityGate({ generate, readReplies, onAttempt, recentReplies = [], inputChars, inputLimit }) {
+export async function runReplyQualityGate({ generate, readReplies, onAttempt, recentReplies = [], knownInterests = [], inputChars, inputLimit }) {
   let feedback = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     let result, replies, issues;
     try {
       result = await generate(feedback);
       replies = readReplies(result);
-      issues = assessReplyQuality(replies, recentReplies);
+      issues = assessReplyQuality(replies, recentReplies, knownInterests);
     } catch (error) {
       await onAttempt({ result, error, feedback });
       throw error;
     }
     await onAttempt({ result, error: issues.length ? new ReplyQualityError() : null, feedback });
     if (!issues.length) return result;
-    if (attempt === 1 || issues.includes("invalid_replies")) throw new ReplyQualityError();
+    if (attempt === 1 || issues.includes("invalid_replies") || issues.includes("known_interest_question")) throw new ReplyQualityError();
     feedback = JSON.stringify({ quality_revision: { issues, previous_drafts: replies } });
     if (inputChars + feedback.length > inputLimit) throw new ReplyQualityError();
   }
