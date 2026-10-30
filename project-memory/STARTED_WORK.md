@@ -1125,7 +1125,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
 - Date: 2026-10-11
-- Status: IN_PROGRESS_STAGING_COMPLETION
+- Status: PARTIAL
 - Risk: R3
 - Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
 - Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
@@ -1145,6 +1145,17 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Harness correction: exact Playwright label text included SELECT options, so the scoped named customer-tier select replaces the impossible exact label. Wait for the correct Fan GET before editing, scope menu/form and bind PATCH to its Fan; add fixed menu/editor/fields/submit/response diagnostic stages. Independent Guardian source PASS. No product or database change; exact-head CI and a fresh separately bound Staging run remain required.
 - Follow-up 2026-10-13 14:23 UTC: PR #1310 passed all14 exact-head checks and Guardian PASS, merged as `efaa80e93bfd9597d052db756f5a4b96acb3f72e`, deployed successfully by `38411876441`, then independently returned HTTP200/staging/exact release. Fresh run `38412192655` passed probe/prepare and customer-tier menu/editor/field selection, then failed `customer_tier_submit/network=write`: the browser allowlist omitted the required same-app Fan PATCH. Both failed runs and uncertain receipts remain immutable. Receipt-bound observations at14:22:29 and14:23:32UTC show all data/usage/session/active-request counts zero; full tier contract is VERIFIED.
 - Narrow network correction: allow only exact same-app `PATCH /api/chatadmin/fans` in acceptance, retain probe/other-method/other-path/other-origin/direct-Supabase/teardown write denials. Actual installed-boundary tests pass (23), including positive transport and negative zero-transport assertions; an isolated probe-mode bypass mutation makes its negative assertion fail as required. Independent source Guardian PASS; exact-head CI and new reviewed-release Staging acceptance remain pending.
+
+- Reconciliation 2026-10-30: the final recorded source correction merged through PR #1311 (`54dc73a50fefdf54f2dbccd1ec5059af72ddc926` -> `1c991782526cbfba973a9e601e1f90cb22c80866`). Source work is no longer running and the linked lock is `PAUSED`. The protected four-offer Staging runtime/product acceptance remains `BLOCKED`/`PAUSED`; no historical failed or uncertain run is promoted to PASS or acceptance, and no Builder slot remains reserved.
+
+## FM-CHATADMIN-LIVE-REPAIR-20261014 — source merged; product acceptance paused
+- Date: 2026-10-14; reconciled 2026-10-30
+- Status: PARTIAL
+- Risk: R3
+- Work lock: LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014 (`PAUSED`)
+- Source completion: PR #1322 head `779b36dead7554cdb1c8e542314654c95748fb20` merged as `b745fba58ab731bfe0111a4e637825d6a5441d2e` on 2026-10-14. No source writer remains.
+- Remaining product boundary: actual price save/reload and fresh multi-turn AI/memory acceptance remain `BLOCKED`/`PAUSED` pending a separately authorized, exact-current-main task with required runtime evidence. The source merge and prior schema observation do not prove product acceptance.
+- Coordination: do not reserve a Builder slot, reopen source repair, dispatch a workflow, deploy or perform a runtime write from this record.
 
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001

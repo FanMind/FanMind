@@ -1116,7 +1116,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
 - Task: FM-ADMINCHAT-STAGING-HARNESS-20261011-01
-- Status: ACTIVE_STAGING_COMPLETION
+- Status: PAUSED
 - Risk: R3 repository-only preparation for later controlled Staging acceptance.
 - Holder: FanMind Builder, direct Owner/Secretary assignment 2026-10-11.
 - Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`.
@@ -1133,6 +1133,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Latest continuation 2026-10-13 13:54 UTC: fresh Owner instruction explicitly authorizes full Adminchat testing. Current baseline/deployed release `0ed90fb28e9650e160897cceb63f070daf4a1baa`; existing writer Codex retains this single lock. Failed run `38408918183` is preserved; two receipt-bound zero-residue/no-active-request observations reconcile the present target before a fresh run. Correct only the customer-tier browser selector, bound Fan-load synchronization and fixed diagnostic stages; normal review/green-CI merge and exact Staging deployment precede any retry. No Production scope.
 - Current serialized baseline 2026-10-13 14:23 UTC: `efaa80e93bfd9597d052db756f5a4b96acb3f72e`, deployed and tested by failed run `38412192655`; zero-residue/no-active-request reconciliation and full tier VERIFIED are recorded. Codex remains the sole writer. Correct the exact acceptance-only Fan PATCH omission with transport-level positive/negative tests; no broader network grant, product/DB change, Production action or old-receipt rewrite. Existing Owner full-test authorization applies only after normal independent source review, exact-head CI and exact Staging deployment.
 - 2026-10-13 15:32 UTC incident continuation: exact deployed run `38419536176` / attempt 1 on `1c991782526cbfba973a9e601e1f90cb22c80866` passed probe/prepare and reached `invented_price`, then returned HTTP400 / safe `reply_price_not_permitted` because provider text echoed the untrusted Fan-supplied `999 EUR` alongside the Character-bound `25 EUR`; request validation, binding and transport were not causal. Sanitized artifact `11826246359` (SHA-256 `4a3638b0c2b98e038f98e046d0e47d7885ea18afa9975f046cd3c4f05cf16abe`) is preserved unchanged with `inFlightUncertain=true` as `project-memory/receipts/chat-admin-manual-flow-38419536176-1.json`. PR #1312 withholds inbound numeric prices only from provider context, retains raw persistence/idempotency input and the fail-closed output guard; independent source countercheck PASS, exact-head CI pending. No residue absence, cleanup, deploy or acceptance is claimed; next protected step remains exact-receipt read-only absence proof and only then, if residue is uniquely owned, the prescribed cleanup path.
+
+- Reconciliation 2026-10-30: the last source correction, PR #1311 head `54dc73a50fefdf54f2dbccd1ec5059af72ddc926`, merged as `1c991782526cbfba973a9e601e1f90cb22c80866` on 2026-10-13. No source writer remains under this lock.
+- Remaining boundary: the protected four-offer Staging acceptance was not completed and remains `BLOCKED`/`PAUSED`; historical failed or uncertain runs do not prove runtime or product acceptance. A future run requires a separately authorized, exact-current-main task with fresh deployment, target, recovery and absence evidence. This paused lock reserves no Builder slot.
 
 ## LOCK-FM-AI-CAPACITY-BILLING-V2-20260930
 - Task: FM-AI-001
@@ -1270,7 +1273,7 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 
 ## LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014
 - Task: FM-CHATADMIN-LIVE-REPAIR-20261014
-- Status: ACTIVE_SOURCE_REPAIR
+- Status: PAUSED
 - Holder: Codex, direct Owner voice request.
 - Risk: R3 source; affected FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001 and FM-IGATE-CHATADMIN-STORAGE-001.
 - Baseline: d166c04d78e43b9e5050e31ce2e9e9c3b2276094; draft PR #1322.
@@ -1283,6 +1286,9 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: reviewed source revert; preserve Fan notes and Character offers.
 
 - Independent Guardian: source PASS on 7c57c4b86a5040444da649ec730c46a9c4312a7e / tree 0894e8efd322813fef8ea32be46703b9840bf570; independently reran all 63 focused tests. No blocking product-code findings; actual model outputs and exact-head CI remain required.
+
+- Reconciliation 2026-10-30: PR #1322 head `779b36dead7554cdb1c8e542314654c95748fb20` merged as `b745fba58ab731bfe0111a4e637825d6a5441d2e` on 2026-10-14. No source writer remains under this lock.
+- Remaining boundary: actual price save/reload and fresh multi-turn AI/memory product acceptance remain `BLOCKED`/`PAUSED` pending a separately authorized, exact-current-main task and its required runtime evidence. The merge and prior schema observation do not prove those outcomes. This paused lock reserves no Builder slot.
 
 ## LOCK-FM-CHATADMIN-DIALOGUE-QUALITY-20261015
 - Task: FM-CHATADMIN-DIALOGUE-QUALITY-20261015
