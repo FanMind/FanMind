@@ -71,6 +71,11 @@ test("English landing uses the complete translation wrapper", async () => {
     'Verkaufsübergabe: "Sales handoff"',
     '"Nach Abnahme der Kanäle in Phase 3 + 7":',
     '"After acceptance of the channels in Phases 3 + 7"',
+    '"Später geplant": "Planned for later"',
+    '"Read-only KI-Analyse und Dashboard-Erklärungen":',
+    '"Read-only AI analysis and dashboard explanations"',
+    '"Später · abhängig von kanonischen Analytics-Daten, Tenant/AuthZ, Datenminimierung, Audit, Capacity/Kosten und Providerfreigaben":',
+    '"Later · dependent on canonical analytics data, tenant isolation and authorization, data minimization, auditability, capacity and cost controls, and provider approvals"',
   ]) {
     assert.ok(
       supplement.includes(roadmapTranslation),

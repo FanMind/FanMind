@@ -198,6 +198,11 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   Listenlogik: "List logic",
   "Filter & Tags": "Filters & tags",
   "Analytics & Reichweitenerkennung": "Analytics & reach detection",
+  "Später geplant": "Planned for later",
+  "Read-only KI-Analyse und Dashboard-Erklärungen":
+    "Read-only AI analysis and dashboard explanations",
+  "Später · abhängig von kanonischen Analytics-Daten, Tenant/AuthZ, Datenminimierung, Audit, Capacity/Kosten und Providerfreigaben":
+    "Later · dependent on canonical analytics data, tenant isolation and authorization, data minimization, auditability, capacity and cost controls, and provider approvals",
   "Performance-Signale": "Performance signals",
   "Fan-/Kanal-Reichweite erkennen": "Detect fan/channel reach",
   Ehrlich: "Transparent",

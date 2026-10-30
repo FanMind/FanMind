@@ -180,6 +180,8 @@ test("channel phases stay unique and selected handoff development retains extern
   const phase3 = roadmap.split('phase: "Phase 3"')[1]?.split('phase: "Phase 4"')[0] ?? "";
   const phase7 = roadmap.split('phase: "Phase 7"')[1]?.split('phase: "Phase 8"')[0] ?? "";
   const phase8 = roadmap.split('phase: "Phase 8"')[1]?.split('phase: "Phase 9"')[0] ?? "";
+  const phase9 = roadmap.split('phase: "Phase 9"')[1]?.split('phase: "Phase 10"')[0] ?? "";
+  const phase10 = roadmap.split('phase: "Phase 10"')[1]?.split('phase: "Phase 11"')[0] ?? "";
   const phase15 = roadmap.split('phase: "Phase 15"')[1] ?? "";
 
   assert.match(phase3, /Facebook[\s\S]*Instagram[\s\S]*WhatsApp/u);
@@ -199,7 +201,26 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.equal((phase8.match(/state: "progress"/gu) ?? []).length, 1);
   assert.match(phase8, /KI-Antworten und Übergabe an den Nutzer[\s\S]{0,160}Antwortentwürfe und manuelle Übergabe in Arbeit/u);
   assert.doesNotMatch(phase8, /Facebook|Instagram|WhatsApp|TikTok|X \/ Twitter|Discord|OnlyFans/u);
+  for (const laterPhase of [phase9, phase10]) {
+    assert.match(laterPhase, /status: "Später geplant"[\s\S]*availability: "later"/u);
+    assert.doesNotMatch(laterPhase, /status: "In Arbeit"|status: "In Kürze"|status: "Coming Soon"|availability: "upcoming"/u);
+  }
+  assert.match(
+    phase10,
+    /Read-only KI-Analyse und Dashboard-Erklärungen[\s\S]*state: "later"[\s\S]*kanonischen Analytics-Daten[\s\S]*Tenant\/AuthZ[\s\S]*Datenminimierung[\s\S]*Audit[\s\S]*Capacity\/Kosten[\s\S]*Providerfreigaben/u,
+  );
+  assert.doesNotMatch(roadmap, /ChatAdmin|Known-Interest-Guard/u);
+  assert.doesNotMatch(roadmap, /TagFilter-Snapshot[\s\S]{0,120}state: "done"/u);
   assert.match(phase15, /Segmente & Listen[\s\S]*Segment-Ansichten[\s\S]*Listenlogik[\s\S]*Filter & Tags[\s\S]*CSV-Import für Segmente nutzen/u);
+  assert.doesNotMatch(phase15, /Filter & Tags[\s\S]{0,120}state: "done"/u);
+  assert.match(
+    sourceOfTruth,
+    /vorhandene Support-Source ist integriert[\s\S]*Abnahme am[\s\S]*Ziel[\s\S]*realen Geräten[\s\S]*Store[\s\S]*weder ein[\s\S]*Neubau noch ein Auslieferungsnachweis/u,
+  );
+  assert.match(
+    sourceOfTruth,
+    /Issue #1259[\s\S]*spätere read-only KI-Analyse[\s\S]*Tenant-Isolation und AuthZ[\s\S]*Datenminimierung[\s\S]*Auditierbarkeit[\s\S]*Capacity-\/Kostenkontrolle[\s\S]*Providerfreigaben[\s\S]*aktiviert aktuell keine Funktion/u,
+  );
   assert.match(publicRoadmap, /import \{ roadmapPhases, type RoadmapPhase \} from "@\/config\/roadmap"/u);
   assert.doesNotMatch(publicRoadmap, /const available:|const inProgress:|const comingSoon:/u);
   assert.match(adminRoadmap, /Alle Phasen sind fortlaufend nummeriert/u);

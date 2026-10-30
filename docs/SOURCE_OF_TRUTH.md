@@ -447,6 +447,9 @@ Noch nicht als ausgelieferte Store-App freigegeben:
   vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
   Apple Developer / App Store Connect, iOS-Build, Gerätenachweis und TestFlight
   folgen erst in der bewusst nach Phase 7 verschobenen Phase 8.
+- Die vorhandene Support-Source ist integriert. Offen bleiben ihre Abnahme am
+  Ziel, auf realen Geräten und im jeweiligen Store; daraus folgt weder ein
+  Neubau noch ein Auslieferungsnachweis.
 
 Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
 
@@ -546,6 +549,15 @@ KI-/Billing-Gesamtabnahme, Security-/Meta-Nachweise sowie Android-Geräte- und
 Push-Zustellung. Die dokumentierte Google-Play-Testveröffentlichung bedeutet
 keine öffentliche Store-Freigabe. Die Roadmap-Korrektur aktualisiert keine
 Provider-Abnahme und aktiviert keine Funktion; die Gesamt-Gates bleiben offen.
+
+Phasen 9 und 10 sind ausschließlich später geplante Roadmap-Richtungen; weder
+"In Arbeit", "In Kürze" noch eine unmittelbare Verfügbarkeit sind dafür belegt.
+Issue #1259 ordnet eine spätere read-only KI-Analyse und Dashboard-Erklärung ein.
+Sie setzt kanonische Analytics-Daten, Tenant-Isolation und AuthZ,
+Datenminimierung, Auditierbarkeit, Capacity-/Kostenkontrolle sowie separate
+Providerfreigaben voraus und aktiviert aktuell keine Funktion. Ein
+TagFilter-Snapshot ist nicht ausgeliefert. ChatAdmin-Fortschritt und
+-Abnahmen bleiben aus der öffentlichen FanMind-Roadmap ausgeschlossen.
 
 Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme
 der erforderlichen Phase-3- und Phase-7-Kanäle. Phase 4 ist deshalb keine
