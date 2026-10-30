@@ -1,4 +1,4 @@
-import { ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
+import { assessReplyQuality, ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { applyChatAdminCurrentInterests, isChatAdminCurrentFactsEnabled, getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
 import * as chatAdminPolicy from "@/lib/chatAdminPolicy.mjs";
@@ -26,8 +26,17 @@ export async function POST(request:NextRequest){
   const replyPause=deriveChatAdminReplyPause(fan?.notes,lastConfirmed);if(replyPause.paused)return NextResponse.json({error:"conversation_paused",reply_pause:replyPause},{status:409});
   const context=fanMode?buildChatAdminFanContext(character,fan!,conversation!,history,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(character,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:"");inputChars=context.length;
   const requestedOffer=(JSON.parse(context) as {sales_playbook?:{requested_offer?:Record<string,unknown>|null}}).sales_playbook?.requested_offer??null;
+  const knownInterests=fanMode&&isChatAdminCurrentFactsEnabled()?(fan!.current_facts??[]):[];
   if(inputChars>AI_REPLY_INPUT_CHAR_LIMIT)return NextResponse.json({error:"input_too_large"},{status:400});
-  const previous=fanMode?await getChatAdminGeneration(workspace.id,character.id,fan!.id,conversation!.id,body.generation_id as string):[];if(previous.length){const inbound=previous.filter(message=>message.direction==="fan_inbound"),stored=previous.filter(message=>message.direction==="suggested_reply");if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());return NextResponse.json({memory_status:memoryStatus,replies:stored.map(message=>message.content),character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});}
+  const previous=fanMode?await getChatAdminGeneration(workspace.id,character.id,fan!.id,conversation!.id,body.generation_id as string):[];
+  if(previous.length){
+   const inbound=previous.filter(message=>message.direction==="fan_inbound"),stored=previous.filter(message=>message.direction==="suggested_reply");
+   if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});
+   const storedReplies=stored.map(message=>message.content);
+   if(assessReplyQuality(storedReplies,[],knownInterests).includes("known_interest_question"))throw new ReplyQualityError();
+   const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());
+   return NextResponse.json({memory_status:memoryStatus,replies:storedReplies,character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
+  }
   const limit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
   const key=process.env.OPENAI_API_KEY;if(!key)return NextResponse.json({error:"ai_unavailable"},{status:503});
   const baseRequest=buildChatAdminModelRequest(context);
@@ -35,7 +44,7 @@ export async function POST(request:NextRequest){
   const sentContext=JSON.parse(context) as {conversation?:{recent_messages?:Array<{direction:string;content:string}>}};
   const recentReplies=(sentContext.conversation?.recent_messages??[]).filter(message=>message.direction==="confirmed_reply").map(message=>message.content).slice(-6);
   const generated=await runReplyQualityGate({
-   inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies,
+   inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies, knownInterests,
    generate:async feedback=>{
     providerAttemptStarted=false;
     signal.throwIfAborted();

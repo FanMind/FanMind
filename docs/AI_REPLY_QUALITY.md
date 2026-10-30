@@ -144,26 +144,25 @@ keine neue Memory und kein zusätzlicher Provideraufruf. Vertrag und Grenzen:
 Synthetische Tests beweisen Kontextübergabe und Schutzregeln, keine semantische
 Befolgung durch ein reales Modell. Echte Mehrturn-Qualitätsabnahme bleibt offen.
 
-## Bekannte Fanangaben: Revalidierung nach Current Facts — 26. Oktober 2026
+## Bekannte Fanangaben: begrenzter Current-Facts-Guard — 30. Oktober 2026
 
-PR #1341 belegte auf dem früheren Legacy-Speicher, dass der gemeinsame
-Antwortqualitätswächter eine redundante Grundsatzfrage wie „Magst du Musik?“ trotz
-gespeicherter Angabe akzeptiert. Nach Integration von #1371 sind zwei Verträge
-getrennt zu bewerten:
+Der ChatAdmin-Fanpfad kann dem gemeinsamen Qualitätswächter optional bereits
+validierte Current-Interest-Fakten übergeben. Das geschieht nur bei aktiviertem
+bestehendem Current-Facts-Flag und nach der vorhandenen Workspace-/Character-/Fan-/
+Conversation-Bindung. Legacy- oder manuelle Notizen und bloße Vorschläge erhalten
+dadurch keine höhere Autorität.
 
-- Bei strikt deaktivierten Current Facts bleibt die historische Legacy-Grenze bestehen.
-- Bei aktivierter, installierter Funktion kann der Modellkontext eine aktuelle positive
-  oder negative, quellgebundene Aussage korrekt unterscheiden und einen älteren
-  Legacy-Fakt desselben Themas unterdrücken.
-- Der gemeinsame Qualitätswächter erhält weiterhin keinen Faktenkontext. Synthetische
-  Routeprüfungen zeigen deshalb, dass er dieselbe breite Rückfrage auch bei einem
-  korrekten positiven oder widerrufenen Current Fact mechanisch akzeptiert.
-- Eine Detailfrage nach Musikrichtung oder Künstlern bleibt bei einem bekannten
-  allgemeinen Musikinteresse zulässig. Manuelle oder unbestätigte Notizen werden
-  nicht zu bestätigten Interessen erhoben.
+Der Wächter lehnt ausschließlich eine endliche DE/EN-Liste breiter Grundsatzfragen
+zu einem passend validierten positiven oder negativen Interesse ab, etwa „Magst du
+Musik?“ oder „Do you like music?“. Detailfragen, ausdrückliche Änderungs- oder
+Rekonfirmationsfragen, Zitate, Hypothesen und unbekannte Themen bleiben zulässig.
+Der Befund ist terminal: Ein frischer Modelloutput erzeugt genau ein Usage-Ereignis,
+keinen Quality-Rewrite und keine Persistenz oder Memory-Aktualisierung. Ein Cache-
+Replay wendet dieselbe Sperre vor Memory/Persistenz an und erzeugt keinen neuen
+Provider- oder Usage-Schritt.
 
-Dies ist eine grüne Diagnose- und Regressionsbaseline, keine Behauptung, dass reale
-Modelle die falsche Frage regelmäßig stellen, und keine Abnahme einer neuen
-semantischen Sperre. Current Facts bleiben default-off und unangewendet. Providerzahl,
-Retry-Grenze, Preis-/Angebotsregeln, manuelles Senden und alle Daten-/Isolationsgrenzen
-bleiben unverändert.
+Bei deaktivierten Current Facts, im Character-only-Pfad und bei allgemeinen
+Reply-Quality-Aufrufen ohne Faktenargument bleibt das bisherige Verhalten unverändert.
+Die Duplicate-Rewrite-Grenze bleibt separat bestehen. Current Facts bleiben
+default-off; die synthetischen Tests sind keine reale Modell-, Provider- oder
+Produktionsabnahme.
