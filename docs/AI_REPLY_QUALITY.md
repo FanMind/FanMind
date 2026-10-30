@@ -154,8 +154,13 @@ dadurch keine höhere Autorität.
 
 Der Wächter lehnt ausschließlich eine endliche DE/EN-Liste breiter Grundsatzfragen
 zu einem passend validierten positiven oder negativen Interesse ab, etwa „Magst du
-Musik?“ oder „Do you like music?“. Detailfragen, ausdrückliche Änderungs- oder
-Rekonfirmationsfragen, Zitate, Hypothesen und unbekannte Themen bleiben zulässig.
+Musik?“ oder „Do you like music?“. Das gilt auch, wenn die gesamte normalisierte
+Antwort exakt aus höchstens einem erlaubten neutralen Präfix, der exakten Frage
+und höchstens einem erlaubten neutralen Suffix besteht. Erlaubte Präfixe sind
+leer, „Danke!“, „Alles klar.“, „Thanks!“ und „All right.“; erlaubte Suffixe sind
+leer, „Danke!“ und „Thanks!“. Zusätzliche Sätze, Detailfragen, ausdrückliche
+Änderungs- oder Rekonfirmationsfragen, Zitate, Hypothesen und unbekannte Themen
+bleiben zulässig; es gibt kein Substring-, Satzsplit- oder NLP-Matching.
 Der Befund ist terminal: Ein frischer Modelloutput erzeugt genau ein Usage-Ereignis,
 keinen Quality-Rewrite und keine Persistenz oder Memory-Aktualisierung. Ein Cache-
 Replay wendet dieselbe Sperre vor Memory/Persistenz an und erzeugt keinen neuen

@@ -33,6 +33,16 @@ for (const [topic, de, en] of [
     `Do you like ${en}?`, `Do you love ${en}?`, `Are you interested in ${en}?`,
   ]) knownInterestQuestions.set(exactQuestion(question), topic);
 }
+const allowedNeutralPrefixes = ["", "Danke!", "Alles klar.", "Thanks!", "All right."];
+const allowedNeutralSuffixes = ["", "Danke!", "Thanks!"];
+const wrappedKnownInterestQuestions = new Map();
+for (const [question, topic] of knownInterestQuestions) {
+  for (const prefix of allowedNeutralPrefixes) {
+    for (const suffix of allowedNeutralSuffixes) {
+      wrappedKnownInterestQuestions.set(exactQuestion([prefix, question, suffix].filter(Boolean).join(" ")), topic);
+    }
+  }
+}
 const stockOpening = value => normalize(value).match(/^(?:ich verstehe|ich kann verstehen|i understand|danke für deine nachricht|thank you for your message|thank you for reaching out|du bist direkt)\b/u)?.[0];
 const substantial = value => value.length >= 80 && value.split(" ").length >= 12;
 function nearCopy(left, right) {
@@ -61,7 +71,7 @@ export function assessReplyQuality(replies, recentReplies = [], knownInterests =
   const currentTopics = new Set(Array.isArray(knownInterests) ? knownInterests
     .filter(fact => fact && (fact.polarity === "positive" || fact.polarity === "negative"))
     .map(fact => fact.topic) : []);
-  if (replies.some(reply => currentTopics.has(knownInterestQuestions.get(exactQuestion(reply))))) issues.add("known_interest_question");
+  if (replies.some(reply => currentTopics.has(wrappedKnownInterestQuestions.get(exactQuestion(reply))))) issues.add("known_interest_question");
   return [...issues];
 }
 

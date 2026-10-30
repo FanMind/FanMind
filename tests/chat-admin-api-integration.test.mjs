@@ -728,9 +728,9 @@ test("diagnostic: default-off legacy knowledge still cannot reject a redundant b
 });
 
 for(const [quote,polarity,question] of [
- ["Ich liebe Musik.","positive","Magst du Musik?"],
- ["Ich mag Musik nicht mehr.","negative","Do you like music?"],
-])test(`current ${polarity} fact terminally rejects a redundant broad music question`,async()=>{
+ ["Ich liebe Musik.","positive","Danke! Magst du Musik? Thanks!"],
+ ["Ich mag Musik nicht mehr.","negative","All right. Do you like music? Danke!"],
+])test(`current ${polarity} fact terminally rejects a neutral-wrapped redundant broad music question`,async()=>{
  const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts(quote),notes:polarity==="negative"?positiveMusicNotes():"Manuell",history:[],replies:[question,"Was machst du gerne?","Erzähl mir etwas von dir."]});
  const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
  assert.equal(response.status,502);assert.equal((await response.json()).error,"reply_quality_rejected");
@@ -760,6 +760,7 @@ test("explicit reconfirmation, quotations, hypotheticals and unknown topics rema
   ["Magst du Musik immer noch?","Hat sich dein Musikgeschmack geändert?","Soll ich Musik weiter als Interesse behandeln?"],
   ['Du hast gefragt: "Magst du Musik?"',"Wenn ich fragen würde, ob du Musik magst, wäre das zu direkt?","Hypothetisch: Magst du Musik?"],
   ["Magst du Filme?","Magst du Bücher?","Magst du Kunst?"],
+  ["Danke! Magst du Musik? Das frage ich nur aus Interesse.","Danke! Danke! Magst du Musik?","Magst du Musik? Danke! Thanks!"],
  ]){
   const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],replies});
   const response=await h.route(h.request(1,"https://fanmind.invalid","Was machst du am Wochenende?"));
@@ -783,7 +784,7 @@ test("cached generation replay applies the guard without provider, usage, persis
  const incoming="Was machst du am Wochenende?";
  const previous=[
   {direction:"fan_inbound",content:incoming},
-  {direction:"suggested_reply",content:"Magst du Musik?"},
+  {direction:"suggested_reply",content:"Alles klar. Magst du Musik? Danke!"},
   {direction:"suggested_reply",content:"Was machst du gerne?"},
   {direction:"suggested_reply",content:"Erzähl mir etwas von dir."},
  ];
