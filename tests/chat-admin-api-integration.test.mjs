@@ -125,7 +125,7 @@ function harness(change, abortController, options = {}) {
       listRecentChatMessages: async () => history,
       getChatAdminGeneration: async (...args) => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persistedByGeneration.get(args[4])??[],
       updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); fanNotes=args[4].notes; return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); const persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))];persistedByGeneration.set(args[6],persisted);calls.persistedGenerations.push({generationId:args[6],incoming:args[8],replies:args.at(-1)});return args.at(-1); },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); const persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10+calls.persistedGenerations.length,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))];persistedByGeneration.set(args[6],persisted);calls.persistedGenerations.push({generationId:args[6],incoming:args[8],replies:args.at(-1)});return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -173,8 +173,8 @@ function harness(change, abortController, options = {}) {
   });
   const confirm=(incomingMessage,confirmedReply,turn)=>{
     const createdAt=new Date(Date.UTC(2026,9,30,12,turn*2)).toISOString();
-    const inbound={id:`baseline-${turn}-fan`,workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:incomingMessage,created_at:createdAt};
-    const confirmed={...inbound,id:`baseline-${turn}-confirmed`,direction:"confirmed_reply",content:confirmedReply,created_at:new Date(Date.UTC(2026,9,30,12,turn*2+1)).toISOString()};
+    const inbound={id:`77777777-7777-4777-8777-${String(turn*2).padStart(12,"0")}`,workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:incomingMessage,created_at:createdAt};
+    const confirmed={...inbound,id:`77777777-7777-4777-8777-${String(turn*2+1).padStart(12,"0")}`,direction:"confirmed_reply",content:confirmedReply,created_at:new Date(Date.UTC(2026,9,30,12,turn*2+1)).toISOString()};
     history.push(inbound,confirmed);calls.confirmations.push({incomingMessage,confirmedReply});return confirmed;
   };
   return { calls, route: exports.POST, request, confirm, resume:confirmedId=>{fanNotes=knowledgePolicy.resumeChatAdminReplies(fanNotes,confirmedId);}, history };
