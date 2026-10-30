@@ -132,6 +132,7 @@ eingebunden.
 - neu: `src/lib/chatAdminStyleExamplePolicy.d.mts`
 - neu: `tests/chat-admin-style-example-policy.test.mjs`
 - Update ausschließlich dieser Anforderungsdatei für belegte Testergebnisse
+- `project-memory/TASK_LEDGER.md` für genau einen knappen wahrheitsgemäßen Status-/Boundary-Eintrag
 
 **Nicht im Task:**
 
