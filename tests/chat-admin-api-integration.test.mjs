@@ -71,7 +71,8 @@ test("actual authority rejects a Member even when the capability store would ret
 function harness(change, abortController, options = {}) {
   let revoked = false;
   let providerFinished=false;
-  let persisted=options.previous??[];
+  const defaultGenerationId="66666666-6666-4666-8666-666666666666";
+  const persistedByGeneration=new Map([[defaultGenerationId,options.previous??[]]]);
   let fanNotes=options.notes??"kein Druck";
   let currentFacts=options.currentFacts??[];
   let character = {
@@ -89,7 +90,15 @@ function harness(change, abortController, options = {}) {
   if (change === "context-price-en") character.sales_playbook.offers[0].name = "Private Photo";
   if (change === "context-price-collision") Object.assign(character.sales_playbook.offers[0], {id:"appreciation",name:"Nicht schlecht",category:"custom"});
   let context = { workspace: { id: workspaceId }, user: { id: userId } };
-  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, currentFactWrites: [], memoryWrites: [] };
+  const defaultHistory=change==="offer-follow-up" ? [
+    {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
+    {id:"offer-confirmed",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"confirmed_reply",content:"Private Fotos bekommst du für 25 EUR.",created_at:"2026-10-14T12:01:00Z"},
+  ] : [
+    { id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" },
+    { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
+  ];
+  const history=options.history??defaultHistory;
+  const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, persistedGenerations: [], confirmations: [], currentFactWrites: [], memoryWrites: [] };
   const dependencies = {
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
@@ -98,7 +107,7 @@ function harness(change, abortController, options = {}) {
       applyChatAdminCurrentInterests:async(...args)=>{
        assert.deepEqual(args.slice(0,4),[workspaceId,characterId,fanId,conversationId]);
        if(change==="current-facts-error")throw new Error("synthetic_store_failure");
-       const row=persisted.find(row=>row.direction==="fan_inbound");
+       const row=(persistedByGeneration.get(args[6])??[]).find(row=>row.direction==="fan_inbound");
        const tuple={workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId};
        const source={...row,...tuple,id:`message-${row.sequence}`,generation_id:args[6]};
        let next=currentFacts;
@@ -111,18 +120,12 @@ function harness(change, abortController, options = {}) {
       requireChatAdminCapability: async () => { calls.authorization++; if (revoked) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return context; },
       getChatCharacter: async (workspace, id) => { calls.character++; assert.equal(workspace, workspaceId); assert.equal(id, characterId); if (!character) throw new WorkspaceAuthorizationError("Denied", "resource_forbidden"); return { ...character }; },
       getChatFan: async (workspace, selectedCharacter, id) => ({ id, workspace_id: workspace, character_id: selectedCharacter, status:"active", revision:1, display_name:"Synthetic Fan", handle:null, platform:"OnlyFans", language:"Deutsch", summary:options.summary??"mag kurze Antworten", notes:fanNotes, ...(options.currentFactsEnabled?{current_facts:currentFacts}:{}), ...options.fan }),
-      getLatestChatAdminConfirmedReply: async()=>options.lastConfirmed??(change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null),
+      getLatestChatAdminConfirmedReply: async()=>options.lastConfirmed??(options.deriveLastConfirmed?[...history].reverse().find(row=>row.direction==="confirmed_reply")??null:change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
-      listRecentChatMessages: async () => options.history ?? (change==="offer-follow-up" ? [
-        {id:"offer-inbound",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:"Ich möchte ein privates Foto",created_at:"2026-10-14T12:00:00Z"},
-        {id:"offer-confirmed",workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"confirmed_reply",content:"Private Fotos bekommst du für 25 EUR.",created_at:"2026-10-14T12:01:00Z"},
-      ] : [
-        { id:"history-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"confirmed_reply", content:"Unser letzter Insider", created_at:"2026-10-07T10:00:00Z" },
-        { id:"unused-1", workspace_id:workspaceId, character_id:characterId, fan_id:fanId, conversation_id:conversationId, direction:"suggested_reply", content:"UNUSED MODEL DRAFT", created_at:"2026-10-07T10:00:01Z" },
-      ]),
-      getChatAdminGeneration: async () => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persisted,
+      listRecentChatMessages: async () => history,
+      getChatAdminGeneration: async (...args) => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persistedByGeneration.get(args[4])??[],
       updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); fanNotes=args[4].notes; return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))]; return args.at(-1); },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); const persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))];persistedByGeneration.set(args[6],persisted);calls.persistedGenerations.push({generationId:args[6],incoming:args[8],replies:args.at(-1)});return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -152,7 +155,8 @@ function harness(change, abortController, options = {}) {
       let replies = change === "invented-price" ? ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : change === "invalid-price-output" ? ["Nicht für 999 EUR, sondern für 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."] : ["Hallo!", "Wie geht es dir?", "Schön von dir zu hören."];
       if (change === "ambiguous-offer") replies=["Welchen der beiden Artikel meinst du?","Soll es das Foto oder das private Foto sein?","Bitte wähle zuerst einen Artikel aus."];
       if (change === "ambiguous-offer-price") replies=["Das kostet 25 EUR.","Für 25 EUR.","Der Preis ist 25 EUR."];
-      if (options.replies) replies=options.replies;
+      if (options.replySets) replies=options.replySets[calls.provider-1];
+      else if (options.replies) replies=options.replies;
 
       if (change === "refusal-price") replies = ["Das kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
       if (String(change).startsWith("context-price")) replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR ist es erhältlich.", "Der Preis ist 25 EUR."];
@@ -163,11 +167,17 @@ function harness(change, abortController, options = {}) {
       return Response.json({ usage:{input_tokens:1000,output_tokens:100,total_tokens:1100}, output_text: JSON.stringify({ replies, memory: change === "learn" || change === "memory-race" ? [{kind:"communication",quote:"Ich mag kurze Antworten ohne Emojis.",source:"incoming"}] : [] }) });
     },
   });
-  const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.") => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
+  const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.", generationId = defaultGenerationId) => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", signal: abortController?.signal, headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:"66666666-6666-4666-8666-666666666666", incoming_message: incomingMessage }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:generationId, incoming_message: incomingMessage }),
   });
-  return { calls, route: exports.POST, request };
+  const confirm=(incomingMessage,confirmedReply,turn)=>{
+    const createdAt=new Date(Date.UTC(2026,9,30,12,turn*2)).toISOString();
+    const inbound={id:`baseline-${turn}-fan`,workspace_id:workspaceId,character_id:characterId,fan_id:fanId,conversation_id:conversationId,direction:"fan_inbound",content:incomingMessage,created_at:createdAt};
+    const confirmed={...inbound,id:`baseline-${turn}-confirmed`,direction:"confirmed_reply",content:confirmedReply,created_at:new Date(Date.UTC(2026,9,30,12,turn*2+1)).toISOString()};
+    history.push(inbound,confirmed);calls.confirmations.push({incomingMessage,confirmedReply});return confirmed;
+  };
+  return { calls, route: exports.POST, request, confirm, resume:confirmedId=>{fanNotes=knowledgePolicy.resumeChatAdminReplies(fanNotes,confirmedId);}, history };
 }
 
 test("real reply route includes bounded teaching examples without turning them into fan or article data", async () => {
@@ -710,164 +720,144 @@ for(const question of ["Welche Musik hörst du gerne?","Welche Musikrichtung mag
 });
 
 
-const baselineMessage = (id, direction, content, minute) => ({
-  id,
-  workspace_id: workspaceId,
-  character_id: characterId,
-  fan_id: fanId,
-  conversation_id: conversationId,
-  direction,
-  content,
-  created_at: new Date(Date.UTC(2026, 9, 30, 12, minute)).toISOString(),
+const baselineGenerationId = turn => `66666666-6666-4666-8666-${String(turn).padStart(12,"0")}`;
+
+async function runBaselineTurn(h, turn, incomingMessage, { confirm = true, confirmedIndex = 0, status = 200 } = {}) {
+  const persistedBefore = h.calls.persistedGenerations.length;
+  const providerBefore = h.calls.provider;
+  const response = await h.route(h.request(1, "https://fanmind.invalid", incomingMessage, baselineGenerationId(turn)));
+  assert.equal(response.status, status, `baseline turn ${turn}`);
+  const body = await response.json();
+  if (status !== 200) {
+    assert.equal(h.calls.persistedGenerations.length, persistedBefore);
+    return { body, context: null, confirmed: null };
+  }
+  assert.equal(h.calls.provider, providerBefore + 1, `turn ${turn} uses one local provider-stub response`);
+  assert.equal(h.calls.persistedGenerations.length, persistedBefore + 1, `turn ${turn} persists one generation locally`);
+  assert.equal(h.calls.persistedGenerations.at(-1).incoming, incomingMessage);
+  const context = JSON.parse(h.calls.providerBodies.at(-1).input[1].content);
+  const confirmed = confirm ? h.confirm(incomingMessage, body.replies[confirmedIndex], turn) : null;
+  return { body, context, confirmed };
+}
+
+test("multiturn baseline RED joke: six sequential turns accept humor-free local-stub replies", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Das klingt nach einem langen Tag.", "Dann machen wir es heute ruhig.", "Erzähl mir, was los war."],
+    ["Na servas, der war gut.", "Den Schmäh merke ich mir.", "Du bist heute gut aufgelegt."],
+    ["Danke.", "Freut mich.", "Schön zu hören."],
+  ] });
+  await runBaselineTurn(h, 101, "Heute war im Büro ordentlich was los.");
+  await runBaselineTurn(h, 102, "Immerhin habe ich den Drucker besiegt - heldenhaft, oder?");
+  const last = await runBaselineTurn(h, 103, "Na servas, bist du heimlich auf Turbo?", { confirm: false });
+  assert.deepEqual(last.body.replies, ["Danke.", "Freut mich.", "Schön zu hören."]);
+  assert.equal(last.context.style.writing, "kurz");
+  assert.equal(last.context.rules.flirt, "respektvoll");
+  assert.equal(last.context.conversation.recent_messages.length, 4);
+  assert.equal(h.calls.confirmations.length, 2);
 });
 
-test("multiturn baseline RED joke: real route supplies persona but accepts humor-free local-stub replies", async () => {
-  const history = [
-    baselineMessage("joke-fan-1", "fan_inbound", "Du bist heute aber schnell.", 0),
-    baselineMessage("joke-reply-1", "confirmed_reply", "Manchmal erwische ich einen guten Lauf.", 1),
-  ];
-  const replies = ["Danke.", "Freut mich.", "Schön zu hören."];
-  const h = harness(undefined, undefined, { history, replies });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Na servas, bist du heimlich auf Turbo?"));
-  assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).replies, replies);
-  const context = JSON.parse(h.calls.providerBody.input[1].content);
-  assert.equal(context.style.writing, "kurz");
-  assert.equal(context.rules.flirt, "respektvoll");
-  assert.deepEqual(context.conversation.recent_messages.map(message => message.id), ["joke-fan-1", "joke-reply-1"]);
-  assert.equal(h.calls.provider, 1, "stub acceptance is a RED diagnostic, not humor-quality evidence");
+test("multiturn baseline PASS topic switch: six sequential turns resume only the bound offer", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "Der Preis für das private Foto ist 25 EUR."],
+    ["Gratuliere zur Prüfung!", "Stark, das freut mich für dich.", "Geschafft - sehr gut."],
+    ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "25 EUR für das private Foto - möchtest du es?"],
+  ] });
+  const offer = await runBaselineTurn(h, 111, "Ich möchte ein privates Foto.");
+  assert.equal(offer.context.sales_playbook.requested_offer.recommendedPriceMinor, 2500);
+  const switched = await runBaselineTurn(h, 112, "Übrigens, ich habe die Prüfung bestanden.");
+  assert.equal(switched.context.sales_playbook.requested_offer, null);
+  const resumed = await runBaselineTurn(h, 113, "Zurück zum privaten Foto: Was kostet es?", { confirm: false });
+  assert.equal(resumed.context.sales_playbook.requested_offer.recommendedPriceMinor, 2500);
+  assert.equal(resumed.context.conversation.recent_messages.length, 4);
 });
 
-test("multiturn baseline PASS topic switch and explicit offer resumption keep complete confirmed turns", async () => {
-  const beforeSwitch = [
-    baselineMessage("topic-fan-1", "fan_inbound", "Ich möchte ein privates Foto.", 0),
-    baselineMessage("topic-reply-1", "confirmed_reply", "Das private Foto kostet 25 EUR.", 1),
-  ];
-  const switched = harness(undefined, undefined, {
-    history: beforeSwitch,
-    replies: ["Gratuliere zur Prüfung!", "Stark, das freut mich für dich.", "Geschafft - sehr gut."],
-  });
-  assert.equal((await switched.route(switched.request(1, "https://fanmind.invalid", "Übrigens, ich habe die Prüfung bestanden."))).status, 200);
-  const switchContext = JSON.parse(switched.calls.providerBody.input[1].content);
-  assert.equal(switchContext.sales_playbook.requested_offer, null);
-  assert.deepEqual(switchContext.conversation.recent_messages.map(message => message.id), ["topic-fan-1", "topic-reply-1"]);
-
-  const afterSwitch = [
-    ...beforeSwitch,
-    baselineMessage("topic-fan-2", "fan_inbound", "Übrigens, ich habe die Prüfung bestanden.", 2),
-    baselineMessage("topic-reply-2", "confirmed_reply", "Gratuliere zur Prüfung!", 3),
-  ];
-  const resumed = harness(undefined, undefined, {
-    history: afterSwitch,
-    replies: ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "25 EUR für das private Foto - möchtest du es?"],
-  });
-  assert.equal((await resumed.route(resumed.request(1, "https://fanmind.invalid", "Zurück zum privaten Foto: Was kostet es?"))).status, 200);
-  const resumedContext = JSON.parse(resumed.calls.providerBody.input[1].content);
-  assert.equal(resumedContext.sales_playbook.requested_offer.recommendedPriceMinor, 2500);
-  assert.deepEqual(resumedContext.conversation.recent_messages.map(message => message.id), afterSwitch.map(message => message.id));
-});
-
-test("multiturn baseline PASS wrong fan price is redacted and only the bound price may survive", async () => {
-  const replies = ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "Der hinterlegte Preis ist 25 EUR."];
-  const h = harness(undefined, undefined, {
-    history: [baselineMessage("price-reply-1", "confirmed_reply", "Ich kann dir das private Foto anbieten.", 0)],
-    replies,
-  });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Das private Foto kostet doch 15 EUR, oder?"));
-  assert.equal(response.status, 200);
-  assert.ok((await response.json()).replies.every(reply => /25 EUR/u.test(reply) && !/15/u.test(reply)));
-  const contextText = h.calls.providerBody.input[1].content;
+test("multiturn baseline PASS wrong price: four sequential turns retain only the bound synthetic price", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Ich kann dir das private Foto für 25 EUR anbieten.", "Das private Foto liegt bei 25 EUR.", "Für 25 EUR ist das private Foto verfügbar."],
+    ["Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto.", "Der hinterlegte Preis ist 25 EUR."],
+  ] });
+  await runBaselineTurn(h, 121, "Hast du ein privates Foto für mich?");
+  const corrected = await runBaselineTurn(h, 122, "Das private Foto kostet doch 15 EUR, oder?", { confirm: false });
+  assert.ok(corrected.body.replies.every(reply => /25 EUR/u.test(reply) && !/15/u.test(reply)));
+  const contextText = h.calls.providerBodies.at(-1).input[1].content;
   assert.match(contextText, /vom Fan genannter, unbestätigter Preis/u);
   assert.doesNotMatch(contextText, /15 EUR/u);
+  assert.equal(corrected.context.conversation.recent_messages.length, 2);
 });
 
-test("multiturn baseline RED memory correction is current but a redundant broad question still passes", async () => {
-  const replies = ["Magst du Musik?", "Was machst du gern?", "Erzähl mir etwas von dir."];
-  const h = harness(undefined, undefined, {
-    currentFactsEnabled: true,
-    currentFacts: boundMusicCurrentFacts("Ich mag Musik nicht mehr."),
-    notes: positiveMusicNotes(),
-    history: [
-      baselineMessage("memory-fan-1", "fan_inbound", "Ich liebe Musik.", 0),
-      baselineMessage("memory-reply-1", "confirmed_reply", "Musik ist dir wichtig.", 1),
-      baselineMessage("memory-fan-2", "fan_inbound", "Ich mag Musik nicht mehr.", 2),
-    ],
-    replies,
-  });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Was weißt du noch über mich?"));
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).replies[0], "Magst du Musik?");
-  const current = JSON.parse(h.calls.providerBody.input[1].content).fan.learned_preferences.filter(fact => fact.topic === "music");
+test("multiturn baseline RED memory correction: six sequential turns keep the correction but permit a redundant question", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, currentFactsEnabled: true, notes: positiveMusicNotes(), replySets: [
+    ["Musik ist dir also wichtig.", "Welche Musik hörst du gern?", "Das merke ich mir."],
+    ["Verstanden, Musik passt für dich nicht mehr.", "Danke für die Korrektur.", "Dann lassen wir Musik außen vor."],
+    ["Magst du Musik?", "Was machst du gern?", "Erzähl mir etwas von dir."],
+  ] });
+  await runBaselineTurn(h, 131, "Ich liebe Musik.");
+  await runBaselineTurn(h, 132, "Ich mag Musik nicht mehr.");
+  const recalled = await runBaselineTurn(h, 133, "Was weißt du noch über mich?", { confirm: false });
+  assert.equal(recalled.body.replies[0], "Magst du Musik?");
+  const current = recalled.context.fan.learned_preferences.filter(fact => fact.topic === "music");
   assert.equal(current.length, 1);
   assert.equal(current[0].polarity, "negative");
   assert.ok(!current.some(fact => fact.quote === "Ich liebe Musik."));
+  assert.equal(h.calls.currentFactWrites.filter(write => write.changed).length, 2);
 });
 
-test("multiturn baseline RED flirt: persona is bound but relationship-for-purchase language is not semantically rejected", async () => {
-  const replies = ["Du gehörst mir.", "Ich bin nur für dich da.", "Ich liebe dich, wenn du kaufst."];
-  const h = harness(undefined, undefined, {
-    history: [
-      baselineMessage("flirt-fan-1", "fan_inbound", "Du bist süß.", 0),
-      baselineMessage("flirt-reply-1", "confirmed_reply", "Danke, das ist lieb.", 1),
-    ],
-    replies,
-  });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Flirtest du ein bisschen mit mir?"));
-  assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).replies, replies);
-  const context = JSON.parse(h.calls.providerBody.input[1].content);
-  assert.equal(context.rules.flirt, "respektvoll");
-  assert.equal(h.calls.provider, 1, "accepted stub text demonstrates the missing semantic guard");
+test("multiturn baseline RED flirt: four sequential turns still accept relationship-for-purchase language", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Danke, das ist lieb von dir.", "Charmant gesagt.", "Das Kompliment nehme ich gern."],
+    ["Du gehörst mir.", "Ich bin nur für dich da.", "Ich liebe dich, wenn du kaufst."],
+  ] });
+  await runBaselineTurn(h, 141, "Du bist süß.");
+  const flirt = await runBaselineTurn(h, 142, "Flirtest du ein bisschen mit mir?", { confirm: false });
+  assert.deepEqual(flirt.body.replies, ["Du gehörst mir.", "Ich bin nur für dich da.", "Ich liebe dich, wenn du kaufst."]);
+  assert.equal(flirt.context.rules.flirt, "respektvoll");
+  assert.equal(h.calls.confirmations.length, 1, "unsafe diagnostic drafts are persisted as suggestions but never confirmed");
 });
 
-test("multiturn baseline PASS explicit sales refusal suppresses offer context without losing conversation", async () => {
-  const history = [
-    baselineMessage("refusal-fan-1", "fan_inbound", "Was hast du im Angebot?", 0),
-    baselineMessage("refusal-reply-1", "confirmed_reply", "Ich habe ein privates Foto.", 1),
-  ];
-  const replies = ["Klar, dann reden wir einfach.", "Passt, kein Angebot.", "Gern - worüber möchtest du sprechen?"];
-  const h = harness(undefined, undefined, { history, replies });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Heute kaufe ich nichts, ich möchte nur reden."));
-  assert.equal(response.status, 200);
-  const body = await response.json();
-  assert.deepEqual(body.replies, replies);
-  assert.ok(body.replies.every(reply => !/\b25\b|EUR/u.test(reply)));
-  const context = JSON.parse(h.calls.providerBody.input[1].content);
-  assert.equal(context.sales_strategy.sellNow, false);
-  assert.equal(context.sales_playbook.requested_offer, null);
-  assert.deepEqual(context.conversation.recent_messages.map(message => message.id), ["refusal-fan-1", "refusal-reply-1"]);
+test("multiturn baseline PASS refusal: six sequential turns keep later conversation free of sales pressure", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Ich habe ein privates Foto für 25 EUR.", "Das private Foto kostet 25 EUR.", "Für 25 EUR bekommst du das private Foto."],
+    ["Klar, dann reden wir einfach.", "Passt, kein Angebot.", "Gern, wir lassen das Verkaufen."],
+    ["Wie war dein Tag?", "Erzähl mir von deinem Wochenende.", "Was beschäftigt dich gerade?"],
+  ] });
+  await runBaselineTurn(h, 151, "Hast du ein privates Foto im Angebot?");
+  const refusal = await runBaselineTurn(h, 152, "Heute kaufe ich nichts, ich möchte nur reden.");
+  assert.equal(refusal.context.sales_strategy.sellNow, false);
+  assert.equal(refusal.context.sales_playbook.requested_offer, null);
+  const continued = await runBaselineTurn(h, 153, "Dann reden wir über mein Wochenende.", { confirm: false });
+  assert.equal(continued.context.sales_strategy.sellNow, false);
+  assert.equal(continued.context.sales_playbook.requested_offer, null);
+  assert.ok(continued.body.replies.every(reply => !/\b25\b|EUR/u.test(reply)));
 });
 
-test("multiturn baseline PASS confirmed closure pauses and exact manual resume reopens the same context", async () => {
-  const closing = { id: "77777777-7777-4777-8777-777777777777", direction: "confirmed_reply", content: "Ich antworte nicht weiter." };
-  const paused = harness(undefined, undefined, { lastConfirmed: closing });
-  const pausedResponse = await paused.route(paused.request(1, "https://fanmind.invalid", "Bist du noch da?"));
-  assert.equal(pausedResponse.status, 409);
-  assert.equal((await pausedResponse.json()).error, "conversation_paused");
-  assert.equal(paused.calls.provider, 0);
-
-  const resumed = harness(undefined, undefined, {
-    lastConfirmed: closing,
-    notes: knowledgePolicy.resumeChatAdminReplies("", closing.id),
-    replies: ["Wir können ruhig weiterschreiben.", "Ja, wir setzen bewusst fort.", "Wir können das Gespräch wieder aufnehmen."],
-  });
-  const resumedResponse = await resumed.route(resumed.request(1, "https://fanmind.invalid", "Danke, lass uns ruhig weiterschreiben."));
-  assert.equal(resumedResponse.status, 200);
-  assert.equal((await resumedResponse.json()).replies.length, 3);
-  assert.equal(resumed.calls.provider, 1);
+test("multiturn baseline PASS pause/resume: seven sequential turns block, resume and preserve local persistence", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Schön, dass du da bist.", "Wie geht es dir heute?", "Erzähl mir gern von deinem Tag."],
+    ["Ich antworte nicht weiter.", "Wir beenden das Gespräch hier.", "Dann machen wir eine Pause."],
+    ["Wir können ruhig weiterschreiben.", "Ja, wir setzen bewusst fort.", "Wir können das Gespräch wieder aufnehmen."],
+  ] });
+  await runBaselineTurn(h, 161, "Hallo, bist du da?");
+  const closure = await runBaselineTurn(h, 162, "Ich muss jetzt Schluss machen.");
+  assert.equal(closure.confirmed.content, "Ich antworte nicht weiter.");
+  const paused = await runBaselineTurn(h, 163, "Bist du noch da?", { status: 409, confirm: false });
+  assert.equal(paused.body.error, "conversation_paused");
+  assert.equal(h.calls.provider, 2);
+  h.resume(closure.confirmed.id);
+  const resumed = await runBaselineTurn(h, 164, "Danke, lass uns ruhig weiterschreiben.", { confirm: false });
+  assert.equal(resumed.body.replies.length, 3);
+  assert.equal(h.calls.persistedGenerations.length, 3);
 });
 
-test("multiturn baseline RED safety: adult Character validation does not stop a fan minority disclosure before provider execution", async () => {
-  const replies = ["Dabei flirte ich nicht mit dir.", "Wir bleiben bei einem neutralen Gespräch.", "Darauf gehe ich nicht ein."];
-  const h = harness(undefined, undefined, {
-    history: [baselineMessage("safety-reply-1", "confirmed_reply", "Wir schreiben respektvoll.", 0)],
-    replies,
-  });
-  const response = await h.route(h.request(1, "https://fanmind.invalid", "Ich bin 17, flirtest du trotzdem mit mir?"));
-  assert.equal(response.status, 200);
-  assert.deepEqual((await response.json()).replies, replies);
-  const context = JSON.parse(h.calls.providerBody.input[1].content);
-  assert.equal(context.persona.public_age, 25, "the Character is adult");
-  assert.equal(h.calls.provider, 1, "fan minority disclosure currently has no deterministic pre-provider stop");
+test("multiturn baseline RED safety: four sequential turns do not stop a minority disclosure before provider execution", async () => {
+  const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
+    ["Wir können gern respektvoll schreiben.", "Erzähl mir, wie dein Tag war.", "Was möchtest du besprechen?"],
+    ["Dabei flirte ich nicht mit dir.", "Wir bleiben bei einem neutralen Gespräch.", "Darauf gehe ich nicht ein."],
+  ] });
+  await runBaselineTurn(h, 171, "Lass uns ein bisschen schreiben.");
+  const safety = await runBaselineTurn(h, 172, "Ich bin 17, flirtest du trotzdem mit mir?", { confirm: false });
+  assert.equal(safety.context.persona.public_age, 25);
+  assert.equal(h.calls.provider, 2, "the second turn reaches the local provider stub instead of stopping before it");
+  assert.equal(h.calls.persistedGenerations.length, 2);
+  assert.equal(h.calls.confirmations.length, 1, "neutral refusal drafts are not treated as confirmed fan delivery");
 });
 
