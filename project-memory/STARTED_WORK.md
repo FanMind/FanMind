@@ -1156,6 +1156,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Source completion: PR #1322 head `779b36dead7554cdb1c8e542314654c95748fb20` merged as `b745fba58ab731bfe0111a4e637825d6a5441d2e` on 2026-10-14. No source writer remains.
 - Remaining product boundary: actual price save/reload and fresh multi-turn AI/memory acceptance remain `BLOCKED`/`PAUSED` pending a separately authorized, exact-current-main task with required runtime evidence. The source merge and prior schema observation do not prove product acceptance.
 - Coordination: do not reserve a Builder slot, reopen source repair, dispatch a workflow, deploy or perform a runtime write from this record.
+- Exact next step: keep the source writer closed and the acceptance boundary paused. Resume only through a separately authorized, exact-current-main runtime/product-acceptance task with fresh target evidence; this record itself authorizes no action.
 
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
