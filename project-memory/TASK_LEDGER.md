@@ -25,7 +25,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
 - Risk: R3
-- Status: ACCEPTED; repository source package consumed.
+- Status: ACCEPTED
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926 (RELEASED_MERGED_VERIFIED).
 - Completion: PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; all eight exact-head workflows, native PG17 job `108490997482`, independent review and regression suite passed. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
 - Result: Exact source-only Provider/Daily/Hosted profile and transition contract accepted; no target or runtime result.
@@ -148,6 +148,7 @@
 ## FM-BILL-003
 - Date: 2026-09-10
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R4
 - Goal: continue actual paid-registration activation engineering for the three approved offers after completed catalog release #1096/#1097.
 - Scope: exact displayed payment-terms revision binding on both provisioning entry points, then existing Production Workspace/consent/Billing rollout prerequisites. No new pricing or unrelated Creator/Social activation.
@@ -213,6 +214,7 @@
 ## FM-CREATOR-001
 - 2026-10-17 bounded repository continuation: existing Creator price-output guard is completed through the unchanged ChatAdmin monetary validator; source regression and independent review recorded in the focused PR. Overall remains IN_PROGRESS; target/model-quality/learning gates remain open. FM-DEC-031 defers company-dependent external actions without deleting tasks/evidence.
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Owner clarification FM-DEC-016 / FM-CR-030 (2026-09-11): one normal user/Creator account, one text writing style, no audio. Future manager access supervises separate Creator accounts/channels using each selected account's own style and fan knowledge. Same-style reply variants and revisions do not create additional styles. Legacy prompt/UI conformance remains an explicit pre-activation check; manager functionality stays later.
 - Risk: R4
 - Phase: 7b; resumed now before Android by FM-DEC-015.
@@ -252,6 +254,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-WEB-004
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Goal: Prepare protected exact-main Staging verification, apply and rollback-only acceptance for the dormant Website Chat retention contract.
 - Scope: optional Workspace filter in the controlled RPC, target/commit/TLS policy, private-passfile runner, manual workflows, deterministic synthetic acceptance, tests and runbook. No workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
@@ -267,6 +270,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-WEB-003
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Goal: Prepare a bounded, dormant retention contract for Website Chat technical sessions, receipts and expired handoff evidence without deleting the CRM history.
 - Scope: checksum-pinned controlled SQL, offline verifier, policy tests and runbook. No database apply, Staging workflow dispatch, timer/worker, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
@@ -282,6 +286,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-WEB-002
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Goal: Prepare an exact-main, isolated-Staging verify/apply and rollback-only acceptance control for the dormant Website Chat human-handoff schema.
 - Scope: repository policy, private-passfile runners, manual protected workflows, deterministic synthetic rollback acceptance, tests and runbook. No workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
@@ -297,6 +302,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-WEB-001
 - Date: 2026-09-04
 - Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Goal: Prepare the dormant Website Chat human-handoff path with explicit visitor email consent, complete CRM conversation linkage and an atomic Workspace processing-entitlement boundary.
 - Scope: policy, API/widget contract, controlled service-role-only SQL, checksum/offline verification, tests and documentation. No database apply, installation activation, AI/provider request, outbound email, timer or Production mutation.
@@ -408,7 +414,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-RST-001
 - Date: 2026-08-17 to 2026-09-08
-- Updated: 2026-09-08
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R4
 - Goal: Complete isolated real restore drill.
@@ -421,7 +427,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-MOB-001
 - Date: through 2026-08-19
-- Updated: 2026-09-07
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Goal: Deliver the native FanMind Mobile app through a signed Android build and current-finishline real-device/store acceptance; prepare iPhone Store metadata now while signed iOS/TestFlight/device work remains Phase 8.
 - Result: Native Expo/React-Native core and the current fan workflow are repository-verified. Protected run `33298699290` / job `99222705186` completed an exact-merge signed Android Preview for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`; the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime scope. PR #1028 then merged the Android `1.0.0` Store control as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`. Protected Production readiness `33316105624` / `99269748215` passed and protected Store build `33316172583` / `99269924756` completed exactly one verified AAB with Submit/Update disabled, redacted receipt and cleanup. FM-EV-030 provides the private evidence preparer; FM-EV-031 dual-store assets, public Support and Apple/Google review/tester handoffs passed all exact-head gates in PR #1031, merged as `3082490451dd45b5127bdf9d9ae55b4712255b72`, deployed and were verified live. FM-EV-034 adds the machine-checked 33-field App Store Connect worksheet with exact 13/12/8 ready/owner/Phase-8 separation; PR #1037 final head `88b9299f9612e344a9c0c48d78f86f11d071db6c` passed all eight exact-head workflows and final review with zero unresolved threads, then squash-merged as `a16e28f6e1aa0a2d7ff81bd679b472fab7563500`. On 2026-09-03 the verified Android `1.0.0` AAB was published in the closed Google Play Alpha track for Germany, Austria and Switzerland. The complete Android 19-check/Recovery/screenshot acceptance, at least 12 opted-in testers for at least 14 days and the later Production-access request remain open.
@@ -476,7 +482,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - 2026-09-07 bounded Staging closeout: the general Billing ledger is installed on isolated Staging; exact deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with shared rollout `PASS`, Billing ledger `verify`, cutover pending `0`, uninventoried `0`, full transaction rollback and cleanup `PASS`. Independent read-only counters remained unchanged. This supersedes the earlier pending ledger/deploy/canonical-acceptance wording below and closes only that bounded technical Staging sub-gate; overall status stays PARTIAL.
 - Historical 2026-09-06 bounded continuation: FM-CR-020 / PR #1058 repaired the shared Checkout freeze bypass; later #1069/#1070/#1072 plus the successful Staging runs above supersede its then-pending cutover wording.
 - Date: through 2026-08-19
-- Updated: 2026-09-07
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Goal: Close KI Standard/Plus/Ultra product, quality, cost, Stripe-lifecycle and activation evidence.
 - Result: Standard is part of the active core. Current protected evidence confirms the dedicated synthetic AI resource, both Plus/Ultra Test prices, the complete five-price Test catalog, exact enabled 22-event Staging webhook, installed AI event ledger and now installed general Billing ledger. The 50/100/150 context policy is accepted. The bounded canonical Billing Staging sub-gate is counterchecked by `34058028839` and `34058118450`; canonical Production projection and Plus/Ultra remain disabled. FM-CR-009's Stripe SDK/payment-method/outbound-version correction remains accepted. Remaining work is product/private quality-cost decisions/evidence, provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed ledgers, Legal/Tax, Production runtime integration and explicit activation.
@@ -486,7 +492,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-META-001
 - Date: through 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Goal: Finish Meta Events Manager, Meta external acceptance and final Meta/Security evidence.
 - Result: Consent-gated parameterless PageView-only Pixel behavior is Production-confirmed. The 2026-08-26 exact-main protected read-only evidence confirms that the isolated Staging conversation-continuation and catch-up objects are present with the observed RLS/ACL/index/function boundaries and disabled runtime gates; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. Its mutable current-state claim is TTL-bound through `EV-META-STAGING-FOUNDATION-20260826`. Meta Facebook/Instagram foundations remain advanced. External Events Manager/Test Events, provider-side no-PII confirmation, App Review/permissions, real account/webhook/conversation E2E and required legal acceptance remain open.
@@ -496,7 +502,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-SOC3-001
 - Date: 2026-08-19 reconciliation of prior work
-- Updated: 2026-08-20
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Goal: Real technical acceptance of Phase 3 — Facebook, Instagram and WhatsApp.
 - Result: Facebook/Instagram foundations are advanced; WhatsApp dormant inbound foundation is merged. None of the three has the final real external Phase-3 E2E acceptance required for sales handoff.
@@ -505,7 +511,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Do not repeat: Do not rebuild Facebook/Instagram foundation from zero; do not expose fake active badges before real acceptance.
 
 ## FM-SOC7-001
-- Updated: 2026-09-11
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Goal: Real technical acceptance of Phase 7 — TikTok, X/Twitter, Discord and conditional OnlyFans.
 - Owner scope: FM-DEC-017 / FM-CR-031 resumes TikTok and X now alongside Creator. One account has one text writing style; Discord remains later.
@@ -516,7 +522,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-SALES-001
 - Date: 2026-08-19 reconciliation of prior work
-- Updated: 2026-08-20
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Goal: Technical sales handoff to Gerhard with production truth aligned to actual sellable scope.
 - Blocked by: real technical acceptance of required Phase-3 and Phase-7 channels and final finishline evidence.
@@ -527,7 +533,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-LEGAL-001
 - Date: through 2026-08-19
-- Updated: 2026-08-20
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Goal: External legal/tax/AVV completion where required.
 - Result: technical/public reader framework and confirmed operator data exist; external legal, tax, registration and final AVV/provider evidence remains incomplete.
@@ -539,6 +545,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Latest continuation: #1116 is Production-confirmed by final receipt 5653464231 on main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6. Owner proves the official protected 2.337.0 bin/externals update links; the canonical-only checker rejects that layout. Finish its bounded stable-path correction through current-head review/CI and installed rollout, then independent reference/recovery/idle/reboot evidence. Older source-pending next steps below are historical; no reboot has occurred.
 - Date: through 2026-08-19
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R4
 - Goal: Production operations, monitoring, backups, audit and deployment baseline.
 - Historical accepted result: Core Operations/backup/deploy/audit/monitoring foundation is production-proven and remains accepted. Optional/destructive follow-ups remain separately controlled.
@@ -580,6 +587,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-SEC-001
 - Date: 2026-08-20
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R3
 - Goal: reconcile current live Supabase security-advisor posture with the repository's controlled hardening design and finishline before any Production/Auth mutation.
 - Starting state: fresh Production/Staging targets are `ACTIVE_HEALTHY`, but current advisors expose unresolved warnings.
@@ -637,6 +645,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 ## FM-REG-003
 - Date: 2026-09-15
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Goal: make confirmed registrations without a Workspace visible to Platform Admins and provide controlled permanent-free, temporary-free and blocked CRM access states.
 - Root cause: the existing Admin list starts at `workspace_members`, so an Auth registration disappears until Workspace provisioning has already happened.
@@ -685,7 +694,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: ACCEPTED; repository source package consumed.
+- Status: ACCEPTED
 - Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified squash merge `08fba825d1228d5b57ff0d145919b6bdb51d7504` at `2026-09-27T01:15:46Z`; all nine exact-head workflows, FanMind CI `36284679968`, native PG17 job `108523066296`, independent exact-head review and zero open review threads passed.
 - Result: bounded fail-closed generator emits only the accepted helper, two RPCs and four policy changes; exact CLI bytes and source/profile/reference pins are fixed; native PG17 proves rollback after each injected step, unchanged data, exact Legacy-to-Current catalog and cross-workspace/direct-write/unknown-role negatives.
 - Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
@@ -713,7 +722,7 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-CHATADMIN-MULTITURN-QUALITY-BASELINE-01 — synthetic sequential quality characterization
 - Date: 2026-10-30
-- Status: IMPLEMENTED_FOR_PR; Risk: R2; Draft PR: #1383.
+- Status: IMPLEMENTED_FOR_PR
 - Result: eight repository-only synthetic Admin Chat scenarios now exercise four-to-seven sequential turns through the real reply-suggestions route with local provider/persistence stubs, unique generation persistence and selected confirmed replies. Deterministic PASS: topic switch/resumption, bound price, explicit refusal and pause/resume. Characterization RED: humor/naturalness, redundant questioning after a memory correction, manipulative flirt semantics and missing pre-provider stop after explicit fan minority disclosure.
 - Boundary: this is diagnostic evidence, not product, language-model, sales, safety or production acceptance. Actual naturalness, humor, verified product/availability integration and stable model behavior remain unproved; no runtime guard, external provider, live/customer data, sale, checkout, send, deploy or merge is authorized.
 - Publication: exact-head relevant CI and final countercheck remain required. Exactly one proposed follow-up remains `FM-CHATADMIN-ADULT-SAFETY-GUARD-01`, which is not started by this entry.
@@ -722,14 +731,14 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 ## FM-CHATADMIN-STYLE-MEMORY-REQUIREMENTS-20261030-01 — bounded style/memory requirements
 - Date: 2026-10-30
-- Status: IMPLEMENTED_FOR_PR; Risk: R2; Draft PR: #1384.
+- Status: IMPLEMENTED_FOR_PR
 - Durable requirement: manual ChatAdmin suggestions may use only an explicitly approved non-explicit style profile scoped to one Workspace/Character; fan/conversation memory remains separately scoped to Workspace/Character/Fan and Conversation where applicable. Example selection, preview, correction, revocation and deletion require human control; no automatic history ingestion or model training is authorized.
 - Open requirement: possible use of real histories remains unapproved until Model authority/consent, counterpart legal basis, minimization, provider/processing location, storage/retention/deletion/backup effects and costs are independently resolved. Owner statements about Model consent and platform disclosure are not independently verified.
 - Boundary/next: no runtime, schema, provider, real data, deployment or erotic-generation capability is added. Exactly one proposed repository-only continuation is `FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01`; later runtime wiring remains dependent on the separate adult-safety guard and privacy/authorization evidence.
 
 ## FM-CHATADMIN-STYLE-EXAMPLE-LIFECYCLE-CONTRACT-01 — pure style-example lifecycle contract
 - Date: 2026-10-30
-- Status: IMPLEMENTED_FOR_R3_REVIEW; Risk: R3 for the controlled `package.json` source binding (the local policy contract remains R2).
+- Status: IMPLEMENTED_FOR_R
 - Requirement source: Draft PR #1384 at exact reviewed head `eacc883e177b9809dddccf6455d0bbd1276ceeee`; its requirements document is not duplicated by this task.
 - Result: a repository-only, side-effect-free policy contract binds manually curated non-explicit style examples to exact Workspace, Character, revision, preview fingerprint, human reviewer, review time and declaration. Corrections create a new draft revision; revoked/deleted examples cannot compile; person-, conversation-, message-, memory- and purchase-scoped fields fail closed.
 - Authorization/evidence: Owner authorized at 2026-10-30 14:18 UTC only the `sha256.package.json` rebaseline from `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c` to the independently read-back candidate `39c01cf1b102334cf1c46b57667cc823ddc4dbd45ec26912049bef64d0d00059`; no other controlled artifact, verifier, workflow or SQL may change.
