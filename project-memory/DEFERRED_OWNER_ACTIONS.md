@@ -138,6 +138,14 @@ Updated: 2026-09-07 Europe/Vienna
 
 ## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
 - Related area: FanMind governance / Project Memory V7 hardening.
+- Status: COMPLETED.
+- Updated: 2026-10-31.
+- Current remote fact: active ruleset `24945113` protects the default branch. It requires pull requests, conversation resolution and twelve strict status contexts; deletion and non-fast-forward updates are blocked.
+- Independent readback: enforcement is `active`, `current_user_can_bypass=never`, and no bypass actors are configured.
+- Completion boundary: this closes only the historical remote-protection activation action. It does not authorize weakening checks, direct pushes, repository-setting changes or any protected runtime action.
+- Canonical contract: `BRANCH_PROTECTION_CONTRACT.json`.
+
+
 - Status: DEFERRED_BY_OWNER.
 - Current remote fact: `main` is not protected as of 2026-08-19; branch API reports `protected=false` and no required status checks.
 - Why deferred: the connected GitHub app can read the branch protection state but exposes no write action for Branch Protection or Rulesets.
