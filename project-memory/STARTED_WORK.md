@@ -10,7 +10,7 @@
 - Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
 - Source: explicit Owner task, not a roadmap-catalog selection.
 - Risk: R3
-- Status: ACCEPTED
+- Status: ACCEPTED; source method merged and canonical receipt prepared for publication.
 - Work lock: LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
 - Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
@@ -45,7 +45,7 @@
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
 - Risk: R3
 - Boundary: repository/test reconciliation only; no product/runtime/provider contract change.
-- Status: ACCEPTED
+- Status: ACCEPTED; post-merge reconciliation consumed.
 - Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (RELEASED_MERGED_VERIFIED).
 - Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499` (verified merge of PR #1210).
 - Completion: PR #1211 final head `e4cf6ee471efbc9ba270aeb7ccc84f8dab853b9c` passed all eight exact-head workflows, including FanMind CI `36309203992`, native PostgreSQL 17, Browser E2E and CodeQL; the exact-head independent review reported no new findings, both blocking review threads were evidence-backed resolved, and the normal squash merge produced `fe8d86ed92dafcc2b7d281f6e1bab39735e2d6b6` at 2026-09-27T09:30:55Z.
@@ -56,7 +56,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: ACCEPTED
+- Status: ACCEPTED; repository source package consumed.
 - Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` (verified merge of PR #1208).
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927 (RELEASED_MERGED_VERIFIED).
 - Result: the repository-only, fail-closed generator/assertions wrapper emits only the pinned Creator access helper, two RPC bodies and four policy USING replacements, plus a reproducible manifest and native PostgreSQL 17 proofs.
@@ -70,7 +70,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
 - Risk: R3
-- Status: ACCEPTED
+- Status: ACCEPTED; repository source package consumed.
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926 (RELEASED_MERGED_VERIFIED).
 - Completion: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`. All eight exact-head workflows passed; FanMind CI run `36273161074` and native PG17 job `108490997482` passed. Independent exact-head review reported no P0/P1/P2/P3; all review threads are resolved. Local focused verification: 41 passed, 0 failed, 1 native-PG17 skip. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
 - Result: Source-only profile transition contract proves original `auth.uid()` ownership before transfer, Daily Workspace constraints without the optional Billing baseline, the exact pinned 21-role/22-membership Hosted PG17 profile including grantors/configuration, and fail-closed rejection of altered caller profiles.
@@ -191,7 +191,7 @@
 - Resume: do not reopen this P1 scope. Continue only the separate confirmed-chat installed source-state step above.
 
 ## FM-REG-001 — Daily setup display closeout
-- Status: PRODUCTION_CONFIRMED
+- Status: PRODUCTION_CONFIRMED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914 — RELEASED_PRODUCTION_CONFIRMED; owner: Codex.
 - Result: PR #1125 final head `423f82d67fd15d633d020c4f92da7f744e181416` passed its final-head checks/review and merged as `8694986f7d25639ccbdf67b23c40f88bd175f972`. Its durable completion receipt records successful Production deploy `34886792334`, exact `/api/version`, Production audit `34886957898` and public readiness `34886957948`.
 - Scope closed: Daily setup presentation only. The receipt explicitly releases this lock. Full Daily provisioning/payment/tax readiness remains separate and PARTIAL.
 - Exact next step: do not rebuild or reopen this UI closeout. Continue only the distinct retained Daily/Billing gates when their own prerequisites and authorizations are satisfied.
@@ -443,7 +443,7 @@
 
 
 ## FM-AI-001 / FM-CR-020 — Staging activation
-- Status: SUPERSEDED
+- Status: SUPERSEDED (historical bounded freeze activation; later ledger/capture/unfreeze/canonical acceptance completed)
 - Risk: R4
 - Updated: 2026-09-07
 - Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 RELEASED.
@@ -456,7 +456,7 @@
 
 ## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
 - Updated: 2026-09-07
-- Status: SUPERSEDED
+- Status: SUPERSEDED (historical repository review; later ledger/capture/unfreeze/canonical acceptance completed)
 - Risk: R4
 - Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
 - Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED; final remote CI/review is closed by the activation receipt.
@@ -1037,7 +1037,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: commit and push the correction to the same PR #1141, obtain exact-head CI/CodeQL, reply to and resolve the three genuinely fixed P2 threads, and request one `@codex review` on that exact head. Do not merge. Only after a final review without P1/P2 may #1141 be reported merge-ready.
 - Owner action needed: final Standard/Plus/Ultra token, provider-cost and optional request limits; overage/fallback behavior remains a later commercial/legal decision.
 ## FM-CREATOR-001 — Delete / Privacy / Disclosure
-- Status: IMPLEMENTED_FOR_PR
+- Status: IMPLEMENTED_FOR_PR; Risk: R3; lock: LOCK-FM-CREATOR-PRIVACY-20260920; owner: Codex.
 - Baseline: verified `main` `32223a6f0fef1c000c1d64ef3fad13f8f6e8be08` after #1142 / Production deploy 35504957682. PR #1141 is fully superseded by #1142 and must not be reused; repository credentials are unavailable for closing it from this workspace. PR #1130 was diffed and its still-valid complete-disclosure implementation was selectively integrated, then reconciled with the newer Creator datasets already on main.
 - Scope: owner-bound contact deletion, account/workspace deletion verification, complete fail-closed own-Workspace disclosure, secret stripping and synthetic cross-tenant/error regressions. No SQL/apply, Production/Staging/customer mutation, provider access, Creator activation, Mobile, Billing or automatic send.
 - Completed so far: contact delete now requires the active owner/contact boundary and an exact workspace-filtered one-row delete; existing cascading FKs remove conversations/messages/summaries/memories/follow-ups/profiles/reports/reply targets and Creator commercial evidence. Account deletion now rejects request/workspace mismatch and verifies all active plus optional Creator data families are absent after auth/workspace cascade. Disclosure includes complete account/Workspace/CRM/Social/Creator persona/style/playbook/commercial data, preserves optional-not-installed honesty, fails closed on authorized-read errors and strips credentials.
@@ -1136,7 +1136,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
 - Date: 2026-10-07
-- Status: ACCEPTED
+- Status: ACCEPTED; source merged, prior Structured-Offers Staging prerequisites completed.
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Owner: FanMind Builder
@@ -1191,7 +1191,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
-- Status: ACCEPTED
+- Status: ACCEPTED.
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
 - Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
@@ -1311,7 +1311,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Orchestrator task_id: fanmind-product-roadmap-continuation-20261005-01
 - Source: one-time direct authenticated Chat authorization for exact Draft PR #1280, explicitly approved by the Owner at 2026-10-05T16:31:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, machine admission, workflow reservation or a schema-valid canonical accepted_handoff.
 - Risk: R3
-- Status: ACCEPTED
+- Status: ACCEPTED; repository source consumed.
 - Work lock: LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
 - Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR #1280 starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
 - Scope: continue only PR #1280; repair and complete `scripts/fanmind_next_best_action.py`, add truthful roadmap references to `project-memory/NEXT_BEST_ACTIONS.json`, regenerate `project-memory/NEXT_BEST_ACTION.md`, retain the existing bounded `project-memory/PROTOCOL.md` update and add only this task's minimum coordination evidence.
@@ -1326,7 +1326,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: normal reviewed repository revert only; no external state is changed.
 ## FM-CHATADMIN-NATURAL-CONTEXT-20261012-01
 - Date: 2026-10-12; Risk: R3 repository-only under FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001.
-- Status: COUNTERCHECKED_SOURCE_ONLY
+- Status: COUNTERCHECKED_SOURCE_ONLY; lock `LOCK-FM-CHATADMIN-NATURAL-CONTEXT-20261012`.
 - Owner: Codex, direct Owner request to implement the discussed natural Character conversation and inspect current ChatAdmin completion.
 - Baseline: `613e452ced0105da4c718b3d4aafb30f77c88ff4`; no open PR overlaps the reply-policy/offer/context-test scope. The existing Staging harness lock remains separately held.
 - Change: omit unused AI alternatives from model dialogue, preserve full atomic history IDs and Fan knowledge, answer compliments without obligatory questions/sales, retain Character-specific writing fields and prevent pure media compliments from releasing prices.
@@ -1442,7 +1442,7 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 ## FM-SUPPORT-1350-STAGING-PREFLIGHT — synthetic repair acceptance preparation
 - Date: 2026-10-25
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
 - Updated: 2026-10-31
 - Risk: R3
 - Lock: LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
