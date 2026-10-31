@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { scanWorkflowPolicy } from "../scripts/verify-actions-pinned.mjs";
 
-const CODEQL_V4_37_7_SHA = "ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd";
+const CODEQL_V4_37_9_SHA = "cdf488f595d80d6e07e03d4674febd5ab45fa938";
 const SETUP_JAVA_V6_0_1_SHA =
   "de7274f081f381c8f8158605e0321c36c376e2e6";
 const HOSTED_CHECKOUT_V7_0_1_SHA =
@@ -347,20 +347,20 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   );
 });
 
-test("CodeQL init and analyze use the same reviewed v4.37.7 commit and minimal permissions", async () => {
+test("CodeQL init and analyze use the same reviewed v4.37.9 commit and minimal permissions", async () => {
   const [source, reader] = await Promise.all([
     readFile(".github/workflows/codeql.yml", "utf8"),
     readFile("docs/security/SUPPLY_CHAIN.md", "utf8"),
   ]);
   const initMatch = source.match(
-    /github\/codeql-action\/init@([0-9a-f]{40})\s+#\s+v4\.37\.7/u,
+    /github\/codeql-action\/init@([0-9a-f]{40})\s+#\s+v4\.37\.9/u,
   );
   const analyzeMatch = source.match(
-    /github\/codeql-action\/analyze@([0-9a-f]{40})\s+#\s+v4\.37\.7/u,
+    /github\/codeql-action\/analyze@([0-9a-f]{40})\s+#\s+v4\.37\.9/u,
   );
 
-  assert.equal(initMatch?.[1], CODEQL_V4_37_7_SHA);
-  assert.equal(analyzeMatch?.[1], CODEQL_V4_37_7_SHA);
+  assert.equal(initMatch?.[1], CODEQL_V4_37_9_SHA);
+  assert.equal(analyzeMatch?.[1], CODEQL_V4_37_9_SHA);
   assert.equal(initMatch?.[1], analyzeMatch?.[1]);
   assert.match(source, /queries: security-extended/u);
   assert.match(source, /security-events: write/u);
@@ -369,12 +369,12 @@ test("CodeQL init and analyze use the same reviewed v4.37.7 commit and minimal p
   assert.match(
     reader,
     new RegExp(
-      `github/codeql-action[^\\n]+${CODEQL_V4_37_7_SHA}[^\\n]+v4\\.37\\.7`,
+      `github/codeql-action[^\\n]+${CODEQL_V4_37_9_SHA}[^\\n]+v4\\.37\\.9`,
       "u",
     ),
   );
-  assert.equal([...reader.matchAll(/4\.37\.7/gu)].length, 2);
-  assert.doesNotMatch(reader, /4\.37\.6/u);
+  assert.equal([...reader.matchAll(/4\.37\.9/gu)].length, 2);
+  assert.doesNotMatch(reader, /4\.37\.7/u);
 });
 
 test("native CI and supply-chain reader use the reviewed setup-java v6.0.1 commit", async () => {
