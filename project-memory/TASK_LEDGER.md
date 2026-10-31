@@ -1,3 +1,7 @@
+## 2026-10-31 active-state reconciliation
+- Issue #1048 was reconciled against current main `890c9889f05fcc6aa3bb1f0562e54b582f252964`, current open PR/issue state, the active branch ruleset, the 2026-10-31 read-only Production audit and current finishline evidence.
+- Aggregate states below remain open unless exact completion evidence exists. Refreshing `Updated` records review, not acceptance, deployment, provider approval or protected authorization.
+
 ## FM-CHATADMIN-003 — persistente Fans je Character — 2026-09-27
 - Risk/Status: R3 / IMPLEMENTED_NOT_VERIFIED for the end-to-end feature; repository postflight correction remains IN_PROGRESS pending resolution of the latest independent review findings and exact-head gates.
 - PR #1221 merged as `aa1a69bc254734ca0578d145ae78f6177cd6c7f2`; the follow-up audit found postflight contract gaps. PR #1222 hardens parent authorization and verifies the controlled fan schema contract.
@@ -82,7 +86,7 @@
 - Next: superseded by the accepted/consumed `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package in PR #1209. Preserve the failed VERIFY and consumed source/catalog/generator evidence; no unchanged retry or learning APPLY is admitted.
 
 ## FM-CHATADMIN-002 — manual application-flow completion — 2026-09-26
-- Status: ACCEPTED; Risk: R4; Action: NBA-CHATADMIN-MANUAL-FLOW.
+- Status: ACCEPTED
 - Authorization: FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926 CONSUMED; lock LOCK-FM-CHATADMIN-MANUAL-FLOW-20260926 RELEASED.
 - Result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
 - Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
@@ -647,12 +651,12 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - 2026-09-19 real browser closeout: #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed current-head checks/review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed. The owner then confirmed the same already-granted account reaches CRM rather than `/billing/start`. FM-CR-043 is PRODUCTION_CONFIRMED. FM-REG-003 remains IN_PROGRESS only for the separately missing synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle; no further real grants until that acceptance is completed.
 
 ## FM-CHATADMIN-001 — isolated multi-character Owner exception
-- Status: IMPLEMENTED_FOR_PR; Risk: R3; Decision: FM-DEC-022.
+- Status: IMPLEMENTED_FOR_PR
 - Exact one-Workspace default-off capability, controlled unapplied Character data contract, capability-hidden UI, manual measured Copy-&-Open reply path, disclosure/deletion coverage and security negatives prepared without changing normal Creator/Admin/CRM behavior.
 - Publication gates: full local checks, one bounded PR, Current-Head CI/CodeQL/Browser E2E and independent review without P1/P2. No target apply or self-merge.
 
 ## FM-CHATADMIN-002 — controlled Staging rollout
-- Status: ACCEPTED; Risk: R4; Decision: FM-DEC-022 / FM-DEC-024; Updated: 2026-09-26.
+- Status: ACCEPTED
 - Completed Staging gates: source/VERIFY/God Mode, schema APPLY, synthetic DB/RLS ACCEPT and distinct actual manual application flow are consumed.
 - Actual manual result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
 - Historical DB-only run `36238536613`, attempt 2 / job `108396358120`, emitted `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; that immutable output remains correct for its DB-only scope.
@@ -689,20 +693,20 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 
 ## FM-CHATADMIN-SCROLL-20261004 — fixed composer with isolated conversation scroll
-- Status: IMPLEMENTED_FOR_PR; Risk: R1; PR: #1267.
+- Status: IMPLEMENTED_FOR_PR
 - Goal/result: On desktop, only the ChatAdmin conversation/history and generated reply area scrolls; the “Neue eingehende Fan-Nachricht” composer and “3 KI-Antworten erzeugen” action remain fixed and visible. Mobile retains document-flow behavior.
 - Scope: client layout only in ChatAdmin plus regression coverage; no API, database, authorization, AI-provider, billing, send, staging or production mutation.
 - Verification: Browser E2E passed on the original PR head. Operations regression was updated to assert the intentional .conversationScroll boundary instead of the superseded .conversationPane scroll rule. Current-head CI and Project Memory Guard must pass before merge.
 
 
 ## FM-CHATADMIN-USED-SUGGESTION-20261007 — mark confirmed AI suggestion as used
-- Status: IMPLEMENTED_FOR_PR; Risk: R1; PR: #1288.
+- Status: IMPLEMENTED_FOR_PR
 - Goal/result: Preserve the existing `Antwort kopieren` and `Als manuell gesendet bestätigen` actions while marking the matching confirmed AI suggestion in conversation history as `Verwendeter KI-Vorschlag`.
 - Scope: ChatAdmin client presentation/derived state only. Builds on current `main`; does not restore the conflicting combined-button flow from #1283 and does not alter customer classification, extended learning, sales strategy, composer scroll behavior, API, database, authorization, AI-provider, billing, send, Staging or Production behavior.
 - Verification: Project Memory Guard required this ledger update because the PR contains a meaningful repository change. FanMind CI and Browser E2E must pass on the updated PR head before merge.
 
 ## FM-CREATOR-BUILDING-REGRESSIONS-20261007 — restore integrated Creator-Building flow
-- Status: IMPLEMENTED_FOR_PR; Risk: R2; PR: #1289.
+- Status: IMPLEMENTED_FOR_PR
 - Goal/result: Restore independent Character-editor scrolling and reachability of Character-bound offer/price rules; combine copy and existing manual-confirmation in one action; make existing Character, Fan, learned preference and conversation context drive three semantically relevant reply strategies.
 - Scope: Repository-only UI, prompt, validation and regression tests. Reuses Character `sales_rules`, canonical fan analysis, the existing confirmation path and used-suggestion marker; no new learning store, schema, database apply, external send, Production, Billing, Stripe, provider or social-platform mutation.
 - Verification: Focused policy, syntax and whitespace checks passed locally. Exact-head FanMind CI, Browser E2E, CodeQL and Project Memory checks remain required before merge.
