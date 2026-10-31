@@ -104,3 +104,35 @@ test("known-interest guard preserves detail, reconfirmation, quotations, hypothe
  assert.ok(!assessReplyQuality(["Magst du Musik?","Was machst du gerne?","Erzähl mir etwas von dir."]).includes("known_interest_question"),"calls without facts stay unchanged");
 });
 
+test("all finite known-interest questions reject every allowed neutral wrapper for positive and negative facts", () => {
+ const prefixes=["","Danke!","Alles klar.","Thanks!","All right."];
+ const suffixes=["","Danke!","Thanks!"];
+ for(const [topic,de,en] of [
+  ["music","Musik","music"],["cats","Katzen","cats"],["dogs","Hunde","dogs"],
+  ["travel","Reisen","travel"],["sports","Sport","sports"],["photos","Fotos","photos"],
+  ["videos","Videos","videos"],["cooking","Kochen","cooking"],
+ ]){
+  for(const question of [
+   `Magst du ${de}?`,`Liebst du ${de}?`,`Interessierst du dich für ${de}?`,
+   `Do you like ${en}?`,`Do you love ${en}?`,`Are you interested in ${en}?`,
+  ]){
+   for(const prefix of prefixes)for(const suffix of suffixes)for(const polarity of ["positive","negative"]){
+    const wrapped=[prefix,question,suffix].filter(Boolean).join(" ");
+    assert.ok(assessReplyQuality([wrapped,...fresh.slice(1)],[],[{topic,polarity}]).includes("known_interest_question"),wrapped);
+   }
+  }
+ }
+});
+
+test("known-interest wrappers stay exact and do not consume extra sentences or repeated wrappers", () => {
+ const known=[{topic:"music",polarity:"positive"}];
+ for(const reply of [
+  "Danke! Danke! Magst du Musik?",
+  "Magst du Musik? Danke! Thanks!",
+  "Danke! Magst du Musik? Das frage ich nur aus Interesse.",
+  "Vorab danke! Magst du Musik?",
+  "Alles klar. Welche Musik hörst du gerne? Danke!",
+ ]){
+  assert.ok(!assessReplyQuality([reply,...fresh.slice(1)],[],known).includes("known_interest_question"),reply);
+ }
+});
