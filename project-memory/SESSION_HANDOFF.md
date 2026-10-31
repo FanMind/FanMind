@@ -1,3 +1,11 @@
+## Current handoff — Project Memory reconciled — 2026-10-31
+- Exact source baseline: `main@890c9889f05fcc6aa3bb1f0562e54b582f252964`; issue #1048 reviewed against current GitHub, active ruleset and read-only Production evidence.
+- Governance: ruleset `24945113` is active on the default branch with strict PR/check enforcement and no bypass for the connected actor. The historical owner activation action is complete.
+- Runtime truth: Production audit passed on release `dc269fd80407bfa2a3e1885e19e432b0ebaed68e`; main is 231 commits ahead. Reboot-required, boot-runner binding and Full-backup age remain Operations/pilot-readiness follow-ups, with no protected action authorized here.
+- Work truth: consumed source records are closed/superseded; aggregate external/protected gates remain open. Open PR cleanup remains a separate bounded task.
+- Exact next action after this repository-only reconciliation: the existing owner-gated read-only Creator target drift diagnosis on the then-current main. Do not infer APPLY/runtime authorization.
+- Safety: no deploy, workflow dispatch, database, provider, payment, secret, permission or customer-data action occurred.
+
 ## Current handoff — Creator drift diagnosis owner-gated — 2026-09-27
 - Current action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` / FM-CREATOR-001 remains IN_PROGRESS overall, but no Builder worker is active.
 - Source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` passed exact-head CI/review and merged normally as current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.

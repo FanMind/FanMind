@@ -1,3 +1,11 @@
+## Current reconciled project state — 2026-10-31
+- Repository main is `890c9889f05fcc6aa3bb1f0562e54b582f252964`; the latest bounded ChatAdmin relationship/purchase guard is merged. Its triggered main checks (God Mode, Browser E2E and CodeQL) completed successfully.
+- GitHub ruleset `24945113` actively protects `main` with pull-request flow, conversation resolution and twelve strict status contexts; deletion/non-fast-forward updates are blocked and the connected actor has no bypass.
+- The 2026-10-31 read-only Production audit passed and reported release `dc269fd80407bfa2a3e1885e19e432b0ebaed68e`, eight healthy components, PM2/nginx/login healthy, 11 local complete backup pairs and 331 offsite pairs. Main is 231 commits ahead of that release. The same audit reported `PRODUCTION_REBOOT_REQUIRED=true`, `PRODUCTION_BOOT_READINESS_VERIFIED=false`, `PRODUCTION_BOOT_RUNNER_BOUND=false` and a 151.92-hour Full backup; these are open Operations/pilot-readiness facts, not authorization to deploy, reboot or mutate Production.
+- Thirteen pull requests were open during reconciliation. #1379 and stacked #1381 are the only current mergeable non-superseded Draft candidates; #1045 is superseded by merged #1046. The remaining open PRs are stale, parked, blocked or conflict with current main and require separate bounded disposition.
+- Issue #1048 active records were reviewed. Completed source increments are closed/superseded in Started Work; aggregate Restore, Mobile, AI/Billing, Meta/Security, Social, Sales, Legal, Registration and Website-runtime gates remain open exactly where external or protected acceptance is missing.
+- `sales_ready=false` remains correct. The generated next action remains the owner-gated read-only Creator target drift diagnosis; this reconciliation performs no Staging/Production/provider/database action and grants no protected authority.
+
 ## Known-fact question diagnosis reconciled on Current Facts — 2026-10-26
 - PR #1341's unique finding is revalidated against merged Current Facts: source currentness and explicit withdrawal are distinguishable when the default-off store is enabled, but the shared reply-quality gate remains fact-context-free and can accept a redundant broad question. Legitimate detail questions remain allowed; manual/unconfirmed notes remain non-authoritative.
 - This is a repository diagnostic baseline, not model-frequency evidence or runtime acceptance. No production source, schema/RLS/ACL, feature flag, provider, database or deployment change. Exact-head CI and independent R3 countercheck belong to the integration PR metadata.
@@ -685,7 +693,7 @@ These live facts can drift. Revalidate runner group/workflow allowlist/JIT state
 
 ## Governance posture
 
-GitHub `main` is currently **not branch-protected**. This is known and remains a deferred owner/governance action; do not falsely report enforced PR/status-check protection.
+GitHub `main` is protected by active ruleset `24945113`. The verified contract requires pull requests, conversation resolution and twelve strict checks; deletion/non-fast-forward updates are blocked and the connected actor has no bypass. Do not weaken this enforcement or infer runtime/protected authorization from it.
 
 ## Do not repeat by default
 
@@ -716,7 +724,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-CREATOR-001:** the merged transition source remains fail-closed because target state is known `DRIFT`. The next action is owner-gated and read-only: after the current reconciliation merges, post `run-creator-target-drift-diagnosis <then-current-main-sha>` on issue #874 using that then-current main SHA. Consume the bounded differing-section/blocker result, implement and review only the proven remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation. Production remains forbidden.
+1. **FM-CREATOR-001:** the merged transition source remains fail-closed because target state is known `DRIFT`. The next action is owner-gated and read-only: post `run-creator-target-drift-diagnosis <then-current-main-sha>` once on the then-current protected `main` on issue #874 using that then-current main SHA. Consume the bounded differing-section/blocker result, implement and review only the proven remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation. Production remains forbidden.
 2. **FM-REG-003:** preserve the accepted existing real 0-EUR account. Its distinct synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle remains the next owner/platform action after the Creator target/runtime action; do not re-register or re-grant the real account.
 3. **FM-CHATADMIN-002:** manual application flow and independent cleanup are accepted. VERIFY/APPLY/DB ACCEPT/manual acceptance are consumed; do not repeat them solely because main advances. The next real admin test is a distinct post-runtime product-flow acceptance, not a repeat of the consumed synthetic ChatAdmin gate.
 4. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.

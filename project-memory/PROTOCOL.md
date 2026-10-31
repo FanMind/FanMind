@@ -29,8 +29,8 @@ Do not require the complete legacy preflight merely because a task is substantiv
 
 ### Branch protection
 - `BRANCH_PROTECTION_CONTRACT.json` defines the required remote `main` protection/ruleset contract.
-- Remote protection is currently owner-deferred because the connected GitHub app cannot configure rulesets/branch protection.
-- Until remote enforcement exists, agents must still use branch + PR and may not treat the unprotected branch as permission for direct `main` writes.
+- Remote protection is active through GitHub ruleset `24945113` (`FanMind main – PR and CI protection`) as verified on 2026-10-31.
+- The ruleset requires pull requests, conversation resolution and strict required checks; deletion and non-fast-forward updates are blocked, and the current connected actor has no bypass. Repository policy still governs the exact required workflow and may be stricter than remote enforcement.
 
 ### Evidence freshness / no stale success
 - `EVIDENCE_TTL_POLICY.json` defines TTLs only for mutable evidence classes.

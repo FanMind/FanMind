@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-05",
+  "updated": "2026-10-31",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
     {
@@ -468,7 +468,7 @@
         { "phase": 7, "label": "Creator-Profile & getrenntes Fanwissen" },
         { "phase": 7, "label": "Kaufdaten & Lernen aus bestätigten Chats" }
       ],
-      "instruction": "PR #1214 source/recovery correction is ACCEPTED on exact main bc85493f8fc25ff90c965208bd20c7dc64641158 (final head 9ad10f2600d9b0b829f052287f81a202ef933383). Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step is owner/platform-gated: After this reconciliation merges, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874, using that then-current main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
+      "instruction": "PR #1214 source/recovery correction remains ACCEPTED on merge bc85493f8fc25ff90c965208bd20c7dc64641158. Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step remains owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874 using the then-current protected main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
       "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
     }
   ],
