@@ -120,7 +120,7 @@ Nach getrenntem Deployment sind neue Mehrturn-Dialoge zu bewerten: Beratung,
 Service, Reklamation, Kompliment, Kaufanfrage, Einwand, Absage, Erinnerung,
 Themenwechsel, KI-Frage, Grenze und Gesprächsende; jeweils mit unterschiedlichen
 freigegebenen Stilen und mindestens Deutsch/Englisch. Rohtexte echter Bewertungen
-bleiben gemäß `operations/AI_REPLY_QUALITY_EVAL.md` außerhalb Git. Bewerten:
+bleiben gemäß `docs/operations/AI_REPLY_QUALITY_EVAL.md` außerhalb Git. Bewerten:
 konkrete Antwort, Kontinuität, Stimme, unnötige Wiederholung, richtige Fakten,
 passender nächster Schritt und Druckfreiheit. Keine erfundenen Qualitätsnoten.
 
