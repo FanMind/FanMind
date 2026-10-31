@@ -329,13 +329,13 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     hostedWorkflows.find((workflow) => workflow.file === ORCHESTRATOR_DISPATCH_WORKFLOW)?.checkoutShas,
     [HOSTED_CHECKOUT_V7_0_1_SHA],
   );
-  assert.equal(hostedWorkflows.length, 74);
+  assert.equal(hostedWorkflows.length, 75);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    81,
+    83,
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
