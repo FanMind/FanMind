@@ -171,6 +171,20 @@
  select boerns_agent_claims.rotate_epoch_after_restore('LOCAL_GATE_RACE_TEST');
  SQL
  ) &
+@@ -211,13 +237,12 @@
+   if (select service_enabled from boerns_agent_claims.control_state where singleton) then
+     raise exception 'service remained enabled after restore race';
+   end if;
+   if exists (
+     select 1 from boerns_agent_claims.claims
+      where state = 'CLAIMED'
+-        or holder_agent_id is not null
+         or lease_expires_at is not null
+   ) then
+     raise exception 'restore race left an authoritative live lease';
+   end if;
+ end
+ $assert$;
 --- a/tests/25_empty_rollback_race.sh
 +++ b/tests/25_empty_rollback_race.sh
 @@ -7,8 +7,28 @@
