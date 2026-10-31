@@ -146,19 +146,5 @@ Updated: 2026-09-07 Europe/Vienna
 - Canonical contract: `BRANCH_PROTECTION_CONTRACT.json`.
 
 
-- Status: DEFERRED_BY_OWNER.
-- Current remote fact: `main` is not protected as of 2026-08-19; branch API reports `protected=false` and no required status checks.
-- Why deferred: the connected GitHub app can read the branch protection state but exposes no write action for Branch Protection or Rulesets.
-- Required remote settings are defined in `BRANCH_PROTECTION_CONTRACT.json`.
-- Deferred actions:
-  1. Enable protection/ruleset for `main`.
-  2. Require pull requests for changes to `main`.
-  3. Require the listed FanMind/Project-Memory status checks.
-  4. Block force pushes and branch deletion.
-  5. Require conversation resolution.
-  6. Do not allow routine direct pushes to `main`.
-- Resume rule: perform this once together when convenient. Until then, agents must still follow the repository branch+PR policy even though GitHub does not technically enforce it.
-- Safety: do not weaken or remove existing checks in order to make the ruleset easier to satisfy.
-
 ## General rule
 When a FanMind finishline action requires owner-only UI access, external provider approval, payment authorization, legal/tax evidence or another capability unavailable to the assistant, record it here and continue with unrelated safe work. Do not repeatedly interrupt the owner with the same deferred request.
