@@ -1,0 +1,256 @@
+--- a/TEST_AND_ROLLBACK_PLAN.md
++++ b/TEST_AND_ROLLBACK_PLAN.md
+@@ -20,13 +20,21 @@
+ psql "$DATABASE_URL" -f tests/00_local_database_preflight.sql
+ psql "$DATABASE_URL" -f 20261028_01_create_boerns_agent_claims.sql
+ psql "$DATABASE_URL" -f tests/10_functional_smoke.sql
+-DATABASE_URL="$DATABASE_URL" tests/20_concurrent_acquire.sh
+-DATABASE_URL="$DATABASE_URL" tests/25_empty_rollback_race.sh
++ARTIFACT_DIR="$PWD/artifacts/concurrent" DATABASE_URL="$DATABASE_URL" \
++  tests/20_concurrent_acquire.sh
++ARTIFACT_DIR="$PWD/artifacts/empty-rollback" \
++  ROLLBACK_DATABASE_URL="$ROLLBACK_DATABASE_URL" \
++  tests/25_empty_rollback_race.sh
+ node --test tests/30_adapter_error_mapping.test.mjs
+ ```
+ 
+-`DATABASE_URL` must point to a disposable environment. It must never point to
+-FanMind production under the current authorization.
++`DATABASE_URL` and `ROLLBACK_DATABASE_URL` must point to two separately
++initialized, disposable PostgreSQL 17 clusters, not merely two databases in one
++cluster. PostgreSQL roles are cluster-global, and each forward migration
++requires the claim roles to be absent. Neither URL may point to FanMind
++production under the current authorization. Each `ARTIFACT_DIR` must name a new,
++non-existing local directory so raw output and the harness exit code cannot be
++overwritten by a later run.
+ 
+ ## Assertions
+ 
+--- a/tests/10_functional_smoke.sql
++++ b/tests/10_functional_smoke.sql
+@@ -187,12 +187,13 @@
+   '10000000-0000-0000-0000-000000000019', 120
+ ) as renew_response \gset
+ reset role;
++insert into test_context values ('acquire', :'acquire_response'::jsonb);
+ 
+ -- A foreign existing claim and an unknown claim_id must be indistinguishable.
+ set role boerns_claims_runtime;
+ do $renew_enumeration_resistance$
+ declare
+-  v_acquire jsonb := :'acquire_response'::jsonb;
++  v_acquire jsonb := (select value from test_context where key = 'acquire');
+   v_foreign_rejected boolean := false;
+   v_unknown_rejected boolean := false;
+ begin
+@@ -228,7 +229,6 @@
+ reset role;
+ 
+ insert into test_context values
+-  ('acquire', :'acquire_response'::jsonb),
+   ('acquire_replay', :'acquire_replay'::jsonb),
+   ('acquire_observed', :'acquire_observed'::jsonb),
+   ('read', :'read_response'::jsonb),
+--- a/tests/20_concurrent_acquire.sh
++++ b/tests/20_concurrent_acquire.sh
+@@ -4,8 +4,28 @@
+ 
+ : "${DATABASE_URL:?DATABASE_URL must point to a disposable PostgreSQL 17 database}"
+ 
++: "${ARTIFACT_DIR:?ARTIFACT_DIR must name a new local directory for raw harness evidence}"
++
++if ! mkdir -- "$ARTIFACT_DIR"; then
++  printf 'ARTIFACT_DIR must not already exist: %s\n' "$ARTIFACT_DIR" >&2
++  exit 1
++fi
+ tmp_dir="$(mktemp -d)"
+-trap 'rm -rf "$tmp_dir"' EXIT
++preserve_raw_logs() {
++  local status=$?
++  local copy_status=0
++  trap - EXIT
++  set +e
++  printf '%s\n' "$status" >"$tmp_dir/harness.exitcode"
++  cp -a "$tmp_dir/." "$ARTIFACT_DIR/"
++  copy_status=$?
++  rm -rf "$tmp_dir"
++  if (( status == 0 && copy_status != 0 )); then
++    status=$copy_status
++  fi
++  exit "$status"
++}
++trap preserve_raw_logs EXIT
+ 
+ wait_for_barrier() {
+   local prefix="$1"
+@@ -22,13 +42,19 @@
+   return 1
+ }
+ 
++count_exact_lines() {
++  local expected="$1"
++  shift
++  awk -v expected="$expected" '$0 == expected { count++ } END { print count + 0 }' "$@"
++}
++
+ # Eight concurrent offers must create one row and one OFFERED audit event.
+ for i in 1 2 3 4 5 6 7 8; do
+   request_id="20000000-0000-0000-0000-$(printf '%012d' "$i")"
+   (
+     touch "$tmp_dir/offer.$i.ready"
+     while [[ ! -e "$tmp_dir/offer.go" ]]; do sleep 0.01; done
+-    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/offer.$i.out"
++    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/offer.$i.out" 2>&1
+ set role boerns_claims_runtime;
+ select boerns_agent_claims.offer(
+   'https://claims.test.local', 'subject-bt001',
+@@ -41,8 +67,8 @@
+ touch "$tmp_dir/offer.go"
+ wait
+ 
+-offered_count="$(grep -hxc 'OFFERED' "$tmp_dir"/offer.*.out || true)"
+-existing_count="$(grep -hxc 'ALREADY_EXISTS' "$tmp_dir"/offer.*.out || true)"
++offered_count="$(count_exact_lines 'OFFERED' "$tmp_dir"/offer.*.out)"
++existing_count="$(count_exact_lines 'ALREADY_EXISTS' "$tmp_dir"/offer.*.out)"
+ if [[ "$offered_count" != "1" || "$existing_count" != "7" ]]; then
+   printf 'Expected 1 OFFERED and 7 ALREADY_EXISTS, got %s and %s\n' \
+     "$offered_count" "$existing_count" >&2
+@@ -56,7 +82,7 @@
+   (
+     touch "$tmp_dir/acquire.$i.ready"
+     while [[ ! -e "$tmp_dir/acquire.go" ]]; do sleep 0.01; done
+-    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/acquire.$i.out"
++    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/acquire.$i.out" 2>&1
+ set role boerns_claims_runtime;
+ select boerns_agent_claims.acquire(
+   'https://claims.test.local', 'subject-bt006',
+@@ -69,8 +95,8 @@
+ touch "$tmp_dir/acquire.go"
+ wait
+ 
+-acquired_count="$(grep -hxc 'ACQUIRED' "$tmp_dir"/acquire.*.out || true)"
+-observed_count="$(grep -hxc 'ALREADY_CLAIMED' "$tmp_dir"/acquire.*.out || true)"
++acquired_count="$(count_exact_lines 'ACQUIRED' "$tmp_dir"/acquire.*.out)"
++observed_count="$(count_exact_lines 'ALREADY_CLAIMED' "$tmp_dir"/acquire.*.out)"
+ if [[ "$acquired_count" != "1" || "$observed_count" != "7" ]]; then
+   printf 'Expected 1 ACQUIRED and 7 ALREADY_CLAIMED, got %s and %s\n' \
+     "$acquired_count" "$observed_count" >&2
+@@ -92,7 +118,7 @@
+   (
+     touch "$tmp_dir/same.$i.ready"
+     while [[ ! -e "$tmp_dir/same.go" ]]; do sleep 0.01; done
+-    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' >"$tmp_dir/same.$i.out"
++    psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' >"$tmp_dir/same.$i.out" 2>&1
+ set role boerns_claims_runtime;
+ select boerns_agent_claims.acquire(
+   'https://claims.test.local', 'subject-bt006',
+@@ -106,7 +132,7 @@
+ touch "$tmp_dir/same.go"
+ wait
+ 
+-same_count="$(grep -hxc 'ACQUIRED' "$tmp_dir"/same.*.out || true)"
++same_count="$(count_exact_lines 'ACQUIRED' "$tmp_dir"/same.*.out)"
+ if [[ "$same_count" != "8" ]]; then
+   printf 'Expected 8 identical ACQUIRED responses, got %s\n' "$same_count" >&2
+   grep -H . "$tmp_dir"/same.*.out >&2 || true
+@@ -159,7 +185,7 @@
+ same_claim_id="$(psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 -c \
+   "select claim_id from boerns_agent_claims.claims where task_id = 'SYNTH-SAME-REQUEST' and step_id = 'T1' and revision = 1")"
+ (
+-  psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/gate_reader.out"
++  psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<SQL >"$tmp_dir/gate_reader.out" 2>&1
+ begin;
+ set role boerns_claims_runtime;
+ select boerns_agent_claims.read(
+@@ -183,7 +209,7 @@
+ fi
+ 
+ (
+-  psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' >"$tmp_dir/rotate.out"
++  psql "$DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' >"$tmp_dir/rotate.out" 2>&1
+ select boerns_agent_claims.rotate_epoch_after_restore('LOCAL_GATE_RACE_TEST');
+ SQL
+ ) &
+--- a/tests/25_empty_rollback_race.sh
++++ b/tests/25_empty_rollback_race.sh
+@@ -7,8 +7,28 @@
+ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ forward_sql="$root_dir/20261028_01_create_boerns_agent_claims.sql"
+ rollback_sql="$root_dir/20261028_01_drop_boerns_agent_claims.sql"
++: "${ARTIFACT_DIR:?ARTIFACT_DIR must name a new local directory for raw harness evidence}"
++
++if ! mkdir -- "$ARTIFACT_DIR"; then
++  printf 'ARTIFACT_DIR must not already exist: %s\n' "$ARTIFACT_DIR" >&2
++  exit 1
++fi
+ tmp_dir="$(mktemp -d)"
+-trap 'rm -rf "$tmp_dir"' EXIT
++preserve_raw_logs() {
++  local status=$?
++  local copy_status=0
++  trap - EXIT
++  set +e
++  printf '%s\n' "$status" >"$tmp_dir/harness.exitcode"
++  cp -a "$tmp_dir/." "$ARTIFACT_DIR/"
++  copy_status=$?
++  rm -rf "$tmp_dir"
++  if (( status == 0 && copy_status != 0 )); then
++    status=$copy_status
++  fi
++  exit "$status"
++}
++trap preserve_raw_logs EXIT
+ 
+ run_rollback() {
+   psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
+@@ -18,8 +38,10 @@
+ }
+ 
+ psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 \
+-  -f "$root_dir/tests/00_local_database_preflight.sql"
+-psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$forward_sql"
++  -f "$root_dir/tests/00_local_database_preflight.sql" \
++  >"$tmp_dir/preflight.out" 2>&1
++psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$forward_sql" \
++  >"$tmp_dir/forward.out" 2>&1
+ 
+ # Writer-first race: rollback must wait, then count the committed row and abort.
+ (
+@@ -33,7 +55,7 @@
+ \! while [ ! -e '$tmp_dir/writer.go' ]; do sleep 0.01; done
+ commit;
+ SQL
+-) &
++) >"$tmp_dir/writer.out" 2>&1 &
+ writer_pid=$!
+ 
+ for _ in $(seq 1 500); do
+@@ -53,7 +75,8 @@
+   exit 1
+ fi
+ 
+-psql "$ROLLBACK_DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' |
++psql "$ROLLBACK_DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' \
++  >"$tmp_dir/writer_first_check.out" 2>&1
+ select case
+   when to_regnamespace('boerns_agent_claims') is not null
+    and (select count(*) from boerns_agent_claims.principals) = 1
+@@ -61,7 +84,7 @@
+   else 'WRITER_FIRST_FAIL'
+ end;
+ SQL
+-grep -qx WRITER_FIRST_PASS
++grep -qx WRITER_FIRST_PASS "$tmp_dir/writer_first_check.out"
+ 
+ psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 \
+   -c "delete from boerns_agent_claims.principals where agent_id = 'BT-006'"
+@@ -76,7 +99,7 @@
+ \! while [ ! -e '$tmp_dir/blocker.go' ]; do sleep 0.01; done
+ commit;
+ SQL
+-) &
++) >"$tmp_dir/blocker.out" 2>&1 &
+ blocker_pid=$!
+ 
+ for _ in $(seq 1 500); do
+
