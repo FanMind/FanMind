@@ -158,6 +158,8 @@ test("relationship manipulation guard preserves compliments, factual sales, unli
   "Das Set kannst du für 25 EUR kaufen.", "The price is 25 EUR if you want to buy it.",
   "Ich mag dich. Wenn du kaufen möchtest, kostet das Set 25 EUR.",
   "I like you. If you want to buy, the price is 25 EUR.",
+  "Ich mag dich, und wenn du kaufen möchtest, kostet das Set 25 EUR.",
+  "I like you, and if you want to buy, the set costs 25 EUR.",
   "Du bist meine beste Kundin.", "I'm only here for you until support arrives.",
   'Zitat: "Du gehörst mir."', 'They wrote: "I love you if you buy."',
   "Hypothetisch: Du gehörst mir.", "If I were to say you belong to me, that would be inappropriate.",

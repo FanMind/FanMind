@@ -59,15 +59,19 @@ const relationalClaims = [
   /^i belong only to you$/u,
   /^you only need me$/u,
 ];
-const affectionClaim = /\b(?:ich (?:liebe|mag) dich|(?:liebe|mag) ich dich|i (?:love|like|care about) you)\b/u;
-const purchaseCondition = /\b(?:wenn|falls|solange|nur wenn|if|when|as long as|only if)\b.*\b(?:kaufst|zahlst|bezahlst|bestellst|buy|purchase|pay|order)\b|\b(?:kaufst|zahlst|bezahlst|bestellst|buy|purchase|pay|order)\b.*\b(?:wenn|falls|solange|nur wenn|if|when|as long as|only if)\b/u;
+const purchaseConditionedAffection = [
+  /\bich (?:liebe|mag) dich (?:wenn|falls|solange|nur wenn) du (?:kaufst|zahlst|bezahlst|bestellst)\b/u,
+  /\b(?:wenn|falls|solange|nur wenn) du (?:kaufst|zahlst|bezahlst|bestellst) (?:dann )?(?:liebe|mag) ich dich\b/u,
+  /\bi (?:love|like|care about) you (?:if|when|as long as|only if) you (?:buy|purchase|pay|order)\b/u,
+  /\b(?:if|when|as long as|only if) you (?:buy|purchase|pay|order) (?:then )?i (?:love|like|care about) you\b/u,
+];
 function hasRelationshipManipulation(value) {
   const unquoted = value.normalize("NFKC").replace(quotedPassages, " ");
   return unquoted.split(/[.!?;\n]+/u).some(part => {
     const statement = normalize(part);
     if (!statement || hypotheticalOpening.test(statement)) return false;
     return relationalClaims.some(pattern => pattern.test(statement))
-      || (affectionClaim.test(statement) && purchaseCondition.test(statement));
+      || purchaseConditionedAffection.some(pattern => pattern.test(statement));
   });
 }
 function nearCopy(left, right) {
