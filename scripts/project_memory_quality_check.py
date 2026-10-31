@@ -213,11 +213,21 @@ else:
 branch_contract = json.loads((PM / "BRANCH_PROTECTION_CONTRACT.json").read_text(encoding="utf-8"))
 if branch_contract.get("branch") != "main" or branch_contract.get("require_pull_request") is not True:
     errors.append("branch-protection-contract-invalid")
-if branch_contract.get("owner_activation") != "DEFERRED_OWNER_ACTION":
-    errors.append("branch-protection-owner-boundary-not-recorded")
+if (
+    branch_contract.get("current_remote_state") != "ACTIVE_RULESET"
+    or branch_contract.get("ruleset_id") != 24945113
+    or branch_contract.get("enforcement") != "active"
+    or branch_contract.get("current_user_can_bypass") != "never"
+    or branch_contract.get("owner_activation") != "COMPLETED_ACTIVE_RULESET"
+):
+    errors.append("branch-protection-active-ruleset-not-recorded")
 deferred = (PM / "DEFERRED_OWNER_ACTIONS.md").read_text(encoding="utf-8")
-if "FM-GOV-OWNER-001" not in deferred:
-    errors.append("branch-protection-deferred-owner-action-missing")
+governance_action = re.search(
+    r"(?ms)^## FM-GOV-OWNER-001[^\\n]*\\n(.*?)(?=^## |\\Z)",
+    deferred,
+)
+if not governance_action or not re.search(r"(?m)^- Status:\\s*COMPLETED\\.\\s*$", governance_action.group(1)):
+    errors.append("branch-protection-owner-action-not-completed")
 
 for script_name in [
     "fanmind_sales_readiness.py",
