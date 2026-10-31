@@ -223,10 +223,10 @@ if (
     errors.append("branch-protection-active-ruleset-not-recorded")
 deferred = (PM / "DEFERRED_OWNER_ACTIONS.md").read_text(encoding="utf-8")
 governance_action = re.search(
-    r"(?ms)^## FM-GOV-OWNER-001[^\\n]*\\n(.*?)(?=^## |\\Z)",
+    r"(?ms)^## FM-GOV-OWNER-001[^\n]*\n(.*?)(?=^## |\Z)",
     deferred,
 )
-if not governance_action or not re.search(r"(?m)^- Status:\\s*COMPLETED\\.\\s*$", governance_action.group(1)):
+if not governance_action or not re.search(r"(?m)^- Status:\s*COMPLETED\.\s*$", governance_action.group(1)):
     errors.append("branch-protection-owner-action-not-completed")
 
 for script_name in [
