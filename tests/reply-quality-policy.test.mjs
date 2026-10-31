@@ -136,3 +136,34 @@ test("known-interest wrappers stay exact and do not consume extra sentences or r
   assert.ok(!assessReplyQuality([reply,...fresh.slice(1)],[],known).includes("known_interest_question"),reply);
  }
 });
+
+test("relationship manipulation guard rejects bounded DE/EN possession, exclusivity, dependency and purchase-conditioned affection", async () => {
+ const blocked=[
+  "Du gehörst mir.", "Du bist ganz mein.", "Ich bin nur für dich da.", "Du brauchst nur mich.",
+  "Ich liebe dich, wenn du kaufst.", "Wenn du bezahlst, liebe ich dich.",
+  "You belong to me.", "You're mine.", "I'm only here for you.", "You only need me.",
+  "I love you if you buy.", "As long as you pay, I care about you.",
+ ];
+ for(const reply of blocked){
+  const replies=[reply,...fresh.slice(1)];
+  assert.ok(assessReplyQuality(replies).includes("relationship_manipulation"),reply);
+  const h=gateHarness([replies,fresh]);
+  await assert.rejects(h.run,ReplyQualityError);assert.equal(h.calls.length,1,reply);
+ }
+});
+
+test("relationship manipulation guard preserves compliments, factual sales, unlinked warmth, quotations and hypotheticals", () => {
+ for(const reply of [
+  "Du siehst heute toll aus.", "Ich flirte gern respektvoll mit dir.",
+  "Das Set kannst du für 25 EUR kaufen.", "The price is 25 EUR if you want to buy it.",
+  "Ich mag dich. Wenn du kaufen möchtest, kostet das Set 25 EUR.",
+  "I like you. If you want to buy, the price is 25 EUR.",
+  "Ich mag dich, und wenn du kaufen möchtest, kostet das Set 25 EUR.",
+  "I like you, and if you want to buy, the set costs 25 EUR.",
+  "Du bist meine beste Kundin.", "I'm only here for you until support arrives.",
+  'Zitat: "Du gehörst mir."', 'They wrote: "I love you if you buy."',
+  "Hypothetisch: Du gehörst mir.", "If I were to say you belong to me, that would be inappropriate.",
+  "Liebe Grüße nur für dich.", "Kaufen musst du nichts.", "The choice is yours.",
+ ])assert.ok(!assessReplyQuality([reply,...fresh.slice(1)]).includes("relationship_manipulation"),reply);
+});
+

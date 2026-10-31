@@ -45,6 +45,35 @@ for (const [question, topic] of knownInterestQuestions) {
 }
 const stockOpening = value => normalize(value).match(/^(?:ich verstehe|ich kann verstehen|i understand|danke für deine nachricht|thank you for your message|thank you for reaching out|du bist direkt)\b/u)?.[0];
 const substantial = value => value.length >= 80 && value.split(" ").length >= 12;
+const quotedPassages = /["“„][^"”“„]*["”“]/gu;
+const hypotheticalOpening = /^(?:hypothetisch|hypothetically|angenommen|suppose|wenn ich sagen würde|if i said|if i were to say)\b/u;
+const relationalClaims = [
+  /^du gehörst (?:nur )?mir$/u,
+  /^du bist (?:ganz )?mein(?:e|er|es)?$/u,
+  /^you belong to me$/u,
+  /^(?:you are|you re) (?:all )?mine$/u,
+  /^ich (?:bin|bleibe) nur für dich da$/u,
+  /^ich gehöre nur dir$/u,
+  /^du brauchst nur mich$/u,
+  /^i (?:am|m) only (?:here|there) for you$/u,
+  /^i belong only to you$/u,
+  /^you only need me$/u,
+];
+const purchaseConditionedAffection = [
+  /\bich (?:liebe|mag) dich (?:wenn|falls|solange|nur wenn) du (?:kaufst|zahlst|bezahlst|bestellst)\b/u,
+  /\b(?:wenn|falls|solange|nur wenn) du (?:kaufst|zahlst|bezahlst|bestellst) (?:dann )?(?:liebe|mag) ich dich\b/u,
+  /\bi (?:love|like|care about) you (?:if|when|as long as|only if) you (?:buy|purchase|pay|order)\b/u,
+  /\b(?:if|when|as long as|only if) you (?:buy|purchase|pay|order) (?:then )?i (?:love|like|care about) you\b/u,
+];
+function hasRelationshipManipulation(value) {
+  const unquoted = value.normalize("NFKC").replace(quotedPassages, " ");
+  return unquoted.split(/[.!?;\n]+/u).some(part => {
+    const statement = normalize(part);
+    if (!statement || hypotheticalOpening.test(statement)) return false;
+    return relationalClaims.some(pattern => pattern.test(statement))
+      || purchaseConditionedAffection.some(pattern => pattern.test(statement));
+  });
+}
 function nearCopy(left, right) {
   if (!substantial(left) || !substantial(right)) return false;
   const a = new Set(left.split(" ")), b = new Set(right.split(" "));
@@ -68,6 +97,7 @@ export function assessReplyQuality(replies, recentReplies = [], knownInterests =
     const opening = stockOpening(replies[index]);
     if (opening && history.filter(previous => stockOpening(previous) === opening).length >= 2) issues.add("repeated_opening");
   }
+  if (replies.some(hasRelationshipManipulation)) issues.add("relationship_manipulation");
   const currentTopics = new Set(Array.isArray(knownInterests) ? knownInterests
     .filter(fact => fact && (fact.polarity === "positive" || fact.polarity === "negative"))
     .map(fact => fact.topic) : []);
@@ -105,9 +135,10 @@ export async function runReplyQualityGate({ generate, readReplies, onAttempt, re
     }
     await onAttempt({ result, error: issues.length ? new ReplyQualityError() : null, feedback });
     if (!issues.length) return result;
-    if (attempt === 1 || issues.includes("invalid_replies") || issues.includes("known_interest_question")) throw new ReplyQualityError();
+    if (attempt === 1 || issues.includes("invalid_replies") || issues.includes("known_interest_question") || issues.includes("relationship_manipulation")) throw new ReplyQualityError();
     feedback = JSON.stringify({ quality_revision: { issues, previous_drafts: replies } });
     if (inputChars + feedback.length > inputLimit) throw new ReplyQualityError();
   }
   throw new ReplyQualityError();
 }
+

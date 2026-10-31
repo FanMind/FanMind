@@ -171,3 +171,19 @@ Reply-Quality-Aufrufen ohne Faktenargument bleibt das bisherige Verhalten unver�
 Die Duplicate-Rewrite-Grenze bleibt separat bestehen. Current Facts bleiben
 default-off; die synthetischen Tests sind keine reale Modell-, Provider- oder
 Produktionsabnahme.
+
+## Relationale Manipulation und Kaufbedingungen — 31. Oktober 2026
+
+Der gemeinsame Qualitätswächter lehnt eine enge DE/EN-Matrix direkter Besitz-,
+Exklusivitäts- und Abhängigkeitsbehauptungen sowie Zuneigung ab, die im selben
+Satz an Kaufen, Bezahlen oder Bestellen geknüpft wird. Der Befund
+`relationship_manipulation` ist terminal: Der verworfene Modelloutput erzeugt
+keinen Quality-Rewrite und wird weder persistiert noch bestätigt.
+
+Der Wächter sperrt keine Einzelwörter wie „Liebe“, „nur“, „kaufen“ oder
+„yours“. Neutrale Komplimente und respektvoller Flirt, sachliche Preis- und
+Kaufantworten, unverknüpfte freundliche Sätze sowie ausdrücklich markierte
+Zitate und Hypothesen bleiben zulässig. Die synthetische DE/EN-Matrix beweist
+nur diesen deterministischen Outputvertrag, keine allgemeine semantische
+Manipulationserkennung oder reale Modellqualität.
+
