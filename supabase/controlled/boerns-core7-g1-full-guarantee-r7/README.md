@@ -25,6 +25,16 @@ so the work API exposes no direct store or adapter route. The in-memory adapter
 holds its serialization lock through asynchronous effect completion; production
 adapters must provide the same atomic receipt/fence guarantee at their target.
 
+`classifyRc6AcquireResponse` is a local, unconnected RC6 response boundary.
+It validates the acquire response shape and preserves operation status, replay
+flag, claim state and fencing data separately. Fresh `ACQUIRED` and `RECOVERED`
+responses are classified as structurally valid but do not authorize G1 work;
+the required principal, version, run and payload bindings are absent. Receipt
+replays of either operation fail closed; `ALREADY_COMPLETED` is not a G1 result
+replay because RC6 supplies no work-result binding. Malformed, inconsistent and
+unknown responses also fail closed. This classifier is not wired to the
+dispatcher or runtime and does not invent any missing binding.
+
 `InMemoryClaimStore` is a deterministic test adapter, not a persistence or
 production implementation. The intended durable adapter is the immutable RC6
 candidate in FanMind PR #1379 at commit
