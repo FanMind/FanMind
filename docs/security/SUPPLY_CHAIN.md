@@ -17,7 +17,7 @@ Aktuell geprüfte Pins:
 | `actions/setup-node` | `820762786026740c76f36085b0efc47a31fe5020` | `v7.0.0` |
 | `actions/setup-java` | `de7274f081f381c8f8158605e0321c36c376e2e6` | `v6.0.1` |
 | `actions/upload-artifact` | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` | `v7.0.1` |
-| `github/codeql-action` | `ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd` | `v4.37.7` |
+| `github/codeql-action` | `cdf488f595d80d6e07e03d4674febd5ab45fa938` | `v4.37.9` |
 
 `actions/checkout` bleibt absichtlich gemischt gepinnt. Alle Checkout-Schritte
 auf GitHub-gehosteten Runnern verwenden v7.0.1. Die geschützten Restore-Jobs
@@ -210,7 +210,7 @@ Patches erneut geprüft; die Ausnahme ersetzt kein Upgrade.
 
 ## CodeQL / SAST
 
-`.github/workflows/codeql.yml` analysiert JavaScript und TypeScript mit der unveränderlich gepinnten CodeQL-v4-Action `4.37.7` und `security-extended`:
+`.github/workflows/codeql.yml` analysiert JavaScript und TypeScript mit der unveränderlich gepinnten CodeQL-v4-Action `4.37.9` und `security-extended`:
 
 - bei Pull Requests gegen `main`;
 - bei Pushes auf `main`;
