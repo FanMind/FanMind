@@ -102,9 +102,60 @@ jobs:
           console.log("CREATOR_TARGET_DRIFT_DIAGNOSIS_COMMAND=CONSUMED");
           NODE
 
+  reference:
+    name: Rebuild exact accepted private PG17 reference
+    needs: authorize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    services:
+      pg17:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: fanmind-ci-only-pg17
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout exact accepted PG17 reference source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: b323361cafc3829e470f6da611c7ab7d8c8664f6
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+
+      - name: Rebuild the accepted reference in isolated PostgreSQL 17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17.id }}
+          FANMIND_CREATOR_PG17_REQUIRED: "true"
+          FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
+          FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: 3cd67cedbcdc051be855d09de8d5ea3225179217
+        run: |
+          set -euo pipefail
+          GITHUB_SHA=b323361cafc3829e470f6da611c7ab7d8c8664f6             node --test --test-concurrency=1 tests/creator-foundation-reconciliation-pg17.test.mjs
+
+      - name: Upload the run-local accepted reference
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+          if-no-files-found: error
+          retention-days: 1
+
   diagnose:
     name: Classify exact Staging target without writes
-    needs: authorize
+    needs: [authorize, reference]
     runs-on: ubuntu-24.04
     environment: staging
     permissions:
@@ -138,40 +189,69 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Download and verify the accepted private PG17 reference
+
+      - name: Download and verify the run-local accepted private PG17 reference
         env:
           GH_TOKEN: ${{ github.token }}
           FANMIND_CREATOR_TRANSITION_REFERENCE_DIR: ${{ runner.temp }}/creator-drift-diagnosis-reference
+          REFERENCE_ARTIFACT_NAME: fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -euo pipefail
           mkdir -m 700 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
           node --input-type=module <<'NODE'
+          import {createHash} from "node:crypto";
           import {writeFileSync} from "node:fs";
-          const id = 10916053961;
+          const runId = process.env.GITHUB_RUN_ID;
+          const name = process.env.REFERENCE_ARTIFACT_NAME;
           const headers = {Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: "application/vnd.github+json"};
-          let response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/artifacts/${id}`, {
+          let response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/runs/${runId}/artifacts?name=${encodeURIComponent(name)}`, {
             headers, redirect: "error", signal: AbortSignal.timeout(15000),
           });
           if (!response.ok) throw new Error("reference_metadata_unavailable");
-          const meta = await response.json();
-          if (meta.id !== id || meta.expired ||
-              meta.name !== "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6" ||
-              meta.workflow_run?.id !== 36273161074 ||
-              meta.workflow_run?.head_sha !== "3cd67cedbcdc051be855d09de8d5ea3225179217" ||
-              meta.digest !== "sha256:c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c") {
+          const listing = await response.json();
+          if (listing.total_count !== 1 || listing.artifacts?.length !== 1) {
+            throw new Error("reference_metadata_mismatch");
+          }
+          const meta = listing.artifacts[0];
+          if (meta.expired || meta.name !== name || meta.workflow_run?.id !== Number(runId) ||
+              !/^sha256:[a-f0-9]{64}$/u.test(meta.digest ?? "")) {
             throw new Error("reference_metadata_mismatch");
           }
           response = await fetch(meta.archive_download_url, {
             headers, redirect: "follow", signal: AbortSignal.timeout(30000),
           });
           if (!response.ok) throw new Error("reference_download_failed");
+          const archive = Buffer.from(await response.arrayBuffer());
+          if (`sha256:${createHash("sha256").update(archive).digest("hex")}` !== meta.digest) {
+            throw new Error("reference_archive_mismatch");
+          }
           writeFileSync(`${process.env.RUNNER_TEMP}/creator-drift-diagnosis-reference.zip`,
-            Buffer.from(await response.arrayBuffer()), {mode: 0o600, flag: "wx"});
+            archive, {mode: 0o600, flag: "wx"});
           NODE
-          printf '%s  %s\n' 'c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c' "$RUNNER_TEMP/creator-drift-diagnosis-reference.zip" | sha256sum -c -
           unzip -q "$RUNNER_TEMP/creator-drift-diagnosis-reference.zip" -d "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"
           rm -f "$RUNNER_TEMP/creator-drift-diagnosis-reference.zip"
           chmod 600 "$FANMIND_CREATOR_TRANSITION_REFERENCE_DIR"/*.json
+          node --input-type=module <<'NODE'
+          import {createHash} from "node:crypto";
+          import {readFileSync} from "node:fs";
+          const directory = process.env.FANMIND_CREATOR_TRANSITION_REFERENCE_DIR;
+          const digest = value => createHash("sha256").update(value).digest("hex");
+          const legacy = readFileSync(`${directory}/legacy.json`);
+          const current = readFileSync(`${directory}/current.json`);
+          const manifest = JSON.parse(readFileSync(`${directory}/manifest.json`, "utf8"));
+          if (digest(legacy) !== "310325bf904790db5644b0674cc3f70f7cf5562c0a7c749b98e716e5d36ce2ab" ||
+              digest(current) !== "26fdb3969f985f1bc91539925615df725ae98f7fda4f8b38354e2934917bfe7e" ||
+              manifest.scope !== "isolated_ci_creator_foundation_reference" ||
+              manifest.githubSha !== "b323361cafc3829e470f6da611c7ab7d8c8664f6" ||
+              manifest.reviewedSourceSha !== "3cd67cedbcdc051be855d09de8d5ea3225179217" ||
+              manifest.runId !== process.env.GITHUB_RUN_ID ||
+              manifest.runAttempt !== process.env.GITHUB_RUN_ATTEMPT ||
+              manifest.querySha256 !== "252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436" ||
+              manifest.files?.["legacy.json"] !== digest(legacy) ||
+              manifest.files?.["current.json"] !== digest(current)) {
+            throw new Error("reference_content_mismatch");
+          }
+          NODE
 
       - name: Prepare dedicated private read-only database password file
         env:
