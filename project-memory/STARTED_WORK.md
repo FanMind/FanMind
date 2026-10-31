@@ -10,7 +10,7 @@
 - Previous task_id: backup-worker-safe-error-codes-20261005T1010Z
 - Source: explicit Owner task, not a roadmap-catalog selection.
 - Risk: R3
-- Status: ACCEPTED; source method merged and canonical receipt prepared for publication.
+- Status: ACCEPTED
 - Work lock: LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Baseline: exact main `26fe1ca6da43b8708f8dea14ae9bcb9161e2ad5e`.
 - Scope: one executable admission/closeout gate, existing selector integration, manual workflow transport enforcement, digest-bound manual preparation/check path, behavioral transport-spy tests and directly affected orchestration documentation/state only.
@@ -29,6 +29,7 @@
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R4
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (PAUSED)
 - Exact source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, normal merge/current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.
 - Remaining result: obtain the separately authorized read-only drift diagnosis, consume its bounded differing-section evidence, implement/review the proven remediation, then require a distinct fresh transition/runtime authorization before any later APPLY/runtime execution.
@@ -44,7 +45,7 @@
 - Action: PR1210-POSTMERGE-CLOSEOUT-P2-CORRECTION
 - Risk: R3
 - Boundary: repository/test reconciliation only; no product/runtime/provider contract change.
-- Status: ACCEPTED; post-merge reconciliation consumed.
+- Status: ACCEPTED
 - Work lock: LOCK-FM-CREATOR-CLOSEOUT-POSTMERGE-P2-20260927 (RELEASED_MERGED_VERIFIED).
 - Exact base: `63e6380cb75da80e9d5bd6b8d8892639a3127499` (verified merge of PR #1210).
 - Completion: PR #1211 final head `e4cf6ee471efbc9ba270aeb7ccc84f8dab853b9c` passed all eight exact-head workflows, including FanMind CI `36309203992`, native PostgreSQL 17, Browser E2E and CodeQL; the exact-head independent review reported no new findings, both blocking review threads were evidence-backed resolved, and the normal squash merge produced `fe8d86ed92dafcc2b7d281f6e1bab39735e2d6b6` at 2026-09-27T09:30:55Z.
@@ -55,7 +56,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
 - Risk: R3
-- Status: ACCEPTED; repository source package consumed.
+- Status: ACCEPTED
 - Exact base: `a165f3c074e8e0eb2b24ea3882a3fd57db011939` (verified merge of PR #1208).
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260927 (RELEASED_MERGED_VERIFIED).
 - Result: the repository-only, fail-closed generator/assertions wrapper emits only the pinned Creator access helper, two RPC bodies and four policy USING replacements, plus a reproducible manifest and native PostgreSQL 17 proofs.
@@ -69,7 +70,7 @@
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
 - Risk: R3
-- Status: ACCEPTED; repository source package consumed.
+- Status: ACCEPTED
 - Work lock: LOCK-FM-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926 (RELEASED_MERGED_VERIFIED).
 - Completion: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`. All eight exact-head workflows passed; FanMind CI run `36273161074` and native PG17 job `108490997482` passed. Independent exact-head review reported no P0/P1/P2/P3; all review threads are resolved. Local focused verification: 41 passed, 0 failed, 1 native-PG17 skip. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
 - Result: Source-only profile transition contract proves original `auth.uid()` ownership before transfer, Daily Workspace constraints without the optional Billing baseline, the exact pinned 21-role/22-membership Hosted PG17 profile including grantors/configuration, and fail-closed rejection of altered caller profiles.
@@ -246,7 +247,9 @@
 
 ## FM-CREATOR-001 — Creator and Social continuation
 - Date: 2026-09-10
-- Status: PARTIAL
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Bounded source work is consumed by merged PRs #1175 and #1184; protected target/runtime acceptance remains separate.
 - Risk: R4
 - Work lock: LOCK-FM-CREATOR-SOCIAL-20260910 RELEASED for first source package.
 - Completed so far: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.
@@ -259,6 +262,7 @@
 ## FM-BILL-003 — paid activation engineering
 - Date: 2026-09-10
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R4
 - Work lock: LOCK-FM-BILL-003-20260910
 - Completed so far: exact revision submission implemented for both entry points/all three offers; nine executable behavior tests and 1,252 Operations tests pass, along with truth/lint/type/build checks. Production read confirms the retained rollout prerequisites.
@@ -452,7 +456,7 @@
 
 ## FM-AI-001 / FM-CR-020 — Checkout freeze review continuation
 - Updated: 2026-09-07
-- Status: SUPERSEDED (historical repository review; later ledger/capture/unfreeze/canonical acceptance completed)
+- Status: SUPERSEDED
 - Risk: R4
 - Branch/PR: `fix/staging-billing-write-freeze-20260905` / #1058
 - Work lock: `LOCK-FM-AI-001-FREEZE-REVIEW-20260906` RELEASED; final remote CI/review is closed by the activation receipt.
@@ -558,7 +562,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-004
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-017; continues FM-WEB-003.
@@ -572,7 +576,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-003
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-016; continues FM-WEB-001/FM-WEB-002.
@@ -588,7 +592,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-002
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-015; continues FM-WEB-001/FM-CR-014.
@@ -605,7 +609,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-001
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-014; extends accepted roadmap decision FM-CR-012.
@@ -697,7 +701,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-RST-001
 - Started: 2026-08-17
-- Updated: 2026-09-07
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R4
 - Scope: Complete the isolated real FanMind Restore drill without touching Production or Supabase Staging; preserve the accepted read-only chain and the now receipt-bound five-extension baseline while keeping every later Restore transition separately protected.
@@ -715,7 +719,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: none for the local-only repository proof. A later real isolated Storage mutation requires a new owner decision because the 2026-09-07 choice explicitly declined an additional Supabase project/Preview branch.
 ## FM-MOB-001
 - Started: before 2026-08-19
-- Updated: 2026-09-04 (one exact handler-containing Android Preview finished; device acceptance pending)
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
@@ -738,7 +742,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-AI-001
 - Started: before 2026-08-19
-- Updated: 2026-09-06
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
@@ -755,7 +759,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-META-001
 - Started: before 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Meta Events Manager/external Meta acceptance and final non-Social security proof.
@@ -785,7 +789,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC3-001
 - Started: foundation work before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Phase 3 real Facebook, Instagram and WhatsApp connectors.
@@ -801,7 +805,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC7-001
 - Started: feasibility assessment before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Phase 7 TikTok, X/Twitter, Discord and conditional OnlyFans.
@@ -817,7 +821,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SALES-001
 - Started: sales materials prepared before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Risk: R2
 - Scope: final technical sales handoff to Gerhard.
@@ -833,7 +837,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-LEGAL-001
 - Started: before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Risk: R3
 - Scope: final external law/tax/AVV/provider evidence.
@@ -849,7 +853,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SEC-001
 - Started: 2026-08-20
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
@@ -934,6 +938,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Second review follow-through #1112: the prior d57bef906fe21f83c1c752894e874428536b3445 passed all 13 remote checks; the completed review found three further reboot gaps. PM2 now requires its exact kill stop command and no post-stop hook; runner registration requires safe GitHub service endpoints; persisted native runner executables must match the kernel-held images of the running service by inode, stable metadata, ELF format and SHA-256. Local focused result: 22 passed, one native-kernel proof skipped because this workspace denies or hides /proc process images. That proof is mandatory and cannot skip in GitHub Actions. Current-head CI/review and installed target evidence remain pending; no service mutation or reboot.
 - Review follow-through #1112 (09:41 UTC): five blocking startup gaps were corrected before merge: NeedDaemonReload=no for every unit; rejected PM2 Node/loader overrides and service launch hooks; actual runner command/registration/artifact binding with official v2.337.0 script fingerprints; resolved release symlink plus Next deployment ID. Twenty-one focused tests pass, including the corresponding failing paths and secret redaction. Current-head remote CI/review and installed target evidence remain pending; no service mutation or reboot.
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; Work lock: LOCK-FM-OPS-REBOOT-20260912.
 - Baseline: clean exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 / tree 4509e2931478c0af046def29760ca139ac51b45f; independently verified Production audit and exact authenticated Exoscale instance. Drift/freshness preflights passed; prior backup closure reconciled from its final durable receipt.
@@ -970,6 +975,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Related source finding: actions/runner v2.337.0 IOUtil.SaveObject writes settings with Encoding.UTF8; its optional leading UTF-8 BOM currently makes the collector's JSON.parse fail. Accept exactly one leading BOM for parsing after hashing the complete original source. Reproduce it in the existing runner fixture; do not claim this is the cause of the owner's unavailable read until host metadata is inspected.
 - Date: 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; existing LOCK-FM-OPS-REBOOT-20260912 retained.
 - Exact next step: verify the bounded source correction, complete current-head review/CI and normal rollout, then resume demonstrated host prerequisites and installed boot proof.
@@ -1061,7 +1067,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
 - Date: 2026-09-22
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The bounded deletion/privacy source shipped through merged PR #1143; runtime acceptance remains governed separately.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Owner: ChatGPT / connected GitHub
@@ -1128,7 +1136,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
 - Date: 2026-10-07
-- Status: ACCEPTED; source merged, prior Structured-Offers Staging prerequisites completed.
+- Status: ACCEPTED
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
 - Owner: FanMind Builder
@@ -1146,6 +1154,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
 - Date: 2026-10-11
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R3
 - Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
 - Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
@@ -1171,6 +1180,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-CHATADMIN-LIVE-REPAIR-20261014 — source merged; product acceptance paused
 - Date: 2026-10-14; reconciled 2026-10-30
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R3
 - Work lock: LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014 (`PAUSED`)
 - Source completion: PR #1322 head `779b36dead7554cdb1c8e542314654c95748fb20` merged as `b745fba58ab731bfe0111a4e637825d6a5441d2e` on 2026-10-14. No source writer remains.
@@ -1181,7 +1191,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-046
-- Status: ACCEPTED.
+- Status: ACCEPTED
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BILLING-V2-20260930`.
 - Scope: repository-only contract/canonical-truth reconciliation for the owner-approved 99/199/312 EUR AI-capacity target model; no Stripe mutation, Production billing activation, customer migration or provider-side write.
@@ -1223,7 +1233,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-052 — AI Capacity reserve/settle runtime foundation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-052
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source was accepted through merged PR #1331; Staging/Production activation remains outside this source record.
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930`.
 - Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3` after merged PR #1242.
@@ -1299,7 +1311,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Orchestrator task_id: fanmind-product-roadmap-continuation-20261005-01
 - Source: one-time direct authenticated Chat authorization for exact Draft PR #1280, explicitly approved by the Owner at 2026-10-05T16:31:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, machine admission, workflow reservation or a schema-valid canonical accepted_handoff.
 - Risk: R3
-- Status: ACCEPTED; repository source consumed.
+- Status: ACCEPTED
 - Work lock: LOCK-FM-GOV-PRODUCT-ROADMAP-CONTINUATION-20261005
 - Baseline: exact main `68be82565888d264a46e6e16dbed75e661f21996`; existing PR #1280 starting head `3552312b83bc04561953fe94b6cc0cf68ed900af`.
 - Scope: continue only PR #1280; repair and complete `scripts/fanmind_next_best_action.py`, add truthful roadmap references to `project-memory/NEXT_BEST_ACTIONS.json`, regenerate `project-memory/NEXT_BEST_ACTION.md`, retain the existing bounded `project-memory/PROTOCOL.md` update and add only this task's minimum coordination evidence.
@@ -1314,7 +1326,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: normal reviewed repository revert only; no external state is changed.
 ## FM-CHATADMIN-NATURAL-CONTEXT-20261012-01
 - Date: 2026-10-12; Risk: R3 repository-only under FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001.
-- Status: COUNTERCHECKED_SOURCE_ONLY; lock `LOCK-FM-CHATADMIN-NATURAL-CONTEXT-20261012`.
+- Status: COUNTERCHECKED_SOURCE_ONLY
 - Owner: Codex, direct Owner request to implement the discussed natural Character conversation and inspect current ChatAdmin completion.
 - Baseline: `613e452ced0105da4c718b3d4aafb30f77c88ff4`; no open PR overlaps the reply-policy/offer/context-test scope. The existing Staging harness lock remains separately held.
 - Change: omit unused AI alternatives from model dialogue, preserve full atomic history IDs and Fan knowledge, answer compliments without obligatory questions/sales, retain Character-specific writing fields and prevent pure media compliments from releasing prices.
@@ -1347,6 +1359,7 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 ## FM-AI-001 / FM-CR-052 — Capacity Staging baseline classification — 2026-10-25
 
 - Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Context: repository diagnostic under the existing R4 Capacity lock.
 - Baseline: exact main `7368305db778165d6a6dd8f83265445a6863a25b`; failed read-only run `40224444403` reported only `schema_md5` and `capacity_generic_migration_marker_absent`.
@@ -1416,7 +1429,9 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 ## FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR — confirmed automatic sync repair
 - Date: 2026-10-25
-- Status: IMPLEMENTED_NOT_VERIFIED
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The source chain was integrated by merged PR #1355 as 7368305db778165d6a6dd8f83265445a6863a25b; protected Staging/runtime acceptance remains separate.
 - Risk: R3
 - Lock: LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
 - Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
@@ -1427,7 +1442,8 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 ## FM-SUPPORT-1350-STAGING-PREFLIGHT — synthetic repair acceptance preparation
 - Date: 2026-10-25
-- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
 - Risk: R3
 - Lock: LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
 - Scope: verify current PR #1351/#1352 source and prepare reproducible repository-only synthetic authorization, audit, repair-flow and UI acceptance evidence plus an exact isolated-Staging runbook.
@@ -1438,7 +1454,9 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 
 ## FM-SUPPORT-1350-COMBINED-CI-20261025 — combined support merge-candidate verification
 - Date: 2026-10-25
-- Status: BLOCKED
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The combined chain and its Capacity/supply-chain blockers were resolved by merged PR #1355; this verification record is consumed.
 - Risk: R3
 - Lock: LOCK-FM-SUPPORT-COMBINED-CI-20261025
 - Scope: verify the exact combined PR #1351/#1352 source, add missing local synthetic Browser E2E for the authenticated help/diagnosis/consent/result flow, run the complete applicable merge-candidate CI against main, restore the stacked PR chain and prepare the executable Staging acceptance plan.
