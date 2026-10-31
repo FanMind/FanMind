@@ -1,3 +1,7 @@
+## 2026-10-31 started-work reconciliation
+- Historical implementation records with verified merged successors are closed or superseded below. Aggregate product/runtime gates remain unchanged and must not be inferred from source acceptance.
+- Remaining active records were rechecked against current main, current PR state and issue #1048; their refreshed date records review only.
+
 ## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
@@ -186,7 +190,7 @@
 - Resume: do not reopen this P1 scope. Continue only the separate confirmed-chat installed source-state step above.
 
 ## FM-REG-001 — Daily setup display closeout
-- Status: PRODUCTION_CONFIRMED; Risk: R2; lock: LOCK-FM-DAILY-SETUP-UI-20260914 — RELEASED_PRODUCTION_CONFIRMED; owner: Codex.
+- Status: PRODUCTION_CONFIRMED
 - Result: PR #1125 final head `423f82d67fd15d633d020c4f92da7f744e181416` passed its final-head checks/review and merged as `8694986f7d25639ccbdf67b23c40f88bd175f972`. Its durable completion receipt records successful Production deploy `34886792334`, exact `/api/version`, Production audit `34886957898` and public readiness `34886957948`.
 - Scope closed: Daily setup presentation only. The receipt explicitly releases this lock. Full Daily provisioning/payment/tax readiness remains separate and PARTIAL.
 - Exact next step: do not rebuild or reopen this UI closeout. Continue only the distinct retained Daily/Billing gates when their own prerequisites and authorizations are satisfied.
@@ -200,7 +204,9 @@
 - Historical checkpoints below are superseded for already-published #1102-#1108 source and installed Social/Creator foundations. Social Apply 34591339718 and deploy 34591566257 completed #1104. Do not repeat those source/installations or treat old locks/next-step text as active. Mutable current-target evidence must be revalidated after listed triggers/TTL; historical successful runs are retained.
 
 ## FM-SOC7-001 — Connection return and initial preview
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source is consumed by merged PR #1103; real provider/account acceptance remains open only on the aggregate Social gate.
 - Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018
 - Risk: R4
 - Work lock: LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
@@ -211,7 +217,9 @@
 - Retained work: Creator draft cd5cac7c remains separately preserved; #1102 source publication is not repeated. Historical Backup failure at 00:30 UTC remains tracked under FM-OPS-001.
 
 ## FM-SOC7-001 — TikTok / X connection engineering
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source is consumed by merged PR #1102; actual apps, consent, budget and provider E2E remain open.
 - Task: FM-SOC7-001 / FM-CR-031
 - Risk: R4
 - Work lock: LOCK-FM-SOCIAL-OAUTH-20260911
@@ -382,7 +390,9 @@
 - Exact next step: complete the existing quality controls, publish to PR #1088 and verify fresh CI/review.
 
 ## FM-RST-001 — owner SSH access repair 2026-09-10
-- Status: PARTIAL
+- Status: SUPERSEDED
+- Updated: 2026-10-31
+- Reconciliation: The database phase later reached accepted DB_POSTCHECKED; this historical SSH attempt must not be resumed. Real isolated Storage remains separately deferred.
 - Risk: R4
 - Work lock: LOCK-FM-RST-SSH-20260910
 - Authorization: owner explicitly confirmed saving the reviewed single-IPv4 TCP/22 ingress rule for the existing isolated Restore VM.
@@ -414,7 +424,9 @@
 - Owner action needed: only the exact remaining boundaries after available work is complete; never ask to recreate accepted prices, database Restore or signed builds.
 
 ## FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resumed finishline 2026-09-06
-- Status: PARTIAL
+- Status: SUPERSEDED
+- Updated: 2026-10-31
+- Reconciliation: Superseded by later independent AI, Mobile and Restore evidence; use their current aggregate records only.
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 remains ACTIVE only for FM-AI-001/FM-MOB-001; FM-RST-001 was removed after the database phase closed. Repository-only postcheck and Storage-preparation locks are released after their bounded counterchecks.
@@ -427,7 +439,7 @@
 
 
 ## FM-AI-001 / FM-CR-020 — Staging activation
-- Status: SUPERSEDED (historical bounded freeze activation; later ledger/capture/unfreeze/canonical acceptance completed)
+- Status: SUPERSEDED
 - Risk: R4
 - Updated: 2026-09-07
 - Work lock: LOCK-FM-AI-001-FREEZE-ACTIVATE-20260906 RELEASED.
@@ -759,6 +771,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC3-001 / FM-CR-044 — Facebook/Instagram inbound continuation — 2026-09-19
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R3
 - Work lock: LOCK-FM-SOCIAL-INBOUND-20260919
 - Baseline: current Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; owner-confirmed Admin-CRM login works; read-only Production countercheck found zero Facebook/Instagram social connections for Admin-CRM workspaces.
@@ -929,6 +942,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.
 ## FM-OPS-001 — official runner update layout — 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
 - Prior source: #1116 final receipt 5653464231 confirms reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0, Deploy 34758542991 and installed audit 34758613627. Its earlier source-pending notes are historical.
@@ -941,6 +955,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-OPS-001 — runner registration compatibility — 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
 - Authorization: the owner's explicit continuation covers demonstrated boot prerequisites, reviewed source publication and normal rollout; the controlled restart remains conditional on actual boot/recovery evidence.
@@ -966,6 +981,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.
 ## FM-REG-003 — Admin access for confirmed registrations — 2026-09-15
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-041
 - Lock: LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915
@@ -1015,7 +1031,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Exact next step: commit and push the correction to the same PR #1141, obtain exact-head CI/CodeQL, reply to and resolve the three genuinely fixed P2 threads, and request one `@codex review` on that exact head. Do not merge. Only after a final review without P1/P2 may #1141 be reported merge-ready.
 - Owner action needed: final Standard/Plus/Ultra token, provider-cost and optional request limits; overage/fallback behavior remains a later commercial/legal decision.
 ## FM-CREATOR-001 — Delete / Privacy / Disclosure
-- Status: IMPLEMENTED_FOR_PR; Risk: R3; lock: LOCK-FM-CREATOR-PRIVACY-20260920; owner: Codex.
+- Status: IMPLEMENTED_FOR_PR
 - Baseline: verified `main` `32223a6f0fef1c000c1d64ef3fad13f8f6e8be08` after #1142 / Production deploy 35504957682. PR #1141 is fully superseded by #1142 and must not be reused; repository credentials are unavailable for closing it from this workspace. PR #1130 was diffed and its still-valid complete-disclosure implementation was selectively integrated, then reconciled with the newer Creator datasets already on main.
 - Scope: owner-bound contact deletion, account/workspace deletion verification, complete fail-closed own-Workspace disclosure, secret stripping and synthetic cross-tenant/error regressions. No SQL/apply, Production/Staging/customer mutation, provider access, Creator activation, Mobile, Billing or automatic send.
 - Completed so far: contact delete now requires the active owner/contact boundary and an exact workspace-filtered one-row delete; existing cascading FKs remove conversations/messages/summaries/memories/follow-ups/profiles/reports/reply targets and Creator commercial evidence. Account deletion now rejects request/workspace mismatch and verifies all active plus optional Creator data families are absent after auth/workspace cascade. Disclosure includes complete account/Workspace/CRM/Social/Creator persona/style/playbook/commercial data, preserves optional-not-installed honesty, fails closed on authorized-read errors and strips credentials.
@@ -1024,7 +1040,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: revert this bounded source/UI/test/memory patch; no external data or target was mutated.
 - Owner action needed: none for source review. A maintainer with GitHub write access may close #1141 as superseded by #1142.
 ## FM-CREATOR-001 — PR #1143 Review-Hotfix
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: PR #1143 merged as 027d5a21ac41daae0331a0af2f9685d3729b2039.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-PRIVACY-HOTFIX-20260920
 - Owner: Codex Cloud
@@ -1096,7 +1114,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 
 ## FM-CREATOR-001 — post-merge authenticator service-role hotfix — 2026-09-24
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: PR #1171 merged as 98a69f26b09c5c5a4f5a24b1d2b134e0371a1279.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
 - Baseline: exact main a034d5517f1ad4846680b293a6b53645aa6bab69 after owner merge of PR #1168.
