@@ -1,3 +1,6 @@
+## 2026-10-31 open-loop reconciliation
+- The active loops below were rechecked against current GitHub, current finishline state and the 2026-10-31 read-only Production audit. Their protected, external or product-acceptance gaps remain open; no status is closed by age alone.
+
 ## FM-LOOP-BACKUP-AUDIT-DIAGNOSTICS-20261005
 - Task: `backup-audit-failure-diagnostics-20261005T0758Z`; Status: IMPLEMENTED_FOR_PR; Risk: R2.
 - Evidence: Production Audit run `37278363646`, job `111660398229`, failed at 2026-10-05T07:33:06Z with collector exit 0 and `production_audit_backup_latest_stale_or_empty`; the separately verified runtime/release subset passed on exact main `27d78f3c45b9f17e29c5222f47402007bea2ec37`.
@@ -14,7 +17,7 @@
 - Fail closed: no transition replay while DRIFT is unresolved, no owner action substitution by Builder, no raw/private catalog output, no Production/provider/customer/Billing/Restore/Mobile mutation.
 
 ## FM-LOOP-CREATOR-DELETION-INVENTORY-20260922
-- Status: CLOSED; Task: FM-CREATOR-001; Risk: R3.
+- Status: CLOSED
 - Closed by: PR #1162 merged as `3532bd4b9a19400284443f35b9b94b2849393aeb`; downstream disclosure/deletion/persistence verification continued through #1163-#1167. Do not rebuild the crash-safe Workspace inventory contract.
 - Follow-up: confirmed-chat schema rollout is a separate lifecycle. Repository runner hardening converged through #1168/#1171/#1172; target-aware source-state/deploy reconciliation converged through #1173/#1174; the VERIFY-only protected Staging source control converged in #1175 and is consumed. Actual target VERIFY and every APPLY remain separate protected actions and must not cause the Builder to recreate #1175 or globally stop unrelated repository-safe Creator work.
 
@@ -22,24 +25,24 @@
 # FanMind Open Loops
 
 ## FM-LOOP-REBOOT-PUBLICATION-20260912
-- Status: CLOSED; task FM-OPS-001 / FM-CR-036; LOCK-FM-OPS-REBOOT-20260912 retained.
+- Status: CLOSED
 - Finished local read-only boot collector/verifier, executable failure/redaction tests and Operations regression checks. Automatic approval review rejects publication of this exact code/memory payload to public FanMind/FanMind despite the verified existing repository and recorded earlier grants. No remote branch/PR/deploy/reboot created; do not bypass via another tool.
 - Historical blocked next step: concrete owner confirmation for the prepared patch's public publication, then normal current-head CI/review/deploy and actual boot-state/recovery preflight. The previously accepted backup/DB Restore/Creator foundation remain closed.
 
 - Resolution: explicit current owner confirmation FM-AUTH-OPS-BOOT-PUBLISH-20260912; approved source tree published unchanged as a33eedad075d506f566ac5347fc3c0ac74f9a2ff. The earlier automatic rejection remains historical; resume current-head PR review/CI and normal rollout. No runtime/reboot acceptance is implied.
 
 ## FM-LOOP-SOCIAL-CONNECT-FLOW-20260911
-- Status: IN_PROGRESS; task FM-SOC7-001 / FM-CR-032 / FM-DEC-018.
+- Status: IN_PROGRESS
 - Source #1102-#1104 is published; selected-channel return and once-only X preview are implemented, Social Staging schema installed via 34591339718 / deploy 34591566257.
 - Next: real app/budget/consent/provider acceptance through owner-required NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7), after current-target checks. No repeated source or schema setup; no Production/provider activation inferred.
 
 ## FM-LOOP-BACKUP-DATABASE-20260911
-- Status: CLOSED; task FM-OPS-001 / FM-CR-035.
+- Status: CLOSED
 - Final evidence: #1111 comment 5644711203. Reviewed hardened/legacy contract correction, scheduled September 12 database backup succeeded/validated/uploaded encrypted; installed full audit 34648286758 / 103525002411 passed on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 at 08:20:31 UTC. Historical failure remains in the unchanged records; no extra backup was created.
 - Preserve: this does not complete the requested Ubuntu reboot or remaining isolated Storage/config Restore. Do not repeat the accepted database Restore or reopen the corrected contract without fresh contradictory evidence.
 
 ## FM-LOOP-CREATOR-SOCIAL-20260910
-- Status: IN_PROGRESS aggregate gate; NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN and NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR are ACCEPTED/CONSUMED repository source scopes, and no target/runtime acceptance follows from either source scope.
+- Status: IN_PROGRESS
 - FM-DEC-016 clarification: one text writing style per user/Creator account; no audio or manager-style substitution. Before target activation, verify existing legacy prompt choices/labels and all reply variants respect the one-style contract. Manager access to multiple separate accounts/channels remains later.
 - Scope: one Creator per own account/Workspace; profile/voice/playbook, commercial evidence and existing reply/Social handoff foundation. Team/roles/auditable approvals/multi-workspace management follow later.
 - Source #1099-#1108 and the bounded privacy/delete, confirmed-chat, onboarding-input and aggregate-summary continuations through #1184 are published. Their accepted repository scopes stay closed. Actual deployed flag, enabled runtime UI, real private samples, human style approval, blinded quality and provider acceptance remain separate and do not by themselves define a repository implementation package.
@@ -187,12 +190,12 @@ This register contains started, partially completed or follow-up work that could
 - A loop may be `OPEN`, `BLOCKED`, `CLOSED` or `SUPERSEDED`.
 
 ## FM-LOOP-CHATADMIN-20260920
-- Status: IMPLEMENTED_FOR_PR; task FM-CHATADMIN-001. Repository-only Owner exception; controlled schema remains unapplied and capability default-off.
+- Status: IMPLEMENTED_FOR_PR
 - Separate unaffected issue: `production_audit_backup_latest_stale_or_empty` remains open under Operations. This task did not run Backup/Restore or claim the complete Production audit is green.
 - Next: local/full verification, publish exactly one bounded PR, then wait for Current-Head CI/CodeQL/Browser E2E and one independent Codex review without P1/P2. Do not merge.
 
 ## FM-LOOP-CHATADMIN-STAGING-20260920
-- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-21.
+- Status: CLOSED
 - PR #1146 merged as exact main `648912cc2e9958cc8bc2e39c11b7977dabff862b` after all current-head gates and independent review passed.
 - Protected read-only Staging VERIFY run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` returned `CHAT_ADMIN_SCHEMA_STATE=ABSENT`; APPLY/ACCEPT skipped.
 - This closes the observation loop only. The distinct later APPLY path is blocked behind God Mode v1 and separate owner authorization.
@@ -200,21 +203,21 @@ This register contains started, partially completed or follow-up work that could
 
 
 ## FM-LOOP-GODMODE-20260921
-- Status: CLOSED; task FM-GOV-GODMODE-001; Updated: 2026-09-22.
+- Status: CLOSED
 - Result: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge repository/runtime counterchecks completed.
 - Boundary: later hardening ideas are new bounded scope. The distinct ChatAdmin Staging APPLY owner action is ready for separate authorization; this loop never authorizes it.
 
 ## FM-LOOP-CHATADMIN-APPLY-AFTER-GODMODE-20260922
-- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-26.
+- Status: CLOSED
 - Protected owner-authorized APPLY `36235870895` / `108387398410` completed on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d`; workflow and independent Staging postflight are VERIFIED, tables remain empty, Production is unchanged.
 - Do not repeat APPLY.
 
 ## FM-LOOP-CHATADMIN-STAGING-ACCEPT-20260926
-- Status: CLOSED; task FM-CHATADMIN-002; Updated: 2026-09-26.
+- Status: CLOSED
 - Protected run `36238536613`, successful attempt 2 / job `108396358120` on exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c` passed same-run schema VERIFY, rollback-only DB/RLS acceptance and cleanup. Independent postflight confirms zero persistent ChatAdmin rows.
 - Attempt 1 failed before mutation at `fixture_identity`; owner-provided protected fixture variables resolved the prerequisite. Do not repeat DB/RLS ACCEPT.
 
 ## FM-LOOP-CHATADMIN-MANUAL-FLOW-20260926
-- Status: CLOSED; task FM-CHATADMIN-002.
+- Status: CLOSED
 - Result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
 - Boundary: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
