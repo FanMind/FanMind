@@ -4,7 +4,7 @@ const PART = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
 export function claimKey({ taskId, stepId, revision }) {
   for (const [name, value] of Object.entries({ taskId, stepId, revision })) {
-    if (!PART.test(String(value))) {
+    if (value === null || value === undefined || !PART.test(String(value))) {
       throw new TypeError(`invalid ${name}`);
     }
   }

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { claimKey } from "../src/canonical.mjs";
 import { ClaimAwareDispatcher } from "../src/dispatcher.mjs";
 import { InMemoryClaimStore } from "../src/in_memory_claim_store.mjs";
 
@@ -121,13 +122,56 @@ test("unknown store state fails closed before work", async () => {
   assert.deepEqual(result, { status: "CLAIM_STATUS_UNKNOWN", workPerformed: 0 });
 });
 
-test("missing execution identity fails closed", async () => {
-  const store = new InMemoryClaimStore();
-  const result = await new ClaimAwareDispatcher({ store }).dispatch(
-    { task, payload: {}, execution: { ...execution, agentVersion: "" } },
-    async () => assert.fail("invalid identity must not execute"),
-  );
-  assert.deepEqual(result, { status: "BLOCKED_CLAIM_STATUS_UNKNOWN", workPerformed: 0 });
+test("required task and execution fields fail closed before acquire or work", async () => {
+  let acquireCalls = 0;
+  let workCalls = 0;
+  const store = {
+    acquire: async () => {
+      acquireCalls += 1;
+      return { operation: "ACQUIRED" };
+    },
+  };
+  const dispatcher = new ClaimAwareDispatcher({ store });
+  const expected = { status: "BLOCKED_CLAIM_STATUS_UNKNOWN", workPerformed: 0 };
+  const work = async () => {
+    workCalls += 1;
+  };
+
+  const invalidExecutions = [{}];
+  for (const field of ["agentId", "agentVersion", "principalId", "runId"]) {
+    const missing = { ...execution };
+    delete missing[field];
+    invalidExecutions.push(
+      missing,
+      { ...execution, [field]: null },
+      { ...execution, [field]: "" },
+      { ...execution, [field]: 7 },
+    );
+  }
+  for (const invalidExecution of invalidExecutions) {
+    const result = await dispatcher.dispatch(
+      { task, payload: {}, execution: invalidExecution },
+      work,
+    );
+    assert.deepEqual(result, expected);
+  }
+
+  for (const field of ["taskId", "stepId", "revision"]) {
+    const missing = { ...task };
+    delete missing[field];
+    for (const invalidTask of [missing, { ...task, [field]: null }]) {
+      const result = await dispatcher.dispatch(
+        { task: invalidTask, payload: {}, execution },
+        work,
+      );
+      assert.deepEqual(result, expected);
+    }
+  }
+
+  assert.equal(claimKey({ ...task, revision: 7 }), "TASK-1:STEP-1:7");
+  assert.equal(claimKey({ ...task, revision: "7" }), "TASK-1:STEP-1:7");
+  assert.equal(acquireCalls, 0);
+  assert.equal(workCalls, 0);
 });
 
 test("a post-acquire failure does not claim that no work occurred", async () => {
