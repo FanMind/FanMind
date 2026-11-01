@@ -355,6 +355,7 @@ export async function resolveWebsiteChatAssistantContext(input: {
   );
   const receipt = receipts[0];
   if (
+    !receipt ||
     !isWebsiteChatAssistantBindingValid({
       session,
       receipt,
