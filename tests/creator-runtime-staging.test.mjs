@@ -133,7 +133,10 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-admission-recovery-reference"/u);
   assert.match(workflow, /actions\/artifacts\/\$\{id\}/u);
   assert.match(recovery, /actions\/artifacts\/\$\{id\}/u);
-  assert.match(ci, /retention-days: 90/u);
+  assert.match(
+    ci,
+    /name: fanmind-creator-foundation-reference-\$\{\{ github\.sha \}\}[\s\S]*retention-days: 90/u,
+  );
   for (const source of [workflow, diagnosis, recovery]) {
     assert.ok(source.includes("const id = 13079301340;"));
     assert.ok(source.includes("fanmind-creator-foundation-reference-96332518aba47b0fac0825b56dfd3eb2ebc6a3d8"));
