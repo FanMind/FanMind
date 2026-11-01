@@ -46,6 +46,16 @@ export function isWebsiteChatAssistantBindingValid({
   );
 }
 
+export function buildWebsiteChatAiIdentity({ workspaceId, conversationId, incomingMessageId }) {
+  if (!validId(workspaceId) || !validId(conversationId) || !validId(incomingMessageId)) {
+    throw new TypeError("invalid Website AI identity");
+  }
+  return {
+    externalMessageId: `website-ai:${incomingMessageId}`,
+    claimSubject: `${workspaceId}:${conversationId}:${incomingMessageId}`,
+  };
+}
+
 export function selectWebsiteChatAiAction({ existingReply, claimAllowed }) {
   if (typeof existingReply === "string" && existingReply.trim()) {
     return { action: "reuse", reply: existingReply };

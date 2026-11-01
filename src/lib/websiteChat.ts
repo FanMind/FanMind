@@ -14,7 +14,10 @@ import {
 } from "@/lib/websiteChatPolicy.mjs";
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
-import { isWebsiteChatAssistantBindingValid } from "@/lib/websiteChatAiPolicy.mjs";
+import {
+  buildWebsiteChatAiIdentity,
+  isWebsiteChatAssistantBindingValid,
+} from "@/lib/websiteChatAiPolicy.mjs";
 
 type InstallationRow = {
   id: string;
@@ -392,7 +395,7 @@ export async function findExistingWebsiteChatAssistantReply(
   context: WebsiteChatAssistantContext,
 ) {
   const { serviceKey } = serviceConfiguration();
-  const externalMessageId = `website-ai:${context.clientMessageId}`;
+  const { externalMessageId } = buildWebsiteChatAiIdentity(context);
   const existing = await fetchRows<WebsiteChatConversationMessage>(
     `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(context.workspaceId)}&conversation_id=eq.${encodeURIComponent(context.conversationId)}&external_message_id=eq.${encodeURIComponent(externalMessageId)}&limit=1`,
     serviceKey,
@@ -416,7 +419,7 @@ export async function persistWebsiteChatAssistantReply(input: {
   } catch {
     throw new WebsiteChatServiceError("assistant_unavailable");
   }
-  const externalMessageId = `website-ai:${input.context.clientMessageId}`;
+  const { externalMessageId } = buildWebsiteChatAiIdentity(input.context);
 
   const response = await fetch(getSupabaseRestUrl("conversation_messages"), {
     method: "POST",

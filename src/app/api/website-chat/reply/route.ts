@@ -5,7 +5,10 @@ import { getClientIp } from "@/lib/rateLimit";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import { getWorkspaceAiPromptContext } from "@/lib/workspaceAiPrompts";
-import { selectWebsiteChatAiAction } from "@/lib/websiteChatAiPolicy.mjs";
+import {
+  buildWebsiteChatAiIdentity,
+  selectWebsiteChatAiAction,
+} from "@/lib/websiteChatAiPolicy.mjs";
 import {
   hashWebsiteChatSessionToken,
   MAX_BODY_BYTES,
@@ -158,7 +161,7 @@ export async function POST(request: NextRequest) {
   try {
     messageClaim = await consumeSharedRateLimit({
       scope: "website_chat_ai_message",
-      subject: `${context.workspaceId}:${context.conversationId}:${context.clientMessageId}`,
+      subject: buildWebsiteChatAiIdentity(context).claimSubject,
       maxRequests: 1,
       windowMs: MESSAGE_CLAIM_WINDOW_MS,
     });

@@ -10,6 +10,7 @@ const landingPath = new URL("../src/app/page.tsx", import.meta.url);
 const envPath = new URL("../.env.example", import.meta.url);
 
 const {
+  buildWebsiteChatAiIdentity,
   isWebsiteChatAssistantBindingValid,
   selectWebsiteChatAiAction,
 } = await import("../src/lib/websiteChatAiPolicy.mjs");
@@ -61,7 +62,7 @@ test("Website AI outbound is idempotent and stays in the same CRM conversation",
     readFile(routePath, "utf8"),
     readFile(servicePath, "utf8"),
   ]);
-  assert.match(service, /website-ai:\$\{context\.clientMessageId\}/u);
+  assert.match(service, /buildWebsiteChatAiIdentity\(context\)/u);
   assert.match(service, /conversation_id: input\.context\.conversationId/u);
   assert.match(service, /contact_id: input\.context\.contactId/u);
   assert.match(service, /direction: "outbound"/u);
@@ -174,4 +175,28 @@ test("Website AI binding rejects revoked, expired and foreign receipt state", ()
     }),
     false,
   );
+});
+
+test("Website AI identity is server-bound to the persisted inbound message", () => {
+  const common = {
+    workspaceId: "20000000-0000-4000-8000-000000000001",
+    conversationId: "20000000-0000-4000-8000-000000000002",
+    clientMessageId: "20000000-0000-4000-8000-000000000003",
+  };
+  const first = buildWebsiteChatAiIdentity({
+    ...common,
+    incomingMessageId: "20000000-0000-4000-8000-000000000004",
+  });
+  const sameReceipt = buildWebsiteChatAiIdentity({
+    ...common,
+    incomingMessageId: "20000000-0000-4000-8000-000000000004",
+  });
+  const laterSessionCollision = buildWebsiteChatAiIdentity({
+    ...common,
+    incomingMessageId: "20000000-0000-4000-8000-000000000005",
+  });
+  assert.deepEqual(first, sameReceipt);
+  assert.notEqual(first.externalMessageId, laterSessionCollision.externalMessageId);
+  assert.notEqual(first.claimSubject, laterSessionCollision.claimSubject);
+  assert.equal(first.externalMessageId, "website-ai:20000000-0000-4000-8000-000000000004");
 });
