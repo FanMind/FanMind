@@ -1,3 +1,12 @@
+## RECEIPT-FM-CREATOR-TARGET-DRIFT-EVIDENCE-20261101
+- Task: FM-CREATOR-001 / creator-target-drift-section-evidence
+- Risk/Status: R3 / IN_PROGRESS
+- Trigger: Owner requested roadmap continuation and explicitly released merge on 2026-11-01.
+- Input evidence: exact-main read-only run `41300503008`; differing sections `authUidFunctions,functions,memberships,policies,roles`; APPLY `not_requested`; runtime `false`; independent R3 diagnosis countercheck PASS.
+- Intended repository result: bounded per-section exactness states plus canonical SHA-256 fingerprints for differing sections, strict output validation, native PG17 regressions and no expansion of the apply contract.
+- Boundary: no database/provider/runtime/Production mutation. The receipt does not authorize a fresh diagnosis, transition APPLY, deployment or runtime activation.
+- Recovery: revert the repository commit. A fresh exact-main read-only diagnosis remains a separate one-shot action.
+
 ## FM-EXEC-PRODUCT-ROADMAP-CONTINUATION-20261005
 - Task ID: `fanmind-product-roadmap-continuation-20261005-01`
 - Handoff ID: `owner-fanmind-product-roadmap-continuation-20261005-01`
