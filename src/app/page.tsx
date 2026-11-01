@@ -34,7 +34,7 @@ export default async function LandingPage({ searchParams }: LandingPageProps) {
 
   return (
     <>
-      <LandingV2 />
+      <LandingV2 searchParams={searchParams} />
       <PublicSupportAssistant language={language} />
     </>
   );
