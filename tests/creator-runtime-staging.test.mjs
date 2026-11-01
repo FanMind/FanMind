@@ -75,6 +75,7 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   const diagnosis = await readFile(".github/workflows/creator-target-drift-diagnosis.yml", "utf8");
   const deploy = await readFile(".github/workflows/deploy-staging.yml", "utf8");
   const recovery = await readFile(".github/workflows/creator-target-admission-recovery.yml", "utf8");
+  const ci = await readFile(".github/workflows/ci-fanmind.yml", "utf8");
 
   assert.match(workflow, /uses: \.\/\.github\/workflows\/deploy-staging\.yml/u);
   assert.doesNotMatch(workflow, /deploy-staging\.yml\/dispatches/u);
@@ -132,6 +133,14 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-admission-recovery-reference"/u);
   assert.match(workflow, /actions\/artifacts\/\$\{id\}/u);
   assert.match(recovery, /actions\/artifacts\/\$\{id\}/u);
+  assert.match(ci, /retention-days: 90/u);
+  for (const source of [workflow, diagnosis, recovery]) {
+    assert.ok(source.includes("const id = 13079301340;"));
+    assert.ok(source.includes("fanmind-creator-foundation-reference-96332518aba47b0fac0825b56dfd3eb2ebc6a3d8"));
+    assert.ok(source.includes("meta.workflow_run?.id !== 41295151183"));
+    assert.ok(source.includes('meta.workflow_run?.head_sha !== "36b17e16fc2bb7b145fa9aa9a518cd202f8fc362"'));
+    assert.ok(source.includes('sha256:287c0a1e6a0015dbe67353da640503227c7f6be958f8c5d51497a1a9c91b1ac1'));
+  }
   assert.match(workflow, /trap 'rollback_flag \$\?' EXIT ERR/u);
   assert.match(workflow, /trap 'rollback_flag 130' INT/u);
   assert.match(workflow, /trap 'rollback_flag 143' TERM/u);
