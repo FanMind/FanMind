@@ -11,6 +11,7 @@ import {
   WEBSITE_CHAT_INSTALLATION_HEADER,
 } from "@/lib/websiteChatPolicy.mjs";
 import {
+  findExistingWebsiteChatAssistantReply,
   persistWebsiteChatAssistantReply,
   resolveWebsiteChatAssistantContext,
   resolveWebsiteChatInstallation,
@@ -23,6 +24,7 @@ export const dynamic = "force-dynamic";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAXIMUM = 20;
+const MESSAGE_CLAIM_WINDOW_MS = 2 * 60 * 1000;
 const TIMEOUT_MS = 20_000;
 
 function corsHeaders(origin?: string) {
@@ -132,6 +134,39 @@ export async function POST(request: NextRequest) {
       return response({ ok: false, code: "SESSION_INVALID" }, 401, resolved.origin);
     }
     return response({ ok: false, code: "CONTEXT_UNAVAILABLE" }, 409, resolved.origin);
+  }
+
+  let existingReply;
+  try {
+    existingReply = await findExistingWebsiteChatAssistantReply(context);
+  } catch {
+    return response({ ok: false, code: "SERVICE_UNAVAILABLE" }, 503, resolved.origin);
+  }
+  if (existingReply) {
+    return response({ ok: true, reply: existingReply.reply, duplicate: true }, 200, resolved.origin);
+  }
+
+  let messageClaim;
+  try {
+    messageClaim = await consumeSharedRateLimit({
+      scope: "website_chat_ai_message",
+      subject: `${context.workspaceId}:${context.conversationId}:${context.clientMessageId}`,
+      maxRequests: 1,
+      windowMs: MESSAGE_CLAIM_WINDOW_MS,
+    });
+  } catch {
+    return response({ ok: false, code: "SERVICE_UNAVAILABLE" }, 503, resolved.origin);
+  }
+  if (!messageClaim.allowed) {
+    try {
+      existingReply = await findExistingWebsiteChatAssistantReply(context);
+    } catch {
+      return response({ ok: false, code: "SERVICE_UNAVAILABLE" }, 503, resolved.origin);
+    }
+    if (existingReply) {
+      return response({ ok: true, reply: existingReply.reply, duplicate: true }, 200, resolved.origin);
+    }
+    return response({ ok: false, code: "AI_IN_PROGRESS" }, 409, resolved.origin);
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();

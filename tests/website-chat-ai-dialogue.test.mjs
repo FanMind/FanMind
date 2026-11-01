@@ -52,13 +52,23 @@ test("Website AI is bounded, unstored at the provider and fail-closed", async ()
 });
 
 test("Website AI outbound is idempotent and stays in the same CRM conversation", async () => {
-  const service = await readFile(servicePath, "utf8");
-  assert.match(service, /website-ai:\$\{input\.context\.clientMessageId\}/u);
+  const [route, service] = await Promise.all([
+    readFile(routePath, "utf8"),
+    readFile(servicePath, "utf8"),
+  ]);
+  assert.match(service, /website-ai:\$\{context\.clientMessageId\}/u);
   assert.match(service, /conversation_id: input\.context\.conversationId/u);
   assert.match(service, /contact_id: input\.context\.contactId/u);
   assert.match(service, /direction: "outbound"/u);
   assert.match(service, /source_platform: "website-chat"/u);
-  assert.match(service, /if \(existing\[0\]\?\.content\)/u);
+  assert.match(service, /findExistingWebsiteChatAssistantReply/u);
+  assert.match(route, /scope: "website_chat_ai_message"/u);
+  assert.match(route, /maxRequests: 1/u);
+  assert.match(route, /AI_IN_PROGRESS/u);
+  assert.ok(
+    route.indexOf("findExistingWebsiteChatAssistantReply(context)") <
+      route.indexOf("fetch(OPENAI_RESPONSES_URL"),
+  );
 });
 
 test("Website widget renders AI replies and preserves human fallback", async () => {

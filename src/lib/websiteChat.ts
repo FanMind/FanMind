@@ -371,10 +371,27 @@ export async function resolveWebsiteChatAssistantContext(input: {
   };
 }
 
+export async function findExistingWebsiteChatAssistantReply(
+  context: WebsiteChatAssistantContext,
+) {
+  const { serviceKey } = serviceConfiguration();
+  const externalMessageId = `website-ai:${context.clientMessageId}`;
+  const existing = await fetchRows<WebsiteChatConversationMessage>(
+    `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(context.workspaceId)}&conversation_id=eq.${encodeURIComponent(context.conversationId)}&external_message_id=eq.${encodeURIComponent(externalMessageId)}&limit=1`,
+    serviceKey,
+  );
+  return existing[0]?.content
+    ? { reply: existing[0].content, duplicate: true as const }
+    : null;
+}
+
 export async function persistWebsiteChatAssistantReply(input: {
   context: WebsiteChatAssistantContext;
   reply: unknown;
 }) {
+  const existing = await findExistingWebsiteChatAssistantReply(input.context);
+  if (existing) return existing;
+
   const { serviceKey } = serviceConfiguration();
   let content: string;
   try {
@@ -383,13 +400,6 @@ export async function persistWebsiteChatAssistantReply(input: {
     throw new WebsiteChatServiceError("assistant_unavailable");
   }
   const externalMessageId = `website-ai:${input.context.clientMessageId}`;
-  const existing = await fetchRows<WebsiteChatConversationMessage>(
-    `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(input.context.workspaceId)}&conversation_id=eq.${encodeURIComponent(input.context.conversationId)}&external_message_id=eq.${encodeURIComponent(externalMessageId)}&limit=1`,
-    serviceKey,
-  );
-  if (existing[0]?.content) {
-    return { reply: existing[0].content, duplicate: true as const };
-  }
 
   const response = await fetch(getSupabaseRestUrl("conversation_messages"), {
     method: "POST",
