@@ -1,3 +1,12 @@
+## LOCK-FM-WEB-PUBLIC-SUPPORT-AI-20261101
+- Task: FM-WEB-001 / issue #1350
+- Risk/Status: R3 / IN_PROGRESS
+- Owner: FanMind Builder
+- Baseline: exact main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`.
+- Scope: fresh conflict-free public landing support launcher plus default-off Website AI reply foundation, session/receipt binding, idempotent CRM persistence and focused negative contract tests.
+- Conflict boundary: supersedes implementation continuation from stale PR #1250 without modifying or closing it; no Creator-Building, ChatAdmin, authenticated In-App help, schema, Staging, Production, provider activation or secret change.
+- Recovery: revert the repository commit; with missing public installation variables the launcher remains a plain `/support` link, and `FANMIND_WEBSITE_CHAT_AI_ENABLED=false` keeps AI unavailable.
+
 ## LOCK-FM-CREATOR-TARGET-DRIFT-EVIDENCE-20261101
 - Task: FM-CREATOR-001
 - Action: creator-target-drift-section-evidence

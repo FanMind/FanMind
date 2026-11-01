@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import LandingV2 from "./landing-v2/page";
+import { PublicSupportAssistant } from "@/components/PublicSupportAssistant";
 import { getFanMindLanguage } from "@/lib/fanmindCopy";
 
 type LandingPageProps = {
@@ -27,4 +28,11 @@ export async function generateMetadata({
   };
 }
 
-export default LandingV2;
+export default function LandingPage() {
+  return (
+    <>
+      <LandingV2 />
+      <PublicSupportAssistant />
+    </>
+  );
+}

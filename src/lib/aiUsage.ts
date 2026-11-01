@@ -3,7 +3,7 @@ import { calculateOpenAiProviderCostMicros } from "./aiCostEngine.mjs";
 import { getChatAdminModelProfile } from "./chatAdminModelPolicy.mjs";
 import { normalizeOpenAiResponseUsage } from "@/lib/aiUsageProviderMetrics.mjs";
 
-export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
+export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "website_chat_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
 export type AiUsageStatus = "ok" | "error" | "skipped";
 
 export type RecordAiUsageEventInput = {

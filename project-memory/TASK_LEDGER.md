@@ -1,3 +1,11 @@
+## FM-WEB-001 — public support launcher and default-off Website AI — 2026-11-01
+- Task/Issue: bounded first implementation slice of #1350.
+- Risk/Status: R3 / IN_PROGRESS on `feat/public-support-ai-foundation-20261101`.
+- Baseline: current main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`; stale PR #1250 inspected and reused selectively.
+- Scope: public landing launcher, safe fallback to `/support`, default-off AI route, exact installation/origin/session/inbound-receipt binding, bounded prompt/provider request, CRM idempotency and human handoff fallback.
+- Boundary: repository-only. No public installation creation, environment value, Staging/Production activation, database apply, provider credential/read, authenticated In-App assistant or autonomous external send.
+- Recovery: revert source commit; absent installation configuration and the false AI flag preserve the prior public behavior.
+
 ## FM-CREATOR-001 — bounded drift section evidence — 2026-11-01
 - Task/Action: FM-CREATOR-001 / creator-target-drift-section-evidence.
 - Risk/Status: R3 / SOURCE_VERIFIED on PR #1397; repository worker complete and lock released.
