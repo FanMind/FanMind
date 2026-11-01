@@ -396,15 +396,27 @@ export function classifyCreatorTargetSnapshot(snapshot, referenceJson) {
 export function formatCreatorTransitionVerification(classification) {
   const status = clean(classification?.status);
   const differingSections = classification?.differingSections ?? [];
+  const sectionStates = classification?.sectionStates ?? {};
+  const differingSectionSha256 = classification?.differingSectionSha256 ?? {};
   const blockers = classification?.blockers ?? [];
   const safeToken = value => typeof value === "string" && /^[A-Za-z0-9_]+$/u.test(value);
+  const sectionStateValues = new Set(["LEGACY_EXACT", "CURRENT_EXACT", "SHARED_EXACT", "DRIFT"]);
+  const sortedSections = [...differingSections].sort();
+  const fingerprintKeys = Object.keys(differingSectionSha256).sort();
   if (!safeToken(status) || !Array.isArray(differingSections) || !Array.isArray(blockers) ||
-      differingSections.some(value => !safeToken(value)) || blockers.some(value => !safeToken(value))) {
+      differingSections.some(value => !safeToken(value)) || blockers.some(value => !safeToken(value)) ||
+      new Set(differingSections).size !== differingSections.length ||
+      sortedSections.join(",") !== differingSections.join(",") ||
+      fingerprintKeys.join(",") !== differingSections.join(",") ||
+      differingSections.some(key => !sectionStateValues.has(sectionStates[key]) ||
+        !/^[a-f0-9]{64}$/u.test(differingSectionSha256[key] ?? ""))) {
     fail("diagnostic_invalid");
   }
   return [
     `CREATOR_TARGET_TRANSITION_STATE=${status}`,
     `CREATOR_TARGET_TRANSITION_DIFFERING_SECTIONS=${differingSections.join(",") || "none"}`,
+    `CREATOR_TARGET_TRANSITION_SECTION_STATES=${differingSections.map(key => `${key}:${sectionStates[key]}`).join(",") || "none"}`,
+    `CREATOR_TARGET_TRANSITION_SECTION_SHA256=${differingSections.map(key => `${key}:${differingSectionSha256[key]}`).join(",") || "none"}`,
     `CREATOR_TARGET_TRANSITION_BLOCKERS=${blockers.join(",") || "none"}`,
     "CREATOR_TARGET_TRANSITION_APPLY=not_requested",
     "CREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false",
