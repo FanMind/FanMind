@@ -9,6 +9,11 @@ const launcherPath = new URL("../src/components/PublicSupportAssistant.tsx", imp
 const landingPath = new URL("../src/app/page.tsx", import.meta.url);
 const envPath = new URL("../.env.example", import.meta.url);
 
+const {
+  isWebsiteChatAssistantBindingValid,
+  selectWebsiteChatAiAction,
+} = await import("../src/lib/websiteChatAiPolicy.mjs");
+
 test("Public support stays useful while Website AI remains default-off", async () => {
   const [route, env, launcher, landing] = await Promise.all([
     readFile(routePath, "utf8"),
@@ -78,4 +83,95 @@ test("Website widget renders AI replies and preserves human fallback", async () 
   assert.match(widget, /addBubble\("assistant"/u);
   assert.match(widget, /persönliche Antwort ist weiterhin möglich/u);
   assert.match(widget, /\/api\/website-chat\/handoff/u);
+});
+
+test("Website AI admission reuses replies and serializes claim winners and losers", () => {
+  assert.deepEqual(
+    selectWebsiteChatAiAction({ existingReply: "Bereits beantwortet", claimAllowed: null }),
+    { action: "reuse", reply: "Bereits beantwortet" },
+  );
+  assert.deepEqual(
+    selectWebsiteChatAiAction({ existingReply: null, claimAllowed: null }),
+    { action: "claim" },
+  );
+  assert.deepEqual(
+    selectWebsiteChatAiAction({ existingReply: null, claimAllowed: true }),
+    { action: "provider" },
+  );
+  assert.deepEqual(
+    selectWebsiteChatAiAction({ existingReply: null, claimAllowed: false }),
+    { action: "in_progress" },
+  );
+  assert.throws(
+    () => selectWebsiteChatAiAction({ existingReply: null, claimAllowed: undefined }),
+    /claimAllowed/u,
+  );
+});
+
+test("Website AI binding rejects revoked, expired and foreign receipt state", () => {
+  const ids = {
+    installation: "10000000-0000-4000-8000-000000000001",
+    workspace: "10000000-0000-4000-8000-000000000002",
+    session: "10000000-0000-4000-8000-000000000003",
+    client: "10000000-0000-4000-8000-000000000004",
+    contact: "10000000-0000-4000-8000-000000000005",
+    conversation: "10000000-0000-4000-8000-000000000006",
+    message: "10000000-0000-4000-8000-000000000007",
+    foreignSession: "10000000-0000-4000-8000-000000000008",
+  };
+  const session = {
+    id: ids.session,
+    installation_id: ids.installation,
+    workspace_id: ids.workspace,
+    origin: "https://fanmind.io",
+    expires_at: "2026-11-01T20:00:00.000Z",
+    revoked_at: null,
+  };
+  const receipt = {
+    session_id: ids.session,
+    installation_id: ids.installation,
+    workspace_id: ids.workspace,
+    client_message_id: ids.client,
+    contact_id: ids.contact,
+    conversation_id: ids.conversation,
+    message_id: ids.message,
+  };
+  const valid = {
+    session,
+    receipt,
+    installationId: ids.installation,
+    workspaceId: ids.workspace,
+    origin: "https://fanmind.io",
+    clientMessageId: ids.client,
+    nowMs: Date.parse("2026-11-01T19:00:00.000Z"),
+  };
+  assert.equal(isWebsiteChatAssistantBindingValid(valid), true);
+  assert.equal(
+    isWebsiteChatAssistantBindingValid({
+      ...valid,
+      session: { ...session, revoked_at: "2026-11-01T18:00:00.000Z" },
+    }),
+    false,
+  );
+  assert.equal(
+    isWebsiteChatAssistantBindingValid({
+      ...valid,
+      nowMs: Date.parse("2026-11-01T20:00:00.000Z"),
+    }),
+    false,
+  );
+  assert.equal(
+    isWebsiteChatAssistantBindingValid({
+      ...valid,
+      receipt: { ...receipt, session_id: ids.foreignSession },
+    }),
+    false,
+  );
+  assert.equal(
+    isWebsiteChatAssistantBindingValid({
+      ...valid,
+      receipt: { ...receipt, workspace_id: ids.foreignSession },
+    }),
+    false,
+  );
 });

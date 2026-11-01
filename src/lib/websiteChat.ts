@@ -14,6 +14,7 @@ import {
 } from "@/lib/websiteChatPolicy.mjs";
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import { evaluateWorkspaceProcessingEntitlement } from "@/lib/workspaceProcessingPolicy.mjs";
+import { isWebsiteChatAssistantBindingValid } from "@/lib/websiteChatAiPolicy.mjs";
 
 type InstallationRow = {
   id: string;
@@ -292,6 +293,10 @@ type WebsiteChatSessionRow = {
 };
 
 type WebsiteChatReceiptRow = {
+  session_id: string;
+  installation_id: string;
+  workspace_id: string;
+  client_message_id: string;
   contact_id: string;
   conversation_id: string;
   message_id: string;
@@ -345,11 +350,22 @@ export async function resolveWebsiteChatAssistantContext(input: {
   }
 
   const receipts = await fetchRows<WebsiteChatReceiptRow>(
-    `website_chat_message_receipts?select=contact_id,conversation_id,message_id&session_id=eq.${encodeURIComponent(session.id)}&client_message_id=eq.${encodeURIComponent(clientMessageId)}&limit=1`,
+    `website_chat_message_receipts?select=session_id,installation_id,workspace_id,client_message_id,contact_id,conversation_id,message_id&session_id=eq.${encodeURIComponent(session.id)}&client_message_id=eq.${encodeURIComponent(clientMessageId)}&limit=1`,
     serviceKey,
   );
   const receipt = receipts[0];
-  if (!receipt) throw new WebsiteChatServiceError("message_invalid");
+  if (
+    !isWebsiteChatAssistantBindingValid({
+      session,
+      receipt,
+      installationId: resolved.installation.id,
+      workspaceId: resolved.installation.workspace_id,
+      origin: resolved.origin,
+      clientMessageId,
+    })
+  ) {
+    throw new WebsiteChatServiceError("message_invalid");
+  }
 
   const history = await fetchRows<WebsiteChatConversationMessage>(
     `conversation_messages?select=id,direction,content,created_at,external_message_id&workspace_id=eq.${encodeURIComponent(session.workspace_id)}&conversation_id=eq.${encodeURIComponent(receipt.conversation_id)}&order=created_at.desc&limit=16`,

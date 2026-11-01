@@ -5,6 +5,7 @@ import { getClientIp } from "@/lib/rateLimit";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import { getWorkspaceAiPromptContext } from "@/lib/workspaceAiPrompts";
+import { selectWebsiteChatAiAction } from "@/lib/websiteChatAiPolicy.mjs";
 import {
   hashWebsiteChatSessionToken,
   MAX_BODY_BYTES,
@@ -142,8 +143,12 @@ export async function POST(request: NextRequest) {
   } catch {
     return response({ ok: false, code: "SERVICE_UNAVAILABLE" }, 503, resolved.origin);
   }
-  if (existingReply) {
-    return response({ ok: true, reply: existingReply.reply, duplicate: true }, 200, resolved.origin);
+  const initialDecision = selectWebsiteChatAiAction({
+    existingReply: existingReply?.reply ?? null,
+    claimAllowed: null,
+  });
+  if (initialDecision.action === "reuse") {
+    return response({ ok: true, reply: initialDecision.reply, duplicate: true }, 200, resolved.origin);
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -166,9 +171,15 @@ export async function POST(request: NextRequest) {
     } catch {
       return response({ ok: false, code: "SERVICE_UNAVAILABLE" }, 503, resolved.origin);
     }
-    if (existingReply) {
-      return response({ ok: true, reply: existingReply.reply, duplicate: true }, 200, resolved.origin);
-    }
+  }
+  const claimDecision = selectWebsiteChatAiAction({
+    existingReply: existingReply?.reply ?? null,
+    claimAllowed: messageClaim.allowed,
+  });
+  if (claimDecision.action === "reuse") {
+    return response({ ok: true, reply: claimDecision.reply, duplicate: true }, 200, resolved.origin);
+  }
+  if (claimDecision.action === "in_progress") {
     return response({ ok: false, code: "AI_IN_PROGRESS" }, 409, resolved.origin);
   }
 
