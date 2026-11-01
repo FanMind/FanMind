@@ -122,25 +122,48 @@ test("Creator target transition classifies every failed APPLY response as indete
 });
 
 test("Creator target verification reports only bounded drift metadata", () => {
+  const parentPoliciesSha256 = "a".repeat(64);
+  const rolesSha256 = "b".repeat(64);
+  const classification = {
+    status: "DRIFT",
+    differingSections: ["parentPolicies", "roles"],
+    sectionStates: {parentPolicies: "LEGACY_EXACT", roles: "DRIFT"},
+    differingSectionSha256: {parentPolicies: parentPoliciesSha256, roles: rolesSha256},
+    blockers: ["catalog_differs_from_pinned_reference"],
+  };
   assert.equal(
-    formatCreatorTransitionVerification({
-      status: "DRIFT",
-      differingSections: ["parentPolicies", "roles"],
-      blockers: ["catalog_differs_from_pinned_reference"],
-    }),
+    formatCreatorTransitionVerification(classification),
     [
       "CREATOR_TARGET_TRANSITION_STATE=DRIFT",
       "CREATOR_TARGET_TRANSITION_DIFFERING_SECTIONS=parentPolicies,roles",
+      "CREATOR_TARGET_TRANSITION_SECTION_STATES=parentPolicies:LEGACY_EXACT,roles:DRIFT",
+      `CREATOR_TARGET_TRANSITION_SECTION_SHA256=parentPolicies:${parentPoliciesSha256},roles:${rolesSha256}`,
       "CREATOR_TARGET_TRANSITION_BLOCKERS=catalog_differs_from_pinned_reference",
       "CREATOR_TARGET_TRANSITION_APPLY=not_requested",
       "CREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false",
     ].join("\n"),
   );
+  for (const invalid of [
+    {...classification, differingSections: null},
+    {...classification, differingSections: {}},
+    {...classification, sectionStates: null},
+    {...classification, sectionStates: []},
+    {...classification, differingSectionSha256: null},
+    {...classification, differingSectionSha256: []},
+  ]) {
+    assert.throws(
+      () => formatCreatorTransitionVerification(invalid),
+      /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
+    );
+  }
+  assert.throws(
+    () => formatCreatorTransitionVerification({...classification, differingSectionSha256: {roles: rolesSha256}}),
+    /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
+  );
   assert.throws(
     () => formatCreatorTransitionVerification({
-      status: "DRIFT\nSECRET=value",
-      differingSections: [],
-      blockers: [],
+      ...classification,
+      sectionStates: {...classification.sectionStates, roles: "DRIFT\nSECRET"},
     }),
     /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
   );

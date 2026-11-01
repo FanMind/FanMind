@@ -1,3 +1,13 @@
+## RECEIPT-FM-CREATOR-TARGET-DRIFT-EVIDENCE-20261101
+- Task: FM-CREATOR-001 / creator-target-drift-section-evidence
+- Risk/Status: R3 / SOURCE_VERIFIED; repository worker lock released
+- Trigger: Owner requested roadmap continuation and explicitly released merge on 2026-11-01.
+- Input evidence: exact-main read-only run `41300503008`; differing sections `authUidFunctions,functions,memberships,policies,roles`; APPLY `not_requested`; runtime `false`; independent R3 diagnosis countercheck PASS.
+- Repository result: bounded per-section exactness states plus canonical SHA-256 fingerprints for differing sections, strict output validation, native PG17 regressions and no expansion of the apply contract.
+- Verification: implementation head `c030c7218027ff9a0bb47f373485066b7e7d15c0` passed FanMind CI `41301541119`, including native PostgreSQL 17 Creator isolation/rollback; Browser, CodeQL, Supply Chain, Landing, Project Memory Guard and Status passed. The two red governance checks were caused by the intentionally active task lock and are expected to clear after this release reconciliation. Final-head CI and independent R3 re-review remain merge gates.
+- Boundary: no database/provider/runtime/Production mutation. The receipt does not authorize a fresh diagnosis, transition APPLY, deployment or runtime activation.
+- Recovery: revert the repository commit. A fresh exact-main read-only diagnosis remains a separate one-shot action.
+
 ## FM-EXEC-PRODUCT-ROADMAP-CONTINUATION-20261005
 - Task ID: `fanmind-product-roadmap-continuation-20261005-01`
 - Handoff ID: `owner-fanmind-product-roadmap-continuation-20261005-01`

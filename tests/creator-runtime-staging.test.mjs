@@ -192,6 +192,9 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(diagnosis, /FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927/u);
   assert.match(diagnosis, /creator-foundation-transition-staging-runner\.mjs --verify/u);
   assert.match(diagnosis, /test "\$status" -eq 0 -o "\$status" -eq 2/u);
+  assert.match(diagnosis, /test "\$\{#lines\[@\]\}" -eq 7/u);
+  assert.match(diagnosis, /CREATOR_TARGET_TRANSITION_SECTION_STATES/u);
+  assert.match(diagnosis, /CREATOR_TARGET_TRANSITION_SECTION_SHA256/u);
   assert.doesNotMatch(diagnosis, /creator-foundation-transition-staging-runner\.mjs --apply/u);
   assert.doesNotMatch(diagnosis, /deploy-staging\.yml/u);
   assert.doesNotMatch(diagnosis, /FANMIND_ENABLE_NON_PRODUCTION_WRITES/u);

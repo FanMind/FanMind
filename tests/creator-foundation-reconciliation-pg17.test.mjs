@@ -143,8 +143,31 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       snapshot.catalog.roles = structuredClone(roleProfile.roles);
       snapshot.catalog.memberships = structuredClone(roleProfile.memberships);
     }
-    assert.equal(classify(hostedLegacy).status, "LEGACY_EXACT");
-    assert.equal(classify(hostedCurrent).status, "CURRENT_EXACT");
+    const hostedLegacyResult = classify(hostedLegacy);
+    const hostedCurrentResult = classify(hostedCurrent);
+    assert.equal(hostedLegacyResult.status, "LEGACY_EXACT");
+    assert.equal(hostedCurrentResult.status, "CURRENT_EXACT");
+    assert.equal(hostedLegacyResult.sectionStates.functions, "LEGACY_EXACT");
+    assert.equal(hostedLegacyResult.sectionStates.policies, "LEGACY_EXACT");
+    assert.equal(hostedLegacyResult.sectionStates.roles, "SHARED_EXACT");
+    assert.equal(hostedCurrentResult.sectionStates.functions, "CURRENT_EXACT");
+    assert.equal(hostedCurrentResult.sectionStates.policies, "CURRENT_EXACT");
+    assert.equal(hostedCurrentResult.sectionStates.memberships, "SHARED_EXACT");
+    assert.deepEqual(hostedLegacyResult.differingSectionSha256, {});
+    assert.deepEqual(hostedCurrentResult.differingSectionSha256, {});
+    const roleDrift = structuredClone(hostedLegacy);
+    roleDrift.catalog.roles[0].canLogin = !roleDrift.catalog.roles[0].canLogin;
+    const reorderedRoleDrift = structuredClone(roleDrift);
+    reorderedRoleDrift.catalog.roles.reverse();
+    const roleDriftResult = classify(roleDrift);
+    const reorderedRoleDriftResult = classify(reorderedRoleDrift);
+    assert.equal(roleDriftResult.sectionStates.roles, "DRIFT");
+    assert.equal(reorderedRoleDriftResult.sectionStates.roles, "DRIFT");
+    assert.equal(
+      roleDriftResult.differingSectionSha256.roles,
+      reorderedRoleDriftResult.differingSectionSha256.roles,
+      "section fingerprints are independent of catalog row order",
+    );
     assert.equal(classifyCreatorFoundationSnapshot(hostedCurrent, { ...options, trustedReferenceSha256: "0".repeat(64) }).status, "INCOMPLETE");
     for (const snapshot of [hostedLegacy, hostedCurrent]) {
       const result = classify(snapshot);
@@ -236,6 +259,8 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
       const result = classify(JSON.parse(sql(query, databases[1])));
       assert.equal(result.status, "DRIFT", name);
       assert.ok(result.differingSections.includes(expectedSection), name);
+      assert.equal(result.sectionStates[expectedSection], "DRIFT", name);
+      assert.match(result.differingSectionSha256[expectedSection], /^[a-f0-9]{64}$/u, name);
     }
 
     for (const [name, statement, expectedSection] of [

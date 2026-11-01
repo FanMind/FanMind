@@ -1,3 +1,12 @@
+## FM-CREATOR-001 — bounded drift section evidence — 2026-11-01
+- Task/Action: FM-CREATOR-001 / creator-target-drift-section-evidence.
+- Risk/Status: R3 / SOURCE_VERIFIED on PR #1397; repository worker complete and lock released.
+- Baseline: exact main `ba981e50c2c18da2cae7afd11cd2bc9f20572f53`; read-only run `41300503008` proved DRIFT in `authUidFunctions,functions,memberships,policies,roles` with APPLY not requested and runtime inactive.
+- Verification: implementation head `c030c7218027ff9a0bb47f373485066b7e7d15c0` passed FanMind CI `41301541119`, including native PostgreSQL 17 Creator isolation/rollback; Browser, CodeQL, Supply Chain, Landing, Project Memory Guard and Status also passed. Final-head CI and independent R3 re-review remain merge gates.
+- Scope: emit only deterministic per-section Legacy/Current/Shared/Drift states and SHA-256 fingerprints for differing sections, with strict seven-line workflow validation and regression tests. This does not trust target values or change the accepted provider profile.
+- Boundary: repository-only. No Staging/Production write, SQL APPLY, deployment, runtime activation, role/auth grant, provider/customer/Billing/Restore/Mobile mutation or secret publication.
+- Recovery: revert the repository change. The paused R4 transition lock and consumed transition authorization remain unchanged; a later read-only diagnosis requires a fresh exact-main one-shot command.
+
 ## 2026-10-31 started-work reconciliation
 - Historical implementation records with verified merged successors are closed or superseded below. Aggregate product/runtime gates remain unchanged and must not be inferred from source acceptance.
 - Remaining active records were rechecked against current main, current PR state and issue #1048; their refreshed date records review only.

@@ -1,3 +1,14 @@
+## LOCK-FM-CREATOR-TARGET-DRIFT-EVIDENCE-20261101
+- Task: FM-CREATOR-001
+- Action: creator-target-drift-section-evidence
+- Risk: R3
+- Status: RELEASED_SOURCE_VERIFIED
+- Owner: FanMind Builder
+- Verification: implementation head `c030c7218027ff9a0bb47f373485066b7e7d15c0` passed FanMind CI `41301541119`, including native PostgreSQL 17 Creator isolation/rollback; final-head CI and R3 re-review remain merge gates.
+- Scope: repository-only bounded section-state/fingerprint evidence and tests on `fix/creator-drift-section-evidence-20261101`.
+- Conflict boundary: does not resume or replace `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927`; no target write or protected runtime action.
+- Recovery: repository revert; no external recovery required.
+
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Status: RELEASED_MERGED_VERIFIED
