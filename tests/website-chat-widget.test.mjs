@@ -12,6 +12,12 @@ import {
   selectWebsiteChatAiAction,
 } from "../src/lib/websiteChatAiPolicy.mjs";
 
+const routePath = new URL("../src/app/api/website-chat/reply/route.ts", import.meta.url);
+const servicePath = new URL("../src/lib/websiteChat.ts", import.meta.url);
+const launcherPath = new URL("../src/components/PublicSupportAssistant.tsx", import.meta.url);
+const landingPath = new URL("../src/app/page.tsx", import.meta.url);
+const envPath = new URL("../.env.example", import.meta.url);
+
 test("widget is consent-first, cookie-free and uses only the public Website Chat APIs", () => {
   const source = buildWebsiteChatWidgetScript();
   assert.match(source, /consent\.checked/u);
