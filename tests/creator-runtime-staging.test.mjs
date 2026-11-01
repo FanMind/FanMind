@@ -75,6 +75,7 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   const diagnosis = await readFile(".github/workflows/creator-target-drift-diagnosis.yml", "utf8");
   const deploy = await readFile(".github/workflows/deploy-staging.yml", "utf8");
   const recovery = await readFile(".github/workflows/creator-target-admission-recovery.yml", "utf8");
+  const ci = await readFile(".github/workflows/ci-fanmind.yml", "utf8");
 
   assert.match(workflow, /uses: \.\/\.github\/workflows\/deploy-staging\.yml/u);
   assert.doesNotMatch(workflow, /deploy-staging\.yml\/dispatches/u);
@@ -132,6 +133,31 @@ test("Creator protected workflow binds deploy, owner workspace, service unit and
   assert.match(recovery, /FANMIND_CREATOR_TRANSITION_REFERENCE_DIR="\$RUNNER_TEMP\/creator-admission-recovery-reference"/u);
   assert.match(workflow, /actions\/artifacts\/\$\{id\}/u);
   assert.match(recovery, /actions\/artifacts\/\$\{id\}/u);
+  assert.match(
+    ci,
+    /name: fanmind-creator-foundation-reference-\$\{\{ github\.sha \}\}[\s\S]*retention-days: 90/u,
+  );
+  const refreshedReferencePin = [
+    "const id = 13079301340;",
+    "fanmind-creator-foundation-reference-96332518aba47b0fac0825b56dfd3eb2ebc6a3d8",
+    "meta.workflow_run?.id !== 41295151183",
+    'meta.workflow_run?.head_sha !== "36b17e16fc2bb7b145fa9aa9a518cd202f8fc362"',
+  ];
+  const refreshedReferenceDigest = "287c0a1e6a0015dbe67353da640503227c7f6be958f8c5d51497a1a9c91b1ac1";
+  const retiredReferencePin = [
+    "10916053961",
+    "fanmind-creator-foundation-reference-b323361cafc3829e470f6da611c7ab7d8c8664f6",
+    "36273161074",
+    "3cd67cedbcdc051be855d09de8d5ea3225179217",
+    "c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c",
+  ];
+  for (const [source, expectedDownloaders] of [[workflow, 3], [diagnosis, 1], [recovery, 1]]) {
+    for (const pin of refreshedReferencePin) {
+      assert.equal(source.split(pin).length - 1, expectedDownloaders);
+    }
+    assert.equal(source.split(refreshedReferenceDigest).length - 1, expectedDownloaders * 2);
+    for (const retiredPin of retiredReferencePin) assert.equal(source.includes(retiredPin), false);
+  }
   assert.match(workflow, /trap 'rollback_flag \$\?' EXIT ERR/u);
   assert.match(workflow, /trap 'rollback_flag 130' INT/u);
   assert.match(workflow, /trap 'rollback_flag 143' TERM/u);

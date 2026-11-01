@@ -1,3 +1,12 @@
+## FM-CREATOR-001 — Creator PG17 reference refresh — 2026-11-01
+- Task/Action: FM-CREATOR-001 / creator-target-reference-refresh
+- Risk/Status: R3 / IN_PROGRESS in PR #1396; repository evidence repair only.
+- Failure evidence: exact-main read-only diagnosis run `41245773828` authenticated and consumed the Owner command, then failed before any database connection because pinned artifact `10916053961` had expired. GitHub rejected retrying source job `108490997482` because its run was over one month old. No Staging/Production read or write occurred.
+- Replacement evidence: PR #1396 branch run `41295151183` passed the isolated PostgreSQL 17 authorization, Capacity, Creator workspace isolation/rollback and upload steps. Private artifact `13079301340`, name `fanmind-creator-foundation-reference-96332518aba47b0fac0825b56dfd3eb2ebc6a3d8`, source head `36b17e16fc2bb7b145fa9aa9a518cd202f8fc362`, archive digest `sha256:287c0a1e6a0015dbe67353da640503227c7f6be958f8c5d51497a1a9c91b1ac1`.
+- Change: all three Creator target consumers pin the same replacement identity; focused tests reject pin drift. Future CI reference retention increases from 7 to 90 days after merge. The one-time PR artifact still expires 2026-11-08 because pull-request workflows execute the workflow definition from current `main`.
+- Boundary: this source/evidence task does not dispatch diagnosis, connect to Staging, apply SQL, deploy, activate runtime or mutate Production/customer/provider/Billing/Restore/Mobile state.
+- Recovery: ordinary PR revert restores the prior pins but also restores the known expired-artifact blocker; do not replay the consumed command. After merge and exact-head checks/countercheck, a distinct fresh exact-main Owner authorization is required for another read-only diagnosis.
+
 ## 2026-10-31 active-state reconciliation
 - Issue #1048 was reconciled against current main `890c9889f05fcc6aa3bb1f0562e54b582f252964`, current open PR/issue state, the active branch ruleset, the 2026-10-31 read-only Production audit and current finishline evidence.
 - Aggregate states below remain open unless exact completion evidence exists. Refreshing `Updated` records review, not acceptance, deployment, provider approval or protected authorization.
