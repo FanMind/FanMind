@@ -395,16 +395,20 @@ export function classifyCreatorTargetSnapshot(snapshot, referenceJson) {
 
 export function formatCreatorTransitionVerification(classification) {
   const status = clean(classification?.status);
-  const differingSections = classification?.differingSections ?? [];
-  const sectionStates = classification?.sectionStates ?? {};
-  const differingSectionSha256 = classification?.differingSectionSha256 ?? {};
+  const differingSections = classification?.differingSections;
+  const sectionStates = classification?.sectionStates;
+  const differingSectionSha256 = classification?.differingSectionSha256;
   const blockers = classification?.blockers ?? [];
   const safeToken = value => typeof value === "string" && /^[A-Za-z0-9_]+$/u.test(value);
+  const plainObject = value => value !== null && typeof value === "object" && !Array.isArray(value);
   const sectionStateValues = new Set(["LEGACY_EXACT", "CURRENT_EXACT", "SHARED_EXACT", "DRIFT"]);
+  if (!safeToken(status) || !Array.isArray(differingSections) || !plainObject(sectionStates) ||
+      !plainObject(differingSectionSha256) || !Array.isArray(blockers)) {
+    fail("diagnostic_invalid");
+  }
   const sortedSections = [...differingSections].sort();
   const fingerprintKeys = Object.keys(differingSectionSha256).sort();
-  if (!safeToken(status) || !Array.isArray(differingSections) || !Array.isArray(blockers) ||
-      differingSections.some(value => !safeToken(value)) || blockers.some(value => !safeToken(value)) ||
+  if (differingSections.some(value => !safeToken(value)) || blockers.some(value => !safeToken(value)) ||
       new Set(differingSections).size !== differingSections.length ||
       sortedSections.join(",") !== differingSections.join(",") ||
       fingerprintKeys.join(",") !== differingSections.join(",") ||
