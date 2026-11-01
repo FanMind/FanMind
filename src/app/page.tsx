@@ -28,11 +28,14 @@ export async function generateMetadata({
   };
 }
 
-export default function LandingPage() {
+export default async function LandingPage({ searchParams }: LandingPageProps) {
+  const params = await searchParams;
+  const language = getFanMindLanguage(params?.lang);
+
   return (
     <>
       <LandingV2 />
-      <PublicSupportAssistant />
+      <PublicSupportAssistant language={language} />
     </>
   );
 }

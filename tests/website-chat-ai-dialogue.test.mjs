@@ -29,7 +29,8 @@ test("Public support stays useful while Website AI remains default-off", async (
   assert.match(launcher, /href="\/support"/u);
   assert.match(launcher, /INSTALLATION_ID_PATTERN\.test\(installationId\)/u);
   assert.match(launcher, /data-installation-id=\{installationId\}/u);
-  assert.match(landing, /<PublicSupportAssistant \/>/u);
+  assert.match(launcher, /language === "en" \? "Help & Support" : "Hilfe & Support"/u);
+  assert.match(landing, /<PublicSupportAssistant language=\{language\} \/>/u);
 });
 
 test("Website AI reply requires a persisted inbound receipt in the same session", async () => {
