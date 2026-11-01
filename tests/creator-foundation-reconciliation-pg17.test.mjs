@@ -155,6 +155,19 @@ test("PG17 reconciles exact historical/current catalogs and rejects real contrac
     assert.equal(hostedCurrentResult.sectionStates.memberships, "SHARED_EXACT");
     assert.deepEqual(hostedLegacyResult.differingSectionSha256, {});
     assert.deepEqual(hostedCurrentResult.differingSectionSha256, {});
+    const roleDrift = structuredClone(hostedLegacy);
+    roleDrift.catalog.roles[0].canLogin = !roleDrift.catalog.roles[0].canLogin;
+    const reorderedRoleDrift = structuredClone(roleDrift);
+    reorderedRoleDrift.catalog.roles.reverse();
+    const roleDriftResult = classify(roleDrift);
+    const reorderedRoleDriftResult = classify(reorderedRoleDrift);
+    assert.equal(roleDriftResult.sectionStates.roles, "DRIFT");
+    assert.equal(reorderedRoleDriftResult.sectionStates.roles, "DRIFT");
+    assert.equal(
+      roleDriftResult.differingSectionSha256.roles,
+      reorderedRoleDriftResult.differingSectionSha256.roles,
+      "section fingerprints are independent of catalog row order",
+    );
     assert.equal(classifyCreatorFoundationSnapshot(hostedCurrent, { ...options, trustedReferenceSha256: "0".repeat(64) }).status, "INCOMPLETE");
     for (const snapshot of [hostedLegacy, hostedCurrent]) {
       const result = classify(snapshot);
