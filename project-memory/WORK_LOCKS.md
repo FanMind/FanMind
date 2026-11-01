@@ -1,7 +1,8 @@
 ## LOCK-FM-WEB-PUBLIC-SUPPORT-AI-20261101
 - Task: FM-WEB-001 / issue #1350
-- Risk/Status: R3 / IN_PROGRESS
+- Risk/Status: R3 / RELEASED_SOURCE_VERIFIED
 - Owner: FanMind Builder
+- Verification: implementation head `76afc5537e458cb6347a16da11f8a48d07ef4430` passed all nine required workflows, including the complete Truth/Lint/Test/Build job and native PostgreSQL 17 authorization, Capacity and Creator isolation/rollback.
 - Baseline: exact main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`.
 - Scope: fresh conflict-free public landing support launcher plus default-off Website AI reply foundation, session/receipt binding, idempotent CRM persistence and focused negative contract tests.
 - Conflict boundary: supersedes implementation continuation from stale PR #1250 without modifying or closing it; no Creator-Building, ChatAdmin, authenticated In-App help, schema, Staging, Production, provider activation or secret change.

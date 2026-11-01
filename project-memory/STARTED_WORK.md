@@ -1,7 +1,8 @@
 ## FM-WEB-001 — public support launcher and default-off Website AI — 2026-11-01
 - Task/Issue: bounded first implementation slice of #1350.
-- Risk/Status: R3 / IN_PROGRESS on `feat/public-support-ai-foundation-20261101`.
+- Risk/Status: R3 / SOURCE_VERIFIED on PR #1398; repository worker complete and lock released.
 - Baseline: current main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`; stale PR #1250 inspected and reused selectively.
+- Verification: implementation head `76afc5537e458cb6347a16da11f8a48d07ef4430` passed all nine required workflows, including the complete Truth/Lint/Test/Build job and native PostgreSQL 17 authorization, Capacity and Creator isolation/rollback.
 - Scope: public landing launcher, safe fallback to `/support`, default-off AI route, exact installation/origin/session/inbound-receipt binding, bounded prompt/provider request, CRM idempotency and human handoff fallback.
 - Boundary: repository-only. No public installation creation, environment value, Staging/Production activation, database apply, provider credential/read, authenticated In-App assistant or autonomous external send.
 - Recovery: revert source commit; absent installation configuration and the false AI flag preserve the prior public behavior.
