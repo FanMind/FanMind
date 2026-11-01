@@ -143,6 +143,19 @@ test("Creator target verification reports only bounded drift metadata", () => {
       "CREATOR_TARGET_TRANSITION_RUNTIME_ACTIVATED=false",
     ].join("\n"),
   );
+  for (const invalid of [
+    {...classification, differingSections: null},
+    {...classification, differingSections: {}},
+    {...classification, sectionStates: null},
+    {...classification, sectionStates: []},
+    {...classification, differingSectionSha256: null},
+    {...classification, differingSectionSha256: []},
+  ]) {
+    assert.throws(
+      () => formatCreatorTransitionVerification(invalid),
+      /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
+    );
+  }
   assert.throws(
     () => formatCreatorTransitionVerification({...classification, differingSectionSha256: {roles: rolesSha256}}),
     /CREATOR_TARGET_TRANSITION_ERROR=diagnostic_invalid/u,
