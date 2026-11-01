@@ -12,6 +12,7 @@ test("widget is consent-first, cookie-free and uses only the public Website Chat
   assert.match(source, /credentials:"omit"/u);
   assert.match(source, /\/api\/website-chat\/session/u);
   assert.match(source, /\/api\/website-chat\/message/u);
+  assert.match(source, /\/api\/website-chat\/reply/u);
   assert.match(source, /crypto\.randomUUID\(\)/u);
   assert.match(source, /!pendingClientMessageId \|\| pendingMessage !== message/u);
   assert.match(source, /pendingClientMessageId = crypto\.randomUUID\(\); pendingMessage = message/u);
@@ -19,8 +20,8 @@ test("widget is consent-first, cookie-free and uses only the public Website Chat
   assert.match(source, /pendingClientMessageId = null; pendingMessage = null; status\.textContent = "Danke/u);
   assert.match(source, /response\.status === 401\) sessionToken = null/u);
   assert.doesNotMatch(source, /catch \{ sessionToken = null/u);
-  assert.match(source, /keine automatische KI-Antwort/u);
-  assert.doesNotMatch(source, /document\.cookie|localStorage|sessionStorage|OPENAI|poll|outbound/iu);
+  assert.match(source, /persönliche Antwort ist weiterhin möglich/u);
+  assert.doesNotMatch(source, /document\.cookie|localStorage|sessionStorage|OPENAI|poll/iu);
 });
 
 test("widget and API routes share the installation, preflight and session envelope contract", async () => {

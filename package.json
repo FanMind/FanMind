@@ -153,7 +153,7 @@
     "db:daily-workspace-provisioning:apply": "node scripts/operations/internal-daily-test-provisioning-migration-runner.mjs --apply",
     "test:daily-workspace-provisioning:production": "node --test tests/production-audit-policy-install.test.mjs tests/internal-daily-test-workspace-provisioning-production.test.mjs",
     "test:inbox": "node --test tests/inbox-queue-policy.test.mjs tests/inbox-queue-ui-policy.test.mjs tests/inbox-human-handoff-policy.test.mjs",
-    "test:website-chat": "node --test tests/website-chat-policy.test.mjs tests/website-chat-foundation.test.mjs tests/website-chat-ingestion.test.mjs tests/website-chat-handoff.test.mjs tests/website-chat-handoff-staging.test.mjs tests/website-chat-retention.test.mjs tests/website-chat-retention-staging.test.mjs tests/website-chat-widget.test.mjs",
+    "test:website-chat": "node --test tests/website-chat-policy.test.mjs tests/website-chat-ai-dialogue.test.mjs tests/website-chat-foundation.test.mjs tests/website-chat-ingestion.test.mjs tests/website-chat-handoff.test.mjs tests/website-chat-handoff-staging.test.mjs tests/website-chat-retention.test.mjs tests/website-chat-retention-staging.test.mjs tests/website-chat-widget.test.mjs",
     "test:production-controls": "node --test tests/trigger-function-hardening-production.test.mjs",
     "test:release-integrations": "npm run test:website-chat && npm run test:inbox && npm run test:production-controls && npm run test:whatsapp-cloud-inbound",
     "test:whatsapp-cloud-inbound": "node --test tests/whatsapp-cloud-inbound.test.mjs tests/whatsapp-cloud-inbound-staging.test.mjs",

@@ -50,8 +50,8 @@ test("public session route is origin-, consent-, body- and rate-limit guarded", 
   assert.match(route, /Cache-Control": "private, no-store"/u);
   assert.match(service, /requireConsent/u);
   assert.match(service, /hashWebsiteChatSessionToken/u);
-  assert.doesNotMatch(`${route}\n${service}`, /OPENAI_API_KEY|reply-suggestions|copilot\/reply/u);
-  assert.doesNotMatch(`${route}\n${service}`, /automatic|auto.?send|outbound/iu);
+  assert.doesNotMatch(route, /OPENAI_API_KEY|reply-suggestions|copilot\/reply/u);
+  assert.doesNotMatch(route, /automatic|auto.?send|outbound/iu);
 });
 
 test("website chat stays disabled while the atomic processing gate awaits controlled Staging acceptance", async () => {
