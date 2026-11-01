@@ -1,6 +1,7 @@
 ## LOCK-FM-WEB-PUBLIC-SUPPORT-AI-20261101
 - Task: FM-WEB-001 / issue #1350
-- Risk/Status: R3 / RELEASED_FOR_PR
+- Risk: R3
+- Status: RELEASED_FOR_PR
 - Owner: FanMind Builder
 - Verification: implementation head `76afc5537e458cb6347a16da11f8a48d07ef4430` passed all nine required workflows, including the complete Truth/Lint/Test/Build job and native PostgreSQL 17 authorization, Capacity and Creator isolation/rollback.
 - Baseline: exact main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`.
