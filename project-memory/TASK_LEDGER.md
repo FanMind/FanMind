@@ -1,3 +1,11 @@
+## FM-CREATOR-001 — bounded drift section evidence — 2026-11-01
+- Task/Action: FM-CREATOR-001 / creator-target-drift-section-evidence.
+- Risk/Status: R3 / IN_PROGRESS on branch `fix/creator-drift-section-evidence-20261101`.
+- Baseline: exact main `ba981e50c2c18da2cae7afd11cd2bc9f20572f53`; read-only run `41300503008` proved DRIFT in `authUidFunctions,functions,memberships,policies,roles` with APPLY not requested and runtime inactive.
+- Scope: emit only deterministic per-section Legacy/Current/Shared/Drift states and SHA-256 fingerprints for differing sections, with strict seven-line workflow validation and regression tests. This does not trust target values or change the accepted provider profile.
+- Boundary: repository-only. No Staging/Production write, SQL APPLY, deployment, runtime activation, role/auth grant, provider/customer/Billing/Restore/Mobile mutation or secret publication.
+- Recovery: revert the repository change. The paused R4 transition lock and consumed transition authorization remain unchanged; a later read-only diagnosis requires a fresh exact-main one-shot command.
+
 ## FM-CREATOR-001 — Creator PG17 reference refresh — 2026-11-01
 - Task/Action: FM-CREATOR-001 / creator-target-reference-refresh
 - Risk/Status: R3 / IN_PROGRESS in PR #1396; repository evidence repair only.
