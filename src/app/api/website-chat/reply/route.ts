@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAXIMUM = 20;
-const MESSAGE_CLAIM_WINDOW_MS = 2 * 60 * 1000;
+const MESSAGE_CLAIM_WINDOW_MS = 30_000;
 const TIMEOUT_MS = 20_000;
 
 function corsHeaders(origin?: string) {
@@ -146,6 +146,9 @@ export async function POST(request: NextRequest) {
     return response({ ok: true, reply: existingReply.reply, duplicate: true }, 200, resolved.origin);
   }
 
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  if (!apiKey) return response({ ok: false, code: "AI_UNAVAILABLE" }, 503, resolved.origin);
+
   let messageClaim;
   try {
     messageClaim = await consumeSharedRateLimit({
@@ -168,9 +171,6 @@ export async function POST(request: NextRequest) {
     }
     return response({ ok: false, code: "AI_IN_PROGRESS" }, 409, resolved.origin);
   }
-
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
-  if (!apiKey) return response({ ok: false, code: "AI_UNAVAILABLE" }, 503, resolved.origin);
 
   const promptContext = await getWorkspaceAiPromptContext(context.workspaceId, null, true);
   const model = getFanMindAiModel();
