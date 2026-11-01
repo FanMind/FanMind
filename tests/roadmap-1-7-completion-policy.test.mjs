@@ -830,8 +830,8 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       );
       assert.match(pausedHarnessLock, /- Status: PAUSED/u);
       assert.match(pausedLiveRepairLock, /- Status: PAUSED/u);
-      assert.match(nextAction, /- Worker slots reserved by active\/ready work: `0`/u);
-      assert.match(nextAction, /- Active task continuations reserving slots: `NONE`/u);
+      assert.match(nextAction, /- Worker slots reserved by active\/ready work: `1`/u);
+      assert.match(nextAction, /- Active task continuations reserving slots: `TASK:FM-WEB-001`/u);
       assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
       assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
       assert.match(nextAction, /run-creator-target-drift-diagnosis <then-current-main-sha>/u);

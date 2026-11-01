@@ -39,7 +39,7 @@ test("Website AI reply requires a persisted inbound receipt in the same session"
     readFile(servicePath, "utf8"),
   ]);
   assert.match(route, /resolveWebsiteChatAssistantContext/u);
-  assert.match(service, /website_chat_message_receipts\?select=contact_id,conversation_id,message_id/u);
+  assert.match(service, /website_chat_message_receipts\?select=session_id,installation_id,workspace_id,client_message_id,contact_id,conversation_id,message_id/u);
   assert.match(service, /session_id=eq\./u);
   assert.match(service, /client_message_id=eq\./u);
   assert.match(service, /session\.revoked_at/u);

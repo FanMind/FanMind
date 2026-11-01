@@ -16,7 +16,8 @@ test("widget is consent-first, cookie-free and uses only the public Website Chat
   assert.match(source, /crypto\.randomUUID\(\)/u);
   assert.match(source, /!pendingClientMessageId \|\| pendingMessage !== message/u);
   assert.match(source, /pendingClientMessageId = crypto\.randomUUID\(\); pendingMessage = message/u);
-  assert.match(source, /clientMessageId:pendingClientMessageId/u);
+  assert.match(source, /const currentMessageId = pendingClientMessageId/u);
+  assert.match(source, /clientMessageId:currentMessageId/u);
   assert.match(source, /pendingClientMessageId = null; pendingMessage = null; status\.textContent = "Danke/u);
   assert.match(source, /response\.status === 401\) sessionToken = null/u);
   assert.doesNotMatch(source, /catch \{ sessionToken = null/u);
