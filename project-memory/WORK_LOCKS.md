@@ -1,3 +1,13 @@
+## LOCK-FM-CREATOR-TARGET-DRIFT-EVIDENCE-20261101
+- Task: FM-CREATOR-001
+- Action: creator-target-drift-section-evidence
+- Risk: R3
+- Status: ACTIVE
+- Owner: FanMind Builder
+- Scope: repository-only bounded section-state/fingerprint evidence and tests on `fix/creator-drift-section-evidence-20261101`.
+- Conflict boundary: does not resume or replace `LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927`; no target write or protected runtime action.
+- Recovery: repository revert; no external recovery required.
+
 ## LOCK-FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Status: RELEASED_MERGED_VERIFIED
