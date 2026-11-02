@@ -1,0 +1,36 @@
+.fallback {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 120;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border: 1px solid rgba(125, 211, 252, 0.48);
+  border-radius: 8px;
+  background: #0787f7;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(0, 27, 61, 0.32);
+}
+
+.fallback:hover {
+  background: #0877d6;
+}
+
+.fallback:focus-visible {
+  outline: 3px solid #f8d35e;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .fallback {
+    right: 16px;
+    bottom: 16px;
+  }
+}
