@@ -62,7 +62,7 @@ a documented product-source gap rather than an implemented capability.
 
 | Scenario | Turns | Deterministic result | What is proven | Product-quality boundary |
 | --- | ---: | --- | --- | --- |
-| Joke / Austrian phrasing | 6 | RED | Character style and confirmed history reach the model; humor-free drafts pass current guards | No humor, irony or Austrian-Schmäh evaluator |
+| Joke / Austrian phrasing | 6 | PASS | The exact DE contextual stub triple is rejected terminally after one local provider attempt | No general humor, irony or Austrian-Schmäh evaluator; any non-exact or contextual set remains outside this guard |
 | Topic switch / resumption | 6 | PASS | Complete confirmed turns survive; unrelated turn has no offer; explicit return restores the synthetic bound offer | Natural transition, benefit framing and next-step quality are not evaluated |
 | Wrong fan price | 4 | PASS | Fan price is redacted; only the server-bound synthetic 25 EUR price may survive | Real product availability and source completeness are not proven |
 | Memory correction | 6 | RED | The current negative music fact supersedes the earlier positive fact across persisted turns | A redundant broad “Magst du Musik?” question still passes the context-free quality gate |
@@ -76,11 +76,12 @@ test process passes only when the documented gap remains reproducible. They must
 quality acceptance, and future fixes should invert the relevant diagnostic with an explicit reviewed
 contract rather than weaken its assertion.
 
-## Exactly one next correction
+## Current bounded status
 
-`FM-CHATADMIN-ADULT-SAFETY-GUARD-01`: add one repository-only deterministic ChatAdmin boundary for
-an explicit fan minority disclosure. It must stop before any provider call and preserve the existing
-adult Character validation, manual-send boundary, tenant/context binding and all current tests. Cover
-clear DE/EN self-disclosure, quoted/hypothetical counterexamples and unknown age without inferring age.
-No provider activation, database change, live access, deployment or automatic message is part of that task.
+The former adult-safety, known-interest and relationship-manipulation REDs are
+covered by their separate bounded guards. The joke scenario now proves only the
+exact `contextual_stub_triple` contract for the two documented DE/EN inputs and
+language-matched reply sets. Broader humor, naturalness, dialect and real-model
+quality remain unproved and require separate evaluation evidence.
+
 

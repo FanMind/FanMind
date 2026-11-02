@@ -11,6 +11,12 @@ import { AI_REPLY_INPUT_CHAR_LIMIT } from "@/lib/aiExecutionPolicy.mjs";
 import { deriveChatAdminReplyPause, extractChatAdminFacts, learnChatAdminKnowledge } from "@/lib/chatAdminKnowledge.mjs";
 import { getChatAdminModelProfile, buildChatAdminModelRequest, CHAT_ADMIN_MODEL_TIMEOUT_MS } from "@/lib/chatAdminModelPolicy.mjs";
 const URL="https://api.openai.com/v1/responses";
+const assessReplyQualityWithCurrentMessage: (
+ replies:unknown,
+ recentReplies:string[],
+ knownInterests:Array<{topic:string;polarity:"positive"|"negative"}>,
+ currentMessage:unknown,
+)=>string[]=assessReplyQuality;
 export async function POST(request:NextRequest){
  if(!isTrustedFanMindMutationRequest(request))return NextResponse.json({error:"untrusted_origin"},{status:403});
  let workspaceId="",userId="",inputChars=0;let usageRecorded=false;let providerAttemptStarted=false;let providerUsage:unknown;const model=getChatAdminModelProfile().model,started=Date.now();
@@ -33,7 +39,8 @@ export async function POST(request:NextRequest){
    const inbound=previous.filter(message=>message.direction==="fan_inbound"),stored=previous.filter(message=>message.direction==="suggested_reply");
    if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});
    const storedReplies=stored.map(message=>message.content);
-   if(assessReplyQuality(storedReplies,[],knownInterests).includes("known_interest_question"))throw new ReplyQualityError();
+   const replayIssues=assessReplyQualityWithCurrentMessage(storedReplies,[],knownInterests,body.incoming_message);
+   if(replayIssues.includes("known_interest_question")||replayIssues.includes("contextual_stub_triple"))throw new ReplyQualityError();
    const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());
    return NextResponse.json({memory_status:memoryStatus,replies:storedReplies,character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
   }
@@ -43,7 +50,8 @@ export async function POST(request:NextRequest){
   const signal=AbortSignal.any([request.signal,AbortSignal.timeout(CHAT_ADMIN_MODEL_TIMEOUT_MS)]);
   const sentContext=JSON.parse(context) as {conversation?:{recent_messages?:Array<{direction:string;content:string}>}};
   const recentReplies=(sentContext.conversation?.recent_messages??[]).filter(message=>message.direction==="confirmed_reply").map(message=>message.content).slice(-6);
-  const generated=await runReplyQualityGate({
+  type GeneratedReply={payload:{output_text?:string;output?:Array<{content?:Array<{text?:string}>}>;usage?:unknown};ok:boolean;replies:string[]|null};
+  const qualityGateOptions:Parameters<typeof runReplyQualityGate<GeneratedReply>>[0]={
    inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies, knownInterests,
    generate:async feedback=>{
     providerAttemptStarted=false;
@@ -84,7 +92,8 @@ export async function POST(request:NextRequest){
      errorCode:error instanceof ReplyQualityError?error.code:error&&typeof error==="object"&&"name" in error&&error.name==="TimeoutError"?"chat_admin_provider_timeout":error?"chat_admin_reply_failed":undefined,
      latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage:result?.payload.usage});
    },
-  });
+  };
+  const generated=await runReplyQualityGate(Object.assign(qualityGateOptions,{currentMessage:body.incoming_message}));
   const replies=generated.replies!;
   // A model call can outlive a capability, Workspace selection or Character edit.
   // Reload with the user's authority before returning any generated content.
@@ -150,3 +159,4 @@ async function saveGenerationKnowledge(workspaceId:string,userId:string,characte
  await checkAuthority();
  return status;
 }
+
