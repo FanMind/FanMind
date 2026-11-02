@@ -815,3 +815,10 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 
 - Follow-up step `RELATIONSHIP_PURCHASE_GUARD_R1` (2026-10-31): IMPLEMENTED_FOR_DRAFT_PR on the bounded repository branch. The shared output-quality gate now rejects a finite DE/EN relationship-manipulation matrix terminally, including direct possession/exclusivity/dependency and purchase-conditioned affection, while preserving neutral compliments, factual sales replies, unlinked warmth, marked quotations and hypotheticals. The former multi-turn flirt RED now expects `502 / reply_quality_rejected` with no rejected-draft persistence or confirmation. Exact-head Draft-PR CI and exactly one independent read-only delta-QA remain required; no merge, deploy, runtime/provider/real-data/training, rights or cost action is included.
 
+
+## FM-CHATADMIN-QUALITY — exact contextual stub triple guard — 2026-11-02
+
+- Risk/Status: R2 / IMPLEMENTED_FOR_DRAFT_PR; Draft PR #1409 at implementation head `70febb5d4435852059ad1e3b12a27886dff5bc9c` before this append-only ledger commit.
+- Result: The shared reply-quality gate now rejects `contextual_stub_triple` only for the two accepted exact normalized DE/EN inputs and the corresponding language-matched exact three-reply sets. Fresh generation is terminal after one provider/usage attempt; generation replay rejects before provider, usage, persistence and memory. Mixed-language, non-exact and contextual reply sets remain eligible under this rule.
+- Verification: focused policy coverage passes locally (23/23) and policy syntax passes. The local route/type harness is NOT_RUN because this workspace cannot download `typescript` (HTTP 403); exact-head automatic Draft-PR CI remains required and is not preclaimed. Existing price, refusal, adult-safety, relationship-manipulation, known-interest and pause/resume regressions are reused unchanged.
+- Boundary/next: no merge, deploy, runtime/provider/real-data/training, schema, flag, rights, secret or cost action is included. Exact-head required CI must complete; then Chief of Staff decides whether at most one independent read-only delta-QA is necessary.
