@@ -37,6 +37,15 @@ test("widget is consent-first, cookie-free and uses only the public Website Chat
   assert.doesNotMatch(source, /document\.cookie|localStorage|sessionStorage|OPENAI|poll/iu);
 });
 
+test("widget closes with Escape and returns focus to the toggle", () => {
+  const source = buildWebsiteChatWidgetScript();
+  assert.match(source, /function setPanelOpen\(open\)/u);
+  assert.match(source, /event\.key === "Escape"/u);
+  assert.match(source, /toggle\.setAttribute\("aria-expanded", String\(open\)\)/u);
+  assert.match(source, /else toggle\.focus\(\)/u);
+  assert.match(source, /setPanelOpen\(false\)/u);
+});
+
 test("widget and API routes share the installation, preflight and session envelope contract", async () => {
   const source = buildWebsiteChatWidgetScript();
   const { readFile } = await import("node:fs/promises");
