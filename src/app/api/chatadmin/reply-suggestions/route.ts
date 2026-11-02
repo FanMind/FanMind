@@ -50,7 +50,8 @@ export async function POST(request:NextRequest){
   const signal=AbortSignal.any([request.signal,AbortSignal.timeout(CHAT_ADMIN_MODEL_TIMEOUT_MS)]);
   const sentContext=JSON.parse(context) as {conversation?:{recent_messages?:Array<{direction:string;content:string}>}};
   const recentReplies=(sentContext.conversation?.recent_messages??[]).filter(message=>message.direction==="confirmed_reply").map(message=>message.content).slice(-6);
-  const generated=await runReplyQualityGate(Object.assign({
+  type GeneratedReply={payload:{output_text?:string;output?:Array<{content?:Array<{text?:string}>}>;usage?:unknown};ok:boolean;replies:string[]|null};
+  const qualityGateOptions:Parameters<typeof runReplyQualityGate<GeneratedReply>>[0]={
    inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies, knownInterests,
    generate:async feedback=>{
     providerAttemptStarted=false;
@@ -91,7 +92,8 @@ export async function POST(request:NextRequest){
      errorCode:error instanceof ReplyQualityError?error.code:error&&typeof error==="object"&&"name" in error&&error.name==="TimeoutError"?"chat_admin_provider_timeout":error?"chat_admin_reply_failed":undefined,
      latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage:result?.payload.usage});
    },
-  },{currentMessage:body.incoming_message}));
+  };
+  const generated=await runReplyQualityGate(Object.assign(qualityGateOptions,{currentMessage:body.incoming_message}));
   const replies=generated.replies!;
   // A model call can outlive a capability, Workspace selection or Character edit.
   // Reload with the user's authority before returning any generated content.
