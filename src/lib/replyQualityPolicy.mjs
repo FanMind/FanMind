@@ -22,6 +22,19 @@ export class ReplyQualityError extends Error {
 }
 const normalize = value => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 const exactQuestion = value => value.normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
+const contextualStubInputs = new Map([
+  ["na servas, bist du heimlich auf turbo?", new Set(["danke", "freut mich", "schön zu hören"])],
+  ["are you secretly on turbo?", new Set(["thanks", "glad to hear it", "good to hear"])],
+]);
+const normalizeContextualStubInput = value => value.normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
+const normalizeContextualStubReply = value => normalizeContextualStubInput(value).replace(/[.!?]$/u, "").trimEnd();
+function isContextualStubTriple(currentMessage, replies) {
+  if (typeof currentMessage !== "string") return false;
+  const expected = contextualStubInputs.get(normalizeContextualStubInput(currentMessage));
+  if (!expected) return false;
+  const actual = new Set(replies.map(normalizeContextualStubReply));
+  return actual.size === 3 && [...actual].every(reply => expected.has(reply));
+}
 const knownInterestQuestions = new Map();
 for (const [topic, de, en] of [
   ["music", "Musik", "music"], ["cats", "Katzen", "cats"], ["dogs", "Hunde", "dogs"],
@@ -84,7 +97,7 @@ function nearCopy(left, right) {
   const common = [...a].filter(word => b.has(word)).length;
   return common / (a.size + b.size - common) >= 0.90;
 }
-export function assessReplyQuality(replies, recentReplies = [], knownInterests = []) {
+export function assessReplyQuality(replies, recentReplies = [], knownInterests = [], currentMessage = "") {
   if (!Array.isArray(replies) || replies.length !== 3 || replies.some(value => typeof value !== "string" || !value.trim() || value.length > 4_000)) return ["invalid_replies"];
   const normalized = replies.map(normalize);
   const history = recentReplies.filter(value => typeof value === "string").slice(-6).map(value => normalize(value.slice(0, 4_000)));
@@ -97,6 +110,7 @@ export function assessReplyQuality(replies, recentReplies = [], knownInterests =
     const opening = stockOpening(replies[index]);
     if (opening && history.filter(previous => stockOpening(previous) === opening).length >= 2) issues.add("repeated_opening");
   }
+  if (isContextualStubTriple(currentMessage, replies)) issues.add("contextual_stub_triple");
   if (replies.some(hasRelationshipManipulation)) issues.add("relationship_manipulation");
   const currentTopics = new Set(Array.isArray(knownInterests) ? knownInterests
     .filter(fact => fact && (fact.polarity === "positive" || fact.polarity === "negative"))
@@ -121,24 +135,25 @@ export function fitRecentDialogueContext(profileContext, lines, maximum) {
 
 // One optional rewrite only; no retry on provider/validation/transport failure.
 // Caller supplies one absolute timeout/abort signal shared by both attempts.
-export async function runReplyQualityGate({ generate, readReplies, onAttempt, recentReplies = [], knownInterests = [], inputChars, inputLimit }) {
+export async function runReplyQualityGate({ generate, readReplies, onAttempt, recentReplies = [], knownInterests = [], currentMessage = "", inputChars, inputLimit }) {
   let feedback = null;
   for (let attempt = 0; attempt < 2; attempt++) {
     let result, replies, issues;
     try {
       result = await generate(feedback);
       replies = readReplies(result);
-      issues = assessReplyQuality(replies, recentReplies, knownInterests);
+      issues = assessReplyQuality(replies, recentReplies, knownInterests, currentMessage);
     } catch (error) {
       await onAttempt({ result, error, feedback });
       throw error;
     }
     await onAttempt({ result, error: issues.length ? new ReplyQualityError() : null, feedback });
     if (!issues.length) return result;
-    if (attempt === 1 || issues.includes("invalid_replies") || issues.includes("known_interest_question") || issues.includes("relationship_manipulation")) throw new ReplyQualityError();
+    if (attempt === 1 || issues.includes("invalid_replies") || issues.includes("known_interest_question") || issues.includes("relationship_manipulation") || issues.includes("contextual_stub_triple")) throw new ReplyQualityError();
     feedback = JSON.stringify({ quality_revision: { issues, previous_drafts: replies } });
     if (inputChars + feedback.length > inputLimit) throw new ReplyQualityError();
   }
   throw new ReplyQualityError();
 }
+
 

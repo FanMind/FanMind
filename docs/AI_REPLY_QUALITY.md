@@ -187,3 +187,23 @@ Zitate und Hypothesen bleiben zulässig. Die synthetische DE/EN-Matrix beweist
 nur diesen deterministischen Outputvertrag, keine allgemeine semantische
 Manipulationserkennung oder reale Modellqualität.
 
+## Kontextbezogenes Stub-Dreierset — 2. November 2026
+
+Für genau die Inputs „Na servas, bist du heimlich auf Turbo?“ und „Are you
+secretly on turbo?“ lehnt der ChatAdmin-Wächter ausschließlich das jeweils
+sprachgleiche exakte Dreierset `Danke` / `Freut mich` / `Schön zu hören`
+beziehungsweise `Thanks` / `Glad to hear it` / `Good to hear` ab. Die begrenzte
+Normalisierung umfasst NFKC, Kleinschreibung, Rand-Trim, Whitespace-Kollaps und
+bei Vorschlägen höchstens ein abschließendes `.`, `!` oder `?`; die Reihenfolge
+der drei Vorschläge ist unerheblich.
+
+Der Befund `contextual_stub_triple` ist terminal. Frische Generationen erzeugen
+genau den bereits gestarteten Provider- und Usage-Versuch, aber keinen Rewrite,
+keine Persistenz, Bestätigung oder Memory-Aktualisierung. Ein Generation-Replay
+wird vor Memory/Persistenz ohne neuen Provider- oder Usage-Versuch verworfen.
+Mixed-Language-Sets, abweichende Satzschlüsse am Input und Dreiersets mit
+mindestens einer kontextbezogenen Antwort bleiben von dieser Regel unberührt.
+Sie ist ausdrücklich kein allgemeiner Humor-, Natürlichkeits-, Dialekt-,
+Keyword-, NLP- oder Modellqualitätswächter.
+
+

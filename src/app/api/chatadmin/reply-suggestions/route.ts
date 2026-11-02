@@ -33,7 +33,8 @@ export async function POST(request:NextRequest){
    const inbound=previous.filter(message=>message.direction==="fan_inbound"),stored=previous.filter(message=>message.direction==="suggested_reply");
    if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});
    const storedReplies=stored.map(message=>message.content);
-   if(assessReplyQuality(storedReplies,[],knownInterests).includes("known_interest_question"))throw new ReplyQualityError();
+   const replayIssues=assessReplyQuality(storedReplies,[],knownInterests,body.incoming_message);
+   if(replayIssues.includes("known_interest_question")||replayIssues.includes("contextual_stub_triple"))throw new ReplyQualityError();
    const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());
    return NextResponse.json({memory_status:memoryStatus,replies:storedReplies,character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
   }
@@ -44,7 +45,7 @@ export async function POST(request:NextRequest){
   const sentContext=JSON.parse(context) as {conversation?:{recent_messages?:Array<{direction:string;content:string}>}};
   const recentReplies=(sentContext.conversation?.recent_messages??[]).filter(message=>message.direction==="confirmed_reply").map(message=>message.content).slice(-6);
   const generated=await runReplyQualityGate({
-   inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies, knownInterests,
+   inputChars, inputLimit:AI_REPLY_INPUT_CHAR_LIMIT, recentReplies, knownInterests, currentMessage:body.incoming_message,
    generate:async feedback=>{
     providerAttemptStarted=false;
     signal.throwIfAborted();
@@ -150,3 +151,4 @@ async function saveGenerationKnowledge(workspaceId:string,userId:string,characte
  await checkAuthority();
  return status;
 }
+

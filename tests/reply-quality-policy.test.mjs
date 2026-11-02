@@ -167,3 +167,36 @@ test("relationship manipulation guard preserves compliments, factual sales, unli
  ])assert.ok(!assessReplyQuality([reply,...fresh.slice(1)]).includes("relationship_manipulation"),reply);
 });
 
+test("contextual stub guard rejects only the exact language-matched DE/EN triples", async () => {
+ const cases=[
+  ["Na servas, bist du heimlich auf Turbo?",["Danke.","Freut mich.","Schön zu hören."],"contextual_stub_triple"],
+  ["  NA SERVAS,  bist du heimlich auf Turbo?  ",["Schön zu hören!","Danke?","Freut mich."],"contextual_stub_triple"],
+  ["Are you secretly on turbo?",["Thanks.","Glad to hear it!","Good to hear?"],"contextual_stub_triple"],
+  ["Ａｒｅ you secretly on turbo?",["Good to hear.","Thanks!","Glad to hear it?"],"contextual_stub_triple"],
+ ];
+ for(const [message,replies,issue] of cases){
+  assert.ok(assessReplyQuality(replies,[],[],message).includes(issue),message);
+  const h=gateHarness([replies,fresh],{currentMessage:message});
+  await assert.rejects(h.run,ReplyQualityError);assert.equal(h.calls.length,1,message);
+ }
+});
+
+test("contextual stub guard preserves ordering boundaries, language boundaries and contextual replies", () => {
+ const de="Na servas, bist du heimlich auf Turbo?", en="Are you secretly on turbo?";
+ for(const [message,replies] of [
+  [de,["Danke.","Freut mich.","Good to hear."]],
+  [en,["Thanks.","Glad to hear it.","Schön zu hören."]],
+  [de,["Danke.","Freut mich.","Turbo nur, wenn der Drucker wieder rebelliert."]],
+  [en,["Thanks.","Glad to hear it.","Only when the printer starts acting up again."]],
+  [de,["Danke..","Freut mich.","Schön zu hören."]],
+  [de,["Danke.","Freut mich.","Schön zu hören. Extra"]],
+  ["Na servas, bist du heimlich auf Turbo!",["Danke.","Freut mich.","Schön zu hören."]],
+  ["Das ist lieb von dir.",["Danke.","Freut mich.","Schön zu hören."]],
+  ["Heute war ein schwerer Tag.",["Danke.","Freut mich.","Schön zu hören."]],
+  ["Was kostet das private Foto?",["Das private Foto kostet 25 EUR.","Für 25 EUR bekommst du es.","Der Preis ist 25 EUR."]],
+  ["Heute kaufe ich nichts, ich möchte nur reden.",["Klar, dann reden wir einfach.","Passt, kein Angebot.","Gern, wir lassen das Verkaufen."]],
+  [de,["Danke","Turbo","Good to hear"]],
+ ])assert.ok(!assessReplyQuality(replies,[],[],message).includes("contextual_stub_triple"),message);
+});
+
+

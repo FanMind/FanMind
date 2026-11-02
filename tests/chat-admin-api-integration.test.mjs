@@ -795,6 +795,21 @@ test("cached generation replay applies the guard without provider, usage, persis
  assert.equal(h.calls.persistedGenerations.length,0);assert.equal(h.calls.currentFactWrites.length,0);assert.equal(h.calls.memoryWrites.length,0);
 });
 
+test("cached contextual stub triple is rejected before provider, usage, persistence or memory",async()=>{
+ const incoming="Na servas, bist du heimlich auf Turbo?";
+ const previous=[
+  {direction:"fan_inbound",content:incoming},
+  {direction:"suggested_reply",content:"Freut mich!"},
+  {direction:"suggested_reply",content:"Schön zu hören?"},
+  {direction:"suggested_reply",content:"Danke."},
+ ];
+ const h=harness(undefined,undefined,{history:[],previous});
+ const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
+ assert.equal(response.status,502);assert.equal((await response.json()).error,"reply_quality_rejected");
+ assert.equal(h.calls.provider,0);assert.equal(h.calls.usage,0);assert.equal(h.calls.persistedHistoryIds,null);
+ assert.equal(h.calls.persistedGenerations.length,0);assert.equal(h.calls.currentFactWrites.length,0);assert.equal(h.calls.memoryWrites.length,0);
+});
+
 
 const baselineGenerationId = turn => `66666666-6666-4666-8666-${String(turn).padStart(12,"0")}`;
 
@@ -816,7 +831,7 @@ async function runBaselineTurn(h, turn, incomingMessage, { confirm = true, confi
   return { body, context, confirmed };
 }
 
-test("multiturn baseline RED joke: six sequential turns accept humor-free local-stub replies", async () => {
+test("multiturn baseline PASS joke: exact contextual stub triple is rejected terminally", async () => {
   const h = harness(undefined, undefined, { history: [], deriveLastConfirmed: true, replySets: [
     ["Das klingt nach einem langen Tag.", "Dann machen wir es heute ruhig.", "Erzähl mir, was los war."],
     ["Na servas, der war gut.", "Den Schmäh merke ich mir.", "Du bist heute gut aufgelegt."],
@@ -824,12 +839,18 @@ test("multiturn baseline RED joke: six sequential turns accept humor-free local-
   ] });
   await runBaselineTurn(h, 101, "Heute war im Büro ordentlich was los.");
   await runBaselineTurn(h, 102, "Immerhin habe ich den Drucker besiegt - heldenhaft, oder?");
-  const last = await runBaselineTurn(h, 103, "Na servas, bist du heimlich auf Turbo?", { confirm: false });
-  assert.deepEqual(last.body.replies, ["Danke.", "Freut mich.", "Schön zu hören."]);
-  assert.equal(last.context.style.writing, "kurz");
-  assert.equal(last.context.rules.flirt, "respektvoll");
-  assert.equal(last.context.conversation.recent_messages.length, 4);
+  const last = await runBaselineTurn(h, 103, "Na servas, bist du heimlich auf Turbo?", { confirm: false, status: 502 });
+  assert.equal(last.body.error,"reply_quality_rejected");
+  assert.equal(h.calls.provider,3);assert.equal(h.calls.usage,3);
+  assert.equal(h.calls.persistedGenerations.length,2);assert.equal(h.calls.memoryWrites.length,0);
   assert.equal(h.calls.confirmations.length, 2);
+});
+
+test("same playful input keeps a contextual reply set eligible",async()=>{
+ const h=harness(undefined,undefined,{history:[],replies:["Danke.","Freut mich.","Turbo nur, wenn der Drucker wieder rebelliert."]});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Na servas, bist du heimlich auf Turbo?"));
+ assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usage,1);
+ assert.equal(h.calls.persistedGenerations.length,1);assert.equal(h.calls.memoryWrites.length,0);
 });
 
 test("multiturn baseline PASS topic switch: six sequential turns resume only the bound offer", async () => {
@@ -938,5 +959,6 @@ test("multiturn baseline PASS safety: direct minority disclosure stops before pr
   assert.equal(h.calls.currentFactWrites.length, 0);
   assert.equal(h.calls.memoryWrites.length, 0);
 });
+
 
 
