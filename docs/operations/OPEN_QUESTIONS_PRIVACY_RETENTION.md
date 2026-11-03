@@ -8,7 +8,7 @@ Status: Repository-Implementierung der Owner-Entscheidung Option A für PR #1411
 
 ## Option-A-Fristen
 
-Das kontrollierte Delta `supabase/controlled/website_chat_open_questions_option_a_retention.sql` setzt die bestätigten Höchstfristen technisch um:
+Der immer atomare Apply-Wrapper `supabase/controlled/website_chat_open_questions_option_a_retention.sql` lädt den gemeinsamen SQL-Body. Die Live-Funktion bezieht ihren Stichtag ausschließlich aus `statement_timestamp()` der Datenbank und setzt die bestätigten Höchstfristen technisch um:
 
 - CRM-Originalnachrichten: 24 Monate nach der Nachricht oder 30 Tage nach Vertragsende bzw. bestätigter Löschinstruktion.
 - Aufgelöste Kandidaten: 30 Tage nach letzter Statusänderung.
@@ -32,6 +32,6 @@ node --test src/lib/openQuestionsRedaction.test.mjs src/lib/openQuestionsGroupin
 node scripts/operations/open-questions-retention-staging-acceptance.mjs --check
 ```
 
-Der rollback-only Harness lädt das kontrollierte Delta ausschließlich in seiner Testtransaktion. Er prüft atomaren Status/Audit, 52→50/Cascade, exakte 30-/180-Tage- und 12-/24-Monatsgrenzen, dokumentierte Verlängerung, Vertragsende, Legal Hold, Workspace-Isolation, No-op-Wiederholung und vollständigen Rollback.
+Der rollback-only Harness verlangt zunächst ein abwesendes Option-A-Schema, lädt ausschließlich den gemeinsamen SQL-Body in seiner Testtransaktion und weist nach dem Rollback erneut die Schema-Abwesenheit nach. Er prüft atomaren Status/Audit, 52→50/Cascade, exakte 30-/180-Tage- und 12-/24-Monatsgrenzen, dokumentierte Verlängerung, Vertragsende, Legal Hold, Workspace-Isolation, No-op-Wiederholung und vollständigen Rollback.
 
 `docs/operations/OPEN_QUESTIONS_RETENTION_STAGING_READINESS.md` ist der verbindliche Preflight. Der spätere Staging-Lauf bleibt blockiert, bis tatsächlicher Executor, isoliertes Ziel, Production-Negativbindung, stabile Commit-Bindung, synthetische Fixture und Rollback-Read-back belegt sind. Merge, Deployment, generisches DB-Apply, Aktivierung und Produktionsbetrieb bleiben getrennte Entscheidungen.
