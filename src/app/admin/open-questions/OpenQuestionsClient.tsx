@@ -164,11 +164,11 @@ export function OpenQuestionsClient({
               <button className={styles.resetButton} type="button" onClick={resetFilters}>Filter zurücksetzen</button>
             </div>
             <div className={styles.filters}>
-              <label>Suche<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema, Ursache oder Referenz" /></label>
-              <label>Thema<select value={topic} onChange={(event) => setTopic(event.target.value)}><option value="all">Alle Themen</option>{topics.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-              <label>Status<select value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Alle Status</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-              <label>Von<input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} /></label>
-              <label>Bis<input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} /></label>
+              <label>Suche<input aria-label="Suche" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema, Ursache oder Referenz" /></label>
+              <label>Thema<select aria-label="Thema" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="all">Alle Themen</option>{topics.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+              <label>Status<select aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Alle Status</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+              <label>Von<input aria-label="Von" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} /></label>
+              <label>Bis<input aria-label="Bis" type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} /></label>
             </div>
           </section>
 
