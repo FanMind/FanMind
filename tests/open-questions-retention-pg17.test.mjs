@@ -6,7 +6,7 @@ import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const containerId = process.env.FANMIND_PG17_SOURCE_CONTAINER_ID?.trim();
 const password = process.env.FANMIND_PG17_PASSWORD?.trim() || "fanmind-ci-only-pg17";
 const sourceCommit = "e127aab07380c416a0832183631374c70841def6";
