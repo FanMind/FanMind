@@ -30,3 +30,8 @@ export function groupOpenQuestions(rows) {
   }
   return [...grouped.values()].sort((a, b) => b.count - a.count || String(b.latest_at).localeCompare(String(a.latest_at)));
 }
+
+// Dashboard ranking excludes completed questions while retaining them in the full list.
+export function groupUnresolvedOpenQuestions(rows) {
+  return groupOpenQuestions(rows.filter(row => row?.status === "open" || row?.status === "in_review"));
+}
