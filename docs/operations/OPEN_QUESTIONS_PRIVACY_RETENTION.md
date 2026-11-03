@@ -32,6 +32,6 @@ node --test src/lib/openQuestionsRedaction.test.mjs src/lib/openQuestionsGroupin
 node scripts/operations/open-questions-retention-staging-acceptance.mjs --check
 ```
 
-Der rollback-only Harness verlangt zunächst ein abwesendes Option-A-Schema, lädt ausschließlich den gemeinsamen SQL-Body in seiner Testtransaktion und weist nach dem Rollback erneut die Schema-Abwesenheit nach. Er prüft atomaren Status/Audit, 52→50/Cascade, exakte 30-/180-Tage- und 12-/24-Monatsgrenzen, dokumentierte Verlängerung, Vertragsende, Legal Hold, Workspace-Isolation, No-op-Wiederholung und vollständigen Rollback.
+Die isolierte Staging-Abnahme bleibt ein gesondertes Gate. Der rollback-only Harness verlangt zunächst ein abwesendes Option-A-Schema, lädt ausschließlich den gemeinsamen SQL-Body in seiner Testtransaktion und weist nach dem Rollback erneut die Schema-Abwesenheit nach. Er prüft atomaren Status/Audit, 52→50/Cascade, exakte 30-/180-Tage- und 12-/24-Monatsgrenzen, dokumentierte Verlängerung, Vertragsende, Legal Hold, Workspace-Isolation, No-op-Wiederholung und vollständigen Rollback.
 
 `docs/operations/OPEN_QUESTIONS_RETENTION_STAGING_READINESS.md` ist der verbindliche Preflight. Der spätere Staging-Lauf bleibt blockiert, bis tatsächlicher Executor, isoliertes Ziel, Production-Negativbindung, stabile Commit-Bindung, synthetische Fixture und Rollback-Read-back belegt sind. Merge, Deployment, generisches DB-Apply, Aktivierung und Produktionsbetrieb bleiben getrennte Entscheidungen.
