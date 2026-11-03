@@ -1,7 +1,62 @@
 \set ON_ERROR_STOP on
 -- Required psql variables: workspace_id, question_id, message_id, actor_id,
--- current_status, next_status. Use only synthetic rows in an isolated Staging
--- workspace. The transaction always rolls back.
+-- current_status, next_status. Use only the exactly marked synthetic fixture in
+-- an isolated Staging workspace. The transaction always rolls back.
+
+-- Read-only and intentionally before every temporary-table, DDL, status, audit
+-- or retention mutation.
+do $fixture_preflight$
+begin
+  if session_user <> 'postgres'
+     or :'current_status'::text = :'next_status'::text
+     or :'current_status'::text not in ('open','in_review','resolved')
+     or :'next_status'::text not in ('open','in_review','resolved')
+     or (select count(*) from public.workspaces
+          where id = :'workspace_id'::uuid
+            and test_access_flags->>'staging_synthetic_fixture' = 'true'
+            and test_access_flags->>'workspace_processing_acceptance' = 'true'
+            and test_access_flags->>'open_question_retention_acceptance' = 'true') <> 1
+     or (select count(*) from public.website_chat_open_questions
+          where workspace_id = :'workspace_id'::uuid) <> 1
+     or not exists (
+       select 1
+         from public.website_chat_open_questions as question
+         join public.conversation_messages as message
+           on message.id = question.inbound_message_id
+          and message.workspace_id = question.workspace_id
+          and message.conversation_id = question.conversation_id
+        where question.id = :'question_id'::uuid
+          and question.workspace_id = :'workspace_id'::uuid
+          and question.inbound_message_id = :'message_id'::uuid
+          and question.status = :'current_status'::text
+          and question.reason = 'assistant_uncertainty'
+          and message.direction = 'inbound'
+          and message.source_platform = 'staging_synthetic'
+          and message.external_message_id =
+              'staging-synthetic-open-question:' || :'question_id'::uuid::text
+          and message.content =
+              'open-question-retention-fixture:' || :'question_id'::uuid::text
+     )
+     or (select count(*) from public.conversation_messages
+          where workspace_id = :'workspace_id'::uuid) <> 1 then
+    raise exception 'open_question_retention_fixture_not_exactly_one_synthetic';
+  end if;
+
+  if to_regclass('public.website_chat_retention_controls') is not null
+     or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
+     or exists (
+       select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'website_chat_open_questions'
+          and column_name in ('retention_extended_until', 'retention_extension_reason')
+     )
+     or to_regclass('public.website_chat_open_questions_retention_idx') is not null
+     or to_regclass('public.website_chat_open_question_audit_retention_idx') is not null then
+    raise exception 'option_a_schema_baseline_not_absent';
+  end if;
+end
+$fixture_preflight$;
+
 create temporary table open_question_acceptance_input on commit preserve rows as
 select :'workspace_id'::uuid as workspace_id,
        :'question_id'::uuid as question_id,
@@ -20,23 +75,56 @@ select :'workspace_id'::uuid as workspace_id,
            and before_status = :'current_status'
            and after_status = :'next_status') as audit_before;
 
+create temporary table open_question_acceptance_target_before on commit preserve rows as
+select to_jsonb(question) as question_row,
+       to_jsonb(message) as message_row,
+       coalesce((
+         select jsonb_agg(to_jsonb(audit) order by audit.id)
+           from public.website_chat_open_question_audit_events as audit
+          where audit.workspace_id = question.workspace_id
+            and audit.open_question_id = question.id
+       ), '[]'::jsonb) as audit_rows
+  from public.website_chat_open_questions as question
+  join public.conversation_messages as message
+    on message.id = question.inbound_message_id
+   and message.workspace_id = question.workspace_id
+ where question.id = :'question_id'::uuid
+   and question.workspace_id = :'workspace_id'::uuid;
+
+create temporary table open_question_acceptance_foreign_before on commit preserve rows as
+select
+  coalesce((
+    select jsonb_agg(to_jsonb(question) order by question.id)
+      from public.website_chat_open_questions as question
+     where question.workspace_id <> :'workspace_id'::uuid
+  ), '[]'::jsonb) as question_rows,
+  coalesce((
+    select jsonb_agg(to_jsonb(audit) order by audit.id)
+      from public.website_chat_open_question_audit_events as audit
+     where audit.workspace_id <> :'workspace_id'::uuid
+  ), '[]'::jsonb) as audit_rows,
+  coalesce((
+    select jsonb_agg(to_jsonb(message) order by message.id)
+      from public.conversation_messages as message
+     where message.workspace_id <> :'workspace_id'::uuid
+  ), '[]'::jsonb) as message_rows;
+
+create temporary table open_question_acceptance_acl_before on commit preserve rows as
+select namespace.nspname as schema_name,
+       relation.relname as table_name,
+       coalesce(to_jsonb(relation.relacl), 'null'::jsonb) as acl
+  from pg_class as relation
+  join pg_namespace as namespace on namespace.oid = relation.relnamespace
+ where namespace.nspname = 'public'
+   and relation.relname in (
+     'workspaces',
+     'conversation_messages',
+     'website_chat_open_questions',
+     'website_chat_open_question_audit_events'
+   )
+ order by relation.relname;
+
 begin;
-do $schema_preflight$
-begin
-  if to_regclass('public.website_chat_retention_controls') is not null
-     or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
-     or exists (
-       select 1 from information_schema.columns
-        where table_schema = 'public'
-          and table_name = 'website_chat_open_questions'
-          and column_name in ('retention_extended_until', 'retention_extension_reason')
-     )
-     or to_regclass('public.website_chat_open_questions_retention_idx') is not null
-     or to_regclass('public.website_chat_open_question_audit_retention_idx') is not null then
-    raise exception 'option_a_schema_baseline_not_absent';
-  end if;
-end
-$schema_preflight$;
 \ir ../../supabase/controlled/website_chat_open_questions_option_a_retention_body.sql
 
 set local role service_role;
@@ -290,21 +378,95 @@ rollback;
 begin;
 set transaction read only;
 do $rollback_check$
-declare input record;
+declare
+  input record;
+  current_question jsonb;
+  current_message jsonb;
+  current_audits jsonb;
+  current_foreign_questions jsonb;
+  current_foreign_audits jsonb;
+  current_foreign_messages jsonb;
 begin
   select * into input from pg_temp.open_question_acceptance_input;
-  if not exists (
-    select 1 from public.website_chat_open_questions
-     where id = input.question_id
-       and workspace_id = input.workspace_id
-       and status = input.current_status
-  ) or not exists (
-    select 1 from public.conversation_messages
-     where id = input.message_id
-       and workspace_id = input.workspace_id
-  ) then
-    raise exception 'open_question_acceptance_rollback_failed';
+  select to_jsonb(question) into current_question
+    from public.website_chat_open_questions as question
+   where question.id = input.question_id
+     and question.workspace_id = input.workspace_id;
+  select to_jsonb(message) into current_message
+    from public.conversation_messages as message
+   where message.id = input.message_id
+     and message.workspace_id = input.workspace_id;
+  select coalesce(jsonb_agg(to_jsonb(audit) order by audit.id), '[]'::jsonb)
+    into current_audits
+    from public.website_chat_open_question_audit_events as audit
+   where audit.open_question_id = input.question_id
+     and audit.workspace_id = input.workspace_id;
+
+  if current_question is distinct from
+       (select question_row from pg_temp.open_question_acceptance_target_before)
+     or current_message is distinct from
+       (select message_row from pg_temp.open_question_acceptance_target_before)
+     or current_audits is distinct from
+       (select audit_rows from pg_temp.open_question_acceptance_target_before) then
+    raise exception 'open_question_acceptance_target_snapshot_mismatch';
   end if;
+
+  select coalesce(jsonb_agg(to_jsonb(question) order by question.id), '[]'::jsonb)
+    into current_foreign_questions
+    from public.website_chat_open_questions as question
+   where question.workspace_id <> input.workspace_id;
+  select coalesce(jsonb_agg(to_jsonb(audit) order by audit.id), '[]'::jsonb)
+    into current_foreign_audits
+    from public.website_chat_open_question_audit_events as audit
+   where audit.workspace_id <> input.workspace_id;
+  select coalesce(jsonb_agg(to_jsonb(message) order by message.id), '[]'::jsonb)
+    into current_foreign_messages
+    from public.conversation_messages as message
+   where message.workspace_id <> input.workspace_id;
+
+  if current_foreign_questions is distinct from
+       (select question_rows from pg_temp.open_question_acceptance_foreign_before)
+     or current_foreign_audits is distinct from
+       (select audit_rows from pg_temp.open_question_acceptance_foreign_before)
+     or current_foreign_messages is distinct from
+       (select message_rows from pg_temp.open_question_acceptance_foreign_before) then
+    raise exception 'open_question_acceptance_foreign_snapshot_mismatch';
+  end if;
+
+  if exists (
+    (select schema_name, table_name, acl
+       from pg_temp.open_question_acceptance_acl_before
+     except
+     select namespace.nspname, relation.relname,
+            coalesce(to_jsonb(relation.relacl), 'null'::jsonb)
+       from pg_class as relation
+       join pg_namespace as namespace on namespace.oid = relation.relnamespace
+      where namespace.nspname = 'public'
+        and relation.relname in (
+          'workspaces',
+          'conversation_messages',
+          'website_chat_open_questions',
+          'website_chat_open_question_audit_events'
+        ))
+    union all
+    (select namespace.nspname, relation.relname,
+            coalesce(to_jsonb(relation.relacl), 'null'::jsonb)
+       from pg_class as relation
+       join pg_namespace as namespace on namespace.oid = relation.relnamespace
+      where namespace.nspname = 'public'
+        and relation.relname in (
+          'workspaces',
+          'conversation_messages',
+          'website_chat_open_questions',
+          'website_chat_open_question_audit_events'
+        )
+     except
+     select schema_name, table_name, acl
+       from pg_temp.open_question_acceptance_acl_before)
+  ) then
+    raise exception 'open_question_acceptance_acl_snapshot_mismatch';
+  end if;
+
   if to_regclass('public.website_chat_retention_controls') is not null
      or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
      or exists (
