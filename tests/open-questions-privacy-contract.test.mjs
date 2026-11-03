@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
+import { validateOpenQuestionRetentionAcceptanceSource } from "../scripts/operations/open-questions-retention-staging-acceptance.mjs";
+
 const migrationPath = new URL("../supabase/migrations/20261103090000_website_chat_open_questions.sql", import.meta.url);
 const retentionPath = new URL("../supabase/migrations/20260614120000_conversation_message_retention.sql", import.meta.url);
 const actionPath = new URL("../src/app/admin/open-questions/actions.ts", import.meta.url);
@@ -11,6 +13,7 @@ const acceptanceRunnerPath = new URL("../scripts/operations/open-questions-reten
 const optionARetentionWrapperPath = new URL("../supabase/controlled/website_chat_open_questions_option_a_retention.sql", import.meta.url);
 const optionARetentionPath = new URL("../supabase/controlled/website_chat_open_questions_option_a_retention_body.sql", import.meta.url);
 const readinessPath = new URL("../docs/operations/OPEN_QUESTIONS_RETENTION_STAGING_READINESS.md", import.meta.url);
+const retentionStagingPolicyPath = new URL("../src/lib/websiteChatRetentionStagingPolicy.mjs", import.meta.url);
 
 test("status mutation and audit event are one workspace-bound transaction", async () => {
   const [sql, action] = await Promise.all([readFile(migrationPath, "utf8"), readFile(actionPath, "utf8")]);
@@ -118,4 +121,45 @@ test("Option A acceptance covers exact boundaries, isolation, no-op repetition, 
   assert.match(runner, /OPTION_A_LEGAL_HOLD=PASS/u);
   assert.match(readiness, /STAGING_EXECUTOR_READINESS: BLOCKED/u);
   assert.match(readiness, /kein Staging-Lauf gestartet/iu);
+});
+
+
+test("retention harness rejects extra fixtures, missing markers, snapshot drift, and ACL drift", async () => {
+  const source = await readFile(acceptancePath, "utf8");
+  assert.doesNotThrow(() => validateOpenQuestionRetentionAcceptanceSource(source));
+
+  const extraFixture = source.replace(
+    "from public.website_chat_open_questions\n          where workspace_id = :'workspace_id'::uuid) <> 1",
+    "from public.website_chat_open_questions\n          where workspace_id = :'workspace_id'::uuid) <> 2",
+  );
+  const missingMarker = source.replace(
+    "test_access_flags->>'open_question_retention_acceptance' = 'true'",
+    "test_access_flags->>'open_question_retention_acceptance' = 'missing'",
+  );
+  const snapshotDrift = source.replace("is distinct from", "is not distinct from");
+  const aclDrift = source.replace(
+    "'website_chat_open_question_audit_events'\n   )",
+    "'website_chat_open_questions'\n   )",
+  );
+
+  for (const changed of [extraFixture, missingMarker, snapshotDrift, aclDrift]) {
+    assert.notEqual(changed, source);
+    assert.throws(
+      () => validateOpenQuestionRetentionAcceptanceSource(changed),
+      /OPEN_QUESTION_RETENTION_ACCEPTANCE_ERROR=source_contract_invalid/u,
+    );
+  }
+});
+
+test("readiness uses the retention-specific reviewed head pin", async () => {
+  const [readiness, policy, runner] = await Promise.all([
+    readFile(readinessPath, "utf8"),
+    readFile(retentionStagingPolicyPath, "utf8"),
+    readFile(acceptanceRunnerPath, "utf8"),
+  ]);
+  assert.match(policy, /environment\.FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_COMMIT/u);
+  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{ mode: "acceptance" \}\)/u);
+  assert.match(readiness, /FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_COMMIT/u);
+  assert.doesNotMatch(readiness, /FANMIND_WEBSITE_CHAT_REVIEWED_COMMIT/u);
+  assert.doesNotMatch(readiness, /GITHUB_REF=refs\/heads\/main/u);
 });
