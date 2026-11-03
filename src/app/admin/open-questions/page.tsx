@@ -28,8 +28,8 @@ export default async function OpenQuestionsPage({
 
   try {
     workspaces = await listAdminOpenQuestionWorkspaces();
-  } catch (cause) {
-    workspaceError = cause instanceof Error ? cause.message : "Workspaces konnten nicht geladen werden";
+  } catch {
+    workspaceError = "Workspaces konnten nicht geladen werden.";
   }
 
   const selectedWorkspace = workspaces.find((candidate) => candidate.id === workspace);
@@ -40,8 +40,8 @@ export default async function OpenQuestionsPage({
   } else if (selectedWorkspace) {
     try {
       questions = await listAdminOpenQuestions(selectedWorkspace.id);
-    } catch (cause) {
-      questionError = cause instanceof Error ? cause.message : "Abfrage fehlgeschlagen";
+    } catch {
+      questionError = "Offene Fragen konnten nicht geladen werden.";
     }
   }
 
@@ -56,7 +56,6 @@ export default async function OpenQuestionsPage({
     reason: question.reason,
     status: question.status,
     createdAt: question.created_at,
-    reference: question.conversation_id.slice(-8),
   }));
 
   return (

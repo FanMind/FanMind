@@ -22,7 +22,9 @@ const modules = {
 const moduleSources = Object.entries(modules).map(([name, [pkg, file]]) =>
   `${JSON.stringify(name)}: function(module, exports, require) {\n${readFileSync(join(dirname(nodeRequire.resolve(`${pkg}/package.json`)), "cjs", file), "utf8")}\n}`,
 );
-const client = ts.transpileModule(readFileSync("src/app/admin/open-questions/OpenQuestionsClient.tsx", "utf8"), {
+const pageSource = readFileSync("src/app/admin/open-questions/page.tsx", "utf8");
+const clientSource = readFileSync("src/app/admin/open-questions/OpenQuestionsClient.tsx", "utf8");
+const client = ts.transpileModule(clientSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
 }).outputText;
 const bundle = `(() => {
@@ -46,9 +48,9 @@ const workspaces = [
   { id: "10000000-0000-4000-8000-000000000002", name: "Synthetic Beta" },
 ];
 const questions = [
-  { id: "20000000-0000-4000-8000-000000000001", topic: "Abrechnung", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reference: "000000a1" },
-  { id: "20000000-0000-4000-8000-000000000002", topic: "Technische Hilfe", reason: "provider_error", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reference: "000000a2" },
-  { id: "20000000-0000-4000-8000-000000000003", topic: "Anmeldung", reason: "knowledge_gap", status: "resolved", createdAt: "2026-10-28T10:00:00Z", reference: "000000a3" },
+  { id: "20000000-0000-4000-8000-000000000001", topic: "Abrechnung", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z" },
+  { id: "20000000-0000-4000-8000-000000000002", topic: "Technische Hilfe", reason: "provider_error", status: "in_review", createdAt: "2026-11-02T10:00:00Z" },
+  { id: "20000000-0000-4000-8000-000000000003", topic: "Anmeldung", reason: "knowledge_gap", status: "resolved", createdAt: "2026-10-28T10:00:00Z" },
 ];
 const topicStats = [{ topic: "Abrechnung", count: 3 }, { topic: "Technische Hilfe", count: 1 }];
 
@@ -63,6 +65,19 @@ async function mount(page: Page) {
   }, { workspaces, selectedWorkspaceId, questions, topicStats });
   await expect(page.getByRole("region", { name: "Offene Supportfragen" })).toBeVisible();
 }
+
+test("synthetic Admin review keeps failures generic and conversation references out of the browser", async ({ page }) => {
+  expect(pageSource).not.toContain("cause.message");
+  expect(pageSource).toContain('workspaceError = "Workspaces konnten nicht geladen werden.";');
+  expect(pageSource).toContain('questionError = "Offene Fragen konnten nicht geladen werden.";');
+  expect(pageSource).not.toContain("question.conversation_id");
+  expect(clientSource).not.toMatch(/\breference\b/u);
+
+  await mount(page);
+  await expect(page.locator("body")).not.toContainText("000000a1");
+  await page.getByLabel("Suche", { exact: true }).fill("000000a1");
+  await expect(page.locator("details")).toHaveCount(0);
+});
 
 test("synthetic Admin review filters redacted details and submits the existing status contract", async ({ page }) => {
   await mount(page);

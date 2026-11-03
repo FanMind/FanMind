@@ -12,7 +12,6 @@ export type OpenQuestionClientRow = {
   reason: string;
   status: OpenQuestionStatus;
   createdAt: string;
-  reference: string;
 };
 
 export type OpenQuestionTopicStat = { topic: string; count: number };
@@ -83,7 +82,7 @@ export function OpenQuestionsClient({
     const needle = query.trim().toLocaleLowerCase("de");
     return questions.filter((question) => {
       const day = calendarDay(question.createdAt);
-      const searchable = [question.topic, reasonLabel(question.reason), question.reference]
+      const searchable = [question.topic, reasonLabel(question.reason)]
         .join(" ")
         .toLocaleLowerCase("de");
       return (!needle || searchable.includes(needle)) &&
@@ -164,7 +163,7 @@ export function OpenQuestionsClient({
               <button className={styles.resetButton} type="button" onClick={resetFilters}>Filter zurücksetzen</button>
             </div>
             <div className={styles.filters}>
-              <label>Suche<input aria-label="Suche" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema, Ursache oder Referenz" /></label>
+              <label>Suche<input aria-label="Suche" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema oder Ursache" /></label>
               <label>Thema<select aria-label="Thema" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="all">Alle Themen</option>{topics.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
               <label>Status<select aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Alle Status</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label>Von<input aria-label="Von" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} /></label>
@@ -183,7 +182,6 @@ export function OpenQuestionsClient({
                 <div className={styles.detailBody}>
                   <dl>
                     <div><dt>Ursache</dt><dd>{reasonLabel(question.reason)}</dd></div>
-                    <div><dt>Interne Referenz</dt><dd>{question.reference}</dd></div>
                     <div><dt>Themenhäufigkeit</dt><dd>{topicStats.find((item) => item.topic === question.topic)?.count ?? 0}</dd></div>
                   </dl>
                   <form action={updateOpenQuestionStatus} className={styles.statusForm}>
