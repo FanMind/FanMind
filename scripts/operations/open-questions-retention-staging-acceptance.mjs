@@ -57,9 +57,20 @@ export function validateOpenQuestionRetentionAcceptanceSource(sql) {
   const preflightIndex = sql.indexOf("do $fixture_preflight$");
   const firstTemporaryMutation = sql.indexOf("create temporary table");
   const retentionBodyMutation = sql.indexOf("\\ir ../../supabase/controlled/");
-  if (/\\bcommit\\s*;/iu.test(sql) || (sql.match(/\\brollback\\s*;/giu)?.length ?? 0) !== 2 ||
+  const exactQuestionFixture =
+    /from public\.website_chat_open_questions[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) <> 1/gu;
+  const exactMessageFixture =
+    /from public\.conversation_messages[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) <> 1/gu;
+  const aclTableSets = sql.match(
+    /relation\.relname in \(\s*'workspaces',\s*'conversation_messages',\s*'website_chat_open_questions',\s*'website_chat_open_question_audit_events'\s*\)/gu,
+  ) ?? [];
+  if (/\bcommit\s*;/iu.test(sql) || (sql.match(/\brollback\s*;/giu)?.length ?? 0) !== 2 ||
       MARKERS.some((marker) => !sql.includes(marker)) ||
       REQUIRED_SOURCE_CONTRACT.some((required) => !sql.includes(required)) ||
+      (sql.match(exactQuestionFixture)?.length ?? 0) !== 1 ||
+      (sql.match(exactMessageFixture)?.length ?? 0) !== 1 ||
+      aclTableSets.length !== 3 ||
+      (sql.match(/is distinct from/gu)?.length ?? 0) < 6 ||
       preflightIndex < 0 || firstTemporaryMutation < 0 || retentionBodyMutation < 0 ||
       preflightIndex > firstTemporaryMutation || preflightIndex > retentionBodyMutation) {
     fail("source_contract_invalid");
