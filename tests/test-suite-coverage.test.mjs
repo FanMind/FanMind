@@ -22,7 +22,7 @@ const requiredCiRoots = [
 const requiredDirectCiTests = [
   {
     testPath: "tests/open-questions-retention-pg17.test.mjs",
-    workflowPattern: /pg17_authorization_roundtrip:[\\s\\S]*?- name: Prove open-question retention rollback in PostgreSQL 17[\\s\\S]*?run: node --test --test-concurrency=1 tests\\/open-questions-retention-pg17\\.test\\.mjs[\\s\\S]*?- name: Prove PostgreSQL 17 authorization backup and restore/u,
+    workflowPattern: /pg17_authorization_roundtrip:[\s\S]*?- name: Prove open-question retention rollback in PostgreSQL 17[\s\S]*?run: node --test --test-concurrency=1 tests\/open-questions-retention-pg17\.test\.mjs[\s\S]*?- name: Prove PostgreSQL 17 authorization backup and restore/u,
   },
 ];
 
@@ -88,3 +88,4 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
 
   assert.deepEqual(orphaned, [], `Node policy tests missing from required CI: ${orphaned.join(", ")}`);
 });
+

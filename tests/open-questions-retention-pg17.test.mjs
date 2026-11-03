@@ -109,6 +109,7 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
     mustSucceed(docker(["cp", `${repoRoot}/.`, `${containerId}:${remoteRoot}`]), "copy proof sources");
     mustSucceed(psql(database, ["--file", `${remoteRoot}/tests/fixtures/open-questions-retention-pg17-setup.sql`]), "apply synthetic fixture and versioned migrations");
 
+    const beforeNegative = stateSnapshot(database);
     mustSucceed(psql(database, ["--command", `insert into public.conversation_messages (workspace_id, conversation_id, contact_id, direction, message_type, source_platform, source_type, content) select workspace_id, conversation_id, contact_id, direction, message_type, source_platform, source_type, 'intentional-extra-fixture' from public.conversation_messages where id = '${fixtureIds.message}'`]), "insert negative extra fixture");
     const negative = psql(database, [
       "--quiet", "--tuples-only", "--no-align",
@@ -120,11 +121,13 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
     assert.equal(negative.status, 0, `observed psql \\quit 3 status changed\n${negative.stdout}\n${negative.stderr}`);
     assert.match(negative.stdout, /open_question_retention_fixture_not_exactly_one_synthetic/u);
     assert.match(negative.stderr, /\\quit: extra argument "3" ignored/u);
+    for (const marker of markers) assert.doesNotMatch(negative.stdout, new RegExp(marker, "u"));
     console.log(`RETENTION_PG17_QUIT3_STATUS=${negative.status}`);
     console.log("RETENTION_PG17_QUIT3_ARGUMENT=IGNORED");
     mustSucceed(psql(database, ["--command", "delete from public.conversation_messages where content = 'intentional-extra-fixture'" ]), "remove negative fixture");
 
     const before = stateSnapshot(database);
+    assert.equal(before, beforeNegative, "negative guard must not change data, ACL, or DDL state");
     const acceptance = psql(database, [
       "--quiet", "--tuples-only", "--no-align",
       `--set=workspace_id=${fixtureIds.workspace}`, `--set=question_id=${fixtureIds.question}`,
