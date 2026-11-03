@@ -7,7 +7,7 @@ Status: **IMPLEMENTED / INDEPENDENT RETEST REQUIRED**. Dies ist Implementierungs
 - `website_chat_open_questions` speichert IDs, Grund, Status und Zeitstempel, keine Kopie des Nachrichtentexts. Die Admin-Leseansicht holt Originaltext über `conversation_messages` mit Workspace-Filter und Service-Role. Vor Darstellung und Gruppierung erfolgt serverseitige Defense-in-depth-Maskierung.
 - Die Ableitung führt Credential-Regeln vor generischen Zahlenregeln aus, erkennt die bestätigten synthetischen Grenzfälle und gibt anschließend ausschließlich ein festes, datenschutzgeprüftes Themenlabel aus. Ungeprüfter Rohtext, Namen im Satz und freie Identifikatoren gelangen nicht in Standardanzeige oder Gruppierung. Dies ist Datenminimierung, keine Anonymisierungszusage.
 - `updateOpenQuestionStatus` prüft Plattformadmin, UUIDs, Status-Whitelist und Workspace-ID und ruft eine service-role-only SQL-Funktion auf. Statuswechsel und Append-only-Audit-Ereignis mit Workspace, Akteur-ID, Vorher-/Nachherstatus und Zeitstempel laufen atomar; identische No-op-Wiederholungen erzeugen kein weiteres Ereignis.
-- Kandidaten und Audit-Ereignisse folgen FK-Cascades. Originalnachrichten werden durch den bestehenden Insert-Trigger auf die neuesten 50 je Konversation begrenzt. Der rollback-only Staging-Harness prüft Status/Audit, Cascade, Trigger und Recovery. Backup-/Ausnahmegrenzen und die noch erforderliche BT-051-Entscheidung stehen in `docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md`.
+- Option A ist als kontrolliertes, nicht aktiviertes SQL-Delta umgesetzt: 30/180 Tage für Kandidaten, 12 Monate für Audit, 24 Monate bzw. 30 Tage nach Vertragsende/Löschinstruktion für Originalnachrichten, dokumentierte Verlängerung und fail-closed Legal Hold. Der rollback-only Harness prüft Grenzen, Workspace-Isolation, No-op, 52→50/Cascade und Recovery. Backup-/externe Rechtsgrenzen stehen in `docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md`.
 
 ## Unabhängige Abnahmetests
 
@@ -18,7 +18,7 @@ Status: **IMPLEMENTED / INDEPENDENT RETEST REQUIRED**. Dies ist Implementierungs
 5. Mehrfache identische Anfrage: Status bleibt stabil und es entsteht kein doppeltes Audit-Ereignis.
 6. Synthetische PII-Varianten: E-Mail, internationale Telefonnummer, eingebettete URL, Adresse, Name, mehrere Tokenklassen und definierte Gesundheitsdaten müssen maskiert sein; unbekannte freie Inhalte bleiben als Restrisiko dokumentiert.
 7. Cross-Tenant-Gruppierung: identischer maskierter Fragetext in zwei Workspaces darf nicht zusammengezählt werden.
-8. Aufbewahrung: Repository-Vertrag, 50-Nachrichten-Begrenzung, Kandidaten-/Audit-Cascade und Betroffenenlöschung in isoliertem Staging nachweisen; Backup-Ausnahmen und BT-051-Entscheidung separat bestätigen.
+8. Aufbewahrung: exakte Option-A-Grenzen, dokumentierte Verlängerung, Legal-Hold-No-op, 50-Nachrichten-Begrenzung, Cascades, Idempotenz und Workspace-Negativfall im isolierten rollback-only Staging nachweisen; Backup-Ausnahmen separat bestätigen.
 9. Logging: keine Rohtexte, Tokens oder vertrauliche Inhalte in Fehlerlogs/Telemetry.
 10. E2E: Staging mit aktiviertem Flag erst nach gesonderter Freigabe und Migration-Review; ausschließlich synthetische Daten.
 
@@ -32,5 +32,9 @@ node --test src/lib/openQuestionsRedaction.test.mjs src/lib/openQuestionsGroupin
 
 - CI grün für aktuellen Commit einschließlich CodeQL und PostgreSQL-Autorisierung.
 - Unabhängige Security-/Privacy-Review und QA durch andere verantwortliche Prüfer als Implementierer.
-- BT-051 bestätigt Rechtsgrundlage/Frist oder fordert eine gesonderte Änderung; Repository-Code behauptet keine neue Rechtsfreigabe.
+- Owner-Option A ist im Repository umgesetzt; BT-051 muss die unabhängige Rechts-/Privacy-Nachprüfung auf dem stabilen Head und den späteren Staging-Nachweis durchführen.
 - Merge, Migration, Staging-Apply und produktive Aktivierung bleiben jeweils getrennt freigabepflichtig.
+
+## Staging-Readiness
+
+`docs/operations/OPEN_QUESTIONS_RETENTION_STAGING_READINESS.md` steht auf **BLOCKED**: In dieser Builder-Laufzeit sind weder ein berechtigter Staging-Executor noch isoliertes Ziel und Production-Negativbindung nachgewiesen. Es wurde kein Staging-Lauf gestartet. Wiederaufnahme erst nach vollständigem Read-back auf stabilem Head.
