@@ -117,8 +117,11 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
       "--set=current_status=open", "--set=next_status=in_review",
       "--file", `${remoteRoot}/scripts/operations/open-questions-retention-acceptance.sql`,
     ]);
-    assert.equal(negative.status, 3, `real psql \\quit 3 status\n${negative.stdout}\n${negative.stderr}`);
+    assert.equal(negative.status, 0, `observed psql \\quit 3 status changed\n${negative.stdout}\n${negative.stderr}`);
     assert.match(negative.stdout, /open_question_retention_fixture_not_exactly_one_synthetic/u);
+    assert.match(negative.stderr, /\\quit: extra argument "3" ignored/u);
+    console.log(`RETENTION_PG17_QUIT3_STATUS=${negative.status}`);
+    console.log("RETENTION_PG17_QUIT3_ARGUMENT=IGNORED");
     mustSucceed(psql(database, ["--command", "delete from public.conversation_messages where content = 'intentional-extra-fixture'" ]), "remove negative fixture");
 
     const before = stateSnapshot(database);
@@ -139,7 +142,6 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
     console.log(`RETENTION_PG17_CONTAINER_ID=${inspectedContainerId}`);
     console.log(`RETENTION_PG17_SERVER_VERSION_NUM=${serverVersionNum}`);
     for (const [path, sha] of Object.entries(files)) console.log(`RETENTION_PG17_BLOB=${sha} ${path}`);
-    console.log("RETENTION_PG17_QUIT3_STATUS=3");
     console.log(`RETENTION_PG17_MARKERS=${markers.length}/8`);
     console.log(`RETENTION_PG17_TERMINAL_COUNTS_QUESTIONS_MESSAGES_AUDITS=${counts}`);
     console.log(`RETENTION_PG17_ROLLBACK_STATE_SHA256=${createHash("sha256").update(after).digest("hex")}`);
