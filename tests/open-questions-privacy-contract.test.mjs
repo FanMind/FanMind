@@ -84,8 +84,8 @@ test("Option A retention is fail-closed, workspace-bound, and legal-hold aware",
   assert.match(sql, /question\.status in \('open', 'in_review'\)[\s\S]*interval '180 days'/u);
   assert.match(sql, /retention_extended_until <= v_now/u);
   assert.match(sql, /message\.workspace_id = p_workspace_id[\s\S]*interval '24 months'/u);
-  assert.match(sql, /contract_ended_at <= p_as_of - interval '30 days'/u);
-  assert.match(sql, /deletion_instructed_at <= p_as_of - interval '30 days'/u);
+  assert.match(sql, /contract_ended_at <= v_now - interval '30 days'/u);
+  assert.match(sql, /deletion_instructed_at <= v_now - interval '30 days'/u);
   assert.match(sql, /revoke all on public\.website_chat_retention_controls from public, anon, authenticated, service_role/u);
   assert.match(sql, /security definer[\s\S]*set search_path = pg_catalog, public, pg_temp/u);
   assert.doesNotMatch(sql, /\b(?:content|message_text|question_text)\s+text\b/iu);
