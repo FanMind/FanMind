@@ -95,6 +95,7 @@ test("native PG17 proves review derivative binding, denial, retention and cleanu
       "+41 79 123 45 67",
       "x".repeat(161),
     ]) {
+      const sqlExcerpt = `'${excerpt.replaceAll("'", "''")}'`;
       assert.throws(() => sql(`
         insert into public.website_chat_open_question_review_derivatives(
           open_question_id, workspace_id, review_version, review_state,
@@ -102,7 +103,7 @@ test("native PG17 proves review derivative binding, denial, retention and cleanu
         ) values (
           '20000000-0000-4000-8000-000000000002',
           '10000000-0000-4000-8000-000000000001', 99, 'approved',
-          ${JSON.stringify(excerpt)}, '30000000-0000-4000-8000-000000000001', now()
+          ${sqlExcerpt}, '30000000-0000-4000-8000-000000000001', now()
         );
       `));
     }
