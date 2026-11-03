@@ -8,6 +8,8 @@ const actionPath = new URL("../src/app/admin/open-questions/actions.ts", import.
 const contractPath = new URL("../docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md", import.meta.url);
 const acceptancePath = new URL("../scripts/operations/open-questions-retention-acceptance.sql", import.meta.url);
 const acceptanceRunnerPath = new URL("../scripts/operations/open-questions-retention-staging-acceptance.mjs", import.meta.url);
+const optionARetentionPath = new URL("../supabase/controlled/website_chat_open_questions_option_a_retention.sql", import.meta.url);
+const readinessPath = new URL("../docs/operations/OPEN_QUESTIONS_RETENTION_STAGING_READINESS.md", import.meta.url);
 
 test("status mutation and audit event are one workspace-bound transaction", async () => {
   const [sql, action] = await Promise.all([readFile(migrationPath, "utf8"), readFile(actionPath, "utf8")]);
@@ -65,4 +67,47 @@ test("original-message lifecycle has a target-bound rollback-only acceptance har
   assert.match(acceptance, /input\.audit_before \+ 1/u);
   assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{ mode: "acceptance" \}\)/u);
   assert.match(runner, /OPEN_QUESTION_RETENTION_TARGET=staging/u);
+});
+
+
+test("Option A retention is fail-closed, workspace-bound, and legal-hold aware", async () => {
+  const sql = await readFile(optionARetentionPath, "utf8");
+  assert.match(sql, /retention_control_not_configured/u);
+  assert.match(sql, /control\.workspace_id = p_workspace_id/u);
+  assert.match(sql, /legal_hold_started_at <= p_as_of[\s\S]*legal_hold_released_at > p_as_of/u);
+  assert.match(sql, /return query select 0::bigint, 0::bigint, 0::bigint/u);
+  assert.match(sql, /audit\.workspace_id = p_workspace_id[\s\S]*interval '12 months'/u);
+  assert.match(sql, /question\.workspace_id = p_workspace_id[\s\S]*interval '30 days'/u);
+  assert.match(sql, /question\.status in \('open', 'in_review'\)[\s\S]*interval '180 days'/u);
+  assert.match(sql, /retention_extended_until <= p_as_of/u);
+  assert.match(sql, /message\.workspace_id = p_workspace_id[\s\S]*interval '24 months'/u);
+  assert.match(sql, /contract_ended_at <= p_as_of - interval '30 days'/u);
+  assert.match(sql, /deletion_instructed_at <= p_as_of - interval '30 days'/u);
+  assert.match(sql, /revoke all on public\.website_chat_retention_controls from public, anon, authenticated, service_role/u);
+  assert.match(sql, /security definer[\s\S]*set search_path = pg_catalog, public, pg_temp/u);
+  assert.doesNotMatch(sql, /\b(?:content|message_text|question_text)\s+text\b/iu);
+});
+
+test("Option A acceptance covers exact boundaries, isolation, no-op repetition, and rollback", async () => {
+  const [acceptance, runner, readiness] = await Promise.all([
+    readFile(acceptancePath, "utf8"),
+    readFile(acceptanceRunnerPath, "utf8"),
+    readFile(readinessPath, "utf8"),
+  ]);
+  assert.match(acceptance, /website_chat_open_questions_option_a_retention\.sql/u);
+  assert.match(acceptance, /interval '180 days'/u);
+  assert.match(acceptance, /interval '30 days'/u);
+  assert.match(acceptance, /interval '24 months'/u);
+  assert.match(acceptance, /interval '12 months'/u);
+  assert.match(acceptance, /OPTION_A_DEADLINE_BOUNDARIES=PASS/u);
+  assert.match(acceptance, /OPTION_A_LEGAL_HOLD=PASS/u);
+  assert.match(acceptance, /OPTION_A_WORKSPACE_ISOLATION=PASS/u);
+  assert.match(acceptance, /OPTION_A_IDEMPOTENCE=PASS/u);
+  assert.match(acceptance, /workspace_id <> :'workspace_id'::uuid/u);
+  assert.match(acceptance, /option_a_repeat_result/u);
+  assert.equal(acceptance.match(/\brollback\s*;/giu)?.length, 2);
+  assert.match(runner, /OPTION_A_DEADLINE_BOUNDARIES=PASS/u);
+  assert.match(runner, /OPTION_A_LEGAL_HOLD=PASS/u);
+  assert.match(readiness, /STAGING_EXECUTOR_READINESS: BLOCKED/u);
+  assert.match(readiness, /kein Staging-Lauf gestartet/iu);
 });
