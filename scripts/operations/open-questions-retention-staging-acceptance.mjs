@@ -83,7 +83,10 @@ export function checkOpenQuestionRetentionAcceptanceSource() {
 }
 
 function run(environment) {
-  const policy = evaluateWebsiteChatRetentionStagingEnvironment(environment, { mode: "acceptance" });
+  const policy = evaluateWebsiteChatRetentionStagingEnvironment(environment, {
+    mode: "acceptance",
+    allowReviewedBranch: true,
+  });
   if (!policy.ok) fail("environment_invalid");
   validatePassfile(environment);
   const questionId = requiredUuid(environment, "FANMIND_OPEN_QUESTIONS_STAGING_QUESTION_ID");
