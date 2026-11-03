@@ -3,7 +3,6 @@ import {
   listAdminOpenQuestions,
   listAdminOpenQuestionWorkspaces,
 } from "@/lib/adminOpenQuestions";
-import { groupUnresolvedOpenQuestions } from "@/lib/openQuestionsGrouping.mjs";
 import { AdminBillingShell } from "../billing/AdminBillingShell";
 import { AdminTabs } from "../billing/AdminTabs";
 import {
@@ -11,10 +10,6 @@ import {
   type OpenQuestionClientRow,
   type OpenQuestionTopicStat,
 } from "./OpenQuestionsClient";
-
-function topicLabel(value: string) {
-  return value.replace(/^Thema:\s*/u, "");
-}
 
 export default async function OpenQuestionsPage({
   searchParams,
@@ -45,17 +40,22 @@ export default async function OpenQuestionsPage({
     }
   }
 
-  const grouped = groupUnresolvedOpenQuestions(questions);
-  const topicStats: OpenQuestionTopicStat[] = grouped.map((group) => ({
-    topic: topicLabel(group.excerpt),
-    count: group.count,
-  }));
+  const topicCounts = new Map<string, number>();
+  for (const question of questions.filter((item) => item.status !== "resolved")) {
+    topicCounts.set(question.topic, (topicCounts.get(question.topic) ?? 0) + 1);
+  }
+  const topicStats: OpenQuestionTopicStat[] = [...topicCounts]
+    .map(([topic, count]) => ({ topic, count }))
+    .sort((left, right) => right.count - left.count || left.topic.localeCompare(right.topic, "de"));
   const clientQuestions: OpenQuestionClientRow[] = questions.map((question) => ({
     id: question.id,
-    topic: topicLabel(question.question),
+    topic: question.topic,
     reason: question.reason,
     status: question.status,
     createdAt: question.created_at,
+    reviewedQuestionExcerpt: question.reviewedQuestionExcerpt,
+    excerptReviewState: question.excerptReviewState,
+    duplicateCount: question.duplicateCount,
   }));
 
   return (

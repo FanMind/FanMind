@@ -5,6 +5,7 @@ import { updateOpenQuestionStatus } from "./actions";
 import styles from "./openQuestions.module.css";
 
 export type OpenQuestionStatus = "open" | "in_review" | "resolved";
+export type ExcerptReviewState = "pending" | "approved" | "rejected";
 
 export type OpenQuestionClientRow = {
   id: string;
@@ -12,6 +13,9 @@ export type OpenQuestionClientRow = {
   reason: string;
   status: OpenQuestionStatus;
   createdAt: string;
+  reviewedQuestionExcerpt: string | null;
+  excerptReviewState: ExcerptReviewState;
+  duplicateCount: number;
 };
 
 export type OpenQuestionTopicStat = { topic: string; count: number };
@@ -30,6 +34,7 @@ const STATUS_LABELS: Record<OpenQuestionStatus, string> = {
   in_review: "In Prüfung",
   resolved: "Erledigt",
 };
+const REVIEW_NOTICE = "Frageinhalt noch nicht datenschutzgeprüft";
 
 const REASON_LABELS: Record<string, string> = {
   assistant_uncertainty: "Fehlendes Wissen oder unsichere Antwort",
@@ -82,9 +87,11 @@ export function OpenQuestionsClient({
     const needle = query.trim().toLocaleLowerCase("de");
     return questions.filter((question) => {
       const day = calendarDay(question.createdAt);
-      const searchable = [question.topic, reasonLabel(question.reason)]
-        .join(" ")
-        .toLocaleLowerCase("de");
+      const searchable = [
+        question.topic,
+        reasonLabel(question.reason),
+        question.reviewedQuestionExcerpt ?? "",
+      ].join(" ").toLocaleLowerCase("de");
       return (!needle || searchable.includes(needle)) &&
         (topic === "all" || question.topic === topic) &&
         (status === "all" || question.status === status) &&
@@ -125,45 +132,23 @@ export function OpenQuestionsClient({
       {selectedWorkspaceId && !error ? (
         <>
           <header className={styles.summaryBar}>
-            <div>
-              <span>Geladene Stichprobe</span>
-              <strong>{questions.length}</strong>
-              <small>maximal 100 neueste Einträge</small>
-            </div>
-            <div>
-              <span>Offen</span>
-              <strong>{questions.filter((question) => question.status === "open").length}</strong>
-              <small>noch nicht geprüft</small>
-            </div>
-            <div>
-              <span>In Prüfung</span>
-              <strong>{questions.filter((question) => question.status === "in_review").length}</strong>
-              <small>menschliche Bearbeitung</small>
-            </div>
+            <div><span>Geladene Stichprobe</span><strong>{questions.length}</strong><small>maximal 100 neueste Einträge</small></div>
+            <div><span>Offen</span><strong>{questions.filter((question) => question.status === "open").length}</strong><small>noch nicht geprüft</small></div>
+            <div><span>In Prüfung</span><strong>{questions.filter((question) => question.status === "in_review").length}</strong><small>menschliche Bearbeitung</small></div>
           </header>
 
           <section className={styles.topicStrip} aria-label="Häufigste offene Themen">
-            <div>
-              <h2>Häufigste offene Themen</h2>
-              <p>Nur feste, redigierte Themenlabels im ausgewählten Workspace.</p>
-            </div>
-            <ol>
-              {topicStats.slice(0, 5).map((item) => (
-                <li key={item.topic}><span>{item.topic}</span><strong>{item.count}</strong></li>
-              ))}
-            </ol>
+            <div><h2>Häufigste offene Themen</h2><p>Nur feste Themenlabels im ausgewählten Workspace.</p></div>
+            <ol>{topicStats.slice(0, 5).map((item) => <li key={item.topic}><span>{item.topic}</span><strong>{item.count}</strong></li>)}</ol>
           </section>
 
           <section className={styles.filterSection} aria-labelledby="filter-title">
             <div className={styles.sectionHeading}>
-              <div>
-                <h2 id="filter-title">Fragen prüfen</h2>
-                <p>{filtered.length} von {questions.length} Einträgen sichtbar</p>
-              </div>
+              <div><h2 id="filter-title">Fragen prüfen</h2><p>{filtered.length} von {questions.length} Einträgen sichtbar</p></div>
               <button className={styles.resetButton} type="button" onClick={resetFilters}>Filter zurücksetzen</button>
             </div>
             <div className={styles.filters}>
-              <label>Suche<input aria-label="Suche" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema oder Ursache" /></label>
+              <label>Suche<input aria-label="Suche" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Thema, Ursache oder geprüfter Auszug" /></label>
               <label>Thema<select aria-label="Thema" value={topic} onChange={(event) => setTopic(event.target.value)}><option value="all">Alle Themen</option>{topics.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
               <label>Status<select aria-label="Status" value={status} onChange={(event) => setStatus(event.target.value)}><option value="all">Alle Status</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
               <label>Von<input aria-label="Von" type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} /></label>
@@ -175,14 +160,15 @@ export function OpenQuestionsClient({
             {filtered.map((question) => (
               <details className={styles.question} key={question.id}>
                 <summary>
-                  <span className={styles.questionTopic}>{question.topic}</span>
+                  <span className={styles.questionTopic}>{question.reviewedQuestionExcerpt ?? REVIEW_NOTICE}</span>
                   <span className={styles.questionDate}>{formatDate(question.createdAt)}</span>
                   <span className={styles.status} data-status={question.status}>{STATUS_LABELS[question.status]}</span>
                 </summary>
                 <div className={styles.detailBody}>
                   <dl>
+                    <div><dt>Thema</dt><dd>{question.topic}</dd></div>
                     <div><dt>Ursache</dt><dd>{reasonLabel(question.reason)}</dd></div>
-                    <div><dt>Themenhäufigkeit</dt><dd>{topicStats.find((item) => item.topic === question.topic)?.count ?? 0}</dd></div>
+                    <div><dt>Identische freigegebene Frage</dt><dd>{question.reviewedQuestionExcerpt ? question.duplicateCount : "Nicht verfügbar"}</dd></div>
                   </dl>
                   <form action={updateOpenQuestionStatus} className={styles.statusForm}>
                     <input type="hidden" name="workspace" value={selectedWorkspaceId} />
