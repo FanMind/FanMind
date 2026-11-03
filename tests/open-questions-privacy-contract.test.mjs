@@ -165,5 +165,5 @@ test("readiness uses the retention-specific reviewed head pin", async () => {
   assert.match(readiness, /FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_REF=refs\/heads\/feat\/admin-open-questions-followup-20261103/u);
   assert.doesNotMatch(readiness, /FANMIND_WEBSITE_CHAT_REVIEWED_COMMIT/u);
   assert.doesNotMatch(readiness, /^GITHUB_REF=refs\/heads\/main$/mu);
-  assert.match(readiness, /GITHUB_REF=refs\/heads\/main[^\n]*darf nicht behauptet werden/u);
+  assert.match(readiness, /GITHUB_REF=refs\/heads\/main[^\n]*fail-closed/u);
 });
