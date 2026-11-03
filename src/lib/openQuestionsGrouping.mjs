@@ -2,7 +2,7 @@
 // Input should contain privacy-reviewed excerpts, not raw visitor contact data.
 export function normalizeQuestion(text) {
   return String(text ?? "").normalize("NFKC").toLocaleLowerCase("de")
-    .replace(/[^\\p{L}\\p{N}]+/gu, " ").trim().replace(/\\s+/g, " ");
+    .replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ");
 }
 
 export function groupOpenQuestions(rows) {
