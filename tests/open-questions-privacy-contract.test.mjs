@@ -7,6 +7,7 @@ const retentionPath = new URL("../supabase/migrations/20260614120000_conversatio
 const actionPath = new URL("../src/app/admin/open-questions/actions.ts", import.meta.url);
 const contractPath = new URL("../docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md", import.meta.url);
 const acceptancePath = new URL("../scripts/operations/open-questions-retention-acceptance.sql", import.meta.url);
+const acceptanceRunnerPath = new URL("../scripts/operations/open-questions-retention-staging-acceptance.mjs", import.meta.url);
 
 test("status mutation and audit event are one workspace-bound transaction", async () => {
   const [sql, action] = await Promise.all([readFile(migrationPath, "utf8"), readFile(actionPath, "utf8")]);
@@ -37,12 +38,13 @@ test("candidate and audit storage remain service-role-only and contain no raw me
   assert.doesNotMatch(sql, /create\s+policy/iu);
 });
 
-test("original-message lifecycle has a rollback-only acceptance harness", async () => {
-  const [sql, retention, contract, acceptance] = await Promise.all([
+test("original-message lifecycle has a target-bound rollback-only acceptance harness", async () => {
+  const [sql, retention, contract, acceptance, runner] = await Promise.all([
     readFile(migrationPath, "utf8"),
     readFile(retentionPath, "utf8"),
     readFile(contractPath, "utf8"),
     readFile(acceptancePath, "utf8"),
+    readFile(acceptanceRunnerPath, "utf8"),
   ]);
   assert.match(sql, /inbound_message_id uuid not null references public\.conversation_messages\(id\) on delete cascade/u);
   assert.match(retention, /row_number\(\) over[\s\S]*partition by conversation_id[\s\S]*where ranked\.rn > 50/u);
@@ -55,5 +57,12 @@ test("original-message lifecycle has a rollback-only acceptance harness", async 
   assert.equal(acceptance.match(/\brollback\s*;/giu)?.length, 2);
   assert.match(acceptance, /OPEN_QUESTION_ATOMIC_AUDIT=PASS/u);
   assert.match(acceptance, /OPEN_QUESTION_DELETE_CASCADE=PASS/u);
+  assert.match(acceptance, /generate_series\(1, 51\)/u);
+  assert.match(acceptance, /CONVERSATION_MESSAGE_LATEST_50=PASS/u);
   assert.match(acceptance, /OPEN_QUESTION_ACCEPTANCE_ROLLBACK=PASS/u);
+  assert.match(acceptance, /staging_synthetic_fixture/u);
+  assert.match(acceptance, /workspace_processing_acceptance/u);
+  assert.match(acceptance, /input\.audit_before \+ 1/u);
+  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{ mode: "acceptance" \}\)/u);
+  assert.match(runner, /OPEN_QUESTION_RETENTION_TARGET=staging/u);
 });
