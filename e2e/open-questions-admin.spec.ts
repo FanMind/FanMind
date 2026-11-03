@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-const nodeRequire = createRequire(import.meta.url);
+const nodeRequire = createRequire(join(process.cwd(), "package.json"));
 const modules = {
   react: ["react", "react.production.js"],
   "react/jsx-runtime": ["react", "react-jsx-runtime.production.js"],
