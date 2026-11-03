@@ -166,6 +166,7 @@ export function OpenQuestionsClient({
                 </summary>
                 <div className={styles.detailBody}>
                   <dl>
+                    <div><dt>Geprüfter Frageauszug</dt><dd>{question.reviewedQuestionExcerpt ?? REVIEW_NOTICE}</dd></div>
                     <div><dt>Thema</dt><dd>{question.topic}</dd></div>
                     <div><dt>Ursache</dt><dd>{reasonLabel(question.reason)}</dd></div>
                     <div><dt>Identische freigegebene Frage</dt><dd>{question.reviewedQuestionExcerpt ? question.duplicateCount : "Nicht verfügbar"}</dd></div>

@@ -48,10 +48,11 @@ const workspaces = [
   { id: selectedWorkspaceId, name: "Synthetic Alpha" },
   { id: "10000000-0000-4000-8000-000000000002", name: "Synthetic Beta" },
 ];
+const longApprovedExcerpt = "Wie lange dauert der Versand, wenn meine Bestellung mehrere Artikel enthält und ich eine Lieferung an eine Adresse in der Schweiz wünsche?";
 const questions = [
-  { id: "20000000-0000-4000-8000-000000000001", topic: "Allgemeine Supportfrage", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reviewedQuestionExcerpt: "Wie lange dauert der Versand?", excerptReviewState: "approved", duplicateCount: 2 },
+  { id: "20000000-0000-4000-8000-000000000001", topic: "Allgemeine Supportfrage", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reviewedQuestionExcerpt: longApprovedExcerpt, excerptReviewState: "approved", duplicateCount: 2 },
   { id: "20000000-0000-4000-8000-000000000002", topic: "Abrechnung", reason: "assistant_uncertainty", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reviewedQuestionExcerpt: "Kann ich per Rechnung zahlen?", excerptReviewState: "approved", duplicateCount: 1 },
-  { id: "20000000-0000-4000-8000-000000000003", topic: "Allgemeine Supportfrage", reason: "knowledge_gap", status: "open", createdAt: "2026-10-28T10:00:00Z", reviewedQuestionExcerpt: "WIE lange dauert der Versand!", excerptReviewState: "approved", duplicateCount: 2 },
+  { id: "20000000-0000-4000-8000-000000000003", topic: "Allgemeine Supportfrage", reason: "knowledge_gap", status: "open", createdAt: "2026-10-28T10:00:00Z", reviewedQuestionExcerpt: longApprovedExcerpt.toLocaleUpperCase("de").replace("?", "!"), excerptReviewState: "approved", duplicateCount: 2 },
   { id: "20000000-0000-4000-8000-000000000004", topic: "Technische Hilfe", reason: "provider_error", status: "open", createdAt: "2026-10-27T10:00:00Z", reviewedQuestionExcerpt: null, excerptReviewState: "pending", duplicateCount: 1 },
 ];
 const topicStats = [{ topic: "Allgemeine Supportfrage", count: 2 }, { topic: "Abrechnung", count: 1 }, { topic: "Technische Hilfe", count: 1 }];
@@ -75,7 +76,7 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   await search.fill("Rechnung");
   await page.getByLabel("Thema", { exact: true }).selectOption("Abrechnung");
   await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.getByText("Kann ich per Rechnung zahlen?", { exact: true })).toBeVisible();
+  await expect(page.locator("details").first().locator("summary").getByText("Kann ich per Rechnung zahlen?", { exact: true })).toBeVisible();
   await page.locator("details").first().locator("summary").click();
   await page.getByLabel("Bearbeitungsstatus").selectOption("resolved");
   await page.getByRole("button", { name: "Status speichern" }).click();
@@ -89,8 +90,14 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   await search.fill("Versand");
   await page.getByLabel("Thema", { exact: true }).selectOption("all");
   await expect(page.locator("details")).toHaveCount(2);
-  await page.locator("details").first().locator("summary").click();
-  await expect(page.locator("details").first().getByText("2", { exact: true })).toBeVisible();
+  const firstQuestion = page.locator("details").first();
+  await firstQuestion.locator("summary").click();
+  await expect(firstQuestion.getByText("2", { exact: true })).toBeVisible();
+  await expect(firstQuestion.locator("summary").getByText(longApprovedExcerpt, { exact: true })).toBeVisible();
+  const fullExcerpt = firstQuestion.locator("dl > div").filter({ hasText: "Geprüfter Frageauszug" }).locator("dd");
+  await expect(fullExcerpt).toHaveText(longApprovedExcerpt);
+  await expect(fullExcerpt).toBeVisible();
+  expect(await fullExcerpt.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 });
 
 test("pending content is neutral and prohibited raw values never reach DOM or search", async ({ page }) => {
@@ -125,7 +132,7 @@ test("focused Admin review retains keyboard and calendar filtering without horiz
   await page.getByLabel("Von", { exact: true }).fill("2026-11-04");
   await page.getByLabel("Bis", { exact: true }).fill("2026-11-04");
   await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.getByText("Wie lange dauert der Versand?", { exact: true })).toBeVisible();
+  await expect(page.locator("details").first().locator("summary").getByText(longApprovedExcerpt, { exact: true })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   for (const control of await page.locator("button, input, select, summary").all()) {
