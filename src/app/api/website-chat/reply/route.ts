@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { classifyWebsiteChatUnanswered } from "@/lib/websiteChatUnanswered.mjs";
+import { persistWebsiteChatOpenQuestionCandidate } from "@/lib/websiteChatOpenQuestions";
 
 import { getFanMindAiModel, recordAiUsageEvent } from "@/lib/aiUsage";
 import { getClientIp } from "@/lib/rateLimit";
@@ -237,6 +238,15 @@ export async function POST(request: NextRequest) {
     }
 
     const persisted = await persistWebsiteChatAssistantReply({ context, reply });
+    // Opt-in only after the schema migration and privacy review have been completed.
+    // A failure to record a review candidate must not suppress a valid chat reply.
+    if (process.env.FANMIND_WEBSITE_CHAT_OPEN_QUESTIONS_ENABLED === "true") {
+      try {
+        await persistWebsiteChatOpenQuestionCandidate(context, persisted.reply);
+      } catch (error) {
+        console.error("Website chat open-question candidate persistence failed", error instanceof Error ? error.message : "unknown");
+      }
+    }
     await recordAiUsageEvent({
       workspaceId: context.workspaceId,
       contactId: context.contactId,
