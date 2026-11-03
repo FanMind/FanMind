@@ -263,7 +263,7 @@ jobs:
         env:
           FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
           FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
-        run: node --test --test-concurrency=1 tests/open-questions-retention-pg17.test.mjs
+        run: node --test --test-concurrency=1 tests/pg17/open-questions-retention-pg17.test.mjs
 
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
