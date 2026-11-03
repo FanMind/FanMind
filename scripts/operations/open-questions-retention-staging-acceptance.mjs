@@ -40,7 +40,7 @@ function validatePassfile(environment) {
 
 const REQUIRED_SOURCE_CONTRACT = [
   "open_question_retention_fixture_not_exactly_one_synthetic",
-  "open_question_retention_acceptance",
+  "test_access_flags->>'open_question_retention_acceptance' = 'true'",
   "staging-synthetic-open-question:",
   "open-question-retention-fixture:",
   "open_question_acceptance_target_before",
