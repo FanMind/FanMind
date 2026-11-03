@@ -233,6 +233,13 @@ jobs:
         with:
           node-version: 22.13.1
 
+      - name: Prove open-question retention rollback in PostgreSQL 17
+        id: open_question_retention_pg17
+        env:
+          FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
+        run: node --test --test-concurrency=1 tests/open-questions-retention-pg17.test.mjs
+
       - name: Prove PostgreSQL 17 authorization backup and restore
         env:
           FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
