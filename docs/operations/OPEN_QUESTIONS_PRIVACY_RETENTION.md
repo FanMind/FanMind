@@ -21,7 +21,7 @@ Der bestehende Insert-Trigger begrenzt jede Konversation zusätzlich auf die 50 
 
 ## Nicht technisch behauptete Grenzen
 
-Backups bleiben außerhalb des normalen Produktzugriffs und benötigen einen getrennten Runoff-Vertrag von maximal 90 Tagen. Eigene Support-/Vertragsanfragen ohne Vertrag, externe Rollen- und Rechtsprüfung, Kundeninstruktionen und Transparenztexte sind nicht vollständig aus diesem Schema ableitbar; das Repository behauptet dafür keine technische Vollständigkeit. Marketing, Profiling, Modelltraining und Cross-Workspace-Nutzung sind durch diesen Retention-Lauf nicht autorisiert.
+Backups bleiben außerhalb des normalen Produktzugriffs und benötigen einen getrennten Runoff-Vertrag von maximal 90 Tagen. Eigene Support-/Vertragsanfragen ohne Vertrag, die unabhängige BT-051-Rollen- und Rechtsprüfung, Kundeninstruktionen und Transparenztexte sind nicht vollständig aus diesem Schema ableitbar; das Repository behauptet dafür keine technische Vollständigkeit. Marketing, Profiling, Modelltraining und Cross-Workspace-Nutzung sind durch diesen Retention-Lauf nicht autorisiert.
 
 ## Verifikation und Aktivierungsgrenze
 
