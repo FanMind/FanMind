@@ -69,7 +69,7 @@ test("original-message lifecycle has a target-bound rollback-only acceptance har
   assert.match(acceptance, /staging_synthetic_fixture/u);
   assert.match(acceptance, /workspace_processing_acceptance/u);
   assert.match(acceptance, /input\.audit_before \+ 1/u);
-  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{ mode: "acceptance" \}\)/u);
+  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{[\s\S]*mode: "acceptance",[\s\S]*allowReviewedBranch: true/u);
   assert.match(runner, /OPEN_QUESTION_RETENTION_TARGET=staging/u);
 });
 
@@ -158,8 +158,11 @@ test("readiness uses the retention-specific reviewed head pin", async () => {
     readFile(acceptanceRunnerPath, "utf8"),
   ]);
   assert.match(policy, /environment\.FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_COMMIT/u);
-  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{ mode: "acceptance" \}\)/u);
+  assert.match(policy, /reviewedBranchAllowed/u);
+  assert.match(policy, /retention_reviewed_ref/u);
+  assert.match(runner, /evaluateWebsiteChatRetentionStagingEnvironment\(environment, \{[\s\S]*mode: "acceptance",[\s\S]*allowReviewedBranch: true/u);
   assert.match(readiness, /FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_COMMIT/u);
+  assert.match(readiness, /FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_REF=refs\/heads\/feat\/admin-open-questions-followup-20261103/u);
   assert.doesNotMatch(readiness, /FANMIND_WEBSITE_CHAT_REVIEWED_COMMIT/u);
   assert.doesNotMatch(readiness, /^GITHUB_REF=refs\/heads\/main$/mu);
   assert.match(readiness, /GITHUB_REF=refs\/heads\/main[^\n]*darf nicht behauptet werden/u);
