@@ -1,6 +1,6 @@
 import { requirePlatformAdmin } from "@/lib/admin";
 import { listAdminOpenQuestions } from "@/lib/adminOpenQuestions";
-import { groupOpenQuestions } from "@/lib/openQuestionsGrouping.mjs";
+import { groupUnresolvedOpenQuestions } from "@/lib/openQuestionsGrouping.mjs";
 import { updateOpenQuestionStatus } from "./actions";
 import { AdminBillingShell } from "../billing/AdminBillingShell";
 import { AdminTabs } from "../billing/AdminTabs";
@@ -19,7 +19,7 @@ export default async function OpenQuestionsPage({
     catch (cause) { error = cause instanceof Error ? cause.message : "Abfrage fehlgeschlagen"; }
   }
   // Resolved items remain visible in the audit list, but are not open questions.
-  const grouped = groupOpenQuestions(questions.filter(question => question.status !== "resolved"));
+  const grouped = groupUnresolvedOpenQuestions(questions);
   return <AdminBillingShell user={user} title="Offene Fragen" subtitle="Echte Chatfragen – Workspace-Auswahl erforderlich.">
     <AdminTabs activeTab="open-questions" />
     <section style={{ padding: 20, marginTop: 20, background: "white", borderRadius: 12 }}>
