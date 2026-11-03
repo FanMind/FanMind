@@ -43,12 +43,16 @@ export function projectOpenQuestionReviews(questions, reviews) {
 
   const result = new Map();
   for (const [binding, question] of questionByBinding) {
-    const rows = (rowsByBinding.get(binding) ?? [])
-      .filter((review) => Number.isSafeInteger(review?.review_version) && review.review_version > 0)
-      .sort((left, right) => right.review_version - left.review_version);
+    const boundRows = rowsByBinding.get(binding) ?? [];
+    const invalidVersion = boundRows.some(
+      (review) => !Number.isSafeInteger(review?.review_version) || review.review_version < 1,
+    );
+    const rows = invalidVersion
+      ? []
+      : [...boundRows].sort((left, right) => right.review_version - left.review_version);
     const latest = rows[0];
     const ambiguousLatest = latest && rows.filter((row) => row.review_version === latest.review_version).length !== 1;
-    const approved = !ambiguousLatest && validApprovedExcerpt(latest);
+    const approved = !invalidVersion && !ambiguousLatest && validApprovedExcerpt(latest);
     const state = approved ? "approved" : latest?.review_state === "rejected" ? "rejected" : "pending";
     result.set(question.id, {
       reviewedQuestionExcerpt: approved ? latest.reviewed_question_excerpt : null,

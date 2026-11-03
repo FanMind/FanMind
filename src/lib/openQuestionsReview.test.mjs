@@ -63,6 +63,21 @@ test("newer pending or rejected evidence blocks an older approval without fallba
   }
 });
 
+test("an invalid bound review version blocks older approved evidence", () => {
+  const projected = projectOpenQuestionReviews(questions, [
+    review(),
+    review({
+      review_version: "2",
+      review_state: "rejected",
+      reviewed_question_excerpt: null,
+      reviewer_id: null,
+      reviewed_at: null,
+    }),
+  ]);
+  assert.equal(projected.get(questions[0].id).reviewedQuestionExcerpt, null);
+  assert.equal(projected.get(questions[0].id).excerptReviewState, "pending");
+});
+
 test("binds review rows to exact question and workspace and counts only valid approved duplicates", () => {
   const projected = projectOpenQuestionReviews(questions, [
     review(),

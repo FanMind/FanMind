@@ -78,6 +78,7 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   await page.locator("details").first().locator("summary").click();
   await page.getByLabel("Bearbeitungsstatus").selectOption("resolved");
   await page.getByRole("button", { name: "Status speichern" }).click();
+  await expect.poll(() => page.evaluate(() => window.statusActions.length)).toBe(1);
   expect(await page.evaluate(() => window.statusActions[0])).toEqual({
     workspace: selectedWorkspaceId,
     id: "20000000-0000-4000-8000-000000000002",
@@ -92,12 +93,18 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
 
 test("pending content is neutral and prohibited raw values never reach DOM or search", async ({ page }) => {
   expect(pageSource).not.toContain("cause.message");
+  expect(pageSource).toContain('workspaceError = "Workspaces konnten nicht geladen werden.";');
+  expect(pageSource).toContain('questionError = "Offene Fragen konnten nicht geladen werden.";');
   expect(pageSource).not.toContain("conversation_id");
   expect(readerSource).not.toContain("conversation_messages?");
   expect(readerSource).not.toContain("inbound_message_id");
   expect(clientSource).not.toMatch(/\breference\b/u);
 
   await mount(page);
+  const workspace = page.getByLabel("Workspace", { exact: true });
+  await expect(workspace.locator("option")).toHaveCount(3);
+  await expect(workspace).toContainText("Synthetic Alpha");
+  await expect(workspace).toContainText("Synthetic Beta");
   await expect(page.getByText("Frageinhalt noch nicht datenschutzgeprüft", { exact: true })).toBeVisible();
   for (const prohibited of ["visitor@example.invalid", "https://example.invalid/private", "sk-synthetic-secret", "000000a1"]) {
     await expect(page.locator("body")).not.toContainText(prohibited);
@@ -106,8 +113,17 @@ test("pending content is neutral and prohibited raw values never reach DOM or se
   }
 });
 
-test("focused Admin review remains usable without horizontal overflow", async ({ page }) => {
+test("focused Admin review retains keyboard and calendar filtering without horizontal overflow", async ({ page }) => {
   await mount(page);
+  const search = page.getByLabel("Suche", { exact: true });
+  await search.fill("Rechnung");
+  await search.press("Tab");
+  await expect(page.getByLabel("Thema", { exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "Filter zurücksetzen" }).click();
+  await page.getByLabel("Von", { exact: true }).fill("2026-11-04");
+  await page.getByLabel("Bis", { exact: true }).fill("2026-11-04");
+  await expect(page.locator("details")).toHaveCount(1);
+  await expect(page.getByText("Wie lange dauert der Versand?", { exact: true })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   for (const control of await page.locator("button, input, select, summary").all()) {
