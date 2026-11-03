@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
+import { redactOpenQuestion } from "@/lib/openQuestionsRedaction.mjs";
 
 export type OpenQuestionRow = {
   id: string;
@@ -36,5 +37,5 @@ export async function listAdminOpenQuestions(workspaceId: string): Promise<Admin
   if (!messagesResponse.ok) throw new Error("Fragetexte konnten nicht geladen werden");
   const messages = await messagesResponse.json() as Array<{ id: string; workspace_id: string; content: string }>;
   const textById = new Map(messages.filter(m => m.workspace_id === workspaceId).map(m => [m.id, m.content]));
-  return rows.map(row => ({ ...row, question: textById.get(row.inbound_message_id) ?? "[Nachricht nicht verfügbar]" }));
+  return rows.map(row => ({ ...row, question: redactOpenQuestion(textById.get(row.inbound_message_id) ?? "[Nachricht nicht verfügbar]") }));
 }
