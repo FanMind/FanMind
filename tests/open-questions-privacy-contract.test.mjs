@@ -124,13 +124,13 @@ test("Option A acceptance covers exact boundaries, isolation, no-op repetition, 
 });
 
 
-test("retention harness rejects extra fixtures, missing markers, snapshot drift, and ACL drift", async () => {
+test("retention harness rejects fixture, snapshot, ACL, interpolation, and role-order drift", async () => {
   const source = await readFile(acceptancePath, "utf8");
   assert.doesNotThrow(() => validateOpenQuestionRetentionAcceptanceSource(source));
 
   const extraFixture = source.replace(
-    "from public.website_chat_open_questions\n          where workspace_id = :'workspace_id'::uuid) <> 1",
-    "from public.website_chat_open_questions\n          where workspace_id = :'workspace_id'::uuid) <> 2",
+    "from public.website_chat_open_questions\n        where workspace_id = :'workspace_id'::uuid) = 1",
+    "from public.website_chat_open_questions\n        where workspace_id = :'workspace_id'::uuid) = 2",
   );
   const missingMarker = source.replace(
     "test_access_flags->>'open_question_retention_acceptance' = 'true'",
@@ -141,8 +141,23 @@ test("retention harness rejects extra fixtures, missing markers, snapshot drift,
     "'website_chat_open_question_audit_events'\n   )",
     "'website_chat_open_questions'\n   )",
   );
+  const quotedPsqlVariable = source.replace(
+    "if session_user <> 'postgres'\n     or input.current_status",
+    "if session_user <> 'postgres'\n     or :'workspace_id'::uuid is null\n     or input.current_status",
+  );
+  const prematureRole = source.replace(
+    "do $preflight$\ndeclare input record;",
+    "set local role service_role;\ndo $preflight$\ndeclare input record;",
+  );
 
-  for (const changed of [extraFixture, missingMarker, snapshotDrift, aclDrift]) {
+  for (const changed of [
+    extraFixture,
+    missingMarker,
+    snapshotDrift,
+    aclDrift,
+    quotedPsqlVariable,
+    prematureRole,
+  ]) {
     assert.notEqual(changed, source);
     assert.throws(
       () => validateOpenQuestionRetentionAcceptanceSource(changed),

@@ -51,16 +51,26 @@ const REQUIRED_SOURCE_CONTRACT = [
   "open_question_acceptance_acl_snapshot_mismatch",
   "option_a_schema_rollback_failed",
   "is distinct from",
+  "\\if :fixture_preflight_ok",
+  "\\if :option_a_schema_baseline_absent",
+  "\\quit 3",
 ];
 
 export function validateOpenQuestionRetentionAcceptanceSource(sql) {
-  const preflightIndex = sql.indexOf("do $fixture_preflight$");
+  const preflightIndex = sql.indexOf("as fixture_preflight_ok");
+  const transactionalPreflightIndex = sql.indexOf("do $preflight$");
+  const firstServiceRoleIndex = sql.indexOf("set local role service_role;");
+  const dollarQuotedDoBodies = [...sql.matchAll(/\bdo \$([a-z_]+)\$[\s\S]*?\$\1\$;/giu)]
+    .map((match) => match[0]);
+  const containsPsqlVariableInDo = dollarQuotedDoBodies.some(
+    (body) => /:'[a-z_][a-z0-9_]*'/iu.test(body),
+  );
   const firstTemporaryMutation = sql.indexOf("create temporary table");
   const retentionBodyMutation = sql.indexOf("\\ir ../../supabase/controlled/");
   const exactQuestionFixture =
-    /from public\.website_chat_open_questions[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) <> 1/gu;
+    /from public\.website_chat_open_questions[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) = 1/gu;
   const exactMessageFixture =
-    /from public\.conversation_messages[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) <> 1/gu;
+    /from public\.conversation_messages[\s\S]{0,120}where workspace_id = :'workspace_id'::uuid\) = 1/gu;
   const aclTableSets = sql.match(
     /relation\.relname in \(\s*'workspaces',\s*'conversation_messages',\s*'website_chat_open_questions',\s*'website_chat_open_question_audit_events'\s*\)/gu,
   ) ?? [];
@@ -71,8 +81,10 @@ export function validateOpenQuestionRetentionAcceptanceSource(sql) {
       (sql.match(exactMessageFixture)?.length ?? 0) !== 1 ||
       aclTableSets.length !== 3 ||
       (sql.match(/is distinct from/gu)?.length ?? 0) < 6 ||
-      preflightIndex < 0 || firstTemporaryMutation < 0 || retentionBodyMutation < 0 ||
-      preflightIndex > firstTemporaryMutation || preflightIndex > retentionBodyMutation) {
+      preflightIndex < 0 || transactionalPreflightIndex < 0 || firstServiceRoleIndex < 0 ||
+      firstTemporaryMutation < 0 || retentionBodyMutation < 0 || containsPsqlVariableInDo ||
+      preflightIndex > firstTemporaryMutation || preflightIndex > retentionBodyMutation ||
+      firstServiceRoleIndex < transactionalPreflightIndex) {
     fail("source_contract_invalid");
   }
   return sql;

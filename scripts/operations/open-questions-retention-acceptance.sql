@@ -5,57 +5,65 @@
 
 -- Read-only and intentionally before every temporary-table, DDL, status, audit
 -- or retention mutation.
-do $fixture_preflight$
-begin
-  if session_user <> 'postgres'
-     or :'current_status'::text = :'next_status'::text
-     or :'current_status'::text not in ('open','in_review','resolved')
-     or :'next_status'::text not in ('open','in_review','resolved')
-     or (select count(*) from public.workspaces
-          where id = :'workspace_id'::uuid
-            and test_access_flags->>'staging_synthetic_fixture' = 'true'
-            and test_access_flags->>'workspace_processing_acceptance' = 'true'
-            and test_access_flags->>'open_question_retention_acceptance' = 'true') <> 1
-     or (select count(*) from public.website_chat_open_questions
-          where workspace_id = :'workspace_id'::uuid) <> 1
-     or not exists (
-       select 1
-         from public.website_chat_open_questions as question
-         join public.conversation_messages as message
-           on message.id = question.inbound_message_id
-          and message.workspace_id = question.workspace_id
-          and message.conversation_id = question.conversation_id
-        where question.id = :'question_id'::uuid
-          and question.workspace_id = :'workspace_id'::uuid
-          and question.inbound_message_id = :'message_id'::uuid
-          and question.status = :'current_status'::text
-          and question.reason = 'assistant_uncertainty'
-          and message.direction = 'inbound'
-          and message.source_platform = 'staging_synthetic'
-          and message.external_message_id =
-              'staging-synthetic-open-question:' || :'question_id'::uuid::text
-          and message.content =
-              'open-question-retention-fixture:' || :'question_id'::uuid::text
-     )
-     or (select count(*) from public.conversation_messages
-          where workspace_id = :'workspace_id'::uuid) <> 1 then
-    raise exception 'open_question_retention_fixture_not_exactly_one_synthetic';
-  end if;
+select (
+  session_user = 'postgres'
+  and :'current_status'::text <> :'next_status'::text
+  and :'current_status'::text in ('open','in_review','resolved')
+  and :'next_status'::text in ('open','in_review','resolved')
+  and (select count(*) from public.workspaces
+        where id = :'workspace_id'::uuid
+          and test_access_flags->>'staging_synthetic_fixture' = 'true'
+          and test_access_flags->>'workspace_processing_acceptance' = 'true'
+          and test_access_flags->>'open_question_retention_acceptance' = 'true') = 1
+  and (select count(*) from public.website_chat_open_questions
+        where workspace_id = :'workspace_id'::uuid) = 1
+  and exists (
+    select 1
+      from public.website_chat_open_questions as question
+      join public.conversation_messages as message
+        on message.id = question.inbound_message_id
+       and message.workspace_id = question.workspace_id
+       and message.conversation_id = question.conversation_id
+     where question.id = :'question_id'::uuid
+       and question.workspace_id = :'workspace_id'::uuid
+       and question.inbound_message_id = :'message_id'::uuid
+       and question.status = :'current_status'::text
+       and question.reason = 'assistant_uncertainty'
+       and message.direction = 'inbound'
+       and message.source_platform = 'staging_synthetic'
+       and message.external_message_id =
+           'staging-synthetic-open-question:' || :'question_id'::uuid::text
+       and message.content =
+           'open-question-retention-fixture:' || :'question_id'::uuid::text
+  )
+  and (select count(*) from public.conversation_messages
+        where workspace_id = :'workspace_id'::uuid) = 1
+) as fixture_preflight_ok
+\gset
+\if :fixture_preflight_ok
+\else
+\echo 'open_question_retention_fixture_not_exactly_one_synthetic'
+\quit 3
+\endif
 
-  if to_regclass('public.website_chat_retention_controls') is not null
-     or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
-     or exists (
-       select 1 from information_schema.columns
-        where table_schema = 'public'
-          and table_name = 'website_chat_open_questions'
-          and column_name in ('retention_extended_until', 'retention_extension_reason')
-     )
-     or to_regclass('public.website_chat_open_questions_retention_idx') is not null
-     or to_regclass('public.website_chat_open_question_audit_retention_idx') is not null then
-    raise exception 'option_a_schema_baseline_not_absent';
-  end if;
-end
-$fixture_preflight$;
+select (
+  to_regclass('public.website_chat_retention_controls') is null
+  and to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is null
+  and not exists (
+    select 1 from information_schema.columns
+     where table_schema = 'public'
+       and table_name = 'website_chat_open_questions'
+       and column_name in ('retention_extended_until', 'retention_extension_reason')
+  )
+  and to_regclass('public.website_chat_open_questions_retention_idx') is null
+  and to_regclass('public.website_chat_open_question_audit_retention_idx') is null
+) as option_a_schema_baseline_absent
+\gset
+\if :option_a_schema_baseline_absent
+\else
+\echo 'option_a_schema_baseline_not_absent'
+\quit 3
+\endif
 
 create temporary table open_question_acceptance_input on commit preserve rows as
 select :'workspace_id'::uuid as workspace_id,
@@ -127,7 +135,6 @@ select namespace.nspname as schema_name,
 begin;
 \ir ../../supabase/controlled/website_chat_open_questions_option_a_retention_body.sql
 
-set local role service_role;
 do $preflight$
 declare input record;
 begin
@@ -157,6 +164,7 @@ begin
 end
 $preflight$;
 
+set local role service_role;
 select * from public.update_website_chat_open_question_status(
   :'workspace_id'::uuid, :'question_id'::uuid, :'actor_id'::uuid, :'next_status'
 );
