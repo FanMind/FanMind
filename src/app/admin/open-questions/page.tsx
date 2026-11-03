@@ -18,7 +18,8 @@ export default async function OpenQuestionsPage({
     try { questions = await listAdminOpenQuestions(workspace); }
     catch (cause) { error = cause instanceof Error ? cause.message : "Abfrage fehlgeschlagen"; }
   }
-  const grouped = groupOpenQuestions(questions);
+  // Resolved items remain visible in the audit list, but are not open questions.
+  const grouped = groupOpenQuestions(questions.filter(question => question.status !== "resolved"));
   return <AdminBillingShell user={user} title="Offene Fragen" subtitle="Echte Chatfragen – Workspace-Auswahl erforderlich.">
     <AdminTabs activeTab="open-questions" />
     <section style={{ padding: 20, marginTop: 20, background: "white", borderRadius: 12 }}>
