@@ -1,6 +1,7 @@
 import { requirePlatformAdmin } from "@/lib/admin";
 import { listAdminOpenQuestions } from "@/lib/adminOpenQuestions";
 import { groupOpenQuestions } from "@/lib/openQuestionsGrouping.mjs";
+import { updateOpenQuestionStatus } from "./actions";
 import { AdminBillingShell } from "../billing/AdminBillingShell";
 import { AdminTabs } from "../billing/AdminTabs";
 
@@ -37,10 +38,18 @@ export default async function OpenQuestionsPage({
             <p>{question.question}</p>
             <p>Erkannt: {new Date(question.created_at).toLocaleString("de-AT")} · Ursache: {question.reason}</p>
             <p>Gespräch: {question.conversation_id}</p>
+            <form action={updateOpenQuestionStatus}>
+              <input type="hidden" name="workspace" value={workspace ?? ""} />
+              <input type="hidden" name="id" value={question.id} />
+              <label htmlFor={`status-${question.id}`}>Bearbeitungsstatus</label>{" "}
+              <select id={`status-${question.id}`} name="status" defaultValue={question.status}>
+                <option value="open">Offen</option><option value="in_review">In Prüfung</option><option value="resolved">Erledigt</option>
+              </select>{" "}<button type="submit">Speichern</button>
+            </form>
           </details>
         </li>)}
       </ul>
-      <p>Bearbeitungsstatus folgt nach Prüfung der Schreibberechtigungen. Häufigkeiten basieren derzeit auf den maximal 100 geladenen Einträgen.</p>
+      <p>Statusänderungen sind nur für Plattformadministratoren und die ausgewählte Workspace-ID erlaubt. Häufigkeiten basieren auf den maximal 100 geladenen Einträgen.</p>
     </section>
   </AdminBillingShell>;
 }
