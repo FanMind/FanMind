@@ -71,7 +71,11 @@ test("native PG17 proves review derivative binding, denial, retention and cleanu
         ('20000000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000001',2,'pending',null,null,null),
         ('20000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000001',1,'approved','WIE lange dauert der Versand!','30000000-0000-4000-8000-000000000001',now());
     `);
-    assert.equal(sql("set role service_role; select count(*) from public.website_chat_open_question_review_derivatives;").trim(), "3");
+    assert.equal(
+      sql("set role service_role; select count(*) from public.website_chat_open_question_review_derivatives;")
+        .trim().split("\n").at(-1),
+      "3",
+    );
     assert.equal(sql(`
       select review_state from public.website_chat_open_question_review_derivatives
        where open_question_id='20000000-0000-4000-8000-000000000001'

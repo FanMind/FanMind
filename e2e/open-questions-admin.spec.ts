@@ -87,7 +87,7 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   await search.fill("Versand");
   await expect(page.locator("details")).toHaveCount(2);
   await page.locator("details").first().locator("summary").click();
-  await expect(page.getByText("2", { exact: true })).toBeVisible();
+  await expect(page.locator("details").first().getByText("2", { exact: true })).toBeVisible();
 });
 
 test("pending content is neutral and prohibited raw values never reach DOM or search", async ({ page }) => {
