@@ -246,13 +246,6 @@ jobs:
         with:
           node-version: 22.13.1
 
-      - name: Prove reviewed excerpt derivative in PostgreSQL 17
-        env:
-          FANMIND_OPEN_QUESTIONS_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
-          FANMIND_OPEN_QUESTIONS_PG17_REQUIRED: "true"
-          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
-        run: node --test --test-concurrency=1 tests/open-questions-reviewed-excerpt-pg17.test.mjs
-
       - name: Prove PostgreSQL 17 authorization backup and restore
         env:
           FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
@@ -277,6 +270,13 @@ jobs:
         run: |
           node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
           npm run test:creator-foundation-transition
+
+      - name: Prove reviewed excerpt derivative in PostgreSQL 17
+        env:
+          FANMIND_OPEN_QUESTIONS_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_OPEN_QUESTIONS_PG17_REQUIRED: "true"
+          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
+        run: node --test --test-concurrency=1 tests/open-questions-reviewed-excerpt-pg17.test.mjs
 
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
