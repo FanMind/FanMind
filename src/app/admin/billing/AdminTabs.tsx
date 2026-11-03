@@ -9,6 +9,7 @@ export type AdminTabKey =
   | "ai-usage"
   | "referrals"
   | "roadmap"
+  | "open-questions"
   | "inquiries"
   | "assets"
   | "operations"
@@ -24,6 +25,7 @@ export function AdminTabs({ activeTab }: { activeTab: AdminTabKey }) {
       <Link className={activeTab === "ai-usage" ? styles.activeTab : undefined} href="/admin/ai-usage">KI-Verbrauch</Link>
       <Link className={activeTab === "referrals" ? styles.activeTab : undefined} href="/admin/referrals">Referrals</Link>
       <Link className={activeTab === "roadmap" ? styles.activeTab : undefined} href="/admin/roadmap">Roadmap</Link>
+      <Link className={activeTab === "open-questions" ? styles.activeTab : undefined} href="/admin/open-questions">Offene Fragen</Link>
       <Link className={activeTab === "inquiries" ? styles.activeTab : undefined} href="/admin/inquiries">Anfragen</Link>
       <Link className={activeTab === "assets" ? styles.activeTab : undefined} href="/admin/assets">Assets</Link>
       <Link className={activeTab === "operations" ? styles.activeTab : undefined} href="/admin/operations">Operations</Link>

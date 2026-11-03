@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { classifyWebsiteChatUnanswered } from "@/lib/websiteChatUnanswered.mjs";
+import { persistWebsiteChatOpenQuestionCandidate } from "@/lib/websiteChatOpenQuestions";
 
 import { getFanMindAiModel, recordAiUsageEvent } from "@/lib/aiUsage";
 import { getClientIp } from "@/lib/rateLimit";
@@ -151,7 +153,7 @@ export async function POST(request: NextRequest) {
     claimAllowed: null,
   });
   if (initialDecision.action === "reuse") {
-    return response({ ok: true, reply: initialDecision.reply, duplicate: true }, 200, resolved.origin);
+    return response({ ok: true, reply: initialDecision.reply, duplicate: true, unansweredCandidate: classifyWebsiteChatUnanswered(initialDecision.reply).candidate }, 200, resolved.origin);
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -180,7 +182,7 @@ export async function POST(request: NextRequest) {
     claimAllowed: messageClaim.allowed,
   });
   if (claimDecision.action === "reuse") {
-    return response({ ok: true, reply: claimDecision.reply, duplicate: true }, 200, resolved.origin);
+    return response({ ok: true, reply: claimDecision.reply, duplicate: true, unansweredCandidate: classifyWebsiteChatUnanswered(claimDecision.reply).candidate }, 200, resolved.origin);
   }
   if (claimDecision.action === "in_progress") {
     return response({ ok: false, code: "AI_IN_PROGRESS" }, 409, resolved.origin);
@@ -236,6 +238,15 @@ export async function POST(request: NextRequest) {
     }
 
     const persisted = await persistWebsiteChatAssistantReply({ context, reply });
+    // Opt-in only after the schema migration and privacy review have been completed.
+    // A failure to record a review candidate must not suppress a valid chat reply.
+    if (process.env.FANMIND_WEBSITE_CHAT_OPEN_QUESTIONS_ENABLED === "true") {
+      try {
+        await persistWebsiteChatOpenQuestionCandidate(context, persisted.reply);
+      } catch (error) {
+        console.error("Website chat open-question candidate persistence failed", error instanceof Error ? error.message : "unknown");
+      }
+    }
     await recordAiUsageEvent({
       workspaceId: context.workspaceId,
       contactId: context.contactId,
@@ -248,7 +259,7 @@ export async function POST(request: NextRequest) {
       sourceRoute: "/api/website-chat/reply",
       providerUsage: (providerBody as { usage?: unknown } | null)?.usage,
     });
-    return response({ ok: true, reply: persisted.reply, duplicate: persisted.duplicate }, 200, resolved.origin);
+    return response({ ok: true, reply: persisted.reply, duplicate: persisted.duplicate, unansweredCandidate: classifyWebsiteChatUnanswered(persisted.reply).candidate }, 200, resolved.origin);
   } catch {
     await recordAiUsageEvent({
       workspaceId: context.workspaceId,
