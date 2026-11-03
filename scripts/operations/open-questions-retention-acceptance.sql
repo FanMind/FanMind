@@ -9,6 +9,7 @@ select :'workspace_id'::uuid as workspace_id,
        :'actor_id'::uuid as actor_id,
        :'current_status'::text as current_status,
        :'next_status'::text as next_status,
+       date_trunc('second', statement_timestamp()) as as_of,
        (select conversation_id from public.website_chat_open_questions
          where id = :'question_id'::uuid
            and workspace_id = :'workspace_id'::uuid) as conversation_id,
@@ -18,9 +19,12 @@ select :'workspace_id'::uuid as workspace_id,
            and actor_id = :'actor_id'::uuid
            and before_status = :'current_status'
            and after_status = :'next_status') as audit_before;
-begin;
-set local role service_role;
 
+begin;
+\set retention_acceptance_mode 1
+\ir ../../supabase/controlled/website_chat_open_questions_option_a_retention.sql
+
+set local role service_role;
 do $preflight$
 declare input record;
 begin
@@ -53,6 +57,7 @@ $preflight$;
 select * from public.update_website_chat_open_question_status(
   :'workspace_id'::uuid, :'question_id'::uuid, :'actor_id'::uuid, :'next_status'
 );
+reset role;
 
 do $audit$
 declare input record;
@@ -69,7 +74,7 @@ begin
 end
 $audit$;
 
-reset role;
+savepoint latest_50_check;
 insert into public.conversation_messages (
   id, workspace_id, conversation_id, contact_id, direction,
   message_type, source_platform, source_type, content, created_at
@@ -78,7 +83,7 @@ select gen_random_uuid(), message.workspace_id, message.conversation_id,
        message.contact_id, message.direction, message.message_type,
        message.source_platform, message.source_type,
        'open-question-retention:' || input.question_id::text || ':' || series.value::text,
-       statement_timestamp() + make_interval(secs => series.value)
+       input.as_of + make_interval(secs => series.value)
   from pg_temp.open_question_acceptance_input as input
   join public.conversation_messages as message on message.id = input.message_id
  cross join generate_series(1, 51) as series(value);
@@ -106,10 +111,167 @@ begin
   end if;
 end
 $cascade$;
+rollback to savepoint latest_50_check;
+
+savepoint extension_check;
+insert into public.website_chat_retention_controls (workspace_id, policy_version)
+select workspace_id, 'option-a-2026-11-03' from pg_temp.open_question_acceptance_input;
+update public.website_chat_open_questions as question
+   set status = 'open',
+       created_at = input.as_of - interval '180 days',
+       retention_extended_until = input.as_of + interval '1 day',
+       retention_extension_reason = 'synthetic acceptance extension'
+  from pg_temp.open_question_acceptance_input as input
+ where question.id = input.question_id and question.workspace_id = input.workspace_id;
+set local role service_role;
+create temporary table option_a_extension_hold as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+reset role;
+do $extension_hold$
+declare input record;
+begin
+  select * into input from pg_temp.open_question_acceptance_input;
+  if not exists (select 1 from public.website_chat_open_questions where id = input.question_id)
+     or (select deleted_open_questions from pg_temp.option_a_extension_hold) <> 0 then
+    raise exception 'option_a_documented_extension_invalid';
+  end if;
+end
+$extension_hold$;
+update public.website_chat_open_questions as question
+   set retention_extended_until = input.as_of
+  from pg_temp.open_question_acceptance_input as input
+ where question.id = input.question_id and question.workspace_id = input.workspace_id;
+set local role service_role;
+create temporary table option_a_extension_due as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+reset role;
+do $extension_due$
+declare input record;
+begin
+  select * into input from pg_temp.open_question_acceptance_input;
+  if exists (select 1 from public.website_chat_open_questions where id = input.question_id)
+     or (select deleted_open_questions from pg_temp.option_a_extension_due) <> 1 then
+    raise exception 'option_a_180_day_boundary_invalid';
+  end if;
+end
+$extension_due$;
+rollback to savepoint extension_check;
+
+savepoint contract_end_check;
+insert into public.website_chat_retention_controls (
+  workspace_id, policy_version, contract_ended_at
+)
+select workspace_id, 'option-a-2026-11-03', as_of - interval '30 days'
+  from pg_temp.open_question_acceptance_input;
+set local role service_role;
+create temporary table option_a_contract_due as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+reset role;
+do $contract_due$
+declare input record;
+begin
+  select * into input from pg_temp.open_question_acceptance_input;
+  if exists (select 1 from public.conversation_messages where id = input.message_id)
+     or (select deleted_conversation_messages from pg_temp.option_a_contract_due) <> 1 then
+    raise exception 'option_a_contract_end_30_day_boundary_invalid';
+  end if;
+end
+$contract_due$;
+rollback to savepoint contract_end_check;
+
+insert into public.website_chat_retention_controls (
+  workspace_id, policy_version, legal_hold_started_at, legal_hold_reason
+)
+select workspace_id, 'option-a-2026-11-03', as_of - interval '1 day',
+       'synthetic acceptance legal hold'
+  from pg_temp.open_question_acceptance_input;
+update public.website_chat_open_questions as question
+   set status = 'resolved',
+       updated_at = input.as_of - interval '30 days'
+  from pg_temp.open_question_acceptance_input as input
+ where question.id = input.question_id and question.workspace_id = input.workspace_id;
+update public.conversation_messages as message
+   set created_at = input.as_of - interval '24 months'
+  from pg_temp.open_question_acceptance_input as input
+ where message.id = input.message_id and message.workspace_id = input.workspace_id;
+update public.website_chat_open_question_audit_events as audit
+   set occurred_at = input.as_of - interval '12 months'
+  from pg_temp.open_question_acceptance_input as input
+ where audit.open_question_id = input.question_id and audit.workspace_id = input.workspace_id;
+
+create temporary table option_a_other_workspace_before as
+select count(*)::bigint as questions
+  from public.website_chat_open_questions
+ where workspace_id <> :'workspace_id'::uuid;
+
+set local role service_role;
+create temporary table option_a_legal_hold_result as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+reset role;
+
+do $legal_hold$
+declare input record;
+begin
+  select * into input from pg_temp.open_question_acceptance_input;
+  if not exists (select 1 from public.website_chat_open_questions where id = input.question_id)
+     or not exists (select 1 from public.conversation_messages where id = input.message_id)
+     or (select deleted_audit_events + deleted_open_questions + deleted_conversation_messages
+           from pg_temp.option_a_legal_hold_result) <> 0 then
+    raise exception 'option_a_legal_hold_noop_invalid';
+  end if;
+end
+$legal_hold$;
+
+update public.website_chat_retention_controls as control
+   set legal_hold_released_at = input.as_of
+  from pg_temp.open_question_acceptance_input as input
+ where control.workspace_id = input.workspace_id;
+
+set local role service_role;
+create temporary table option_a_due_result as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+create temporary table option_a_repeat_result as
+select * from public.run_website_chat_option_a_retention(
+  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
+);
+reset role;
+
+do $option_a_due$
+declare input record;
+begin
+  select * into input from pg_temp.open_question_acceptance_input;
+  if exists (select 1 from public.website_chat_open_questions where id = input.question_id)
+     or exists (select 1 from public.conversation_messages where id = input.message_id)
+     or (select deleted_audit_events from pg_temp.option_a_due_result) <> 1
+     or (select deleted_open_questions from pg_temp.option_a_due_result) <> 1
+     or (select deleted_conversation_messages from pg_temp.option_a_due_result) <> 1
+     or (select deleted_audit_events + deleted_open_questions + deleted_conversation_messages
+           from pg_temp.option_a_repeat_result) <> 0
+     or (select questions from pg_temp.option_a_other_workspace_before) <>
+        (select count(*) from public.website_chat_open_questions
+          where workspace_id <> input.workspace_id) then
+    raise exception 'option_a_due_or_isolation_invalid';
+  end if;
+end
+$option_a_due$;
 
 select 'OPEN_QUESTION_ATOMIC_AUDIT=PASS';
 select 'OPEN_QUESTION_DELETE_CASCADE=PASS';
 select 'CONVERSATION_MESSAGE_LATEST_50=PASS';
+select 'OPTION_A_DEADLINE_BOUNDARIES=PASS';
+select 'OPTION_A_LEGAL_HOLD=PASS';
+select 'OPTION_A_WORKSPACE_ISOLATION=PASS';
+select 'OPTION_A_IDEMPOTENCE=PASS';
 rollback;
 
 begin;
