@@ -4,6 +4,7 @@ import {
   EXCERPT_REVIEW_NOTICE,
   normalizeReviewedQuestion,
   projectOpenQuestionReviews,
+  topicForReviewedExcerpt,
   validApprovedExcerpt,
 } from "./openQuestionsReview.mjs";
 
@@ -76,6 +77,11 @@ test("an invalid bound review version blocks older approved evidence", () => {
   ]);
   assert.equal(projected.get(questions[0].id).reviewedQuestionExcerpt, null);
   assert.equal(projected.get(questions[0].id).excerptReviewState, "pending");
+});
+
+test("approved excerpts retain allowlisted topics while pending content stays generic", () => {
+  assert.equal(topicForReviewedExcerpt("Kann ich per Rechnung zahlen?", "Allgemeine Supportfrage"), "Abrechnung");
+  assert.equal(topicForReviewedExcerpt(null, "Technische Hilfe"), "Technische Hilfe");
 });
 
 test("binds review rows to exact question and workspace and counts only valid approved duplicates", () => {

@@ -1,3 +1,5 @@
+import { redactOpenQuestion } from "./openQuestionsRedaction.mjs";
+
 export const EXCERPT_REVIEW_NOTICE = "Frageinhalt noch nicht datenschutzgeprüft";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -23,6 +25,11 @@ export function validApprovedExcerpt(review) {
   const excerpt = review.reviewed_question_excerpt;
   if (!excerpt || excerpt !== excerpt.trim() || Array.from(excerpt).length > 160) return false;
   return !CONTROL.test(excerpt) && !URL.test(excerpt) && !EMAIL.test(excerpt) && !TOKEN.test(excerpt) && !PHONE.test(excerpt);
+}
+
+export function topicForReviewedExcerpt(reviewedQuestionExcerpt, fallbackTopic) {
+  if (typeof reviewedQuestionExcerpt !== "string" || !reviewedQuestionExcerpt) return fallbackTopic;
+  return redactOpenQuestion(reviewedQuestionExcerpt).replace(/^Thema:\s*/u, "");
 }
 
 export function projectOpenQuestionReviews(questions, reviews) {

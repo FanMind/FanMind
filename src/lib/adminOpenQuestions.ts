@@ -2,6 +2,7 @@ import "server-only";
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 import {
   projectOpenQuestionReviews,
+  topicForReviewedExcerpt,
   type OpenQuestionReviewSource,
   type OpenQuestionReviewState,
 } from "@/lib/openQuestionsReview.mjs";
@@ -82,13 +83,16 @@ export async function listAdminOpenQuestions(workspaceId: string): Promise<Admin
   }
 
   const projections = projectOpenQuestionReviews(rows, reviewRows);
-  return rows.map((row) => ({
-    ...row,
-    topic: topicForReason(row.reason),
-    ...(projections.get(row.id) ?? {
+  return rows.map((row) => {
+    const projection = projections.get(row.id) ?? {
       reviewedQuestionExcerpt: null,
       excerptReviewState: "pending" as const,
       duplicateCount: 1,
-    }),
-  }));
+    };
+    return {
+      ...row,
+      topic: topicForReviewedExcerpt(projection.reviewedQuestionExcerpt, topicForReason(row.reason)),
+      ...projection,
+    };
+  });
 }

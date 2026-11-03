@@ -19,6 +19,7 @@ export type OpenQuestionReviewProjection = {
 export const EXCERPT_REVIEW_NOTICE: string;
 export function normalizeReviewedQuestion(text: unknown): string;
 export function validApprovedExcerpt(review: unknown): boolean;
+export function topicForReviewedExcerpt(reviewedQuestionExcerpt: string | null, fallbackTopic: string): string;
 export function projectOpenQuestionReviews(
   questions: Array<{ id: string; workspace_id: string }>,
   reviews: OpenQuestionReviewSource[],

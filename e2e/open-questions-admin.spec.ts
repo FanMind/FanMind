@@ -50,11 +50,11 @@ const workspaces = [
 ];
 const questions = [
   { id: "20000000-0000-4000-8000-000000000001", topic: "Allgemeine Supportfrage", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reviewedQuestionExcerpt: "Wie lange dauert der Versand?", excerptReviewState: "approved", duplicateCount: 2 },
-  { id: "20000000-0000-4000-8000-000000000002", topic: "Allgemeine Supportfrage", reason: "assistant_uncertainty", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reviewedQuestionExcerpt: "Kann ich per Rechnung zahlen?", excerptReviewState: "approved", duplicateCount: 1 },
+  { id: "20000000-0000-4000-8000-000000000002", topic: "Abrechnung", reason: "assistant_uncertainty", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reviewedQuestionExcerpt: "Kann ich per Rechnung zahlen?", excerptReviewState: "approved", duplicateCount: 1 },
   { id: "20000000-0000-4000-8000-000000000003", topic: "Allgemeine Supportfrage", reason: "knowledge_gap", status: "open", createdAt: "2026-10-28T10:00:00Z", reviewedQuestionExcerpt: "WIE lange dauert der Versand!", excerptReviewState: "approved", duplicateCount: 2 },
   { id: "20000000-0000-4000-8000-000000000004", topic: "Technische Hilfe", reason: "provider_error", status: "open", createdAt: "2026-10-27T10:00:00Z", reviewedQuestionExcerpt: null, excerptReviewState: "pending", duplicateCount: 1 },
 ];
-const topicStats = [{ topic: "Allgemeine Supportfrage", count: 3 }, { topic: "Technische Hilfe", count: 1 }];
+const topicStats = [{ topic: "Allgemeine Supportfrage", count: 2 }, { topic: "Abrechnung", count: 1 }, { topic: "Technische Hilfe", count: 1 }];
 
 async function mount(page: Page) {
   await page.route("**/*", (route) => route.fulfill({ contentType: "text/html", body: '<html><body><main id="root"></main></body></html>' }));
@@ -73,6 +73,7 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   const search = page.getByLabel("Suche", { exact: true });
 
   await search.fill("Rechnung");
+  await page.getByLabel("Thema", { exact: true }).selectOption("Abrechnung");
   await expect(page.locator("details")).toHaveCount(1);
   await expect(page.getByText("Kann ich per Rechnung zahlen?", { exact: true })).toBeVisible();
   await page.locator("details").first().locator("summary").click();
@@ -86,6 +87,7 @@ test("approved excerpts stay distinguishable and exact duplicates retain per-que
   });
 
   await search.fill("Versand");
+  await page.getByLabel("Thema", { exact: true }).selectOption("all");
   await expect(page.locator("details")).toHaveCount(2);
   await page.locator("details").first().locator("summary").click();
   await expect(page.locator("details").first().getByText("2", { exact: true })).toBeVisible();
