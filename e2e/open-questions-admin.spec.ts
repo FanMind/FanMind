@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-const require = createRequire(import.meta.url);
+const nodeRequire = createRequire(import.meta.url);
 const modules = {
   react: ["react", "react.production.js"],
   "react/jsx-runtime": ["react", "react-jsx-runtime.production.js"],
@@ -20,7 +20,7 @@ const modules = {
   scheduler: ["scheduler", "scheduler.production.js"],
 };
 const moduleSources = Object.entries(modules).map(([name, [pkg, file]]) =>
-  `${JSON.stringify(name)}: function(module, exports, require) {\n${readFileSync(join(dirname(require.resolve(`${pkg}/package.json`)), "cjs", file), "utf8")}\n}`,
+  `${JSON.stringify(name)}: function(module, exports, require) {\n${readFileSync(join(dirname(nodeRequire.resolve(`${pkg}/package.json`)), "cjs", file), "utf8")}\n}`,
 );
 const client = ts.transpileModule(readFileSync("src/app/admin/open-questions/OpenQuestionsClient.tsx", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
