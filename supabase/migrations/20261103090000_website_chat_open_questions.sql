@@ -33,6 +33,8 @@ alter table public.website_chat_open_questions enable row level security;
 alter table public.website_chat_open_question_audit_events enable row level security;
 revoke all on public.website_chat_open_questions from public, anon, authenticated;
 revoke all on public.website_chat_open_question_audit_events from public, anon, authenticated;
+revoke update, delete on public.website_chat_open_questions from service_role;
+revoke insert, update, delete on public.website_chat_open_question_audit_events from service_role;
 grant select, insert on public.website_chat_open_questions to service_role;
 grant select on public.website_chat_open_question_audit_events to service_role;
 

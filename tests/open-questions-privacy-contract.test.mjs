@@ -25,6 +25,8 @@ test("candidate and audit storage remain service-role-only and contain no raw me
   assert.doesNotMatch(sql, /\b(?:content|question_text|message_text)\s+text\b/iu);
   assert.match(sql, /revoke all on public\.website_chat_open_questions from public, anon, authenticated/u);
   assert.match(sql, /revoke all on public\.website_chat_open_question_audit_events from public, anon, authenticated/u);
+  assert.match(sql, /revoke update, delete on public\.website_chat_open_questions from service_role/u);
+  assert.match(sql, /revoke insert, update, delete on public\.website_chat_open_question_audit_events from service_role/u);
   assert.match(sql, /grant select, insert on public\.website_chat_open_questions to service_role/u);
   assert.match(sql, /grant select on public\.website_chat_open_question_audit_events to service_role/u);
   assert.match(sql, /security definer[\s\S]*set search_path = pg_catalog, public, pg_temp/u);
