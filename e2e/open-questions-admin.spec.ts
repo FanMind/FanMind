@@ -23,6 +23,7 @@ const moduleSources = Object.entries(modules).map(([name, [pkg, file]]) =>
   `${JSON.stringify(name)}: function(module, exports, require) {\n${readFileSync(join(dirname(nodeRequire.resolve(`${pkg}/package.json`)), "cjs", file), "utf8")}\n}`,
 );
 const pageSource = readFileSync("src/app/admin/open-questions/page.tsx", "utf8");
+const readerSource = readFileSync("src/lib/adminOpenQuestions.ts", "utf8");
 const clientSource = readFileSync("src/app/admin/open-questions/OpenQuestionsClient.tsx", "utf8");
 const client = ts.transpileModule(clientSource, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
@@ -47,12 +48,14 @@ const workspaces = [
   { id: selectedWorkspaceId, name: "Synthetic Alpha" },
   { id: "10000000-0000-4000-8000-000000000002", name: "Synthetic Beta" },
 ];
+const longApprovedExcerpt = "Wie lange dauert der Versand, wenn meine Bestellung mehrere Artikel enthält und ich eine Lieferung an eine Adresse in der Schweiz wünsche?";
 const questions = [
-  { id: "20000000-0000-4000-8000-000000000001", topic: "Abrechnung", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z" },
-  { id: "20000000-0000-4000-8000-000000000002", topic: "Technische Hilfe", reason: "provider_error", status: "in_review", createdAt: "2026-11-02T10:00:00Z" },
-  { id: "20000000-0000-4000-8000-000000000003", topic: "Anmeldung", reason: "knowledge_gap", status: "resolved", createdAt: "2026-10-28T10:00:00Z" },
+  { id: "20000000-0000-4000-8000-000000000001", topic: "Allgemeine Supportfrage", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reviewedQuestionExcerpt: longApprovedExcerpt, excerptReviewState: "approved", duplicateCount: 2 },
+  { id: "20000000-0000-4000-8000-000000000002", topic: "Abrechnung", reason: "assistant_uncertainty", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reviewedQuestionExcerpt: "Kann ich per Rechnung zahlen?", excerptReviewState: "approved", duplicateCount: 1 },
+  { id: "20000000-0000-4000-8000-000000000003", topic: "Allgemeine Supportfrage", reason: "knowledge_gap", status: "open", createdAt: "2026-10-28T10:00:00Z", reviewedQuestionExcerpt: longApprovedExcerpt.toLocaleUpperCase("de").replace("?", "!"), excerptReviewState: "approved", duplicateCount: 2 },
+  { id: "20000000-0000-4000-8000-000000000004", topic: "Technische Hilfe", reason: "provider_error", status: "open", createdAt: "2026-10-27T10:00:00Z", reviewedQuestionExcerpt: null, excerptReviewState: "pending", duplicateCount: 1 },
 ];
-const topicStats = [{ topic: "Abrechnung", count: 3 }, { topic: "Technische Hilfe", count: 1 }];
+const topicStats = [{ topic: "Allgemeine Supportfrage", count: 2 }, { topic: "Abrechnung", count: 1 }, { topic: "Technische Hilfe", count: 1 }];
 
 async function mount(page: Page) {
   await page.route("**/*", (route) => route.fulfill({ contentType: "text/html", body: '<html><body><main id="root"></main></body></html>' }));
@@ -66,42 +69,15 @@ async function mount(page: Page) {
   await expect(page.getByRole("region", { name: "Offene Supportfragen" })).toBeVisible();
 }
 
-test("synthetic Admin review keeps failures generic and conversation references out of the browser", async ({ page }) => {
-  expect(pageSource).not.toContain("cause.message");
-  expect(pageSource).toContain('workspaceError = "Workspaces konnten nicht geladen werden.";');
-  expect(pageSource).toContain('questionError = "Offene Fragen konnten nicht geladen werden.";');
-  expect(pageSource).not.toContain("question.conversation_id");
-  expect(clientSource).not.toMatch(/\breference\b/u);
-
+test("approved excerpts stay distinguishable and exact duplicates retain per-question actions", async ({ page }) => {
   await mount(page);
-  await expect(page.locator("body")).not.toContainText("000000a1");
-  await page.getByLabel("Suche", { exact: true }).fill("000000a1");
-  await expect(page.locator("details")).toHaveCount(0);
-});
-
-test("synthetic Admin review filters redacted details and submits the existing status contract", async ({ page }) => {
-  await mount(page);
-  const workspace = page.getByLabel("Workspace", { exact: true });
-  await expect(workspace.locator("option")).toHaveCount(3);
-  await expect(workspace).toContainText("Synthetic Alpha");
-  await expect(workspace).toContainText("Synthetic Beta");
-  await expect(page.locator("body")).not.toContainText("visitor@example.invalid");
-  await expect(page.locator("body")).not.toContainText("sk-synthetic-secret");
-
   const search = page.getByLabel("Suche", { exact: true });
-  await search.fill("Abrechnung");
-  await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.locator("details").getByText("Abrechnung", { exact: true })).toBeVisible();
-  await search.press("Tab");
-  await expect(page.getByLabel("Thema", { exact: true })).toBeFocused();
 
-  await page.getByRole("button", { name: "Filter zurücksetzen" }).click();
-  await page.getByLabel("Status", { exact: true }).selectOption("in_review");
+  await search.fill("Rechnung");
+  await page.getByLabel("Thema", { exact: true }).selectOption("Abrechnung");
   await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.getByText("Providerfehler", { exact: true })).toBeHidden();
+  await expect(page.locator("details").first().locator("summary").getByText("Kann ich per Rechnung zahlen?", { exact: true })).toBeVisible();
   await page.locator("details").first().locator("summary").click();
-  await expect(page.getByText("Providerfehler", { exact: true })).toBeVisible();
-
   await page.getByLabel("Bearbeitungsstatus").selectOption("resolved");
   await page.getByRole("button", { name: "Status speichern" }).click();
   await expect.poll(() => page.evaluate(() => window.statusActions.length)).toBe(1);
@@ -110,15 +86,53 @@ test("synthetic Admin review filters redacted details and submits the existing s
     id: "20000000-0000-4000-8000-000000000002",
     status: "resolved",
   });
+
+  await search.fill("Versand");
+  await page.getByLabel("Thema", { exact: true }).selectOption("all");
+  await expect(page.locator("details")).toHaveCount(2);
+  const firstQuestion = page.locator("details").first();
+  await firstQuestion.locator("summary").click();
+  await expect(firstQuestion.getByText("2", { exact: true })).toBeVisible();
+  await expect(firstQuestion.locator("summary").getByText(longApprovedExcerpt, { exact: true })).toBeVisible();
+  const fullExcerpt = firstQuestion.locator("dl > div").filter({ hasText: "Geprüfter Frageauszug" }).locator("dd");
+  await expect(fullExcerpt).toHaveText(longApprovedExcerpt);
+  await expect(fullExcerpt).toBeVisible();
+  expect(await fullExcerpt.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
 });
 
-test("synthetic Admin review stays usable without horizontal overflow", async ({ page }) => {
+test("pending content is neutral and prohibited raw values never reach DOM or search", async ({ page }) => {
+  expect(pageSource).not.toContain("cause.message");
+  expect(pageSource).toContain('workspaceError = "Workspaces konnten nicht geladen werden.";');
+  expect(pageSource).toContain('questionError = "Offene Fragen konnten nicht geladen werden.";');
+  expect(pageSource).not.toContain("conversation_id");
+  expect(readerSource).not.toContain("conversation_messages?");
+  expect(readerSource).not.toContain("inbound_message_id");
+  expect(clientSource).not.toMatch(/\breference\b/u);
+
   await mount(page);
+  const workspace = page.getByLabel("Workspace", { exact: true });
+  await expect(workspace.locator("option")).toHaveCount(3);
+  await expect(workspace).toContainText("Synthetic Alpha");
+  await expect(workspace).toContainText("Synthetic Beta");
+  await expect(page.locator("summary").getByText("Frageinhalt noch nicht datenschutzgeprüft", { exact: true })).toBeVisible();
+  for (const prohibited of ["visitor@example.invalid", "https://example.invalid/private", "sk-synthetic-secret", "000000a1"]) {
+    await expect(page.locator("body")).not.toContainText(prohibited);
+    await page.getByLabel("Suche", { exact: true }).fill(prohibited);
+    await expect(page.locator("details")).toHaveCount(0);
+  }
+});
+
+test("focused Admin review retains keyboard and calendar filtering without horizontal overflow", async ({ page }) => {
+  await mount(page);
+  const search = page.getByLabel("Suche", { exact: true });
+  await search.fill("Rechnung");
+  await search.press("Tab");
+  await expect(page.getByLabel("Thema", { exact: true })).toBeFocused();
+  await page.getByRole("button", { name: "Filter zurücksetzen" }).click();
   await page.getByLabel("Von", { exact: true }).fill("2026-11-04");
   await page.getByLabel("Bis", { exact: true }).fill("2026-11-04");
   await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.locator("details").getByText("Abrechnung", { exact: true })).toBeVisible();
-  await expect(page.locator("details").getByText(/04\.11\.2026/u)).toBeVisible();
+  await expect(page.locator("details").first().locator("summary").getByText(longApprovedExcerpt, { exact: true })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   for (const control of await page.locator("button, input, select, summary").all()) {

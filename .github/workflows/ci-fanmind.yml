@@ -46,6 +46,19 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Prove reviewed excerpt fail-closed projection
+        run: node --test src/lib/openQuestionsReview.test.mjs
+
+      - name: Install pinned Chromium for focused Admin review
+        run: npx playwright install --with-deps chromium
+
+      - name: Run focused Admin reviewed excerpts on desktop and mobile
+        env:
+          CI: "1"
+          PLAYWRIGHT_SKIP_WEBSERVER: "1"
+          FANMIND_RUNTIME_SETTINGS_FILE: /tmp/fanmind-browser-e2e-runtime-settings.json
+        run: npx playwright test --config=playwright.config.mts e2e/open-questions-admin.spec.ts --project=desktop-chromium --project=mobile-chromium
+
       - name: Verify Mobile EAS project-info parser
         id: mobile_eas_project_info
         continue-on-error: true
@@ -232,6 +245,13 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22.13.1
+
+      - name: Prove reviewed excerpt derivative in PostgreSQL 17
+        env:
+          FANMIND_OPEN_QUESTIONS_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_OPEN_QUESTIONS_PG17_REQUIRED: "true"
+          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
+        run: node --test --test-concurrency=1 tests/open-questions-reviewed-excerpt-pg17.test.mjs
 
       - name: Prove PostgreSQL 17 authorization backup and restore
         env:
