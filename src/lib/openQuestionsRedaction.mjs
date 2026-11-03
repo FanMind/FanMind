@@ -1,7 +1,18 @@
-// Defense-in-depth display masking, not a guarantee of full PII anonymization.
-// Keep raw content only in the existing restricted source system.
+const TOPICS = [
+  ["Abrechnung", /\b(?:rechnung|bezahlen?|preis|kosten|abo|zahlung)\b/iu],
+  ["Datenexport", /\b(?:datenexport|export|datenkopie|herunterladen)\b/iu],
+  ["Teamverwaltung", /\b(?:team|mitglied|einladen|rolle)\b/iu],
+  ["Anmeldung", /\b(?:login|anmeld|passwort|zugang)\b/iu],
+  ["Einstellungen", /\b(?:einstellung|benachrichtigung|profil|sprache)\b/iu],
+  ["Technische Hilfe", /\b(?:fehler|lädt|laden|funktioniert|problem)\b/iu],
+];
+
+// Fail-closed display derivation, not a guarantee of PII anonymization.
+// Raw content stays only in the restricted source system; the admin list and
+// grouping receive one fixed, privacy-reviewed topic label.
 export function redactOpenQuestion(text) {
-  return String(text ?? "")
+  const source = String(text ?? "");
+  const masked = source
     // Specific credentials must run before generic number masking.
     .replace(/\b(?:sk-[A-Za-z0-9_-]{12,}|Bearer\s+[A-Za-z0-9._~-]{12,}|gh[pousr]_[A-Za-z0-9_]{20,}|AKIA[A-Z0-9]{16}|xox[baprs]-[A-Za-z0-9-]{10,})\b/gi, "[Zugangsdaten entfernt]")
     .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[E-Mail entfernt]")
@@ -12,4 +23,6 @@ export function redactOpenQuestion(text) {
     .replace(/\b\p{Lu}[\p{L}.'’-]{1,50}(?:straße|strasse|str\.|gasse|weg|platz|allee)\s+\d{1,5}[a-z]?(?:\s*,?\s*\d{4,5}\s+\p{Lu}[\p{L}.'’-]{1,50})?/giu, "[Adresse entfernt]")
     .replace(/\b(?:Diagnose|HIV(?:-positiv)?|Krankheit|Therapie|Medikament|psychische(?:r|s)?\s+Zustand)\b[^.!?\n]*/giu, "[Sensibler Inhalt entfernt]")
     .replace(/\b(?:\+?\d[\d\s()./-]{7,}\d)\b/g, "[Telefon/Zahl entfernt]");
+  const topic = TOPICS.find(([, pattern]) => pattern.test(masked))?.[0] ?? "Allgemeine Supportfrage";
+  return `Thema: ${topic}`;
 }

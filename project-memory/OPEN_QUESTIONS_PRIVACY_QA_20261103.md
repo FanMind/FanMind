@@ -5,9 +5,9 @@ Status: **IMPLEMENTED / INDEPENDENT RETEST REQUIRED**. Dies ist Implementierungs
 ## Datenfluss und Befund
 
 - `website_chat_open_questions` speichert IDs, Grund, Status und Zeitstempel, keine Kopie des Nachrichtentexts. Die Admin-Leseansicht holt Originaltext über `conversation_messages` mit Workspace-Filter und Service-Role. Vor Darstellung und Gruppierung erfolgt serverseitige Defense-in-depth-Maskierung.
-- Die Maskierung führt Credential-Regeln vor generischen Zahlenregeln aus und deckt die bestätigten synthetischen E-Mail-, Telefon-, URL-Präfix-, Token-, Namen-, Adress- und Gesundheitsdatenfälle ab. Sie ist ausdrücklich **keine Anonymisierung**; freie unerkannte Identifikatoren und weitere semantische Inhalte bleiben Restrisiko und benötigen unabhängigen Retest.
+- Die Ableitung führt Credential-Regeln vor generischen Zahlenregeln aus, erkennt die bestätigten synthetischen Grenzfälle und gibt anschließend ausschließlich ein festes, datenschutzgeprüftes Themenlabel aus. Ungeprüfter Rohtext, Namen im Satz und freie Identifikatoren gelangen nicht in Standardanzeige oder Gruppierung. Dies ist Datenminimierung, keine Anonymisierungszusage.
 - `updateOpenQuestionStatus` prüft Plattformadmin, UUIDs, Status-Whitelist und Workspace-ID und ruft eine service-role-only SQL-Funktion auf. Statuswechsel und Append-only-Audit-Ereignis mit Workspace, Akteur-ID, Vorher-/Nachherstatus und Zeitstempel laufen atomar; identische No-op-Wiederholungen erzeugen kein weiteres Ereignis.
-- Kandidaten und Audit-Ereignisse folgen FK-Cascades. Originalnachrichten werden durch den bestehenden Insert-Trigger auf die neuesten 50 je Konversation begrenzt. Der zweckbezogene Vertrag, Backup-/Ausnahmegrenzen und die noch erforderliche BT-051-Entscheidung stehen in `docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md`.
+- Kandidaten und Audit-Ereignisse folgen FK-Cascades. Originalnachrichten werden durch den bestehenden Insert-Trigger auf die neuesten 50 je Konversation begrenzt. Der rollback-only Staging-Harness prüft Status/Audit, Cascade, Trigger und Recovery. Backup-/Ausnahmegrenzen und die noch erforderliche BT-051-Entscheidung stehen in `docs/operations/OPEN_QUESTIONS_PRIVACY_RETENTION.md`.
 
 ## Unabhängige Abnahmetests
 

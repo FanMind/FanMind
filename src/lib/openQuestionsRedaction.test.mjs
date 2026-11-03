@@ -4,9 +4,8 @@ import { redactOpenQuestion } from "./openQuestionsRedaction.mjs";
 
 test("masks synthetic email, embedded link and phone-like content", () => {
   const output = redactOpenQuestion("Kontakt test@example.org, prefixhttps://example.org/help, +43 660 12345678");
-  assert.match(output, /\[E-Mail entfernt\]/);
-  assert.match(output, /prefix\[Link entfernt\]/);
-  assert.match(output, /\[Telefon\/Zahl entfernt\]/);
+  assert.equal(output, "Thema: Allgemeine Supportfrage");
+  assert.doesNotMatch(output, /test@example|prefix|660/iu);
   assert.doesNotMatch(output, /https?:\/\/|www\./i);
   assert.doesNotMatch(output, /\b\d{8,}\b/);
 });
@@ -14,25 +13,32 @@ test("masks synthetic email, embedded link and phone-like content", () => {
 test("masks credentials before generic numbers", () => {
   assert.equal(
     redactOpenQuestion("Mein Schlüssel: sk-12345678901234567890"),
-    "Mein Schlüssel: [Zugangsdaten entfernt]",
+    "Thema: Allgemeine Supportfrage",
   );
   assert.equal(
     redactOpenQuestion("Bearer abcdefghijklmnopqrstuvwxyz"),
-    "[Zugangsdaten entfernt]",
+    "Thema: Allgemeine Supportfrage",
   );
   assert.equal(
     redactOpenQuestion("AKIAIOSFODNN7EXAMPLE"),
-    "[Zugangsdaten entfernt]",
+    "Thema: Allgemeine Supportfrage",
   );
 });
 
-test("masks defined synthetic names, addresses and health data", () => {
-  assert.equal(redactOpenQuestion("Anna Musterfrau"), "[Name entfernt]");
-  assert.equal(redactOpenQuestion("Name: Max Mustermann"), "[Name entfernt]");
-  assert.equal(redactOpenQuestion("Musterstrasse 12, 8000 Zürich"), "[Adresse entfernt]");
-  assert.equal(redactOpenQuestion("Diagnose: HIV-positiv"), "[Sensibler Inhalt entfernt]");
+test("withholds names in sentences, addresses, health data and free identifiers", () => {
+  for (const input of [
+    "Anna Musterfrau", "Name: Max Mustermann",
+    "Bitte kontaktieren Sie Anna Musterfrau morgen", "Ich heiße Anna Musterfrau",
+    "Musterstrasse 12, 8000 Zürich", "Diagnose: HIV-positiv",
+    "Kundennummer ABC-123-XYZ",
+  ]) {
+    assert.equal(redactOpenQuestion(input), "Thema: Allgemeine Supportfrage");
+    assert.doesNotMatch(redactOpenQuestion(input), /Anna|Muster|HIV|ABC-123/iu);
+  }
 });
 
-test("does not claim anonymization or suppress ordinary support questions", () => {
-  assert.equal(redactOpenQuestion("Wie ändere ich meine Rechnungsadresse?"), "Wie ändere ich meine Rechnungsadresse?");
+test("emits only fixed privacy-reviewed topic labels", () => {
+  assert.equal(redactOpenQuestion("Wie bezahle ich meine Rechnung?"), "Thema: Abrechnung");
+  assert.equal(redactOpenQuestion("Wo ist der Datenexport?"), "Thema: Datenexport");
+  assert.equal(redactOpenQuestion("Warum lädt die Übersicht nicht?"), "Thema: Technische Hilfe");
 });

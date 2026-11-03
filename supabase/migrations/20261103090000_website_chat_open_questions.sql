@@ -33,8 +33,8 @@ alter table public.website_chat_open_questions enable row level security;
 alter table public.website_chat_open_question_audit_events enable row level security;
 revoke all on public.website_chat_open_questions from public, anon, authenticated;
 revoke all on public.website_chat_open_question_audit_events from public, anon, authenticated;
-grant select, insert, update, delete on public.website_chat_open_questions to service_role;
-grant select, insert on public.website_chat_open_question_audit_events to service_role;
+grant select, insert on public.website_chat_open_questions to service_role;
+grant select on public.website_chat_open_question_audit_events to service_role;
 
 create or replace function public.update_website_chat_open_question_status(
   p_workspace_id uuid,
@@ -44,8 +44,8 @@ create or replace function public.update_website_chat_open_question_status(
 )
 returns table (id uuid, workspace_id uuid, before_status text, after_status text, occurred_at timestamptz)
 language plpgsql
-security invoker
-set search_path = public, pg_temp
+security definer
+set search_path = pg_catalog, public, pg_temp
 as $function$
 declare
   v_question public.website_chat_open_questions%rowtype;
@@ -83,6 +83,33 @@ revoke all on function public.update_website_chat_open_question_status(uuid, uui
   from public, anon, authenticated, service_role;
 grant execute on function public.update_website_chat_open_question_status(uuid, uuid, uuid, text)
   to service_role;
+
+do $postflight$
+declare
+  status_function regprocedure := to_regprocedure(
+    'public.update_website_chat_open_question_status(uuid,uuid,uuid,text)'
+  );
+begin
+  if status_function is null
+     or not exists (
+       select 1 from pg_proc
+        where oid = status_function
+          and proowner = to_regrole('postgres')
+          and prosecdef
+          and proconfig = array['search_path=pg_catalog, public, pg_temp']::text[]
+     )
+     or has_table_privilege('service_role', 'public.website_chat_open_questions', 'UPDATE')
+     or has_table_privilege('service_role', 'public.website_chat_open_questions', 'DELETE')
+     or has_table_privilege('service_role', 'public.website_chat_open_question_audit_events', 'INSERT')
+     or has_table_privilege('service_role', 'public.website_chat_open_question_audit_events', 'UPDATE')
+     or has_table_privilege('service_role', 'public.website_chat_open_question_audit_events', 'DELETE')
+     or has_function_privilege('anon', status_function, 'EXECUTE')
+     or has_function_privilege('authenticated', status_function, 'EXECUTE')
+     or not has_function_privilege('service_role', status_function, 'EXECUTE') then
+    raise exception 'open_question_status_boundary_postflight_failed';
+  end if;
+end
+$postflight$;
 
 comment on table public.website_chat_open_questions is
  'Workspace-scoped unanswered-question candidates; no duplicated message content or email. Source text remains in CRM under the explicit conversation-message retention contract.';

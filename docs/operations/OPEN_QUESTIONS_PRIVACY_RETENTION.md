@@ -4,7 +4,7 @@ Status: Repository-Vertrag für PR #1411. Kein DB-Apply, keine Aktivierung und k
 
 ## Zweck und Datenminimierung
 
-`website_chat_open_questions` speichert nur Workspace-, Konversations- und Nachrichten-IDs, den Erkennungsgrund, Status und Zeitstempel. Der ursprüngliche Nachrichtentext wird nicht dupliziert. Die Adminansicht liest höchstens 100 explizit referenzierte Nachrichten eines ausgewählten Workspaces und wendet vor Anzeige und Gruppierung serverseitige Defense-in-depth-Maskierung an. Diese Maskierung ist keine Anonymisierung.
+`website_chat_open_questions` speichert nur Workspace-, Konversations- und Nachrichten-IDs, den Erkennungsgrund, Status und Zeitstempel. Der ursprüngliche Nachrichtentext wird nicht dupliziert. Die Adminansicht liest höchstens 100 explizit referenzierte Nachrichten eines ausgewählten Workspaces. Vor Anzeige und Gruppierung leitet der Server ausschließlich ein festes, datenschutzgeprüftes Themenlabel ab. Ungeprüfter Rohtext und freie Identifikatoren werden nicht an die Standardansicht oder Gruppierung weitergegeben. Das ist Datenminimierung, keine Anonymisierungszusage.
 
 ## Aufbewahrung und Löschung
 
@@ -24,4 +24,4 @@ node --test src/lib/openQuestionsRedaction.test.mjs tests/open-questions-privacy
 
 Der Contract-Test prüft, dass Rohtext nicht in der Kandidatentabelle dupliziert wird, Status und Audit atomar in einer Transaktion verbunden sind, Browserrollen keinen Tabellen-/RPC-Zugriff erhalten und die vorhandene Originalnachrichten-Begrenzung samt Cascade-Verknüpfung bestehen bleibt.
 
-Eine isolierte Staging-Abnahme muss zusätzlich Statuswechsel, No-op-Wiederholung, Workspace-Negativfall, Audit-Ereignis, Lösch-Cascade und die installierte Retentionfunktion prüfen. Erst danach dürfen Security, Privacy und QA das Gate neu bewerten. Merge, DB-Apply, Aktivierung und Produktionsbetrieb bleiben getrennte Entscheidungen.
+Der rollback-only Harness `scripts/operations/open-questions-retention-acceptance.sql` prüft mit synthetischen IDs Status/Audit, Nachrichten-Cascade, installierten Retention-Trigger und vollständigen Rollback. Seine Ausführung ist ein gesonderter autorisierter Staging-Schritt und wird in diesem Repository-Lauf nicht gestartet. Eine isolierte Staging-Abnahme muss zusätzlich No-op-Wiederholung und Workspace-Negativfall prüfen. Erst danach dürfen Security, Privacy und QA das Gate neu bewerten. Merge, DB-Apply, Aktivierung und Produktionsbetrieb bleiben getrennte Entscheidungen.
