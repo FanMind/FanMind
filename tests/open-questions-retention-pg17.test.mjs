@@ -78,9 +78,24 @@ function stateSnapshot(database) {
 
 test("executes the e127aab retention harness in disposable PostgreSQL 17", { timeout: 120_000 }, () => {
   assert.ok(containerId, "FANMIND_PG17_SOURCE_CONTAINER_ID is required");
+  assert.match(containerId, /^[a-f0-9]{12,64}$/u, "service container id must be a Docker id");
   for (const [path, expected] of Object.entries(files)) {
     assert.equal(gitBlobSha(path), expected, `${path} must remain bound to ${sourceCommit}`);
   }
+
+  const inspectedContainerId = mustSucceed(
+    docker(["inspect", "--format={{.Id}}", containerId]),
+    "resolve PostgreSQL service container",
+  );
+  assert.ok(inspectedContainerId.startsWith(containerId) || containerId.startsWith(inspectedContainerId));
+  const serverVersionNum = mustSucceed(
+    execInContainer([
+      "psql", "--username=postgres", "--dbname=postgres", "--quiet", "--tuples-only",
+      "--no-align", "--command", "show server_version_num",
+    ]),
+    "read PostgreSQL server version",
+  );
+  assert.equal(Math.trunc(Number(serverVersionNum) / 10_000), 17, `expected PostgreSQL 17, got ${serverVersionNum}`);
 
   const suffix = `${process.env.GITHUB_RUN_ID ?? "local"}_${process.env.GITHUB_RUN_ATTEMPT ?? "1"}_${process.pid}`
     .replace(/[^a-zA-Z0-9_]/gu, "_").toLowerCase();
@@ -121,6 +136,8 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
 
     const counts = mustSucceed(psql(database, ["--quiet", "--tuples-only", "--no-align", "--command", `select count(*) || '/' || (select count(*) from public.conversation_messages) || '/' || (select count(*) from public.website_chat_open_question_audit_events) from public.website_chat_open_questions`]), "read terminal counts");
     console.log(`RETENTION_PG17_TESTED_COMMIT=${sourceCommit}`);
+    console.log(`RETENTION_PG17_CONTAINER_ID=${inspectedContainerId}`);
+    console.log(`RETENTION_PG17_SERVER_VERSION_NUM=${serverVersionNum}`);
     for (const [path, sha] of Object.entries(files)) console.log(`RETENTION_PG17_BLOB=${sha} ${path}`);
     console.log("RETENTION_PG17_QUIT3_STATUS=3");
     console.log(`RETENTION_PG17_MARKERS=${markers.length}/8`);
