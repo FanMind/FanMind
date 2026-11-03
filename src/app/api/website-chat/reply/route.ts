@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { classifyWebsiteChatUnanswered } from "@/lib/websiteChatUnanswered.mjs";
 
 import { getFanMindAiModel, recordAiUsageEvent } from "@/lib/aiUsage";
 import { getClientIp } from "@/lib/rateLimit";
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
     claimAllowed: null,
   });
   if (initialDecision.action === "reuse") {
-    return response({ ok: true, reply: initialDecision.reply, duplicate: true }, 200, resolved.origin);
+    return response({ ok: true, reply: initialDecision.reply, duplicate: true, unansweredCandidate: classifyWebsiteChatUnanswered(initialDecision.reply).candidate }, 200, resolved.origin);
   }
 
   const apiKey = process.env.OPENAI_API_KEY?.trim();
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
     claimAllowed: messageClaim.allowed,
   });
   if (claimDecision.action === "reuse") {
-    return response({ ok: true, reply: claimDecision.reply, duplicate: true }, 200, resolved.origin);
+    return response({ ok: true, reply: claimDecision.reply, duplicate: true, unansweredCandidate: classifyWebsiteChatUnanswered(claimDecision.reply).candidate }, 200, resolved.origin);
   }
   if (claimDecision.action === "in_progress") {
     return response({ ok: false, code: "AI_IN_PROGRESS" }, 409, resolved.origin);
@@ -248,7 +249,7 @@ export async function POST(request: NextRequest) {
       sourceRoute: "/api/website-chat/reply",
       providerUsage: (providerBody as { usage?: unknown } | null)?.usage,
     });
-    return response({ ok: true, reply: persisted.reply, duplicate: persisted.duplicate }, 200, resolved.origin);
+    return response({ ok: true, reply: persisted.reply, duplicate: persisted.duplicate, unansweredCandidate: classifyWebsiteChatUnanswered(persisted.reply).candidate }, 200, resolved.origin);
   } catch {
     await recordAiUsageEvent({
       workspaceId: context.workspaceId,
