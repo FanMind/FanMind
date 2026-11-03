@@ -21,8 +21,23 @@ select :'workspace_id'::uuid as workspace_id,
            and after_status = :'next_status') as audit_before;
 
 begin;
-\set retention_acceptance_mode 1
-\ir ../../supabase/controlled/website_chat_open_questions_option_a_retention.sql
+do $schema_preflight$
+begin
+  if to_regclass('public.website_chat_retention_controls') is not null
+     or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
+     or exists (
+       select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'website_chat_open_questions'
+          and column_name in ('retention_extended_until', 'retention_extension_reason')
+     )
+     or to_regclass('public.website_chat_open_questions_retention_idx') is not null
+     or to_regclass('public.website_chat_open_question_audit_retention_idx') is not null then
+    raise exception 'option_a_schema_baseline_not_absent';
+  end if;
+end
+$schema_preflight$;
+\ir ../../supabase/controlled/website_chat_open_questions_option_a_retention_body.sql
 
 set local role service_role;
 do $preflight$
@@ -125,9 +140,7 @@ update public.website_chat_open_questions as question
  where question.id = input.question_id and question.workspace_id = input.workspace_id;
 set local role service_role;
 create temporary table option_a_extension_hold as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 reset role;
 do $extension_hold$
 declare input record;
@@ -145,9 +158,7 @@ update public.website_chat_open_questions as question
  where question.id = input.question_id and question.workspace_id = input.workspace_id;
 set local role service_role;
 create temporary table option_a_extension_due as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 reset role;
 do $extension_due$
 declare input record;
@@ -169,9 +180,7 @@ select workspace_id, 'option-a-2026-11-03', as_of - interval '30 days'
   from pg_temp.open_question_acceptance_input;
 set local role service_role;
 create temporary table option_a_contract_due as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 reset role;
 do $contract_due$
 declare input record;
@@ -206,15 +215,17 @@ update public.website_chat_open_question_audit_events as audit
  where audit.open_question_id = input.question_id and audit.workspace_id = input.workspace_id;
 
 create temporary table option_a_other_workspace_before as
-select count(*)::bigint as questions
-  from public.website_chat_open_questions
- where workspace_id <> :'workspace_id'::uuid;
+select
+  (select count(*) from public.website_chat_open_questions
+    where workspace_id <> :'workspace_id'::uuid)::bigint as questions,
+  (select count(*) from public.website_chat_open_question_audit_events
+    where workspace_id <> :'workspace_id'::uuid)::bigint as audits,
+  (select count(*) from public.conversation_messages
+    where workspace_id <> :'workspace_id'::uuid)::bigint as messages;
 
 set local role service_role;
 create temporary table option_a_legal_hold_result as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 reset role;
 
 do $legal_hold$
@@ -237,13 +248,9 @@ update public.website_chat_retention_controls as control
 
 set local role service_role;
 create temporary table option_a_due_result as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 create temporary table option_a_repeat_result as
-select * from public.run_website_chat_option_a_retention(
-  :'workspace_id'::uuid, (select as_of from pg_temp.open_question_acceptance_input)
-);
+select * from public.run_website_chat_option_a_retention(:'workspace_id'::uuid);
 reset role;
 
 do $option_a_due$
@@ -259,6 +266,12 @@ begin
            from pg_temp.option_a_repeat_result) <> 0
      or (select questions from pg_temp.option_a_other_workspace_before) <>
         (select count(*) from public.website_chat_open_questions
+          where workspace_id <> input.workspace_id)
+     or (select audits from pg_temp.option_a_other_workspace_before) <>
+        (select count(*) from public.website_chat_open_question_audit_events
+          where workspace_id <> input.workspace_id)
+     or (select messages from pg_temp.option_a_other_workspace_before) <>
+        (select count(*) from public.conversation_messages
           where workspace_id <> input.workspace_id) then
     raise exception 'option_a_due_or_isolation_invalid';
   end if;
@@ -291,6 +304,18 @@ begin
        and workspace_id = input.workspace_id
   ) then
     raise exception 'open_question_acceptance_rollback_failed';
+  end if;
+  if to_regclass('public.website_chat_retention_controls') is not null
+     or to_regprocedure('public.run_website_chat_option_a_retention(uuid)') is not null
+     or exists (
+       select 1 from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'website_chat_open_questions'
+          and column_name in ('retention_extended_until', 'retention_extension_reason')
+     )
+     or to_regclass('public.website_chat_open_questions_retention_idx') is not null
+     or to_regclass('public.website_chat_open_question_audit_retention_idx') is not null then
+    raise exception 'option_a_schema_rollback_failed';
   end if;
 end
 $rollback_check$;
