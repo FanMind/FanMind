@@ -38,11 +38,37 @@ function validatePassfile(environment) {
   } finally { if (descriptor !== undefined) closeSync(descriptor); }
 }
 
-export function checkOpenQuestionRetentionAcceptanceSource() {
-  const sql = readFileSync(sqlPath, "utf8");
-  if (/\bcommit\s*;/iu.test(sql) || (sql.match(/\brollback\s*;/giu)?.length ?? 0) !== 2 ||
-      MARKERS.some((marker) => !sql.includes(marker))) fail("source_contract_invalid");
+const REQUIRED_SOURCE_CONTRACT = [
+  "open_question_retention_fixture_not_exactly_one_synthetic",
+  "open_question_retention_acceptance",
+  "staging-synthetic-open-question:",
+  "open-question-retention-fixture:",
+  "open_question_acceptance_target_before",
+  "open_question_acceptance_foreign_before",
+  "open_question_acceptance_acl_before",
+  "open_question_acceptance_target_snapshot_mismatch",
+  "open_question_acceptance_foreign_snapshot_mismatch",
+  "open_question_acceptance_acl_snapshot_mismatch",
+  "option_a_schema_rollback_failed",
+  "is distinct from",
+];
+
+export function validateOpenQuestionRetentionAcceptanceSource(sql) {
+  const preflightIndex = sql.indexOf("do $fixture_preflight$");
+  const firstTemporaryMutation = sql.indexOf("create temporary table");
+  const retentionBodyMutation = sql.indexOf("\\ir ../../supabase/controlled/");
+  if (/\\bcommit\\s*;/iu.test(sql) || (sql.match(/\\brollback\\s*;/giu)?.length ?? 0) !== 2 ||
+      MARKERS.some((marker) => !sql.includes(marker)) ||
+      REQUIRED_SOURCE_CONTRACT.some((required) => !sql.includes(required)) ||
+      preflightIndex < 0 || firstTemporaryMutation < 0 || retentionBodyMutation < 0 ||
+      preflightIndex > firstTemporaryMutation || preflightIndex > retentionBodyMutation) {
+    fail("source_contract_invalid");
+  }
   return sql;
+}
+
+export function checkOpenQuestionRetentionAcceptanceSource() {
+  return validateOpenQuestionRetentionAcceptanceSource(readFileSync(sqlPath, "utf8"));
 }
 
 function run(environment) {
