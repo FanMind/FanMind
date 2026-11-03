@@ -114,7 +114,7 @@ test("pending content is neutral and prohibited raw values never reach DOM or se
   await expect(workspace.locator("option")).toHaveCount(3);
   await expect(workspace).toContainText("Synthetic Alpha");
   await expect(workspace).toContainText("Synthetic Beta");
-  await expect(page.getByText("Frageinhalt noch nicht datenschutzgeprüft", { exact: true })).toBeVisible();
+  await expect(page.locator("summary").getByText("Frageinhalt noch nicht datenschutzgeprüft", { exact: true })).toBeVisible();
   for (const prohibited of ["visitor@example.invalid", "https://example.invalid/private", "sk-synthetic-secret", "000000a1"]) {
     await expect(page.locator("body")).not.toContainText(prohibited);
     await page.getByLabel("Suche", { exact: true }).fill(prohibited);
