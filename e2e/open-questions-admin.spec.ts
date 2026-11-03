@@ -46,7 +46,7 @@ const workspaces = [
   { id: "10000000-0000-4000-8000-000000000002", name: "Synthetic Beta" },
 ];
 const questions = [
-  { id: "20000000-0000-4000-8000-000000000001", topic: "Abrechnung", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T10:00:00Z", reference: "000000a1" },
+  { id: "20000000-0000-4000-8000-000000000001", topic: "Abrechnung", reason: "assistant_uncertainty", status: "open", createdAt: "2026-11-03T23:30:00Z", reference: "000000a1" },
   { id: "20000000-0000-4000-8000-000000000002", topic: "Technische Hilfe", reason: "provider_error", status: "in_review", createdAt: "2026-11-02T10:00:00Z", reference: "000000a2" },
   { id: "20000000-0000-4000-8000-000000000003", topic: "Anmeldung", reason: "knowledge_gap", status: "resolved", createdAt: "2026-10-28T10:00:00Z", reference: "000000a3" },
 ];
@@ -76,7 +76,7 @@ test("synthetic Admin review filters redacted details and submits the existing s
   const search = page.getByLabel("Suche", { exact: true });
   await search.fill("Abrechnung");
   await expect(page.locator("details")).toHaveCount(1);
-  await expect(page.getByText("Abrechnung", { exact: true })).toBeVisible();
+  await expect(page.locator("details").getByText("Abrechnung", { exact: true })).toBeVisible();
   await search.press("Tab");
   await expect(page.getByLabel("Thema", { exact: true })).toBeFocused();
 
@@ -99,9 +99,11 @@ test("synthetic Admin review filters redacted details and submits the existing s
 
 test("synthetic Admin review stays usable without horizontal overflow", async ({ page }) => {
   await mount(page);
-  await page.getByLabel("Von", { exact: true }).fill("2026-11-03");
-  await page.getByLabel("Bis", { exact: true }).fill("2026-11-03");
+  await page.getByLabel("Von", { exact: true }).fill("2026-11-04");
+  await page.getByLabel("Bis", { exact: true }).fill("2026-11-04");
   await expect(page.locator("details")).toHaveCount(1);
+  await expect(page.locator("details").getByText("Abrechnung", { exact: true })).toBeVisible();
+  await expect(page.locator("details").getByText(/04\.11\.2026/u)).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
   for (const control of await page.locator("button, input, select, summary").all()) {

@@ -37,6 +37,7 @@ const REASON_LABELS: Record<string, string> = {
   knowledge_gap: "Fehlendes Wissen",
   provider_error: "Providerfehler",
 };
+const REVIEW_TIME_ZONE = "Europe/Zurich";
 
 function reasonLabel(reason: string) {
   return REASON_LABELS[reason] ?? "Nicht beantwortet";
@@ -46,7 +47,19 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("de-CH", {
     dateStyle: "medium",
     timeStyle: "short",
+    timeZone: REVIEW_TIME_ZONE,
   }).format(new Date(value));
+}
+
+function calendarDay(value: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: REVIEW_TIME_ZONE,
+  }).formatToParts(new Date(value));
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return [values.year, values.month, values.day].join("-");
 }
 
 export function OpenQuestionsClient({
@@ -69,7 +82,7 @@ export function OpenQuestionsClient({
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("de");
     return questions.filter((question) => {
-      const day = question.createdAt.slice(0, 10);
+      const day = calendarDay(question.createdAt);
       const searchable = [question.topic, reasonLabel(question.reason), question.reference]
         .join(" ")
         .toLocaleLowerCase("de");
