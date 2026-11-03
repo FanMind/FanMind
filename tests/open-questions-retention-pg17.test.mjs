@@ -103,6 +103,12 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
   const remoteRoot = `/tmp/${database}`;
   let created = false;
   try {
+    const rolesAbsent = mustSucceed(execInContainer([
+      "psql", "--username=postgres", "--dbname=postgres", "--quiet", "--tuples-only",
+      "--no-align", "--command",
+      "select not exists (select 1 from pg_roles where rolname in ('anon','authenticated','service_role'))",
+    ]), "verify synthetic roles are initially absent");
+    assert.equal(rolesAbsent, "t");
     mustSucceed(execInContainer(["createdb", "--username=postgres", database]), "create disposable database");
     created = true;
     mustSucceed(execInContainer(["mkdir", "-p", remoteRoot]), "create remote workspace");
@@ -154,6 +160,16 @@ test("executes the e127aab retention harness in disposable PostgreSQL 17", { tim
       mustSucceed(execInContainer(["dropdb", "--username=postgres", "--force", database]), "drop disposable database");
       const absent = mustSucceed(execInContainer(["psql", "--username=postgres", "--dbname=postgres", "--quiet", "--tuples-only", "--no-align", "--command", `select not exists (select 1 from pg_database where datname = '${database}')`]), "verify cleanup");
       assert.equal(absent, "t");
+      mustSucceed(execInContainer([
+        "psql", "--username=postgres", "--dbname=postgres", "--quiet",
+        "--command", "drop role if exists anon, authenticated, service_role",
+      ]), "drop synthetic cluster roles");
+      const rolesAbsent = mustSucceed(execInContainer([
+        "psql", "--username=postgres", "--dbname=postgres", "--quiet", "--tuples-only",
+        "--no-align", "--command",
+        "select not exists (select 1 from pg_roles where rolname in ('anon','authenticated','service_role'))",
+      ]), "verify synthetic role cleanup");
+      assert.equal(rolesAbsent, "t");
       execInContainer(["rm", "-rf", remoteRoot]);
       console.log(`RETENTION_PG17_DATABASE=${basename(database)}`);
       console.log("RETENTION_PG17_CLEANUP=PASS");
