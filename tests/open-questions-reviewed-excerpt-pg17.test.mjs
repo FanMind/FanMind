@@ -97,7 +97,16 @@ test("native PG17 proves original retention, BYPASSRLS denial and cleanup", { ti
     mustSucceed(execInContainer(["createdb", "--username=postgres", database]), "create disposable database");
     databaseCreated = true;
     mustSucceed(execInContainer(["mkdir", "-p", remoteRoot]), "create remote workspace");
-    mustSucceed(docker(["cp", `${repoRoot}/.`, `${containerId}:${remoteRoot}`]), "copy proof sources");
+    const proofSources = [
+      ...Object.keys(originalSources),
+      "supabase/controlled/website_chat_open_question_review_derivatives.sql",
+      "tests/fixtures/open-questions-reviewed-excerpt-pg17-setup.sql",
+    ];
+    for (const path of proofSources) {
+      const remotePath = join(remoteRoot, path);
+      mustSucceed(execInContainer(["mkdir", "-p", dirname(remotePath)]), `create proof directory for ${path}`);
+      mustSucceed(docker(["cp", join(repoRoot, path), `${containerId}:${remotePath}`]), `copy proof source ${path}`);
+    }
     mustSucceed(psql(database, ["--file", `${remoteRoot}/tests/fixtures/open-questions-reviewed-excerpt-pg17-setup.sql`]), "apply original migrations, reviewed derivative and Option A");
 
     assert.equal(query(database, "select count(*) from public.website_chat_open_question_review_derivatives", "service_role"), "3");
