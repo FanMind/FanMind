@@ -258,6 +258,13 @@ jobs:
           node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs
           npm run test:creator-foundation-transition
 
+      - name: Prove open-question retention rollback in PostgreSQL 17
+        id: open_question_retention_pg17
+        env:
+          FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
+        run: node --test --test-concurrency=1 tests/open-questions-retention-pg17.test.mjs
+
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
