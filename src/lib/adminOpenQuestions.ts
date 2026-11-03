@@ -12,14 +12,36 @@ export type OpenQuestionRow = {
   created_at: string;
 };
 export type AdminOpenQuestion = OpenQuestionRow & { question: string };
+export type AdminOpenQuestionWorkspace = { id: string; name: string };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function serviceKey() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!key) throw new Error("Datenbankzugriff nicht konfiguriert");
+  return key;
+}
+
+// Call only from a server component after requirePlatformAdmin(). The narrow
+// projection deliberately excludes billing, owner and tenant-content fields.
+export async function listAdminOpenQuestionWorkspaces(): Promise<AdminOpenQuestionWorkspace[]> {
+  const response = await fetch(getSupabaseRestUrl("workspaces?select=id,name&order=name.asc&limit=500"), {
+    headers: getSupabaseHeaders(serviceKey()),
+    cache: "no-store",
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error("Workspaces konnten nicht geladen werden");
+  const rows = await response.json() as Array<{ id?: unknown; name?: unknown }>;
+  if (rows.some((row) => typeof row.id !== "string" || !UUID.test(row.id) || typeof row.name !== "string" || !row.name.trim())) {
+    throw new Error("Workspace-Liste ungültig");
+  }
+  return rows.map((row) => ({ id: row.id as string, name: (row.name as string).trim() }));
+}
 
 // Call only from a server component after requirePlatformAdmin().
 // Explicit workspace selection is mandatory: never aggregate private tenant content by default.
 export async function listAdminOpenQuestions(workspaceId: string): Promise<AdminOpenQuestion[]> {
   if (!UUID.test(workspaceId)) throw new Error("Ungültige Workspace-ID");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  if (!key) throw new Error("Datenbankzugriff nicht konfiguriert");
+  const key = serviceKey();
   const headers = getSupabaseHeaders(key);
   const base = getSupabaseRestUrl(
     `website_chat_open_questions?select=id,workspace_id,conversation_id,inbound_message_id,reason,status,created_at&workspace_id=eq.${encodeURIComponent(workspaceId)}&order=created_at.desc&limit=100`,
