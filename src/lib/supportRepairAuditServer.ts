@@ -1,4 +1,5 @@
 import "server-only";
+import { notifySupport } from "./supportCentreServer";
 import {
   getSupabaseApiKeyHeaders,
   getSupabaseRestUrl,
@@ -73,5 +74,7 @@ export async function startRepairAuditEvent(input: RepairAuditEvent) {
 }
 
 export async function completeRepairAuditEvent(input: RepairAuditEvent) {
-  return persistRepairAuditCompletion(input, updateRepairAuditInSupabase);
+  const event = await persistRepairAuditCompletion(input, updateRepairAuditInSupabase);
+  if (["failed", "partial"].includes(event.status)) await notifySupport(event.workspace_id,"repair_failed",event.request_id);
+  return event;
 }

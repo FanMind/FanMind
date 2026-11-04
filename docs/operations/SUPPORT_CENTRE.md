@@ -1,0 +1,120 @@
+# Support assistant and KI-Support-Zentrale — #1350 / #1416
+
+Repository implementation; runtime defaults off. No Production deployment or SQL apply.
+
+## Scope and reuse
+
+The existing public Website Chat AI, installation/session/consent/origin binding,
+Widget, Inbox and handoff are reused. The existing authenticated help launcher,
+connection diagnostics, customer-confirmed repair executor and repair audit are
+reused. The separate Admin Chat, Builder and Open Questions PRs are unchanged.
+The current continuation extends the same PR #1416, not a parallel implementation.
+
+## Owner centre
+
+`/admin/support` uses the existing verified login and platform Admin policy.
+Platform Owner additionally requires the exact user UUID in the separately
+provisioned `support_centre_owners`; workspace ownership/user metadata never grants
+platform ownership. Admins can inspect a selected Workspace; only Platform Owners
+receive the global coarse notification inbox and make approval decisions.
+
+The centre contains Dashboard, case diagnoses, expiring one-shot approvals,
+combined existing sync-repair audit plus central check history, append-only case
+activities and customer-consented transcript review. The transcript review requires
+exact Workspace/thread binding and a recorded consent snapshot, never a broad
+customer-message query.
+
+Critical/failed checks, incomplete audits, failed legacy sync repairs, authenticated
+attempts to cross the Owner boundary and explicit customer handoffs create fixed,
+deduplicated notifications. Pending approvals also create inbox records atomically
+through the case trigger. Routine successes stay in history. The inbox prioritizes
+critical open entries before applying its 100-row limit; acknowledgements are
+Owner-only, recorded with actor/time, and a recurring incident reopens the entry.
+No message text, raw provider error, IP, credential or free-form log enters the
+notification. Anonymous/bad-Origin requests cannot flood this inbox.
+
+Full database failure cannot be durably reported into that same database: routes
+fail closed, UI shows unavailable, and incomplete started checks remain available
+for reconciliation when the database returns. No notification-delivery success is
+claimed on a failed write. Existing independent infrastructure monitoring remains
+necessary for host/database outages; no new infrastructure is created here.
+
+## Bounded automatic correction and recovery
+
+- Existing automatic status refresh and safe re-probe remain read-only and are
+  now rate limited. Connected status plus a synchronization error is correctly
+  attention-required, not a false successful check.
+- Approved central reads keep exact Owner/Workspace/connection/expiry binding,
+  atomic one-time consumption and a separate fresh postcheck.
+- Automatic maintenance expires stale pending approvals and marks interrupted
+  running checks failed with audit, without retrying the old approval or making
+  any provider call. Each pass locks at most 100 rows and is idempotent. It runs
+  while the authenticated Owner centre is open; there is no hidden new worker.
+- Existing explicit customer confirmation for sync restart is unchanged. No OAuth,
+  permission, credential, disconnect, Production or customer-content repair is added.
+
+## Authenticated conversation continuity
+
+The help panel uses `/api/support/conversation`. Actor and Workspace derive from
+fresh verified server auth for every read/write. A server-derived opaque scope
+binds pending requests; caller-supplied Workspace/actor identifiers are rejected.
+Threads and turns are private to the exact user+Workspace tuple. Browser database
+roles have no direct table or RPC access; only the bounded server adapter writes.
+
+Questions/answers persist server-side for up to 30 days, newest 100 per page with
+an exact own-turn cursor for older pages. Each send uses one UUID; ambiguous
+responses retry the same immutable payload, with an atomic DB duplicate check.
+Changed payload under the same UUID is rejected. Per-actor/Workspace rate limiting
+and a serialized 100-turn/day DB bound protect storage. No localStorage, sessionStorage
+or third-party provider is used for authenticated conversation persistence.
+
+Account/Workspace changes, logout, navigation/pagehide, auth failures and late
+responses clear or invalidate private client state. Polling and focus revalidate
+identity even during a pending retry. Owner transcript views likewise clear on
+failed verification, lifecycle changes and superseding requests.
+
+Answers are bounded approved FAQ guidance; prices/included connections derive
+from the canonical commercial model. Unknown questions receive a transparent
+fallback. The existing public AI route remains the separate provider-backed path;
+this increment introduces no new provider call or claim of open-ended model reasoning.
+
+Customer handoff requires a separate explicit click. It records a timestamp and
+monotonic turn-sequence snapshot; review excludes all later messages, including
+under clock changes. Newer messages require a fresh handoff. Technical diagnoses
+can be handed off separately without sharing conversation text.
+
+## Controlled storage and activation gates
+
+`supabase/controlled/support_centre.sql` remains UNAPPLIED, outside normal migrations
+and deployment. `FANMIND_SUPPORT_CENTRE_ENABLED` defaults off; existing help,
+diagnostics, Website AI and repair flags retain their separate gates. No Owner is
+provisioned, grant installed on a live target, migration pushed or provider enabled.
+
+The controlled purge removes terminal cases/events after 30 days, expired pending/
+running metadata after the 31-day reconciliation period, chat turns/idle threads
+and notifications after 30 days. Account/Workspace deletion cascades private chat
+and cases. The purge is denied to browser and app service roles; no scheduler is
+installed. Before activation an approved maintenance operator, daily physical
+cleanup, monitoring and deletion evidence are mandatory. Read filtering is not a
+physical deletion proof. New support text is personal data, not anonymized metadata.
+
+Runtime activation also requires updated processing/privacy information and an
+operational subject-access/export process including support conversations, plus
+actual Staging verification of identity/role changes, isolation, consent snapshots,
+retention/cleanup and storage failure. These operational/legal gates are separate
+from code merge; no legal certification or real-data permission is inferred.
+
+## Verification
+
+Existing Website Chat policy and native Authorization PG17 CI own the added tests;
+no package, lockfile or workflow is changed. The native test uses its own synthetic
+database and proves roles/RLS, tenant and actor separation, expiry, concurrent
+single-claim, idempotent send, consent cutoff, global Owner-only notices, recovery
+without replay, retention and database cleanup. Desktop/mobile tests use the actual
+centre and actual chat/inbox components, including ambiguous retry, persisted reload,
+account switch and transcript clearing after authorization failure.
+
+Independent QA, Security and Privacy review must cover the final exact head. All
+required CI and repository rules must pass before the expressly authorized merge.
+Staging Readiness is checked after merge; deployment needs separately applicable
+existing authorization and exclusive target ownership. Production is excluded.

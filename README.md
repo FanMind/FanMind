@@ -1001,3 +1001,11 @@ oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jed
 möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+
+Die KI-Support-Zentrale unter `/admin/support` ergänzt Owner-Freigaben,
+workspaceübergreifende technische Meldungen, Diagnose-/Reparaturhistorie und
+sichere Wiederaufnahme interner Supportzustände. Die angemeldete Hilfe bewahrt
+Gespräche getrennt nach Nutzer und Workspace mit idempotenter Wiederholung und
+ausdrücklich freigegebenen Übergaben. SQL und Runtime bleiben bis zum getrennten
+Staging-/Datenschutz-/Retentionbetrieb deaktiviert.
+[Umfang und Aktivierungsgrenzen](docs/operations/SUPPORT_CENTRE.md).

@@ -2,7 +2,7 @@ import { verifyConnectionAfterRepair } from "./supportRepairPostcheck";
 import { getSupportRepairPolicy } from "./supportRepairPolicy";
 
 type Platform = "instagram" | "facebook" | "whatsapp";
-type Connection = { platform: string; status: string };
+type Connection = { platform: string; status: string; last_messenger_sync_error?: string | null };
 export type SafeRepairResult =
   | { status: "connected"; verified: true; changed: false }
   | { status: "attention_required" | "not_configured" | "diagnostics_unavailable" | "manual_action_required"; verified: false; changed: false };
