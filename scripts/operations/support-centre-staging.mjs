@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.mjs';
 import {evaluateWebsiteChatStagingControlEnvironment} from '../../src/lib/websiteChatStagingControlPolicy.mjs';
-import {sourceManifest,catalogueSql,classify,assertReference,installSql,rollbackSql,REFERENCE_PATH} from './support-centre-schema.mjs';
+import {sourceManifest,catalogueSql,roleBoundarySql,classify,assertReference,installSql,rollbackSql,REFERENCE_PATH} from './support-centre-schema.mjs';
 const STAGING='vshyhvgcmrlagvfnvomc',PRODUCTION='drqkpdvtbbrrdwmtrodz';
 export const CONFIRMATIONS={verify:'verify-support-centre-schema',apply:'apply-support-centre-schema',retention:'run-support-retention',monitor:'verify-support-retention',owner:'bind-support-platform-owner','rollback-empty':'rollback-empty-support-centre'};
 export function evaluateSupportEnvironment(env,mode,checkout){
@@ -42,6 +42,7 @@ export function runSupportStaging(mode,env=process.env){
  };
  const inspect=()=>JSON.parse(run(`BEGIN READ ONLY;SET LOCAL statement_timeout='10s';${catalogueSql()}ROLLBACK;`));
  try{
+  if(run(`BEGIN READ ONLY;${roleBoundarySql()}ROLLBACK;`)!=='t')throw new Error('effective_role_boundary_rejected');
   let state=classify(inspect(),reference);console.log(`SUPPORT_SCHEMA_STATE=${state}`);
   if(mode==='apply'){
    if(state==='ABSENT'){run(installSql(reference));state=classify(inspect(),reference);}

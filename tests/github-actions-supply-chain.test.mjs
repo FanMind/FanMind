@@ -335,7 +335,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    83,
+    84, // Existing retention workflow adds one separately gated Support job.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

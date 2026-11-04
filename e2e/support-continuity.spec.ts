@@ -50,3 +50,16 @@ test("support erase clears ambiguous pending text despite focus refresh and pres
  // A fresh explicit erase may fail; a subsequent successful reload must not hide it.
  await page.unroute("**/api/support/privacy?**");await page.route("**/api/support/privacy?**",route=>route.fulfill({status:503,json:{error:'unavailable'}}));await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect(page.getByText('Löschung nicht bestätigt.',{exact:false})).toBeVisible();
 });
+test("own support export downloads retained data and confirmed erasure submits the exact preview",async({page})=>{
+ const thread='10000000-0000-4000-8000-000000000001';let erased=false,submissions=0;
+ const turns=[{request_id:'10000000-0000-4000-8000-000000000002',question:'Synthetic own question',answer:'Synthetic answer',unanswered:false}];
+ await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns:erased?[]:turns}}));
+ await page.route('**/api/support/privacy**',async route=>{
+  if(route.request().method()==='POST'){expect(route.request().postDataJSON()).toEqual({action:'erase',confirmed:true,scope:'scope-a',thread,sequence:12});submissions++;erased=true;await route.fulfill({json:{erased:true}});return;}
+  await route.fulfill({json:route.request().url().includes('preview=erase')?{scope:'scope-a',state:{thread,sequence:12}}:{scope:'scope-a',turns}});
+ });
+ await mount(page);await expect(page.getByText('Synthetic own question',{exact:false})).toBeVisible();
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'Eigene Supportdaten herunterladen'}).click();const artifact=await download;expect(artifact.suggestedFilename()).toBe('fanmind-support-data.json');
+ const stream=await artifact.createReadStream();let content='';for await(const chunk of stream!)content+=chunk.toString();expect(JSON.parse(content)).toEqual({scope:'scope-a',turns});
+ page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect(page.getByText('Synthetic own question',{exact:false})).toHaveCount(0);await expect.poll(()=>submissions).toBe(1);await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();
+});

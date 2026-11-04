@@ -15,12 +15,19 @@ test('new Support rollout PG17: independent reference, hostile defaults, rollbac
   fixture(a);madeA=true;
   for(const source of sourceManifest().sources)sql(readFileSync(source.path,'utf8'),a);
   const catalogue=object(a),reference={manifest:sourceManifest(),catalogue,catalogue_sha256:digest(canonical(catalogue)),provenance:{kind:'synthetic_ci_pg17',server_version:sql('SHOW server_version;',a),source_commit:process.env.GITHUB_SHA??'0'.repeat(40)}};
+  assert.equal(catalogue.sequences[0].parameters.max,'9223372036854775807','bigint metadata must remain exact across JSON transport');
   assertReference(reference);
   if(existsSync(REFERENCE_PATH))assert.deepEqual(JSON.parse(readFileSync(REFERENCE_PATH,'utf8')).catalogue,catalogue,'committed reference must reproduce exactly');
   console.log('SUPPORT_ROLLOUT_REFERENCE_JSON='+JSON.stringify(reference));
   fixture(b);madeB=true;assert.equal(classify(object(b),reference),'ABSENT');
   sql("CREATE TABLE public.support_retention_unexpected(id integer);",b);assert.equal(classify(object(b),reference),'DRIFT');assert.throws(()=>sql(installSql(reference),b));sql('DROP TABLE public.support_retention_unexpected;',b);
   sql(installSql(reference),b);assert.equal(classify(object(b),reference),'EXACT');
+  sql('CREATE POLICY support_synthetic_drift ON public.support_centre_cases USING(true);',b);
+  assert.equal(classify(object(b),reference),'DRIFT');assert.throws(()=>sql(rollbackSql(reference),b));
+  sql('DROP POLICY support_synthetic_drift ON public.support_centre_cases;',b);
+  const audited=sourceManifest().triggers[0];sql(`ALTER TABLE public.${audited.table} DISABLE TRIGGER ${audited.name};`,b);
+  assert.equal(classify(object(b),reference),'DRIFT');assert.throws(()=>sql(rollbackSql(reference),b));
+  sql(`ALTER TABLE public.${audited.table} ENABLE TRIGGER ${audited.name};`,b);assert.equal(classify(object(b),reference),'EXACT');
   // Exact state is a no-op, while a second blind CREATE is rejected before mutation.
   assert.throws(()=>sql(installSql(reference),b));assert.equal(classify(object(b),reference),'EXACT');
   sql(rollbackSql(reference),b);assert.equal(classify(object(b),reference),'ABSENT');
