@@ -75,3 +75,14 @@ release with fresh scoped authorization. No previously accepted schema apply
 or historical test is replayed. This receipt authorizes no dispatch, merge,
 deployment, fixture/capability write, Production, Billing, secrets, IAM,
 customer-data or external Fan-message action.
+
+## First-head CI correction
+
+On `894f8222d93566d7747fda5be2b1a967d0283b4d`, authoritative Browser E2E
+41791385432 passed all 33 component/boundary cases, including the new
+empty-offer regression. The Operations gate correctly rejected changing the
+parent protected lock status from PAUSED to RELEASED_FOR_PR. The parent remains
+PAUSED; a separate source-continuation status now records RELEASED_FOR_PR.
+No test assertion or protected boundary is weakened. The targeted existing
+Creator-selection/paused-lock regression passes after that metadata correction.
+Fresh final-head CI remains mandatory; the historical failed gate is retained.
