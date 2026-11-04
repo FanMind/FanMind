@@ -2238,3 +2238,6 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     }
   },
 );
+
+// Separate disposable database; no change to the Authorization proof's fixture.
+await import("../src/lib/supportCentrePg17.test.mjs");

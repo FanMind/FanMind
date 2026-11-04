@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type Connection = {
   platform: string;
@@ -23,6 +23,8 @@ const providerNames: Record<string, string> = {
 
 export function WorkspaceHelpLauncher() {
   const [open, setOpen] = useState(false);
+  const handoffGeneration = useRef(0);
+  const [handoff, setHandoff] = useState<"idle" | "busy" | "recorded" | "failed">("idle");
   const [diagnosticState, setDiagnosticState] =
     useState<DiagnosticState>("idle");
   const [connections, setConnections] = useState<Connection[]>([]);
@@ -37,6 +39,19 @@ export function WorkspaceHelpLauncher() {
   const selectedConnection =
     connections.find((connection) => connection.platform === selectedProvider) ??
     null;
+
+  async function escalate(platform: string) {
+    const generation = ++handoffGeneration.current;
+    setHandoff("busy");
+    try {
+      const response = await fetch("/api/support/escalate", {
+        method: "POST", credentials: "same-origin", cache: "no-store",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ platform }),
+      });
+      if (!response.ok) throw new Error("unavailable");
+      if (generation === handoffGeneration.current) setHandoff("recorded");
+    } catch { if (generation === handoffGeneration.current) setHandoff("failed"); }
+  }
 
   async function recheckConnection(platform: string) {
     setCheckState("loading");
@@ -157,6 +172,8 @@ export function WorkspaceHelpLauncher() {
   }, [open]);
 
   function selectProvider(platform: string) {
+    handoffGeneration.current++;
+    setHandoff("idle");
     setSelectedProvider(platform);
     setRepairConsent(false);
     setRepairRequestId(crypto.randomUUID());
@@ -334,6 +351,17 @@ export function WorkspaceHelpLauncher() {
             begrenzt. OAuth, Berechtigungen und Zugangsdaten bleiben immer
             manuell.
           </p>
+          {selectedConnection?.status === "attention_required" && (
+            <div>
+              <button type="button" disabled={handoff !== "idle"} onClick={() => void escalate(selectedConnection.platform)}>
+                Technischen Fehler an Support-Zentrale übergeben
+              </button>
+              <p>Erfasst werden Plattform, Fehlerklasse, technische Zuordnung zu deinem Workspace und Zeitpunkt; keine Nachrichteninhalte.</p>
+              {handoff === "busy" && <p role="status">Übergabe wird erfasst …</p>}
+              {handoff === "recorded" && <p role="status">Technischer Supportfall wurde erfasst.</p>}
+              {handoff === "failed" && <p role="alert">Übergabe derzeit nicht bestätigt. Bitte über die Supportseite Kontakt aufnehmen.</p>}
+            </div>
+          )}
           <a href="/channels">Kanäle öffnen</a>
           <div style={{ marginTop: 12 }}>
             <button type="button" onClick={() => setOpen(false)}>
@@ -351,6 +379,8 @@ export function WorkspaceHelpLauncher() {
             setDiagnosticState("loading");
             setConnections([]);
             setSelectedProvider(null);
+            handoffGeneration.current++;
+            setHandoff("idle");
             setRepairConsent(false);
             setRepairRequestId(null);
             setRepairState("idle");

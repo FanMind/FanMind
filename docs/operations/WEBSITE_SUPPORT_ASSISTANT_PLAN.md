@@ -61,3 +61,11 @@ Owner authorization: start development, 2026-10-22. This document does not autho
 
 - The reproducible evidence matrix, read-only schema classifier, negative runtime procedure, recovery and rollback prerequisites are defined in [SUPPORT_REPAIR_STAGING_ACCEPTANCE.md](./SUPPORT_REPAIR_STAGING_ACCEPTANCE.md).
 - Repository mock evidence does not constitute Staging acceptance. Schema application, repair-flag activation and external provider execution each require a separate explicit authorization and exact-target preflight.
+
+## Owner extension 2026-11-04: separate support centre
+
+The source-only `/admin/support` increment, bounded Owner decision contract,
+coarse technical handoff, retention and remaining acceptance are documented in
+[SUPPORT_CENTRE.md](./SUPPORT_CENTRE.md). The only new executable capability is
+an exact-connection read-only status recheck with independent postcheck. This is
+not a general repair permission and does not replace customer consent.

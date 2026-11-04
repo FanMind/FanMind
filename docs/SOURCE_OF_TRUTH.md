@@ -1590,3 +1590,13 @@ möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantis
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
 
+
+### KI-Support-Zentrale — source preparation, 4 November 2026
+
+Issue #1350 now includes a separate `/admin/support` area using existing login,
+platform-admin visibility and a separately provisioned platform-Owner decision
+boundary. Coarse connection-case handoff, expiring one-shot read-only checks and
+transactional audit are prepared; SQL is unapplied and all new runtime access is
+default-off. This is not autonomous provider repair or full #1350 completion.
+See `docs/operations/SUPPORT_CENTRE.md` for exact scope, retention operations,
+independent review and outstanding Staging/product gates.

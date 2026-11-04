@@ -1001,3 +1001,9 @@ oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jed
 möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+
+Die eigenständige KI-Support-Zentrale unter `/admin/support` ist als deaktivierter
+Source-Inkrement zu #1350 vorbereitet: fallgebundene Owner-Freigaben, lesende
+Statusprüfung, Nachprüfung und Audit. Kontrollierte SQL-Installation, Owner-
+Provisionierung, Retentionbetrieb und echte Staging-Abnahme stehen aus.
+[Umfang und offene Funktionen](docs/operations/SUPPORT_CENTRE.md).
