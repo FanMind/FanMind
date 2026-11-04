@@ -82,7 +82,12 @@ On `894f8222d93566d7747fda5be2b1a967d0283b4d`, authoritative Browser E2E
 41791385432 passed all 33 component/boundary cases, including the new
 empty-offer regression. The Operations gate correctly rejected changing the
 parent protected lock status from PAUSED to RELEASED_FOR_PR. The parent remains
-PAUSED; a separate source-continuation status now records RELEASED_FOR_PR.
+PAUSED; the existing source-handoff prose records completion without a second
+status field.
 No test assertion or protected boundary is weakened. The targeted existing
 Creator-selection/paused-lock regression passes after that metadata correction.
-Fresh final-head CI remains mandatory; the historical failed gate is retained.
+The second head exposed that a second `status:` label is intentionally treated
+as conflicting lock evidence by the existing selector. Removing that duplicate
+label preserves a single authoritative PAUSED state; no selector or generated
+next-action output is changed. Fresh final-head CI remains mandatory; both
+historical failed gates are retained.
