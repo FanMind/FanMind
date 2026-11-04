@@ -2,7 +2,7 @@ import { readSupportRequest } from "@/lib/supportCentreRequest";
 import { NextRequest, NextResponse } from "next/server";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { isSupportUuid } from "@/lib/supportCentrePolicy";
-import { decideSupportCase, supportCentreActor, supportCentreEnabled } from "@/lib/supportCentreServer";
+import { notifySupport, decideSupportCase, supportCentreActor, supportCentreEnabled } from "@/lib/supportCentreServer";
 
 export async function POST(request: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
@@ -12,7 +12,11 @@ export async function POST(request: NextRequest) {
   try {
     const actor = await supportCentreActor();
     if (!actor) return reply("unauthorized", 401);
-    if (!actor.owner) return reply("owner_required", 403);
+    if (!actor.owner) {
+      const allowance = await consumeSharedRateLimit({scope:"support.security.boundary",subject:actor.user.id,maxRequests:1,windowMs:60000});
+      if(allowance.allowed) {try{await notifySupport(null,"security_boundary",actor.user.id);}catch{/* Denial remains effective even when alert storage fails. */}}
+      return reply("owner_required", 403);
+    }
     let body: Record<string, unknown>;
     try { body = await readSupportRequest(request, 1024); } catch { return reply("invalid_request", 400); }
     if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).some(k => !["workspace", "id", "decision"].includes(k)) ||

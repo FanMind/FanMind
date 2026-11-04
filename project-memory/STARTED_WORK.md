@@ -1564,3 +1564,11 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Controlled source: root `package.json` and all 18 Capacity-bound sources remain byte-identical; no Capacity hash rebaseline is necessary or authorized by this diff.
 - Recovery: reviewed repository revert of the single Mobile lockfile resolution and task evidence. No database, provider, signing, Store, Staging/Production or deployment cleanup is required.
 - Handoff: exact-head full CI, Mobile/native Android+iOS, Browser, Security, PostgreSQL 17/Governance and independent R3 countercheck decide merge eligibility. Fully covered #1362 may close only after verified merge; #1363-#1366 remain isolated.
+
+## FM-ADMINCHAT-STAGING-HARNESS-20261104
+- Owner-requested completion of the existing Admin-Chat; reuse LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011, no duplicate writer or lock.
+- Exact main `b9693fb5a14ace4cd6ade8f753868d878aed3d30`; actual Staging release remains `f353f3e1c853c6104797d4db9ab578b8695b14bd` as observed 2026-11-04T07:12:14.663Z.
+- R3 source-only test maintenance: existing acceptance must create four named synthetic offers through the current custom-offer editor before filling prices. Existing product, pinned SQL, runner, write boundaries and acceptance counts remain unchanged.
+- Independent historical audit confirms actual acceptance run 38432481036 with all required PASS markers. Original #1219 CLI block is superseded by successful deploy 36686671173; historical success does not prove current-main runtime.
+- Focused browser/contract tests and independent final-diff QA required. No protected action is executed or authorized by this record.
+- Source handoff: focused contracts 23/23, ESLint and generated-route TypeScript PASS; browser launch blocked locally by missing Chromium. Exact-head CI and independent QA remain required; source lock released for PR handoff. Receipt `receipts/chatadmin-staging-offer-fixture-20261104.md`. No target action.

@@ -16,13 +16,14 @@ function load(file: string, bindings: Record<string, unknown>) {
   return exports;
 }
 async function html(owner:boolean) {
+  const inbox=load("src/app/admin/support/OwnerInbox.tsx",{"react":React,"react/jsx-runtime":jsx});
   const buttons=load("src/app/admin/support/DecisionButtons.tsx",{"react":React,"react/jsx-runtime":jsx});
   const source=load("src/app/admin/support/page.tsx",{
     "react/jsx-runtime":jsx,"next/link":{default:({children,...props}:React.ComponentProps<"a">)=>React.createElement("a",props,children),__esModule:true},
     "@/lib/admin":{requirePlatformAdmin:async()=>({id:workspace})},
     "@/lib/supportCentrePolicy":policy,
-    "@/lib/supportCentreServer":{supportCentreEnabled:()=>true,supportCentreTime:async()=>now,supportCentreActor:async()=>({owner}),listSupportWorkspaces:async()=>[{id:workspace,name:"Synthetischer Workspace"}],listSupportCases:async()=>({cases,audit:[]})},
-    "./DecisionButtons":buttons,"./support.module.css":{default:new Proxy({},{get:(_,name)=>name}),__esModule:true},
+    "@/lib/supportCentreServer":{supportCentreEnabled:()=>true,supportCentreTime:async()=>now,supportCentreActor:async()=>({owner}),listSupportWorkspaces:async()=>[{id:workspace,name:"Synthetischer Workspace"}],listSupportRepairHistory:async()=>[],listSupportCases:async()=>({cases,audit:[]})},
+    "./OwnerInbox":inbox,"./DecisionButtons":buttons,"./support.module.css":{default:new Proxy({},{get:(_,name)=>name}),__esModule:true},
   });
   const Page=source.default as (props:{searchParams:Promise<{workspace:string}>})=>Promise<React.ReactElement>;
   return `<html lang="de"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${readFileSync("src/app/admin/support/support.module.css","utf8")}</style>${renderToStaticMarkup(await Page({searchParams:Promise.resolve({workspace})}))}</html>`;

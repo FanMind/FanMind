@@ -1591,12 +1591,18 @@ Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
 
 
-### KI-Support-Zentrale — source preparation, 4 November 2026
+### KI-Support-Zentrale — source implementation, 4 November 2026
 
-Issue #1350 now includes a separate `/admin/support` area using existing login,
-platform-admin visibility and a separately provisioned platform-Owner decision
-boundary. Coarse connection-case handoff, expiring one-shot read-only checks and
-transactional audit are prepared; SQL is unapplied and all new runtime access is
-default-off. This is not autonomous provider repair or full #1350 completion.
-See `docs/operations/SUPPORT_CENTRE.md` for exact scope, retention operations,
-independent review and outstanding Staging/product gates.
+Issue #1350 / PR #1416 reuses the existing public Website AI/Widget/Inbox and
+adds /admin/support with existing login, separate platform Owner authority,
+coarse global critical/security notifications, combined repair history and
+one-shot approvals. Automatic correction remains limited to read-only checks
+and internal stale-support-state recovery; no provider/customer-content repair
+is activated. Private authenticated support conversations persist by user plus
+Workspace, with idempotent retry, paged history, account/logout clearing and
+explicit handoff snapshots. FAQ answers use approved product guidance and the
+canonical commercial model; this adds no new provider/model call.
+Controlled SQL remains unapplied and runtime default-off. Staging setup, Owner
+provisioning, physical retention operation, support-text privacy/access handling
+and real Staging acceptance are separate activation gates. See
+`docs/operations/SUPPORT_CENTRE.md`; source merge is not runtime completion.

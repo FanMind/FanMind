@@ -70,6 +70,37 @@ test("support centre native PG17: ACL, tenant, expiry, atomic concurrent claim, 
     assert.equal(sql("select public.support_centre_purge();"),"1");
     assert.equal(sql(`select count(*) from public.support_centre_events where case_id='${caseId}';`),"0");
     assert.equal(sql(`select count(*) from public.support_centre_cases where id='${third}';`),"1");
+    // Global alerts require Owner; acknowledged rows cannot hide open incidents.
+    assert.throws(()=>sql(`set role service_role; select public.support_centre_inbox('${id(2)}');`));
+    sql(`set role service_role; select public.support_centre_notify('${id(11)}','security_boundary','${id(21)}');`);
+    const inbox=JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`));
+    assert.ok(inbox.some(n=>n.workspace_id===id(11)&&n.code==='security_boundary'));
+    const notification=inbox.find(n=>n.code==='security_boundary').id;
+    sql(`set role service_role; select public.support_centre_ack('${id(1)}','${notification}');`);
+    assert.ok(!JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`)).some(n=>n.id===notification));
+    sql(`set role service_role; select public.support_centre_notify('${id(11)}','security_boundary','${id(21)}');`);
+    assert.ok(JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`)).some(n=>n.id===notification));
+    // Same request survives retries without a second turn; actor/Workspace reads are isolated.
+    const send=`set role service_role; select public.support_chat_send('${id(2)}','${id(10)}','${id(30)}','question','answer','support',false);`;
+    assert.equal(JSON.parse(sql(send)).question,'question');assert.equal(JSON.parse(sql(send)).question,'question');
+    assert.equal(sql("select count(*) from public.support_chat_turns;"),'1');
+    assert.equal(sql(`set role service_role; select public.support_chat_read('${id(1)}','${id(10)}');`),'[]');
+    assert.equal(sql(`set role service_role; select public.support_chat_read('${id(2)}','${id(11)}');`),'[]');
+    const thread=sql("select id from public.support_chat_threads;");
+    assert.throws(()=>sql(`set role service_role; select public.support_chat_review('${id(10)}','${thread}');`));
+    sql(`set role service_role; select public.support_chat_handoff('${id(2)}','${id(10)}');`);
+    sql(`set role service_role; select public.support_chat_send('${id(2)}','${id(10)}','${id(31)}','later private question','answer','support',false);`);
+    const shared=JSON.parse(sql(`set role service_role; select public.support_chat_review('${id(10)}','${thread}');`));
+    assert.equal(shared.length,1);assert.equal(shared[0].question,'question');
+    assert.throws(()=>sql(`set role service_role; select public.support_chat_send('${id(2)}','${id(10)}','${id(30)}','changed question','answer','support',false);`));
+    // Metadata recovery consumes no provider action and is idempotent.
+    const recoveryId=sql(report);
+    sql(`set role service_role; select public.support_centre_decide('${id(1)}','${id(10)}','${recoveryId}','approve');`);
+    sql(`update public.support_centre_cases set decided_at=clock_timestamp()-interval '3 minutes' where id='${recoveryId}';`);
+    assert.equal(sql(`set role service_role; select public.support_centre_recover('${id(1)}');`),'1');
+    assert.equal(sql(`set role service_role; select public.support_centre_recover('${id(1)}');`),'0');
+    assert.equal(sql(`select status from public.support_centre_cases where id='${recoveryId}';`),'failed');
+    for(const table of ['support_chat_threads','support_chat_turns','support_centre_notifications'])for(const role of ['anon','authenticated','service_role'])assert.equal(sql(`select has_table_privilege('${role}','public.${table}','SELECT,INSERT,UPDATE,DELETE');`),'f');
     sql(`delete from public.workspaces where id='${id(10)}';`);
     assert.equal(sql("select count(*) from public.support_centre_cases;"),"0");
     assert.equal(sql("select count(*) from public.support_centre_events;"),"0");

@@ -1,5 +1,6 @@
 "use client";
 
+import { SupportConversation } from "./SupportConversation";
 import { useEffect, useRef, useState } from "react";
 
 type Connection = {
@@ -346,6 +347,7 @@ export function WorkspaceHelpLauncher() {
               </div>
             </section>
           ) : null}
+          <SupportConversation />
           <p>
             Automatische Reparaturen sind auf bestätigte, sichere Aktionen
             begrenzt. OAuth, Berechtigungen und Zugangsdaten bleiben immer

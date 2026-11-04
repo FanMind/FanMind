@@ -1,103 +1,120 @@
-# KI-Support-Zentrale — #1350
+# Support assistant and KI-Support-Zentrale — #1350 / #1416
 
-Source increment SUPPORT-CENTRE-1350-20261104 on main b9693fb5. Not activated.
+Repository implementation; runtime defaults off. No Production deployment or SQL apply.
 
-## Reuse and separation
+## Scope and reuse
 
-The public support launcher, Website Chat AI/session/message/consent/Origin/receipt
-binding, customer embed and Inbox handoff already exist. The authenticated
-WorkspaceHelpLauncher, coarse diagnostics, automatic read-only checks and
-customer-confirmed sync repair also exist. PR #1250 is still open but its public
-support continuation was superseded by the merged implementation; do not merge
-its stale implementation as a new feature. Open Question PRs #1411–#1414 remain
-separate Draft work. No ChatAdmin, Builder, agent-chat, Open Questions, shared
-WorkspaceShell, package, lockfile or workflow implementation is changed here.
+The existing public Website Chat AI, installation/session/consent/origin binding,
+Widget, Inbox and handoff are reused. The existing authenticated help launcher,
+connection diagnostics, customer-confirmed repair executor and repair audit are
+reused. The separate Admin Chat, Builder and Open Questions PRs are unchanged.
+The current continuation extends the same PR #1416, not a parallel implementation.
 
-## New source
+## Owner centre
 
-- `/admin/support`: existing login and platform-admin gate, separate navigation,
-  explicit Workspace selection, dashboard, cases/diagnosis, Owner decisions,
-  history and append-only activities. AdminTabs provides the entry link.
-- The help panel can explicitly escalate a technical connection problem through
-  `/api/support/escalate`. Auth derives Workspace and connection. Only fixed
-  platform/problem codes are stored; no free-form error, message or token.
-- `FANMIND_SUPPORT_CENTRE_ENABLED` defaults off and does not enable diagnostics,
-  Website AI or existing repair/provider flags. Escalation additionally requires
-  the existing diagnostics gate. GET diagnostics remains read-only.
-- Platform Admin = existing FANMIND_ADMIN_EMAILS policy. Platform Owner = that
-  same policy AND the verified auth-user UUID provisioned in the separate
-  `support_centre_owners` table. Workspace Owner is not Platform Owner. There
-  is no application writer, self-promotion endpoint or user-metadata fallback.
-- Cases bind Workspace, exact connection, action and permission. The only current
-  action is `refresh_readonly_status` / `read_connection_status`. A fresh Owner
-  decision atomically consumes a 30-minute pending case with audit under row
-  lock. Replays, expiry, foreign targets and unknown actions fail closed.
-- The coarse checking RPC revalidates Owner, running claim, expiry and exact
-  connection. Two fresh reads comprise execution and postcheck. No provider
-  call or account mutation occurs. Failure remains visible; uncertain completion
-  stays running for reconciliation and is never blindly repeated.
-- Failed/running cases and unexpired approvals form Owner notifications in the
-  selected Workspace. Successful routine checks are only in history/audit.
-  This increment does not monitor critical incidents or security events.
+`/admin/support` uses the existing verified login and platform Admin policy.
+Platform Owner additionally requires the exact user UUID in the separately
+provisioned `support_centre_owners`; workspace ownership/user metadata never grants
+platform ownership. Admins can inspect a selected Workspace; only Platform Owners
+receive the global coarse notification inbox and make approval decisions.
 
-## Database and retention
+The centre contains Dashboard, case diagnoses, expiring one-shot approvals,
+combined existing sync-repair audit plus central check history, append-only case
+activities and customer-consented transcript review. The transcript review requires
+exact Workspace/thread binding and a recorded consent snapshot, never a broad
+customer-message query.
 
-`supabase/controlled/support_centre.sql` is SOURCE ONLY / UNAPPLIED. It is not a
-normal migration and no deploy or script applies it. Browser roles have no table
-or function access. Service role has SELECT and only fixed RPCs; no direct
-INSERT/UPDATE/DELETE/TRUNCATE, including on the Owner table or audit.
+Critical/failed checks, incomplete audits, failed legacy sync repairs, authenticated
+attempts to cross the Owner boundary and explicit customer handoffs create fixed,
+deduplicated notifications. Pending approvals also create inbox records atomically
+through the case trigger. Routine successes stay in history. The inbox prioritizes
+critical open entries before applying its 100-row limit; acknowledgements are
+Owner-only, recorded with actor/time, and a recurring incident reopens the entry.
+No message text, raw provider error, IP, credential or free-form log enters the
+notification. Anonymous/bad-Origin requests cannot flood this inbox.
 
-Terminal case metadata and cascading events have a 30-day retention window.
-Expired pending/running metadata has a maximum 31-day reconciliation window.
-The restricted `support_centre_purge()` is not executable by the app service
-role and has no installed scheduler. Before activation an authorized maintenance
-operator, daily cleanup, monitoring and deletion evidence must be configured.
-Without that operation the retention SLA is NOT met. Workspace deletion cascades
-cases and events. No conversation evidence or legal holds are copied here;
-existing source-system duties and retention continue independently. Actor UUIDs
-and connection/workspace identifiers are pseudonymous personal data, not anonymous.
+Full database failure cannot be durably reported into that same database: routes
+fail closed, UI shows unavailable, and incomplete started checks remain available
+for reconciliation when the database returns. No notification-delivery success is
+claimed on a failed write. Existing independent infrastructure monitoring remains
+necessary for host/database outages; no new infrastructure is created here.
 
-Owner provisioning, maintenance grants and any schema APPLY require separate
-review and exact Staging target binding; this source does not perform them.
+## Bounded automatic correction and recovery
 
-## Verification and acceptance
+- Existing automatic status refresh and safe re-probe remain read-only and are
+  now rate limited. Connected status plus a synchronization error is correctly
+  attention-required, not a false successful check.
+- Approved central reads keep exact Owner/Workspace/connection/expiry binding,
+  atomic one-time consumption and a separate fresh postcheck.
+- Automatic maintenance expires stale pending approvals and marks interrupted
+  running checks failed with audit, without retrying the old approval or making
+  any provider call. Each pass locks at most 100 rows and is idempotent. It runs
+  while the authenticated Owner centre is open; there is no hidden new worker.
+- Existing explicit customer confirmation for sync restart is unchanged. No OAuth,
+  permission, credential, disconnect, Production or customer-content repair is added.
 
-Tests are registered through the existing Website Chat and Authorization PG17
-suites; package/workflow files are unchanged. The native test creates and drops
-its own synthetic database in the existing pinned CI PG17 source container and
-checks ACL/RLS, foreign Workspace, expiry, concurrent single claim, postcheck,
-terminal idempotency, cascading audit retention and cleanup. It must not be
-reported PASS until the exact commit's CI step succeeds. Local mock/contract
-checks do not replace native PostgreSQL or real Staging.
+## Authenticated conversation continuity
 
-Real Staging still needs a reviewed commit, protected schema installation,
-explicit Owner UUID, cleanup operator, synthetic Workspace/connection, exact
-origin and isolated runtime flags. Test login/logout, Owner/Admin/member,
-Desktop/mobile, failed reads/audit, request races, expiry, foreign-tenant input
-and removal of temporary state. Do not enable a provider repair for these checks.
+The help panel uses `/api/support/conversation`. Actor and Workspace derive from
+fresh verified server auth for every read/write. A server-derived opaque scope
+binds pending requests; caller-supplied Workspace/actor identifiers are rejected.
+Threads and turns are private to the exact user+Workspace tuple. Browser database
+roles have no direct table or RPC access; only the bounded server adapter writes.
 
-## Remaining product work
+Questions/answers persist server-side for up to 30 days, newest 100 per page with
+an exact own-turn cursor for older pages. Each send uses one UUID; ambiguous
+responses retry the same immutable payload, with an atomic DB duplicate check.
+Changed payload under the same UUID is rejected. Per-actor/Workspace rate limiting
+and a serialized 100-turn/day DB bound protect storage. No localStorage, sessionStorage
+or third-party provider is used for authenticated conversation persistence.
 
-This increment is a bounded central triage and approval foundation, not full
-completion of #1350. Still needed: autonomous critical/security incident intake,
-owner-wide notifications beyond the selected Workspace, additional separately
-reviewed repair capabilities, integration of existing sync-repair history, and
-full authenticated conversational context/continuity with logout/Workspace
-reset and unresolved-conversation handoff. Website/widget real Staging acceptance,
-knowledge-source freshness, legal/provider gates and production activation remain
-separate. Existing customer confirmation is never replaced by Platform Owner approval.
+Account/Workspace changes, logout, navigation/pagehide, auth failures and late
+responses clear or invalidate private client state. Polling and focus revalidate
+identity even during a pending retry. Owner transcript views likewise clear on
+failed verification, lifecycle changes and superseding requests.
 
-## Local evidence for this increment
+Answers are bounded approved FAQ guidance; prices/included connections derive
+from the canonical commercial model. Unknown questions receive a transparent
+fallback. The existing public AI route remains the separate provider-backed path;
+this increment introduces no new provider call or claim of open-ended model reasoning.
 
-- Website Chat suite: 77 pass / 0 fail, including 9 central policy/request/route cases.
-- TypeScript, focused ESLint, test-suite ownership and product-truth checks: pass.
-- Next production build: pass (initial external dependency symlink rejected by
-  Turbopack; rebuilt successfully with local dependencies, no source workaround).
-- Independent Security and Privacy source reviews: no unresolved P0/P1/P2 after
-  correcting the exact-target reader, retention design and request validation.
-- Independent QA: focused tests, typecheck and 4 browser test registrations pass.
-  The delayed cross-platform handoff response is guarded by a generation counter.
-- Local Browser execution is BLOCKED: Chromium executable absent. Four tests
-  could not launch; no browser pass is claimed. Exact-head CI must run them.
-- Native PG17 is NOT_RUN locally: no Docker/PostgreSQL capability. The registered
-  CI proof must succeed before this controlled SQL is considered verified.
+Customer handoff requires a separate explicit click. It records a timestamp and
+monotonic turn-sequence snapshot; review excludes all later messages, including
+under clock changes. Newer messages require a fresh handoff. Technical diagnoses
+can be handed off separately without sharing conversation text.
+
+## Controlled storage and activation gates
+
+`supabase/controlled/support_centre.sql` remains UNAPPLIED, outside normal migrations
+and deployment. `FANMIND_SUPPORT_CENTRE_ENABLED` defaults off; existing help,
+diagnostics, Website AI and repair flags retain their separate gates. No Owner is
+provisioned, grant installed on a live target, migration pushed or provider enabled.
+
+The controlled purge removes terminal cases/events after 30 days, expired pending/
+running metadata after the 31-day reconciliation period, chat turns/idle threads
+and notifications after 30 days. Account/Workspace deletion cascades private chat
+and cases. The purge is denied to browser and app service roles; no scheduler is
+installed. Before activation an approved maintenance operator, daily physical
+cleanup, monitoring and deletion evidence are mandatory. Read filtering is not a
+physical deletion proof. New support text is personal data, not anonymized metadata.
+
+Runtime activation also requires updated processing/privacy information and an
+operational subject-access/export process including support conversations, plus
+actual Staging verification of identity/role changes, isolation, consent snapshots,
+retention/cleanup and storage failure. These operational/legal gates are separate
+from code merge; no legal certification or real-data permission is inferred.
+
+## Verification
+
+Existing Website Chat policy and native Authorization PG17 CI own the added tests;
+no package, lockfile or workflow is changed. The native test uses its own synthetic
+database and proves roles/RLS, tenant and actor separation, expiry, concurrent
+single-claim, idempotent send, consent cutoff, global Owner-only notices, recovery
+without replay, retention and database cleanup. Desktop/mobile tests use the actual
+centre and actual chat/inbox components, including ambiguous retry, persisted reload,
+account switch and transcript clearing after authorization failure.
+
+Independent QA, Security and Privacy review must cover the final exact head. All
+required CI and repository rules must pass before the expressly authorized merge.
+Staging Readiness is checked after merge; deployment needs separately applicable
+existing authorization and exclusive target ownership. Production is excluded.

@@ -1,6 +1,7 @@
+import { OwnerInbox } from "./OwnerInbox";
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin";
-import { listSupportCases, listSupportWorkspaces, supportCentreActor, supportCentreTime, supportCentreEnabled, type SupportAudit } from "@/lib/supportCentreServer";
+import { listSupportRepairHistory, listSupportCases, listSupportWorkspaces, supportCentreActor, supportCentreTime, supportCentreEnabled, type SupportAudit } from "@/lib/supportCentreServer";
 import { supportProblems, supportCaseNeedsAttention, type SupportCase } from "@/lib/supportCentrePolicy";
 import { DecisionButtons } from "./DecisionButtons";
 import styles from "./support.module.css";
@@ -16,6 +17,7 @@ export default async function SupportCentrePage({ searchParams }: { searchParams
   let owner = false, error = "";
   let workspaces: Array<{ id: string; name: string }> = [];
   let cases: SupportCase[] = [], audit: SupportAudit[] = [];
+  let repairs:Awaited<ReturnType<typeof listSupportRepairHistory>>=[],historyError=false;
   if (supportCentreEnabled()) {
     try {
       owner = (await supportCentreActor())?.owner === true;
@@ -23,6 +25,7 @@ export default async function SupportCentrePage({ searchParams }: { searchParams
       if (workspace) {
         if (!workspaces.some(w => w.id === workspace)) throw new Error("invalid_workspace");
         ({ cases, audit } = await listSupportCases(workspace));
+        try{repairs=await listSupportRepairHistory(workspace);}catch{historyError=true;}
       }
     } catch { error = "Supportdaten sind derzeit nicht verfügbar. Es wird kein leerer Erfolgsstatus angenommen."; }
   }
@@ -38,9 +41,10 @@ export default async function SupportCentrePage({ searchParams }: { searchParams
     <section id="dashboard"><h2>Dashboard</h2>{!workspace || error || !supportCentreEnabled() ? <p>Für verlässliche Zahlen zuerst einen verfügbaren Workspace auswählen.</p> : <><p>Die maximal 100 neuesten Fälle des ausgewählten Workspaces.</p><div className={styles.metrics}><p>{cases.length} Fälle</p><p>{pending.length} offene Freigaben</p><p>{cases.filter(c=>c.status==="failed").length} fehlgeschlagene Prüfungen</p><p>{cases.filter(c=>c.status==="succeeded").length} bestätigte Prüfungen</p></div></>}
       {owner && alerts.length > 0 && <aside aria-label="Owner-Benachrichtigungen" className={styles.notice}><h3>Aufmerksamkeit erforderlich</h3><ul>{alerts.map(c => <li key={c.id}><a href={`#case-${c.id}`}>{c.platform}: {statuses[c.status]}</a></li>)}</ul><p>Routineerfolge stehen ausschließlich im Verlauf.</p></aside>}
     </section>
+    {owner && <OwnerInbox />}
     <section id="cases"><h2>Supportfälle & technische Diagnosen</h2><p>Nur feste Fehlerklassen; keine Nachrichteninhalte, Zugangsdaten oder Provider-Fehlertexte.</p>{cases.map(c => <article key={c.id} id={`case-${c.id}`}><h3>{c.platform} · {supportProblems[c.problem].problem}</h3><p>{c.status === "pending" && Date.parse(c.expires_at) <= now ? "Abgelaufen" : statuses[c.status]} · {time(c.created_at)}</p><details><summary>Details anzeigen</summary><dl><dt>Betroffenes System</dt><dd>Workspace-Verbindung · {c.platform}</dd><dt>Problembeschreibung</dt><dd>{supportProblems[c.problem].problem}</dd><dt>Technische Diagnose</dt><dd>{supportProblems[c.problem].diagnosis}</dd><dt>Bereits durchgeführte Prüfungen</dt><dd>Authentifizierung, Workspace-Zuordnung, gespeicherter Verbindungsstatus und Synchronisierungsfehlerklasse.</dd><dt>Vorgeschlagene Aktion</dt><dd>{supportProblems[c.problem].repair}</dd><dt>Konkret benötigte Berechtigung</dt><dd>{c.permission} · {c.action}</dd><dt>Risiko</dt><dd>{supportProblems[c.problem].risk}</dd><dt>Erwartete Auswirkungen</dt><dd>{supportProblems[c.problem].impact}</dd><dt>Freigabe gültig bis</dt><dd>{time(c.expires_at)} · einmalig für diesen Fall</dd></dl></details></article>)}</section>
     <section id="approvals"><h2>Owner-Freigaben</h2><p>Eine Freigabe erlaubt genau eine lesende Prüfung mit Nachprüfung. Sie ersetzt keine Kundenbestätigung und erlaubt keine Provider-, Daten- oder Rechteänderung.</p>{pending.map(c => <article key={c.id}><a href={`#case-${c.id}`}>{c.platform}: Details anzeigen</a>{owner ? <DecisionButtons workspace={c.workspace_id} id={c.id}/> : <p>Nur der Plattform-Owner kann entscheiden.</p>}</article>)}</section>
-    <section id="history"><h2>Reparaturhistorie</h2><p>Dieser Bereich zeigt die Prüfungen der Support-Zentrale. Bestehende kundenseitig bestätigte Synchronisierungsreparaturen besitzen weiterhin ihr eigenes Audit.</p><ul>{cases.filter(c=>!["pending","running"].includes(c.status)).map(c=><li key={c.id}>{c.platform} · {statuses[c.status]} · {time(c.completed_at ?? c.created_at)}</li>)}</ul></section>
+    <section id="history"><h2>Reparaturhistorie</h2>{historyError&&<p role="alert">Die bisherige Sync-Reparaturhistorie ist nicht verfügbar.</p>}<ul>{repairs.map(r=><li key={r.request_id}>{r.platform} · {r.status} · {time(r.created_at)}</li>)}</ul><p>Dieser Bereich zeigt die Prüfungen der Support-Zentrale. Kundenseitig bestätigte Synchronisierungsreparaturen werden aus dem vorhandenen Audit eingeblendet.</p><ul>{cases.filter(c=>!["pending","running"].includes(c.status)).map(c=><li key={c.id}>{c.platform} · {statuses[c.status]} · {time(c.completed_at ?? c.created_at)}</li>)}</ul></section>
     <section id="audit"><h2>Audit & Aktivitäten</h2><p>Die 200 neuesten protokollierten Ereignisse des ausgewählten Workspaces.</p><ol>{audit.map((event,index)=><li key={`${event.case_id}-${index}`}>{time(event.created_at)} · {events[event.event]} · <a href={`#case-${event.case_id}`}>Fall anzeigen</a></li>)}</ol></section>
   </main>;
 }

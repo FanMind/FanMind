@@ -61,7 +61,7 @@ test("support centre actual decision route: auth, Owner, Origin, fields and fail
     "@/lib/supportCentreRequest":{readSupportRequest},
     "@/lib/supportCentrePolicy":load("src/lib/supportCentrePolicy.ts"),
     "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed})},
-    "@/lib/supportCentreServer":{supportCentreEnabled:()=>enabled,supportCentreActor:async()=>actor,decideSupportCase:async()=>{decisions++;return "rejected";}},
+    "@/lib/supportCentreServer":{notifySupport:async()=>undefined,supportCentreEnabled:()=>enabled,supportCentreActor:async()=>actor,decideSupportCase:async()=>{decisions++;return "rejected";}},
   });
   const request=(body={workspace,id,decision:"reject"},origin="https://example.test")=>{
     const req=new Request("https://example.test/api/admin/support/decision",{method:"POST",headers:{origin},body:JSON.stringify(body)});
@@ -77,4 +77,27 @@ test("support centre actual decision route: auth, Owner, Origin, fields and fail
   allowed=false;assert.equal((await POST(request())).status,429);allowed=true;
   assert.equal(decisions,0);
   assert.equal((await POST(request())).status,200);assert.equal(decisions,1);
+});
+test("support postcheck rejects connected records with synchronization errors",()=>{
+ const {verifyConnectionAfterRepair}=load("src/lib/supportRepairPostcheck.ts");
+ assert.equal(verifyConnectionAfterRepair([{platform:"facebook",status:"connected",last_messenger_sync_error:"private failure"}],"facebook").verified,false);
+ assert.equal(verifyConnectionAfterRepair([{platform:"facebook",status:"connected",last_messenger_sync_error:null}],"facebook").verified,true);
+});
+test("authenticated conversation actual route derives identity and forbids foreign scope/fields",async()=>{
+ let identity={actor:id,workspace,scope:"bound"},calls=0,enabled=true;
+ const {GET,POST}=load("src/app/api/support/conversation/route.ts",{
+  "next/server":{NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
+  "@/lib/supportContinuityServer":{supportCustomer:async()=>identity,readSupportConversation:async()=>[]},
+  "@/lib/supportCentreServer":{supportCentreEnabled:()=>enabled,supportCentreDatabase:async(_,body)=>{assert.equal(body.p_workspace,workspace);assert.equal(body.p_actor,id);calls++;return{};}},
+  "@/lib/supportCentreRequest":load("src/lib/supportCentreRequest.ts"),"@/lib/supportCentrePolicy":load("src/lib/supportCentrePolicy.ts"),
+  "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed:true})},"@/lib/supportKnowledge":{supportAnswer:()=>({answer:"documented",unanswered:false})},
+ });
+ const req=(body,origin="https://example.test")=>{const r=new Request("https://example.test/api/support/conversation",{method:"POST",headers:{origin},body:JSON.stringify(body)});r.nextUrl=new URL(r.url);return r;};
+ const message={scope:"bound",question:"Hilfe",context:"support",requestId:id};
+ assert.equal((await POST(req({...message,workspace}))).status,409);
+ assert.equal((await POST(req({...message,scope:"other"}))).status,409);
+ assert.equal((await POST(req(message,"https://evil.test"))).status,403);
+ assert.equal(calls,0);assert.equal((await POST(req(message))).status,200);assert.equal(calls,1);
+ assert.equal((await POST(req({scope:"bound",handoff:true}))).status,200);assert.equal(calls,2);
+ identity=null;assert.equal((await GET()).status,401);enabled=false;assert.equal((await GET()).status,404);
 });

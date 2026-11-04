@@ -105,6 +105,9 @@ CREATE FUNCTION public.support_centre_purge()
 RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE removed integer;
 BEGIN
+  DELETE FROM public.support_chat_threads WHERE updated_at<clock_timestamp()-interval '30 days';
+  DELETE FROM public.support_chat_turns WHERE created_at<clock_timestamp()-interval '30 days';
+  DELETE FROM public.support_centre_notifications WHERE created_at<clock_timestamp()-interval '30 days';
   DELETE FROM public.support_centre_cases WHERE
     (completed_at IS NOT NULL AND completed_at < clock_timestamp() - interval '30 days') OR
     (status IN ('pending','running') AND expires_at < clock_timestamp() - interval '31 days');
@@ -114,4 +117,139 @@ END $$;
 REVOKE ALL ON FUNCTION public.support_centre_purge() FROM PUBLIC, anon, authenticated, service_role;
 -- No scheduler or EXECUTE grant is installed. Activation requires an approved
 -- maintenance operator, run evidence and monitoring of the retention SLA.
+-- Dedicated coarse Owner inbox; no customer messages, IPs or raw provider errors.
+CREATE TABLE public.support_centre_notifications (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), workspace_id uuid REFERENCES public.workspaces(id) ON DELETE CASCADE,
+ code text NOT NULL CHECK(code IN ('approval_required','repair_failed','audit_incomplete','security_boundary','diagnostics_unavailable','handoff_required')),
+ reference_id uuid NOT NULL, created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ acknowledged_at timestamptz, acknowledged_by uuid, occurrences integer NOT NULL DEFAULT 1,
+ UNIQUE NULLS NOT DISTINCT(workspace_id,code,reference_id)
+);
+ALTER TABLE public.support_centre_notifications ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.support_centre_notifications FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.support_centre_notify(p_workspace uuid,p_code text,p_reference uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ INSERT INTO public.support_centre_notifications(workspace_id,code,reference_id) VALUES(p_workspace,p_code,p_reference)
+ ON CONFLICT(workspace_id,code,reference_id) DO UPDATE SET acknowledged_at=NULL,acknowledged_by=NULL,created_at=clock_timestamp(),occurrences=least(public.support_centre_notifications.occurrences+1,100000);
+ RETURN true;
+END $$;
+CREATE FUNCTION public.support_centre_inbox(p_actor uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;
+ RETURN coalesce((SELECT jsonb_agg(to_jsonb(n)) FROM (SELECT id,workspace_id,code,reference_id,created_at,acknowledged_at,occurrences FROM public.support_centre_notifications WHERE acknowledged_at IS NULL ORDER BY (code IN ('repair_failed','audit_incomplete','security_boundary','diagnostics_unavailable')) DESC,created_at DESC LIMIT 100) n),'[]'::jsonb);
+END $$;
+CREATE FUNCTION public.support_centre_ack(p_actor uuid,p_notification uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;
+ UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()),acknowledged_by=p_actor WHERE id=p_notification;
+ RETURN FOUND;
+END $$;
+-- Automatic repairs only internal support state; never replay a provider operation.
+CREATE FUNCTION public.support_centre_recover(p_actor uuid)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE candidate public.support_centre_cases; repaired integer:=0;
+BEGIN
+ IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;
+ FOR candidate IN SELECT * FROM public.support_centre_cases WHERE
+  (status='pending' AND expires_at<=clock_timestamp()) OR
+  (status='running' AND decided_at<clock_timestamp()-interval '2 minutes') ORDER BY created_at LIMIT 100 FOR UPDATE SKIP LOCKED LOOP
+  UPDATE public.support_centre_cases SET status=CASE WHEN candidate.status='pending' THEN 'expired' ELSE 'failed' END,completed_at=clock_timestamp() WHERE id=candidate.id;
+  INSERT INTO public.support_centre_events(workspace_id,case_id,event,actor_user_id) VALUES(candidate.workspace_id,candidate.id,CASE WHEN candidate.status='pending' THEN 'expired' ELSE 'failed' END,p_actor);
+  IF candidate.status='running' THEN PERFORM public.support_centre_notify(candidate.workspace_id,'audit_incomplete',candidate.id); END IF;
+  UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()) WHERE reference_id=candidate.id AND code='approval_required';
+  repaired:=repaired+1;
+ END LOOP;
+ RETURN repaired;
+END $$;
+CREATE FUNCTION public.support_centre_case_notification()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ IF TG_OP='INSERT' THEN PERFORM public.support_centre_notify(NEW.workspace_id,'approval_required',NEW.id);
+ ELSIF NEW.status='failed' AND OLD.status IS DISTINCT FROM NEW.status THEN PERFORM public.support_centre_notify(NEW.workspace_id,'repair_failed',NEW.id); END IF;
+ IF NEW.status<>'pending' THEN UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()) WHERE reference_id=NEW.id AND code='approval_required'; END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER support_centre_case_notification AFTER INSERT OR UPDATE OF status ON public.support_centre_cases FOR EACH ROW EXECUTE FUNCTION public.support_centre_case_notification();
+
+-- Private authenticated support conversation, isolated by verified user + Workspace.
+CREATE TABLE public.support_chat_threads (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), workspace_id uuid NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
+ user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE, handoff_consent boolean NOT NULL DEFAULT false, handoff_until timestamptz, shared_sequence bigint NOT NULL DEFAULT 0,
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp(), UNIQUE(workspace_id,user_id), UNIQUE(id,workspace_id,user_id)
+);
+CREATE TABLE public.support_chat_turns (
+ turn_number bigint GENERATED ALWAYS AS IDENTITY, thread_id uuid NOT NULL, workspace_id uuid NOT NULL,user_id uuid NOT NULL,request_id uuid NOT NULL,
+ question text NOT NULL CHECK(char_length(question) BETWEEN 1 AND 1000),answer text NOT NULL CHECK(char_length(answer) BETWEEN 1 AND 2000),
+ context text NOT NULL CHECK(context IN ('dashboard','channels','billing','support')),unanswered boolean NOT NULL,
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),PRIMARY KEY(thread_id,request_id),
+ FOREIGN KEY(thread_id,workspace_id,user_id) REFERENCES public.support_chat_threads(id,workspace_id,user_id) ON DELETE CASCADE
+);
+ALTER TABLE public.support_chat_threads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.support_chat_turns ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.support_chat_threads,public.support_chat_turns FROM PUBLIC,anon,authenticated,service_role;
+REVOKE ALL ON SEQUENCE public.support_chat_turns_turn_number_seq FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION public.support_chat_read(p_actor uuid,p_workspace uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);
+END $$;
+CREATE FUNCTION public.support_chat_send(p_actor uuid,p_workspace uuid,p_request uuid,p_question text,p_answer text,p_context text,p_unanswered boolean)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE thread public.support_chat_threads; turn public.support_chat_turns;
+BEGIN
+ INSERT INTO public.support_chat_threads(workspace_id,user_id) VALUES(p_workspace,p_actor) ON CONFLICT(workspace_id,user_id) DO NOTHING;
+ SELECT * INTO thread FROM public.support_chat_threads WHERE workspace_id=p_workspace AND user_id=p_actor FOR UPDATE;
+ SELECT * INTO turn FROM public.support_chat_turns WHERE thread_id=thread.id AND request_id=p_request;
+ IF FOUND THEN
+  IF turn.question IS DISTINCT FROM p_question OR turn.context IS DISTINCT FROM p_context THEN RAISE EXCEPTION 'request_conflict'; END IF;
+  RETURN to_jsonb(turn)-'workspace_id'-'user_id'-'thread_id';
+ END IF;
+ IF (SELECT count(*) FROM public.support_chat_turns WHERE thread_id=thread.id AND created_at>clock_timestamp()-interval '1 day')>=100 THEN RAISE EXCEPTION 'chat_limit'; END IF;
+ INSERT INTO public.support_chat_turns(thread_id,workspace_id,user_id,request_id,question,answer,context,unanswered) VALUES(thread.id,p_workspace,p_actor,p_request,p_question,p_answer,p_context,p_unanswered) RETURNING * INTO turn;
+ UPDATE public.support_chat_threads SET updated_at=clock_timestamp() WHERE id=thread.id;
+ RETURN to_jsonb(turn)-'workspace_id'-'user_id'-'thread_id';
+END $$;
+CREATE FUNCTION public.support_chat_handoff(p_actor uuid,p_workspace uuid)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE thread uuid;
+BEGIN
+ UPDATE public.support_chat_threads SET handoff_consent=true,handoff_until=clock_timestamp(),shared_sequence=(SELECT coalesce(max(turn_number),0) FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace) WHERE user_id=p_actor AND workspace_id=p_workspace RETURNING id INTO thread;
+ IF NOT FOUND THEN RAISE EXCEPTION 'thread_unavailable'; END IF;
+ PERFORM public.support_centre_notify(p_workspace,'handoff_required',thread);
+ RETURN true;
+END $$;
+CREATE FUNCTION public.support_chat_review(p_workspace uuid,p_thread uuid,p_before uuid DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE actor uuid; boundary bigint:=9223372036854775807;
+BEGIN
+ SELECT user_id INTO actor FROM public.support_chat_threads WHERE id=p_thread AND workspace_id=p_workspace AND handoff_consent;
+ IF NOT FOUND THEN RAISE EXCEPTION 'handoff_consent_required'; END IF;
+ IF p_before IS NOT NULL THEN SELECT turn_number INTO boundary FROM public.support_chat_turns WHERE workspace_id=p_workspace AND thread_id=p_thread AND request_id=p_before AND turn_number<=(SELECT shared_sequence FROM public.support_chat_threads WHERE id=p_thread); IF NOT FOUND THEN RAISE EXCEPTION 'cursor_unavailable'; END IF; END IF;
+ RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=actor AND workspace_id=p_workspace AND thread_id=p_thread AND turn_number<boundary AND turn_number<=(SELECT shared_sequence FROM public.support_chat_threads WHERE id=p_thread) AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);
+END $$;
+REVOKE ALL ON FUNCTION public.support_centre_notify(uuid,text,uuid),public.support_centre_inbox(uuid),public.support_centre_ack(uuid,uuid),public.support_centre_recover(uuid),public.support_centre_case_notification(),public.support_chat_read(uuid,uuid),public.support_chat_send(uuid,uuid,uuid,text,text,text,boolean),public.support_chat_handoff(uuid,uuid),public.support_chat_review(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.support_centre_notify(uuid,text,uuid),public.support_centre_inbox(uuid),public.support_centre_ack(uuid,uuid),public.support_centre_recover(uuid),public.support_chat_read(uuid,uuid),public.support_chat_send(uuid,uuid,uuid,text,text,text,boolean),public.support_chat_handoff(uuid,uuid),public.support_chat_review(uuid,uuid,uuid) TO service_role;
+
+CREATE FUNCTION public.support_chat_page(p_actor uuid,p_workspace uuid,p_before uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE boundary bigint;
+BEGIN
+ SELECT turn_number INTO boundary FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND request_id=p_before;
+ IF NOT FOUND THEN RAISE EXCEPTION 'cursor_unavailable'; END IF;
+ RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND turn_number<boundary AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);
+END $$;
+REVOKE ALL ON FUNCTION public.support_chat_page(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated,service_role;
+GRANT EXECUTE ON FUNCTION public.support_chat_page(uuid,uuid,uuid) TO service_role;
+
+CREATE FUNCTION public.support_chat_delete_notification()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ DELETE FROM public.support_centre_notifications WHERE workspace_id=OLD.workspace_id AND reference_id=OLD.id AND code='handoff_required';
+ RETURN OLD;
+END $$;
+REVOKE ALL ON FUNCTION public.support_chat_delete_notification() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER support_chat_delete_notification AFTER DELETE ON public.support_chat_threads FOR EACH ROW EXECUTE FUNCTION public.support_chat_delete_notification();
 COMMIT;

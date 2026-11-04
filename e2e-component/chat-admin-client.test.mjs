@@ -5,6 +5,7 @@ import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
 import { chromium, expect } from "@playwright/test";
 import ts from "typescript";
+import { ensureOfferEditor } from "../e2e-chatadmin-staging/offer-evidence.mjs";
 
 // Execute the actual client and React DOM in Chromium. Only the external API is
 // deferred; this suite proves client isolation, not Staging/provider acceptance.
@@ -94,6 +95,32 @@ async function complete(page,index=0,overrides={},status=200){const request=awai
 test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Charaktere"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
 
 test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
+
+test("Staging offer setup creates four named offers from an empty Character without duplicates",async t=>{
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await page.getByRole("button",{name:"Angebot entfernen",exact:true}).click();
+ await expect(page.getByText("Noch keine Angebote angelegt.",{exact:true})).toBeVisible();
+ const names=["Foto","Video","Privates Foto","Privates Video"],prices=["10.00","20.00","25.00","40.00"];
+ for(const [index,name] of names.entries()){
+  const editor=await ensureOfferEditor(page,name);
+  await editor.getByLabel("Empfohlener Preis",{exact:true}).fill(prices[index]);
+  if(name==="Privates Foto")await editor.getByLabel("Angebot aktiv",{exact:true}).uncheck();
+ }
+ for(const name of names)await ensureOfferEditor(page,name);
+ await expect(page.getByLabel("Angebotsname",{exact:true})).toHaveCount(4);
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0]),offers=request.body.sales_playbook.offers;
+ assert.deepEqual(offers.map(offer=>({name:offer.name,price:offer.recommendedPriceMinor,active:offer.active})),names.map((name,index)=>({name,price:Math.round(Number(prices[index])*100),active:name!=="Privates Foto"})));
+ assert.ok(offers.every(offer=>offer.category==="custom"));assert.equal(new Set(offers.map(offer=>offer.id)).size,4);
+ await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request.body,revision:2});
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ for(const [index,name] of names.entries()){
+  const editor=await ensureOfferEditor(page,name);
+  await expect(editor.getByLabel("Empfohlener Preis",{exact:true})).toHaveValue(prices[index]);
+  await expect(editor.getByLabel("Angebot aktiv",{exact:true})).toBeChecked({checked:name!=="Privates Foto"});
+ }
+ await expect(page.getByLabel("Angebotsname",{exact:true})).toHaveCount(4);
+});
 
 test("Fan actions live in the Fan-row menu while the conversation header and memory cards stay hidden",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await expect(page.getByRole("button",{name:"Fan bearbeiten"})).toHaveCount(0);await expect(page.getByText("Wichtige Fakten",{exact:true})).toHaveCount(0);await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();for(const action of ["Bearbeiten","Notizen und Fakten","Deaktivieren","Löschen"])await expect(page.getByRole("button",{name:action,exact:true})).toBeVisible();});
 

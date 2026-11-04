@@ -1,3 +1,5 @@
+import { notifySupport } from "@/lib/supportCentreServer";
+import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { NextRequest, NextResponse } from "next/server";
 import {
   getSupabaseServerUser,
@@ -43,12 +45,17 @@ export async function POST(request: NextRequest) {
   if (!workspace.workspace || workspace.error) {
     return NextResponse.json({ error: "workspace_unavailable" }, { status: 403, headers });
   }
+  try {
+    const allowance=await consumeSharedRateLimit({scope:"support.safe.check",subject:workspace.workspace.id,maxRequests:10,windowMs:60000});
+    if(!allowance.allowed)return NextResponse.json({error:"rate_limited"},{status:429,headers});
+  } catch {return NextResponse.json({error:"diagnostics_unavailable"},{status:503,headers});}
   const check = await executeSafeSupportRepair(action, input.platform as "instagram" | "facebook" | "whatsapp", async () => {
     const connections = await getWorkspaceSocialConnections(workspace.workspace!.id);
     if (connections.error) throw new Error("diagnostics_unavailable");
     return connections.connections;
   });
   if (check.status === "diagnostics_unavailable") {
+    try{await notifySupport(workspace.workspace.id,"diagnostics_unavailable",data.user.id);}catch{/* Never claim notification delivery when storage is unavailable. */}
     return NextResponse.json({ error: "diagnostics_unavailable" }, { status: 503, headers });
   }
   return NextResponse.json({

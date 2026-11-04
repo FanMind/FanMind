@@ -98,3 +98,16 @@ muss zusätzlich `npm run legal:evidence:require-complete` erfolgreich sein.
 Bis diese Punkte bestätigt sind, darf weder dieses Register noch die
 öffentliche Datenschutzerklärung als pauschale DSGVO-Konformitätsgarantie
 ausgegeben werden.
+
+## Support centre / authenticated support conversation (#1350 / #1416)
+
+Source-only controlled tables `support_chat_threads`, `support_chat_turns`,
+`support_centre_notifications`, `support_centre_cases`, `support_centre_events`.
+Chat text is private to actor+Workspace; support review is bound to an explicit
+monotonic consent snapshot. Chat and notification retention: 30 days; terminal
+case/event retention: 30 days; unresolved expired/running metadata reconciliation:
+31 days. Controlled purge is app-denied and not scheduled/applied by this source.
+Activation requires an approved daily cleanup operator, monitoring/deletion proof,
+processing/privacy information and subject-access/export coverage of support text.
+Account and Workspace deletion cascade. Source tests are not a runtime retention
+or legal acceptance certificate. See `docs/operations/SUPPORT_CENTRE.md`.

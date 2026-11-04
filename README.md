@@ -1002,8 +1002,10 @@ möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantis
 Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
 nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
 
-Die eigenständige KI-Support-Zentrale unter `/admin/support` ist als deaktivierter
-Source-Inkrement zu #1350 vorbereitet: fallgebundene Owner-Freigaben, lesende
-Statusprüfung, Nachprüfung und Audit. Kontrollierte SQL-Installation, Owner-
-Provisionierung, Retentionbetrieb und echte Staging-Abnahme stehen aus.
-[Umfang und offene Funktionen](docs/operations/SUPPORT_CENTRE.md).
+Die KI-Support-Zentrale unter `/admin/support` ergänzt Owner-Freigaben,
+workspaceübergreifende technische Meldungen, Diagnose-/Reparaturhistorie und
+sichere Wiederaufnahme interner Supportzustände. Die angemeldete Hilfe bewahrt
+Gespräche getrennt nach Nutzer und Workspace mit idempotenter Wiederholung und
+ausdrücklich freigegebenen Übergaben. SQL und Runtime bleiben bis zum getrennten
+Staging-/Datenschutz-/Retentionbetrieb deaktiviert.
+[Umfang und Aktivierungsgrenzen](docs/operations/SUPPORT_CENTRE.md).
