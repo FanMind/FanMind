@@ -553,3 +553,6 @@ test("staging schema verifier is read-only and classifies absent or drifted stat
 
 // The support-centre delta is part of the existing required Website Chat CI suite.
 await import("../src/lib/supportCentrePolicy.test.mjs");
+
+// Only the new rollout/privacy controls, not a second product implementation.
+await import("../src/lib/supportRollout.test.mjs");
