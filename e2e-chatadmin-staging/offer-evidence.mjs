@@ -1,5 +1,16 @@
 const MONEY = /(?:(EUR|CHF|USD|GBP|Euros?|Franken|Fr\.|Pfund|Pounds?|Dollars?|[€$£])\s*(\d+(?:[.,]\d{1,2})?)|(\d+(?:[.,]\d{1,2})?)\s*(EUR|CHF|USD|GBP|Euros?|Franken|Fr\.|Pfund|Pounds?|Dollars?|[€$£]))/giu;
 
+/** @param {import('@playwright/test').Page} page @param {string} name */
+export async function ensureOfferEditor(page, name) {
+  const heading = page.getByRole("heading", { name, exact: true });
+  if (await heading.count() === 0) {
+    await page.getByRole("button", { name: "+ Angebot", exact: true }).click();
+    await page.getByRole("heading", { name: "Neues Angebot", exact: true })
+      .locator("..").getByLabel("Angebotsname", { exact: true }).fill(name);
+  }
+  return heading.locator("..");
+}
+
 const currencyFor = (token) => {
   if (/^(?:EUR|Euros?|€)$/iu.test(token)) return "EUR";
   if (/^(?:CHF|Franken|Fr\.)$/iu.test(token)) return "CHF";
