@@ -1,0 +1,1950 @@
+{
+  "manifest": {
+    "version": 1,
+    "sources": [
+      {
+        "path": "supabase/controlled/support_centre.sql",
+        "sha256": "051fa0253bb6a815820d825ca4c1c35a70405a25de59e8dc0d7e899ef5179a30"
+      },
+      {
+        "path": "supabase/controlled/support_centre_operations.sql",
+        "sha256": "c8bb1c8be779d0cfd64797bdc9fe2f4248abbdb201e0959bcc8e6ebe90be8633"
+      }
+    ],
+    "tables": [
+      "support_centre_owners",
+      "support_centre_cases",
+      "support_centre_events",
+      "support_centre_notifications",
+      "support_chat_threads",
+      "support_chat_turns",
+      "support_retention_runs"
+    ],
+    "functions": [
+      "support_centre_report",
+      "support_centre_decide",
+      "support_centre_check",
+      "support_centre_finish",
+      "support_centre_purge",
+      "support_centre_notify",
+      "support_centre_inbox",
+      "support_centre_ack",
+      "support_centre_recover",
+      "support_centre_case_notification",
+      "support_chat_read",
+      "support_chat_send",
+      "support_chat_handoff",
+      "support_chat_review",
+      "support_chat_page",
+      "support_chat_delete_notification",
+      "run_support_retention",
+      "support_retention_health",
+      "support_chat_privacy_state",
+      "support_chat_erase"
+    ],
+    "triggers": [
+      {
+        "name": "support_centre_case_notification",
+        "table": "support_centre_cases"
+      },
+      {
+        "name": "support_chat_delete_notification",
+        "table": "support_chat_threads"
+      }
+    ]
+  },
+  "catalogue": {
+    "tables": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "SELECT"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_centre_cases",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "connection_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "platform",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "problem",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "action",
+            "type": "text",
+            "default": "'refresh_readonly_status'::text",
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "permission",
+            "type": "text",
+            "default": "'read_connection_status'::text",
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "text",
+            "default": "'pending'::text",
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "expires_at",
+            "type": "timestamp with time zone",
+            "default": "(clock_timestamp() + '00:30:00'::interval)",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "decided_by",
+            "type": "uuid",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "decided_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "completed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_case_retention ON public.support_centre_cases USING btree (completed_at, expires_at)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_cases_pkey ON public.support_centre_cases USING btree (id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_centre_cases_recent ON public.support_centre_cases USING btree (workspace_id, created_at DESC)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_cases_workspace_id_id_key ON public.support_centre_cases USING btree (workspace_id, id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_one_active ON public.support_centre_cases USING btree (workspace_id, connection_id, problem) WHERE (status = ANY (ARRAY['pending'::text, 'running'::text]))"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "CHECK (action = 'refresh_readonly_status'::text)",
+            "name": "support_centre_cases_action_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (expires_at > created_at AND expires_at <= (created_at + '01:00:00'::interval))",
+            "name": "support_centre_cases_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (permission = 'read_connection_status'::text)",
+            "name": "support_centre_cases_permission_check",
+            "type": "c"
+          },
+          {
+            "def": "PRIMARY KEY (id)",
+            "name": "support_centre_cases_pkey",
+            "type": "p"
+          },
+          {
+            "def": "CHECK (platform = ANY (ARRAY['facebook'::text, 'instagram'::text, 'whatsapp'::text]))",
+            "name": "support_centre_cases_platform_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (problem = ANY (ARRAY['connection_attention'::text, 'sync_attention'::text]))",
+            "name": "support_centre_cases_problem_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (status = ANY (ARRAY['pending'::text, 'running'::text, 'rejected'::text, 'succeeded'::text, 'failed'::text, 'expired'::text]))",
+            "name": "support_centre_cases_status_check",
+            "type": "c"
+          },
+          {
+            "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE",
+            "name": "support_centre_cases_workspace_id_fkey",
+            "type": "f"
+          },
+          {
+            "def": "UNIQUE (workspace_id, id)",
+            "name": "support_centre_cases_workspace_id_id_key",
+            "type": "u"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "SELECT"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_centre_events",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "case_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "event",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "actor_user_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_events_pkey ON public.support_centre_events USING btree (id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_centre_events_recent ON public.support_centre_events USING btree (workspace_id, created_at DESC)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "CHECK (event = ANY (ARRAY['requested'::text, 'approved'::text, 'rejected'::text, 'succeeded'::text, 'failed'::text, 'expired'::text]))",
+            "name": "support_centre_events_event_check",
+            "type": "c"
+          },
+          {
+            "def": "PRIMARY KEY (id)",
+            "name": "support_centre_events_pkey",
+            "type": "p"
+          },
+          {
+            "def": "FOREIGN KEY (workspace_id, case_id) REFERENCES support_centre_cases(workspace_id, id) ON DELETE CASCADE",
+            "name": "support_centre_events_workspace_id_case_id_fkey",
+            "type": "f"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_centre_notifications",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "code",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "reference_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "acknowledged_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "acknowledged_by",
+            "type": "uuid",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "occurrences",
+            "type": "integer",
+            "default": "1",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_notifications_pkey ON public.support_centre_notifications USING btree (id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_notifications_workspace_id_code_reference_id_key ON public.support_centre_notifications USING btree (workspace_id, code, reference_id) NULLS NOT DISTINCT"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_notice_retention ON public.support_centre_notifications USING btree (created_at)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "CHECK (code = ANY (ARRAY['approval_required'::text, 'repair_failed'::text, 'audit_incomplete'::text, 'security_boundary'::text, 'diagnostics_unavailable'::text, 'handoff_required'::text]))",
+            "name": "support_centre_notifications_code_check",
+            "type": "c"
+          },
+          {
+            "def": "PRIMARY KEY (id)",
+            "name": "support_centre_notifications_pkey",
+            "type": "p"
+          },
+          {
+            "def": "UNIQUE NULLS NOT DISTINCT (workspace_id, code, reference_id)",
+            "name": "support_centre_notifications_workspace_id_code_reference_id_key",
+            "type": "u"
+          },
+          {
+            "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE",
+            "name": "support_centre_notifications_workspace_id_fkey",
+            "type": "f"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "SELECT"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_centre_owners",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "user_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_centre_owners_pkey ON public.support_centre_owners USING btree (user_id)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "PRIMARY KEY (user_id)",
+            "name": "support_centre_owners_pkey",
+            "type": "p"
+          },
+          {
+            "def": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+            "name": "support_centre_owners_user_id_fkey",
+            "type": "f"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_chat_threads",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": "gen_random_uuid()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "user_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "handoff_consent",
+            "type": "boolean",
+            "default": "false",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "handoff_until",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "shared_sequence",
+            "type": "bigint",
+            "default": "0",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "updated_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_chat_threads_id_workspace_id_user_id_key ON public.support_chat_threads USING btree (id, workspace_id, user_id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_chat_threads_pkey ON public.support_chat_threads USING btree (id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_chat_threads_workspace_id_user_id_key ON public.support_chat_threads USING btree (workspace_id, user_id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_thread_retention ON public.support_chat_threads USING btree (updated_at)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "UNIQUE (id, workspace_id, user_id)",
+            "name": "support_chat_threads_id_workspace_id_user_id_key",
+            "type": "u"
+          },
+          {
+            "def": "PRIMARY KEY (id)",
+            "name": "support_chat_threads_pkey",
+            "type": "p"
+          },
+          {
+            "def": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+            "name": "support_chat_threads_user_id_fkey",
+            "type": "f"
+          },
+          {
+            "def": "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE",
+            "name": "support_chat_threads_workspace_id_fkey",
+            "type": "f"
+          },
+          {
+            "def": "UNIQUE (workspace_id, user_id)",
+            "name": "support_chat_threads_workspace_id_user_id_key",
+            "type": "u"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_chat_turns",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "turn_number",
+            "type": "bigint",
+            "default": null,
+            "notnull": true,
+            "identity": "a",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "thread_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "user_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "request_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "question",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "answer",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "context",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "unanswered",
+            "type": "boolean",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "created_at",
+            "type": "timestamp with time zone",
+            "default": "clock_timestamp()",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_chat_turns_pkey ON public.support_chat_turns USING btree (thread_id, request_id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX support_turn_retention ON public.support_chat_turns USING btree (created_at)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "CHECK (char_length(answer) >= 1 AND char_length(answer) <= 2000)",
+            "name": "support_chat_turns_answer_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (context = ANY (ARRAY['dashboard'::text, 'channels'::text, 'billing'::text, 'support'::text]))",
+            "name": "support_chat_turns_context_check",
+            "type": "c"
+          },
+          {
+            "def": "PRIMARY KEY (thread_id, request_id)",
+            "name": "support_chat_turns_pkey",
+            "type": "p"
+          },
+          {
+            "def": "CHECK (char_length(question) >= 1 AND char_length(question) <= 1000)",
+            "name": "support_chat_turns_question_check",
+            "type": "c"
+          },
+          {
+            "def": "FOREIGN KEY (thread_id, workspace_id, user_id) REFERENCES support_chat_threads(id, workspace_id, user_id) ON DELETE CASCADE",
+            "name": "support_chat_turns_thread_id_workspace_id_user_id_fkey",
+            "type": "f"
+          }
+        ],
+        "persistence": "p"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_retention_runs",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "run_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "retention_day",
+            "type": "date",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "source_commit",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "status",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "attempts",
+            "type": "integer",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "started_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "completed_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "counts",
+            "type": "jsonb",
+            "default": "'{}'::jsonb",
+            "notnull": true,
+            "identity": "",
+            "collation": null,
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "error_code",
+            "type": "text",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "collation": "default",
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_retention_one_success_daily ON public.support_retention_runs USING btree (retention_day) WHERE (status = 'succeeded'::text)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_retention_runs_pkey ON public.support_retention_runs USING btree (run_id)"
+          }
+        ],
+        "options": null,
+        "policies": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "def": "CHECK (attempts >= 1 AND attempts <= 3)",
+            "name": "support_retention_runs_attempts_check",
+            "type": "c"
+          },
+          {
+            "def": "PRIMARY KEY (run_id)",
+            "name": "support_retention_runs_pkey",
+            "type": "p"
+          },
+          {
+            "def": "CHECK (source_commit ~ '^[a-f0-9]{40}$'::text)",
+            "name": "support_retention_runs_source_commit_check",
+            "type": "c"
+          },
+          {
+            "def": "CHECK (status = ANY (ARRAY['started'::text, 'succeeded'::text, 'failed'::text]))",
+            "name": "support_retention_runs_status_check",
+            "type": "c"
+          }
+        ],
+        "persistence": "p"
+      }
+    ],
+    "triggers": [
+      {
+        "enabled": "O",
+        "definition": "CREATE TRIGGER support_centre_case_notification AFTER INSERT OR UPDATE OF status ON support_centre_cases FOR EACH ROW EXECUTE FUNCTION support_centre_case_notification()"
+      },
+      {
+        "enabled": "O",
+        "definition": "CREATE TRIGGER support_chat_delete_notification AFTER DELETE ON support_chat_threads FOR EACH ROW EXECUTE FUNCTION support_chat_delete_notification()"
+      }
+    ],
+    "functions": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE prior public.support_retention_runs; existing uuid; candidate_ids uuid[]; thread_ids uuid[];\n n_turns integer:=0; n_threads integer:=0; n_notices integer:=0; n_cases integer:=0; n_events integer:=0; n_more integer:=0;\n today date:=(clock_timestamp() AT TIME ZONE 'UTC')::date; result jsonb;\nBEGIN\n IF p_run IS NULL OR p_source IS NULL OR (p_source !~ '^[a-f0-9]{40}$' OR p_source=repeat('0',40)) THEN RAISE EXCEPTION 'invalid_retention_request'; END IF;\n IF NOT pg_catalog.pg_try_advisory_xact_lock(1350,1416) THEN RETURN jsonb_build_object('status','busy'); END IF;\n SELECT * INTO prior FROM public.support_retention_runs WHERE run_id=p_run FOR UPDATE;\n IF FOUND THEN\n  IF prior.source_commit<>p_source OR prior.retention_day<>today THEN RAISE EXCEPTION 'retention_request_conflict'; END IF;\n  IF prior.status='succeeded' OR NOT p_retry OR prior.attempts>=3 THEN RETURN to_jsonb(prior); END IF;\n END IF;\n SELECT run_id INTO existing FROM public.support_retention_runs WHERE retention_day=today AND status='succeeded';\n IF FOUND THEN RETURN jsonb_build_object('status','already_completed','run_id',existing); END IF;\n INSERT INTO public.support_retention_runs(run_id,retention_day,source_commit,status,attempts,started_at)\n VALUES(p_run,today,p_source,'started',1,clock_timestamp())\n ON CONFLICT(run_id) DO UPDATE SET status='started',attempts=public.support_retention_runs.attempts+1,started_at=clock_timestamp(),completed_at=NULL,error_code=NULL;\n BEGIN\n  -- Refuse an unsupported backlog rather than timing out repeatedly without evidence.\n  IF (SELECT count(*) FROM (SELECT 1 FROM public.support_chat_turns WHERE created_at<clock_timestamp()-interval '30 days' LIMIT 10001)x)>10000 OR (SELECT count(*) FROM public.support_centre_cases)>10000 OR (SELECT count(*) FROM public.support_centre_notifications)>20000 THEN RAISE EXCEPTION 'retention_volume_requires_review'; END IF;\n  WITH gone AS(DELETE FROM public.support_chat_turns WHERE created_at<clock_timestamp()-interval '30 days' RETURNING 1)SELECT count(*) INTO n_turns FROM gone;\n  SELECT array_agg(id) INTO thread_ids FROM (SELECT t.id FROM public.support_chat_threads t WHERE t.updated_at<clock_timestamp()-interval '30 days' AND NOT EXISTS(SELECT 1 FROM public.support_chat_turns m WHERE m.thread_id=t.id) FOR UPDATE OF t)t;\n  -- Fresh statement after row locks: a sender may have committed while we waited.\n  SELECT array_agg(t.id) INTO thread_ids FROM public.support_chat_threads t WHERE t.id=ANY(coalesce(thread_ids,'{}'::uuid[])) AND t.updated_at<clock_timestamp()-interval '30 days' AND NOT EXISTS(SELECT 1 FROM public.support_chat_turns m WHERE m.thread_id=t.id);\n  WITH gone AS(DELETE FROM public.support_centre_notifications WHERE code='handoff_required' AND reference_id=ANY(coalesce(thread_ids,'{}'::uuid[])) RETURNING 1)SELECT count(*) INTO n_notices FROM gone;\n  WITH gone AS(DELETE FROM public.support_chat_threads WHERE id=ANY(coalesce(thread_ids,'{}'::uuid[])) RETURNING 1)SELECT count(*) INTO n_threads FROM gone;\n  SELECT array_agg(id) INTO candidate_ids FROM (SELECT id FROM public.support_centre_cases WHERE\n   (completed_at IS NOT NULL AND completed_at<clock_timestamp()-interval '30 days') OR\n   (status IN ('pending','running') AND expires_at<clock_timestamp()-interval '31 days') FOR UPDATE)c;\n  SELECT array_agg(id) INTO candidate_ids FROM public.support_centre_cases WHERE id=ANY(coalesce(candidate_ids,'{}'::uuid[])) AND ((completed_at IS NOT NULL AND completed_at<clock_timestamp()-interval '30 days') OR (status IN ('pending','running') AND expires_at<clock_timestamp()-interval '31 days'));\n  SELECT count(*) INTO n_events FROM public.support_centre_events WHERE case_id=ANY(coalesce(candidate_ids,'{}'::uuid[]));\n  WITH gone AS(DELETE FROM public.support_centre_notifications WHERE reference_id=ANY(coalesce(candidate_ids,'{}'::uuid[])) OR created_at<clock_timestamp()-interval '30 days' RETURNING 1)SELECT count(*) INTO n_more FROM gone;\n  n_notices:=n_notices+n_more;\n  WITH gone AS(DELETE FROM public.support_centre_cases WHERE id=ANY(coalesce(candidate_ids,'{}'::uuid[])) RETURNING 1)SELECT count(*) INTO n_cases FROM gone;\n  result:=jsonb_build_object('turns',n_turns,'threads',n_threads,'notifications',n_notices,'cases',n_cases,'case_events',n_events);\n  UPDATE public.support_retention_runs SET status='succeeded',completed_at=clock_timestamp(),counts=result WHERE run_id=p_run;\n  DELETE FROM public.support_retention_runs WHERE run_id<>p_run AND completed_at<clock_timestamp()-interval '90 days';\n EXCEPTION WHEN OTHERS THEN\n  UPDATE public.support_retention_runs SET status='failed',completed_at=clock_timestamp(),counts='{}'::jsonb,error_code=SQLSTATE WHERE run_id=p_run;\n END;\n SELECT to_jsonb(r) INTO result FROM public.support_retention_runs r WHERE run_id=p_run;\n RETURN result;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "run_support_retention",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": false,
+        "defaults": "false",
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_run uuid, p_source text, p_retry boolean",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()),acknowledged_by=p_actor WHERE id=p_notification;\n RETURN FOUND;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_ack",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_notification uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n IF TG_OP='INSERT' THEN PERFORM public.support_centre_notify(NEW.workspace_id,'approval_required',NEW.id);\n ELSIF NEW.status='failed' AND OLD.status IS DISTINCT FROM NEW.status THEN PERFORM public.support_centre_notify(NEW.workspace_id,'repair_failed',NEW.id); END IF;\n IF NEW.status<>'pending' THEN UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()) WHERE reference_id=NEW.id AND code='approval_required'; END IF;\n RETURN NEW;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_case_notification",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "trigger",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE target public.support_centre_cases;\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n  SELECT * INTO target FROM public.support_centre_cases WHERE id=p_case AND workspace_id=p_workspace;\n  IF NOT FOUND OR target.status <> 'running' OR target.decided_by IS DISTINCT FROM p_actor OR target.expires_at <= clock_timestamp() THEN RAISE EXCEPTION 'claim_unavailable'; END IF;\n  RETURN EXISTS (SELECT 1 FROM public.social_connections c WHERE c.id=target.connection_id AND c.workspace_id=p_workspace AND c.platform=target.platform AND c.status='connected' AND nullif(pg_catalog.btrim(c.last_messenger_sync_error),'') IS NULL);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_check",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_case uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE target public.support_centre_cases;\nBEGIN\n  IF NOT EXISTS (SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) OR p_decision NOT IN ('approve','reject') OR p_decision IS NULL THEN RAISE EXCEPTION 'owner_required'; END IF;\n  SELECT * INTO target FROM public.support_centre_cases WHERE id=p_case AND workspace_id=p_workspace FOR UPDATE;\n  IF NOT FOUND OR target.status <> 'pending' OR target.expires_at <= clock_timestamp() OR target.action <> 'refresh_readonly_status' OR target.permission <> 'read_connection_status' THEN RAISE EXCEPTION 'claim_unavailable'; END IF;\n  IF NOT EXISTS (SELECT 1 FROM public.social_connections c WHERE c.id=target.connection_id AND c.workspace_id=target.workspace_id AND c.platform=target.platform) THEN RAISE EXCEPTION 'target_unavailable'; END IF;\n  UPDATE public.support_centre_cases SET status=CASE WHEN p_decision='approve' THEN 'running' ELSE 'rejected' END,\n    decided_by=p_actor,decided_at=clock_timestamp(),completed_at=CASE WHEN p_decision='reject' THEN clock_timestamp() ELSE NULL END\n    WHERE id=p_case RETURNING * INTO target;\n  INSERT INTO public.support_centre_events(workspace_id,case_id,event,actor_user_id) VALUES(p_workspace,p_case,CASE WHEN p_decision='approve' THEN 'approved' ELSE 'rejected' END,p_actor);\n  RETURN to_jsonb(target);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_decide",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_case uuid, p_decision text",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE target public.support_centre_cases; terminal text;\nBEGIN\n  IF p_success IS NULL OR NOT EXISTS (SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n  terminal := CASE WHEN p_success THEN 'succeeded' ELSE 'failed' END;\n  SELECT * INTO target FROM public.support_centre_cases WHERE id=p_case AND workspace_id=p_workspace FOR UPDATE;\n  IF NOT FOUND OR target.decided_by IS DISTINCT FROM p_actor THEN RAISE EXCEPTION 'claim_unavailable'; END IF;\n  IF target.status=terminal THEN RETURN true; END IF;\n  IF target.status <> 'running' THEN RAISE EXCEPTION 'transition_unavailable'; END IF;\n  UPDATE public.support_centre_cases SET status=terminal,completed_at=clock_timestamp() WHERE id=p_case;\n  INSERT INTO public.support_centre_events(workspace_id,case_id,event,actor_user_id) VALUES(p_workspace,p_case,terminal,p_actor);\n  RETURN true;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_finish",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_case uuid, p_success boolean",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n RETURN coalesce((SELECT jsonb_agg(to_jsonb(n)) FROM (SELECT id,workspace_id,code,reference_id,created_at,acknowledged_at,occurrences FROM public.support_centre_notifications WHERE acknowledged_at IS NULL ORDER BY (code IN ('repair_failed','audit_incomplete','security_boundary','diagnostics_unavailable')) DESC,created_at DESC LIMIT 100) n),'[]'::jsonb);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_inbox",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n INSERT INTO public.support_centre_notifications(workspace_id,code,reference_id) VALUES(p_workspace,p_code,p_reference)\n ON CONFLICT(workspace_id,code,reference_id) DO UPDATE SET acknowledged_at=NULL,acknowledged_by=NULL,created_at=clock_timestamp(),occurrences=least(public.support_centre_notifications.occurrences+1,100000);\n RETURN true;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_notify",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_workspace uuid, p_code text, p_reference uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n RAISE EXCEPTION 'use_reviewed_retention_runner';\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_purge",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "integer",
+        "strict": false,
+        "definer": false,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE candidate public.support_centre_cases; repaired integer:=0;\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n FOR candidate IN SELECT * FROM public.support_centre_cases WHERE\n  (status='pending' AND expires_at<=clock_timestamp()) OR\n  (status='running' AND decided_at<clock_timestamp()-interval '2 minutes') ORDER BY created_at LIMIT 100 FOR UPDATE SKIP LOCKED LOOP\n  UPDATE public.support_centre_cases SET status=CASE WHEN candidate.status='pending' THEN 'expired' ELSE 'failed' END,completed_at=clock_timestamp() WHERE id=candidate.id;\n  INSERT INTO public.support_centre_events(workspace_id,case_id,event,actor_user_id) VALUES(candidate.workspace_id,candidate.id,CASE WHEN candidate.status='pending' THEN 'expired' ELSE 'failed' END,p_actor);\n  IF candidate.status='running' THEN PERFORM public.support_centre_notify(candidate.workspace_id,'audit_incomplete',candidate.id); END IF;\n  UPDATE public.support_centre_notifications SET acknowledged_at=coalesce(acknowledged_at,clock_timestamp()) WHERE reference_id=candidate.id AND code='approval_required';\n  repaired:=repaired+1;\n END LOOP;\n RETURN repaired;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_recover",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "integer",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE existing public.support_centre_cases; result_id uuid;\nBEGIN\n  IF p_platform NOT IN ('facebook','instagram','whatsapp') OR p_problem NOT IN ('connection_attention','sync_attention') OR\n    NOT EXISTS (SELECT 1 FROM public.social_connections c WHERE c.id=p_connection AND c.workspace_id=p_workspace AND c.platform=p_platform) THEN\n    RAISE EXCEPTION 'invalid_support_target';\n  END IF;\n  PERFORM pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_workspace::text || ':' || p_connection::text || ':' || p_problem,0));\n  SELECT * INTO existing FROM public.support_centre_cases WHERE workspace_id=p_workspace AND connection_id=p_connection AND problem=p_problem AND status IN ('pending','running') FOR UPDATE;\n  IF FOUND THEN\n    IF existing.status='running' OR existing.expires_at > clock_timestamp() THEN RETURN existing.id; END IF;\n    UPDATE public.support_centre_cases SET status='expired',completed_at=clock_timestamp() WHERE id=existing.id;\n    INSERT INTO public.support_centre_events(workspace_id,case_id,event) VALUES(p_workspace,existing.id,'expired');\n  END IF;\n  INSERT INTO public.support_centre_cases(workspace_id,connection_id,platform,problem) VALUES(p_workspace,p_connection,p_platform,p_problem) RETURNING id INTO result_id;\n  INSERT INTO public.support_centre_events(workspace_id,case_id,event) VALUES(p_workspace,result_id,'requested');\n  RETURN result_id;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_centre_report",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "uuid",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_workspace uuid, p_connection uuid, p_platform text, p_problem text",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n DELETE FROM public.support_centre_notifications WHERE workspace_id=OLD.workspace_id AND reference_id=OLD.id AND code='handoff_required';\n RETURN OLD;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_delete_notification",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "trigger",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE found_thread uuid;\nBEGIN\n IF p_sequence IS NULL OR p_sequence<0 THEN RAISE EXCEPTION 'invalid_erase_snapshot'; END IF;\n SELECT id INTO found_thread FROM public.support_chat_threads WHERE id=p_thread AND user_id=p_actor AND workspace_id=p_workspace FOR UPDATE;\n IF NOT FOUND THEN RETURN false; END IF;\n IF EXISTS(SELECT 1 FROM public.support_chat_turns WHERE thread_id=found_thread AND turn_number>p_sequence) THEN RAISE EXCEPTION 'erase_snapshot_changed'; END IF;\n DELETE FROM public.support_chat_threads WHERE id=found_thread AND user_id=p_actor AND workspace_id=p_workspace;\n RETURN FOUND;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_erase",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_thread uuid, p_sequence bigint",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE thread uuid;\nBEGIN\n UPDATE public.support_chat_threads SET handoff_consent=true,handoff_until=clock_timestamp(),shared_sequence=(SELECT coalesce(max(turn_number),0) FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace) WHERE user_id=p_actor AND workspace_id=p_workspace RETURNING id INTO thread;\n IF NOT FOUND THEN RAISE EXCEPTION 'thread_unavailable'; END IF;\n PERFORM public.support_centre_notify(p_workspace,'handoff_required',thread);\n RETURN true;\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_handoff",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "boolean",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE boundary bigint;\nBEGIN\n SELECT turn_number INTO boundary FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND request_id=p_before;\n IF NOT FOUND THEN RAISE EXCEPTION 'cursor_unavailable'; END IF;\n RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND turn_number<boundary AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_page",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_before uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\n SELECT jsonb_build_object('thread',t.id,'sequence',coalesce((SELECT max(m.turn_number) FROM public.support_chat_turns m WHERE m.thread_id=t.id),0)) FROM public.support_chat_threads t WHERE t.user_id=p_actor AND t.workspace_id=p_workspace;\n",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_privacy_state",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "sql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nBEGIN\n RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=p_actor AND workspace_id=p_workspace AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_read",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE actor uuid; boundary bigint:=9223372036854775807;\nBEGIN\n SELECT user_id INTO actor FROM public.support_chat_threads WHERE id=p_thread AND workspace_id=p_workspace AND handoff_consent;\n IF NOT FOUND THEN RAISE EXCEPTION 'handoff_consent_required'; END IF;\n IF p_before IS NOT NULL THEN SELECT turn_number INTO boundary FROM public.support_chat_turns WHERE workspace_id=p_workspace AND thread_id=p_thread AND request_id=p_before AND turn_number<=(SELECT shared_sequence FROM public.support_chat_threads WHERE id=p_thread); IF NOT FOUND THEN RAISE EXCEPTION 'cursor_unavailable'; END IF; END IF;\n RETURN coalesce((SELECT jsonb_agg(to_jsonb(t)) FROM (SELECT request_id,question,answer,context,unanswered,created_at FROM public.support_chat_turns WHERE user_id=actor AND workspace_id=p_workspace AND thread_id=p_thread AND turn_number<boundary AND turn_number<=(SELECT shared_sequence FROM public.support_chat_threads WHERE id=p_thread) AND created_at>clock_timestamp()-interval '30 days' ORDER BY turn_number DESC LIMIT 100)t),'[]'::jsonb);\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_review",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": "NULL::uuid",
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_workspace uuid, p_thread uuid, p_before uuid",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE thread public.support_chat_threads; turn public.support_chat_turns;\nBEGIN\n INSERT INTO public.support_chat_threads(workspace_id,user_id) VALUES(p_workspace,p_actor) ON CONFLICT(workspace_id,user_id) DO NOTHING;\n SELECT * INTO thread FROM public.support_chat_threads WHERE workspace_id=p_workspace AND user_id=p_actor FOR UPDATE;\n SELECT * INTO turn FROM public.support_chat_turns WHERE thread_id=thread.id AND request_id=p_request;\n IF FOUND THEN\n  IF turn.question IS DISTINCT FROM p_question OR turn.context IS DISTINCT FROM p_context THEN RAISE EXCEPTION 'request_conflict'; END IF;\n  RETURN to_jsonb(turn)-'workspace_id'-'user_id'-'thread_id';\n END IF;\n IF (SELECT count(*) FROM public.support_chat_turns WHERE thread_id=thread.id AND created_at>clock_timestamp()-interval '1 day')>=100 THEN RAISE EXCEPTION 'chat_limit'; END IF;\n INSERT INTO public.support_chat_turns(thread_id,workspace_id,user_id,request_id,question,answer,context,unanswered) VALUES(thread.id,p_workspace,p_actor,p_request,p_question,p_answer,p_context,p_unanswered) RETURNING * INTO turn;\n UPDATE public.support_chat_threads SET updated_at=clock_timestamp() WHERE id=thread.id;\n RETURN to_jsonb(turn)-'workspace_id'-'user_id'-'thread_id';\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_chat_send",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid, p_workspace uuid, p_request uuid, p_question text, p_answer text, p_context text, p_unanswered boolean",
+        "leakproof": false,
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE last_success timestamptz; latest_status text;\nBEGIN\n IF NOT EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id=p_actor) THEN RAISE EXCEPTION 'owner_required'; END IF;\n SELECT max(completed_at) INTO last_success FROM public.support_retention_runs WHERE status='succeeded';\n SELECT status INTO latest_status FROM public.support_retention_runs ORDER BY started_at DESC LIMIT 1;\n RETURN jsonb_build_object('last_success',last_success,'latest_status',latest_status,'healthy',last_success IS NOT NULL AND last_success>clock_timestamp()-interval '30 hours' AND latest_status='succeeded');\nEND ",
+        "cost": 100,
+        "kind": "f",
+        "name": "support_retention_health",
+        "rows": 0,
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "language": "plpgsql",
+        "parallel": "u",
+        "settings": [
+          "search_path=\"\""
+        ],
+        "arguments": "p_actor uuid",
+        "leakproof": false,
+        "volatility": "v"
+      }
+    ],
+    "sequences": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "USAGE"
+          }
+        ],
+        "name": "support_chat_turns_turn_number_seq",
+        "owner": "postgres",
+        "parameters": {
+          "max": "9223372036854775807",
+          "min": "1",
+          "type": "bigint",
+          "cache": "1",
+          "cycle": false,
+          "start": "1",
+          "increment": "1"
+        }
+      }
+    ],
+    "extra_relations": []
+  },
+  "catalogue_sha256": "95083136b610c0fbe2822a3dee309038f7aacb18e4eed344654dd7d5eba60472",
+  "provenance": {
+    "kind": "synthetic_ci_pg17",
+    "server_version": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "source_commit": "54e50afddbfd8fe4f4f88be53026c0d2b65d7469",
+    "workflow_run": 41813281435,
+    "job_id": 126517604625,
+    "head_commit": "1865c17e32f87cd52d69fb9167eede569ee9a92a"
+  }
+}
