@@ -14,7 +14,7 @@ test("authenticated support restores persisted turns, retries the same request a
   }
   await route.fulfill({json:{scope,turns}});
  });
- await mount(page);await expect(page.getByRole("button",{name:"Speichern und senden",exact:true})).toBeEnabled();
+ await mount(page);await expect(page.getByRole("textbox",{name:"Deine Frage"})).toBeEnabled();
  await page.getByRole("textbox",{name:"Deine Frage"}).fill("Meine technische Frage");await page.getByRole("button",{name:"Speichern und senden",exact:true}).click();
  await page.getByRole("button",{name:"Mit gleicher Anfrage erneut versuchen"}).click();await expect(page.getByText("Gespeicherte Antwort",{exact:false})).toBeVisible();expect(ids[0]).toBe(ids[1]);
  await mount(page);await expect(page.getByText("Meine technische Frage",{exact:false})).toBeVisible();
