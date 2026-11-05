@@ -1,5 +1,7 @@
 "use strict";
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Synchronous helper for PM2's CommonJS configuration.
 const { readFileSync } = require("node:fs");
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Synchronous helper for PM2's CommonJS configuration.
 const { join } = require("node:path");
 
 function parseSupportSetting(source) {

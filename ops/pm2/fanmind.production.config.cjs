@@ -1,5 +1,6 @@
 "use strict";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- PM2 loads its configuration synchronously as CommonJS.
 const { readSupportSetting } = require("./support-runtime-setting.cjs");
 
 const currentReleaseLink = process.env.FANMIND_CURRENT_RELEASE_LINK;
