@@ -16,7 +16,8 @@ import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
 export const MANUAL_FLOW_TASK_ID = "FM-ADMINCHAT-STAGING-HARNESS-20261011-01";
-export const MANUAL_BROWSER_TIMEOUT_MS = 420_000;
+export { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../../e2e-chatadmin-staging/response-budget.mjs";
+import { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../../e2e-chatadmin-staging/response-budget.mjs";
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
 const DATA_ID_KEYS = ["FAN_A_ID","FAN_B_ID","FAN_A_CREATION_ID","FAN_B_CREATION_ID","FOREIGN_CHARACTER_ID"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };

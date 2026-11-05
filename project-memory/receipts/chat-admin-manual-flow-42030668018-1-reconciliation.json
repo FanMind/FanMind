@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "run": "42030668018",
+  "attempt": "1",
+  "sourceCommit": "0abf48a96a80be00d17edfa880e5492bee0a07a9",
+  "target": "vshyhvgcmrlagvfnvomc",
+  "acceptance": "FAILED_NOT_ACCEPTED",
+  "originalReceipt": "chat-admin-manual-flow-42030668018-1.json",
+  "originalReceiptSha256": "e0309ce4786d9ca5acc242efe679c0066323278443832ddf50f3573d46c77775",
+  "artifactId": "13416271709",
+  "artifactSha256": "165b9257942c248070fa52174d6ac21c7e7ebeb625eca604ce00fab00bb3eb06",
+  "failure": {
+    "stage": "compliment",
+    "kind": "action_timeout",
+    "http": "none",
+    "network": "none",
+    "sessionCleanup": "passed"
+  },
+  "reconciliation": "READONLY_ZERO_RESIDUE_AND_DRAINED_TRANSPORTS",
+  "independentObservedAt": "2026-11-05T12:57:23.534777Z",
+  "independentCounts": {
+    "allThreeCharacters": 0,
+    "runFansAndCreationIdsAndChildren": 0,
+    "runConversationsAndChildren": 0,
+    "runMessagesAndChildren": 0,
+    "workspaceCapability": 0,
+    "boundUsageSinceReceiptStart": 0,
+    "runSessionsSinceReceiptStart": 0,
+    "activeChatQueries": 0,
+    "idleChatTransactions": 0
+  },
+  "evidence": [
+    "Independent BEGIN READ ONLY/ROLLBACK queried only the exact receipt-bound fixture identities and counts.",
+    "Browser failed normally with action_timeout, not process_timeout; finally awaited logout, all tracked transports, context closures and a final drain. Network none excludes failed or timed-out transports.",
+    "The deployed API awaits provider, usage, persistence and knowledge work before response; no detached work occurs in this route.",
+    "Actual exact cleanup ran before inflight_reconciliation_required withheld success; full independent zero counts confirm its result.",
+    "Original inFlightUncertain=true remains unchanged; this separate reconciliation does not turn the failed acceptance into PASS."
+  ]
+}
