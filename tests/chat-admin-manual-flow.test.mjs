@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
-  validateManualFlowEnvironment, verifyManualFlowRelease,
+  validateManualFlowEnvironment, verifyManualFlowRelease, runManualFlowPostBrowserPhase,
   buildManualFlowSql, runWithGuaranteedCleanup,
   completeManualFlowCleanup,
   reserveManualFlowReceipt, authorizeReservedManualFlow,
@@ -415,4 +415,27 @@ test("manual response, transport, full flow and parent deadlines nest around the
   assert.deepEqual(seen.map(item=>item.timeout),[CHAT_ADMIN_RESPONSE_TIMEOUT_MS,45_000,45_000]);
   assert.ok(seen.every(item=>item.maxRedirects===0&&item.maxRetries===0));
   await violations.stop();assert.equal(violations(),0);
+});
+
+test("post-browser phases preserve successful release and persistence checks",async()=>{
+ const emitted=[],calls=[];
+ for(const phase of ['receipt','release','persistence']){
+  assert.equal(await runManualFlowPostBrowserPhase(phase,async()=>{calls.push(phase);return phase;},line=>emitted.push(line)),phase);
+ }
+ assert.deepEqual(calls,['receipt','release','persistence']);
+ assert.deepEqual(emitted,calls.map(phase=>`CHAT_ADMIN_MANUAL_POST_BROWSER_PHASE=${phase}`));
+});
+test("post-browser phases redact unexpected exceptions and preserve existing fail-closed errors",async()=>{
+ for(const phase of ['receipt','release','persistence']){
+  const emitted=[];
+  await assert.rejects(()=>runManualFlowPostBrowserPhase(phase,async()=>{throw new TypeError('private transport detail');},line=>emitted.push(line)),{message:`CHAT_ADMIN_MANUAL_FLOW_ERROR=post_browser_${phase}`});
+  assert.equal(emitted.length,1);assert.doesNotMatch(emitted.join('\n'),/private transport detail/);
+ }
+ const known=new Error('CHAT_ADMIN_MANUAL_FLOW_ERROR=database_operation');
+ await assert.rejects(()=>runManualFlowPostBrowserPhase('persistence',async()=>{throw known;},()=>{}),error=>error===known);
+});
+test("post-browser phases reject unknown phase before executing an operation",async()=>{
+ let called=false;
+ await assert.rejects(()=>runManualFlowPostBrowserPhase('private detail',async()=>{called=true;},()=>{throw Error('must not emit')}),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=post_browser_phase'});
+ assert.equal(called,false);
 });
