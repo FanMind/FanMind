@@ -437,6 +437,8 @@ fi
 
   const baseEnv = {
     ...process.env,
+    // Each synthetic scenario owns this setting; never inherit the real deploy guard.
+    FANMIND_REQUIRE_SUPPORT_DISABLED: "false",
     PATH: `${fakeBin}:${process.env.PATH}`,
     FANMIND_SOURCE_DIR: source,
     FANMIND_RELEASE_ROOT: releaseRoot,
