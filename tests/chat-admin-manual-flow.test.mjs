@@ -2,6 +2,7 @@ import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS, CHAT_ADMIN_FLOW_TIMEOUT_MS, CHAT_ADMIN_
 import { CHAT_ADMIN_MODEL_TIMEOUT_MS } from "../src/lib/chatAdminModelPolicy.mjs";
 import { classifyManualBrowserFailure } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import test from "node:test";
+import { EventEmitter } from "node:events";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -9,7 +10,7 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
-  validateManualFlowEnvironment, verifyManualFlowRelease, runManualFlowPostBrowserPhase,
+  validateManualFlowEnvironment, verifyManualFlowRelease, fetchManualFlowRelease, runManualFlowPostBrowserPhase,
   buildManualFlowSql, runWithGuaranteedCleanup,
   completeManualFlowCleanup,
   reserveManualFlowReceipt, authorizeReservedManualFlow,
@@ -438,4 +439,67 @@ test("post-browser phases reject unknown phase before executing an operation",as
  let called=false;
  await assert.rejects(()=>runManualFlowPostBrowserPhase('private detail',async()=>{called=true;},()=>{throw Error('must not emit')}),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=post_browser_phase'});
  assert.equal(called,false);
+});
+
+function releaseTransportFixture({status=200,encoding,body='{"application":"fanmind","runtimeEnvironment":"staging","releaseCommit":"'+env.GITHUB_SHA+'"}',error,truncated=false,stall=false}={}) {
+  const calls=[];
+  const requestImpl=(url,options,callback)=>{
+    const request=new EventEmitter();request.destroy=()=>{};
+    request.end=()=>queueMicrotask(()=>{
+      if(error){request.emit('error',error);return;}
+      if(stall){options.signal.addEventListener('abort',()=>request.emit('error',{code:'ABORT_ERR'}),{once:true});return;}
+      const response=new EventEmitter();response.statusCode=status;response.headers=encoding?{'content-encoding':encoding}:{};response.destroy=()=>{};
+      callback(response);
+      if(truncated){response.emit('aborted');return;}
+      response.emit('data',Buffer.from(body));response.emit('end');
+    });
+    calls.push({url,options});return request;
+  };
+  return {calls,requestImpl};
+}
+const releaseOptions=()=>({redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15_000)});
+
+test('release transport uses one fresh TLS connection and preserves exact release binding',async()=>{
+  const fixture=releaseTransportFixture();
+  await verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,fixture.requestImpl));
+  assert.equal(fixture.calls.length,1);
+  const {url,options}=fixture.calls[0];
+  assert.equal(url,'https://staging.fanmind.ch/api/version');assert.equal(options.agent,false);
+  assert.equal(options.method,'GET');assert.equal(options.headers['accept-encoding'],'identity');
+  assert.ok(options.signal instanceof AbortSignal);
+  assert.equal(options.rejectUnauthorized,undefined); // Node's TLS verification remains enabled.
+  const wrong=releaseTransportFixture({body:JSON.stringify({application:'fanmind',runtimeEnvironment:'staging',releaseCommit:'b'.repeat(40)})});
+  await assert.rejects(verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,wrong.requestImpl)),/FLOW_ERROR=release$/u);
+});
+
+test('release transport refuses redirects, non-success, compression, empty and oversized bodies without retry',async()=>{
+  for(const input of [{status:302},{status:503},{encoding:'gzip'},{body:''},{body:'x'.repeat(8193)}]){
+    const fixture=releaseTransportFixture(input);
+    await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),/FLOW_ERROR=release$/u);
+    assert.equal(fixture.calls.length,1);
+  }
+  const fixture=releaseTransportFixture();
+  assert.throws(()=>fetchManualFlowRelease('https://fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),/release_transport_config/u);
+  assert.equal(fixture.calls.length,0);
+});
+
+test('release transport rejects TLS, DNS and connection errors with fixed redacted codes',async()=>{
+  for(const [code,expected] of [['CERT_HAS_EXPIRED','tls'],['ERR_TLS_CERT_ALTNAME_INVALID','tls'],['ENOTFOUND','dns'],['ECONNRESET','connection'],['UNKNOWN_PRIVATE_SOCKET','']]){
+    const fixture=releaseTransportFixture({error:Object.assign(new Error('private-secret-content'),{code})});
+    await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),{message:`CHAT_ADMIN_MANUAL_FLOW_ERROR=release_transport${expected?'_'+expected:''}`});
+    assert.equal(fixture.calls.length,1);
+  }
+});
+
+test('release transport enforces a total abort deadline and rejects truncated or invalid JSON',async()=>{
+  const fixture=releaseTransportFixture({stall:true});
+  const controller=new AbortController();
+  const pending=fetchManualFlowRelease('https://staging.fanmind.ch/api/version',{...releaseOptions(),signal:controller.signal},fixture.requestImpl);
+  await Promise.resolve();controller.abort();
+  await assert.rejects(pending,/release_transport_timeout$/u);
+  assert.equal(fixture.calls.length,1);
+  const truncated=releaseTransportFixture({truncated:true});
+  await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),truncated.requestImpl),/release_transport_truncated$/u);
+  const invalid=releaseTransportFixture({body:'<html>private</html>'});
+  await assert.rejects(verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,invalid.requestImpl)),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=release_json'});
 });
