@@ -644,6 +644,7 @@ test('Production owner requires the actual configured platform Admin and fixed t
 test('scheduled cleanup allows only explicitly enabled retention/monitor on pinned reviewed source', () => {
   const scheduled = { ...base, GITHUB_EVENT_NAME: 'schedule', GITHUB_SHA: 'b'.repeat(40), FANMIND_SUPPORT_SCHEDULE_ENABLED: 'true' };
   assert.equal(targetFor(scheduled, 'monitor', email).commit, commit);
+  assert.equal(targetFor({ ...scheduled, FANMIND_ADMIN_EMAILS: '' }, 'retention', email).commit, commit);
   assert.throws(() => targetFor(scheduled, 'owner', email));
   assert.throws(() => targetFor({ ...scheduled, FANMIND_SUPPORT_SCHEDULE_ENABLED: 'false' }, 'retention', email));
 });

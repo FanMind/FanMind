@@ -44,8 +44,10 @@ export function targetFor(env, action, email) {
   if ((!direct && !pooler) || (env.FANMIND_BACKUP_DB_PORT || '5432') !== '5432' || env.FANMIND_BACKUP_DB_NAME !== 'postgres') fail('database_binding_invalid');
   if (!/^\/etc\/fanmind-backup\/[a-zA-Z0-9_.-]+$/.test(env.FANMIND_BACKUP_PGPASSFILE ?? '')) fail('passfile_path_invalid');
   const emails = (env.FANMIND_ADMIN_EMAILS ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-  if (!emails.length || emails.some(s => !EMAIL.test(s))) fail('admin_allowlist_invalid');
-  if (!emails.includes(email)) fail('owner_not_platform_admin');
+  if (['verify', 'owner', 'activate'].includes(action)) {
+    if (!emails.length || emails.some(s => !EMAIL.test(s))) fail('admin_allowlist_invalid');
+    if (!emails.includes(email)) fail('owner_not_platform_admin');
+  }
   return { host, user, emails, email, commit: env.FANMIND_SUPPORT_REVIEWED_COMMIT };
 }
 
@@ -129,12 +131,15 @@ export function runProductionControl(action, email, env = process.env) {
     if (db(`BEGIN READ ONLY; ${roleBoundarySql()} ROLLBACK;`) !== 't') fail('role_boundary_invalid');
     const catalogue = JSON.parse(db(`BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; ${catalogueSql()} ROLLBACK;`));
     if (classify(catalogue, reference) !== 'EXACT') fail('schema_not_exact');
-    const owners = JSON.parse(db(`BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; SELECT coalesce(jsonb_agg(id),'[]'::jsonb) FROM auth.users WHERE lower(email)=${literal(target.email)} AND email_confirmed_at IS NOT NULL AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<clock_timestamp()); ROLLBACK;`));
-    if (!Array.isArray(owners) || owners.length !== 1 || !UUID.test(owners[0])) fail('owner_identity_invalid');
-    target.uuid = owners[0];
-    let bound = db(ownerSql(target)) === 't';
-    if (action === 'owner') { db(ownerSql(target, true)); bound = db(ownerSql(target)) === 't'; }
-    if (action !== 'verify' && !bound) fail('owner_not_bound');
+    let bound = false;
+    if (['verify', 'owner', 'activate'].includes(action)) {
+      const owners = JSON.parse(db(`BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; SELECT coalesce(jsonb_agg(id),'[]'::jsonb) FROM auth.users WHERE lower(email)=${literal(target.email)} AND email_confirmed_at IS NOT NULL AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<clock_timestamp()); ROLLBACK;`));
+      if (!Array.isArray(owners) || owners.length !== 1 || !UUID.test(owners[0])) fail('owner_identity_invalid');
+      target.uuid = owners[0];
+      bound = db(ownerSql(target)) === 't';
+      if (action === 'owner') { db(ownerSql(target, true)); bound = db(ownerSql(target)) === 't'; }
+      if (action !== 'verify' && !bound) fail('owner_not_bound');
+    }
     if (action === 'retention') {
       const live = version();
       if (live.application !== 'fanmind' || live.runtimeEnvironment !== 'production' || !SHA.test(live.releaseCommit ?? '')) fail('live_version_invalid');
@@ -149,7 +154,7 @@ export function runProductionControl(action, email, env = process.env) {
     }
     if (action === 'activate') activate(target, env);
     console.log(`SUPPORT_PRODUCTION_${action.toUpperCase()}=PASS`);
-    console.log(`SUPPORT_PRODUCTION_OWNER_BOUND=${bound}`);
+    if (['verify', 'owner', 'activate'].includes(action)) console.log(`SUPPORT_PRODUCTION_OWNER_BOUND=${bound}`);
   } finally { if (descriptor !== undefined) closeSync(descriptor); rmSync(directory, { recursive: true, force: true }); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
