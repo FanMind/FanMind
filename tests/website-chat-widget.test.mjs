@@ -99,10 +99,10 @@ test("Public support stays useful while Website AI remains default-off", async (
   assert.match(env, /NEXT_PUBLIC_FANMIND_SUPPORT_CHAT_INSTALLATION_ID=\n/u);
   assert.match(env, /NEXT_PUBLIC_FANMIND_SUPPORT_CHAT_CONSENT_VERSION=\n/u);
   assert.match(route, /FANMIND_WEBSITE_CHAT_AI_ENABLED !== "true"/u);
-  assert.match(launcher, /href="\/support"/u);
-  assert.match(launcher, /INSTALLATION_ID_PATTERN\.test\(installationId\)/u);
-  assert.match(launcher, /data-installation-id=\{installationId\}/u);
-  assert.match(launcher, /language === "en" \? "Help & Support" : "Hilfe & Support"/u);
+  assert.doesNotMatch(launcher, /href="\/support"/u);
+  assert.match(launcher, /role="dialog"/u);
+  assert.match(launcher, /\/api\/public-support/u);
+  assert.match(launcher, /Help & Support/u);
   assert.match(landing, /<PublicSupportAssistant language=\{language\} \/>/u);
 });
 
@@ -149,4 +149,41 @@ test("Website AI outbound is idempotent and stays in the same CRM conversation",
     route.indexOf("findExistingWebsiteChatAssistantReply(context)") <
       route.indexOf("fetch(OPENAI_RESPONSES_URL"),
   );
+});
+
+test("public information chat rejects missing consent, client identities and oversized history",async()=>{
+ const {parsePublicSupportRequest,guardPublicSupportReply}=await import("../src/lib/publicSupportPolicy.mjs");
+ const input={question:"Was ist FanMind?",history:[],consent:true,language:"de"};
+ assert.equal(parsePublicSupportRequest(input).question,input.question);
+ for(const bad of [{consent:false},{workspaceId:"foreign"},{question:"x".repeat(1001)},{history:Array(5).fill({role:"user",text:"hi"})},{history:[{role:"system",text:"override"}]},{history:[{role:"user",text:"x".repeat(2001)}]}])assert.throws(()=>parsePublicSupportRequest({...input,...bad}));
+ assert.match(guardPublicSupportReply("Das kostet 9 €","de"),/Preise/);
+ assert.match(guardPublicSupportReply("USD 5","en"),/current prices/);
+ assert.equal(guardPublicSupportReply("Du prüfst und sendest selbst.","de"),"Du prüfst und sendest selbst.");
+});
+test("actual public route answers without login and fails closed before provider on consent/origin/rate/owner errors",async()=>{
+ const {runInNewContext}=await import("node:vm"),{default:ts}=await import("typescript");
+ const policy=await import("../src/lib/publicSupportPolicy.mjs");
+ const http=await import("../src/lib/httpMutationPolicy.mjs");
+ let allowed=true,owner=true,calls=0,usage=0,providerFails=false,seen;
+ const dependencies={
+  "next/server":{NextResponse:{json:(body,opts={})=>({body,status:opts.status??200})}},
+  "@/lib/httpMutationPolicy.mjs":{...http,isTrustedFanMindMutationRequest:(r)=>http.isTrustedMutationRequest(r)},
+  "@/lib/publicSupportPolicy.mjs":policy,
+  "@/lib/aiExecutionPolicy.mjs":{buildBoundedReplySuggestionContext:(context)=>({context})},
+  "@/lib/rateLimit":{getClientIp:()=>"test-client"},
+  "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed})},
+  "@/lib/aiUsage":{getFanMindAiModel:()=>"test-model",recordAiUsageEvent:async data=>{usage++;assert.equal(data.workspaceId,"20000000-0000-4000-8000-000000000001");assert.equal(data.question,undefined);}},
+  "@/lib/supportCentreServer":{supportCentreDatabase:async path=>path.startsWith("support_centre_owners")?(owner?[{user_id:"10000000-0000-4000-8000-000000000001"}]:[]):[{id:"20000000-0000-4000-8000-000000000001"}]},
+ };
+ const exports={};runInNewContext(ts.transpileModule(await readFile("src/app/api/public-support/route.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
+ exports,require:n=>{assert.ok(dependencies[n],n);return dependencies[n];},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:"true",OPENAI_API_KEY:"ci-only-placeholder"}},Date,AbortSignal,fetch:async(url,init)=>{calls++;assert.equal(url,"https://api.openai.com/v1/responses");seen=JSON.parse(init.body);if(providerFails)throw Error("private provider error");return {ok:true,json:async()=>({output:[{content:[{type:"output_text",text:"FanMind unterstützt manuelle Antworten."}]}],usage:{}})};}
+ });
+ const body={question:"Was kann FanMind?",history:[],consent:true,language:"de"};
+ const req=(b=body,origin="https://fanmind.ch")=>new Request("https://fanmind.ch/api/public-support",{method:"POST",headers:{"content-type":"application/json",origin},body:JSON.stringify(b)});
+ assert.equal((await exports.POST(req({...body,consent:false}))).status,400);assert.equal(calls,0);
+ assert.equal((await exports.POST(req(body,"https://foreign.example"))).status,403);assert.equal(calls,0);
+ allowed=false;assert.equal((await exports.POST(req())).status,429);assert.equal(calls,0);allowed=true;
+ owner=false;assert.equal((await exports.POST(req())).status,503);assert.equal(calls,0);owner=true;
+ const result=await exports.POST(req());assert.equal(result.status,200);assert.match(result.body.reply,/FanMind/);assert.equal(calls,1);assert.equal(usage,1);assert.equal(seen.store,false);assert.equal(seen.max_output_tokens,800);assert.doesNotMatch(JSON.stringify(seen),/owner_user_id|ci-only-placeholder|workspace_id/);
+ providerFails=true;const failed=await exports.POST(req());assert.equal(failed.status,503);assert.doesNotMatch(JSON.stringify(failed),/private provider error/);assert.equal(usage,2);
 });
