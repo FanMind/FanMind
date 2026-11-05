@@ -1,3 +1,4 @@
+import "./staging-support-media-runtime.cases.mjs";
 import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS, CHAT_ADMIN_FLOW_TIMEOUT_MS, CHAT_ADMIN_RUNNER_TIMEOUT_MS } from "../e2e-chatadmin-staging/response-budget.mjs";
 import { CHAT_ADMIN_MODEL_TIMEOUT_MS } from "../src/lib/chatAdminModelPolicy.mjs";
 import { classifyManualBrowserFailure } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";

@@ -69,3 +69,10 @@ Before activation source revert is sufficient. After activation use reviewed
 Staging deactivate, inspect private receipt and effective flags; preserve schema
 and all data. Never restore enabled flags on failed deactivation or drop populated
 objects. Overall functional parity and complete acceptance remain NO.
+
+CI follow-up: the first required Operations run rejected the changed package.json
+checksum in the unrelated Capacity source contract. Preserve that pin and restore
+package.json byte-for-byte; register the new runtime cases through the already
+owned manual-flow test module instead. No Capacity pin, assertion or gate changes.
+All focused source/supply-chain/ownership checks remain green. Independent final
+source review GO is conditional on actual native PG17 CI, never a target claim.
