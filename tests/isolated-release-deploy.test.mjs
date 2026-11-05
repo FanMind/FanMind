@@ -8,6 +8,7 @@ import {
   mkdtemp,
   readFile,
   readlink,
+  readdir,
   rm,
   symlink,
   writeFile,
@@ -293,6 +294,7 @@ test("legacy migration is followed by a delete-free rolling release in an execut
   const fakeBin = join(root, "bin");
   const pm2State = join(root, "pm2-state.json");
   const pm2Actions = join(root, "pm2-actions.log");
+  const operationsHeads = join(root, "operations-heads.log");
   const deployScript = join(process.cwd(), scriptPath);
 
   await mkdir(join(seed, "scripts", "operations"), { recursive: true });
@@ -389,7 +391,14 @@ fs.writeFileSync(statePath, JSON.stringify(state));
     join(fakeBin, "npm"),
     `#!/usr/bin/env bash
 set -euo pipefail
+if [[ "\${1:-}" == "run" ]] && [[ "\${2:-}" == "test:operations" ]]; then
+  [[ -d .git && ! -e .env.production ]]
+  [[ "$PWD" != "$FANMIND_SOURCE_DIR" ]]
+  git rev-parse HEAD >> "$FAKE_OPERATIONS_HEADS"
+  [[ -z "\${FAKE_OPERATIONS_FAIL:-}" ]]
+fi
 if [[ "\${1:-}" == "run" ]] && [[ "\${2:-}" == "build" ]]; then
+  [[ ! -e .git ]]
   mkdir -p .next
   printf '{"config":{"deploymentId":"%s"}}\\n' "$NEXT_DEPLOYMENT_ID" > .next/required-server-files.json
 fi
@@ -435,14 +444,40 @@ fi
     FANMIND_DEPLOY_BASE_URL: "https://fanmind.invalid",
     FAKE_PM2_STATE: pm2State,
     FAKE_PM2_ACTIONS: pm2Actions,
+    FAKE_OPERATIONS_HEADS: operationsHeads,
     FAKE_LIVE_COMMIT: "0".repeat(40),
   };
 
+  const rejected = spawnSync("bash", [deployScript, firstCommit], {
+    env: { ...baseEnv, FAKE_OPERATIONS_FAIL: "true" }, encoding: "utf8",
+  });
+  assert.notEqual(rejected.status, 0);
+  assert.equal(await readlink(currentLink), oldRelease);
+  assert.doesNotMatch(await readFile(pm2Actions, "utf8"), /^(delete|start|reload)$/m);
+  assert.deepEqual(await readdir(releaseRoot), ["0".repeat(40)]);
+  await writeFile(pm2Actions, "");
+  const enabledSupport = spawnSync("bash", [deployScript, firstCommit], {
+    env: { ...baseEnv, FANMIND_REQUIRE_SUPPORT_DISABLED: "true" }, encoding: "utf8",
+  });
+  assert.notEqual(enabledSupport.status, 0);
+  assert.match(enabledSupport.stderr, /Support must remain disabled/);
+  assert.equal(await readlink(currentLink), oldRelease);
+  assert.doesNotMatch(await readFile(pm2Actions, "utf8"), /^(delete|start|reload)$/m);
+  await writeFile(pm2Actions, "");
+  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=false\n");
+  const disabledSupport = runChecked("bash", [deployScript, firstCommit], {
+    env: { ...baseEnv, FANMIND_REQUIRE_SUPPORT_DISABLED: "true" },
+  });
+  assert.match(disabledSupport.stdout, /SUPPORT_DEPLOY_DISABLED=PASS/);
+  // Existing normal deployments must still preserve an already enabled flag.
+  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n");
+  await writeFile(pm2Actions, "");
   const firstDeploy = runChecked("bash", [deployScript, firstCommit], { env: baseEnv });
-  assert.match(firstDeploy.stdout, /migrating legacy PM2 process/u);
+  assert.deepEqual((await readFile(operationsHeads, "utf8")).trim().split("\n"), [firstCommit, firstCommit, firstCommit]);
+  assert.match(firstDeploy.stdout, /switching release with PM2 rolling reload/u);
   assert.equal(await readlink(currentLink), join(releaseRoot, firstCommit));
   const firstActions = await readFile(pm2Actions, "utf8");
-  assert.match(firstActions, /^jlist\njlist\ndelete\nstart\njlist\nsave\n/m);
+  assert.match(firstActions, /^jlist\njlist\nreload\njlist\nsave\n/m);
 
   await writeFile(join(seed, "release-marker.txt"), "second release\n");
   runChecked("git", ["add", "release-marker.txt"], { cwd: seed });

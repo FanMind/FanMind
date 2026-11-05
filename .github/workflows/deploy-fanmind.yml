@@ -13,6 +13,11 @@ on:
       expected_current_release:
         type: string
         required: true
+      support_must_remain_disabled:
+        description: Verify Support stays off before and after this deployment
+        type: boolean
+        default: false
+        required: true
 
 concurrency:
   group: fanmind-production-deploy
@@ -65,6 +70,7 @@ jobs:
         env:
           EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_main_commit }}
           EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
+          FANMIND_REQUIRE_SUPPORT_DISABLED: ${{ inputs.support_must_remain_disabled }}
         run: |
           set -euo pipefail
 
@@ -274,3 +280,4 @@ jobs:
           fi
 
           echo "FanMind deployment finished successfully at $RELEASE_COMMIT."
+
