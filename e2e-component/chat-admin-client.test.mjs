@@ -96,6 +96,7 @@ test("CRM workspace prioritizes Character, Fan list and selected conversation",a
 
 for(const mode of ["create","profile","knowledge"])test(`Fan ${mode} form scrolls independently and keeps its save action reachable`,async t=>{
  const page=await mount(t);await page.setViewportSize({width:1280,height:520});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
  await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
  if(mode==="create")await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
  else{await openFan(page,"Fan A1");await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();await page.getByRole("button",{name:mode==="profile"?"Bearbeiten":"Notizen und Fakten",exact:true}).click();}
@@ -115,6 +116,7 @@ for(const mode of ["create","profile","knowledge"])test(`Fan ${mode} form scroll
 
 test("Fan creation stays reachable by keyboard on a narrow viewport",async t=>{
  const page=await mount(t);await page.setViewportSize({width:390,height:740});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
  await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
  await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
  await page.getByLabel("Name",{exact:true}).fill("Synthetic mobile fan");
@@ -127,6 +129,18 @@ test("Fan creation stays reachable by keyboard on a narrow viewport",async t=>{
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),"no horizontal page overflow");
  await page.keyboard.press("Enter");await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  assert.equal(await page.evaluate(()=>window.testRequests[0].body.display_name),"Synthetic mobile fan");
+});
+
+test("conversation status remains dismissible without reserving space below the composer",async t=>{
+ const page=await mount(t);await page.setViewportSize({width:1280,height:720});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await openFan(page,"Fan A1");const composer=page.locator(".messageComposer"),history=page.locator(".conversationScroll");
+ const composerBefore=await composer.boundingBox(),historyBefore=await history.boundingBox();
+ await generate(page);await page.evaluate(()=>window.testRequests[0].reject(new Error("network")));
+ await expect(page.getByRole("status")).toContainText("fehlgeschlagen");
+ assert.deepEqual(await composer.boundingBox(),composerBefore);assert.deepEqual(await history.boundingBox(),historyBefore);
+ await page.getByRole("button",{name:"Meldung schließen",exact:true}).click();await expect(page.getByRole("status")).toHaveCount(0);
 });
 
 test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
@@ -178,6 +192,45 @@ test("network failure is visible and retry reuses its idempotency key without st
 test("Fan creation uses the selected Character and opens its persisted Conversation",async t=>{const page=await mount(t);await page.getByRole("button",{name:"Fan hinzufügen"}).click();await page.getByLabel("Name",{exact:true}).fill("Fan Neu");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const body=await page.evaluate(()=>window.testRequests[0].body);assert.equal(body.character_id,characterA.id);assert.match(body.creation_id,/^[0-9a-f-]{36}$/u);const created={...fanA1,id:"30000000-0000-4000-8000-000000000009",workspace_id:characterA.workspace_id,display_name:"Fan Neu"};await page.evaluate(async created=>{window.fixture.fansByCharacter[created.character_id].push(created);window.fixture.conversationFor[created.id]={id:"40000000-0000-4000-8000-000000000009",workspace_id:created.workspace_id,character_id:created.character_id,fan_id:created.id};window.fixture.historyFor[created.id]=[];window.testRequests[0].resolve(Response.json({fan:created},{status:201}));},created);await expect(page.getByRole("region",{name:"Gespräch mit Fan Neu",exact:true})).toBeVisible();});
 test("switching from edit to add resets uncontrolled Fan fields",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();await page.getByRole("button",{name:"Bearbeiten",exact:true}).click();await expect(page.getByLabel("Name",{exact:true})).toHaveValue("Fan A1");await page.getByRole("button",{name:"Fan hinzufügen"}).click();await expect(page.getByLabel("Name",{exact:true})).toHaveValue("");await expect(page.getByLabel("Plattform / Quelle")).toHaveValue("OnlyFans");});
 test("copy-and-use confirmation is serialized against double clicks",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.evaluate(()=>{const buttons=[...document.querySelectorAll("button")].filter(button=>button.textContent==="Kopieren und verwenden");buttons[0].click();buttons[1].click();});await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),1);const confirmation=await page.evaluate(()=>window.testRequests.find(r=>r.url==="/api/chatadmin/conversations").body);assert.match(confirmation.confirmation_id,/^[0-9a-f-]{36}$/u);});
+
+test("editing a generated suggestion copies and persists only the user's final wording",async t=>{
+ const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);
+ await page.getByRole("button",{name:"Vorschlag 2 bearbeiten",exact:true}).click();
+ const editor=page.getByLabel("Deine Antwort",{exact:true});await expect(editor).toHaveValue(drafts[1]);
+ const edited="Danke dir! Was hat dich auf mein Profil neugierig gemacht?";await editor.fill(edited);
+ await expect(page.getByText(drafts[1],{exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Bearbeitete Antwort kopieren und verwenden",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ const saved=await page.evaluate(()=>window.testRequests[1].body);
+ assert.equal(saved.content,edited);assert.equal(saved.fan_id,fanA1.id);assert.equal(saved.conversation_id,conversationFor[fanA1.id].id);
+ assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),edited);
+ await page.evaluate(({fanId,conversationId,content})=>{
+  const message={id:"edited-confirmation",fan_id:fanId,conversation_id:conversationId,direction:"confirmed_reply",content,created_at:"2026-11-05T00:00:00Z"};
+  window.fixture.historyFor[fanId].push(message);window.testRequests[1].resolve(Response.json({message}));
+ },{fanId:fanA1.id,conversationId:conversationFor[fanA1.id].id,content:edited});
+ await expect(editor).toHaveCount(0);await expect(page.locator('article[data-direction="confirmed_reply"]').filter({hasText:edited})).toHaveCount(1);
+});
+
+test("stored suggestions can be rewritten; failed confirmation retains the edit and retry identity",async t=>{
+ const page=await mount(t);await openFan(page,"Fan A1");await page.getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true}).click();
+ await page.getByRole("button",{name:"KI-Vorschlag bearbeiten",exact:true}).first().click();
+ const editor=page.getByLabel("Deine Antwort",{exact:true});await expect(editor).toHaveValue("Stored suggestion one");await editor.fill("Meine eigene Antwort.");
+ const use=page.getByRole("button",{name:"Bearbeitete Antwort kopieren und verwenden",exact:true});await use.click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ await page.evaluate(()=>window.testRequests[0].resolve(Response.json({error:"temporary_unavailable"},{status:503})));
+ await expect(page.getByRole("status")).toContainText("Bestätigung wurde abgewiesen");await expect(editor).toHaveValue("Meine eigene Antwort.");
+ await use.click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ const attempts=await page.evaluate(()=>window.testRequests.map(r=>r.body));assert.equal(attempts[0].confirmation_id,attempts[1].confirmation_id);assert.equal(attempts[1].content,"Meine eigene Antwort.");
+});
+
+test("discarding an edit or switching Fans never persists or transfers an unconfirmed draft",async t=>{
+ const page=await mount(t);await openFan(page,"Fan A1");await page.getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true}).click();
+ await page.getByRole("button",{name:"KI-Vorschlag bearbeiten",exact:true}).first().click();await page.getByLabel("Deine Antwort",{exact:true}).fill("Nicht verwenden.");
+ await page.getByRole("button",{name:"Bearbeitung verwerfen",exact:true}).click();await expect(page.getByLabel("Deine Antwort",{exact:true})).toHaveCount(0);
+ await expect(page.getByText("Stored suggestion one",{exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"KI-Vorschlag bearbeiten",exact:true}).first().click();await page.getByLabel("Deine Antwort",{exact:true}).fill("Nur für Fan A1.");
+ await openFan(page,"Fan A2");await expect(page.getByLabel("Deine Antwort",{exact:true})).toHaveCount(0);assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+});
 
 test("delayed copy-and-use confirmation cannot reopen a previously selected Fan",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.getByRole("button",{name:"Kopieren und verwenden"}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);await openFan(page,"Fan A2");await page.evaluate(binding=>window.testRequests[1].resolve(Response.json({message:{id:"confirmed-a1",fan_id:binding.fanId,conversation_id:binding.conversationId}})),{fanId:fanA1.id,conversationId:conversationFor[fanA1.id].id});await expect(page.getByRole("region",{name:"Gespräch mit Fan A2",exact:true})).toBeVisible();await expect(page.getByText("A1 mag Katzen",{exact:true})).toHaveCount(0);});
 

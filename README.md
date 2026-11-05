@@ -865,6 +865,8 @@ einer noch offenen Frage. Bekannte Angaben und Grenzen bleiben maßgeblich.
 Reine Komplimente zu
 Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält nur
 Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
+Vorschläge lassen sich vor dem Kopieren bearbeiten oder vollständig umschreiben;
+als verwendet gespeichert wird nur die endgültige manuell bestätigte Fassung.
 Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:
 `docs/CHAT_ADMIN_REPLY_STYLE.md`. Diese Source-Änderung belegt keine Live-Abnahme.
 

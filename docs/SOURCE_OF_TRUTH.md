@@ -1466,6 +1466,9 @@ eigenen kontextbezogenen Gedanken oder höchstens eine Anschlussfrage je Vorschl
 weiterführen. Eine Frage darf Interesse zeigen, ohne eine Sachlücke schließen zu
 müssen. Keine Fragepflicht, kein Nachhaken bei einer noch offenen Frage, keine
 erneute Abfrage bekannter Angaben und keine erfundenen Gemeinsamkeiten.
+Neue und gespeicherte Vorschläge können vor Verwendung bearbeitet werden. Nur
+die endgültige bestätigte Fassung wird über den bestehenden Bestätigungspfad
+gespeichert; Originalentwürfe bleiben unverändert. Kein automatischer Versand.
 Ein reines Kompliment über Medien berechtigt nicht zur Preisnennung; ausdrückliche
 Medien-/Preisanfragen behalten die gebundene Offer-Auflösung. Der KI-Verlauf enthält
 nur `fan_inbound` und `confirmed_reply`; unbenutzte `suggested_reply` bleiben
