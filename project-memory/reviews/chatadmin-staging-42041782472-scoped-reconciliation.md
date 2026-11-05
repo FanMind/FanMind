@@ -64,3 +64,28 @@ confirmed: Production a798d7938bb4e7e168f615f0c32d1a603dd47d4a,
 Staging1184616ddea8c1ea2fa93b8d74a19ab28eb8d35a.
 Earlier unknown-release/unknown-provider-backup statements are historical.
 No migration, deployment, activation or data mutation occurred.
+
+
+## Distinct later live acceptance — run42092700717
+
+Current source/deployed Staging a798d7938bb4e7e168f615f0c32d1a603dd47d4a
+was tested once in actual workflow run42092700717/job127474690048.
+Browser stagecomplete/outcomepassed/networknone/sessionCleanuppassed and
+BROWSER=PASS at2026-11-05T19:23:08Z; full browser scenario includes invented_price.
+CLEANUP=PASS19:23:11,ABSENCE=PASS19:23:13. A subsequent unclassified error yields
+FLOW_ERROR=unexpected19:23:20; overall job remainsFAIL, final cleanupNOT_NEEDED.
+
+Original Recovery artifact13446715495 SHA256
+b33c57aff3d2cc8aba34a555117bced399a794343b958f0082970ea817fda969
+was independently downloaded/verified. Separate receipt-bound Staging read-only
+reconciliation at19:25:40UTC found every exact Character/Fan/Conversation/Message/
+Capability/Usage/session/in-flight predicate0. No extra Cleanup was executed.
+Original immutable inFlightUncertain remains preserved; the previous
+run42041782472 staysFAIL. SQL generation of the verify template independently
+succeeds offline, so a ReferenceError is not established. Unknown release-read,
+receipt or persistence exception remains unclassified in this runtime.
+
+Existing PR1432 now contains a source-only diagnostic correction and9/9passing
+focused tests: allowlisted post-browser receipt/release/persistence phases and
+safe fixed error codes, existing fail-closed errors preserved. Independent QA
+PASS; not merged/deployed, no repeat live test or failure-resolution claim.
