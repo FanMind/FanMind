@@ -690,6 +690,7 @@ test('workflow serializes with deployment and cleanup stays disabled by default'
   const workflow = readFileSync('.github/workflows/support-production-control.yml', 'utf8');
   assert.match(workflow, /group: fanmind-production-deploy/);
   assert.match(workflow, /environment: production/);
+  assert.match(workflow, /FANMIND_RUNTIME_ENVIRONMENT=production/);
   assert.match(workflow, /FANMIND_SUPPORT_PRODUCTION_SCHEDULE_ENABLED == 'true'/);
   assert.match(workflow, /git merge-base --is-ancestor/);
   assert.doesNotMatch(workflow, /continue-on-error|\|\| true/);
