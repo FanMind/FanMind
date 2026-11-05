@@ -16,7 +16,7 @@ export const PROFILE_PINS=Object.freeze({
  "scripts/operations/chat-admin-fan-staging-runner.mjs":"78bcdb0752cb15c59188a0bd16c0ee4260bda53369149446c81278093a051038",
  "scripts/operations/chat-admin-structured-offers-staging-runner.mjs":"f1eb9c30e7c77da69c696ede51894b9de032ad06a54a9bac65f0db952f3b1029",
  "scripts/operations/chat-admin-customer-tier-staging-runner.mjs":"a72b5e5b5429cf144886585be0876a615cb9a1fd8ec969557fe572bc8c57cf42",
- "scripts/operations/chat-admin-manual-flow-staging.mjs":"7c24a239e168e4719e4633cba9b2714d2f331236a6f7c538e89705c9044a2527",
+ "scripts/operations/chat-admin-manual-flow-staging.mjs":"82a18ed54624e62470d84cd8a0b2c61159e977fd6617f29460436a730a1905fc",
  "scripts/operations/database-authorization-contract.mjs":"b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de",
 });
 // Fixed reviewed reference; never learn/approve a catalog from a checked target.

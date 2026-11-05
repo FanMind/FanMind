@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { request as httpsRequest } from "node:https";
 import { createHash, randomBytes } from "node:crypto";
 import { closeSync, constants, fstatSync, fsyncSync, mkdtempSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -56,14 +57,68 @@ export function validateManualFlowEnvironment(env) {
   return ids;
 }
 
-export async function verifyManualFlowRelease(env, fetchImpl = fetch) {
+const MANUAL_FLOW_RELEASE_URL = 'https://staging.fanmind.ch/api/version';
+
+// A release check must not reuse a connection left idle while the synchronous
+// browser child ran. Each read gets a fresh TLS connection, with no retries.
+export function fetchManualFlowRelease(url, options, requestImpl = httpsRequest) {
+  if (url !== MANUAL_FLOW_RELEASE_URL || options?.redirect !== 'error' || options?.cache !== 'no-store' || !options.signal) fail('release_transport_config');
+  return new Promise((resolveResponse, reject) => {
+    let request; let settled=false;
+    const rejectCode = code => {
+      if (settled) return;
+      settled=true;
+      reject(new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`));
+      request?.destroy();
+    };
+    const transportError = error => {
+      const code=error?.code;
+      if (options.signal.aborted || code === 'ETIMEDOUT') return rejectCode('release_transport_timeout');
+      if (['CERT_HAS_EXPIRED','DEPTH_ZERO_SELF_SIGNED_CERT','SELF_SIGNED_CERT_IN_CHAIN','UNABLE_TO_VERIFY_LEAF_SIGNATURE','ERR_TLS_CERT_ALTNAME_INVALID','UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) return rejectCode('release_transport_tls');
+      if (['ENOTFOUND','EAI_AGAIN'].includes(code)) return rejectCode('release_transport_dns');
+      if (['ECONNRESET','EPIPE','ECONNREFUSED'].includes(code)) return rejectCode('release_transport_connection');
+      rejectCode('release_transport');
+    };
+    try {
+      request=requestImpl(MANUAL_FLOW_RELEASE_URL,{
+        method:'GET',agent:false,signal:options.signal,
+        headers:{accept:'application/json','accept-encoding':'identity','cache-control':'no-cache'},
+      },response=>{
+        const status=response.statusCode;
+        if (!Number.isInteger(status) || status<200 || status>=300 || (response.headers['content-encoding'] && response.headers['content-encoding'] !== 'identity')) {
+          rejectCode('release');response.destroy();return;
+        }
+        let size=0;const chunks=[];
+        response.on('data',chunk=>{
+          size+=chunk.length;
+          if(size>8192){rejectCode('release');response.destroy();return;}
+          chunks.push(chunk);
+        });
+        response.on('aborted',()=>rejectCode('release_transport_truncated'));
+        response.on('error',transportError);
+        response.on('end',()=>{
+          if(settled)return;
+          if(size===0){rejectCode('release');return;}
+          settled=true;
+          resolveResponse(new Response(Buffer.concat(chunks),{status:200}));
+        });
+      });
+      request.on('error',transportError);
+      request.end();
+    } catch(error) {transportError(error);}
+  });
+}
+
+export async function verifyManualFlowRelease(env, fetchImpl = fetchManualFlowRelease) {
   validateManualFlowEnvironment(env);
   const response = await fetchImpl("https://staging.fanmind.ch/api/version", {redirect:"error",cache:"no-store",signal:AbortSignal.timeout(15_000)});
   if (!response.ok || !response.body) fail("release");
   const reader=response.body.getReader(); let size=0; const chunks=[];
   try { for (;;) { const {done,value}=await reader.read(); if(done)break; size+=value.length;if(size>8192)fail("release");chunks.push(value); } }
   finally { await reader.cancel().catch(()=>{}); }
-  const payload=JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  let payload;
+  try {payload=JSON.parse(Buffer.concat(chunks).toString("utf8"));}
+  catch {fail('release_json');}
   if (payload.application !== "fanmind" || payload.runtimeEnvironment !== "staging" || payload.releaseCommit !== env.GITHUB_SHA) fail("release");
 }
 
