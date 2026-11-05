@@ -1,6 +1,6 @@
 # Support assistant and KI-Support-Zentrale — #1350 / #1416
 
-Repository implementation; runtime defaults off. No Production deployment or SQL apply.
+Repository implementation; runtime defaults off. On2026-11-05 the Owner selected Production for the schema-only rollout; the seven-table Support schema is installed and verified there. No application deployment or runtime activation is implied.
 
 ## Scope and reuse
 
@@ -132,3 +132,12 @@ required CI suites own new focused/native/browser tests; the established protect
 Website retention workflow is extended with a separately gated Support component.
 No source, workflow or document is evidence that live Staging schema, daily
 scheduler, Owner binding, privacy operations or final runtime acceptance is complete.
+
+## Owner-selected Production schema installation (2026-11-05)
+
+The Owner replaced Staging with Production as the schema-installation target.
+The exact reviewed main0a965fd49d9552326c2ff96952b37282b7dac63a SQL was applied once to Production drqkpdvtbbrrdwmtrodz through a separately reviewed, fixed-target connector path. The Staging-only runner and its Production exclusion remain unchanged.
+Full catalogue/body/ACL postflight equals the independent pinned PG17 reference;7tables,20functions,2triggers,1sequence; all seven tables empty and RLS-enabled. Migration20261105115731 records this installation.
+This supersedes earlier UNAPPLIED/Production-excluded statements only for these Support schema objects. Staging remains absent and was not applied. No Owner binding, runtime feature flag, deletion/retention schedule, provider action or application deploy was performed.
+Operational privacy/monitoring, exact Owner approval, actual runtime and end-to-end acceptance remain separate/open. Issue1350 is not closed by the schema result.
+Evidence and authorization/recovery: [Production schema receipt](../../project-memory/receipts/support-production-schema-20261105.md).
