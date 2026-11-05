@@ -1,5 +1,8 @@
 "use strict";
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- PM2 loads its configuration synchronously as CommonJS.
+const { readSupportSetting } = require("./support-runtime-setting.cjs");
+
 const currentReleaseLink = process.env.FANMIND_CURRENT_RELEASE_LINK;
 const releaseCommit = process.env.FANMIND_RELEASE_COMMIT;
 const appName = process.env.FANMIND_PM2_APP_NAME || "fanmind";
@@ -30,7 +33,9 @@ module.exports = {
         FANMIND_RUNTIME_ENVIRONMENT: "production",
         FANMIND_RELEASE_COMMIT: releaseCommit,
         FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED: "true",
+        FANMIND_SUPPORT_CENTRE_ENABLED: readSupportSetting(currentReleaseLink),
       },
     },
   ],
 };
+

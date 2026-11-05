@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { targetFor, ownerSql, replaceSupportFlag, withActivationRollback, readProductionFile, PRODUCTION } from "../scripts/operations/support-production-control.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -222,14 +224,17 @@ test("current release link is updated atomically with the required privilege", a
   assert.ok(createTempLink < replaceCurrentLink);
 });
 
-test("PM2 production contract uses one rolling cluster worker on the stable release link", () => {
+test("PM2 production contract uses one rolling cluster worker on the stable release link", async (t) => {
+  const runtime = await mkdtemp(join(tmpdir(), "fanmind-pm2-support-"));
+  t.after(() => rm(runtime, { recursive: true, force: true }));
+  await writeFile(join(runtime, ".env.production"), "FANMIND_SUPPORT_CENTRE_ENABLED=true\n");
   const previousEnv = {
     FANMIND_CURRENT_RELEASE_LINK: process.env.FANMIND_CURRENT_RELEASE_LINK,
     FANMIND_RELEASE_COMMIT: process.env.FANMIND_RELEASE_COMMIT,
     FANMIND_PM2_APP_NAME: process.env.FANMIND_PM2_APP_NAME,
   };
 
-  process.env.FANMIND_CURRENT_RELEASE_LINK = "/var/www/fanmind-current";
+  process.env.FANMIND_CURRENT_RELEASE_LINK = runtime;
   process.env.FANMIND_RELEASE_COMMIT = "a".repeat(40);
   process.env.FANMIND_PM2_APP_NAME = "fanmind";
   const configModule = require.resolve(`../${pm2ConfigPath}`);
@@ -258,7 +263,7 @@ test("PM2 production contract uses one rolling cluster worker on the stable rele
     },
     {
       name: "fanmind",
-      cwd: "/var/www/fanmind-current",
+      cwd: runtime,
       script: "node_modules/next/dist/bin/next",
       instances: 1,
       execMode: "cluster",
@@ -267,6 +272,7 @@ test("PM2 production contract uses one rolling cluster worker on the stable rele
       filterEnv: true,
     },
   );
+  assert.equal(config.apps[0].env.FANMIND_SUPPORT_CENTRE_ENABLED, "true");
   assert.equal(config.apps[0].env.FANMIND_RUNTIME_ENVIRONMENT, "production");
   assert.equal(config.apps[0].env.FANMIND_RELEASE_COMMIT, "a".repeat(40));
   assert.equal(
@@ -303,6 +309,8 @@ test("legacy migration is followed by a delete-free rolling release in an execut
     await readFile(pm2ConfigPath),
   );
 
+  await writeFile(join(seed, "ops/pm2/support-runtime-setting.cjs"), await readFile("ops/pm2/support-runtime-setting.cjs"));
+
   runChecked("git", ["init", "-b", "main"], { cwd: seed });
   runChecked("git", ["config", "user.name", "FanMind Test"], { cwd: seed });
   runChecked("git", ["config", "user.email", "fanmind-test@example.invalid"], { cwd: seed });
@@ -312,7 +320,7 @@ test("legacy migration is followed by a delete-free rolling release in an execut
   runChecked("git", ["clone", "--bare", seed, remote]);
   runChecked("git", ["clone", remote, source]);
   runChecked("git", ["remote", "add", "origin", remote], { cwd: seed });
-  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\n");
+  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n");
 
   const oldRelease = join(releaseRoot, "0".repeat(40));
   await mkdir(join(oldRelease, ".next"), { recursive: true });
@@ -370,6 +378,7 @@ if (action === "delete") {
       pm_cwd: app.cwd,
       FANMIND_RELEASE_COMMIT: app.env.FANMIND_RELEASE_COMMIT,
       FANMIND_RUNTIME_ENVIRONMENT: app.env.FANMIND_RUNTIME_ENVIRONMENT,
+      FANMIND_SUPPORT_CENTRE_ENABLED: app.env.FANMIND_SUPPORT_CENTRE_ENABLED,
     },
   }];
 }
@@ -458,6 +467,7 @@ fi
 
   const finalState = JSON.parse(await readFile(pm2State, "utf8"));
   assert.equal(finalState.processes.length, 1);
+  assert.equal(finalState.processes[0].pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED, "true");
   assert.equal(finalState.processes[0].pm2_env.exec_mode, "cluster_mode");
   assert.equal(finalState.processes[0].pm2_env.pm_cwd, currentLink);
   assert.equal(
@@ -606,4 +616,103 @@ test("rollback failures fall through to the next safe target and live version lo
   assert.match(script, /previous cwd could not be started; trying source checkout fallback/);
   assert.match(script, /source checkout fallback could not be started/);
   assert.match(script, /manual intervention required/);
+});
+
+
+
+const email = 'operator@example.test';
+const commit = 'a'.repeat(40);
+const { parseSupportSetting } = createRequire(import.meta.url)('../ops/pm2/support-runtime-setting.cjs');
+const base = {
+  GITHUB_REPOSITORY: 'FanMind/FanMind', GITHUB_REF: 'refs/heads/main', GITHUB_ACTOR_ID: '270165082',
+  GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: commit, FANMIND_SUPPORT_REVIEWED_COMMIT: commit,
+  FANMIND_RUNTIME_ENVIRONMENT: 'production', NEXT_PUBLIC_SUPABASE_URL: `https://${PRODUCTION}.supabase.co`,
+  NEXT_PUBLIC_APP_URL: 'https://fanmind.ch', FANMIND_SUPPORT_CONFIRM: 'support-production-owner',
+  FANMIND_BACKUP_DB_HOST: `db.${PRODUCTION}.supabase.co`, FANMIND_BACKUP_DB_USER: 'postgres',
+  FANMIND_BACKUP_DB_NAME: 'postgres', FANMIND_BACKUP_PGPASSFILE: '/etc/fanmind-backup/pgpass',
+  FANMIND_ADMIN_EMAILS: email,
+};
+test('Production owner requires the actual configured platform Admin and fixed target', () => {
+  assert.equal(targetFor(base, 'owner', email).email, email);
+  for (const patch of [
+    { NEXT_PUBLIC_SUPABASE_URL: 'https://vshyhvgcmrlagvfnvomc.supabase.co' },
+    { FANMIND_ADMIN_EMAILS: 'someone-else@example.test' }, { GITHUB_ACTOR_ID: '123' },
+    { FANMIND_BACKUP_DB_USER: 'postgres.another-project' }, { GITHUB_SHA: 'b'.repeat(40) },
+    { FANMIND_SUPPORT_CONFIRM: 'support-production-activate' }, { PGOPTIONS: '-c role=postgres' },
+  ]) assert.throws(() => targetFor({ ...base, ...patch }, 'owner', email));
+});
+test('scheduled cleanup allows only explicitly enabled retention/monitor on pinned reviewed source', () => {
+  const scheduled = { ...base, GITHUB_EVENT_NAME: 'schedule', GITHUB_SHA: 'b'.repeat(40), FANMIND_SUPPORT_SCHEDULE_ENABLED: 'true' };
+  assert.equal(targetFor(scheduled, 'monitor', email).commit, commit);
+  assert.equal(targetFor({ ...scheduled, FANMIND_ADMIN_EMAILS: '' }, 'retention', email).commit, commit);
+  assert.throws(() => targetFor(scheduled, 'owner', email));
+  assert.throws(() => targetFor({ ...scheduled, FANMIND_SUPPORT_SCHEDULE_ENABLED: 'false' }, 'retention', email));
+});
+test('Owner mutation is one guarded transaction and never changes Auth/admin configuration', () => {
+  const sql = ownerSql({ ...targetFor(base, 'owner', email), uuid: '11111111-1111-4111-8111-111111111111' }, true);
+  assert.match(sql, /pg_advisory_xact_lock\(1350,1417\)/);
+  assert.match(sql, /email_confirmed_at IS NOT NULL/);
+  assert.match(sql, /banned_until/);
+  assert.match(sql, /lower\(email\)='operator@example.test'/);
+  assert.match(sql, /user_id<>/);
+  assert.doesNotMatch(sql, /(?:INSERT INTO|UPDATE|DELETE FROM) auth\./i);
+  assert.doesNotMatch(sql, /GRANT|ALTER ROLE/i);
+});
+test('Support flag change preserves unrelated settings and rejects ambiguity', () => {
+  const original = 'OTHER_SECRET=private\nFANMIND_SUPPORT_CENTRE_ENABLED=false\nOTHER_FLAG=true\n';
+  assert.equal(replaceSupportFlag(original, true), 'OTHER_SECRET=private\nFANMIND_SUPPORT_CENTRE_ENABLED=true\nOTHER_FLAG=true\n');
+  assert.equal(replaceSupportFlag('OTHER=true\n', true), 'OTHER=true\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n');
+  assert.throws(() => replaceSupportFlag(original + 'FANMIND_SUPPORT_CENTRE_ENABLED=true\n', true));
+  assert.throws(() => replaceSupportFlag('FANMIND_SUPPORT_CENTRE_ENABLED="true"\n', true));
+});
+test('PM2 uses only the persistent support flag and fails closed on ambiguous values', () => {
+  assert.equal(parseSupportSetting('UNRELATED_SECRET=private\n'), 'false');
+  assert.equal(parseSupportSetting('UNRELATED_SECRET=private\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n'), 'true');
+  assert.equal(parseSupportSetting('FANMIND_SUPPORT_CENTRE_ENABLED=false\n'), 'false');
+  assert.throws(() => parseSupportSetting('FANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_SUPPORT_CENTRE_ENABLED=false\n'));
+  assert.throws(() => parseSupportSetting('FANMIND_SUPPORT_CENTRE_ENABLED=maybe\n'));
+  const pm2 = readFileSync('ops/pm2/fanmind.production.config.cjs', 'utf8');
+  assert.match(pm2, /FANMIND_SUPPORT_CENTRE_ENABLED: readSupportSetting\(currentReleaseLink\)/);
+});
+test('activation failure restores the prior state and exposes rollback failure', () => {
+  const before = 'UNRELATED_SECRET=keep\nFANMIND_SUPPORT_CENTRE_ENABLED=false\n';
+  let state = before;
+  let restored = false;
+  assert.throws(() => withActivationRollback(
+    () => { state = replaceSupportFlag(state, true); },
+    () => { throw new Error('health failed'); },
+    () => { state = before; restored = true; },
+  ), /activation_failed_rolled_back/);
+  assert.equal(state, before);
+  assert.equal(restored, true);
+  assert.throws(() => withActivationRollback(() => { throw new Error('reload'); }, () => {}, () => { throw new Error('rollback reload'); }), /activation_rollback_failed/);
+});
+test('workflow serializes with deployment and cleanup stays disabled by default', () => {
+  const workflow = readFileSync('.github/workflows/support-production-control.yml', 'utf8');
+  assert.match(workflow, /group: fanmind-production-deploy/);
+  assert.match(workflow, /environment: production/);
+  assert.match(workflow, /FANMIND_RUNTIME_ENVIRONMENT=production/);
+  assert.match(workflow, /FANMIND_SUPPORT_PRODUCTION_SCHEDULE_ENABLED == 'true'/);
+  assert.match(workflow, /git merge-base --is-ancestor/);
+  assert.doesNotMatch(workflow, /continue-on-error|\|\| true/);
+  const source = readFileSync('scripts/operations/support-production-control.mjs', 'utf8');
+  assert.match(source, /classify\(catalogue, reference\) !== 'EXACT'/);
+  assert.match(source, /PGSSLMODE: 'verify-full'/);
+  assert.match(source, /activation_rollback_failed/);
+  assert.match(source, /operational_readiness_missing/);
+  assert.doesNotMatch(source, /console\.(?:log|error)\((?:env|result|catalogue|target)/);
+});
+test('Production config reads use one checked descriptor and reject links, modes and oversized files', async (t) => {
+  const root = await mkdtemp(join(tmpdir(), 'fanmind-support-file-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const path = join(root, 'setting');
+  await writeFile(path, 'PRIVATE=keep\n', { mode: 0o600 });
+  const owners = [process.getuid()];
+  assert.equal(readProductionFile(path, owners, [0o600], 100).content, 'PRIVATE=keep\n');
+  assert.throws(() => readProductionFile(path, owners, [0o600], 2), /protected_file_invalid/);
+  await chmod(path, 0o644);
+  assert.throws(() => readProductionFile(path, owners, [0o600], 100), /protected_file_invalid/);
+  await chmod(path, 0o600);
+  await symlink(path, join(root, 'link'));
+  assert.throws(() => readProductionFile(join(root, 'link'), owners, [0o600], 100));
 });
