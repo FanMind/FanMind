@@ -172,7 +172,12 @@ jobs:
           npm run staging:preflight
           npm run verify:truth
           npm run lint
-          npm run test:operations
+          # Git-backed source checks belong to the reviewed checkout, never the gitless runtime.
+          (
+            cd "$GITHUB_WORKSPACE"
+            npm ci --no-audit --no-fund
+            npm run test:operations
+          )
           npm run test:release-integrations
           NEXT_DEPLOYMENT_ID="$EXPECTED_RELEASE_COMMIT" npm run build
 
