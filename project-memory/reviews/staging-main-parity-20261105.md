@@ -359,3 +359,16 @@ Do not substitute the old Production receipt for current Staging recovery.
 Do not invent a requirement to purchase a third Supabase project, repeat a
 consumed Restore, restore Production into Staging, or weaken safety checks.
 No target mutation was made by this correction.
+
+
+## 2026-11-05T20:22Z – regulärer Merge und eingegrenzter Abschlussfehler
+
+- PR #1432 regulär als `4a22cec1003db80d6c3897686a3a09589ae03608` gemergt, nachdem alle 12 erforderlichen Checks für `e8cf8929a5ff6ad86a8c9b0ee1e4911c149435bb` und unabhängige Source-QA bestanden waren. Kein Branch-Schutz umgangen.
+- Geschützter Staging-Deploy `42100363592` / Job `127501241035` PASS. Live-Staging-Version `4a22cec1…` um 20:09:30 UTC bestätigt; Production bleibt `a798d793…` um 20:10:10 UTC, ohne Deployment oder DB-/Einstellungsänderung. Produktlaufzeitdateien unverändert; die Commit-Differenz enthält nur Operations-/Test-/Dokumentationsänderungen.
+- Der Preflight bestätigt um 20:07:28 UTC `STAGING_SUPPORT_CENTRE_RUNTIME=disabled`, `STAGING_CHAT_ADMIN_MEDIA_RUNTIME=disabled`, `STAGING_CHAT_ADMIN_MEDIA_ANALYSIS_RUNTIME=disabled`. Staging besitzt null Support-Owner-Zuordnungen. Keine Aktivierung oder Zuordnung vorgenommen. Positive Support-/Media-Datei-UI-Abnahme bleibt konkret blockiert.
+- Einziger neuer tatsächlicher Acceptance-Lauf `42101152303` / Job `127504041619` auf `4a22cec1…`: Probe, Browser einschließlich `invented_price`, Session-Cleanup, Daten-Cleanup und Absence PASS. Gesamtjob FAIL: um 20:15:44 UTC erfolgreiche Receipt-Phase, anschließend `post_browser_release`; Persistenzabschluss nicht erreicht.
+- Unabhängige Original-Receipt-Reconciliation um 20:17:47 UTC PASS: keine exakten Testrows, Capabilities, zugeordnete Nutzung, nachlaufende Sessions, offenen Operationen oder Locks. Recovery-Artefakt `13450121680` unverändert. Kein erneuter Cleanup notwendig. Historische FAIL-Ergebnisse bleiben FAIL.
+- PR #1433 behebt ausschließlich den technischen Release-Read: pro Versionsabruf frische `node:https`-Verbindung mit `agent:false`, fester HTTPS-Zieladresse, Standard-TLS-Prüfung, keiner Weiterleitung/Proxy-/Retry-Logik, unveränderter Gesamtdeadline 15 Sekunden und 8192-Byte-Streaminggrenze. Nichtidentische Kompression, Trunkierung, ungültiges JSON und technische Fehler scheitern mit festen sicheren Codes. Application-/Staging-/SHA-Bindung sowie SQL, Browser-Assertions, Berechtigungen und Cleanup bleiben unverändert.
+- Neuer Runner-SHA256 `82a18ed54624e62470d84cd8a0b2c61159e977fd6617f29460436a730a1905fc`; genau ein Current-Facts-Profilpin entsprechend aktualisiert, übrige elf Pins und vollständige Referenzen unverändert. 13 gezielte Tests PASS; unabhängig ebenfalls 13/13 und vollständige Pin-/Reference-Prüfung PASS.
+- Eine Stale-Keep-Alive-Ursache ist nicht bewiesen; zwei unabhängige lokale Node-24-Proben reproduzierten sie nicht. Der historische native Ausnahmegrund kann nicht nachträglich behauptet werden. Tatsächliche Heilung erst nach erfolgreichem geschütztem Staging-Abschlusslauf bestätigen.
+- Bestehende SQL-/Katalog-/RLS-/Storage-/Rollback-Nachweise weiter gültig. Keine neue Infrastruktur, Datenbank, Kosten, Produktaktivierung oder Production-Schreiboperation. Funktionale Gleichwertigkeit weiterhin NEIN, solange Abschlusslauf und benötigte deaktivierte Runtime/Owner-Zuordnung nicht abgenommen sind.
