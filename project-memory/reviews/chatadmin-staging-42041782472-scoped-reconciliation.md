@@ -36,3 +36,31 @@ No SQL writes, no extra cleanup, no deployment, no feature activation, no Produc
 ## Independent review request
 
 Confirm the scoped read-only predicates against the original `schemaVersion=2` receipt and repository cleanup/marker binding and, if sufficient, issue separate `RECONCILED_ZERO_RESIDUE` conclusion without modifying the failed acceptance result; otherwise enumerate exact remaining checks. This document is a scoped check, not unilateral removal of the existing workflow safety gate.
+
+
+## Independent closeout — 2026-11-05 18:30:01 UTC
+
+Separate Guardian reviewed the original archive (same SHA256), receipt bindings,
+five marker-derived UUIDs and unchanged full harness absence predicates.
+Independent BEGIN READ ONLY / ROLLBACK on exact Staging found:
+- All three reserved Characters, including FOREIGN_CHARACTER_ID: 0.
+- Fan IDs/creation IDs and child Conversations/Messages: 0.
+- Workspace-wide fixture capability and exact bound Usage predicate: 0.
+- All Auth sessions created since startedAt, project-wide: 0 (also covers the
+  platform-admin actor intentionally absent from Recovery JSON).
+- Relevant active/idle-in-transaction backends and advisory locks: 0.
+
+Original GitHub job is completed/failure; its unmodified log confirms NETWORK=none,
+SESSION_CLEANUP=passed, process exit and final orphan-process cleanup.
+Conclusion: **RECONCILED_ZERO_RESIDUE for the defined harness database/session
+scope**. No repeat Cleanup is needed. Original FAIL and inFlightUncertain=true
+remain unchanged; this is not a successful invented_price acceptance.
+
+Supabase dashboard independently confirms eight Staging daily physical backups,
+latest COMPLETED 2026-11-05 02:29:39 UTC. The separate-new-project restore path
+exists and quotes USD9.68/month compute; dialog was cancelled without execution.
+A successful tested restore/postflight is still missing. Live releases are now
+confirmed: Production a798d7938bb4e7e168f615f0c32d1a603dd47d4a,
+Staging1184616ddea8c1ea2fa93b8d74a19ab28eb8d35a.
+Earlier unknown-release/unknown-provider-backup statements are historical.
+No migration, deployment, activation or data mutation occurred.
