@@ -34,3 +34,16 @@ unchanged. No DB writes, Production, Billing, secrets or IAM mutation by this fi
 
 Reuse the existing lock; no competing source/target writer found. Source handoff
 releases the worker after publication. Current-main final acceptance remains OPEN.
+
+## First-head checksum failure reconciled
+
+PR1421 first head25f0a2fa37bfd745856b7965adb253ab7892a51e passed actual
+Chromium34/34 (including the held-response regression), focused24/24 and the
+Operations suite2152passed/0failed. Its native PG17 profile gate then correctly
+failed current_facts_profile_source_checksum because the existing Current-Facts
+profile pins the shared manual-flow runner. Refresh only that reviewed runner
+pin to f06ee4058b310d9d671dc27527d8c86fe8ca4dcdca5503a5a1584b180e99f959.
+All eleven other source pins, controlled SQL, fixed reference/catalog hashes and
+checksum-corruption negatives stay unchanged. This does not enable CurrentFacts
+or touch its target. The corrected exact head requires green native CI again;
+the first failed head is not merge-ready and its failure remains preserved.
