@@ -1,0 +1,44 @@
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+const w="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",otherW="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",c="cccccccc-cccc-4ccc-8ccc-cccccccccccc",otherC="dddddddd-dddd-4ddd-8ddd-dddddddddddd",id="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",owner="11111111-1111-4111-8111-111111111111",foreign="22222222-2222-4222-8222-222222222222";
+
+export async function runChatAdminMediaSqlCases(sql){
+ const as=(query,user=owner)=>sql(`set role authenticated;set request.jwt.claim.sub='${user}';${query}`);
+  await sql(readFileSync("tests/fixtures/chat-admin-current-facts.sql","utf8"));
+  await sql(readFileSync("supabase/controlled/20260920230000_chat_admin_multi_character.sql","utf8"));
+  await sql(`create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create table public.account_deletion_requests(user_id uuid,status text);`);
+  await sql(`insert into public.workspace_chat_admin_capabilities(workspace_id,chat_admin_multi_character,granted_to_user_id) values('${w}',true,'${owner}');insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values('${c}','${w}','${owner}','A',25,'','','','','','',''),('${otherC}','${otherW}','${foreign}','B',25,'','','','','','','');`);
+  await sql(readFileSync("supabase/controlled/chat_admin_media.sql","utf8"));
+  const path=`${w}/${c}/${id}.webp`,insert=`insert into public.chat_character_media(id,workspace_id,character_id) values('${id}','${w}','${c}');`;
+  await as(insert);assert.equal((await sql(`select revision from public.chat_characters where id='${c}';`)).trim(),"2");
+  assert.equal((await as("select count(*) from public.chat_character_media;",foreign)).trim().split("\n").at(-1),"0");
+  await assert.rejects(()=>as(`insert into public.chat_character_media(id,workspace_id,character_id) values(gen_random_uuid(),'${otherW}','${otherC}');`));
+  await assert.rejects(()=>as(`insert into public.chat_character_media(id,workspace_id,character_id) values(gen_random_uuid(),'${w}','${otherC}');`));
+  await assert.rejects(()=>sql("set role anon;select * from public.chat_character_media;"));
+  await assert.rejects(()=>as(`update public.chat_character_media set workspace_id='${otherW}';`));
+  await assert.rejects(()=>as(`update public.chat_character_media set revision=999;`));
+  await as(`insert into storage.objects(bucket_id,name) values('chat-character-media','${path}');`);
+  await assert.rejects(()=>as(`insert into storage.objects(bucket_id,name) values('chat-character-media','${otherW}/${otherC}/${id}.webp');`));
+  await assert.rejects(()=>as(`insert into storage.objects(bucket_id,name) values('chat-character-media','${w}/${c}/../malformed.webp');`));
+  assert.equal((await as("select count(*) from storage.objects;",foreign)).trim().split("\n").at(-1),"0");
+  await as(`delete from public.chat_character_media where id='${id}';`);assert.equal((await sql("select count(*) from public.chat_character_media;")).trim(),"1","metadata cannot disappear before object cleanup");
+  await as(`update public.chat_character_media set description='Strand',tags=array['Strand'],reviewed=true,available=true where id='${id}';`);
+  assert.equal((await sql(`select revision from public.chat_characters where id='${c}';`)).trim(),"3");
+  await assert.rejects(()=>as(`delete from public.chat_characters where id='${c}';`),"Character deletion cannot orphan private images");
+  await sql(`update public.chat_characters set status='inactive' where id='${c}';`);
+  assert.equal((await as("select count(*) from storage.objects;")).trim().split("\n").at(-1),"0","inactive image download denied");
+  await as(`update public.chat_character_media set deleted=true,reviewed=false,available=false where id='${id}';`);
+  assert.equal((await as("select count(*) from storage.objects;")).trim().split("\n").at(-1),"1","tombstone remains visible for authenticated Storage deletion");
+  await as(`delete from public.chat_character_media where id='${id}';`);assert.equal((await sql("select count(*) from public.chat_character_media;")).trim(),"1");
+  await as(`delete from storage.objects where name='${path}';delete from public.chat_character_media where id='${id}';`);
+  assert.equal((await sql("select count(*) from public.chat_character_media;")).trim(),"0");
+  await sql(`update public.chat_characters set status='active' where id='${c}';insert into public.account_deletion_requests values('${owner}','processing');`);
+  await assert.rejects(()=>as(insert),"new uploads blocked during account deletion processing");
+  await assert.rejects(()=>as(`insert into public.chat_character_media_policies(workspace_id,character_id) values('${w}','${c}');`));
+  assert.equal((await sql("select has_table_privilege('anon','public.chat_character_media','SELECT');")).trim(),"f");
+  assert.equal((await sql("select has_function_privilege('anon','public.chat_admin_media_writes_allowed(uuid)','EXECUTE');")).trim(),"f");
+  await sql(`delete from public.account_deletion_requests;`);
+  await as(`insert into public.chat_character_media(id,workspace_id,character_id) select gen_random_uuid(),'${w}','${c}' from generate_series(1,100);`);
+  await assert.rejects(()=>as(`insert into public.chat_character_media(id,workspace_id,character_id) values(gen_random_uuid(),'${w}','${c}');`),/media_library_limit/u);
+  assert.equal((await sql(`select count(*) from public.chat_character_media;`)).trim(),"100");
+}

@@ -858,9 +858,15 @@ Wenn Preise, Pakete, Referral-Logik, aktiver Scope, Demo-Pfad, Billing, KI-Leist
 
 Der Character-Schreibstil, Satzstil, Emoji-Stil, Beispiele und No-Gos steuern
 alle drei Antwortalternativen. Kurze Komplimente sollen zunächst kurz beantwortet
-werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Reine Komplimente zu
+werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Im persönlichen
+Kennenlernen sind passende Neugier, eigene kontextbezogene Gedanken und höchstens
+eine Anschlussfrage je Vorschlag erwünscht, ohne Fragepflicht oder Nachhaken bei
+einer noch offenen Frage. Bekannte Angaben und Grenzen bleiben maßgeblich.
+Reine Komplimente zu
 Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält nur
 Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
+Vorschläge lassen sich vor dem Kopieren bearbeiten oder vollständig umschreiben;
+als verwendet gespeichert wird nur die endgültige manuell bestätigte Fassung.
 Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:
 `docs/CHAT_ADMIN_REPLY_STYLE.md`. Diese Source-Änderung belegt keine Live-Abnahme.
 
@@ -1009,3 +1015,8 @@ Gespräche getrennt nach Nutzer und Workspace mit idempotenter Wiederholung und
 ausdrücklich freigegebenen Übergaben. SQL und Runtime bleiben bis zum getrennten
 Staging-/Datenschutz-/Retentionbetrieb deaktiviert.
 [Umfang und Aktivierungsgrenzen](docs/operations/SUPPORT_CENTRE.md).
+
+
+## ChatAdmin: private Bilderbibliothek — Source-Erweiterung 5. November 2026
+
+Die private Bibliothek je Character mit Upload, geprüften Bildbeschreibungen, konservativer Motivsuche und konfigurierbaren kostenpflichtigen Anfertigungen ist im Repository vorbereitet. Preise bleiben an bestehende Character-Angebote gebunden; Lieferfristen werden ausdrücklich konfiguriert. Beide neuen Schalter bleiben aus; kontrolliertes Schema/Storage, tatsächliche Bildanalyse und Zielabnahme sind nicht als installiert oder aktiv bestätigt. Details: `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`. Die Erkennung konkreter Verfügbarkeitsfragen zu eigenen Angeboten korrigiert den reproduzierten Preis-Kontextfehler; die abschließende Staging-Abnahme bleibt offen.
