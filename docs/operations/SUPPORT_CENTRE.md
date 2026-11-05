@@ -118,3 +118,17 @@ Independent QA, Security and Privacy review must cover the final exact head. All
 required CI and repository rules must pass before the expressly authorized merge.
 Staging Readiness is checked after merge; deployment needs separately applicable
 existing authorization and exclusive target ownership. Production is excluded.
+
+## Postmerge Staging continuation (2026-11-04)
+
+PR #1416 is merged at f8ed24bd12c3445732abcd46b9d3f42bfad55334; the
+source/test acceptance above remains completed. The new operational continuation
+is described in [SUPPORT_STAGING_ROLLOUT.md](SUPPORT_STAGING_ROLLOUT.md) and
+[SUPPORT_PRIVACY_PROCESS.md](SUPPORT_PRIVACY_PROCESS.md). It adds an audited,
+volume-guarded operator-only purge, independent full-schema reference, scope-bound
+own-data export/erasure and Owner retention health. This supersedes only the older
+purge/activation description, not the finished product implementation. Existing
+required CI suites own new focused/native/browser tests; the established protected
+Website retention workflow is extended with a separately gated Support component.
+No source, workflow or document is evidence that live Staging schema, daily
+scheduler, Owner binding, privacy operations or final runtime acceptance is complete.

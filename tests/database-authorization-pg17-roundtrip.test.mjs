@@ -2241,3 +2241,6 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
 
 // Separate disposable database; no change to the Authorization proof's fixture.
 await import("../src/lib/supportCentrePg17.test.mjs");
+
+// New controlled rollout/retention proof uses two additional disposable databases.
+await import("../src/lib/supportStagingPg17.test.mjs");

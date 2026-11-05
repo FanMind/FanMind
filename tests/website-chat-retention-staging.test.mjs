@@ -254,14 +254,22 @@ printf '%s\n' 'WEBSITE_CHAT_RETENTION_POSTFLIGHT=PASS'
   }
 });
 
-test("retention workflows are manual exact-main Staging controls with separate confirmations", async () => {
+test("Website retention remains manual; Support schedules require an explicit separate gate", async () => {
   const [schemaWorkflow, acceptanceWorkflow] = await Promise.all([
     readFile(new URL("../.github/workflows/website-chat-retention-staging.yml", import.meta.url), "utf8"),
     readFile(new URL("../.github/workflows/website-chat-retention-staging-acceptance.yml", import.meta.url), "utf8"),
   ]);
   const combined = `${schemaWorkflow}\n${acceptanceWorkflow}`;
   assert.equal((combined.match(/workflow_dispatch:/gu) ?? []).length, 2);
-  assert.doesNotMatch(combined, /^\s*(?:push|pull_request|schedule):/mu);
+  assert.doesNotMatch(combined, /^\s*(?:push|pull_request):/mu);
+  assert.doesNotMatch(acceptanceWorkflow, /^\s*schedule:/mu);
+  const websiteJobs=schemaWorkflow.split('  support-staging-control:')[0].split('jobs:')[1];
+  assert.equal((websiteJobs.match(/github.event_name == 'workflow_dispatch'/gu)??[]).length,2);
+  assert.equal((websiteJobs.match(/inputs.component == 'website'/gu)??[]).length,2);
+  const supportJob=schemaWorkflow.split('  support-staging-control:')[1];
+  assert.match(supportJob,/vars.FANMIND_SUPPORT_RETENTION_SCHEDULE_ENABLED == 'true'/u);
+  assert.match(supportJob,/FANMIND_SUPPORT_RETENTION_SOURCE_COMMIT/u);
+  assert.match(supportJob,/PGSSLROOTCERT:.*supabase-root-2021-ca.crt/u);
   assert.match(combined, /github\.ref == 'refs\/heads\/main'/u);
   assert.match(combined, /inputs\.reviewed_commit == github\.sha/u);
   assert.match(combined, /environment: staging/u);

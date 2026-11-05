@@ -4,10 +4,11 @@ type Turn={request_id:string;question:string;answer:string;unanswered:boolean};
 type Pending={requestId:string;question:string;context:string;scope:string};
 export function SupportConversation(){
  const [turns,setTurns]=useState<Turn[]>([]),[scope,setScope]=useState(""),[text,setText]=useState(""),[status,setStatus]=useState("loading"),[handoff,setHandoff]=useState(false);
- const [more,setMore]=useState(false);
- const browsingOlder=useRef(false);
+ const [more,setMore]=useState(false),[privacyError,setPrivacyError]=useState(false);
+ const browsingOlder=useRef(false),privacyBusy=useRef(false);
  const generation=useRef(0),pending=useRef<Pending|null>(null),boundScope=useRef("");
  const load=useCallback(async()=>{
+  if(privacyBusy.current)return;
   const version=++generation.current;
   try{
    const response=await fetch("/api/support/conversation",{cache:"no-store"});
@@ -40,6 +41,25 @@ export function SupportConversation(){
   }catch{if(version===generation.current){browsingOlder.current=false;setTurns([]);setText("");setStatus("retry");}}
  }
  async function older(){if(!turns.length)return;const version=++generation.current;try{const response=await fetch(`/api/support/conversation?before=${turns[0].request_id}`,{cache:"no-store"});if(!response.ok)throw new Error("unavailable");const data=await response.json();if(version!==generation.current)return;if(data.scope!==boundScope.current){await load();return;}browsingOlder.current=true;setTurns(previous=>[...data.turns,...previous]);setMore(data.turns.length===100);}catch{if(version===generation.current){browsingOlder.current=false;setTurns([]);setStatus("unavailable");}}}
+ async function download(){
+  if(!scope||privacyBusy.current)return;const selected=scope,version=generation.current;
+  try{const r=await fetch(`/api/support/privacy?scope=${selected}`,{cache:"no-store"});if(!r.ok)throw new Error("unavailable");const data=await r.json();if(version!==generation.current||selected!==boundScope.current||data.scope!==selected)return;
+   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="fanmind-support-data.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),0);
+  }catch{if(version===generation.current)setStatus("unavailable");}
+ }
+ async function erase(){
+  if(!scope||privacyBusy.current)return;
+  setPrivacyError(false);privacyBusy.current=true;const selected=scope,version=++generation.current;
+  setStatus("sending");
+  try{
+   const preview=await fetch(`/api/support/privacy?scope=${selected}&preview=erase`,{cache:"no-store"});if(!preview.ok)throw new Error("unavailable");const data=await preview.json();
+   if(version!==generation.current||selected!==boundScope.current||data.scope!==selected)return;
+   if(!window.confirm("Deinen gespeicherten Supportverlauf und seine Übergabefreigabe löschen?"))return;
+   pending.current=null;setText("");setTurns([]);setHandoff(false);browsingOlder.current=false;
+   if(data.state){const r=await fetch("/api/support/privacy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"erase",confirmed:true,scope:selected,thread:data.state.thread,sequence:data.state.sequence})});if(!r.ok)throw new Error("unavailable");}
+  }catch{if(version===generation.current)setPrivacyError(true);}
+  finally{privacyBusy.current=false;await load();}
+ }
  async function share(){const version=++generation.current;const selectedScope=scope;setHandoff(false);try{const r=await fetch("/api/support/conversation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scope,handoff:true})});if(!r.ok)throw new Error("unavailable");const data=await r.json();if(version===generation.current&&selectedScope===boundScope.current&&data.scope===selectedScope)setHandoff(true);}catch{if(version===generation.current)setStatus("unavailable");}}
- return <section aria-label="Dein Supportgespräch"><h3>Dein Supportgespräch</h3><p>Verlauf für dein Konto und deinen Workspace, bis zu 30 Tage gespeichert. Keine Passwörter oder sensiblen Daten eingeben. Antworten basieren auf freigegebenen Produktinformationen.</p>{status==="unavailable"?<p role="alert">Gespräch nicht verfügbar. <button onClick={()=>void load()}>Erneut laden</button></p>:<>{more&&<button disabled={status!=="ready"} onClick={()=>void older()}>Ältere Nachrichten laden</button>}<div aria-live="polite">{turns.map(t=><article key={t.request_id}><p><strong>Du:</strong> {t.question}</p><p><strong>Support:</strong> {t.answer}</p></article>)}</div><label>Deine Frage<textarea maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label><button disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"} onClick={()=>void send()}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":"Speichern und senden"}</button>{status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}<button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button>{handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}</>}</section>;
+ return <section aria-label="Dein Supportgespräch"><h3>Dein Supportgespräch</h3>{privacyError&&<p role="alert">Löschung nicht bestätigt. Bitte erneut prüfen und bestätigen.</p>}<p><button disabled={!scope||status==="sending"} onClick={()=>void download()}>Eigene Supportdaten herunterladen</button> · <button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button> · <a href="/datenschutz">Datenschutzinformationen</a></p><p>Verlauf für dein Konto und deinen Workspace, bis zu 30 Tage gespeichert. Keine Passwörter oder sensiblen Daten eingeben. Antworten basieren auf freigegebenen Produktinformationen.</p>{status==="unavailable"?<p role="alert">Gespräch nicht verfügbar. <button onClick={()=>void load()}>Erneut laden</button></p>:<>{more&&<button disabled={status!=="ready"} onClick={()=>void older()}>Ältere Nachrichten laden</button>}<div aria-live="polite">{turns.map(t=><article key={t.request_id}><p><strong>Du:</strong> {t.question}</p><p><strong>Support:</strong> {t.answer}</p></article>)}</div><label>Deine Frage<textarea maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label><button disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"} onClick={()=>void send()}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":"Speichern und senden"}</button>{status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}<button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button>{handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}</>}</section>;
 }

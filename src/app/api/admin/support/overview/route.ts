@@ -13,7 +13,8 @@ export async function GET(request:NextRequest){
   const workspace=request.nextUrl.searchParams.get("workspace"),thread=request.nextUrl.searchParams.get("thread");
   if(workspace||thread){if(!isSupportUuid(workspace)||!isSupportUuid(thread))return fail(400);const before=request.nextUrl.searchParams.get("before");if(before&&!isSupportUuid(before))return fail(400);const turns=safeSupportTurns(await supportCentreDatabase("rpc/support_chat_review",{p_workspace:workspace,p_thread:thread,p_before:before}));return NextResponse.json({turns},{headers});}
   if(!actor.owner)return fail(403);
-  return NextResponse.json({items:await listOwnerSupportNotifications()},{headers});
+  const retention=await supportCentreDatabase("rpc/support_retention_health",{p_actor:actor.user.id});
+  return NextResponse.json({items:await listOwnerSupportNotifications(),retention},{headers});
  }catch{return fail(503);}
 }
 export async function POST(request:NextRequest){

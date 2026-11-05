@@ -160,7 +160,7 @@ function modeFromArguments(args) {
   return args[0];
 }
 
-function privatePassfileSnapshot(environment) {
+export function privatePassfileSnapshot(environment) {
   const sourcePath = environment.PGPASSFILE?.trim();
   if (!sourcePath || !isAbsolute(sourcePath)) fail("passfile_missing");
   let descriptor;
