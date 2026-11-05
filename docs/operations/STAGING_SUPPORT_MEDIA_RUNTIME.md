@@ -1,6 +1,6 @@
 # Staging Support/Media control — prepared, not activated
 
-Scope: FM-CONTRACT-CHAT-ADMIN-MULTI-CHARACTER, Support repair persistence and
+Scope: FM-CONTRACT-CHATADMIN-AI-001 and FM-CONTRACT-CHATADMIN-STORAGE-001, Support repair persistence and
 Workspace authorization. Production deployment, schema mutation, provider/image
 analysis, billing and delivery remain excluded. Main is unchanged at5414f53d.
 
