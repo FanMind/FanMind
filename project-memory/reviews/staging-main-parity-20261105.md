@@ -192,3 +192,35 @@ schema copy is prepared. Current blocker is the isolated, verified Staging
 recovery path (with the quoted new-project cost not yet authorized); exact
 migration dependency/security postflights and Staging acceptance remain pending
 after that gate. Main/Staging functional parity: NO.
+
+
+## Owner correction and existing Restore discovery — 2026-11-05
+
+Owner explicitly rejects any third Supabase database/project. No new project,
+server, billable resource, target reset or repeat Restore is authorized.
+The earlier statement that new-project cost approval was a prerequisite is
+withdrawn: that is not the only recovery mechanism and is not the selected path.
+
+Existing canonical evidence found:
+- Decision FM-DEC-004 says Restore must not target Production/shared Supabase
+  Staging and must not spawn another restore server by default.
+- Existing host fanmind-restore-01 already has the isolated PostgreSQL17 recovery
+  facility. Receipt:
+  project-memory/receipts/FM-RST-001-ISOLATED-DATABASE-RESTORE-ACCEPTED-20260828.md.
+- Run33178878764/job98874745740 committed the database Restore. Separately
+  authorized ACL completion produced expected/actual fingerprint equality,
+  core postcheck5|5|5|5 and plaintext cleanup PASS.
+- CURRENT_STATE supersedes the historical failure and accepts DB_POSTCHECKED;
+  #944 is closed/completed. Do not repeat this accepted database Restore.
+- Remaining overall Storage/config/cleanup gate is distinct; it does not turn
+  the accepted database Restore into a failure.
+- These are historical Production-backup recovery-tooling evidence, not proof
+  that today's Staging backup was restored or that current host access works.
+
+Next recovery assessment must reuse existing approved infrastructure/evidence,
+check what is actually required for the bounded additive Staging migrations,
+and isolate any genuinely missing current target/backup/access evidence.
+Do not substitute the old Production receipt for current Staging recovery.
+Do not invent a requirement to purchase a third Supabase project, repeat a
+consumed Restore, restore Production into Staging, or weaken safety checks.
+No target mutation was made by this correction.
