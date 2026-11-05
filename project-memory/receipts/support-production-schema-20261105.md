@@ -1,6 +1,6 @@
 # Support #1350 — Production schema execution, 2026-11-05
 
-Status: APPLIED_AND_VERIFIED; independent target countercheck pending.
+Status: ACCEPTED — Production schema-only installation; independent target countercheck PASS.
 Risk: R4. Task/lock: SUPPORT-PRODUCTION-SCHEMA-1350-20261105.
 Holder: current interactive Codex root; apply complete, no active schema writer; database advisory lease (1350,1417) released at transaction completion.
 Owner authorization: current direct Owner instruction requests the Support database objects directly on the real Production database from main, replacing Staging as the selected schema-installation target. This does not authorize Owner assignment, retention execution/schedule or application activation/deployment.
@@ -47,3 +47,11 @@ Staging verify42021541799 on the same source correctly reported ABSENT/schema_no
 - Security advisor delta is exactly7 INFO rls_enabled_no_policy findings for the intentionally policy-free/browser-denied Support tables; full ACL/reference equality confirms intentional server/operator-only access. Five pre-existing unrelated security-definer warnings remain unchanged. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy .
 - Main source remained0a965fd49d9552326c2ff96952b37282b7dac63a throughout execution.
 - Scope complete after independent target countercheck: Production Support SCHEMA only. Full Support runtime activation/identity/consent/privacy/retention/end-to-end acceptance remains open under Issue1350.
+
+## Independent closeout
+
+Separate Guardian independently re-read Production at2026-11-05T11:59:56.148096Z in BEGIN READ ONLY/ROLLBACK.
+Canonical full catalogue (not only counts) equals the pinned reference EXACT;7tables/20functions/2triggers/1sequence; all7 tables owned by postgres and RLS-enabled; no PUBLIC/anon/authenticated ACL on any scoped object.
+Separate row-count readback confirms all7 tables empty and exactly one migration history entry20261105115731/support_centre_reviewed_main_0a965fd4.
+No writes or test reruns were performed by the Guardian.
+Lock RELEASED for this completed schema action. Runtime, Owner, retention/privacy operations and application acceptance remain open; do not infer or repeat an apply.
