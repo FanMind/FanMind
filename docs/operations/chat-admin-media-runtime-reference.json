@@ -1,0 +1,680 @@
+{
+  "version": 1,
+  "source": "supabase/controlled/chat_admin_media.sql",
+  "sourceSha256": "3c4fa2214b5721dd8a7bc85d9ea3ef3b6b8c592c5305315eb623cf99cf1d59fe",
+  "catalogue": {
+    "bucket": [
+      {
+        "id": "chat-character-media",
+        "mime": [
+          "image/webp"
+        ],
+        "name": "chat-character-media",
+        "limit": 5242880,
+        "public": false
+      }
+    ],
+    "tables": [
+      {
+        "acl": [
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "chat_character_media",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "character_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "description",
+            "type": "text",
+            "default": "''::text",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "tags",
+            "type": "text[]",
+            "default": "'{}'::text[]",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "folder",
+            "type": "text",
+            "default": "''::text",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "offer_id",
+            "type": "text",
+            "default": "''::text",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "reviewed",
+            "type": "boolean",
+            "default": "false",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "available",
+            "type": "boolean",
+            "default": "false",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "deleted",
+            "type": "boolean",
+            "default": "false",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "revision",
+            "type": "integer",
+            "default": "1",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE INDEX chat_character_media_character ON public.chat_character_media USING btree (workspace_id, character_id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX chat_character_media_pkey ON public.chat_character_media USING btree (id)"
+          }
+        ],
+        "options": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "name": "chat_character_media_check",
+            "type": "c",
+            "definition": "CHECK (NOT reviewed OR length(description) > 0 AND cardinality(tags) > 0)"
+          },
+          {
+            "name": "chat_character_media_check1",
+            "type": "c",
+            "definition": "CHECK (NOT deleted OR NOT reviewed AND NOT available)"
+          },
+          {
+            "name": "chat_character_media_description_check",
+            "type": "c",
+            "definition": "CHECK (length(description) <= 1200)"
+          },
+          {
+            "name": "chat_character_media_folder_check",
+            "type": "c",
+            "definition": "CHECK (length(folder) <= 80)"
+          },
+          {
+            "name": "chat_character_media_offer_id_check",
+            "type": "c",
+            "definition": "CHECK (length(offer_id) <= 80)"
+          },
+          {
+            "name": "chat_character_media_pkey",
+            "type": "p",
+            "definition": "PRIMARY KEY (id)"
+          },
+          {
+            "name": "chat_character_media_revision_check",
+            "type": "c",
+            "definition": "CHECK (revision > 0)"
+          },
+          {
+            "name": "chat_character_media_tags_check",
+            "type": "c",
+            "definition": "CHECK (cardinality(tags) <= 20 AND length(array_to_string(tags, ''::text)) <= 1600)"
+          },
+          {
+            "name": "chat_character_media_workspace_id_character_id_fkey",
+            "type": "f",
+            "definition": "FOREIGN KEY (workspace_id, character_id) REFERENCES chat_characters(workspace_id, id) ON DELETE RESTRICT"
+          }
+        ]
+      },
+      {
+        "acl": [
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "chat_character_media_policies",
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "workspace_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "character_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "enabled",
+            "type": "boolean",
+            "default": "false",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "offer_id",
+            "type": "text",
+            "default": "''::text",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "delivery_hours",
+            "type": "integer",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "motifs",
+            "type": "text[]",
+            "default": "'{}'::text[]",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": "{authenticated=w/postgres}",
+            "name": "requires_confirmation",
+            "type": "boolean",
+            "default": "true",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "revision",
+            "type": "integer",
+            "default": "1",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX chat_character_media_policies_pkey ON public.chat_character_media_policies USING btree (workspace_id, character_id)"
+          }
+        ],
+        "options": null,
+        "force_rls": false,
+        "constraints": [
+          {
+            "name": "chat_character_media_policies_check",
+            "type": "c",
+            "definition": "CHECK (NOT enabled OR length(offer_id) > 0 AND delivery_hours IS NOT NULL AND cardinality(motifs) > 0)"
+          },
+          {
+            "name": "chat_character_media_policies_delivery_hours_check",
+            "type": "c",
+            "definition": "CHECK (delivery_hours >= 1 AND delivery_hours <= 720)"
+          },
+          {
+            "name": "chat_character_media_policies_motifs_check",
+            "type": "c",
+            "definition": "CHECK (cardinality(motifs) <= 20 AND length(array_to_string(motifs, ''::text)) <= 1600)"
+          },
+          {
+            "name": "chat_character_media_policies_offer_id_check",
+            "type": "c",
+            "definition": "CHECK (length(offer_id) <= 80)"
+          },
+          {
+            "name": "chat_character_media_policies_pkey",
+            "type": "p",
+            "definition": "PRIMARY KEY (workspace_id, character_id)"
+          },
+          {
+            "name": "chat_character_media_policies_revision_check",
+            "type": "c",
+            "definition": "CHECK (revision > 0)"
+          },
+          {
+            "name": "chat_character_media_policies_workspace_id_character_id_fkey",
+            "type": "f",
+            "definition": "FOREIGN KEY (workspace_id, character_id) REFERENCES chat_characters(workspace_id, id) ON DELETE CASCADE"
+          }
+        ]
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "DELETE",
+        "qual": "(is_current_chat_admin_workspace(workspace_id) AND deleted AND (NOT (EXISTS ( SELECT 1\n   FROM storage.objects o\n  WHERE ((o.bucket_id = 'chat-character-media'::text) AND (o.name = ((((((chat_character_media.workspace_id)::text || '/'::text) || (chat_character_media.character_id)::text) || '/'::text) || (chat_character_media.id)::text) || '.webp'::text)))))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "chat_character_media",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_delete",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "chat_character_media",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_insert",
+        "schemaname": "public",
+        "with_check": "(chat_admin_media_writes_allowed(workspace_id) AND (EXISTS ( SELECT 1\n   FROM chat_characters c\n  WHERE ((c.workspace_id = chat_character_media.workspace_id) AND (c.id = chat_character_media.character_id) AND (c.status = 'active'::text)))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "is_current_chat_admin_workspace(workspace_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "chat_character_media",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_read",
+        "schemaname": "public",
+        "with_check": null
+      },
+      {
+        "cmd": "UPDATE",
+        "qual": "is_current_chat_admin_workspace(workspace_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "chat_character_media",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_update",
+        "schemaname": "public",
+        "with_check": "(is_current_chat_admin_workspace(workspace_id) AND (deleted OR chat_admin_media_writes_allowed(workspace_id)) AND (EXISTS ( SELECT 1\n   FROM chat_characters c\n  WHERE ((c.workspace_id = chat_character_media.workspace_id) AND (c.id = chat_character_media.character_id) AND ((c.status = 'active'::text) OR chat_character_media.deleted)))))"
+      },
+      {
+        "cmd": "ALL",
+        "qual": "is_current_chat_admin_workspace(workspace_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "chat_character_media_policies",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_policy_owner",
+        "schemaname": "public",
+        "with_check": "(chat_admin_media_writes_allowed(workspace_id) AND (EXISTS ( SELECT 1\n   FROM chat_characters c\n  WHERE ((c.workspace_id = chat_character_media_policies.workspace_id) AND (c.id = chat_character_media_policies.character_id) AND (c.status = 'active'::text)))))"
+      },
+      {
+        "cmd": "DELETE",
+        "qual": "((bucket_id = 'chat-character-media'::text) AND (EXISTS ( SELECT 1\n   FROM chat_character_media m\n  WHERE (m.deleted AND (objects.name = ((((((m.workspace_id)::text || '/'::text) || (m.character_id)::text) || '/'::text) || (m.id)::text) || '.webp'::text)) AND is_current_chat_admin_workspace(m.workspace_id)))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_object_delete",
+        "schemaname": "storage",
+        "with_check": null
+      },
+      {
+        "cmd": "INSERT",
+        "qual": null,
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_object_insert",
+        "schemaname": "storage",
+        "with_check": "((bucket_id = 'chat-character-media'::text) AND (EXISTS ( SELECT 1\n   FROM (chat_character_media m\n     JOIN chat_characters c ON (((c.workspace_id = m.workspace_id) AND (c.id = m.character_id))))\n  WHERE ((NOT m.deleted) AND (c.status = 'active'::text) AND (objects.name = ((((((m.workspace_id)::text || '/'::text) || (m.character_id)::text) || '/'::text) || (m.id)::text) || '.webp'::text)) AND chat_admin_media_writes_allowed(m.workspace_id)))))"
+      },
+      {
+        "cmd": "SELECT",
+        "qual": "((bucket_id = 'chat-character-media'::text) AND (EXISTS ( SELECT 1\n   FROM (chat_character_media m\n     JOIN chat_characters c ON (((c.workspace_id = m.workspace_id) AND (c.id = m.character_id))))\n  WHERE (((c.status = 'active'::text) OR m.deleted) AND (objects.name = ((((((m.workspace_id)::text || '/'::text) || (m.character_id)::text) || '/'::text) || (m.id)::text) || '.webp'::text)) AND is_current_chat_admin_workspace(m.workspace_id)))))",
+        "roles": [
+          "authenticated"
+        ],
+        "tablename": "objects",
+        "permissive": "PERMISSIVE",
+        "policyname": "chat_media_object_select",
+        "schemaname": "storage",
+        "with_check": null
+      }
+    ],
+    "triggers": [
+      {
+        "name": "chat_media_revision",
+        "table": "chat_character_media",
+        "schema": "public",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER chat_media_revision BEFORE INSERT OR DELETE OR UPDATE ON chat_character_media FOR EACH ROW EXECUTE FUNCTION chat_admin_media_revision()"
+      },
+      {
+        "name": "chat_media_policy_revision",
+        "table": "chat_character_media_policies",
+        "schema": "public",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER chat_media_policy_revision BEFORE INSERT OR DELETE OR UPDATE ON chat_character_media_policies FOR EACH ROW EXECUTE FUNCTION chat_admin_media_revision()"
+      },
+      {
+        "name": "chat_media_object_guard",
+        "table": "objects",
+        "schema": "storage",
+        "enabled": "O",
+        "definition": "CREATE TRIGGER chat_media_object_guard BEFORE INSERT ON storage.objects FOR EACH ROW EXECUTE FUNCTION chat_admin_media_object_guard()"
+      }
+    ],
+    "functions": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "args": "",
+        "name": "chat_admin_media_object_guard",
+        "owner": "postgres",
+        "definition": "CREATE OR REPLACE FUNCTION public.chat_admin_media_object_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\ndeclare target_workspace uuid; target_character uuid;\nbegin\n if new.bucket_id<>'chat-character-media' then return new; end if;\n select c.workspace_id,c.id into target_workspace,target_character\n from public.chat_characters c join public.chat_character_media m\n on m.workspace_id=c.workspace_id and m.character_id=c.id\n where new.name=m.workspace_id::text||'/'||m.character_id::text||'/'||m.id::text||'.webp'\n for update of c;\n if not found then raise exception 'media_object_binding_invalid'; end if;\n if not public.chat_admin_media_writes_allowed(target_workspace) or not exists(\n select 1 from public.chat_character_media m join public.chat_characters c\n on c.workspace_id=m.workspace_id and c.id=m.character_id\n where m.workspace_id=target_workspace and m.character_id=target_character\n and not m.deleted and c.status='active'\n and new.name=m.workspace_id::text||'/'||m.character_id::text||'/'||m.id::text||'.webp')\n then raise exception 'media_object_binding_invalid'; end if;\n return new;\nend;$function$\n"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "args": "",
+        "name": "chat_admin_media_revision",
+        "owner": "postgres",
+        "definition": "CREATE OR REPLACE FUNCTION public.chat_admin_media_revision()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n if TG_OP='UPDATE' then new.revision:=old.revision+1; end if;\n update public.chat_characters set revision=revision+1,updated_at=now()\n where workspace_id=case when TG_OP='DELETE' then old.workspace_id else new.workspace_id end\n and id=case when TG_OP='DELETE' then old.character_id else new.character_id end;\n if TG_OP='INSERT' and TG_TABLE_NAME='chat_character_media' and\n (select count(*) from public.chat_character_media m where m.workspace_id=new.workspace_id and m.character_id=new.character_id)>=100\n then raise exception 'media_library_limit'; end if;\n if TG_OP='DELETE' then return old; end if; return new;\nend;$function$\n"
+      },
+      {
+        "acl": [
+          {
+            "role": "authenticated",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "args": "target_workspace uuid",
+        "name": "chat_admin_media_writes_allowed",
+        "owner": "postgres",
+        "definition": "CREATE OR REPLACE FUNCTION public.chat_admin_media_writes_allowed(target_workspace uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n select auth.uid() is not null and public.is_current_chat_admin_workspace(target_workspace)\n and not exists(select 1 from public.account_deletion_requests r where r.user_id=auth.uid() and r.status='processing')\n$function$\n"
+      }
+    ]
+  }
+}

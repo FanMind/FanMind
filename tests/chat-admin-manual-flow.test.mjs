@@ -503,3 +503,26 @@ test('release transport enforces a total abort deadline and rejects truncated or
   const invalid=releaseTransportFixture({body:'<html>private</html>'});
   await assert.rejects(verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,invalid.requestImpl)),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=release_json'});
 });
+
+test('SQL diagnostics admit only fixed bounded numeric counts, including on verifier failure',async()=>{
+ const {manualFlowCountDiagnostics,MANUAL_FLOW_EXPECTED_COUNTS}=await import('../scripts/operations/chat-admin-manual-flow-staging.mjs');
+ const actual={characters:3,fans:2,conversations:2,messages:41,usage_ok:10,usage_error:0};
+ const lines=manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(actual)}\nERROR: private credentials and SQL must never escape`);
+ assert.deepEqual(lines,[`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:MANUAL_FLOW_EXPECTED_COUNTS,actual})}`]);
+ assert.equal(MANUAL_FLOW_EXPECTED_COUNTS.usage_error,2,'diagnostics must not silently change the existing assertion');
+ for(const invalid of [{...actual,secret:'private'},{...actual,messages:'private'},{...actual,messages:-1},{...actual,messages:1000001},{...actual,messages:1.1},null,[]])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(invalid)}`),[]);
+ assert.deepEqual(manualFlowCountDiagnostics('', 'ERROR: private details\nNOTICE: CHAT_ADMIN_MANUAL_COUNTS=invalid-json'),[]);
+});
+
+test('ten successful generations do not imply exactly two rejected provider attempts',async()=>{
+ const {runReplyQualityGate}=await import('../src/lib/replyQualityPolicy.mjs');
+ const accepted=['Heute klingt das nach einem entspannten Tag.','Bei mir gibt es gerade einen kleinen Moment Ruhe.','Was hat dir an dem Foto besonders gefallen?'];
+ for(const rewrites of [0,2,10]){
+  const observed={ok:0,error:0};
+  for(let index=0;index<10;index++)await runReplyQualityGate({
+   generate:async feedback=>({replies:index<rewrites&&!feedback?['Ich freue mich sehr.','Ich freue mich sehr.','Ich freue mich sehr.']:accepted}),
+   readReplies:value=>value.replies,onAttempt:async({error})=>{observed[error?'error':'ok']++;},inputChars:10,inputLimit:10000,
+  });
+  assert.deepEqual(observed,{ok:10,error:rewrites});
+ }
+});

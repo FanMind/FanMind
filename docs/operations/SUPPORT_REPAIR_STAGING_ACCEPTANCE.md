@@ -69,7 +69,7 @@ Before any protected target action, recompute with `sha256sum` and stop on any m
 
 | Artifact | Reviewed SHA-256 |
 | --- | --- |
-| `docs/operations/sql/support_repair_audit_draft.sql` | `6afedb605fbe71e99f0d1c1b53bd088f7011da6f4e7d1d96cdc5182067dc661a` |
+| `docs/operations/sql/support_repair_audit_draft.sql` | `30e60b111727fb0d806bcc2bdb15fb7292693255c3816ae09a678dbd2d98989b` |
 | `docs/operations/sql/support_repair_audit_verify.sql` | `87918c38dd8ca31ef72c982d4f01ea17a0dd07ca897e18bfd21d081af3219168` |
 
 The APPLY checksum authorizes only the exact draft SQL on the named isolated Staging project. It grants no authority for Production, a different project or a modified file.
@@ -345,3 +345,21 @@ Open protected prerequisites:
 Current blockers are Support-specific protected authorization and target evidence, not repository-source ambiguity. The checked-in `RELEASE_DECISION.json` is a conservative `BLOCK` for the separate `FM-CREATOR-001` disclosure/delete scope; it is neither a Support authorization nor an unrelated Support veto. Before any cumulative Staging action, a fresh target-specific God Mode evaluation must bind both `FM-CONTRACT-SOCIAL-CRM-001` / `FM-IGATE-SOCIAL-CRM-001` and `FM-CONTRACT-REG-ENTITLEMENT-001` / `FM-IGATE-REG-ENTITLEMENT-001`, the exact release, exact target, protected-producer attestation, negative evidence and recovery. Because deployment is protected, the technically complete expected result is `OWNER_REQUIRED`, not inferred `ALLOW`. Staging runtime, schema state, flag state, rollback execution and provider behavior remain `NOT_RUN`.
 
 The next safe step is to prepare and obtain human authorization for the exact Support God Mode preflight and deployment boundary. Only after its requirements are satisfied may the then-current reviewed `main` SHA, recorded as `<EXACT_AUTHORIZED_DEPLOYMENT_SHA>`, be deployed to isolated Staging, followed by release/flag verification and the separately authorized read-only classifier. The historical Support merge anchor proves source inclusion but is not itself deployment authority. No schema APPLY or flag activation is bundled with deployment.
+
+## 2026-11-05 source correction and observed Staging drift
+
+The earlier draft pin predated the required connection binding. This source-only
+correction pins the actual twelve-column draft; it does not grant a target apply.
+Read-only Staging inspection found the eleven-column legacy table empty, without
+connection_id, partial status, completion constraint or connection-history index.
+The application inserts connection_id and filters completion updates by it, so
+this is a real repair-persistence defect.
+
+The separately reviewed empty-table upgrade and synthetic rollback acceptance
+are under docs/operations/sql/support_repair_audit_staging_empty_upgrade.sql
+and support_repair_audit_synthetic_acceptance.sql. Never run the CREATE IF NOT
+EXISTS draft over the legacy shape. The upgrade must retain its exact legacy
+fingerprint, exclusive lock, empty-table guard and full postflight. A populated
+legacy table requires a separate identity-reconciliation design, never fabricated
+connection identifiers or a destructive reset. No successful target apply is
+claimed here.

@@ -22,6 +22,25 @@ import { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../..
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
 const DATA_ID_KEYS = ["FAN_A_ID","FAN_B_ID","FAN_A_CREATION_ID","FAN_B_CREATION_ID","FOREIGN_CHARACTER_ID"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
+export const MANUAL_FLOW_EXPECTED_COUNTS = Object.freeze({characters:3,fans:2,conversations:2,messages:41,usage_ok:10,usage_error:2});
+// Only these bounded numeric fields may cross the private psql boundary.
+export function manualFlowCountDiagnostics(stdout = '', stderr = '') {
+  const lines = `${stdout}\n${stderr}`.split(/\r?\n/u);
+  const prefix = 'CHAT_ADMIN_MANUAL_COUNTS=';
+  const found = [];
+  for (const line of lines) {
+    const index = line.indexOf(prefix);
+    if (index < 0 || line.length > 1024) continue;
+    try {
+      const value = JSON.parse(line.slice(index + prefix.length));
+      const keys = Object.keys(MANUAL_FLOW_EXPECTED_COUNTS);
+      if (!value || Array.isArray(value) || Object.keys(value).length !== keys.length ||
+          !keys.every(key => Object.hasOwn(value,key) && Number.isSafeInteger(value[key]) && value[key] >= 0 && value[key] <= 1000000)) continue;
+      found.push(`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:MANUAL_FLOW_EXPECTED_COUNTS,actual:Object.fromEntries(keys.map(key=>[key,value[key]]))})}`);
+    } catch { /* Never expose raw SQL, exception details, identifiers or text. */ }
+  }
+  return [...new Set(found)];
+}
 const literal = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const identities = (env) => Object.fromEntries(ID_KEYS.map(key => [key, canonicalChatAdminFixtureId(env[`FANMIND_CHAT_ADMIN_${key}`])]));
 const uuidFromMarker = (marker,label) => { const value=createHash("sha256").update(`${marker}:${label}`).digest("hex").slice(0,32).split("");value[12]="4";value[16]="8";return `${value.slice(0,8).join("")}-${value.slice(8,12).join("")}-${value.slice(12,16).join("")}-${value.slice(16,20).join("")}-${value.slice(20).join("")}`; };
@@ -207,6 +226,13 @@ rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
+  raise notice 'CHAT_ADMIN_MANUAL_COUNTS=%',jsonb_build_object(
+    'characters',(select count(*) from public.chat_characters where ${ownedCharacters}),
+    'fans',(select count(*) from public.chat_character_fans where ${ownedFans}),
+    'conversations',(select count(*) from public.chat_character_conversations where ${ownedConversations}),
+    'messages',(select count(*) from public.chat_character_messages where ${ownedMessages}),
+    'usage_ok',(select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz),
+    'usage_error',(select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz));
   if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>41 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>10 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>2 then raise exception 'runtime_effect_missing'; end if;
   if not exists(select 1 from public.chat_character_fans where id=${fanA}::uuid and customer_tier='blue') or not exists(select 1 from public.chat_character_fans where id=${fanB}::uuid and customer_tier='green') then raise exception 'customer_tier_persistence_missing'; end if;
   if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid) and jsonb_array_length(sales_playbook->'offers')=4)<>2 or not exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages} and confirmed.direction='confirmed_reply' and exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) then raise exception 'persisted_offer_or_confirmation_missing'; end if;
@@ -242,6 +268,7 @@ function database(sql, env) {
     bytes=privateRead(env.PGPASSFILE);const path=join(directory,'pgpass');writeFileSync(path,bytes,{mode:0o600,flag:'wx'});
     const safe=Object.fromEntries(['PATH','HOME','LANG','PGHOST','PGPORT','PGDATABASE','PGUSER','PGSSLMODE','PGSSLROOTCERT'].filter(key=>env[key]!==undefined).map(key=>[key,env[key]]));
     const result=spawnSync('psql',['--no-password','--no-psqlrc','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1'],{env:{...safe,PGPASSFILE:path,PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c lock_timeout=5000 -c statement_timeout=120000'},input:sql,encoding:'utf8',timeout:150_000,maxBuffer:1024*1024});
+    for (const line of manualFlowCountDiagnostics(result.stdout,result.stderr)) console.log(line);
     if(result.error||result.status!==0)fail('database_operation');
     return `${result.stdout}\n${result.stderr}`;
   } finally {bytes?.fill(0);rmSync(directory,{recursive:true,force:true});}
