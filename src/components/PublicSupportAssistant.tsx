@@ -29,7 +29,7 @@ export function PublicSupportAssistant({language}:{language:"de"|"en"}){
    </header>
    <div className={styles.conversation} ref={log} role="log" aria-live="polite" aria-label={en?"Chat history":"Gesprächsverlauf"}>
     <p className={styles.assistant}>{en?"Hi! I’m the FanMind AI assistant. What would you like to know about features, getting started or using FanMind?":"Hallo! Ich bin der KI-Assistent von FanMind. Was möchtest du über Funktionen, den Einstieg oder die Nutzung wissen?"}</p>
-    {turns.map((turn,i)=><p key={i} className={turn.role==="user"?styles.visitor:styles.assistant}><span className={styles.speaker}>{turn.role==="user"?(en?"You":"Du"):"FanMind KI"}</span>{turn.text}</p>)}
+    {turns.map((turn,i)=><p key={i} className={turn.role==="user"?styles.visitor:styles.assistant}><span className={styles.speaker}>{turn.role==="user"?(en?"You":"Du"):"FanMind KI"}</span><span>{turn.text}</span></p>)}
     {busy&&<p className={styles.assistant} role="status">{en?"Thinking …":"Antwort wird vorbereitet …"}</p>}
    </div>
    <form className={styles.composer} onSubmit={e=>{e.preventDefault();void send();}}>
