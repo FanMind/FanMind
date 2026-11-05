@@ -1,8 +1,8 @@
 # Support #1350 — Production schema execution, 2026-11-05
 
-Status: PREFLIGHT_COMPLETE; schema apply NOT_RUN.
+Status: APPLIED_AND_VERIFIED; independent target countercheck pending.
 Risk: R4. Task/lock: SUPPORT-PRODUCTION-SCHEMA-1350-20261105.
-Holder: current interactive Codex root; one schema writer; database advisory lease (1350,1417).
+Holder: current interactive Codex root; apply complete, no active schema writer; database advisory lease (1350,1417) released at transaction completion.
 Owner authorization: current direct Owner instruction requests the Support database objects directly on the real Production database from main, replacing Staging as the selected schema-installation target. This does not authorize Owner assignment, retention execution/schedule or application activation/deployment.
 Source: reviewed main 0a965fd49d9552326c2ff96952b37282b7dac63a, PR #1417 merged normally after all 12 required app/context pairs passed and independent Guardian countercheck.
 Target: Supabase FanMind Production drqkpdvtbbrrdwmtrodz, ACTIVE_HEALTHY, PostgreSQL17.6.
@@ -36,3 +36,14 @@ Postflight must independently prove EXACT, all new tables empty, RLS enabled, br
 No schema result may be called complete Support runtime or Production product acceptance.
 
 Staging verify42021541799 on the same source correctly reported ABSENT/schema_not_exact with private-file cleanup successful; no Staging apply was run.
+
+## Actual execution and postflight
+
+- Supabase apply_migration succeeded for Production target drqkpdvtbbrrdwmtrodz.
+- Migration history version20261105115731, name support_centre_reviewed_main_0a965fd4; one installed migration row independently read back.
+- First platform confirmation expired before execution. Fresh catalogue still ABSENT; a second confirmation completed the same scoped operation successfully. No unchanged SQL retry after an executed failure and no duplicate install.
+- Root fresh read-only full catalogue exactly equals the pinned independent PG17 reference:7tables/20functions/2triggers/1sequence, all owned by postgres, all7 tables RLS-enabled.
+- All7 tables have zero rows, including platform Owners and retention receipts. No Owner grant, retention/deletion execution, schedule activation, provider invocation or application deploy/flag change occurred.
+- Security advisor delta is exactly7 INFO rls_enabled_no_policy findings for the intentionally policy-free/browser-denied Support tables; full ACL/reference equality confirms intentional server/operator-only access. Five pre-existing unrelated security-definer warnings remain unchanged. Reference: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy .
+- Main source remained0a965fd49d9552326c2ff96952b37282b7dac63a throughout execution.
+- Scope complete after independent target countercheck: Production Support SCHEMA only. Full Support runtime activation/identity/consent/privacy/retention/end-to-end acceptance remains open under Issue1350.
