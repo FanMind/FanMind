@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-10-17",
-  "last_source_of_truth_review": "2026-10-17 communication dimensions on maincb572 after merged1339: existing source-backed length/style/emoji semantics merge by dimension, literal residual quotes keep original provenance; same v1 fields/eight facts/4000 chars, boundaries first, interests yield; same global replay veto, commercial/quality/isolation/manual-send gates. Source-only, global release/target/FM-DEC-031 unchanged.",
+  "captured": "2026-11-05",
+  "last_source_of_truth_review": "2026-11-05 Owner-requested ChatAdmin contextual curiosity and editable replies: Character/Fan context, original drafts, manual confirmation and all price/authority/send boundaries preserved. Source-only; no model, Staging or Production acceptance inferred. Other watched sources unchanged.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "4e0d1cfb00fcdabebc95c63fa95780114352b4d0",
+    "docs/SOURCE_OF_TRUTH.md": "49c886938315570cadf0e18ce58b38dc908bc077",
     "src/config/roadmap.ts": "7179da112c26e357fb2d8f17e20aabf1b530c675",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
@@ -12,5 +12,6 @@
     ".github/workflows/restore-drill-database.yml": "1a5d977e4314e46cacb7197e9ab25bdba8dc315d"
   },
   "rule": "A watched-file fingerprint change is not automatically a defect, but it creates DRIFT_REVIEW_REQUIRED before relying on prior acceptance evidence. Update this baseline only in the same reviewed change that reconciles the affected gate.",
-  "last_contact_review": "2026-11-05 Owner explicitly confirms fanmind@fanmind.ch for general contact, support and privacy intake. Reviewed SOURCE_OF_TRUTH delta changes only this contact address; operator identity, commercial terms, prior acceptance evidence and runtime activation gates remain unchanged. Web/mailto/default/example configuration and Mobile store metadata/checks reconciled in PR1423."
+  "last_contact_review": "2026-11-05 Owner explicitly confirms fanmind@fanmind.ch for general contact, support and privacy intake. Reviewed SOURCE_OF_TRUTH delta changes only this contact address; operator identity, commercial terms, prior acceptance evidence and runtime activation gates remain unchanged. Web/mailto/default/example configuration and Mobile store metadata/checks reconciled in PR1423.",
+  "last_media_review": "2026-11-05 reviewed source-only Character media library, conservative verified-tag grounding and configurable paid custom work; controlled storage/schema and provider image-analysis switches remain off; existing Staging acceptance unresolved."
 }

@@ -1,3 +1,4 @@
+import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
 import * as currentFactsPolicy from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
 import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
 import assert from "node:assert/strict";
@@ -32,6 +33,8 @@ function authorityHarness(email, role = "owner") {
     require(name) { assert.ok(["next/navigation", "@/lib/supabase/server"].includes(name)); return {}; },
   });
   const dependencies = {
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "@/lib/admin": admin,
     "next/headers": { cookies: async () => ({ get: () => ({ value: "synthetic-session" }) }) },
@@ -100,6 +103,8 @@ function harness(change, abortController, options = {}) {
   const history=options.history??defaultHistory;
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, persistedGenerations: [], confirmations: [], currentFactWrites: [], memoryWrites: [] };
   const dependencies = {
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
@@ -123,9 +128,9 @@ function harness(change, abortController, options = {}) {
       getLatestChatAdminConfirmedReply: async()=>options.lastConfirmed??(options.deriveLastConfirmed?[...history].reverse().find(row=>row.direction==="confirmed_reply")??null:change==="closed"||((change==="close-during-provider"||change==="quality-close")&&providerFinished)?{id:"77777777-7777-4777-8777-777777777777",direction:"confirmed_reply",content:"Das Gespräch ist beendet."}:null),
       getChatConversation: async (workspace, selectedCharacter, selectedFan, id) => ({ id, workspace_id:workspace, character_id:selectedCharacter, fan_id:selectedFan }),
       listRecentChatMessages: async () => history,
-      getChatAdminGeneration: async (...args) => change === "retry-learning" ? [{direction:"fan_inbound",sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",content:"Hallo!"}))] : persistedByGeneration.get(args[4])??[],
+      getChatAdminGeneration: async (...args) => change === "retry-learning" ? [{direction:"fan_inbound",character_revision:1,sequence:10,content:"Ich mag kurze Antworten ohne Emojis."},...Array.from({length:3},()=>({direction:"suggested_reply",character_revision:1,content:"Hallo!"}))] : persistedByGeneration.get(args[4])??[],
       updateChatFan: async (...args) => { calls.memoryWrites.push(args); if(change==="memory-revoked")revoked=true; if(change === "memory-race") throw new Error("revision_changed"); fanNotes=args[4].notes; return {}; },
-      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); const persisted=[{direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10+calls.persistedGenerations.length,content:options.savedContent??args[8]},...args.at(-1).map(content=>({direction:"suggested_reply",content}))];persistedByGeneration.set(args[6],persisted);calls.persistedGenerations.push({generationId:args[6],incoming:args[8],replies:args.at(-1)});return args.at(-1); },
+      persistChatAdminGeneration: async (...args) => { calls.persistedHistoryIds=args[7]; if(change==="persist-failed")throw new Error("storage_failed"); const persisted=[{character_revision:args[4],direction:options.savedDirection??"fan_inbound",sequence:Object.hasOwn(options,"persistedSequence")?options.persistedSequence:10+calls.persistedGenerations.length,content:options.savedContent??args[8]},...args.at(-1).map(content=>({character_revision:args[4],direction:"suggested_reply",content}))];persistedByGeneration.set(args[6],persisted);calls.persistedGenerations.push({generationId:args[6],incoming:args[8],replies:args.at(-1)});return args.at(-1); },
     },
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
@@ -314,6 +319,8 @@ test("actual Fan route deletes only the revision-bound Fan in the authorized wor
     exports: route, Response, Request, URL,
     require(name) {
       const dependencies = {
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
         "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
         "@/lib/chatAdmin": {
@@ -783,10 +790,10 @@ test("flag-off and Character-only paths do not acquire a facts guard",async()=>{
 test("cached generation replay applies the guard without provider, usage, persistence or memory",async()=>{
  const incoming="Was machst du am Wochenende?";
  const previous=[
-  {direction:"fan_inbound",content:incoming},
-  {direction:"suggested_reply",content:"Alles klar. Magst du Musik? Danke!"},
-  {direction:"suggested_reply",content:"Was machst du gerne?"},
-  {direction:"suggested_reply",content:"Erzähl mir etwas von dir."},
+  {character_revision:1,direction:"fan_inbound",content:incoming},
+  {character_revision:1,direction:"suggested_reply",content:"Alles klar. Magst du Musik? Danke!"},
+  {character_revision:1,direction:"suggested_reply",content:"Was machst du gerne?"},
+  {character_revision:1,direction:"suggested_reply",content:"Erzähl mir etwas von dir."},
  ];
  const h=harness(undefined,undefined,{currentFactsEnabled:true,currentFacts:boundMusicCurrentFacts("Ich liebe Musik."),history:[],previous});
  const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
@@ -798,10 +805,10 @@ test("cached generation replay applies the guard without provider, usage, persis
 test("cached contextual stub triple is rejected before provider, usage, persistence or memory",async()=>{
  const incoming="Na servas, bist du heimlich auf Turbo?";
  const previous=[
-  {direction:"fan_inbound",content:incoming},
-  {direction:"suggested_reply",content:"Freut mich!"},
-  {direction:"suggested_reply",content:"Schön zu hören?"},
-  {direction:"suggested_reply",content:"Danke."},
+  {character_revision:1,direction:"fan_inbound",content:incoming},
+  {character_revision:1,direction:"suggested_reply",content:"Freut mich!"},
+  {character_revision:1,direction:"suggested_reply",content:"Schön zu hören?"},
+  {character_revision:1,direction:"suggested_reply",content:"Danke."},
  ];
  const h=harness(undefined,undefined,{history:[],previous});
  const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));
@@ -962,3 +969,9 @@ test("multiturn baseline PASS safety: direct minority disclosure stops before pr
 
 
 
+
+
+test("cached generation cannot be replayed under a newer Character revision",async()=>{
+ const incoming="Hallo";const previous=[{character_revision:0,direction:"fan_inbound",content:incoming},...Array.from({length:3},()=>({character_revision:0,direction:"suggested_reply",content:"Ich habe ein Bild für dich."}))];
+ const h=harness(undefined,undefined,{previous});const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));assert.equal(response.status,409);assert.equal((await response.json()).error,"stale_generation_revision");assert.equal(h.calls.provider,0);assert.equal(h.calls.persistedGenerations.length,0);
+});

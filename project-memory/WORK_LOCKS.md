@@ -1549,3 +1549,14 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: separately reviewed revert of the single Mobile lock delta and evidence records. No external cleanup.
 - Forbidden: forced/legacy peer resolution, Doctor suppression, dependency-validation exclusions, Expo/React Native SDK upgrade, Capacity-control weakening, signing, Store action, database/migration, Staging/Production activation or deployment.
 - Handoff: source lock released for one integration PR. #1362 may close as SUPERSEDED / INTEGRATED after verified merge; incompatible #1363-#1366 are not represented by the integration diff.
+
+
+## FM-CHATADMIN-MEDIA-1425-20261105
+- Status: READY_FOR_PUBLICATION; Risk: R3 repository-only; Holder: Codex.
+- Owner explicitly requested completion of ChatAdmin media library, grounded image search/analysis and configurable paid custom work, plus existing #1424 UI corrections and #1219 acceptance.
+- Source base: PR #1424 head 4619b8f59586c82c122f14a09a3be7c0005969d4; separate source branch feat/chatadmin-media-1425. No duplicate media writer found.
+- Contracts: FM-CONTRACT-CHATADMIN-AI-001; FM-IGATE-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-STORAGE-001.
+- Boundary: controlled private media schema/storage and image analysis remain default-off; no target APPLY, provider activation, real media processing or Production action. Existing Staging acceptance authorization remains separate; failed run 42041782472 requires reconciliation before new target writes.
+- Recovery: source revert before activation; media deletion revokes availability before object removal; existing Character revision serializes media invalidation against generation and confirmation. Independent Guardian required.
+
+- Source handoff: implemented locally, targeted308/308 + embedded SQL cases/build/lint/truth PASS; no publication or target activation. Receipt: receipts/chatadmin-media-1425-20261105.md.

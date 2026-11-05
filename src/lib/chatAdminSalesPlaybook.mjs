@@ -40,7 +40,7 @@ export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {
   // A compliment about existing media is not a request to buy more. Preserve
   // short category requests and explicit price/content requests as before.
   const appreciation = /\b(?:schön\w*|schoen\w*|nett\w*|toll\w*|hübsch\w*|huebsch\w*|süß\w*|suess\w*|nice|beautiful|lovely|great)\b/iu.test(incoming);
-  const explicitRequest = /\b(?:will|möchte|moechte|hätte|haette|schick\w*|zeig\w*|kauf\w*|bestell\w*|bekomm\w*|kost\w*|preis\w*|wieviel|want|send|show|buy|order|cost\w*|price\w*)\b|\b(?:wie\s+viel|how\s+much)\b|\b(?:kann|könnte|koennte|darf)\s+ich\b.{0,100}\b(?:haben|sehen)\b|\b(?:can|could|may)\s+i\s+(?:get|have|see)\b/iu.test(incoming);
+  const explicitRequest = /\b(?:will|möchte|moechte|hätte|haette|schick\w*|zeig\w*|kauf\w*|bestell\w*|bekomm\w*|kost\w*|preis\w*|wieviel|want|send|show|buy|order|cost\w*|price\w*)\b|\b(?:wie\s+viel|how\s+much)\b|\b(?:kann|könnte|koennte|darf)\s+ich\b.{0,100}\b(?:haben|sehen)\b|\b(?:can|could|may)\s+i\s+(?:get|have|see)\b|\b(?:ist|sind|is|are)\b.{0,120}\b(?:erhältlich|erhaeltlich|verfügbar|verfuegbar|available)\b|\b(?:bietest|bietet)\b.{0,100}\ban\b|\b(?:do|does)\b.{0,100}\boffer\b/iu.test(incoming);
   const callRequest = /\b(?:video[ -]*(?:telefon(?:at|ieren)?|anruf|call|chat)|videotelefon(?:at|ieren)?|telefon(?:at|ieren)|anrufen|facetime)\b/iu.test(incoming);
   const category = callRequest ? null : appreciation && !explicitRequest ? null
     : privateRequest && photoRequest ? "private_photo"

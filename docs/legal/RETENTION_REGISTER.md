@@ -111,3 +111,8 @@ Activation requires an approved daily cleanup operator, monitoring/deletion proo
 processing/privacy information and subject-access/export coverage of support text.
 Account and Workspace deletion cascade. Source tests are not a runtime retention
 or legal acceptance certificate. See `docs/operations/SUPPORT_CENTRE.md`.
+
+
+### Private ChatAdmin-Medien — vorbereitet, nicht aktiviert
+
+Private Bilddateien, manuell geprüfte Beschreibungen/Schlagwörter, Verfügbarkeit und Anfertigungsregeln bleiben Workspace-/Character-gebunden. Die KI-Beschreibung wird nur ausdrücklich ausgelöst und bleibt bis zur manuellen Prüfung unfreigegeben. Einzelbildlöschung entzieht zuerst Freigabe/Verfügbarkeit, bestätigt dann die physische Datei-Löschung und entfernt erst danach Metadaten. Der bestehende geschützte Account-Löschprozessor bereinigt Bilder vor Auth-Löschung; Disclosure enthält Metadaten/Regeln. Keine neue allgemeine Aufbewahrungsfrist, automatische Bildübertragung oder Produktivaktivierung wird behauptet. Siehe `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`; Provider-/Datenschutz- und Zielabnahme bleiben offen.
