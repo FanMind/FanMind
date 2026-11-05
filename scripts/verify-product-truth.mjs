@@ -1059,8 +1059,8 @@ forbidRuntime(
   "Veraltete .de-Kontaktadresse gefunden.",
 );
 forbidRuntime(
-  /(?:Fanmind|hello)@fanmind\.ch/iu,
-  "Uneinheitliche Kontaktadresse gefunden; nutze kontakt@fanmind.ch.",
+  /(?:kontakt|hello)@fanmind\.ch/iu,
+  "Uneinheitliche Kontaktadresse gefunden; nutze fanmind@fanmind.ch.",
 );
 forbidRuntime(
   /Ehrliche Roadmap/iu,
@@ -2217,7 +2217,7 @@ requireText(
 );
 requireText(
   "src/app/impressum/page.tsx",
-  "kontakt@fanmind.ch",
+  "fanmind@fanmind.ch",
   "Das Impressum muss die einheitliche Kontaktadresse verwenden.",
 );
 requireText(

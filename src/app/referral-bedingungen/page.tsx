@@ -169,7 +169,7 @@ const sections: ReferralSection[] = [
     content: (
       <p>
         Fragen zum Referral-Programm bitte an{" "}
-        <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a> richten.
+        <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a> richten.
       </p>
     ),
   },

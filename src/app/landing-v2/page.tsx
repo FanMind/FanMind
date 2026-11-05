@@ -637,7 +637,7 @@ const faqContacts = [
     title: "Beratung anfragen",
     text: "Schreib uns eine Nachricht zu deinem Use Case und zum passenden FanMind-Einstieg.",
     cta: "Beratung anfragen",
-    href: "mailto:kontakt@fanmind.ch?subject=Beratung%20anfragen",
+    href: "mailto:fanmind@fanmind.ch?subject=Beratung%20anfragen",
     tone: "blue",
   },
   {

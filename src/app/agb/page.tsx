@@ -350,7 +350,7 @@ const sections: TermsSection[] = [
       <>
         <p>
           Support- und Vertragsanfragen können an{" "}
-          <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a> gerichtet werden.
+          <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a> gerichtet werden.
           Reaktionszeiten sind nicht garantiert, sofern keine Service-Level vereinbart sind.
         </p>
         <p>

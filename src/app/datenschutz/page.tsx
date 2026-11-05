@@ -35,7 +35,7 @@ const sections: PrivacySection[] = [
           <span>2345 Brunn am Gebirge</span>
           <span>Österreich</span>
           <span>
-            E-Mail: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>
+            E-Mail: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           </span>
           <span>
             Website: <a href="https://fanmind.ch">https://fanmind.ch</a>

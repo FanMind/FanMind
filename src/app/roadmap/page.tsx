@@ -81,7 +81,7 @@ export default function RoadmapPage() {
 
         <footer className={styles.siteFooter}>
           <strong>FanMind</strong>
-          <p>KI-gestütztes Fan-CRM mit manuellem Copy-&-Open-Workflow · kontakt@fanmind.ch</p>
+          <p>KI-gestütztes Fan-CRM mit manuellem Copy-&-Open-Workflow · fanmind@fanmind.ch</p>
           <nav aria-label="Footer Navigation">
             <Link href="/impressum">Impressum</Link>
             <Link href="/datenschutz">Datenschutz</Link>

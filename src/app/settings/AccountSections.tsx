@@ -196,7 +196,7 @@ function getPackageRequestHref(
     ].join("\n"),
   );
 
-  return `mailto:kontakt@fanmind.ch?subject=${subject}&body=${body}`;
+  return `mailto:fanmind@fanmind.ch?subject=${subject}&body=${body}`;
 }
 
 function getAddOnRequestHref(
@@ -218,7 +218,7 @@ function getAddOnRequestHref(
     ].join("\n"),
   );
 
-  return `mailto:kontakt@fanmind.ch?subject=${subject}&body=${body}`;
+  return `mailto:fanmind@fanmind.ch?subject=${subject}&body=${body}`;
 }
 
 export function getSettingsAccountPageTitle(

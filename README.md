@@ -453,7 +453,7 @@ Vertragspartner ist **Bernd Guggenberger, Einzelunternehmen unter der Geschäfts
 - Geschäftsanschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
 - Inhaber und vertretungsberechtigt: Bernd Guggenberger
 - Zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling
-- Kontakt: `kontakt@fanmind.ch`
+- Kontakt: `fanmind@fanmind.ch`
 - Telefon: `+43 676 5367236`
 
 Der Zusatz `e.U.` wird erst nach bestätigter Firmenbucheintragung samt Firmenbuchnummer und Firmenbuchgericht verwendet.

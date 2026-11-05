@@ -39,7 +39,7 @@ const operatorRows = [
   },
   {
     label: "E-Mail",
-    value: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>,
+    value: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>,
   },
   {
     label: "Telefon",
@@ -197,7 +197,7 @@ export default function ImpressumPage() {
             </p>
             <p>
               Datenschutzanfragen können gerichtet werden an:{" "}
-              <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>.
+              <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>.
             </p>
           </section>
         </article>

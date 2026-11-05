@@ -432,7 +432,7 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     () =>
       evaluateStoreReadiness({
         ...validInput,
-        listing: listing.replace("kontakt@fanmind.ch", "help@example.com"),
+        listing: listing.replace("fanmind@fanmind.ch", "help@example.com"),
       }),
     /store_identity_document_mismatch/u,
   );

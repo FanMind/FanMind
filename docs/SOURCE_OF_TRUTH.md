@@ -1119,7 +1119,7 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 - Geschäftsanschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich.
 - Inhaber und vertretungsberechtigt: Bernd Guggenberger.
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
-- Kontakt: kontakt@fanmind.ch, +43 676 5367236.
+- Kontakt: fanmind@fanmind.ch, +43 676 5367236.
 - Angebot ausschließlich für B2B-Unternehmer.
 - `FanMind e.U.` darf erst nach bestätigter Firmenbucheintragung verwendet werden.
 - Die veröffentlichten Beträge sind Nettopreise. Für steuerpflichtige Umsätze in Österreich gilt die technische Vorgabe von 20 % Umsatzsteuer; international bestimmt Stripe Tax anhand Rechnungsadresse und steuerlichem Kundenstatus den anwendbaren Satz oder Reverse Charge.
