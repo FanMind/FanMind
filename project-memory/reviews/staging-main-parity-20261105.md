@@ -52,3 +52,143 @@ Read from Supabase connectors (public base tables):
 - Main must remain bit-for-bit unchanged by this workstream; all existing customer data/accounts/chats/media remain preserved.
 - Similar behavior means same reviewed software commit and same required schema/security contracts, not identical users, data rows, testing integrations or enabled providers.
 - Do not claim parity PASS until live code versions, controlled database postflight and synthetic application acceptance all PASS.
+
+
+## Continuation: live evidence 2026-11-05 18:27–18:31 UTC
+
+This section supersedes the earlier UNKNOWN statements about live versions,
+provider backups and the scoped recovery conclusion. No target mutation was made.
+
+### Release binding (live browser reads)
+- Current GitHub main: `a798d7938bb4e7e168f615f0c32d1a603dd47d4a`.
+- Production /api/version checkedAt 18:27:09.545Z: same exact main SHA,
+  runtimeEnvironment=production.
+- Staging /api/version checkedAt 18:27:16.744Z:
+  `1184616ddea8c1ea2fa93b8d74a19ab28eb8d35a`,
+  runtimeEnvironment=staging. Its environment=production is Next.js production
+  build mode, not evidence of Production target identity.
+- Code parity is therefore FAIL; no Production redeployment is needed to reach
+  the current main. Staging deployment is pending schema/recovery prerequisites.
+- Both Supabase project IDs/names independently re-read ACTIVE_HEALTHY.
+  Runtime-secret project binding still requires the protected host preflight;
+  project metadata and runtimeEnvironment alone do not prove that binding.
+
+### Provider backups: existence verified, tested restore still pending
+- Authenticated Staging dashboard lists eight physical daily backups, latest
+  2026-11-05 02:29:39 UTC. Restore-to-new-project list marks it COMPLETED.
+- Production dashboard lists eight physical daily backups, latest
+  2026-11-05 05:58:44 UTC. No restore or Production action was invoked.
+- Supabase explicitly excludes Storage object bytes from database backups.
+  Fresh Staging Storage object count is zero; Production objects are not copied.
+- Staging Restore-to-new-project confirmation was inspected, then cancelled.
+  It preserves source organization/region, creates a separate database project,
+  restores schema/data/indexes/roles/permissions/users, and requires manual
+  Storage, Edge Function, Auth/API-key and extension/configuration treatment.
+  It quotes additional compute USD 9.68/month and disk USD 0/month.
+- No project was created and no cost incurred. Source Staging was not reset.
+  Cost authorization and isolated restore/postflight remain required. An offered
+  restore button is NOT evidence that a restore has succeeded.
+- No daily backup is represented as a current full Storage-inclusive snapshot.
+  Before eventual apply, bind the tested recovery to then-current Staging state
+  and check any changes after the selected snapshot.
+
+### Fresh catalogue comparison (read-only)
+Compared public tables/columns, complete public function definitions and ACLs,
+RLS policy expressions including Storage, non-internal public triggers,
+constraints, indexes, table grants and column privileges. No row contents read.
+- Tables 45/68; common 36; Production-only 9; Staging-only 32 (unchanged).
+- Public RLS policies 66/89; including storage policies 69/89.
+- Public functions 52/74; non-internal public triggers 17/26.
+  Earlier historical trigger counts 24/32 used a different/unspecified counting
+  scope and must not be compared as though all used this same predicate.
+- Public indexes 145/222; constraints 274/543; advisory locks observed 0/0.
+- All listed public base tables have RLS enabled. RLS enabled alone is not an
+  access-control acceptance result.
+- Current security advisors: Production 17 INFO no-policy and 6 WARN
+  authenticated-security-definer-executable; Staging 36 INFO and 7 WARN.
+  No warning is fixed, dismissed or accepted by these counts. Intentional
+  server-only policy-free tables require ACL proof, not blanket policy creation.
+- Shared function signatures: 11 differ in definition and/or ACL. The
+  create_chat_admin_fan difference is insertion-column ordering with equivalent
+  explicit values; do not replace it merely for text equality.
+- Production-only conversation_messages trim trigger/function must be evaluated
+  against the reviewed retention contract before matching its behavior.
+- Production admin_crm_entitlement_boundary policies/RPCs are absent on Staging.
+  Staging has separate owner/member and server-owned-workspace hardening.
+  Do not replace those policies wholesale or weaken either environment.
+
+### Nine shared-table column differences
+Column ordering alone is ignored in this comparison.
+
+| Table | Production fields missing in Staging | Staging additions / changed defaults | Safe disposition |
+|---|---|---|---|
+| chat_character_fans | memory | none | Review source-pinned additive Staging contract; no apply yet |
+| chat_characters | pricing_config, sales_profile | none | Review source-pinned additive Staging contract; no apply yet |
+| contact_ai_profiles | none | source_from_at, source_to_at, review_status, reviewed_by, reviewed_at, commercial_profile | Preserve Staging additions; no automatic promotion or deletion |
+| conversations | external_video_id | assigned_user_id, sales_state, sales_state_updated_at, sales_state_source | Review source-pinned additive Staging contract; no apply yet |
+| fan_analysis_reports | none | source_from_at, source_to_at, confidence_score, review_status, reviewed_by, reviewed_at | Preserve Staging additions; no automatic promotion or deletion |
+| referral_discount_snapshots | none | source_event_id, source_event_type, stripe_subscription_id, stripe_coupon_id, stripe_sync_status, stripe_sync_error, stripe_synced_at | Preserve Staging additions; no automatic promotion or deletion |
+| social_connections | last_comment_fetch_imported_count | oauth_login_type, external_account_type, token_expires_at, permissions_verified_at, analytics_enabled, messenger_sync_continuation_after, messenger_sync_continuation_started_at | Review source-pinned additive Staging contract; no apply yet |
+| workspace_voice_profiles | none | source_from_at, source_to_at, source_scope, review_status, reviewed_by, reviewed_at | Preserve Staging additions; no automatic promotion or deletion |
+| workspaces | none | commercial_option: 'starter_12m_setup_waived'::text (Production) vs 'starter_no_setup_commitment'::text (Staging), monthly_fee_cents: 29900 (Production) vs 31200 (Staging) | Commercial defaults: separate reviewed decision, no silent price/default change |
+
+### Staging-only tables: individual retention decisions
+Each object below is retained in Staging. None is approved for Production by
+this parity task. Classification identifies its contract family, not activation.
+
+| Table | Contract family | Decision |
+|---|---|---|
+| ai_capacity_admin_policy | Capacity-v2 gated billing | Keep; independent contract/feature gate, no Production copy |
+| ai_capacity_grants | Capacity-v2 gated billing | Keep; independent contract/feature gate, no Production copy |
+| ai_capacity_ledger_events | Capacity-v2 gated billing | Keep; independent contract/feature gate, no Production copy |
+| ai_capacity_reservation_allocations | Capacity-v2 gated billing | Keep; independent contract/feature gate, no Production copy |
+| ai_capacity_reservations | Capacity-v2 gated billing | Keep; independent contract/feature gate, no Production copy |
+| communication_analysis_reports | Meta/content analysis | Keep; independent contract/feature gate, no Production copy |
+| content_metric_snapshots | Meta/content analysis | Keep; independent contract/feature gate, no Production copy |
+| content_sources | Meta/content analysis | Keep; independent contract/feature gate, no Production copy |
+| creator_commercial_events | Creator Intelligence | Keep; independent contract/feature gate, no Production copy |
+| creator_sales_playbooks | Creator Intelligence | Keep; independent contract/feature gate, no Production copy |
+| creator_voice_profiles | Creator Intelligence | Keep; independent contract/feature gate, no Production copy |
+| creators | Creator Intelligence | Keep; independent contract/feature gate, no Production copy |
+| meta_conversation_catchup_jobs | Meta/content analysis | Keep; independent contract/feature gate, no Production copy |
+| mobile_push_delivery_attempts | Mobile push | Keep; independent contract/feature gate, no Production copy |
+| mobile_push_registrations | Mobile push | Keep; independent contract/feature gate, no Production copy |
+| social_provider_connections | Social OAuth/profile preview | Keep; independent contract/feature gate, no Production copy |
+| social_provider_oauth_attempts | Social OAuth/profile preview | Keep; independent contract/feature gate, no Production copy |
+| support_repair_audit | Support recovery audit | Keep; independent contract/feature gate, no Production copy |
+| website_chat_allowed_origins | Customer website-chat foundation | Keep; independent contract/feature gate, no Production copy |
+| website_chat_handoffs | Customer website-chat foundation | Keep; independent contract/feature gate, no Production copy |
+| website_chat_installations | Customer website-chat foundation | Keep; independent contract/feature gate, no Production copy |
+| website_chat_message_receipts | Customer website-chat foundation | Keep; independent contract/feature gate, no Production copy |
+| website_chat_visitor_sessions | Customer website-chat foundation | Keep; independent contract/feature gate, no Production copy |
+| workspace_ai_prompt_settings | Workspace prompt settings | Keep; independent contract/feature gate, no Production copy |
+| workspace_ai_tier_entitlements | AI tier / Stripe ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_ai_tier_stripe_events | AI tier / Stripe ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_ai_tier_stripe_reconciliations | AI tier / Stripe ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_analysis_settings | Meta/content analysis | Keep; independent contract/feature gate, no Production copy |
+| workspace_stripe_billing_events | Stripe billing ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_stripe_billing_object_bindings | Stripe billing ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_stripe_billing_reconciliations | Stripe billing ledger | Keep; independent contract/feature gate, no Production copy |
+| workspace_stripe_billing_streams | Stripe billing ledger | Keep; independent contract/feature gate, no Production copy |
+
+### Recovery reconciliation: separate conclusion
+Independent Guardian checked original ZIP SHA, receipt/run/target binding and all
+five marker-derived UUIDs against the unchanged harness, then queried Staging in
+BEGIN READ ONLY / ROLLBACK at 2026-11-05 18:30:01 UTC.
+All full harness absence predicates are zero, including FOREIGN_CHARACTER_ID,
+fan/creation/child relations, workspace capability and exact usage route/time/
+workspace/user. All auth sessions since start, relevant active or idle-in-
+transaction backends, and advisory locks are zero. Original job completed/failure,
+NETWORK=none, SESSION_CLEANUP=passed and final orphan-process cleanup corroborate
+termination. Conclusion: RECONCILED_ZERO_RESIDUE for the defined database/session
+scope. Original acceptance remains FAIL; original receipt remains unchanged.
+No new cleanup or synthetic write test was run.
+
+### Actual disposition
+No SQL write/apply, deployment, feature activation, real provider invocation,
+data transfer or Production change. Existing reviewed Support/media contracts
+remain the only candidate installation sources; no generic migration push or
+schema copy is prepared. Current blocker is the isolated, verified Staging
+recovery path (with the quoted new-project cost not yet authorized); exact
+migration dependency/security postflights and Staging acceptance remain pending
+after that gate. Main/Staging functional parity: NO.
