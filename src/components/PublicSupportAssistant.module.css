@@ -1,4 +1,4 @@
-.root{position:fixed;right:20px;bottom:20px;z-index:1100;font-size:14px;color:#eef5ff}
+.root{position:fixed;right:20px;bottom:20px;z-index:2147483647;font-size:14px;color:#eef5ff}
 .launcher,.send{border:1px solid #42b8ff;border-radius:14px;background:linear-gradient(120deg,#0787f7,#4d56e9);color:#fff;font-weight:700;cursor:pointer;min-height:48px;padding:12px 20px;box-shadow:0 12px 30px #001b3d55}
 .launcher{display:block;margin-left:auto}
 .panel,.panelLarge{display:flex;flex-direction:column;width:min(410px,calc(100vw - 32px));height:min(680px,calc(100dvh - 100px));margin-bottom:12px;overflow:hidden;border:1px solid #294a70;border-radius:20px;background:#091423;box-shadow:0 20px 70px #0009}
