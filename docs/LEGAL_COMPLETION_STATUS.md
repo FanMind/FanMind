@@ -10,7 +10,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 - Betreiber und Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
 - Inhaber und vertretungsberechtigt: Bernd Guggenberger
 - Anschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
-- Allgemeine Kontaktadresse: `kontakt@fanmind.ch`
+- Allgemeine Kontaktadresse: `fanmind@fanmind.ch`
 - Website: `https://fanmind.ch`
 - Produktgrenze: keine automatische Nachrichtenversendung; der Mensch prüft und sendet final selbst
 - Integrationen werden nur als aktiv bezeichnet, wenn sie technisch und rechtlich freigegeben sind

@@ -35,7 +35,7 @@ const sections: PrivacySection[] = [
           <span>2345 Brunn am Gebirge</span>
           <span>Österreich</span>
           <span>
-            E-Mail: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>
+            E-Mail: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           </span>
           <span>
             Website: <a href="https://fanmind.ch">https://fanmind.ch</a>
@@ -47,7 +47,7 @@ const sections: PrivacySection[] = [
           aus dem <Link href="/impressum">Impressum</Link>.
         </p>
         <p>
-          Datenschutzanfragen können an <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>
+          Datenschutzanfragen können an <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           gerichtet werden.
         </p>
       </>
@@ -427,14 +427,40 @@ const sections: PrivacySection[] = [
     icon: "?",
     title: "Kontakt, Support und Pilot-/Demo-Anfragen",
     content: (
-      <p>
-        Bei Kontakt-, Support-, Pilot- oder Demo-Anfragen können Name, E-Mail-Adresse,
-        Unternehmen, Organisation, Rolle, Nachricht, Kommunikationsverlauf, technische Metadaten
-        und Supportanliegen verarbeitet werden. Zwecke sind Beantwortung der Anfrage, Vorbereitung
-        von Demo oder Pilot, Vertragsanbahnung, Support und Nachweisführung. Rechtsgrundlagen sind
-        Art. 6 Abs. 1 lit. b DSGVO bei Vertrags- oder Pilotbezug und Art. 6 Abs. 1 lit. f DSGVO
-        bei allgemeiner Kommunikation.
-      </p>
+      <>
+        <p>
+          Bei Kontakt-, Support-, Pilot- oder Demo-Anfragen können Name, E-Mail-Adresse,
+          Unternehmen, Organisation, Rolle, Nachricht, Kommunikationsverlauf, technische Metadaten
+          und Supportanliegen verarbeitet werden. Zwecke sind Beantwortung der Anfrage, Vorbereitung
+          von Demo oder Pilot, Vertragsanbahnung, Support und Nachweisführung. Rechtsgrundlagen sind
+          Art. 6 Abs. 1 lit. b DSGVO bei Vertrags- oder Pilotbezug und Art. 6 Abs. 1 lit. f DSGVO
+          bei allgemeiner Kommunikation.
+        </p>
+        <p>
+          Bei aktiviertem Supportverlauf werden eigene Fragen, Antworten, Zeitpunkte und
+          ausgewählter Hilfekontext dem angemeldeten Konto und aktuellen Workspace zugeordnet,
+          damit das Gespräch später fortgesetzt werden kann. Eine Übergabe des Gesprächs an
+          den Plattform-Owner erfolgt nur nach gesonderter Freigabe des ausgewählten Verlaufs.
+          Spätere Nachrichten werden dadurch nicht automatisch mit freigegeben. Bitte keine
+          Passwörter, Zugangsschlüssel oder unnötigen sensiblen Daten in den Supportchat eingeben.
+        </p>
+        <p>
+          Eigene gespeicherte Supportnachrichten und Übergabehinweise werden im eingerichteten
+          Löschbetrieb nach 30 Tagen entfernt. Abgeschlossene Fälle der Support-Zentrale werden
+          nach 30 Tagen ab Abschluss entfernt; abgelaufene offene Prüfungen nach 31 Tagen ab
+          ihrem Ablauf. Abgeschlossene technische Löschlaufprotokolle werden nach 90 Tagen
+          entfernt. Diese Regeln betreffen den Supportbestand und sind keine Zusage zur
+          sofortigen Entfernung sämtlicher Konto-, Provider- oder Backup-Daten.
+        </p>
+        <p>
+          Der eigene aufbewahrte Supportverlauf kann bei aktivierter Funktion im angemeldeten
+          Hilfebereich als JSON heruntergeladen und ausdrücklich gelöscht werden. Dies ersetzt
+          keine vollständige Konto- oder Workspace-Auskunft beziehungsweise Löschung.
+          Weitere Datenschutzanfragen und Fragen zum Umfang können an
+          <a href="mailto:fanmind@fanmind.ch"> fanmind@fanmind.ch</a> gerichtet werden.
+          Die Zuordnung und Identität werden vor der Bereitstellung geprüft.
+        </p>
+      </>
     ),
   },
   {
@@ -595,7 +621,7 @@ const sections: PrivacySection[] = [
           Betroffene Personen haben nach Maßgabe der DSGVO Rechte auf Auskunft, Berichtigung,
           Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerspruch, Widerruf von
           Einwilligungen und Beschwerde bei einer Aufsichtsbehörde. Anfragen können an
-          <a href="mailto:kontakt@fanmind.ch"> kontakt@fanmind.ch</a> gerichtet werden.
+          <a href="mailto:fanmind@fanmind.ch"> fanmind@fanmind.ch</a> gerichtet werden.
         </p>
         <p>
           Zuständige Aufsichtsbehörde in Österreich ist die Österreichische Datenschutzbehörde,

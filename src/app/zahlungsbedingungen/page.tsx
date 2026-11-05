@@ -141,11 +141,11 @@ const sections: PaymentSection[] = [
   },
   {
     title: "Kündigung",
-    content: <p>Starter Flex kann jederzeit zum Ende des laufenden, vollständig zu bezahlenden Abrechnungsmonats gekündigt werden. Starter 12 Monate hat eine Mindestlaufzeit von zwölf Monaten und verlängert sich danach jeweils um einen Monat. Kündigungen müssen in Textform erfolgen, sofern kein anderer Kündigungsprozess bereitgestellt wird. Kündigung an: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>. Individuelle Angebote können abweichende Kündigungsregeln enthalten.</p>,
+    content: <p>Starter Flex kann jederzeit zum Ende des laufenden, vollständig zu bezahlenden Abrechnungsmonats gekündigt werden. Starter 12 Monate hat eine Mindestlaufzeit von zwölf Monaten und verlängert sich danach jeweils um einen Monat. Kündigungen müssen in Textform erfolgen, sofern kein anderer Kündigungsprozess bereitgestellt wird. Kündigung an: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>. Individuelle Angebote können abweichende Kündigungsregeln enthalten.</p>,
   },
   {
     title: "Rückerstattung und Gutschriften",
-    content: <p>Rückerstattungen erfolgen nur, soweit gesetzlich vorgeschrieben oder individuell vereinbart. Setup-Leistungen, Pilot-/Einrichtungsleistungen und bereits bereitgestellte Leistungen sind grundsätzlich nicht automatisch erstattungsfähig, soweit gesetzlich zulässig. Kulanzregelungen bleiben möglich. Bei fehlerhaften Abbuchungen oder Doppelzahlungen soll der Kunde FanMind unter <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a> kontaktieren.</p>,
+    content: <p>Rückerstattungen erfolgen nur, soweit gesetzlich vorgeschrieben oder individuell vereinbart. Setup-Leistungen, Pilot-/Einrichtungsleistungen und bereits bereitgestellte Leistungen sind grundsätzlich nicht automatisch erstattungsfähig, soweit gesetzlich zulässig. Kulanzregelungen bleiben möglich. Bei fehlerhaften Abbuchungen oder Doppelzahlungen soll der Kunde FanMind unter <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a> kontaktieren.</p>,
   },
   {
     title: "Rechnungen und Aufbewahrung",
@@ -165,7 +165,7 @@ const sections: PaymentSection[] = [
   },
   {
     title: "Kontakt",
-    content: <p>Fragen zu Zahlungen, Rechnungen, Paketwechsel, Kündigung oder Freischaltung bitte an: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>.</p>,
+    content: <p>Fragen zu Zahlungen, Rechnungen, Paketwechsel, Kündigung oder Freischaltung bitte an: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>.</p>,
   },
 ];
 

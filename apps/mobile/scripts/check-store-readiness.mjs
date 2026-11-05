@@ -366,7 +366,7 @@ export function evaluateStoreReadiness(input) {
     || tableValue(listing, "Website") !== "https://fanmind.ch"
     || tableValue(listing, "Support") !== "https://fanmind.ch/support"
     || tableValue(listing, "Google-Play-Support-E-Mail")
-      !== "kontakt@fanmind.ch"
+      !== "fanmind@fanmind.ch"
     || tableValue(listing, "Datenschutz") !== "https://fanmind.ch/datenschutz"
     || tableValue(listing, "Account-Löschung")
       !== "https://fanmind.ch/account-deletion"

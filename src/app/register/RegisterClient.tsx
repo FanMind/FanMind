@@ -601,7 +601,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
               </div>
               <div className={styles.previewActions}>
                 <a className={styles.primaryLink} href={buildRegistrationHref({ language, planId: "starter", starterOption, referralCode: referralCodeFromUrl })}>{language === "en" ? "Start with Starter" : "Mit Starter starten"}</a>
-                <a className={styles.secondaryLink} href="mailto:kontakt@fanmind.ch?subject=FanMind%20Demo%20anfragen">{language === "en" ? "Request demo" : "Zugang anfragen"}</a>
+                <a className={styles.secondaryLink} href="mailto:fanmind@fanmind.ch?subject=FanMind%20Demo%20anfragen">{language === "en" ? "Request demo" : "Zugang anfragen"}</a>
               </div>
               {error && <p className={styles.error} role="alert">{error}</p>}
               <p className={styles.notice}>{language === "en" ? "No productive Growth/Agency activation, no payment and no subscription billing are created here." : "Hier wird keine produktive Growth-/Agency-Freischaltung, keine Zahlung und keine Subscription-Abrechnung erstellt."}</p>

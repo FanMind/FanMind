@@ -3,7 +3,7 @@ type AccountDeletionNotificationResult = {
   errorCode: string | null;
 };
 
-const DEFAULT_OPERATIONS_TO = "kontakt@fanmind.ch";
+const DEFAULT_OPERATIONS_TO = "fanmind@fanmind.ch";
 
 async function sendResendEmail(input: {
   to: string;

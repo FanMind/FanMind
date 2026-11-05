@@ -134,7 +134,7 @@ bei:
 - Nachweis der vereinbarten technischen und organisatorischen Maßnahmen.
 
 Betroffenenanfragen und Sicherheitsvorfälle werden an
-`kontakt@fanmind.ch` gerichtet und gegen den betroffenen Workspace geprüft.
+`fanmind@fanmind.ch` gerichtet und gegen den betroffenen Workspace geprüft.
 
 ## 9. Löschung und Rückgabe
 
