@@ -858,7 +858,11 @@ Wenn Preise, Pakete, Referral-Logik, aktiver Scope, Demo-Pfad, Billing, KI-Leist
 
 Der Character-Schreibstil, Satzstil, Emoji-Stil, Beispiele und No-Gos steuern
 alle drei Antwortalternativen. Kurze Komplimente sollen zunächst kurz beantwortet
-werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Reine Komplimente zu
+werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Im persönlichen
+Kennenlernen sind passende Neugier, eigene kontextbezogene Gedanken und höchstens
+eine Anschlussfrage je Vorschlag erwünscht, ohne Fragepflicht oder Nachhaken bei
+einer noch offenen Frage. Bekannte Angaben und Grenzen bleiben maßgeblich.
+Reine Komplimente zu
 Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält nur
 Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
 Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:

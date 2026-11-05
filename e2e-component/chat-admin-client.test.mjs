@@ -94,6 +94,41 @@ async function complete(page,index=0,overrides={},status=200){const request=awai
 
 test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Charaktere"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
 
+for(const mode of ["create","profile","knowledge"])test(`Fan ${mode} form scrolls independently and keeps its save action reachable`,async t=>{
+ const page=await mount(t);await page.setViewportSize({width:1280,height:520});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ if(mode==="create")await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
+ else{await openFan(page,"Fan A1");await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();await page.getByRole("button",{name:mode==="profile"?"Bearbeiten":"Notizen und Fakten",exact:true}).click();}
+ const form=page.locator("form");const sidebar=page.getByRole("region",{name:"Fans von Synthetic Anna",exact:true});const sidebarBefore=await sidebar.boundingBox();
+ if(mode==="create")await form.getByLabel("Name",{exact:true}).fill("Synthetic new fan");
+ const dimensions=await form.evaluate(node=>({height:node.clientHeight,content:node.scrollHeight}));assert.ok(dimensions.content>dimensions.height,"fixture must overflow at this viewport");
+ const box=await form.boundingBox();await page.mouse.move(box.x+box.width-12,box.y+40);await page.mouse.wheel(0,2000);
+ await expect.poll(()=>form.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+ const save=form.getByRole("button",{name:"Speichern",exact:true});await expect(save).toBeInViewport();
+ assert.equal(await page.evaluate(()=>window.scrollY),0,"desktop page stays fixed");assert.deepEqual(await sidebar.boundingBox(),sidebarBefore,"Fan sidebar stays fixed");
+ await save.click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>({method:window.testRequests[0].method,body:window.testRequests[0].body}));
+ assert.equal(request.method,mode==="create"?"POST":"PATCH");
+ if(mode==="create")assert.equal(request.body.display_name,"Synthetic new fan");
+ else assert.equal(request.body.id,fanA1.id);
+});
+
+test("Fan creation stays reachable by keyboard on a narrow viewport",async t=>{
+ const page=await mount(t);await page.setViewportSize({width:390,height:740});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
+ await page.getByLabel("Name",{exact:true}).fill("Synthetic mobile fan");
+ await page.getByLabel("Name",{exact:true}).focus();
+ for(let index=0;index<50;index++){
+  await page.keyboard.press("Tab");
+  if(await page.getByRole("button",{name:"Speichern",exact:true}).evaluate(node=>node===document.activeElement))break;
+ }
+ const save=page.getByRole("button",{name:"Speichern",exact:true});await expect(save).toBeFocused();await expect(save).toBeInViewport();
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),"no horizontal page overflow");
+ await page.keyboard.press("Enter");await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ assert.equal(await page.evaluate(()=>window.testRequests[0].body.display_name),"Synthetic mobile fan");
+});
+
 test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
 
 test("Staging offer setup creates four named offers from an empty Character without duplicates",async t=>{

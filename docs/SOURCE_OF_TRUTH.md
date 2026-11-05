@@ -1461,6 +1461,11 @@ Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Cap
 Die serverseitigen Gesprächsregeln verwenden die bestehenden Character-Felder
 für Schreibstil, Satzstil, Emojis, Beispiele und No-Gos. Vorschläge reagieren
 zuerst auf die konkrete Nachricht, ohne routinemäßige Rückfrage oder Verkaufsdruck.
+Im persönlichen Kennenlernen soll passende Neugier das Gespräch durch einen
+eigenen kontextbezogenen Gedanken oder höchstens eine Anschlussfrage je Vorschlag
+weiterführen. Eine Frage darf Interesse zeigen, ohne eine Sachlücke schließen zu
+müssen. Keine Fragepflicht, kein Nachhaken bei einer noch offenen Frage, keine
+erneute Abfrage bekannter Angaben und keine erfundenen Gemeinsamkeiten.
 Ein reines Kompliment über Medien berechtigt nicht zur Preisnennung; ausdrückliche
 Medien-/Preisanfragen behalten die gebundene Offer-Auflösung. Der KI-Verlauf enthält
 nur `fan_inbound` und `confirmed_reply`; unbenutzte `suggested_reply` bleiben

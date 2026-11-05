@@ -40,6 +40,17 @@ darf ohne Frage enden. Die direkte Variante wird nicht automatisch intimer oder
 verkäuferischer. Bekannte Fan-Fakten sollen nicht erneut erfragt oder aufgezählt
 werden. Keine künstlichen Tippfehler, Dringlichkeit oder erfundenen Zusagen.
 
+Owner-Präzisierung vom 5. November 2026: Im persönlichen Kennenlernen soll der
+Character auch selbst Interesse zeigen. Auf passende Hinweise kann ein eigener
+Gedanke oder eine konkrete Anschlussfrage folgen, statt über mehrere Nachrichten
+nur zu danken. Eine Frage muss keine Sachlücke schließen; sie darf dem Kennenlernen
+dienen. Höchstens eine pro Vorschlag, keine Pflicht nach jeder Nachricht, kein
+Nachhaken bei einer noch unbeantworteten Frage und keine Wiederholung bekannter
+Angaben. Bestätigter Kontext, Character-Stimme und Fan-Grenzen bleiben maßgeblich;
+es werden keine Erlebnisse, Gemeinsamkeiten oder Verkaufsanlässe erfunden.
+Die gemeinsame Qualitätsgrundlage erlaubt diesen Anschluss ebenfalls. Die
+synthetischen Tests belegen keine bestimmte Häufigkeit echter Modellfragen.
+
 ## Gedächtnis und Preise
 
 - Die bestehenden Workspace-/Character-/Fan-/Conversation-Prüfungen bleiben vor
