@@ -1,3 +1,5 @@
+import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS } from "./response-budget.mjs";
+
 /**
  * @param {import('@playwright/test').BrowserContext} context
  * @param {{appOrigin:string,supabaseOrigin:string,mode?:'probe'|'acceptance',onViolation?:(reason:string)=>void}} targets
@@ -22,7 +24,7 @@ export async function installChatAdminNetworkBoundary(context,{appOrigin,supabas
     // Fetch one response only, then preserve its body/headers (including Set-Cookie).
     let response;
     try {
-      response=await route.fetch({maxRedirects:0,maxRetries:0,timeout:45_000});
+      response=await route.fetch({maxRedirects:0,maxRetries:0,timeout:url.origin===appOrigin&&url.pathname==="/api/chatadmin/reply-suggestions"&&method==="POST"?CHAT_ADMIN_RESPONSE_TIMEOUT_MS:45_000});
       if(response.status()>=300&&response.status()<400){violation('redirect');await route.abort();return;}
       await route.fulfill({response});
     } catch {
