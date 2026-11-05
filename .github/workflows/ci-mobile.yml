@@ -59,6 +59,20 @@ jobs:
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
 
+      - name: Resolve reviewed Expo dependency lock for Support release
+        shell: bash
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Export reviewed dependency manifests
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: support-release-expo-manifests
+          path: |
+            apps/mobile/package.json
+            apps/mobile/package-lock.json
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Install mobile dependencies
         shell: bash
         run: |
