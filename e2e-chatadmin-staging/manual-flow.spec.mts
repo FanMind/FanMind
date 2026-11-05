@@ -1,3 +1,4 @@
+import { waitForChatAdminReplyResponse } from "./response-budget.mjs";
 import { test, expect, type APIRequestContext, type BrowserContext, type Page } from "@playwright/test";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "./network-boundary.mjs";
 import { updateBrowserDiagnostic } from "./browser-diagnostic.mjs";
@@ -48,7 +49,7 @@ async function persistCustomerTier(page:Page,name:string,tier:"blue"|"green"){
  mark("customer_tier_reload");await page.reload();await selectCharacter(page,name.endsWith(" A")?"FM Synthetic Character A":"FM Synthetic Character B");const reloadedCard=page.locator("article").filter({has:page.getByRole("button",{name:`${name} öffnen`,exact:true})});await expect(reloadedCard.locator(`i[title="Kundenstatus: ${tier}"]`)).toHaveCount(1);return fan.revision as number;
 }
 async function generate(page:Page,binding:{characterId:string;fanId:string;conversationId:string;revision:number;fanRevision?:number},message:string,expectedPriceMinor:number|null){
- await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);const pending=page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/reply-suggestions"&&response.request().method()==="POST");await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();const response=await pending;noteStatus(response.status());expect(response.status()).toBe(200);
+ await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);const pending=waitForChatAdminReplyResponse(page,APP);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();const response=await pending;noteStatus(response.status());expect(response.status()).toBe(200);
  const request=response.request().postDataJSON();expect(request).toMatchObject({character_id:binding.characterId,character_revision:binding.revision,fan_id:binding.fanId,fan_revision:binding.fanRevision??1,conversation_id:binding.conversationId,incoming_message:message});const payload=await response.json();expect(payload).toMatchObject({character_id:binding.characterId,character_revision:binding.revision,fan_id:binding.fanId,conversation_id:binding.conversationId});expect(payload.replies).toHaveLength(3);expect(payload.replies.every((reply:unknown)=>typeof reply==="string"&&reply.trim().length>0)).toBe(true);assertReplyPriceEvidence(payload.replies,expectedPriceMinor===null?null:{currency:"EUR",minor:expectedPriceMinor});await expect(page.getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(3);return payload.replies as string[];
 }
 

@@ -1,3 +1,4 @@
+import { CHAT_ADMIN_FLOW_TIMEOUT_MS } from "./e2e-chatadmin-staging/response-budget.mjs";
 import { defineConfig, devices } from "@playwright/test";
 
 const env=process.env;
@@ -16,7 +17,7 @@ if(target!=="https://staging.fanmind.ch" || env.FANMIND_TARGET_API_ORIGIN!==targ
 }
 export default defineConfig({
   testDir:"./e2e-chatadmin-staging", outputDir:"test-results/chatadmin-staging",
-  fullyParallel:false,forbidOnly:true,retries:0,workers:1,timeout:360_000,
+  fullyParallel:false,forbidOnly:true,retries:0,workers:1,timeout:CHAT_ADMIN_FLOW_TIMEOUT_MS,
   expect:{timeout:15_000}, reporter:[["line"]],
   use:{...devices["Desktop Chrome"],baseURL:target,actionTimeout:15_000,navigationTimeout:30_000,
     trace:"off",screenshot:"off",video:"off",locale:"de-CH",timezoneId:"Europe/Zurich",

@@ -1,3 +1,5 @@
+import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS, CHAT_ADMIN_FLOW_TIMEOUT_MS, CHAT_ADMIN_RUNNER_TIMEOUT_MS } from "../e2e-chatadmin-staging/response-budget.mjs";
+import { CHAT_ADMIN_MODEL_TIMEOUT_MS } from "../src/lib/chatAdminModelPolicy.mjs";
 import { classifyManualBrowserFailure } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -389,4 +391,28 @@ test("browser failure classification emits only fixed kinds and cannot forward p
   ]) assert.equal(classifyManualBrowserFailure({status:1,stderr:text}),kind);
   assert.equal(classifyManualBrowserFailure({error:{code:"ETIMEDOUT",message:"private-secret"}}),"process_timeout");
   assert.equal(classifyManualBrowserFailure({stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token"}),"unclassified");
+});
+
+
+test("manual response, transport, full flow and parent deadlines nest around the unchanged provider deadline",async()=>{
+  assert.ok(CHAT_ADMIN_RESPONSE_TIMEOUT_MS>CHAT_ADMIN_MODEL_TIMEOUT_MS);
+  assert.ok(CHAT_ADMIN_FLOW_TIMEOUT_MS>=10*CHAT_ADMIN_RESPONSE_TIMEOUT_MS+120_000);
+  assert.ok(CHAT_ADMIN_RUNNER_TIMEOUT_MS>CHAT_ADMIN_FLOW_TIMEOUT_MS);
+  assert.equal(MANUAL_BROWSER_TIMEOUT_MS,CHAT_ADMIN_RUNNER_TIMEOUT_MS);
+  assert.ok(CHAT_ADMIN_RUNNER_TIMEOUT_MS<25*60_000,"leave room for install, probe and mandatory cleanup inside the 30-minute job");
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  const config=readFileSync(new URL("../playwright.chatadmin-staging.config.mts",import.meta.url),"utf8");
+  assert.ok(browser.includes("const pending=waitForChatAdminReplyResponse(page,APP);"));
+  assert.ok(config.includes("timeout:CHAT_ADMIN_FLOW_TIMEOUT_MS"));
+  assert.ok(config.includes("actionTimeout:15_000"),"ordinary UI action deadlines remain bounded");
+  let handler;const seen=[];
+  const appOrigin="https://staging.fanmind.ch",supabaseOrigin="https://synthetic.supabase.co";
+  const violations=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{appOrigin,supabaseOrigin});
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/reply-suggestions","GET"],["/api/chatadmin/fans","PATCH"]])await handler({
+    request:()=>({url:()=>appOrigin+path,method:()=>method}),abort:async()=>assert.fail("allowed fixture transport"),
+    fetch:async options=>{seen.push(options);return {status:()=>200,dispose:async()=>{}};},fulfill:async()=>{},
+  });
+  assert.deepEqual(seen.map(item=>item.timeout),[CHAT_ADMIN_RESPONSE_TIMEOUT_MS,45_000,45_000]);
+  assert.ok(seen.every(item=>item.maxRedirects===0&&item.maxRetries===0));
+  await violations.stop();assert.equal(violations(),0);
 });
