@@ -1477,7 +1477,10 @@ test("permanent Production audit runs installed root-owned code only", async () 
 
   const deployment = yaml.load(deploy);
   assert.deepEqual(Object.keys(deployment.on), ["workflow_dispatch"]);
-  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit"]);
+  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit","support_must_remain_disabled"]);
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.type, "boolean");
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.default, false);
+  assert.equal(deployment.jobs.deploy.steps[0].env.FANMIND_REQUIRE_SUPPORT_DISABLED, "${{ inputs.support_must_remain_disabled }}");
   assert.equal(deployment.jobs.deploy.if, "github.ref == 'refs/heads/main'");
   assert.equal(deployment.jobs.deploy.needs, "validate");
   assert.equal(deployment.jobs.deploy.environment, "production");
