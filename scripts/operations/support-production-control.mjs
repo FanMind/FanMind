@@ -16,6 +16,17 @@ const ENV_FILE = '/var/www/fanmind/.env.production';
 const CURRENT = '/var/www/fanmind-current';
 const literal = value => "'" + value.replaceAll("'", "''") + "'";
 function fail(code) { throw new Error(code); }
+export function readProductionFile(path, owners, modes, maxBytes) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isFile() || !owners.includes(stat.uid) || !modes.includes(stat.mode & 0o777) || stat.size < 1 || stat.size > maxBytes) fail('protected_file_invalid');
+    const content = readFileSync(fd, 'utf8');
+    const after = fstatSync(fd);
+    if (after.dev !== stat.dev || after.ino !== stat.ino || after.size !== stat.size || after.mtimeMs !== stat.mtimeMs || after.ctimeMs !== stat.ctimeMs) fail('protected_file_changed');
+    return { content, stat };
+  } finally { closeSync(fd); }
+}
 
 export function targetFor(env, action, email) {
   if (!ACTIONS.includes(action) || !EMAIL.test(email ?? '')) fail('action_or_owner_invalid');
@@ -78,9 +89,7 @@ function activate(target, env) {
   if (env.FANMIND_SUPPORT_SCHEDULE_SOURCE !== target.commit || env.FANMIND_SUPPORT_SCHEDULE_OWNER !== target.email) fail('schedule_binding_missing');
   if (env.FANMIND_SUPPORT_ACCEPTANCE_COMMIT !== target.commit) fail('runtime_acceptance_required');
   requireLive(target.commit);
-  const stat = lstatSync(ENV_FILE);
-  if (!stat.isFile() || stat.isSymbolicLink() || ![0, Number(execute('/usr/bin/id', ['-u', 'ubuntu']))].includes(stat.uid) || ![0o600, 0o640].includes(stat.mode & 0o777) || stat.size > 1048576) fail('environment_file_invalid');
-  const before = readFileSync(ENV_FILE, 'utf8');
+  const { stat, content: before } = readProductionFile(ENV_FILE, [0, Number(execute('/usr/bin/id', ['-u', 'ubuntu']))], [0o600, 0o640], 1048576);
   const after = replaceSupportFlag(before, true);
   const pm2 = ['/usr/bin/pm2', '/usr/local/bin/pm2'].find(p => { try { return lstatSync(p).isFile() || lstatSync(p).isSymbolicLink(); } catch { return false; } });
   if (!pm2) fail('pm2_missing');
@@ -103,9 +112,7 @@ function activate(target, env) {
 export function runProductionControl(action, email, env = process.env) {
   const target = targetFor(env, action, email);
   if (typeof process.getuid !== 'function' || process.getuid() !== 0) fail('root_required');
-  const sourceMarker = lstatSync('.support-reviewed-source');
-  if (!sourceMarker.isFile() || sourceMarker.isSymbolicLink() || sourceMarker.uid !== 0 || (sourceMarker.mode & 0o777) !== 0o600) fail('source_marker_invalid');
-  const checkout = readFileSync('.support-reviewed-source', 'utf8').trim();
+  const checkout = readProductionFile('.support-reviewed-source', [0], [0o600], 41).content.trim();
   if (checkout !== target.commit) fail('checkout_mismatch');
   const reference = JSON.parse(readFileSync(REFERENCE_PATH, 'utf8')); assertReference(reference);
   const directory = mkdtempSync(join(tmpdir(), 'fanmind-support-production-'));
