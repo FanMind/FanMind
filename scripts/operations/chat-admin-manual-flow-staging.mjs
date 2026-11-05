@@ -264,6 +264,17 @@ function schema(env) {
   }
 }
 
+export async function runManualFlowPostBrowserPhase(phase, action, emit = console.log) {
+  if (!['receipt','release','persistence'].includes(phase)) fail('post_browser_phase');
+  emit(`CHAT_ADMIN_MANUAL_POST_BROWSER_PHASE=${phase}`);
+  try { return await action(); }
+  catch (error) {
+    if (/^CHAT_ADMIN_MANUAL_FLOW_ERROR=[a-z_]+$/u.test(error?.message ?? '')) throw error;
+    // Never print raw fetch, filesystem or database exceptions.
+    fail(`post_browser_${phase}`);
+  }
+}
+
 export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
   try {await prepare();await run();await verify();} finally {await cleanup();}
 }
@@ -393,9 +404,9 @@ async function main() {
     run:async()=>{
       receipt.inFlightUncertain=true;updateReceipt(env,receipt);
       runManualBrowser({...env,...Object.fromEntries(Object.entries(receipt.dataIds).map(([key,value])=>[`FANMIND_CHAT_ADMIN_RUN_${key}`,value]))},'acceptance');
-      receipt.inFlightUncertain=false;updateReceipt(env,receipt);
+      await runManualFlowPostBrowserPhase('receipt',async()=>{receipt.inFlightUncertain=false;updateReceipt(env,receipt);});
     },
-    verify:async()=>{await verifyManualFlowRelease(env);sqlMode('verify',env,receipt);},
+    verify:async()=>{await runManualFlowPostBrowserPhase('release',()=>verifyManualFlowRelease(env));await runManualFlowPostBrowserPhase('persistence',async()=>sqlMode('verify',env,receipt));},
     cleanup:async()=>cleanup(env),
   });
   console.log('CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS');
