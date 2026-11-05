@@ -1,0 +1,95 @@
+name: FanMind Support Production Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        required: true
+        type: choice
+        options: [verify, owner, retention, monitor, activate]
+      reviewed_commit:
+        description: Exact reviewed main source (activation also requires this live release)
+        required: true
+        type: string
+      owner_email:
+        description: Explicitly approved existing Owner email; must match actual Production Admin configuration
+        required: true
+        type: string
+      confirmation:
+        description: support-production- followed by the selected action
+        required: true
+        type: string
+  schedule:
+    - cron: '23 2 * * *'
+    - cron: '23 */6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  control:
+    if: >-
+      ${{ github.ref == 'refs/heads/main' &&
+          (github.event_name == 'workflow_dispatch' && github.actor_id == '270165082' ||
+           github.event_name == 'schedule' && vars.FANMIND_SUPPORT_PRODUCTION_SCHEDULE_ENABLED == 'true') }}
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 15
+    env:
+      REVIEWED: ${{ github.event_name == 'schedule' && vars.FANMIND_SUPPORT_PRODUCTION_SOURCE_COMMIT || inputs.reviewed_commit }}
+      OWNER_EMAIL: ${{ github.event_name == 'schedule' && vars.FANMIND_SUPPORT_PRODUCTION_OWNER_EMAIL || inputs.owner_email }}
+      ACTION: ${{ github.event_name == 'schedule' && (github.event.schedule == '23 2 * * *' && 'retention' || 'monitor') || inputs.action }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      SCHEDULE_ENABLED: ${{ vars.FANMIND_SUPPORT_PRODUCTION_SCHEDULE_ENABLED }}
+      PRIVACY_READY: ${{ vars.FANMIND_SUPPORT_PRODUCTION_PRIVACY_READY }}
+      SCHEDULE_SOURCE: ${{ vars.FANMIND_SUPPORT_PRODUCTION_SOURCE_COMMIT }}
+      SCHEDULE_OWNER: ${{ vars.FANMIND_SUPPORT_PRODUCTION_OWNER_EMAIL }}
+      ACCEPTANCE_COMMIT: ${{ vars.FANMIND_SUPPORT_PRODUCTION_ACCEPTANCE_COMMIT }}
+    steps:
+      - name: Run only reviewed source against the existing Production target
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REVIEWED" =~ ^[a-f0-9]{40}$ ]]
+          case "$ACTION" in verify|owner|retention|monitor|activate) ;; *) exit 1 ;; esac
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            [[ "$REVIEWED" == "$GITHUB_SHA" && "$CONFIRMATION" == "support-production-$ACTION" ]]
+          fi
+          cd /var/www/fanmind
+          case "$(git remote get-url origin)" in
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            *) exit 1 ;;
+          esac
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
+          git merge-base --is-ancestor "$REVIEWED" origin/main
+          ROOT_SOURCE="$(sudo -n mktemp -d /tmp/fanmind-support-control.XXXXXXXX)"
+          trap 'sudo -n rm -rf -- "$ROOT_SOURCE"' EXIT
+          git archive "$REVIEWED" \
+            scripts/operations/support-production-control.mjs \
+            scripts/operations/support-centre-schema.mjs \
+            docs/operations/support-centre-reference.json \
+            supabase/controlled/support_centre.sql \
+            supabase/controlled/support_centre_operations.sql \
+            config/certificates/supabase-root-2021-ca.crt \
+            | sudo -n tar -xf - -C "$ROOT_SOURCE"
+          printf '%s\n' "$REVIEWED" | sudo -n tee "$ROOT_SOURCE/.support-reviewed-source" >/dev/null
+          sudo -n chmod 0600 "$ROOT_SOURCE/.support-reviewed-source"
+          sudo -n /usr/bin/env \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_SHA="$GITHUB_SHA" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" \
+            GITHUB_ACTOR_ID="$GITHUB_ACTOR_ID" GITHUB_RUN_ID="$GITHUB_RUN_ID" \
+            GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            FANMIND_SUPPORT_REVIEWED_COMMIT="$REVIEWED" \
+            FANMIND_SUPPORT_CONFIRM="$CONFIRMATION" \
+            FANMIND_SUPPORT_SCHEDULE_ENABLED="$SCHEDULE_ENABLED" \
+            FANMIND_SUPPORT_PRIVACY_READY="$PRIVACY_READY" \
+            FANMIND_SUPPORT_SCHEDULE_SOURCE="$SCHEDULE_SOURCE" \
+            FANMIND_SUPPORT_SCHEDULE_OWNER="$SCHEDULE_OWNER" \
+            FANMIND_SUPPORT_ACCEPTANCE_COMMIT="$ACCEPTANCE_COMMIT" \
+            /bin/bash -c 'cd "$1"; exec /usr/bin/node --env-file=/var/www/fanmind/.env.production --env-file=/etc/fanmind-backup/worker.env scripts/operations/support-production-control.mjs "$2" "$3"' \
+            support-control "$ROOT_SOURCE" "$ACTION" "$OWNER_EMAIL"

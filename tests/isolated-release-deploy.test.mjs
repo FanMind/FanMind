@@ -222,14 +222,17 @@ test("current release link is updated atomically with the required privilege", a
   assert.ok(createTempLink < replaceCurrentLink);
 });
 
-test("PM2 production contract uses one rolling cluster worker on the stable release link", () => {
+test("PM2 production contract uses one rolling cluster worker on the stable release link", async (t) => {
+  const runtime = await mkdtemp(join(tmpdir(), "fanmind-pm2-support-"));
+  t.after(() => rm(runtime, { recursive: true, force: true }));
+  await writeFile(join(runtime, ".env.production"), "FANMIND_SUPPORT_CENTRE_ENABLED=true\n");
   const previousEnv = {
     FANMIND_CURRENT_RELEASE_LINK: process.env.FANMIND_CURRENT_RELEASE_LINK,
     FANMIND_RELEASE_COMMIT: process.env.FANMIND_RELEASE_COMMIT,
     FANMIND_PM2_APP_NAME: process.env.FANMIND_PM2_APP_NAME,
   };
 
-  process.env.FANMIND_CURRENT_RELEASE_LINK = "/var/www/fanmind-current";
+  process.env.FANMIND_CURRENT_RELEASE_LINK = runtime;
   process.env.FANMIND_RELEASE_COMMIT = "a".repeat(40);
   process.env.FANMIND_PM2_APP_NAME = "fanmind";
   const configModule = require.resolve(`../${pm2ConfigPath}`);
@@ -258,7 +261,7 @@ test("PM2 production contract uses one rolling cluster worker on the stable rele
     },
     {
       name: "fanmind",
-      cwd: "/var/www/fanmind-current",
+      cwd: runtime,
       script: "node_modules/next/dist/bin/next",
       instances: 1,
       execMode: "cluster",
@@ -267,6 +270,7 @@ test("PM2 production contract uses one rolling cluster worker on the stable rele
       filterEnv: true,
     },
   );
+  assert.equal(config.apps[0].env.FANMIND_SUPPORT_CENTRE_ENABLED, "true");
   assert.equal(config.apps[0].env.FANMIND_RUNTIME_ENVIRONMENT, "production");
   assert.equal(config.apps[0].env.FANMIND_RELEASE_COMMIT, "a".repeat(40));
   assert.equal(
@@ -303,6 +307,8 @@ test("legacy migration is followed by a delete-free rolling release in an execut
     await readFile(pm2ConfigPath),
   );
 
+  await writeFile(join(seed, "ops/pm2/support-runtime-setting.cjs"), await readFile("ops/pm2/support-runtime-setting.cjs"));
+
   runChecked("git", ["init", "-b", "main"], { cwd: seed });
   runChecked("git", ["config", "user.name", "FanMind Test"], { cwd: seed });
   runChecked("git", ["config", "user.email", "fanmind-test@example.invalid"], { cwd: seed });
@@ -312,7 +318,7 @@ test("legacy migration is followed by a delete-free rolling release in an execut
   runChecked("git", ["clone", "--bare", seed, remote]);
   runChecked("git", ["clone", remote, source]);
   runChecked("git", ["remote", "add", "origin", remote], { cwd: seed });
-  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\n");
+  await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n");
 
   const oldRelease = join(releaseRoot, "0".repeat(40));
   await mkdir(join(oldRelease, ".next"), { recursive: true });
@@ -370,6 +376,7 @@ if (action === "delete") {
       pm_cwd: app.cwd,
       FANMIND_RELEASE_COMMIT: app.env.FANMIND_RELEASE_COMMIT,
       FANMIND_RUNTIME_ENVIRONMENT: app.env.FANMIND_RUNTIME_ENVIRONMENT,
+      FANMIND_SUPPORT_CENTRE_ENABLED: app.env.FANMIND_SUPPORT_CENTRE_ENABLED,
     },
   }];
 }
@@ -458,6 +465,7 @@ fi
 
   const finalState = JSON.parse(await readFile(pm2State, "utf8"));
   assert.equal(finalState.processes.length, 1);
+  assert.equal(finalState.processes[0].pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED, "true");
   assert.equal(finalState.processes[0].pm2_env.exec_mode, "cluster_mode");
   assert.equal(finalState.processes[0].pm2_env.pm_cwd, currentLink);
   assert.equal(
@@ -607,3 +615,4 @@ test("rollback failures fall through to the next safe target and live version lo
   assert.match(script, /source checkout fallback could not be started/);
   assert.match(script, /manual intervention required/);
 });
+
