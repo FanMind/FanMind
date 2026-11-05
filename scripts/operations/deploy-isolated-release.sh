@@ -10,6 +10,7 @@ RETAIN_RELEASES="${FANMIND_RELEASE_RETENTION_COUNT:-4}"
 RELEASE_COMMIT="${1:-}"
 PM2_CONFIG_RELATIVE_PATH="ops/pm2/fanmind.production.config.cjs"
 TEMP_RELEASE=""
+OPERATIONS_CHECKOUT=""
 SWITCHED=0
 PREVIOUS_CWD=""
 PREVIOUS_COMMIT=""
@@ -290,6 +291,9 @@ rollback() {
 
 cleanup() {
   stop_availability_probe
+  if [[ -n "$OPERATIONS_CHECKOUT" ]] && [[ -d "$OPERATIONS_CHECKOUT" ]]; then
+    rm -rf -- "$OPERATIONS_CHECKOUT"
+  fi
   if [[ -n "$AVAILABILITY_LOG" ]] && [[ -f "$AVAILABILITY_LOG" ]]; then
     rm -f -- "$AVAILABILITY_LOG"
   fi
@@ -359,7 +363,20 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   npm ci --no-audit --no-fund
   npm run verify:truth
   npm run lint
-  npm run test:operations
+  # Operations verifies committed source. Keep Git out of the runtime archive
+  # and never test in SOURCE_DIR, which may still be the live rollback target.
+  OPERATIONS_CHECKOUT="$(mktemp -d "$RELEASE_ROOT/.${RELEASE_COMMIT}.tests.XXXXXXXX")"
+  git clone --shared --no-checkout --quiet "$SOURCE_DIR" "$OPERATIONS_CHECKOUT"
+  git -C "$OPERATIONS_CHECKOUT" checkout --quiet --detach "$RELEASE_COMMIT"
+  [[ "$(git -C "$OPERATIONS_CHECKOUT" rev-parse HEAD)" == "$RELEASE_COMMIT" ]] \
+    || fail "Operations checkout does not match the reviewed release"
+  (
+    cd "$OPERATIONS_CHECKOUT"
+    npm ci --no-audit --no-fund
+    npm run test:operations
+  )
+  rm -rf -- "$OPERATIONS_CHECKOUT"
+  OPERATIONS_CHECKOUT=""
   npm run test:release-integrations
   NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
   [[ -f ".next/required-server-files.json" ]] || fail "required Next.js build metadata missing"
@@ -371,6 +388,14 @@ fi
 
 verify_built_deployment_id "$RELEASE_DIR" "$RELEASE_COMMIT" \
   || fail "Next.js deployment ID is not bound to the release commit"
+
+if [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" == "true" ]]; then
+  node -e '
+    const { readSupportSetting } = require(process.argv[1]);
+    process.exit(readSupportSetting(process.argv[2]) === "false" ? 0 : 1);
+  ' "$RELEASE_DIR/ops/pm2/support-runtime-setting.cjs" "$RELEASE_DIR" \
+    || fail "Support must remain disabled for this deployment"
+fi
 
 # Owner-authorized ChatAdmin model activation requires a real provider contract
 # probe before the live symlink or process changes. No automatic model downgrade.
@@ -406,6 +431,23 @@ fi
 if ! verify_pm2_release_contract "$RELEASE_COMMIT"; then
   rollback "PM2 release contract verification failed" || true
   fail "new release does not satisfy the PM2 rolling release contract"
+fi
+
+if [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" == "true" ]]; then
+  if ! pm2 jlist | node -e '
+    let body = "";
+    process.stdin.on("data", chunk => body += chunk);
+    process.stdin.on("end", () => {
+      try {
+        const list = JSON.parse(body).filter(item => item?.name === process.env.FANMIND_PM2_APP_NAME);
+        process.exit(list.length === 1 && list[0].pm2_env?.FANMIND_SUPPORT_CENTRE_ENABLED === "false" ? 0 : 1);
+      } catch { process.exit(1); }
+    });
+  '; then
+    rollback "Support disabled-state verification failed" || true
+    fail "Support was not confirmed disabled after deployment"
+  fi
+  log "SUPPORT_DEPLOY_DISABLED=PASS"
 fi
 
 HEALTH_OK=0
@@ -470,3 +512,4 @@ for candidate in "${RELEASE_PATHS[@]}"; do
 done
 
 log "isolated release deployment completed at $RELEASE_COMMIT"
+

@@ -176,3 +176,10 @@ Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
 geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
 Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
 Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.
+
+# Support rollout continuation — 2026-11-05
+
+Production Operations tests require committed Git source (including unchanged Capacity source-binding tests). The release builder runs the complete suite in a disposable local clone detached at the exact release SHA, with its own dependency install. The runtime/build archive stays Git-free; the old source checkout remains untouched until the existing post-switch synchronization. A failed suite removes both temporary trees before any live switch.
+
+For a Support-disabled rollout, select `support_must_remain_disabled=true` in the reviewed Production workflow. The builder requires the shared Support setting to be strictly false or absent before the provider/switch stage, then verifies the effective PM2 value is false after reload; a failed postcheck invokes the existing rollback. Normal later deployments retain the existing persistent flag contract when this optional guard is false. This guard does not enable Support, set privacy/acceptance evidence, configure retention or apply schema.
+
