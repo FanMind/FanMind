@@ -1,7 +1,142 @@
 # FanMind: Main/Staging parity inventory and controlled convergence (2026-11-05)
 
-Status: READ-ONLY INVENTORY / APPLY BLOCKED BY RECOVERY EVIDENCE
+Status: STAGING_SCHEMA_APPLIED / CODE_PARITY_CONFIRMED / SQL_ACCEPTANCE_PASS / LIVE_ACCEPTANCE_PARTIAL
 Owner intent: both environments should deliver the same approved functions. Production Main and all existing records must remain untouched. Never sync real customer records, auth users, secrets or production payment identifiers into Staging.
+
+
+## Current execution result — 2026-11-05 19:30 UTC (supersedes earlier pending steps)
+
+**Actual state:** STAGING_SCHEMA_APPLIED / CODE_PARITY_CONFIRMED /
+SQL_ACCEPTANCE_PASS / LIVE_ACCEPTANCE_PARTIAL. No new Supabase project, database,
+server, billable resource or Restore was created. Production/Main source,
+database, runtime configuration and deployment were not changed by this task.
+
+### Source, recovery and authorization
+- Reviewed source/main stays `a798d7938bb4e7e168f615f0c32d1a603dd47d4a`.
+- Direct Owner authorizes safe Staging parity work and excludes new infrastructure
+  and Production changes. Prior provider daily backup and accepted DB_POSTCHECKED
+  tooling evidence were reused; neither was mislabeled a fresh Staging restore.
+- Independent Guardian judged recovery adequate for these specific additive,
+  atomic installations: current Staging provider backup, complete catalog guard
+  before COMMIT, feature switches unchanged, source-first application rollback
+  leaving unused schema in place. No repeated complete Restore was required.
+- A failed migration would roll back atomically. No table-drop rollback,
+  reset, default-privilege change, role grant or ownership change was executed.
+
+### Actual Staging migrations
+| Version | Name | Effect |
+|---|---|---|
+| 20261105190505 | support_centre_reviewed_main_a798d793_staging | Seven empty Support tables,20functions,2triggers,1sequence |
+| 20261105190733 | chat_media_storage_policy_rollback_probe_staging_20261105 | Restrictive Storage-policy permission probe, completely rolled back; ledger only |
+| 20261105190924 | chat_admin_private_media_reviewed_main_a798d793_staging | Two Media tables,3functions,8policies,3triggers and one private WebP bucket |
+| 20261105192811 | media_rollback_only_database_acceptance_a798d793_staging | Synthetic database acceptance, entire fixture rolled back; ledger only |
+| 20261105192918 | support_rollback_only_acceptance_a798d793_staging | Synthetic database acceptance, entire fixture and sequence restart rolled back; ledger only |
+
+Support source SQL SHA256s remain051fa0253bb6a815820d825ca4c1c35a70405a25de59e8dc0d7e899ef5179a30
+andc8bb1c8be779d0cfd64797bdc9fe2f4248abbdb201e0959bcc8e6ebe90be8633;
+independent PG17 reference95083136b610c0fbe2822a3dee309038f7aacb18e4eed344654dd7d5eba60472.
+Support installer payloadb523e2b1b43039f03a9a1c772775b2eee1025d64298fc244a9061c43da3aa642
+is unchanged installer SQL minus the psql directive plus user/database assertion.
+Media SQL source3c4fa2214b5721dd8a7bc85d9ea3ef3b6b8c592c5305315eb623cf99cf1d59fe;
+wrapped payloadb7ba1a49e9c445a1da2dceae3f204f7be073567ee979e53d7a1150b182ad197c.
+Wrapper preserves original body and adds target/absence/parent/data guards and
+full equality to fresh Production metadata before COMMIT. Production rows were
+not copied; all metadata comparison was read-only.
+
+### Independent postflights and database acceptance
+- Support complete object/function-body/ACL/column/index/constraint/policy/
+  trigger/sequence catalog EXACT against pinned reference, not counts alone.
+- Media complete catalog EXACT against independent fresh Production reference.
+  Private bucket5MiB/WebP; existing Storage owner and both old protection triggers
+  preserved. No ownership or inherited-role workaround was used.
+- Media rollback acceptance payloade940fcd27dec46eabfb5671cebf3f45824cf18b6a3296e1329aa9d0daa2797b9:
+  owner visibility, foreign denial, scope reassignment denial, revision updates,
+  bound Storage metadata insert, unbound insert denial, replacement denial,
+  tombstone and late-insert/orphan protection PASS. No image bytes uploaded.
+- Support rollback acceptance payload5be24c913d369e649fd3ba34c5122e93d34abb367682bde68d1d85255ffc2347:
+  cases/replay, Owner and tenant denial, safe internal decisions/check, audit,
+  notifications/inbox/ack, recovery, chat replay/conflict/pagination/isolation,
+  consent snapshot, stale/foreign erasure denial, bounded erasure and retention,
+  browser/service/operator boundary PASS.
+- First Support rollback-test attempt aborted on its recovery assertion.
+  Read-only EXPLAIN confirmed status subqueries were InitPlans in the same
+  expression as the mutating function. Test sequencing was corrected; no product
+  assertion relaxed. Aborted attempt left no rows or ledger entry. Corrected test
+  passed. Transactional ALTER SEQUENCE RESTART plus ROLLBACK preserves original
+  sequence1/is_called=false; no setval repair.
+- Independent Guardian19:30:09UTC confirms all7Support tables, both Media tables,
+  Characters, fixture capability, Storage objects and tokenless synthetic Social
+  connection0; sequence1/false, locks0; both complete catalogs remain EXACT.
+- Security advisor delta: seven intentional server-only policy-free Support
+  tables and the source-reviewed authenticated own-Workspace Media helper.
+  Staging INFO43/WARN8; no blanket grants or policies to silence advisories.
+
+### Application deployment and actual live versions
+- Existing protected Staging deploy run42091553062/job127470608886 PASS, with
+  billing_write_freeze=preserve. Existing false value remained false; no billing
+  activation or write-freeze change.
+- Host preflight proves separate HTTPS/Supabase target, exact URL/ref binding,
+  Stripe TEST mode, safe baseline switches and shared-rate-limit readiness.
+- Build/lint/Operations/release-integration checks and public14-route smoke pass.
+  Seven required health components healthy. Optional email_config remains unknown.
+- Fresh live /api/version: Staging19:13:56.517Z and Production19:14:05.826Z both
+  exacta798d7938bb4e7e168f615f0c32d1a603dd47d4a, with their distinct runtimeEnvironment.
+- No Production deploy. No credentials, accounts, customer records or files moved.
+
+### Live ChatAdmin outcome: distinguish browser success from overall job failure
+- New existing-workflow run42092700717/job127474690048 on exact main completed.
+  Auth/authority probe PASS; fixture reservation/upload PASS.
+- Original sanitized log at19:23:08: stagecomplete, outcomepassed, networknone,
+  sessionCleanuppassed, CHAT_ADMIN_MANUAL_BROWSER=PASS. This covers the complete
+  actual browser journey including invented_price. Historical run42041782472
+  remains FAIL; it is not rewritten.
+- CLEANUP=PASS19:23:11, ABSENCE=PASS19:23:13, then FLOW_ERROR=unexpected19:23:20.
+  Final independent cleanup step=success/NOT_NEEDED; password file removed.
+  **Overall run remains FAIL; no full end-to-end acceptance PASS is claimed.**
+- New original Recovery artifact13446715495/digest
+  b33c57aff3d2cc8aba34a555117bced399a794343b958f0082970ea817fda969
+  remains unchanged. Independent receipt-bound Guardian read19:25:40UTC proves
+  all exact IDs/Usage/sessions/in-flight predicates0.
+- Verify SQL generation was independently reproduced offline without a
+  ReferenceError. Exact failure cause is not observable from the current
+  redacted unexpected error; a release-read/receipt/persistence phase failure
+  must not be guessed or used to justify an unchanged blind retry.
+
+### Compatibility decisions and remaining boundaries
+- All45Production public table names now exist on Staging; Staging has77tables,
+  retaining all32Staging-only tables. No extras promoted or deleted.
+- Independent consumer review confirms legacy chat_character_fans.memory,
+  chat_characters.pricing_config/sales_profile, conversations.external_video_id
+  and social_connections.last_comment_fetch_imported_count are not required by
+  the current reviewed consumers. ChatAdmin uses sales_playbook; actual active
+  video metadata is on conversation_messages, where Staging already has it.
+  No unnecessary legacy-column migration was executed.
+- Staging-only intelligence/billing/member-hardening columns and separate
+  commercial defaults remain unchanged; no price/default rewrite or blanket
+  RLS synchronization. Earlier exact drift inventory remains applicable.
+- Support Owner assignment, runtime activation and retention schedule remain
+  untouched. Media runtime/analysis switches remain unchanged; no new activation.
+- Staging has the new private media bucket; public legacy fanmind-assets remains
+  absent. No customer/public Production files copied. This is not blanket Storage
+  or profile-image acceptance.
+- Actual Support browser/runtime, real Media file-API/UI and optional analysis
+  acceptance remain unproven. No new provider/payment/email activity was enabled.
+- Functional equality of all requested product behavior: **NO**.
+  Code parity and the two new database contract/rollback acceptances: **PASS**.
+
+### Prepared source diagnosis, not deployed
+The same PR carries a bounded test-runner diagnostic correction: fixed
+receipt/release/persistence phase enums, fixed-code redaction of unexpected
+exceptions and preserved existing failures. No SQL, assertions, cleanup, retry,
+target or permission boundary is weakened. Focused release/cleanup/phase tests
+9/9PASS;3newphase tests are included. Independent review and exact-head CI govern
+source publication. No merge, deployment or repeated live test of this correction;
+it does not establish the cause or resolution of the already recorded failure.
+
+
+## Historical inventory and earlier prerequisite assessments
+
+The following sections preserve earlier observations; the current execution result above supersedes their pending/unknown statuses.
 
 ## Targets and source
 
