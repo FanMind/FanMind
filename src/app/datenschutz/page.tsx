@@ -339,6 +339,18 @@ const sections: PrivacySection[] = [
           ein generierter Analysebericht verarbeitet werden. Es wird keine Bildanalyse behauptet.
         </p>
         <p>
+          Der öffentliche Informationschat auf der Landingpage ist ohne Anmeldung nutzbar.
+          Erst nach deiner ausdrücklichen Zustimmung werden deine Frage und höchstens vier
+          vorangegangene Beiträge zur Beantwortung an OpenAI übermittelt. Der sichtbare Verlauf
+          bleibt im Arbeitsspeicher dieses Browserfensters und wird nicht als Kontakt oder
+          Kundengespräch gespeichert. Ein neues Gespräch oder das Neuladen der Seite entfernt
+          diesen sichtbaren Verlauf. Es werden keine privaten Workspace-Daten als Kontext geladen.
+          Technische Nutzungs- und Kostenzähler ohne Nachrichtentext sowie die bestehenden
+          missbrauchsbegrenzenden, gehashten Anfragezähler werden serverseitig verarbeitet.
+          Ohne Zustimmung wird keine Chat-Anfrage ausgelöst. Du kannst die weitere Verarbeitung
+          jederzeit beenden, indem du keine neue Frage sendest oder ein neues Gespräch beginnst.
+        </p>
+        <p>
           Der OpenAI API-Key wird nur serverseitig verwendet und darf niemals im Browser erscheinen.
           Produktive KI-Anfragen verwenden <code>store: false</code>. Eingabelängen werden
           begrenzt. KI-Funktionen liefern Vorschläge, Entwürfe,
