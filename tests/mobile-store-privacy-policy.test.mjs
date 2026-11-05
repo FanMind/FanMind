@@ -148,7 +148,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(storeListing, /STORE_PRIVACY_DECLARATIONS\.md/u);
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
   assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
-  assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
+  assert.match(storeListing, /Google-Play-Support-E-Mail \| `fanmind@fanmind\.ch`/u);
   assert.match(storeListing, /32-Bit-PNG mit Alpha-Kanal/u);
   assert.match(storeListing, /## Apple - Suchbegriffe DE/u);
   assert.match(storeListing, /## Apple - Keywords EN/u);
@@ -189,7 +189,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(reviewAccess, /24\/7/u);
   assert.match(testerProgram, /12 Tester \/ 14 Tage/u);
   assert.match(testerProgram, /keinen neuen Build starten/iu);
-  assert.match(supportPage, /kontakt@fanmind\.ch/u);
+  assert.match(supportPage, /fanmind@fanmind\.ch/u);
   assert.match(supportPage, /Sende niemals dein Passwort/u);
 
   assert.doesNotMatch(pushSource, /requestPermissionsAsync/u);
