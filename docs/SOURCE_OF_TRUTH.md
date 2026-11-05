@@ -1461,6 +1461,14 @@ Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Cap
 Die serverseitigen Gesprächsregeln verwenden die bestehenden Character-Felder
 für Schreibstil, Satzstil, Emojis, Beispiele und No-Gos. Vorschläge reagieren
 zuerst auf die konkrete Nachricht, ohne routinemäßige Rückfrage oder Verkaufsdruck.
+Im persönlichen Kennenlernen soll passende Neugier das Gespräch durch einen
+eigenen kontextbezogenen Gedanken oder höchstens eine Anschlussfrage je Vorschlag
+weiterführen. Eine Frage darf Interesse zeigen, ohne eine Sachlücke schließen zu
+müssen. Keine Fragepflicht, kein Nachhaken bei einer noch offenen Frage, keine
+erneute Abfrage bekannter Angaben und keine erfundenen Gemeinsamkeiten.
+Neue und gespeicherte Vorschläge können vor Verwendung bearbeitet werden. Nur
+die endgültige bestätigte Fassung wird über den bestehenden Bestätigungspfad
+gespeichert; Originalentwürfe bleiben unverändert. Kein automatischer Versand.
 Ein reines Kompliment über Medien berechtigt nicht zur Preisnennung; ausdrückliche
 Medien-/Preisanfragen behalten die gebundene Offer-Auflösung. Der KI-Verlauf enthält
 nur `fan_inbound` und `confirmed_reply`; unbenutzte `suggested_reply` bleiben
@@ -1606,3 +1614,8 @@ Controlled SQL remains unapplied and runtime default-off. Staging setup, Owner
 provisioning, physical retention operation, support-text privacy/access handling
 and real Staging acceptance are separate activation gates. See
 `docs/operations/SUPPORT_CENTRE.md`; source merge is not runtime completion.
+
+
+## ChatAdmin: private Bilderbibliothek — Source-Erweiterung 5. November 2026
+
+Die private Bibliothek je Character mit Upload, geprüften Bildbeschreibungen, konservativer Motivsuche und konfigurierbaren kostenpflichtigen Anfertigungen ist im Repository vorbereitet. Preise bleiben an bestehende Character-Angebote gebunden; Lieferfristen werden ausdrücklich konfiguriert. Beide neuen Schalter bleiben aus; kontrolliertes Schema/Storage, tatsächliche Bildanalyse und Zielabnahme sind nicht als installiert oder aktiv bestätigt. Details: `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`. Die Erkennung konkreter Verfügbarkeitsfragen zu eigenen Angeboten korrigiert den reproduzierten Preis-Kontextfehler; die abschließende Staging-Abnahme bleibt offen.

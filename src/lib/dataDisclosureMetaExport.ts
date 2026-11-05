@@ -70,6 +70,8 @@ export type DisclosureMetaDataset = {
     | "creator_confirmed_chat_learning"
     | "chat_admin_capability"
     | "chat_characters"
+    | "chat_character_media"
+    | "chat_character_media_policies"
     | "chat_character_fans"
     | "chat_character_conversations"
     | "chat_character_current_facts"
@@ -134,6 +136,8 @@ const DATASETS: DatasetDefinition[] = [
     ),
   },
   { key: "chat_admin_capability", table: "workspace_chat_admin_capabilities", scope: "workspace", order: "workspace_id.asc", optionalUntilInstalled: true },
+  { key: "chat_character_media", table: "chat_character_media", scope: "workspace", order: "character_id.asc,id.asc", optionalUntilInstalled: true },
+  { key: "chat_character_media_policies", table: "chat_character_media_policies", scope: "workspace", order: "character_id.asc", optionalUntilInstalled: true },
   { key: "chat_characters", table: "chat_characters", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_fans", table: "chat_character_fans", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },
   { key: "chat_character_conversations", table: "chat_character_conversations", scope: "workspace", order: "created_at.asc,id.asc", optionalUntilInstalled: true },

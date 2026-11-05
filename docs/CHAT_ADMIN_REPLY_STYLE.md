@@ -40,6 +40,32 @@ darf ohne Frage enden. Die direkte Variante wird nicht automatisch intimer oder
 verkäuferischer. Bekannte Fan-Fakten sollen nicht erneut erfragt oder aufgezählt
 werden. Keine künstlichen Tippfehler, Dringlichkeit oder erfundenen Zusagen.
 
+Owner-Präzisierung vom 5. November 2026: Im persönlichen Kennenlernen soll der
+Character auch selbst Interesse zeigen. Auf passende Hinweise kann ein eigener
+Gedanke oder eine konkrete Anschlussfrage folgen, statt über mehrere Nachrichten
+nur zu danken. Eine Frage muss keine Sachlücke schließen; sie darf dem Kennenlernen
+dienen. Höchstens eine pro Vorschlag, keine Pflicht nach jeder Nachricht, kein
+Nachhaken bei einer noch unbeantworteten Frage und keine Wiederholung bekannter
+Angaben. Bestätigter Kontext, Character-Stimme und Fan-Grenzen bleiben maßgeblich;
+es werden keine Erlebnisse, Gemeinsamkeiten oder Verkaufsanlässe erfunden.
+Die gemeinsame Qualitätsgrundlage erlaubt diesen Anschluss ebenfalls. Die
+synthetischen Tests belegen keine bestimmte Häufigkeit echter Modellfragen.
+
+## Vorschläge als bearbeitbare Entwürfe
+
+Neue und gespeicherte KI-Vorschläge können über „Bearbeiten“ als Textvorlage
+übernommen, umgeschrieben oder ganz ersetzt werden. Erst „Bearbeitete Antwort
+kopieren und verwenden“ kopiert den endgültigen Text und speichert ihn über den
+vorhandenen revisions- und gesprächsgebundenen Bestätigungspfad als
+`confirmed_reply`. Originalvorschläge bleiben unverändert; nur eine textgleiche
+Bestätigung markiert einen Originalvorschlag als verwendet. Verwerfen oder
+Fan-/Character-Wechsel speichert keinen Entwurf. Ein gescheiterter Speicherversuch
+behält den Text zur erneuten Bestätigung. Kein automatischer externer Versand.
+
+Fanformulare scrollen auf Desktop innerhalb des rechten Bereichs; auf schmalen
+Bildschirmen bleibt der Seitenfluss erhalten. Statusmeldungen erscheinen als
+schließbare Überlagerung ohne dauerhaft reservierten unteren Anzeigebereich.
+
 ## Gedächtnis und Preise
 
 - Die bestehenden Workspace-/Character-/Fan-/Conversation-Prüfungen bleiben vor

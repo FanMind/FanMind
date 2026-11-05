@@ -20,6 +20,10 @@ const compiled = ts.transpileModule(source, {
 function loadClient() {
   const clientModule = { exports: {} };
   const localRequire = (name) => {
+    if (name === "./CharacterMediaLibrary") {
+      const mediaModule={exports:{}};const mediaCode=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+      new Function("module","exports","require",mediaCode)(mediaModule,mediaModule.exports,localRequire);return mediaModule.exports;
+    }
     if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;
     if (name === "./chatadmin.module.css") return new Proxy({}, { get: (_, key) => String(key) });
     return require(name);
