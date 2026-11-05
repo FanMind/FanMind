@@ -35,3 +35,33 @@ Schema acceptance and unit/native/component CI do not complete runtime acceptanc
 The single existing Support flag also enables customer conversation storage. Do not call this an admin-only activation or enable it before privacy and cleanup prerequisites. Existing provider/help/diagnostic/repair switches remain separate. No new provider, external send, Billing, schema or production-data fixture is authorized by this runbook.
 
 Source preparation and safe Owner binding can proceed while these runtime prerequisites remain open. Overall Issue #1350 remains open until actual runtime acceptance is complete.
+
+## Owner-directed live acceptance — 5 November 2026
+
+The Owner explicitly requested enabling live Support so that he can perform the
+remaining acceptance himself. This supersedes pre-completed acceptance as a
+prerequisite **only for** the manual `activate-for-owner-acceptance` action.
+It is not an accepted privacy/runtime result and does not set PRIVACY_READY or
+ACCEPTANCE_COMMIT. Logs explicitly retain `SUPPORT_RUNTIME_ACCEPTANCE=PENDING_OWNER`;
+Issue #1350 remains open until the Owner reports actual results.
+
+Use reviewed protected main as controller source, supply the exact current live
+commit separately and acknowledge `I_WILL_PERFORM_THE_PENDING_LIVE_ACCEPTANCE`.
+The workflow checks both live and pinned cleanup sources are ancestors of reviewed
+main and that their full Support schema/reference matches; the live PM2 contract
+must also match. The controller still requires the actual bound eligible Owner,
+exact Production/schema/role checks, authorized schedules and a fresh succeeded
+receipt for the pinned cleanup source. It verifies exact live version and all
+eight health checks, with the existing byte-exact rollback on failure.
+
+This switches the existing global Support flag, including authenticated customer
+conversation persistence; it does not restrict activation to the Owner's browser.
+Consent, identity/tenant checks and the separate provider/repair switches remain
+unchanged. No synthetic customer records, schema writes or provider calls are
+performed by this action. The Owner performs the pending live checks.
+
+For an explicit stop, `deactivate` uses the same main/Owner/live binding and
+rollback verification, but deliberately does not require healthy cleanup or
+completed privacy/runtime acceptance. It changes only the Support flag to false;
+existing data and cleanup remain intact. Normal `activate` keeps all original
+completed-acceptance requirements.

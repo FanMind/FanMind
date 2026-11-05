@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import { assertReference, catalogueSql, roleBoundarySql, classify, REFERENCE_PATH } from './support-centre-schema.mjs';
 
 export const PRODUCTION = 'drqkpdvtbbrrdwmtrodz';
-export const ACTIONS = ['verify', 'owner', 'retention', 'monitor', 'activate'];
+export const ACTIONS = ['verify', 'owner', 'retention', 'monitor', 'activate', 'activate-for-owner-acceptance', 'deactivate'];
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const EMAIL = /^[a-z0-9.!#$%&*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
 const SHA = /^[a-f0-9]{40}$/;
@@ -44,7 +44,7 @@ export function targetFor(env, action, email) {
   if ((!direct && !pooler) || (env.FANMIND_BACKUP_DB_PORT || '5432') !== '5432' || env.FANMIND_BACKUP_DB_NAME !== 'postgres') fail('database_binding_invalid');
   if (!/^\/etc\/fanmind-backup\/[a-zA-Z0-9_.-]+$/.test(env.FANMIND_BACKUP_PGPASSFILE ?? '')) fail('passfile_path_invalid');
   const emails = (env.FANMIND_ADMIN_EMAILS ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-  if (['verify', 'owner', 'activate'].includes(action)) {
+  if (['verify', 'owner', 'activate', 'activate-for-owner-acceptance', 'deactivate'].includes(action)) {
     if (!emails.length || emails.some(s => !EMAIL.test(s))) fail('admin_allowlist_invalid');
     if (!emails.includes(email)) fail('owner_not_platform_admin');
   }
@@ -86,13 +86,24 @@ export function withActivationRollback(perform, verify, restore) {
     fail('activation_failed_rolled_back');
   }
 }
-function activate(target, env) {
+export function activationTarget(target, env, action = 'activate') {
+  if (action === 'activate-for-owner-acceptance' || action === 'deactivate') {
+    if (!SHA.test(env.FANMIND_SUPPORT_LIVE_COMMIT ?? '')) fail('live_source_invalid');
+    if (action === 'activate-for-owner-acceptance') {
+      if (env.FANMIND_SUPPORT_OWNER_ACCEPTANCE_ACK !== 'I_WILL_PERFORM_THE_PENDING_LIVE_ACCEPTANCE') fail('owner_acceptance_confirmation_missing');
+      if (env.FANMIND_SUPPORT_SCHEDULE_ENABLED !== 'true' || !SHA.test(env.FANMIND_SUPPORT_SCHEDULE_SOURCE ?? '') || env.FANMIND_SUPPORT_SCHEDULE_OWNER !== target.email) fail('schedule_binding_missing');
+    }
+    return { ...target, commit: env.FANMIND_SUPPORT_LIVE_COMMIT };
+  }
   if (env.FANMIND_SUPPORT_PRIVACY_READY !== 'true' || env.FANMIND_SUPPORT_SCHEDULE_ENABLED !== 'true') fail('operational_readiness_missing');
   if (env.FANMIND_SUPPORT_SCHEDULE_SOURCE !== target.commit || env.FANMIND_SUPPORT_SCHEDULE_OWNER !== target.email) fail('schedule_binding_missing');
   if (env.FANMIND_SUPPORT_ACCEPTANCE_COMMIT !== target.commit) fail('runtime_acceptance_required');
+  return target;
+}
+function setSupportFlag(target, env, enabled) {
   requireLive(target.commit);
   const { stat, content: before } = readProductionFile(ENV_FILE, [0, Number(execute('/usr/bin/id', ['-u', 'ubuntu']))], [0o600, 0o640], 1048576);
-  const after = replaceSupportFlag(before, true);
+  const after = replaceSupportFlag(before, enabled);
   const pm2 = ['/usr/bin/pm2', '/usr/local/bin/pm2'].find(p => { try { return lstatSync(p).isFile() || lstatSync(p).isSymbolicLink(); } catch { return false; } });
   if (!pm2) fail('pm2_missing');
   const reload = enabled => execute('/usr/bin/sudo', ['-n', '-u', 'ubuntu', '-H', '/usr/bin/env', `FANMIND_SUPPORT_CENTRE_ENABLED=${enabled ? 'true' : 'false'}`, `FANMIND_RELEASE_COMMIT=${target.commit}`, `FANMIND_CURRENT_RELEASE_LINK=${CURRENT}`, 'FANMIND_PM2_APP_NAME=fanmind', pm2, 'reload', `${CURRENT}/ops/pm2/fanmind.production.config.cjs`, '--only', 'fanmind', '--update-env']);
@@ -101,10 +112,10 @@ function activate(target, env) {
     try { writeFileSync(temp, text, { mode: stat.mode & 0o777, flag: 'wx' }); chownSync(temp, stat.uid, stat.gid); renameSync(temp, ENV_FILE); }
     finally { rmSync(temp, { force: true }); }
   };
-  withActivationRollback(() => { write(after); reload(true); }, () => {
+  withActivationRollback(() => { write(after); reload(enabled); }, () => {
     const processes = JSON.parse(execute('/usr/bin/sudo', ['-n', '-u', 'ubuntu', '-H', pm2, 'jlist'])).filter(p => p.name === 'fanmind');
     const app = processes[0]?.pm2_env;
-    if (processes.length !== 1 || app?.status !== 'online' || app.exec_mode !== 'cluster_mode' || app.pm_cwd !== CURRENT || app.FANMIND_RELEASE_COMMIT !== target.commit || app.FANMIND_RUNTIME_ENVIRONMENT !== 'production' || app.FANMIND_SUPPORT_CENTRE_ENABLED !== 'true') fail('process_contract_failed');
+    if (processes.length !== 1 || app?.status !== 'online' || app.exec_mode !== 'cluster_mode' || app.pm_cwd !== CURRENT || app.FANMIND_RELEASE_COMMIT !== target.commit || app.FANMIND_RUNTIME_ENVIRONMENT !== 'production' || app.FANMIND_SUPPORT_CENTRE_ENABLED !== String(enabled)) fail('process_contract_failed');
     requireLive(target.commit);
     const health = JSON.parse(execute('/usr/bin/curl', ['-fsS', '--max-time', '15', '--max-filesize', '65536', 'https://fanmind.ch/api/health']));
     if (health.status !== 'healthy' || !Array.isArray(health.checks) || health.checks.length !== 8 || health.checks.some(c => c.status !== 'healthy')) fail('health_failed');
@@ -132,7 +143,7 @@ export function runProductionControl(action, email, env = process.env) {
     const catalogue = JSON.parse(db(`BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; ${catalogueSql()} ROLLBACK;`));
     if (classify(catalogue, reference) !== 'EXACT') fail('schema_not_exact');
     let bound = false;
-    if (['verify', 'owner', 'activate'].includes(action)) {
+    if (['verify', 'owner', 'activate', 'activate-for-owner-acceptance', 'deactivate'].includes(action)) {
       const owners = JSON.parse(db(`BEGIN READ ONLY; SET LOCAL statement_timeout='10s'; SELECT coalesce(jsonb_agg(id),'[]'::jsonb) FROM auth.users WHERE lower(email)=${literal(target.email)} AND email_confirmed_at IS NOT NULL AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<clock_timestamp()); ROLLBACK;`));
       if (!Array.isArray(owners) || owners.length !== 1 || !UUID.test(owners[0])) fail('owner_identity_invalid');
       target.uuid = owners[0];
@@ -149,12 +160,15 @@ export function runProductionControl(action, email, env = process.env) {
       const result = JSON.parse(db(`SELECT public.run_support_retention('${id}'::uuid,'${target.commit}',${Number(env.GITHUB_RUN_ATTEMPT ?? 1)>1});`));
       if (!['succeeded', 'already_completed'].includes(result.status)) fail('retention_failed');
     }
-    if (['monitor', 'activate'].includes(action)) {
-      if (db(`BEGIN READ ONLY; SELECT coalesce((SELECT status='succeeded' AND source_commit=${literal(target.commit)} AND completed_at>clock_timestamp()-interval '30 hours' FROM public.support_retention_runs ORDER BY started_at DESC LIMIT 1),false); ROLLBACK;`) !== 't') fail('retention_unhealthy');
+    if (['monitor', 'activate', 'activate-for-owner-acceptance'].includes(action)) {
+      const receiptSource = action === 'activate-for-owner-acceptance' ? env.FANMIND_SUPPORT_SCHEDULE_SOURCE : target.commit;
+      if (!SHA.test(receiptSource ?? '')) fail('retention_source_invalid');
+      if (db(`BEGIN READ ONLY; SELECT coalesce((SELECT status='succeeded' AND source_commit=${literal(receiptSource)} AND completed_at>clock_timestamp()-interval '30 hours' FROM public.support_retention_runs ORDER BY started_at DESC LIMIT 1),false); ROLLBACK;`) !== 't') fail('retention_unhealthy');
     }
-    if (action === 'activate') activate(target, env);
+    if (['activate', 'activate-for-owner-acceptance', 'deactivate'].includes(action)) setSupportFlag(activationTarget(target, env, action), env, action !== 'deactivate');
+    if (action === 'activate-for-owner-acceptance') console.log('SUPPORT_RUNTIME_ACCEPTANCE=PENDING_OWNER');
     console.log(`SUPPORT_PRODUCTION_${action.toUpperCase()}=PASS`);
-    if (['verify', 'owner', 'activate'].includes(action)) console.log(`SUPPORT_PRODUCTION_OWNER_BOUND=${bound}`);
+    if (['verify', 'owner', 'activate', 'activate-for-owner-acceptance', 'deactivate'].includes(action)) console.log(`SUPPORT_PRODUCTION_OWNER_BOUND=${bound}`);
   } finally { if (descriptor !== undefined) closeSync(descriptor); rmSync(directory, { recursive: true, force: true }); }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

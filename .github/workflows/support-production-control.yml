@@ -6,10 +6,18 @@ on:
       action:
         required: true
         type: choice
-        options: [verify, owner, retention, monitor, activate]
+        options: [verify, owner, retention, monitor, activate, activate-for-owner-acceptance, deactivate]
       reviewed_commit:
         description: Exact reviewed main source (activation also requires this live release)
         required: true
+        type: string
+      live_commit:
+        description: Exact current live release for Owner acceptance or deactivation; must be an ancestor of reviewed main
+        required: false
+        type: string
+      owner_acceptance_ack:
+        description: For Owner acceptance only, I_WILL_PERFORM_THE_PENDING_LIVE_ACCEPTANCE
+        required: false
         type: string
       owner_email:
         description: Explicitly approved existing Owner email; must match actual Production Admin configuration
@@ -48,6 +56,8 @@ jobs:
       PRIVACY_READY: ${{ vars.FANMIND_SUPPORT_PRODUCTION_PRIVACY_READY }}
       SCHEDULE_SOURCE: ${{ vars.FANMIND_SUPPORT_PRODUCTION_SOURCE_COMMIT }}
       SCHEDULE_OWNER: ${{ vars.FANMIND_SUPPORT_PRODUCTION_OWNER_EMAIL }}
+      LIVE_COMMIT: ${{ inputs.live_commit }}
+      OWNER_ACCEPTANCE_ACK: ${{ inputs.owner_acceptance_ack }}
       ACCEPTANCE_COMMIT: ${{ vars.FANMIND_SUPPORT_PRODUCTION_ACCEPTANCE_COMMIT }}
     steps:
       - name: Run only reviewed source against the existing Production target
@@ -55,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$REVIEWED" =~ ^[a-f0-9]{40}$ ]]
-          case "$ACTION" in verify|owner|retention|monitor|activate) ;; *) exit 1 ;; esac
+          case "$ACTION" in verify|owner|retention|monitor|activate|activate-for-owner-acceptance|deactivate) ;; *) exit 1 ;; esac
           if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
             [[ "$REVIEWED" == "$GITHUB_SHA" && "$CONFIRMATION" == "support-production-$ACTION" ]]
           fi
@@ -67,6 +77,16 @@ jobs:
           git fetch --prune origin main
           [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
           git merge-base --is-ancestor "$REVIEWED" origin/main
+          if [[ "$ACTION" == activate-for-owner-acceptance || "$ACTION" == deactivate ]]; then
+            [[ "$LIVE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+            git merge-base --is-ancestor "$LIVE_COMMIT" "$REVIEWED"
+            git diff --quiet "$LIVE_COMMIT" "$REVIEWED" -- docs/operations/support-centre-reference.json supabase/controlled/support_centre.sql supabase/controlled/support_centre_operations.sql ops/pm2/fanmind.production.config.cjs
+          fi
+          if [[ "$ACTION" == activate-for-owner-acceptance ]]; then
+            [[ "$SCHEDULE_SOURCE" =~ ^[a-f0-9]{40}$ ]]
+            git merge-base --is-ancestor "$SCHEDULE_SOURCE" "$REVIEWED"
+            git diff --quiet "$SCHEDULE_SOURCE" "$REVIEWED" -- docs/operations/support-centre-reference.json supabase/controlled/support_centre.sql supabase/controlled/support_centre_operations.sql
+          fi
           ROOT_SOURCE="$(sudo -n mktemp -d /tmp/fanmind-support-control.XXXXXXXX)"
           trap 'sudo -n rm -rf -- "$ROOT_SOURCE"' EXIT
           git archive "$REVIEWED" \
@@ -91,6 +111,8 @@ jobs:
             FANMIND_SUPPORT_PRIVACY_READY="$PRIVACY_READY" \
             FANMIND_SUPPORT_SCHEDULE_SOURCE="$SCHEDULE_SOURCE" \
             FANMIND_SUPPORT_SCHEDULE_OWNER="$SCHEDULE_OWNER" \
+            FANMIND_SUPPORT_LIVE_COMMIT="$LIVE_COMMIT" \
+            FANMIND_SUPPORT_OWNER_ACCEPTANCE_ACK="$OWNER_ACCEPTANCE_ACK" \
             FANMIND_SUPPORT_ACCEPTANCE_COMMIT="$ACCEPTANCE_COMMIT" \
             /bin/bash -c 'cd "$1"; exec /usr/bin/node --env-file=/var/www/fanmind/.env.production --env-file=/etc/fanmind-backup/worker.env scripts/operations/support-production-control.mjs "$2" "$3"' \
             support-control "$ROOT_SOURCE" "$ACTION" "$OWNER_EMAIL"

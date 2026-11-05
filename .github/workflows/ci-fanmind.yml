@@ -91,7 +91,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm run test:operations 2>&1 | tee operations-test-report.txt
+          { npm run test:operations && node --test src/lib/supportOwnerAcceptance.test.mjs; } 2>&1 | tee operations-test-report.txt
 
       - name: Staging Stripe catalog policy tests
         id: staging_stripe_catalog
