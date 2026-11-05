@@ -131,6 +131,18 @@ test("Fan creation stays reachable by keyboard on a narrow viewport",async t=>{
  assert.equal(await page.evaluate(()=>window.testRequests[0].body.display_name),"Synthetic mobile fan");
 });
 
+test("conversation status remains dismissible without reserving space below the composer",async t=>{
+ const page=await mount(t);await page.setViewportSize({width:1280,height:720});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await openFan(page,"Fan A1");const composer=page.locator(".messageComposer"),history=page.locator(".conversationScroll");
+ const composerBefore=await composer.boundingBox(),historyBefore=await history.boundingBox();
+ await generate(page);await page.evaluate(()=>window.testRequests[0].reject(new Error("network")));
+ await expect(page.getByRole("status")).toContainText("fehlgeschlagen");
+ assert.deepEqual(await composer.boundingBox(),composerBefore);assert.deepEqual(await history.boundingBox(),historyBefore);
+ await page.getByRole("button",{name:"Meldung schließen",exact:true}).click();await expect(page.getByRole("status")).toHaveCount(0);
+});
+
 test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
 
 test("Staging offer setup creates four named offers from an empty Character without duplicates",async t=>{
