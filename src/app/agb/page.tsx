@@ -20,7 +20,7 @@ const sections: TermsSection[] = [
     content: (
       <>
         <p>
-          Vertragspartner ist Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Turnerstraße 18, 2345 Brunn am Gebirge, Österreich. Inhaber und vertretungsberechtigt ist Bernd Guggenberger.
+          Vertragspartnerin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich (GISA 40314440). Bernd Guggenberger ist operativer Ansprechpartner.
         </p>
         <p>
           FanMind ist ein KI-gestützter Antwort- und Memory-Assistent für Fan-, Kunden- und
