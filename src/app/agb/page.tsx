@@ -432,7 +432,7 @@ export default function AgbPage() {
         <header className={styles.hero}>
           <h1>AGB / VERTRAGSBEDINGUNGEN</h1>
           <p className={styles.subtitle}>für die Nutzung von FanMind</p>
-          <p className={styles.stand}>Stand: Juli 2026</p>
+          <p className={styles.stand}>Stand: 6. November 2026</p>
           <p className={styles.intro}>
             Diese Vertragsbedingungen regeln das Vertragsverhältnis zwischen FanMind und Kundinnen
             und Kunden, Pilotkunden sowie registrierten Nutzerinnen und Nutzern, soweit keine
@@ -461,3 +461,4 @@ export default function AgbPage() {
     </main>
   );
 }
+

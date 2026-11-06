@@ -6,6 +6,26 @@ import test from "node:test";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+test("operator correction preserves GISA identity and never grants Bernd signing authority", async () => {
+  const paths = ["src/app/impressum/page.tsx", "src/app/agb/page.tsx", "src/app/datenschutz/page.tsx", "src/app/referral-bedingungen/page.tsx", "docs/legal/AVV_WORKING_DRAFT.md", "docs/legal/EXTERNAL_APPROVAL_REGISTER.md"];
+  for (const path of paths) {
+    const text = await source(path);
+    assert.match(text, /Brigitte Erika Guggenberger/u);
+    assert.doesNotMatch(text, /Turnerstraße|2345 Brunn|Bernd Guggenberger unterschreibt|Inhaber und vertretungsberechtigt ist Bernd/u);
+  }
+  const imprint = await source(paths[0]);
+  assert.match(imprint, /40314440/u);
+  assert.match(imprint, /29\.10\.2026/u);
+  assert.match(imprint, /Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik/u);
+  const evidence = JSON.parse(await source("docs/legal/external-approval-evidence.json"));
+  assert.equal(evidence.operator.gisaNumber.status, "confirmed");
+  assert.equal(evidence.operator.gisaNumber.value, "40314440");
+  assert.match(evidence.operator.gisaNumber.evidenceRef, /^sha256:[a-f0-9]{64}$/u);
+  assert.equal(evidence.operator.vatId.status, "pending");
+  assert.equal(evidence.approvals.legalReview.status, "pending");
+  assert.equal(evidence.approvals.taxReview.status, "pending");
+});
+
 async function source(path) {
   return readFile(resolve(root, path), "utf8");
 }
@@ -266,3 +286,4 @@ test("both production release checks include every public legal route", async ()
     }
   }
 });
+

@@ -1,6 +1,6 @@
 # FanMind AVV – geprüfte Arbeitsfassung
 
-Stand: 30. Juli 2026
+Stand: 6. November 2026 · Betreiberkorrektur; externe Vertragsfreigabe weiterhin offen
 
 Diese Arbeitsfassung bereitet die technischen und fachlichen Anlagen einer
 Auftragsverarbeitungsvereinbarung vor. Sie ist **nicht unterschriftsreif**,
@@ -217,3 +217,4 @@ Nach externer Freigabe unterschreibt oder akzeptiert Brigitte Erika Guggenberger
 FanMind. Der jeweilige B2B-Kunde unterschreibt oder akzeptiert für seine
 Organisation. Eine Steuerberaterin oder ein Steuerberater ist nicht allein
 durch die fachliche Prüfung Vertragspartei der Kunden-AVV.
+

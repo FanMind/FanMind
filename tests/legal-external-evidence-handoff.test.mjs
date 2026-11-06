@@ -28,10 +28,10 @@ test("handoff covers every currently required external evidence control", async 
   const registered = collectRegisteredControlIds(evidence);
 
   assert.equal(handoff.totalControls, 27);
-  assert.equal(handoff.pendingControls, 27);
+  assert.equal(handoff.pendingControls, 26);
   assert.deepEqual(
     new Set(handoff.tasks.map(({ id }) => id)),
-    registered,
+    new Set([...registered].filter(id => id !== "operator.gisaNumber")),
   );
   assert.equal(
     handoff.tasks.filter(({ group }) => group === "provider").length,
@@ -62,7 +62,7 @@ test("formatted handoff omits values, evidence references and completed controls
     buildExternalEvidenceHandoff(evidence),
   );
 
-  assert.match(output, /Offen: 25 von 27 Kontrollen/u);
+  assert.match(output, /Offen: 24 von 27 Kontrollen/u);
   assert.doesNotMatch(output, /operator\.vatId/u);
   assert.doesNotMatch(output, /provider\.exoscale\.dpa/u);
   assert.doesNotMatch(output, /SENSITIVE|sha256:|evidenceRef|acceptedAt/iu);
@@ -102,8 +102,8 @@ test("the canonical verifier accepts valid confirmed transitions and rejects unv
   };
 
   const valid = validateExternalEvidence(evidence);
-  assert.equal(valid.completeCount, 1);
-  assert.equal(valid.incomplete.length, 26);
+  assert.equal(valid.completeCount, 2);
+  assert.equal(valid.incomplete.length, 25);
 
   evidence.approvals.legalReview.reviewedVersion = null;
   assert.throws(
@@ -130,7 +130,7 @@ test("invalid completion evidence keeps controls in the external handoff", async
   const handoff = buildExternalEvidenceHandoff(evidence);
   const output = formatExternalEvidenceHandoff(handoff);
 
-  assert.equal(handoff.pendingControls, 27);
+  assert.equal(handoff.pendingControls, 26);
   assert.match(output, /operator\.vatId/u);
   assert.match(output, /provider\.exoscale\.dpa/u);
   assert.doesNotMatch(output, /SENSITIVE|sha256:|evidenceRef|acceptedAt/iu);
@@ -152,3 +152,4 @@ test("handoff fails closed for unknown, duplicate or malformed providers", async
     { code: "handoff_providers_invalid" },
   );
 });
+

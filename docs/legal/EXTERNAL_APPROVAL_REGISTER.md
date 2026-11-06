@@ -1,6 +1,6 @@
 # FanMind Register für externe Rechts-, Steuer- und Anbieterfreigaben
 
-Stand: 30. Juli 2026
+Stand: 6. November 2026
 
 Dieses Register macht die externen Route-23-Abschlussnachweise prüfbar. Es
 ersetzt weder eine Rechts- oder Steuerberatung noch die Vertragsannahme in
@@ -81,7 +81,7 @@ Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
 | UID | nicht mitgeteilt | UID-Bescheid/FinanzOnline-Bestätigung oder fachliche Bestätigung „nicht vorhanden/nicht anwendbar“ |
 | Firmenbuchnummer | nicht mitgeteilt | aktueller Firmenbuchauszug oder Bestätigung „nicht eingetragen“ |
 | Firmenbuchgericht | nicht mitgeteilt | Firmenbuchauszug oder Bestätigung „nicht anwendbar“ |
-| GISA-Zahl | 40314440 laut amtlichem Auszug vom 02.11.2026 | Privaten GISA-Auszug als Beleg hashen und das maschinenlesbare Freigaberegister erst danach auf `confirmed` stellen |
+| GISA-Zahl | 40314440 laut amtlichem Auszug vom 02.11.2026 | Original-PDF privat geprüft und gehasht; `operator.gisaNumber` am 06.11.2026 mit Wert und SHA-256-Beleg bestätigt |
 | Stripe Tax / Nettopreise | technisch auf 20 % für steuerpflichtige Österreich-Umsätze entschieden; externe Prüfung offen | schriftliche Steuerfreigabe für Checkout, internationale Behandlung, Angebot, Rechnung und Rechnungshinweis |
 
 Der Zusatz `e.U.` darf nur verwendet werden, wenn die Eintragung samt
@@ -123,7 +123,7 @@ normalerweise nicht Vertragspartei der FanMind-Kunden-AVV. Empfohlen ist:
 1. Rechts-/Datenschutzberatung macht aus
    `AVV_WORKING_DRAFT.md` eine freigegebene Vertragsfassung;
 2. Steuerberatung bestätigt nur die steuer- und rechnungsbezogenen Teile;
-3. Bernd Guggenberger unterschreibt beziehungsweise akzeptiert für FanMind;
+3. Brigitte Erika Guggenberger oder eine nachweislich bevollmächtigte Person unterschreibt beziehungsweise akzeptiert für FanMind; Bernd ist operativer Ansprechpartner, ohne hiermit behauptete Vollmacht;
 4. der jeweilige B2B-Kunde unterschreibt oder akzeptiert wirksam für seine
    Organisation;
 5. Version, Datum und Beweis-Hash werden im externen Register dokumentiert.
@@ -179,6 +179,7 @@ Restore-/Löschtest erfolgen.
    registriert.
 4. Rechts-/Datenschutzberatung prüft die exakt versionierten öffentlichen
    Texte und macht die AVV unterschriftsfähig.
-5. Bernd und der jeweilige B2B-Kunde nehmen die finale AVV wirksam an.
+5. Brigitte Erika Guggenberger (oder eine nachweislich bevollmächtigte Person) und der jeweilige B2B-Kunde nehmen die finale AVV wirksam an.
 6. `npm run legal:evidence:require-complete` muss grün sein, bevor echte
    Drittpersonendaten eines Pilotkunden verarbeitet werden.
+

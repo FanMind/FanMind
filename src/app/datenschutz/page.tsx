@@ -679,7 +679,7 @@ export default function DatenschutzPage() {
         <section className={styles.hero} aria-labelledby="privacy-title">
           <h1 id="privacy-title">Datenschutzerklärung</h1>
           <p>Transparenz zur Verarbeitung personenbezogener Daten bei FanMind</p>
-          <span className={styles.statusPill}>▣ Stand: Juli 2026</span>
+          <span className={styles.statusPill}>▣ Stand: 6. November 2026</span>
         </section>
 
         <article className={styles.timeline} aria-label="Datenschutzerklärung Inhalt">
@@ -698,3 +698,4 @@ export default function DatenschutzPage() {
     </main>
   );
 }
+

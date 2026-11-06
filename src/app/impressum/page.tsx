@@ -10,11 +10,11 @@ export const metadata: Metadata = {
 
 const operatorRows = [
   {
-    label: "Betreiber / Vertragspartner",
+    label: "Betreiberin / Vertragspartnerin / Medieninhaberin",
     value: "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   },
   {
-    label: "Geschäftsanschrift / Sitz",
+    label: "Gewerbestandort / Geschäftsanschrift",
     value: (
       <>
         Bahnstraße 11, Stiege 2, Tür 1
@@ -26,7 +26,7 @@ const operatorRows = [
     ),
   },
   {
-    label: "Inhaber und vertretungsberechtigt",
+    label: "Gewerbeinhaberin",
     value: "Brigitte Erika Guggenberger",
   },
   {
@@ -36,6 +36,18 @@ const operatorRows = [
   {
     label: "GISA-Zahl",
     value: "40314440",
+  },
+  {
+    label: "Gewerbebeginn",
+    value: "29.10.2026",
+  },
+  {
+    label: "Gewerbewortlaut",
+    value: "Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik",
+  },
+  {
+    label: "Anwendbare Gewerbevorschriften",
+    value: <a href="https://www.ris.bka.gv.at/eli/bgbl/1994/194">Gewerbeordnung 1994 (GewO 1994)</a>,
   },
   {
     label: "Operativer Ansprechpartner",
@@ -220,3 +232,4 @@ export default function ImpressumPage() {
     </main>
   );
 }
+

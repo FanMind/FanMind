@@ -26,10 +26,10 @@
       "evidenceRef": null
     },
     "gisaNumber": {
-      "status": "pending",
-      "value": null,
-      "confirmedAt": null,
-      "evidenceRef": null
+      "status": "confirmed",
+      "value": "40314440",
+      "confirmedAt": "2026-11-06",
+      "evidenceRef": "sha256:b652865a5c5d15399e898684aea055428403f8850258dc1f30380703d343b4f8"
     },
     "taxMode": {
       "status": "pending",

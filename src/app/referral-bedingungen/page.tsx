@@ -189,7 +189,7 @@ export default function ReferralTermsPage() {
           <p className={styles.subtitle}>
             Beschlossene Programmlogik, Teilnahmevoraussetzungen und klare Grenzen
           </p>
-          <p className={styles.stand}>Stand: Juli 2026</p>
+          <p className={styles.stand}>Stand: 6. November 2026</p>
           <p className={styles.intro}>
             Diese Seite beschreibt die aktuell beschlossene Logik des FanMind Referral
             Growth Window. Eine automatische Rabattverrechnung ist erst aktiv, wenn
@@ -238,3 +238,4 @@ export default function ReferralTermsPage() {
     </main>
   );
 }
+
