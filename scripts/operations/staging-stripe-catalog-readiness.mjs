@@ -2,6 +2,7 @@
 
 import {
   STAGING_STRIPE_PRICE_CONTRACTS,
+  STAGING_CAPACITY_PRICE_CONTRACTS,
   verifyStagingStripeCatalog,
 } from "../../src/lib/stagingStripeCatalogPolicy.mjs";
 
@@ -19,7 +20,9 @@ async function main() {
         STAGING_STRIPE_PRICE_CONTRACTS.map(
           (contract) => contract.environmentName,
         ),
-      ).size !== 5
+      ).size !== 5 ||
+      STAGING_CAPACITY_PRICE_CONTRACTS.length !== 3 ||
+      new Set(STAGING_CAPACITY_PRICE_CONTRACTS.map((contract) => contract.environmentName)).size !== 3
     ) {
       fail("contract_invalid");
       return;
@@ -38,7 +41,7 @@ async function main() {
   if (!result.ok) {
     if (
       typeof result.slot === "string" &&
-      /^(?:starter_setup|starter_monthly|internal_daily_test|ai_plus|ai_ultra)$/u.test(
+      /^(?:starter_setup|starter_monthly|internal_daily_test|ai_plus|ai_ultra|capacity_99|capacity_199|capacity_312)$/u.test(
         result.slot,
       )
     ) {
@@ -49,6 +52,7 @@ async function main() {
   }
 
   console.log("STAGING_STRIPE_MODE=test");
+  console.log(`STAGING_STRIPE_CATALOG_CONTRACT=${process.env.FANMIND_STAGING_STRIPE_CATALOG_CONTRACT ?? "legacy_v1"}`);
   console.log("STAGING_STRIPE_WEBHOOK_SECRET=configured");
   console.log(`STAGING_STRIPE_CATALOG_PRICES=${result.priceCount}`);
   console.log("STAGING_STRIPE_CATALOG=PASS");
