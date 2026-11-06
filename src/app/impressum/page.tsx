@@ -11,15 +11,15 @@ export const metadata: Metadata = {
 const operatorRows = [
   {
     label: "Betreiber / Vertragspartner",
-    value: "Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
+    value: "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   },
   {
     label: "Geschäftsanschrift / Sitz",
     value: (
       <>
-        Turnerstraße 18
+        Bahnstraße 11, Stiege 2, Tür 1
         <br />
-        2345 Brunn am Gebirge
+        2351 Wiener Neudorf
         <br />
         Österreich
       </>
@@ -27,11 +27,19 @@ const operatorRows = [
   },
   {
     label: "Inhaber und vertretungsberechtigt",
-    value: "Bernd Guggenberger",
+    value: "Brigitte Erika Guggenberger",
   },
   {
     label: "Zuständige Gewerbebehörde",
     value: "Bezirkshauptmannschaft Mödling",
+  },
+  {
+    label: "GISA-Zahl",
+    value: "40314440",
+  },
+  {
+    label: "Operativer Ansprechpartner",
+    value: "Bernd Guggenberger",
   },
   {
     label: "Kammerzugehörigkeit",
@@ -82,8 +90,8 @@ export default function ImpressumPage() {
               Rechtlicher Abschlussstatus
             </h2>
             <p>
-              FanMind wird derzeit von Bernd Guggenberger als Einzelunternehmen
-              unter der Geschäftsbezeichnung FanMind betrieben. Eine
+              FanMind wird von Brigitte Erika Guggenberger als Einzelunternehmerin
+              unter der Geschäftsbezeichnung FanMind betrieben. Bernd Guggenberger ist operativer Ansprechpartner; die rechtliche Betreiberin und Vertragspartnerin bleibt Brigitte Erika Guggenberger. Eine
               Firmenbuchnummer, ein Firmenbuchgericht und eine UID werden erst
               angeführt, sobald sie tatsächlich vorhanden und bestätigt sind.
             </p>
