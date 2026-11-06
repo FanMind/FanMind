@@ -45,7 +45,7 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     grant execute on function auth.uid() to authenticated;
     create table public.workspaces(id uuid primary key,owner_user_id uuid references auth.users(id),name text,test_access_flags jsonb,workspace_access_mode text,billing_status text,stripe_customer_id text,stripe_subscription_id text,stripe_checkout_session_id text,stripe_payment_intent_id text,stripe_mandate_id text);
     create table public.workspace_members(workspace_id uuid,user_id uuid,role text);
-    create table public.ai_usage_events(workspace_id uuid,user_id uuid,feature text,source_route text,status text,created_at timestamptz default now());
+    create table public.ai_usage_events(id uuid primary key default gen_random_uuid(),workspace_id uuid,user_id uuid,feature text,source_route text,status text,created_at timestamptz default now());
     grant select on public.workspaces to authenticated;
     alter table public.workspaces enable row level security;
     create policy workspace_owner_read on public.workspaces for select to authenticated using(owner_user_id=auth.uid());
@@ -487,11 +487,40 @@ test("native PG17 proves committed fixture ownership, identity negatives, read-o
     }
     sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
       select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,2,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
-      insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
-      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','ok','${receipt.startedAt}'::timestamptz+(ordinal||' seconds')::interval from generate_series(1,10) ordinal;
-      insert into public.ai_usage_events(workspace_id,user_id,feature,source_route,status,created_at)
-      select '${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','error','${receipt.startedAt}'::timestamptz+(((ordinal+10)::text||' seconds')::interval) from generate_series(1,2) ordinal;`);
-    assert.match(sql(buildManualFlowSql("verify",env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
+      `);
+    const eventId=(prefix,index)=>`${(prefix+index).toString(16)}-1111-4111-8111-111111111111`;
+    const insertAttempt=attempt=>`insert into public.ai_usage_events(id,workspace_id,user_id,feature,source_route,status,created_at) values('${attempt.id}','${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','${attempt.status}','${receipt.startedAt}'::timestamptz+interval '1 second');`;
+    // Exact per-attempt proofs: a clean provider result must not require two
+    // invented failures; real quality rewrites still require their own rows.
+    for(const errors of [0,2,10]){
+      sql('delete from public.ai_usage_events;');
+      receipt.usageWitness=batches.map((batch,index)=>({generationId:batch[3],attempts:[
+        ...(index<errors?[{id:eventId(0xcb000000,index),status:'error'}]:[]),
+        {id:eventId(0xcc000000,index),status:'ok'},
+      ]}));
+      sql(receipt.usageWitness.flatMap(row=>row.attempts).map(insertAttempt).join('\n'));
+      assert.match(sql(buildManualFlowSql('verify',env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
+    }
+    const missing=receipt.usageWitness[0].attempts.at(-1);
+    const extra={id:'cd000000-1111-4111-8111-111111111111',status:'ok'};
+    sql(`delete from public.ai_usage_events where id='${missing.id}';`+insertAttempt(extra));
+    // All six totals still match: an unrelated replacement cannot conceal a
+    // missing witnessed event, even when it has the same scope and status.
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_usage_witness_mismatch/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`+insertAttempt(missing));
+    sql(`update public.ai_usage_events set status='error' where id='${missing.id}';`);
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_effect_missing/u);
+    sql(`update public.ai_usage_events set status='ok' where id='${missing.id}';`);
+    sql(`update public.ai_usage_events set workspace_id='${ids[1]}' where id='${missing.id}';`);
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)));
+    sql(`update public.ai_usage_events set workspace_id='${ids[0]}' where id='${missing.id}';`);
+    sql(insertAttempt(extra));
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_effect_missing/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`);
+    sql(insertAttempt({...extra,status:'skipped'}));
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_usage_witness_mismatch/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`);
+    assert.match(sql(buildManualFlowSql('verify',env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
 
     const attachedFan="dddddddd-dddd-4ddd-8ddd-dddddddddddd",attachedCreation="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
     sql(`insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,status,summary,notes,creation_id)

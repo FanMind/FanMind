@@ -1,15 +1,16 @@
 import { createHash, randomBytes } from "node:crypto";
 import { constants, openSync, closeSync, fstatSync, readFileSync, writeFileSync, fsyncSync, renameSync, rmSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
+import { parseChatAdminUsageHeader, validateChatAdminUsageWitness } from "../src/lib/chatAdminUsageWitness.mjs";
 
 const MODES=["probe","acceptance"];
 const STAGES=["browser_launch","browser_context","version","anonymous","admin_login_page","admin_login_form","admin_token","admin_identity","admin_dashboard","admin_authority","admin_denial","owner_login_page","owner_login_form","owner_token","owner_identity","owner_dashboard","secondary_login_page","secondary_login_form","secondary_token","secondary_identity","secondary_dashboard","chatadmin_page","offers_save","offers_reload","offers_editor","offers_fields","offers_submit","offers_saved_payload","offers_reload_editor","offers_reload_prices","offers_reload_active","offers_reload_close","fan_a_list","fan_a_open","fan_b_list","fan_b_open","customer_tier_save","customer_tier_menu","customer_tier_editor","customer_tier_fields","customer_tier_submit","customer_tier_saved_response","customer_tier_reload","memory_a","memory_b","compliment","persona_a_request","persona_a_response","persona_a_copy","confirmation_reload","invented_price","semantic_isolation","persona_switch","persona_b_request","inactive_offer","persona_b_response","persona_b_copy","foreign_offer","negatives","network_check","complete"];
 const OPTIONS={stage:STAGES,outcome:["running","passed","failed"],status:["none","2xx","3xx","4xx","5xx","other"],network:["none","origin","write","redirect","transport"],sessionCleanup:["not_started","passed","failed"]};
-const FIELDS=["version","run","attempt","sha","target","source","mode",...Object.keys(OPTIONS)];
+const FIELDS=["version","run","attempt","sha","target","source","mode","usageWitness",...Object.keys(OPTIONS)];
 const fail=()=>{throw Error("CHAT_ADMIN_MANUAL_FLOW_ERROR=browser_diagnostic");};
 function sourceDigest() {
   const hash=createHash("sha256");
-  for(const file of ["./response-budget.mjs","../src/lib/chatAdminModelPolicy.mjs","./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./offer-evidence.mjs","./manual-flow.spec.mts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
+  for(const file of ["./response-budget.mjs","../src/lib/chatAdminModelPolicy.mjs","../src/lib/chatAdminUsageWitness.mjs","./browser-diagnostic.mjs","./fixture-identity.mjs","./network-boundary.mjs","./offer-evidence.mjs","./manual-flow.spec.mts","../playwright.chatadmin-staging.config.mts","../scripts/operations/chat-admin-manual-flow-staging.mjs"])hash.update(readFileSync(new URL(file,import.meta.url)));
   return hash.digest("hex");
 }
 function binding(env,mode) {
@@ -21,6 +22,8 @@ function validate(value,env,mode) {
   const expected=binding(env,mode);
   if(!value||typeof value!=="object"||Array.isArray(value)||Object.keys(value).length!==FIELDS.length||FIELDS.some(key=>!Object.hasOwn(value,key))||
     Object.entries(expected).some(([key,item])=>value[key]!==item)||Object.entries(OPTIONS).some(([key,allowed])=>!allowed.includes(value[key])))fail();
+  validateChatAdminUsageWitness(value.usageWitness);
+  if (mode === "probe" && value.usageWitness.length !== 0) fail();
   return value;
 }
 export function readBrowserDiagnostic(env,mode) {
@@ -34,14 +37,20 @@ function writePrivate(file,value) {
   try{writeFileSync(fd,JSON.stringify(value));fsyncSync(fd);}finally{closeSync(fd);}
 }
 export function initializeBrowserDiagnostic(env,mode) {
-  const value={...binding(env,mode),stage:"browser_launch",outcome:"running",status:"none",network:"none",sessionCleanup:"not_started"};
+  const value={...binding(env,mode),usageWitness:[],stage:"browser_launch",outcome:"running",status:"none",network:"none",sessionCleanup:"not_started"};
   writePrivate(path(env,mode),value);
 }
 export function updateBrowserDiagnostic(env,mode,patch) {
   const current=readBrowserDiagnostic(env,mode);
-  if(!patch||typeof patch!=="object"||Object.keys(patch).some(key=>!Object.hasOwn(OPTIONS,key)))fail();
+  if(!patch||typeof patch!=="object"||Object.keys(patch).some(key=>key!=="usageWitness"&&!Object.hasOwn(OPTIONS,key)))fail();
   const next=validate({...current,...patch},env,mode),temporary=`${path(env,mode)}.${randomBytes(8).toString("hex")}.tmp`;
   try{writePrivate(temporary,next);renameSync(temporary,path(env,mode));}finally{rmSync(temporary,{force:true});}
+}
+export function recordBrowserUsageWitness(env,generationId,header) {
+  const value=readBrowserDiagnostic(env,"acceptance");
+  const usageWitness=[...value.usageWitness,{generationId,attempts:parseChatAdminUsageHeader(header)}];
+  validateChatAdminUsageWitness(usageWitness);
+  updateBrowserDiagnostic(env,"acceptance",{usageWitness});
 }
 export function formatBrowserDiagnostic(env,mode) {
   const value=readBrowserDiagnostic(env,mode);

@@ -1,4 +1,6 @@
 import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
+import { randomUUID } from "node:crypto";
+import * as usageWitness from "../src/lib/chatAdminUsageWitness.mjs";
 import * as currentFactsPolicy from "../src/lib/chatAdminCurrentFactsPolicy.mjs";
 import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
 import assert from "node:assert/strict";
@@ -103,6 +105,8 @@ function harness(change, abortController, options = {}) {
   const history=options.history??defaultHistory;
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, persistedGenerations: [], confirmations: [], currentFactWrites: [], memoryWrites: [] };
   const dependencies = {
+    "node:crypto": { randomUUID },
+    "@/lib/chatAdminUsageWitness.mjs": usageWitness,
     "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
@@ -135,7 +139,7 @@ function harness(change, abortController, options = {}) {
     "@/lib/chatAdminPolicy.mjs": chatPolicy,
     "@/lib/chatAdminModelPolicy.mjs": modelPolicy,
     "@/lib/chatAdminKnowledge.mjs": knowledgePolicy,
-    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage++; calls.usageEvents.push(event); } },
+    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage++; if(!options.dropUsage)calls.usageEvents.push(event); } },
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: request => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
     "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: ++calls.rateLimitCalls===1 || change!=="quality-limit" }) },
     "@/lib/workspaceAuthorization": { WorkspaceAuthorizationError },
@@ -974,4 +978,43 @@ test("multiturn baseline PASS safety: direct minority disclosure stops before pr
 test("cached generation cannot be replayed under a newer Character revision",async()=>{
  const incoming="Hallo";const previous=[{character_revision:0,direction:"fan_inbound",content:incoming},...Array.from({length:3},()=>({character_revision:0,direction:"suggested_reply",content:"Ich habe ein Bild für dich."}))];
  const h=harness(undefined,undefined,{previous});const response=await h.route(h.request(1,"https://fanmind.invalid",incoming));assert.equal(response.status,409);assert.equal((await response.json()).error,"stale_generation_revision");assert.equal(h.calls.provider,0);assert.equal(h.calls.persistedGenerations.length,0);
+});
+
+test('actual reply responses bind every provider attempt to the exact independent usage event ID',async()=>{
+ for(const change of ['', 'quality-repair']){
+  const h=harness(change),request=h.request();
+  request.headers.set(usageWitness.CHAT_ADMIN_USAGE_HEADER,'ok:cd000000-1111-4111-8111-111111111111');
+  const response=await h.route(request);assert.equal(response.status,200);
+  const attempts=usageWitness.parseChatAdminUsageHeader(response.headers.get(usageWitness.CHAT_ADMIN_USAGE_HEADER));
+  assert.equal(attempts.length,h.calls.provider);
+  assert.deepEqual(attempts,h.calls.usageEvents.map(value=>({id:value.eventId,status:value.status})));
+  assert.deepEqual(attempts.map(value=>value.status),change?['error','ok']:['ok']);
+  assert.ok(attempts.every(value=>value.id!=='cd000000-1111-4111-8111-111111111111'),'client-supplied witness must never control server event IDs');
+ }
+});
+
+test('usage witness survives a best-effort logger that writes no rows; denied requests expose no witness',async()=>{
+ const h=harness('',undefined,{dropUsage:true}),response=await h.route(h.request());
+ assert.equal(response.status,200);assert.equal(h.calls.provider,1);assert.equal(h.calls.usageEvents.length,0);
+ assert.equal(usageWitness.parseChatAdminUsageHeader(response.headers.get(usageWitness.CHAT_ADMIN_USAGE_HEADER)).length,1);
+ const denied=harness(),denial=await denied.route(denied.request(1,'https://untrusted.invalid'));
+ assert.equal(denial.status,403);assert.equal(denial.headers.get(usageWitness.CHAT_ADMIN_USAGE_HEADER),null);
+ assert.equal(denied.calls.provider,0);assert.equal(denied.calls.usage,0);
+});
+
+test('usage storage preserves a server-generated event ID and leaves generic callers on database defaults',async()=>{
+ const storageCode=ts.transpileModule(readFileSync('src/lib/aiUsage.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const exported={},bodies=[];
+ const dependencies={
+  '@/lib/supabase/config':{getSupabaseHeaders:()=>({}),getSupabaseRestUrl:()=> 'https://database.invalid/ai_usage_events'},
+  './aiCostEngine.mjs':{calculateOpenAiProviderCostMicros:()=>({costMicros:0})},
+  './chatAdminModelPolicy.mjs':{getChatAdminModelProfile:()=>({model:'synthetic'})},
+  '@/lib/aiUsageProviderMetrics.mjs':{normalizeOpenAiResponseUsage:()=>null},
+ };
+ runInNewContext(storageCode,{exports:exported,process:{env:{SUPABASE_SERVICE_ROLE_KEY:'synthetic-no-network'}},require(name){assert.ok(Object.hasOwn(dependencies,name),name);return dependencies[name];},fetch:async(url,init)=>{assert.equal(url,'https://database.invalid/ai_usage_events');bodies.push(JSON.parse(init.body));return new Response(null,{status:201});}});
+ const input={workspaceId,userId,feature:'chat_admin_reply',model:'synthetic',inputChars:100,status:'ok'};
+ const eventId='ce000000-1111-4111-8111-111111111111';
+ await exported.recordAiUsageEvent({...input,eventId});assert.equal(bodies[0].id,eventId);
+ await exported.recordAiUsageEvent(input);assert.equal(Object.hasOwn(bodies[1],'id'),false);
+ await exported.recordAiUsageEvent({...input,eventId:"'; private"});assert.equal(bodies.length,2);
 });

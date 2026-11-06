@@ -6,6 +6,7 @@ export const CURRENT_FACTS_SQL_SHA256="a980ccc6268e4515f71d2be2ce486d6fd3f7a3874
 const root=new URL("../../",import.meta.url);
 const hash=bytes=>createHash("sha256").update(bytes).digest("hex");
 export const PROFILE_PINS=Object.freeze({
+ "src/lib/chatAdminUsageWitness.mjs":"a564b9a95390c1d433408170c531c9a8928522bdd57a91ca8c1659bd94b9c191",
  "tests/fixtures/chat-admin-current-facts.sql":"136ee144d4befd0bafffdff3223234c0f3500d25dc0fea762ecc78495d804b01",
  "supabase/controlled/chat_admin_current_facts.sql":CURRENT_FACTS_SQL_SHA256,
  "supabase/controlled/20260920230000_chat_admin_multi_character.sql":"9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b",
@@ -16,7 +17,7 @@ export const PROFILE_PINS=Object.freeze({
  "scripts/operations/chat-admin-fan-staging-runner.mjs":"78bcdb0752cb15c59188a0bd16c0ee4260bda53369149446c81278093a051038",
  "scripts/operations/chat-admin-structured-offers-staging-runner.mjs":"f1eb9c30e7c77da69c696ede51894b9de032ad06a54a9bac65f0db952f3b1029",
  "scripts/operations/chat-admin-customer-tier-staging-runner.mjs":"a72b5e5b5429cf144886585be0876a615cb9a1fd8ec969557fe572bc8c57cf42",
- "scripts/operations/chat-admin-manual-flow-staging.mjs":"24f171633a268216e62f0adeeaf3f78b72620a99aa366662e91923f38a801034",
+ "scripts/operations/chat-admin-manual-flow-staging.mjs":"cdcf0569c1e445e3145b57b81ce10da400122a992685caf7b3343eae29e2ffe6",
  "scripts/operations/database-authorization-contract.mjs":"b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de",
 });
 // Fixed reviewed reference; never learn/approve a catalog from a checked target.
