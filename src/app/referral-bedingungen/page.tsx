@@ -36,8 +36,8 @@ const sections: ReferralSection[] = [
     content: (
       <>
         <p>
-          Anbieter ist Bernd Guggenberger, Einzelunternehmen unter der
-          Geschäftsbezeichnung FanMind, Turnerstraße 18, 2345 Brunn am Gebirge,
+          Anbieterin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der
+          Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf,
           Österreich. Das Referral-Programm richtet sich ausschließlich an
           Unternehmer und geschäftliche FanMind-Kunden.
         </p>
