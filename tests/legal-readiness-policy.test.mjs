@@ -178,7 +178,7 @@ test("external legal evidence stays account-specific and fail-closed", async () 
   };
 
   assert.equal(parsed.schemaVersion, 1);
-  assert.equal(parsed.operator.legalName, "Bernd Guggenberger");
+  assert.equal(parsed.operator.legalName, "Brigitte Erika Guggenberger");
   assert.equal(parsed.operator.legalForm, "Einzelunternehmen");
   for (const key of [
     "vatId",
