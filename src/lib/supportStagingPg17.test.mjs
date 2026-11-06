@@ -2,10 +2,16 @@ import test from 'node:test';
 
 import {checkAuditSources,auditAcceptanceSql,AUDIT_ABSENCE_SQL} from '../../scripts/operations/support-repair-audit-staging.mjs';
 test('Support audit PG17: exact empty legacy upgrade, immutable verifier, synthetic rollback and retained schema',{skip:process.env.FANMIND_PG17_REQUIRE_SERVICE_CONTAINERS!=='true'},()=>{
- const db='support_audit_'+process.pid;let made=false;
+ const db='postgres';let isolated='';
+ const sql=query=>execFileSync('docker',['exec','-i',isolated,'psql','-X','-U','postgres','-d',db,'-v','ON_ERROR_STOP=1','-Atq'],{input:query,encoding:'utf8',timeout:90000,stdio:['pipe','pipe','pipe'],maxBuffer:4*1024*1024}).trim();
  const legacy="CREATE TABLE public.support_repair_audit(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),workspace_id uuid NOT NULL,actor_user_id uuid NOT NULL,platform text NOT NULL CHECK(platform IN('instagram','facebook','whatsapp')),action text NOT NULL,consent_required boolean NOT NULL,consent_given boolean NOT NULL DEFAULT false,status text NOT NULL CHECK(status IN('requested','denied','started','succeeded','failed','manual_action_required')),request_id uuid NOT NULL UNIQUE,created_at timestamptz NOT NULL DEFAULT now(),completed_at timestamptz,CONSTRAINT support_repair_audit_consent CHECK(NOT consent_required OR consent_given OR status IN('requested','denied')));CREATE INDEX support_repair_audit_workspace_created ON public.support_repair_audit(workspace_id,created_at DESC);ALTER TABLE public.support_repair_audit ENABLE ROW LEVEL SECURITY;GRANT ALL ON public.support_repair_audit TO postgres,service_role;REVOKE ALL ON public.support_repair_audit FROM anon,authenticated;";
  try{
-  fixture(db);made=true;
+  // Preserve current_database()='postgres'; never relax the real upgrade guard.
+  // Reuse the already-pulled parent image by immutable local content ID.
+  const image=execFileSync('docker',['inspect','--format','{{.Image}}',container],{encoding:'utf8'}).trim();assert.match(image,/^sha256:[a-f0-9]{64}$/u);
+  isolated=execFileSync('docker',['run','--detach','--rm','--network','none','-e','POSTGRES_HOST_AUTH_METHOD=trust',image],{encoding:'utf8'}).trim();assert.match(isolated,/^[a-f0-9]{64}$/u);
+  let ready=false;for(let attempt=0;attempt<100;attempt++){try{execFileSync('docker',['exec',isolated,'pg_isready','-U','postgres'],{stdio:'ignore'});ready=true;break;}catch{Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,100);}}assert.ok(ready,'isolated PostgreSQL did not become ready');
+  sql('CREATE ROLE anon NOLOGIN;CREATE ROLE authenticated NOLOGIN;CREATE ROLE service_role NOLOGIN BYPASSRLS;CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY,email_confirmed_at timestamptz,deleted_at timestamptz);CREATE TABLE public.workspaces(id uuid PRIMARY KEY);CREATE TABLE public.social_connections(id uuid PRIMARY KEY,workspace_id uuid,platform text,status text,last_messenger_sync_error text);GRANT USAGE ON SCHEMA public TO anon,authenticated,service_role;');
   sql("ALTER TABLE public.workspaces ADD COLUMN test_access_flags jsonb;ALTER TABLE auth.users ADD COLUMN email text;INSERT INTO public.workspaces VALUES('58a18c7e-4af0-459d-b44d-7d924ee7ffe9','{\"staging_synthetic_fixture\":true,\"workspace_processing_acceptance\":true}');INSERT INTO auth.users(id,email)VALUES('3abca6a2-c4f7-4ff7-b72d-915d19181ffc','support-synthetic@example.invalid');",db);
   for(const source of sourceManifest().sources)sql(readFileSync(source.path,'utf8'),db);
   sql("SELECT public.run_support_retention('de135103-2026-4000-8000-000000000001','"+'a'.repeat(40)+"',false);",db);
@@ -25,7 +31,7 @@ test('Support audit PG17: exact empty legacy upgrade, immutable verifier, synthe
   for(const marker of ['SUPPORT_REPAIR_AUDIT_NATIVE_ACCEPTANCE=PASS','SUPPORT_SYNTHETIC_FUNCTIONS=PASS','SUPPORT_AUDIT_TRANSACTION=ROLLED_BACK'])assert.ok(result.includes(marker),marker);
   assert.deepEqual(JSON.parse(sql(AUDIT_ABSENCE_SQL,db)),{audit:0,owner:0,threads:0,connection:0,cases:0});
   assert.match(sql(sources[paths[1]],db),/SCHEMA_STATE=INSTALLED/u);
- }finally{if(made)sql('DROP DATABASE '+db+' WITH(FORCE);','postgres');}
+ }finally{if(/^[a-f0-9]{64}$/u.test(isolated))execFileSync('docker',['rm','--force',isolated],{stdio:'ignore'});}
 });
 
 import assert from 'node:assert/strict';
