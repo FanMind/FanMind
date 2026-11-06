@@ -1,15 +1,16 @@
 # FanMind Legal Completion Status
 
-Stand: Juli 2026
+Stand: 6. November 2026
 
 Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch durch Bernd, Steuerberatung oder Rechtsberatung verbindlich freigegeben werden müssen. Es ist keine Rechtsberatung und ersetzt keine unterzeichneten Vertragsunterlagen.
 
 ## Öffentlich bestätigt
 
 - Marke/Produkt: FanMind
-- Betreiber und Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger
-- Anschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
+- Betreiberin und Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
+- GISA-Zahl: 40314440 (amtlicher Auszug vom 02.11.2026)
 - Allgemeine Kontaktadresse: `fanmind@fanmind.ch`
 - Website: `https://fanmind.ch`
 - Produktgrenze: keine automatische Nachrichtenversendung; der Mensch prüft und sendet final selbst
