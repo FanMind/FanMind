@@ -7,6 +7,7 @@ export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "website
 export type AiUsageStatus = "ok" | "error" | "skipped";
 
 export type RecordAiUsageEventInput = {
+  eventId?: string;
   workspaceId: string;
   userId?: string | null;
   contactId?: string | null;
@@ -49,6 +50,7 @@ export function estimateAiCostCents(inputTokens: number, outputTokens: number, m
 export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promise<void> {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) return;
+  if (input.eventId !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(input.eventId)) return;
 
   const inputChars = Math.max(0, Math.round(input.inputChars));
   const outputChars = Math.max(0, Math.round(input.outputChars ?? 0));
@@ -68,6 +70,7 @@ export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promis
     : null;
 
   const body = {
+    ...(input.eventId === undefined ? {} : { id: input.eventId }),
     workspace_id: input.workspaceId,
     user_id: input.userId ?? null,
     contact_id: input.contactId ?? null,

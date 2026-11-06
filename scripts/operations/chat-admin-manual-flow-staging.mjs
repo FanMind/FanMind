@@ -14,6 +14,7 @@ import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_W
 import { POSTFLIGHT_SQL as TIER_POSTFLIGHT_SQL, SQL_PATH as TIER_SQL_PATH, SQL_SHA256 as TIER_SQL_SHA256 } from "./chat-admin-customer-tier-staging-runner.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, formatBrowserDiagnostic, requireSuccessfulProbe } from "../../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture-identity.mjs";
+import { validateChatAdminUsageWitness } from "../../src/lib/chatAdminUsageWitness.mjs";
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
 export const MANUAL_FLOW_TASK_ID = "FM-ADMINCHAT-STAGING-HARNESS-20261011-01";
@@ -22,7 +23,11 @@ import { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../..
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
 const DATA_ID_KEYS = ["FAN_A_ID","FAN_B_ID","FAN_A_CREATION_ID","FAN_B_CREATION_ID","FOREIGN_CHARACTER_ID"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
-export const MANUAL_FLOW_EXPECTED_COUNTS = Object.freeze({characters:3,fans:2,conversations:2,messages:41,usage_ok:10,usage_error:2});
+export const MANUAL_FLOW_EXPECTED_COUNTS = Object.freeze({characters:3,fans:2,conversations:2,messages:41,usage_ok:10});
+export function expectedManualFlowCounts(witness) {
+  const attempts=validateChatAdminUsageWitness(witness,true);
+  return {...MANUAL_FLOW_EXPECTED_COUNTS,usage_error:attempts.filter(value=>value.status==='error').length};
+}
 // Only these bounded numeric fields may cross the private psql boundary.
 export function manualFlowCountDiagnostics(stdout = '', stderr = '') {
   const lines = `${stdout}\n${stderr}`.split(/\r?\n/u);
@@ -33,10 +38,11 @@ export function manualFlowCountDiagnostics(stdout = '', stderr = '') {
     if (index < 0 || line.length > 1024) continue;
     try {
       const value = JSON.parse(line.slice(index + prefix.length));
-      const keys = Object.keys(MANUAL_FLOW_EXPECTED_COUNTS);
-      if (!value || Array.isArray(value) || Object.keys(value).length !== keys.length ||
-          !keys.every(key => Object.hasOwn(value,key) && Number.isSafeInteger(value[key]) && value[key] >= 0 && value[key] <= 1000000)) continue;
-      found.push(`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:MANUAL_FLOW_EXPECTED_COUNTS,actual:Object.fromEntries(keys.map(key=>[key,value[key]]))})}`);
+      const keys = [...Object.keys(MANUAL_FLOW_EXPECTED_COUNTS),'usage_error'];
+      const validCounts = counts => counts && !Array.isArray(counts) && Object.keys(counts).length===keys.length && keys.every(key=>Object.hasOwn(counts,key)&&Number.isSafeInteger(counts[key])&&counts[key]>=0&&counts[key]<=1000000);
+      if (!value || Array.isArray(value) || Object.keys(value).length!==2 || !validCounts(value.expected) || !validCounts(value.actual) ||
+          Object.entries(MANUAL_FLOW_EXPECTED_COUNTS).some(([key,count])=>value.expected[key]!==count) || value.expected.usage_error>10) continue;
+      found.push(`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:Object.fromEntries(keys.map(key=>[key,value.expected[key]])),actual:Object.fromEntries(keys.map(key=>[key,value.actual[key]]))})}`);
     } catch { /* Never expose raw SQL, exception details, identifiers or text. */ }
   }
   return [...new Set(found)];
@@ -224,16 +230,20 @@ select 'CHAT_ADMIN_MANUAL_CLEANUP=PASS';`;
 do $empty$ begin if ${residue} then raise exception 'cleanup_incomplete'; end if; end $empty$;
 rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
+  const attempts=validateChatAdminUsageWitness(receipt.usageWitness,true);
+  const expected=expectedManualFlowCounts(receipt.usageWitness);
+  const witnessRows=attempts.map(value=>`(${literal(value.id)}::uuid,${literal(value.status)})`).join(',');
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  raise notice 'CHAT_ADMIN_MANUAL_COUNTS=%',jsonb_build_object(
+  raise notice 'CHAT_ADMIN_MANUAL_COUNTS=%',jsonb_build_object('expected',${literal(JSON.stringify(expected))}::jsonb,'actual',jsonb_build_object(
     'characters',(select count(*) from public.chat_characters where ${ownedCharacters}),
     'fans',(select count(*) from public.chat_character_fans where ${ownedFans}),
     'conversations',(select count(*) from public.chat_character_conversations where ${ownedConversations}),
     'messages',(select count(*) from public.chat_character_messages where ${ownedMessages}),
     'usage_ok',(select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz),
-    'usage_error',(select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz));
-  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>41 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>10 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>2 then raise exception 'runtime_effect_missing'; end if;
+    'usage_error',(select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)));
+  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>41 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>10 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>${expected.usage_error} then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz)<>${attempts.length} or exists(select 1 from (values ${witnessRows}) expected_attempt(id,status) where not exists(select 1 from public.ai_usage_events actual_attempt where actual_attempt.id=expected_attempt.id and actual_attempt.status=expected_attempt.status and ${usage} and created_at>=${started}::timestamptz)) then raise exception 'runtime_usage_witness_mismatch'; end if;
   if not exists(select 1 from public.chat_character_fans where id=${fanA}::uuid and customer_tier='blue') or not exists(select 1 from public.chat_character_fans where id=${fanB}::uuid and customer_tier='green') then raise exception 'customer_tier_persistence_missing'; end if;
   if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid) and jsonb_array_length(sales_playbook->'offers')=4)<>2 or not exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages} and confirmed.direction='confirmed_reply' and exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) then raise exception 'persisted_offer_or_confirmation_missing'; end if;
 end $guard$;
@@ -486,7 +496,11 @@ async function main() {
     run:async()=>{
       receipt.inFlightUncertain=true;updateReceipt(env,receipt);
       runManualBrowser({...env,...Object.fromEntries(Object.entries(receipt.dataIds).map(([key,value])=>[`FANMIND_CHAT_ADMIN_RUN_${key}`,value]))},'acceptance');
-      await runManualFlowPostBrowserPhase('receipt',async()=>{receipt.inFlightUncertain=false;updateReceipt(env,receipt);});
+      await runManualFlowPostBrowserPhase('receipt',async()=>{
+        receipt.inFlightUncertain=false;updateReceipt(env,receipt);
+        receipt.usageWitness=readBrowserDiagnostic(env,'acceptance').usageWitness;
+        validateChatAdminUsageWitness(receipt.usageWitness,true);updateReceipt(env,receipt);
+      });
     },
     verify:async()=>{await runManualFlowPostBrowserPhase('release',()=>verifyManualFlowRelease(env));await runManualFlowPostBrowserPhase('persistence',async()=>sqlMode('verify',env,receipt));},
     cleanup:async()=>cleanup(env),

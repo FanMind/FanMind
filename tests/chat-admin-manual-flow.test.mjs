@@ -23,6 +23,17 @@ import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagno
 import { canonicalChatAdminFixtureId } from "../e2e-chatadmin-staging/fixture-identity.mjs";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "../e2e-chatadmin-staging/network-boundary.mjs";
 import { assertReplyPriceEvidence, monetaryEvidence } from "../e2e-chatadmin-staging/offer-evidence.mjs";
+import { parseChatAdminUsageHeader, validateChatAdminUsageWitness, CHAT_ADMIN_USAGE_HEADER } from "../src/lib/chatAdminUsageWitness.mjs";
+import { expectedManualFlowCounts } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { recordBrowserUsageWitness } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
+
+function witnessFixture(errors=0) {
+  const uuid=(prefix,index)=>`${(prefix+index).toString(16)}-1111-4111-8111-111111111111`;
+  return Array.from({length:10},(_,index)=>({generationId:uuid(0xca000000,index),attempts:[
+    ...(index<errors?[{id:uuid(0xcb000000,index),status:'error'}]:[]),
+    {id:uuid(0xcc000000,index),status:'ok'},
+  ]}));
+}
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
 const keys = ["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
@@ -332,7 +343,7 @@ test("foreign rows are preserved while exact fixture collisions and interrupted 
 });
 
 test("foreign denial uses an existing character with exact second-workspace cleanup ownership", () => {
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32))};
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32)),usageWitness:witnessFixture()};
   const foreignId=receipt.dataIds.FOREIGN_CHARACTER_ID;
   const second=env.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID;
   const foreignOwner=env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID;
@@ -506,13 +517,46 @@ test('release transport enforces a total abort deadline and rejects truncated or
 });
 
 test('SQL diagnostics admit only fixed bounded numeric counts, including on verifier failure',async()=>{
- const {manualFlowCountDiagnostics,MANUAL_FLOW_EXPECTED_COUNTS}=await import('../scripts/operations/chat-admin-manual-flow-staging.mjs');
+ const {manualFlowCountDiagnostics}=await import('../scripts/operations/chat-admin-manual-flow-staging.mjs');
  const actual={characters:3,fans:2,conversations:2,messages:41,usage_ok:10,usage_error:0};
- const lines=manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(actual)}\nERROR: private credentials and SQL must never escape`);
- assert.deepEqual(lines,[`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:MANUAL_FLOW_EXPECTED_COUNTS,actual})}`]);
- assert.equal(MANUAL_FLOW_EXPECTED_COUNTS.usage_error,2,'diagnostics must not silently change the existing assertion');
- for(const invalid of [{...actual,secret:'private'},{...actual,messages:'private'},{...actual,messages:-1},{...actual,messages:1000001},{...actual,messages:1.1},null,[]])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(invalid)}`),[]);
+ const expected=expectedManualFlowCounts(witnessFixture(2));
+ const value={expected,actual};
+ const lines=manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(value)}\nERROR: private credentials and SQL must never escape`);
+ assert.deepEqual(lines,[`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(value)}`]);
+ for(const invalid of [{...actual,secret:'private'},{...actual,messages:'private'},{...actual,messages:-1},{...actual,messages:1000001},{...actual,messages:1.1},null,[]])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected,actual:invalid})}`),[]);
+ for(const invalid of [{...expected,usage_error:11},{...expected,messages:40},{...expected,secret:'private'}])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:invalid,actual})}`),[]);
  assert.deepEqual(manualFlowCountDiagnostics('', 'ERROR: private details\nNOTICE: CHAT_ADMIN_MANUAL_COUNTS=invalid-json'),[]);
+});
+
+test('usage witness requires ten unique generations and exact independent event IDs',()=>{
+ for(const errors of [0,2,10]){
+  const witness=witnessFixture(errors),attempts=validateChatAdminUsageWitness(witness,true);
+  assert.equal(attempts.length,10+errors);assert.equal(expectedManualFlowCounts(witness).usage_error,errors);
+  const receipt={marker:'f'.repeat(32),startedAt:'2026-11-06T10:00:00.000Z',dataIds:createManualFlowReceiptDataIds('f'.repeat(32)),usageWitness:witness};
+  const sql=buildManualFlowSql('verify',env,receipt);
+  assert.match(sql,/runtime_usage_witness_mismatch/);assert.match(sql,/actual_attempt\.id=expected_attempt\.id/);assert.match(sql,/actual_attempt\.status=expected_attempt\.status/);
+  for(const attempt of attempts)assert.ok(sql.includes(`'${attempt.id}'::uuid,'${attempt.status}'`));
+ }
+ const valid=witnessFixture(),duplicateGeneration=structuredClone(valid),duplicateEvent=structuredClone(valid);
+ duplicateGeneration[1].generationId=valid[0].generationId;
+ duplicateEvent[1].attempts[0].id=valid[0].attempts[0].id;
+ for(const invalid of [undefined,[],valid.slice(0,9),[...valid,valid[0]],duplicateGeneration,duplicateEvent])assert.throws(()=>validateChatAdminUsageWitness(invalid,true),/usage_witness/);
+ for(const header of [undefined,'','ok',`error:${valid[0].attempts[0].id}`,`ok:${valid[0].attempts[0].id},ok:${valid[1].attempts[0].id}`,`ok:${valid[0].attempts[0].id}\nprivate`,"ok:'; delete"] )assert.throws(()=>parseChatAdminUsageHeader(header),/usage_witness/);
+});
+
+test('browser witness is private, bound to the run and never appears in diagnostic logs',()=>{
+ const root=mkdtempSync(join(tmpdir(),'chatadmin-witness-'));
+ const bound={...env,RUNNER_TEMP:root,GITHUB_RUN_ID:'12345',GITHUB_RUN_ATTEMPT:'1'};
+ try{
+  initializeBrowserDiagnostic(bound,'acceptance');
+  const row=witnessFixture(1)[0],header=row.attempts.map(value=>`${value.status}:${value.id}`).join(',');
+  recordBrowserUsageWitness(bound,row.generationId,header);
+  assert.deepEqual(readBrowserDiagnostic(bound,'acceptance').usageWitness,[row]);
+  assert.throws(()=>recordBrowserUsageWitness(bound,row.generationId,header),/usage_witness/);
+  assert.throws(()=>recordBrowserUsageWitness({...bound,GITHUB_RUN_ATTEMPT:'2'},witnessFixture()[1].generationId,header),/browser_diagnostic/);
+  assert.ok(formatBrowserDiagnostic(bound,'acceptance').every(line=>!line.includes(row.generationId)&&!line.includes(row.attempts[0].id)));
+  assert.equal(CHAT_ADMIN_USAGE_HEADER,'x-fanmind-chatadmin-usage');
+ }finally{rmSync(root,{recursive:true,force:true});}
 });
 
 test('ten successful generations do not imply exactly two rejected provider attempts',async()=>{
