@@ -17,8 +17,8 @@ Verantwortlichen verlangt.
 
 ## 1. Rollen und Parteien
 
-- **Auftragsverarbeiter:** Bernd Guggenberger, Einzelunternehmen unter der
-  Geschäftsbezeichnung FanMind, Turnerstraße 18, 2345 Brunn am Gebirge,
+- **Auftragsverarbeiterin:** Brigitte Erika Guggenberger, Einzelunternehmen unter der
+  Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf,
   Österreich.
 - **Verantwortlicher:** der im jeweiligen FanMind-Vertrag ausgewiesene
   B2B-Kunde beziehungsweise die dort ausgewiesene Organisation.
@@ -213,7 +213,7 @@ Rechnungsdarstellung und steuerliche Aufbewahrungsfristen. Die
 unterzeichnungsfähige AVV sollte zusätzlich durch Rechts- beziehungsweise
 qualifizierte Datenschutzberatung aus dieser Arbeitsfassung erstellt werden.
 
-Nach externer Freigabe unterschreibt oder akzeptiert Bernd Guggenberger für
+Nach externer Freigabe unterschreibt oder akzeptiert Brigitte Erika Guggenberger (oder eine nachweislich bevollmächtigte Person) für
 FanMind. Der jeweilige B2B-Kunde unterschreibt oder akzeptiert für seine
 Organisation. Eine Steuerberaterin oder ein Steuerberater ist nicht allein
 durch die fachliche Prüfung Vertragspartei der Kunden-AVV.
