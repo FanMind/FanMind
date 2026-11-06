@@ -48,3 +48,11 @@ then rerun only the necessary approved acceptance. No Production, secrets,
 provider configuration, persistent permission change or generic migration push.
 Retain previous valid ChatAdmin/Website evidence when exact application source,
 schema/config and target bindings remain unchanged.
+
+Initial native CI rejected the fixture database name with audit_identity_rejected.
+The original database identity guard is retained. The rehearsal now creates its
+own network-none PostgreSQL container using the already pulled immutable parent
+image ID, with database postgres, no published port and no real credentials. It
+waits for the final TCP listener, excluding the temporary bootstrap server, and
+destroys only that exact synthetic container in finally. Failed CI remains FAIL;
+the corrected head must pass the entire native proof before any target apply.
