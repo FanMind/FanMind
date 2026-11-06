@@ -804,7 +804,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   // /proc, just as the versioned runner fixture below does.
   await copyFile(realpathSync(process.execPath), candidate);
   await chmod(candidate, 0o700);
-  const child = spawn(candidate, ["-e", 'process.stdout.write("SYNTHETIC_IMAGE_READY\\n"); setInterval(() => {}, 1000);'], {
+  const child = spawn(candidate, ["-e", 'process.stdout.write("SYNTHETIC_IMAGE_READY"); setInterval(() => {}, 1000);'], {
     stdio: ["ignore", "pipe", "pipe"],
   });
   t.after(async () => {
@@ -820,7 +820,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
     child.once("exit", () => { clearTimeout(timer); reject(new Error("synthetic image stopped before readiness")); });
     child.stdout.on("data", data => {
       output += data.toString("utf8");
-      if (output === "SYNTHETIC_IMAGE_READY\\n") { clearTimeout(timer); resolveReady(); }
+      if (output === "SYNTHETIC_IMAGE_READY") { clearTimeout(timer); resolveReady(); }
       else if (output.length > 128) { clearTimeout(timer); reject(new Error("synthetic image output invalid")); }
     });
   });
