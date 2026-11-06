@@ -29,10 +29,10 @@ const sections: PrivacySection[] = [
         <address className={styles.addressBlock}>
           <strong>FanMind</strong>
           <span>
-            Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind
+            Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind
           </span>
-          <span>Turnerstraße 18</span>
-          <span>2345 Brunn am Gebirge</span>
+          <span>Bahnstraße 11, Stiege 2, Tür 1</span>
+          <span>2351 Wiener Neudorf</span>
           <span>Österreich</span>
           <span>
             E-Mail: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
@@ -42,7 +42,7 @@ const sections: PrivacySection[] = [
           </span>
         </address>
         <p>
-          Inhaber und vertretungsberechtigt ist Bernd Guggenberger. Die
+          Inhaberin und rechtliche Betreiberin ist Brigitte Erika Guggenberger. Operativer Ansprechpartner ist Bernd Guggenberger. Die
           vollständigen Anbieter- und Betreiberangaben ergeben sich ergänzend
           aus dem <Link href="/impressum">Impressum</Link>.
         </p>
