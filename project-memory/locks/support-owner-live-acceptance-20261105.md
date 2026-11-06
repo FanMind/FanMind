@@ -1,9 +1,0 @@
-# Support Owner live acceptance — 5 November 2026
-
-Risk R4. Holder interactive root. Base bfc3a2a2840c13532c6084158968038d79ac8dc1. Scope Issue #1350 only; no duplicate schema installation or application deployment.
-
-Owner explicitly requests enabling live Support so he can perform the remaining acceptance himself. New manual action records PENDING_OWNER rather than inventing completed privacy/runtime evidence. Global Support persistence is enabled by the same existing flag. Existing consent/tenant controls and independent provider/repair flags remain unchanged. Exact main/source, approved Owner, Production identity, full schema/roles, matching pinned cleanup schema, fresh receipt, actual schedules, exact live release, PM2 and eight healthy components remain required. Separate deactivation preserves cleanup/data and allows recovery without a healthy retention prerequisite.
-
-No registered Creator/ChatAdmin/AI/Billing contract implementation changes; disclosure/delete acceptance remains pending, not VERIFIED. No changes to God Mode decisions or evidence attestations. Local negative/authorization/rollback tests 4/4 PASS; required exact-head CI remains necessary. Do not merge around protected repository checks. CI executes the new tests in the existing Operations gate. No credentials, customer fixtures, provider calls, Billing or DB migration.
-
-The live commit and cleanup source are separate reviewed ancestors of controller main; git compares exact SQL/reference (plus live PM2 contract), preventing schema drift while avoiding fabricated receipts for an unrelated app-only release. The UTC daily receipt deduplication is preserved. Existing normal completed-acceptance activation remains unchanged. Rollback restores prior environment bytes and effective flag on failure. Record actual workflow outcome and independently verify the enabled UI before claiming live activation.
