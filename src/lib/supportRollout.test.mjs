@@ -1,4 +1,63 @@
 import test from 'node:test';
+
+import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {AUDIT_CONFIRMATIONS,AUDIT_SOURCES,checkAuditSources,evaluateAuditEnvironment,auditState,auditAcceptanceSql,legacyAuditPreflightSql,runAudit} from '../../scripts/operations/support-repair-audit-staging.mjs';
+test('audit controlled sources retain the exact reviewed upgrade and rollback-only acceptance',()=>{
+ const sources=checkAuditSources();assert.equal(Object.keys(sources).length,4);
+ assert.equal(AUDIT_SOURCES['docs/operations/sql/support_repair_audit_staging_empty_upgrade.sql'],'178bb5017ac25114ded84213f37f92bda224193bbd9ab0aa5b2812fec6c9faf1');
+ const sql=auditAcceptanceSql(sources);
+ assert.doesNotMatch(sql,/\bcommit\s*;/iu);assert.match(sql,/SHARE ROW EXCLUSIVE/u);
+ assert.match(sql,/audit_acceptance_requires_empty/u);assert.match(sql,/SUPPORT_AUDIT_TRANSACTION=ROLLED_BACK/u);
+ assert.match(legacyAuditPreflightSql(sources),/confrelid/u);
+});
+test('audit environment refuses wrong target, unchecked source, schedule, TLS and ambiguous action',()=>{
+ for(const mode of Object.keys(AUDIT_CONFIRMATIONS)){
+  const valid={...env(mode==='audit-verify'?'verify':'apply'),FANMIND_SUPPORT_CONFIRM:AUDIT_CONFIRMATIONS[mode]};
+  assert.equal(evaluateAuditEnvironment(valid,mode,sha).ok,true);
+  for(const bad of [{GITHUB_REF:'refs/heads/feature'},{GITHUB_EVENT_NAME:'schedule'},{FANMIND_TARGET_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz'},{PGSSLMODE:'require'},{PGPASSWORD:'secret'},{FANMIND_SUPPORT_CONFIRM:'apply-support-centre-schema'},{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'}])
+   assert.equal(evaluateAuditEnvironment({...valid,...bad},mode,sha).ok,false);
+ }
+ assert.throws(()=>auditState('SUPPORT_REPAIR_AUDIT_SCHEMA_STATE=INSTALLED\n'),/classifier_output/u);
+ assert.equal(auditState('SUPPORT_REPAIR_AUDIT_SCHEMA_STATE=INSTALLED SUPPORT_REPAIR_AUDIT_SCHEMA_DETAILS={}'),'INSTALLED');
+});
+test('audit executor rejects drift/data before DDL, skips installed state and verifies rollback cleanup',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'fanmind-audit-policy-'));const pass=join(dir,'pgpass');
+ writeFileSync(pass,'localhost:5432:postgres:postgres:synthetic\n',{mode:0o600});
+ const state=value=>'SUPPORT_REPAIR_AUDIT_SCHEMA_STATE='+value+' SUPPORT_REPAIR_AUDIT_SCHEMA_DETAILS={}';
+ const absence=JSON.stringify({audit:0,owner:0,threads:0,connection:0,cases:0});
+ async function execute(mode,{initial='INSTALLED',legacy={exact:true,empty:true,dependencies:true},residue=absence,markers=true}={}){
+  const calls=[];let classifiers=0;
+  const configuration={...env(mode==='audit-verify'?'verify':'apply'),FANMIND_SUPPORT_CONFIRM:AUDIT_CONFIRMATIONS[mode],PGPASSFILE:pass};
+  const promise=runAudit(mode,configuration,{
+   fetch:async url=>url.endsWith('/api/version')?({status:200,text:async()=>JSON.stringify({application:'fanmind',runtimeEnvironment:'staging',releaseCommit:sha})}):({status:404,headers:{get:()=>'no-store'},text:async()=>JSON.stringify({error:url.endsWith('repair-request')?'not_available':'support_unavailable'})}),
+   verifyCore:()=>{},
+   spawn:(command,args,options)=>{
+    if(command==='git')return {status:0,stdout:sha+'\n'};
+    calls.push(options.input);
+    let out='';
+    if(options.input.includes('SUPPORT_REPAIR_AUDIT_SCHEMA_DETAILS'))out=state(classifiers++===0?initial:'INSTALLED');
+    else if(options.input.startsWith('BEGIN READ ONLY;SELECT jsonb_build_object(\'exact\''))out=JSON.stringify(legacy);
+    else if(options.input.includes('SUPPORT_AUDIT_TRANSACTION=ROLLED_BACK'))out=markers?'SUPPORT_REPAIR_AUDIT_NATIVE_ACCEPTANCE=PASS\nSUPPORT_SYNTHETIC_FUNCTIONS=PASS\nSUPPORT_AUDIT_BINDING=PASS\nSUPPORT_AUDIT_TRANSACTION=ROLLED_BACK':'';
+    else if(options.input.includes("'threads'"))out=residue;
+    return {status:0,stdout:out};
+   },
+  });return {promise,calls};
+ }
+ try{
+  for(const legacy of [{exact:false,empty:true,dependencies:true},{exact:true,empty:false,dependencies:true},{exact:true,empty:true,dependencies:false}]){
+   const run=await execute('audit-upgrade',{initial:'DRIFT',legacy});
+   await assert.rejects(run.promise,/legacy_drift_or_data/u);assert.equal(run.calls.some(q=>q.includes('ALTER TABLE')),false);
+  }
+  const installed=await execute('audit-upgrade');await installed.promise;assert.equal(installed.calls.some(q=>q.includes('ALTER TABLE')),false);
+  const upgrade=await execute('audit-upgrade',{initial:'DRIFT'});await upgrade.promise;assert.equal(upgrade.calls.filter(q=>q.includes('ALTER TABLE')).length,1);
+  const accepted=await execute('audit-acceptance');await accepted.promise;
+  const missing=await execute('audit-acceptance',{markers:false});await assert.rejects(missing.promise,/acceptance_marker/u);
+  const dirty=await execute('audit-acceptance',{residue:JSON.stringify({audit:1,owner:0,threads:0,connection:0,cases:0})});await assert.rejects(dirty.promise,/cleanup/u);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {sourceManifest,classify,catalogueSql,canonical} from '../../scripts/operations/support-centre-schema.mjs';
