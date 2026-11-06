@@ -65,12 +65,13 @@ wenn die fachliche Prüfung tatsächlich alle betreffenden Aussagen abdeckt.
 
 ## 1. Betreiber-, UID- und Registerangaben
 
-Bereits durch Bernd für den Projektstand bestätigt:
+Gemäß GISA-Auszug vom 02.11.2026 und Owner-Bestätigung vom 06.11.2026:
 
-- Bernd Guggenberger;
+- Brigitte Erika Guggenberger als Gewerbeinhaberin und rechtliche Betreiberin;
 - Einzelunternehmen unter der Geschäftsbezeichnung FanMind;
-- Turnerstraße 18, 2345 Brunn am Gebirge, Österreich;
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger;
+- Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich;
+- GISA-Zahl 40314440, Gewerbebeginn 29.10.2026;
+- Bernd Guggenberger als operativer Ansprechpartner (keine hiermit nachgewiesene rechtsgeschäftliche Vollmacht);
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
 
 Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
@@ -80,7 +81,7 @@ Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
 | UID | nicht mitgeteilt | UID-Bescheid/FinanzOnline-Bestätigung oder fachliche Bestätigung „nicht vorhanden/nicht anwendbar“ |
 | Firmenbuchnummer | nicht mitgeteilt | aktueller Firmenbuchauszug oder Bestätigung „nicht eingetragen“ |
 | Firmenbuchgericht | nicht mitgeteilt | Firmenbuchauszug oder Bestätigung „nicht anwendbar“ |
-| GISA-Zahl | nicht mitgeteilt | GISA-Auszug oder fachliche Bestätigung, ob und wie sie anzugeben ist |
+| GISA-Zahl | 40314440 laut amtlichem Auszug vom 02.11.2026 | Privaten GISA-Auszug als Beleg hashen und das maschinenlesbare Freigaberegister erst danach auf `confirmed` stellen |
 | Stripe Tax / Nettopreise | technisch auf 20 % für steuerpflichtige Österreich-Umsätze entschieden; externe Prüfung offen | schriftliche Steuerfreigabe für Checkout, internationale Behandlung, Angebot, Rechnung und Rechnungshinweis |
 
 Der Zusatz `e.U.` darf nur verwendet werden, wenn die Eintragung samt
