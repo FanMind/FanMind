@@ -363,3 +363,53 @@ fingerprint, exclusive lock, empty-table guard and full postflight. A populated
 legacy table requires a separate identity-reconciliation design, never fabricated
 connection identifiers or a destructive reset. No successful target apply is
 claimed here.
+
+## Authorized empty-legacy continuation, 2026-11-06
+
+The current direct Owner instruction explicitly authorizes this exact isolated
+Staging schema upgrade and synthetic rollback acceptance. It supersedes the
+preparation-only authorization statements above for these named actions only.
+No Production, secrets, provider configuration, real customer repair or feature
+activation is authorized or performed.
+
+Reuse the existing `.github/workflows/website-chat-retention-staging.yml`,
+component `support`, protected environment `staging`, existing credentials/CA
+and `fanmind-website-chat-staging-write` concurrency. Do not use generic db push.
+The new source-only controller is `scripts/operations/support-repair-audit-staging.mjs`.
+
+| action | confirmation | Effect |
+| --- | --- | --- |
+| audit-verify | verify-support-repair-audit | read-only full core and audit contract |
+| audit-upgrade | upgrade-empty-support-repair-audit | exact legacy fingerprint plus empty/no-inbound-FK guard, original transactional upgrade, independent readback |
+| audit-acceptance | run-support-repair-audit-acceptance | installed schema required, synthetic rollback-only database functions and unauthenticated HTTP denials |
+
+Every action requires the exact then-current reviewed Main checkout and the same
+actually deployed Staging version before/after. Existing target/DB identity/TLS,
+private passfile, Production-exclusion and write acknowledgements are reused.
+Scheduled dispatch is rejected for audit actions. An INSTALLED upgrade is a no-op;
+ABSENT, unexpected DRIFT, any audit row or inbound dependency stops it. Preserve
+the original SQL bytes and SHA256 pins:
+upgrade178bb5017ac25114ded84213f37f92bda224193bbd9ab0aa5b2812fec6c9faf1,
+verify87918c38dd8ca31ef72c982d4f01ea17a0dd07ca897e18bfd21d081af3219168,
+acceptance1c6fe0c787c2b95c8f1f466b88209370d818b8720ca6654ad47e8fc3bdebbb75.
+
+The acceptance takes both existing database advisory locks, rejects nonempty
+audit state and uses the preexisting marked synthetic workspace/actor only after
+checking both fixture flags and a synthetic email. A temporary platform Owner
+binding and token-free expired connection exist only within the rolled-back
+transaction. No persistent Owner or permission grant occurs. It exercises actual
+installed report/decision/check/finish/history, Owner inbox, chat replay/isolation/
+pagination, consent snapshot, own erasure and retention-health functions. The
+existing audit SQL remains unchanged; additional exact-tuple completion queries
+mirror the application writer and verify wrong-workspace/connection rejection,
+same-terminal retry and conflicting-terminal denial. Audit connection_id is
+intentionally a non-null UUID rather than a foreign key in the reviewed Main
+contract; do not invent a different constraint.
+
+ROLLBACK applies to synthetic fixtures, never to the installed audit schema.
+An independent absence query and immutable classifier must prove zero fixtures
+and INSTALLED afterward. Chat turn sequence values may advance through rolled-back
+inserts; never reset a shared sequence to conceal this normal PostgreSQL behavior.
+The no-provider evidence is separate from external repair success. HTTP negatives
+do not claim authenticated browser-positive acceptance; use retained exact-code
+browser/route tests plus the actual target database proof within this scope.
