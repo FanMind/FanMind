@@ -1,6 +1,6 @@
 # FanMind Register für externe Rechts-, Steuer- und Anbieterfreigaben
 
-Stand: 30. Juli 2026
+Stand: 6. November 2026
 
 Dieses Register macht die externen Route-23-Abschlussnachweise prüfbar. Es
 ersetzt weder eine Rechts- oder Steuerberatung noch die Vertragsannahme in
@@ -65,12 +65,13 @@ wenn die fachliche Prüfung tatsächlich alle betreffenden Aussagen abdeckt.
 
 ## 1. Betreiber-, UID- und Registerangaben
 
-Bereits durch Bernd für den Projektstand bestätigt:
+Gemäß GISA-Auszug vom 02.11.2026 und Owner-Bestätigung vom 06.11.2026:
 
-- Bernd Guggenberger;
+- Brigitte Erika Guggenberger als Gewerbeinhaberin und rechtliche Betreiberin;
 - Einzelunternehmen unter der Geschäftsbezeichnung FanMind;
-- Turnerstraße 18, 2345 Brunn am Gebirge, Österreich;
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger;
+- Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich;
+- GISA-Zahl 40314440, Gewerbebeginn 29.10.2026;
+- Bernd Guggenberger als operativer Ansprechpartner (keine hiermit nachgewiesene rechtsgeschäftliche Vollmacht);
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
 
 Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
@@ -80,7 +81,7 @@ Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
 | UID | nicht mitgeteilt | UID-Bescheid/FinanzOnline-Bestätigung oder fachliche Bestätigung „nicht vorhanden/nicht anwendbar“ |
 | Firmenbuchnummer | nicht mitgeteilt | aktueller Firmenbuchauszug oder Bestätigung „nicht eingetragen“ |
 | Firmenbuchgericht | nicht mitgeteilt | Firmenbuchauszug oder Bestätigung „nicht anwendbar“ |
-| GISA-Zahl | nicht mitgeteilt | GISA-Auszug oder fachliche Bestätigung, ob und wie sie anzugeben ist |
+| GISA-Zahl | 40314440 laut amtlichem Auszug vom 02.11.2026 | Original-PDF privat geprüft und gehasht; `operator.gisaNumber` am 06.11.2026 mit Wert und SHA-256-Beleg bestätigt |
 | Stripe Tax / Nettopreise | technisch auf 20 % für steuerpflichtige Österreich-Umsätze entschieden; externe Prüfung offen | schriftliche Steuerfreigabe für Checkout, internationale Behandlung, Angebot, Rechnung und Rechnungshinweis |
 
 Der Zusatz `e.U.` darf nur verwendet werden, wenn die Eintragung samt
@@ -122,7 +123,7 @@ normalerweise nicht Vertragspartei der FanMind-Kunden-AVV. Empfohlen ist:
 1. Rechts-/Datenschutzberatung macht aus
    `AVV_WORKING_DRAFT.md` eine freigegebene Vertragsfassung;
 2. Steuerberatung bestätigt nur die steuer- und rechnungsbezogenen Teile;
-3. Bernd Guggenberger unterschreibt beziehungsweise akzeptiert für FanMind;
+3. Brigitte Erika Guggenberger oder eine nachweislich bevollmächtigte Person unterschreibt beziehungsweise akzeptiert für FanMind; Bernd ist operativer Ansprechpartner, ohne hiermit behauptete Vollmacht;
 4. der jeweilige B2B-Kunde unterschreibt oder akzeptiert wirksam für seine
    Organisation;
 5. Version, Datum und Beweis-Hash werden im externen Register dokumentiert.
@@ -135,7 +136,7 @@ normalerweise nicht Vertragspartei der FanMind-Kunden-AVV. Empfohlen ist:
 | Supabase | Eine statische [DPA](https://supabase.com/legal/dpa) reicht laut Anbieter nicht; die bindende Fassung muss über den Legal-Documents-Bereich als PandaDoc angefordert und ausgefüllt werden. Die [Projektregion](https://supabase.com/docs/guides/platform/regions) ist separat zu belegen | unterschriebene PandaDoc-DPA, Produktionsprojektregion, aktuelle Unterauftragsliste |
 | OpenAI | [DPA](https://openai.com/de-DE/policies/data-processing-addendum/) mit OpenAI Ireland Ltd. für EWR-Kunden ist seit 1. Januar 2026 wirksam; Annahme kann über Zustimmung, Bestellformular oder Nutzung erfolgen. [EU-Datenresidenz](https://openai.com/de-DE/index/introducing-data-residency-in-europe/) ist eine konkrete Projektoption, keine automatische Kontoeigenschaft | kontobezogener Vertrags-/DPA-Nachweis, Organisation/Projekt intern zugeordnet, Region des verwendeten API-Projekts, aktuelle [Unterauftragsliste](https://openai.com/policies/sub-processor-list/) und Transferprüfung |
 | Stripe | [DPA](https://stripe.com/at/legal/dpa) ist Bestandteil des Stripe-Vertrags; außerhalb Amerikas ist grundsätzlich Stripe Payments Europe, Limited Vertragspartner. Stripe beschreibt zugleich globale Übermittlungen | österreichisches Konto und Vertragspartner, verwendete Produkte/Rollen, DPA-Fassung, aktuelle [Service-Provider-Liste](https://stripe.com/en-at/legal/service-providers) und Transferprüfung; keine erfundene einzelne Speicherregion |
-| Meta | Das Pixel fällt unter die [Meta Business Tools Terms](https://www.facebook.com/legal/terms/businesstools); die Rollen hängen vom konkreten Datenfluss ab | Eigentümer von Business-Konto und Pixel, akzeptierte [Data Processing Terms](https://www.facebook.com/legal/terms/dataprocessing), Rollen-/Transferprüfung für die drei parameterlosen Events |
+| Meta | Das Pixel fällt unter die [Meta Business Tools Terms](https://www.facebook.com/legal/terms/businesstools); die Rollen hängen vom konkreten Datenfluss ab | Eigentümer von Business-Konto und Pixel, akzeptierte [Data Processing Terms](https://www.facebook.com/legal/terms/dataprocessing), Rollen-/Transferprüfung für das ausschließlich aktive parameterlose Event `PageView` |
 | Resend | [DPA](https://resend.com/legal/dpa) wird laut Anbieter mit Vertragsannahme oder Ausführung bindend. Eine [EU-Senderegion](https://resend.com/docs/dashboard/domains/regions) ändert nicht den US-Speicherort der Konto-, E-Mail-Metadaten, Logs und API-Daten | zunächst bestätigen, ob Produktion tatsächlich Resend statt SMTP nutzt; dann DPA-Beleg, Domain-Senderegion, US-Datenhaltung, [Unterauftragsliste](https://resend.com/legal/subprocessors) und Transferprüfung |
 
 Die OpenAI-Projektoption `Europe` ist nur dann als FanMind-Region einzutragen,
@@ -178,6 +179,7 @@ Restore-/Löschtest erfolgen.
    registriert.
 4. Rechts-/Datenschutzberatung prüft die exakt versionierten öffentlichen
    Texte und macht die AVV unterschriftsfähig.
-5. Bernd und der jeweilige B2B-Kunde nehmen die finale AVV wirksam an.
+5. Brigitte Erika Guggenberger (oder eine nachweislich bevollmächtigte Person) und der jeweilige B2B-Kunde nehmen die finale AVV wirksam an.
 6. `npm run legal:evidence:require-complete` muss grün sein, bevor echte
    Drittpersonendaten eines Pilotkunden verarbeitet werden.
+

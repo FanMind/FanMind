@@ -1,3 +1,11 @@
+## FM-LEGAL-OPERATOR-20261106 — PR #1438 operator correction and release boundary
+- Date: 2026-11-06. Risk: R3 (legal source, repository only). Status: IN_REVIEW; no Owner merge authorization.
+- Owner-confirmed facts: FanMind trade name; Brigitte Erika Guggenberger legal proprietor and contracting party, GISA 40314440, trade start 2026-10-29, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf. Bernd Guggenberger is an operational contact only; no general power of attorney inferred.
+- Change: 13 files in PR #1438, including public impressum, terms, privacy, referral, AVV working draft, canonical truth, external evidence and tests. Reviewed Source of Truth fingerprint now tracked by DRIFT_BASELINE.json without weakening drift validation.
+- Preflight/reconciliation: reviewed exact PR patch, main and PR heads, Project Memory protocol, ledger, decisions, failed attempts, drift baseline and failing required check logs. Original PR CI: Product Truth/Lint/Build/PG17/Browser/CodeQL/Supply Chain passed; Project Memory Guard failed due to missing memory update and Quality failed due to unreconciled watched-file fingerprint. This bounded documentation repair addresses those causes, not legal acceptance.
+- Outstanding gates: exact-head required CI and independent QA, owner-specific merge authorization, private GISA evidence SHA-256, legal/tax review including UID/Firmenbuch applicability and invoice/Stripe Tax rules, Stripe Live account-holder verification. Stripe identity/payment/social activation, staging deployment, production deployment and database mutation are excluded.
+- Recovery: revert only this bounded PR if rejected. Do not register a fake evidence PASS or infer staging equivalence from source CI.
+
 ## FM-WEB-001 — public support launcher and default-off Website AI — 2026-11-01
 - Task/Issue: bounded first implementation slice of #1350.
 - Risk: R3

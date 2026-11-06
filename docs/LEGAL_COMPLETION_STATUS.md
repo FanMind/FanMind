@@ -1,15 +1,18 @@
 # FanMind Legal Completion Status
 
-Stand: Juli 2026
+Stand: 6. November 2026
 
 Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch durch Bernd, Steuerberatung oder Rechtsberatung verbindlich freigegeben werden müssen. Es ist keine Rechtsberatung und ersetzt keine unterzeichneten Vertragsunterlagen.
 
 ## Öffentlich bestätigt
 
 - Marke/Produkt: FanMind
-- Betreiber und Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger
-- Anschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
+- Betreiberin und Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
+- GISA-Zahl: 40314440 (amtlicher Auszug vom 02.11.2026; Original privat geprüft und mit SHA-256-Beleg im externen Register bestätigt)
+- Gewerbebeginn: 29.10.2026
+- Gewerbewortlaut: Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik
 - Allgemeine Kontaktadresse: `fanmind@fanmind.ch`
 - Website: `https://fanmind.ch`
 - Produktgrenze: keine automatische Nachrichtenversendung; der Mensch prüft und sendet final selbst
@@ -58,7 +61,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 - `npm run legal:evidence:hash` erzeugt aus einer privaten, nicht verlinkten
   Belegdatei ausschließlich die registrierbare SHA-256-Referenz. Der Befehl
   gibt weder Pfad noch Inhalt aus und verändert den Freigabestatus nicht.
-- `npm run legal:evidence:handoff` erzeugt die aktuell offene 27-Control-
+- `npm run legal:evidence:handoff` erzeugt die verbleibende 26-von-27-Control-
   Aufgabenliste nach Zuständigkeit. Sie gibt keine Werte, Pfade,
   Kontokennungen, Beleginhalte oder vorhandenen Hashes aus und verändert das
   Register nicht.
@@ -91,3 +94,8 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
       `/agb` und `/zahlungsbedingungen`.
 - [ ] Extern freigegebene UID-, Register-, Anbieter-, Transfer-, Steuer- und
       Rechtswerte werden nach Bestätigung zentral ergänzt.
+
+
+## Kommerzieller Start – Prüfung vom 06.11.2026
+
+Vorbereitung und konkrete Restarbeiten: `docs/legal/COMMERCIAL_LAUNCH_REVIEW_2026-11-06.md`. Das vorhandene Stripe-Konto ist technisch zahlungs- und auszahlungsfähig, aber auf Bernd statt auf die bestätigte Betreiberin registriert; alte Kontakt-/Adressdaten bleiben dort unverändert. Stripe Tax ist aktiv, jedoch ohne Steuerregistrierung. Es ist keine steuerliche Freigabe. Kein Merge, Deployment, Provider-/Kontoänderung oder echter Zahlungstest wurde damit autorisiert.

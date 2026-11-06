@@ -1115,9 +1115,9 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 
 ### Betreiber- und Steuerstatus
 
-- Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind.
-- Geschäftsanschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich.
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger.
+- Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind.
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich.
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger.
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
 - Kontakt: fanmind@fanmind.ch, +43 676 5367236.
 - Angebot ausschließlich für B2B-Unternehmer.

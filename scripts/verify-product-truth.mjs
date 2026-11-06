@@ -2192,17 +2192,17 @@ requireText(
 // Betreiber, B2B und Steuerdarstellung.
 requireText(
   "src/app/impressum/page.tsx",
-  "Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
+  "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   "Das Impressum muss den bestätigten Einzelunternehmer nennen.",
 );
 requireText(
   "src/app/datenschutz/page.tsx",
-  "Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
+  "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   "Die Datenschutzerklärung muss denselben bestätigten Betreiber wie das Impressum nennen.",
 );
 requireText(
   "docs/LEGAL_COMPLETION_STATUS.md",
-  "Betreiber und Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind",
+  "Betreiberin und Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind",
   "Der rechtliche Abschlussstatus muss den kanonischen Betreiber nennen.",
 );
 requireText(

@@ -448,10 +448,10 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 
 ## Betreiber
 
-Vertragspartner ist **Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind**.
+Vertragspartnerin ist **Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind**.
 
-- Geschäftsanschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
 - Zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling
 - Kontakt: `fanmind@fanmind.ch`
 - Telefon: `+43 676 5367236`

@@ -36,8 +36,8 @@ const sections: ReferralSection[] = [
     content: (
       <>
         <p>
-          Anbieter ist Bernd Guggenberger, Einzelunternehmen unter der
-          Geschäftsbezeichnung FanMind, Turnerstraße 18, 2345 Brunn am Gebirge,
+          Anbieterin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der
+          Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf,
           Österreich. Das Referral-Programm richtet sich ausschließlich an
           Unternehmer und geschäftliche FanMind-Kunden.
         </p>
@@ -189,7 +189,7 @@ export default function ReferralTermsPage() {
           <p className={styles.subtitle}>
             Beschlossene Programmlogik, Teilnahmevoraussetzungen und klare Grenzen
           </p>
-          <p className={styles.stand}>Stand: Juli 2026</p>
+          <p className={styles.stand}>Stand: 6. November 2026</p>
           <p className={styles.intro}>
             Diese Seite beschreibt die aktuell beschlossene Logik des FanMind Referral
             Growth Window. Eine automatische Rabattverrechnung ist erst aktiv, wenn
@@ -238,3 +238,4 @@ export default function ReferralTermsPage() {
     </main>
   );
 }
+

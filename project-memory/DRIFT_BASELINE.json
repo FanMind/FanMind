@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
   "baseline_commit": "CURRENT_HEAD_PENDING_COMMIT",
-  "captured": "2026-11-05",
-  "last_source_of_truth_review": "2026-11-05 Owner-requested ChatAdmin contextual curiosity and editable replies: Character/Fan context, original drafts, manual confirmation and all price/authority/send boundaries preserved. Source-only; no model, Staging or Production acceptance inferred. Other watched sources unchanged.",
+  "captured": "2026-11-06",
+  "last_source_of_truth_review": "2026-11-06 PR #1438 reviewed legal-operator change: Source of Truth identifies Brigitte Erika Guggenberger as the legal contracting sole proprietor and Bernd Guggenberger as operational contact only, consistent with owner-confirmed GISA 40314440. No implied delegated signing authority; UID, trade-register applicability, external legal/tax signoff, Stripe account-holder verification and commercial activation remain pending. Source-only; no Production/Staging/provider/DB mutation and no acceptance inferred.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "49c886938315570cadf0e18ce58b38dc908bc077",
+    "docs/SOURCE_OF_TRUTH.md": "688c28056883355095772276f7aae23877cbcd38",
     "src/config/roadmap.ts": "7179da112c26e357fb2d8f17e20aabf1b530c675",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",

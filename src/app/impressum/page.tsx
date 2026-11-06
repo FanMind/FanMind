@@ -10,28 +10,48 @@ export const metadata: Metadata = {
 
 const operatorRows = [
   {
-    label: "Betreiber / Vertragspartner",
-    value: "Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
+    label: "Betreiberin / Vertragspartnerin / Medieninhaberin",
+    value: "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   },
   {
-    label: "Geschäftsanschrift / Sitz",
+    label: "Gewerbestandort / Geschäftsanschrift",
     value: (
       <>
-        Turnerstraße 18
+        Bahnstraße 11, Stiege 2, Tür 1
         <br />
-        2345 Brunn am Gebirge
+        2351 Wiener Neudorf
         <br />
         Österreich
       </>
     ),
   },
   {
-    label: "Inhaber und vertretungsberechtigt",
-    value: "Bernd Guggenberger",
+    label: "Gewerbeinhaberin",
+    value: "Brigitte Erika Guggenberger",
   },
   {
     label: "Zuständige Gewerbebehörde",
     value: "Bezirkshauptmannschaft Mödling",
+  },
+  {
+    label: "GISA-Zahl",
+    value: "40314440",
+  },
+  {
+    label: "Gewerbebeginn",
+    value: "29.10.2026",
+  },
+  {
+    label: "Gewerbewortlaut",
+    value: "Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik",
+  },
+  {
+    label: "Anwendbare Gewerbevorschriften",
+    value: <a href="https://www.ris.bka.gv.at/eli/bgbl/1994/194">Gewerbeordnung 1994 (GewO 1994)</a>,
+  },
+  {
+    label: "Operativer Ansprechpartner",
+    value: "Bernd Guggenberger",
   },
   {
     label: "Kammerzugehörigkeit",
@@ -82,8 +102,8 @@ export default function ImpressumPage() {
               Rechtlicher Abschlussstatus
             </h2>
             <p>
-              FanMind wird derzeit von Bernd Guggenberger als Einzelunternehmen
-              unter der Geschäftsbezeichnung FanMind betrieben. Eine
+              FanMind wird von Brigitte Erika Guggenberger als Einzelunternehmerin
+              unter der Geschäftsbezeichnung FanMind betrieben. Bernd Guggenberger ist operativer Ansprechpartner; die rechtliche Betreiberin und Vertragspartnerin bleibt Brigitte Erika Guggenberger. Eine
               Firmenbuchnummer, ein Firmenbuchgericht und eine UID werden erst
               angeführt, sobald sie tatsächlich vorhanden und bestätigt sind.
             </p>
@@ -212,3 +232,4 @@ export default function ImpressumPage() {
     </main>
   );
 }
+
