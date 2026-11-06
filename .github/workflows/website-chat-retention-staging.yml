@@ -30,6 +30,9 @@ on:
           - monitor
           - owner
           - rollback-empty
+          - audit-verify
+          - audit-upgrade
+          - audit-acceptance
       confirmation:
         description: 'Type the exact confirmation shown in the runbook'
         required: true
@@ -189,7 +192,7 @@ jobs:
       FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
-      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ (github.event_name == 'schedule' && github.event.schedule == '23 2 * * *' || github.event_name != 'schedule' && inputs.action != 'verify' && inputs.action != 'monitor') && 'true' || 'false' }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ (github.event_name == 'schedule' && github.event.schedule == '23 2 * * *' || github.event_name != 'schedule' && inputs.action != 'verify' && inputs.action != 'monitor' && inputs.action != 'audit-verify') && 'true' || 'false' }}
       FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ (github.event_name == 'schedule' && github.event.schedule == '23 2 * * *' || github.event_name != 'schedule' && inputs.action != 'verify' && inputs.action != 'monitor') && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
@@ -223,7 +226,9 @@ jobs:
         with:
           node-version: '24'
       - name: Check full pinned Support schema and independent reference offline
-        run: node scripts/operations/support-centre-staging.mjs --check
+        run: |
+          node scripts/operations/support-centre-staging.mjs --check
+          node scripts/operations/support-repair-audit-staging.mjs --check
       - name: Prepare dedicated private database password file
         env:
           FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
@@ -241,7 +246,12 @@ jobs:
       - name: Execute only the explicitly selected Support action
         env:
           PGPASSFILE: ${{ runner.temp }}/fanmind-support-staging.pgpass
-        run: node scripts/operations/support-centre-staging.mjs "--$SUPPORT_ACTION"
+        run: |
+          set -euo pipefail
+          case "$SUPPORT_ACTION" in
+            audit-verify|audit-upgrade|audit-acceptance) node scripts/operations/support-repair-audit-staging.mjs "--$SUPPORT_ACTION" ;;
+            *) node scripts/operations/support-centre-staging.mjs "--$SUPPORT_ACTION" ;;
+          esac
       - name: Remove dedicated private database password file
         if: ${{ always() }}
         env:
