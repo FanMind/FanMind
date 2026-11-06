@@ -798,21 +798,35 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), true);
   const root = await mkdtemp(join(tmpdir(), "fanmind-boot-image-"));
   const candidate = join(root, "runner-image");
-  // Copy a known installed native utility, never execute a candidate supplied
-  // by an audit or a configuration file.
-  await copyFile("/usr/bin/sleep", candidate);
+  // Copy the installed native Node executable, never an audit-supplied file.
+  // A spawn event alone does not prove the synthetic process has reached its
+  // stable running image. Wait for its fixed readiness marker before inspecting
+  // /proc, just as the versioned runner fixture below does.
+  await copyFile(realpathSync(process.execPath), candidate);
   await chmod(candidate, 0o700);
-  const child = spawn(candidate, ["30"], { stdio: "ignore" });
+  const child = spawn(candidate, ["-e", 'process.stdout.write("SYNTHETIC_IMAGE_READY"); setInterval(() => {}, 1000);'], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
   t.after(async () => {
     if (child.exitCode === null && child.signalCode === null) {
       const exited = once(child, "exit"); child.kill("SIGTERM"); await exited;
     }
     await rm(root, { recursive: true, force: true });
   });
-  await once(child, "spawn");
+  await new Promise((resolveReady, reject) => {
+    let output = "";
+    const timer = setTimeout(() => reject(new Error("synthetic image startup timed out")), 10000);
+    child.once("error", error => { clearTimeout(timer); reject(error); });
+    child.once("exit", () => { clearTimeout(timer); reject(new Error("synthetic image stopped before readiness")); });
+    child.stdout.on("data", data => {
+      output += data.toString("utf8");
+      if (output === "SYNTHETIC_IMAGE_READY") { clearTimeout(timer); resolveReady(); }
+      else if (output.length > 128) { clearTimeout(timer); reject(new Error("synthetic image output invalid")); }
+    });
+  });
   assert.equal(loadedExecutableMatches(candidate, child.pid), true);
   await rename(candidate, join(root, "old-running-image"));
-  await copyFile("/usr/bin/sleep", candidate);
+  await copyFile(realpathSync(process.execPath), candidate);
   await chmod(candidate, 0o700);
   assert.equal(loadedExecutableMatches(candidate, child.pid), false);
   await writeFile(candidate, "synthetic-not-an-executable");

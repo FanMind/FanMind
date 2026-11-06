@@ -25,6 +25,7 @@ const CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_WORKFLOW =
   "chat-admin-structured-offers-staging-migration.yml";
 const ORCHESTRATOR_DISPATCH_WORKFLOW = "fanmind-manager-event-dispatch.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
+const STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW = "staging-support-media-runtime.yml";
 const CREATOR_TARGET_RUNTIME_WORKFLOW = "creator-target-transition-runtime.yml";
 const CREATOR_TARGET_RECOVERY_WORKFLOW = "creator-target-admission-recovery.yml";
 const DAILY_PRODUCTION_CONTROL_WORKFLOW =
@@ -220,6 +221,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     CREATOR_TARGET_RECOVERY_WORKFLOW,
     STAGING_BILLING_CAPTURE_WORKFLOW,
     STAGING_PUSH_RUNTIME_WORKFLOW,
+    STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW,
     STAGING_DEPLOY_WORKFLOW,
     STAGING_PROVISION_WORKFLOW,
     RESTORE_DATABASE_WORKFLOW,
@@ -250,6 +252,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       RESTORE_WORKFLOW,
       STAGING_BILLING_CAPTURE_WORKFLOW,
       STAGING_PUSH_RUNTIME_WORKFLOW,
+      STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW,
     ],
   );
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
@@ -290,6 +293,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     HOSTED_CHECKOUT_V7_0_1_SHA,
   ]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_PUSH_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RECOVERY_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === CREATOR_TARGET_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === DAILY_PRODUCTION_CONTROL_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
