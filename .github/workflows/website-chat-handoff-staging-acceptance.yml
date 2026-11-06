@@ -7,6 +7,10 @@ on:
         description: 'Exact reviewed main commit containing the applied Website Chat handoff'
         required: true
         type: string
+      workspace_id:
+        description: 'Existing marked synthetic Staging workspace; SQL verifies both fixture flags'
+        required: true
+        type: string
       confirmation:
         description: 'Type run-website-chat-handoff-acceptance to continue'
         required: true
@@ -42,7 +46,7 @@ jobs:
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
       FANMIND_WEBSITE_CHAT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
       FANMIND_WEBSITE_CHAT_ACCEPTANCE_CONFIRM: run-website-chat-handoff-acceptance
-      FANMIND_WEBSITE_CHAT_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_WEBSITE_CHAT_STAGING_WORKSPACE_ID }}
+      FANMIND_WEBSITE_CHAT_STAGING_WORKSPACE_ID: ${{ inputs.workspace_id }}
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
@@ -50,6 +54,7 @@ jobs:
       PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
       PGUSER: ${{ secrets.FANMIND_STAGING_DB_USER }}
       PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
     steps:
       - name: Checkout reviewed main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
