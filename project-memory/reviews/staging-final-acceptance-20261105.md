@@ -76,3 +76,63 @@ package.json byte-for-byte; register the new runtime cases through the already
 owned manual-flow test module instead. No Capacity pin, assertion or gate changes.
 All focused source/supply-chain/ownership checks remain green. Independent final
 source review GO is conditional on actual native PG17 CI, never a target claim.
+
+
+## Direct continuation — 2026-11-06
+
+The Owner requested direct investigation without delegation and retained explicit
+merge/deploy approval plus an absolute Production-write prohibition. No agent was
+delegated. Existing PR1434 was reused; no duplicate implementation or writer was
+started. This continuation does not activate Support/Media or apply audit SQL.
+
+Fresh observations:
+- GitHub Main and HTTPS Staging release: 5414f53d4cdfc9db58bf1306654e62eb0efa44da.
+- HTTPS Production release: a798d7938bb4e7e168f615f0c32d1a603dd47d4a.
+- Git diff Production release..Main lists six operations/tests/evidence paths;
+  src/, app dependencies and controlled SQL have no changes in this interval.
+  Matching application source does not prove matching runtime or database behavior.
+- Failed acceptance job127525038805 confirms browser complete/passed, release
+  phase followed by persistence, cleanup PASS and absence PASS. Its runner emits
+  only database_operation and does not expose the six actual counts.
+- A read-only Staging usage query for the synthetic workspace and the historical
+  run window returns no rows after cleanup. It cannot reconstruct historical
+  actual counts. No exact historical failing counter is asserted.
+- Existing deterministic quality-gate reproduction confirms ten successful
+  generations with 0, 2 or 10 rejected attempts. The fixed usage_error=2
+  condition is not a valid invariant; removing or widening it is not accepted
+  without an independent per-attempt usage witness. The diagnostic patch retains
+  all six exact assertions, scope/ownership guards and guaranteed cleanup.
+- Fresh read-only catalogue comparison confirms identical constraints and RLS
+  policy fingerprints for the shared selected ChatAdmin/Support tables.
+  Production additionally has chat_character_fans.memory and
+  chat_characters.pricing_config/sales_profile; Staging lacks those columns.
+  support_repair_audit exists only on Staging. These are actual schema differences,
+  not instructions to copy/drop columns or install an audit table.
+- Definition hashes match for all 24 selected public functions named
+  chat_admin_% or containing support. This limited comparison does not establish
+  full function ACL, runtime-flag, Storage or functional equivalence.
+
+Validation on existing source head366681f7d92504e7ca6862eeee1a98b1a2328d94:
+- npm ci completed without lockfile changes. An initial pre-install test run had
+  one missing-Playwright-dependency failure; this was resolved by installing the
+  committed dependencies, without changing code.
+- node --test tests/chat-admin-manual-flow.test.mjs
+  tests/chat-admin-api-integration.test.mjs tests/reply-quality-policy.test.mjs:
+  176 PASS, 0 FAIL, 0 SKIP.
+- Manual-flow --check: CHAT_ADMIN_MANUAL_CONTRACT=PASS.
+- All 14 returned GitHub check runs for that exact source head are success,
+  including native PG17 authorization and build:
+  https://github.com/FanMind/FanMind/actions/runs/42118261387
+  https://github.com/FanMind/FanMind/actions/runs/42118269834
+  This is isolated/source CI, not hosted Staging acceptance.
+
+Remaining execution boundary: the diagnostic is not on Main or the deployed
+Staging release. The protected acceptance workflow requires refs/heads/main,
+requested_commit=GITHUB_SHA and the same deployed release. Do not bypass those
+checks or rerun the old harness as a claimed repair. Explicit merge approval for
+PR1434 and Staging-only deployment approval for the resulting exact Main commit
+are needed before the diagnostic live acceptance can proceed. That first live
+diagnostic may still fail; its counters must guide the final minimal repair.
+Full Staging acceptance and functional equivalence remain UNPROVEN.
+Production was read only. No schema, secret, permission, provider, runtime flag,
+Main ref, merge or deployment was changed by this continuation.
