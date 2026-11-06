@@ -1,0 +1,22 @@
+export const INSTAGRAM_BUSINESS_BASIC_SCOPE = "instagram_business_basic";
+export const INSTAGRAM_BUSINESS_MESSAGES_SCOPE =
+  "instagram_business_manage_messages";
+export const INSTAGRAM_BUSINESS_COMMENTS_SCOPE =
+  "instagram_business_manage_comments";
+export const INSTAGRAM_BUSINESS_INSIGHTS_SCOPE =
+  "instagram_business_manage_insights";
+
+export const INSTAGRAM_MESSAGES_OAUTH_SCOPES = [
+  INSTAGRAM_BUSINESS_BASIC_SCOPE,
+  INSTAGRAM_BUSINESS_MESSAGES_SCOPE,
+] as const;
+
+export const INSTAGRAM_COMMENTS_OAUTH_SCOPES = [
+  INSTAGRAM_BUSINESS_BASIC_SCOPE,
+  INSTAGRAM_BUSINESS_COMMENTS_SCOPE,
+] as const;
+
+export const INSTAGRAM_INSIGHTS_OAUTH_SCOPES = [
+  INSTAGRAM_BUSINESS_BASIC_SCOPE,
+  INSTAGRAM_BUSINESS_INSIGHTS_SCOPE,
+] as const;

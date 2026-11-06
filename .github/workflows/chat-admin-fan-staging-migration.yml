@@ -1,0 +1,102 @@
+name: FanMind ChatAdmin Fan Staging Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: Exact reviewed current main commit
+        required: true
+        type: string
+      mode:
+        description: Read-only verification or separately approved apply
+        required: true
+        type: choice
+        options: [VERIFY, APPLY]
+      confirmation:
+        description: Exact mode confirmation
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-chat-admin-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      PGCONNECT_TIMEOUT: '10'
+      PGOPTIONS: '-c lock_timeout=5000 -c statement_timeout=120000'
+    steps:
+      - name: Validate exact current-main request
+        env:
+          REQUESTED_COMMIT: ${{ inputs.reviewed_commit }}
+          REQUESTED_MODE: ${{ inputs.mode }}
+          REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$REQUESTED_COMMIT" == "$GITHUB_SHA" ]]
+          case "$REQUESTED_MODE:$REQUESTED_CONFIRMATION" in
+            VERIFY:verify-chat-admin-schema|APPLY:apply-chat-admin-migration) ;;
+            *) echo 'ChatAdmin Fan mode/confirmation mismatch.' >&2; exit 1 ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Verify pinned contract offline
+        run: npm run db:chat-admin-fans:check
+      - name: Prepare private database passfile
+        env:
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          [[ -n "$PASSWORD" && "$PASSWORD" != *$'\n'* && "$PASSWORD" != *$'\r'* ]]
+          P="${PASSWORD//\\/\\\\}"; P="${P//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$P" > "$RUNNER_TEMP/chat-admin-fans.pgpass"
+          chmod 600 "$RUNNER_TEMP/chat-admin-fans.pgpass"
+      - name: Read-only schema verification
+        if: ${{ inputs.mode == 'VERIFY' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin-fans.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_CHAT_ADMIN_SCHEMA_CONFIRM: verify-chat-admin-schema
+        run: npm run db:chat-admin-fans:verify
+      - name: Apply pinned schema transaction and postflight
+        if: ${{ inputs.mode == 'APPLY' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin-fans.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+          FANMIND_CHAT_ADMIN_MIGRATION_CONFIRM: apply-chat-admin-migration
+        run: npm run db:chat-admin-fans:apply
+      - name: Remove private passfile
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/chat-admin-fans.pgpass"

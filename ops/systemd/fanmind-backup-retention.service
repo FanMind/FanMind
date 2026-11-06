@@ -1,0 +1,24 @@
+[Unit]
+Description=FanMind backup retention
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/usr/local/lib/fanmind-ops
+Environment=FANMIND_BACKUP_ROOT=/var/backups/fanmind
+Environment=FANMIND_BACKUP_RETENTION_DAILY=1
+Environment=FANMIND_BACKUP_RETENTION_WEEKLY=1
+Environment=FANMIND_BACKUP_RETENTION_MONTHLY=1
+Environment=FANMIND_BACKUP_RETENTION_FULL_DAILY=0
+Environment=FANMIND_BACKUP_RETENTION_FULL_WEEKLY=1
+Environment=FANMIND_BACKUP_RETENTION_FULL_MONTHLY=1
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/backup-retention.mjs --execute
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/fanmind
+LockPersonality=true

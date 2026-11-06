@@ -1,0 +1,626 @@
+## FM-CR-CHATADMIN-USABILITY-20261105 — Fan scrolling, contextual curiosity and editable replies
+- Source: Bernd confirmed natural interested follow-ups, requested editing one of three suggestions before use, and removal of the permanently reserved bottom status area.
+- Scope/status: R2 repository-only implementation in PR #1424; exact final CI/browser acceptance pending. No runtime acceptance claimed.
+- Behavior: Fan create/profile/knowledge form has independent desktop scroll; mobile page flow retained. Personal conversation may use a relevant interested question or grounded thought without question quotas, known-fact repetition or chasing unanswered questions. New/stored suggestions seed an editable draft; only the final copied/confirmed text enters the existing authorized, revision-bound persistence path. Drafts clear on discard/Fan/Character change. Status overlay is dismissible and reserves no lower row.
+- Evidence: focused API/policy/layout/quality tests 180/180; local ESLint/truth/build passed before the final UI expansion. Actual-client Chromium scroll/edit/keyboard/retry/isolation coverage runs in required CI; local browser download failed. Initial PR CI exposed a missing full-page wrapper in the new scroll fixture and stale Source-of-Truth fingerprint; corrected with the actual page container and this reviewed documentation/decision update. Existing checks were not weakened.
+- Contracts/consumers: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; ChatAdmin UI and shared reply guidance (CRM/Creator/Copilot/Mobile consumers) retain schema, rate/quality/price, context-isolation and manual-send contracts. No new provider calls, model configuration, stored persona, schema, storage, secrets, billing, deployment or target changes.
+- Recovery: revert the bounded source change. Issue #1219 live acceptance remains separate/open.
+- Follow-up requested: private Character media inventory with image analysis/search and grounded existing-vs-custom availability. Separate controlled storage/provider scope; only configured/approved prices and delivery windows may support custom-order promises. No media uploaded/analyzed or storage/provider activated by this PR.
+
+## FM-CR-034 — Harden the merged ChatAdmin fan postflight
+- Date: 2026-09-27
+- Status: IN_PROGRESS
+- Related task: FM-CHATADMIN-003 / issue #1219.
+- Source: owner requested complete merge-readiness/security review; PR #1221 merged before its unresolved inline contract findings were reconciled.
+- Scope: repository-only read-only verification hardening for parent ChatAdmin authority and the controlled fan SQL catalog contract (RLS, grants, policies, indexes, constraints, triggers, RPC identities/source and idempotent boundaries).
+- Acceptance: exact-head required CI and PostgreSQL 17 contract execution pass; exact review threads/findings reconciled; no staging/production mutation.
+- Boundary: staging APPLY, runtime activation, fan/provider/customer mutation, production schema/data mutation and auto-send remain outside scope.
+
+## FM-CR-033 — Finish Meta initial import and Creator Staging
+- Bounded source/schema/JWT/revision/PDF package ACCEPTED by #1105-#1108 / 34629009649; full Creator/Social remains open for actual deployed flag, enabled UI, full deletion, real quality/learning and provider acceptance. See FM-EV-CREATOR-FOUNDATION-20260911 and its mutable freshness entry.
+- CI follow-through includes the compatible Expo SDK57 patch alignment required by the current Mobile gate and the Creator approval/ACL review corrections before Staging Apply; no Android/store feature activation.
+- Task: FM-CREATOR-001 / FM-SOC3-001; Risk R4.
+- Source: owner says to finish all listed Social/Creator steps after the verified status report.
+- Scope: automatic first import for verified Meta messaging connections; controlled existing Creator Staging rollout and one-text-style conformance. Central provider resources and real consent are checked separately.
+- Preserve: #1099–#1104 completed source, empty Social Staging foundation, original send/processing/tenant rules, deferred paid activation and Android-after-Creator/Social order.
+
+## FM-CR-032 — Complete the connection return and initial-read journey
+- Date: 2026-09-11
+- Status: IN_PROGRESS
+- Task: FM-SOC7-001 / FM-DEC-018
+- Scope: provider-hosted sign-in explanation, return to the selected channel, one atomic initial X preview and controlled isolated-Staging schema Verify/Apply/Postflight. Reuse the existing account boundaries; preserve the separate Creator rollout draft.
+- Acceptance: browser return/first-load proof, duplicate/foreign/missing-consent rejection, real PG17 atomicity and controlled schema checks, current PR security/CI. Source work does not establish actual provider access or a clean Production-operations gate.
+
+## FM-CR-031 — Resume TikTok and X/Twitter integration
+- Date: 2026-09-11
+- Status: IN_PROGRESS
+- Source: Bernd: TikTok and X/Twitter should also be connected now; continue working.
+- Decision: FM-DEC-017, retaining FM-DEC-016.
+- Task: FM-SOC7-001
+- Scope: official account connection and supported read capability, isolated by own Creator account. No scraping, auto-send, account style selector or manager expansion.
+- Acceptance: concrete code/CI and honest capability UI; external activation remains separately evidenced.
+
+# FanMind Change Requests
+
+## FM-CR-030
+- Date: 2026-09-11
+- Status: ACCEPTED
+- Related task/decision: FM-CREATOR-001 / FM-DEC-016.
+- Source: owner clarification: normal user = Creator; one writing style per account; a manager may supervise several separate users/Creators and channels. No generated sound or real voices.
+- Classification: R1 documentation/account-semantics clarification for the existing Creator workstream.
+- Scope: canonical terminology and single-style contract, same-style reply variants and future manager context. Retain the open legacy prompt/UI and actual Staging acceptance checks. No code, SQL, permission, provider, billing or mobile change.
+- Acceptance: current source/cardinality comparison, synchronized readers and existing documentation/truth/memory controls. No runtime capability is accepted through this change.
+
+## FM-CR-029
+- Date: 2026-09-10
+- Classification: explicit owner reprioritization and bounded Creator/Social implementation.
+- Related tasks: FM-CREATOR-001 / FM-SOC3-001 / FM-SOC7-001.
+- Decision: FM-DEC-015 resumes Creator and selected Social/handoff development before Android. Implement the data model before wiring the existing reply engine; keep all actual external acceptance visible.
+- Risk: R4 (database boundaries and reviewed source publication).
+- Expected scope: one Creator per independent account/Workspace (owner follow-up), structured profile and scoped context, manual Social workflow, tests and canonical roadmap/memory. Existing workspace_id is the fan/conversation boundary; do not build multi-Creator tenancy or later Team/roles/approval/multi-workspace features. Controlled SQL is prepared and verified before target-bound rollout.
+
+## FM-CR-028
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-BILL-003
+- Source: repeated explicit owner request to continue and activate all three approved paid plans.
+- Scope: paid-registration/Workspace/contract/Billing implementation and validated controlled rollout; retain catalog prices and successful prior acceptance.
+- Initial finding: setup/API submit only an acceptance boolean, so a stale form cannot prove which revision the customer saw. Bind the exact submitted revision before creating trusted provisioning metadata or any Workspace.
+- Boundary: deployment does not imply tax/legal/customer consent or automatically execute SQL/Stripe mutations.
+
+## FM-CR-027
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-BILL-002
+- Source: owner explicitly requests EUR 990 setup + EUR 312/month, EUR 0 setup + EUR 312/month, EUR 0 setup + EUR 1/day and full publication.
+- Decision: Daily becomes the third permanent public offer. This supersedes the former catalog-only/timed-beta product restriction; retain existing Flex/12-month terms and Daily daily cancellation/no referral unless separately changed.
+- Boundary: reuse existing engine/Prices; price/publication approval is not evidence of tax registration, verified email receipt, Meta review or actual Storage restore. Protected readiness and customer consent remain necessary.
+
+## FM-CR-026
+- Date: 2026-09-10
+- Source: owner requests registration completion and immediate publication.
+- Related task: FM-REG-002
+- Classification: R4 Web Auth flow/publication; no commercial or provider activation.
+- Existing work checked: FM-REG-001, current /register, custom Supabase client, /workspace/setup and protected terms/Checkout policy on main 52b2b888.
+- Decision: permit a non-commercial login account and verified-email continuation independently from paid Workspace provisioning. Keep fresh authenticated consent and all existing terms/Tax/billing checks at activation. No previous consent or external approval is invented.
+
+## FM-CR-025
+- Follow-up: owner reports the approved addition missing on the live roadmap and asks for retained open points. Complete this same PR through corrected DE/EN rendering, current-main reconciliation, green CI/review and normal Web publication. Reconcile only documented Staging/build facts; preserve all unresolved acceptance. This supersedes the initial preparation-only publication boundary, without authorizing Creator implementation or unrelated protected operations.
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: owner explicitly places the reviewed Creator Intelligence & Sales Assistance proposal in Phase 7 after Sales Handoff and before Phase 8.
+- Classification: roadmap/scheduling decision only; implementation remains deferred until FM-SALES-001 is accepted.
+- Existing work checked: main 7004c9ea, FM-SOC7-001, FM-SALES-001, FM-DEC-011 and the Creator architecture review; FM-CR-023/024 are already used by open PR #1089.
+- Decision: Phase 7a = required Social channels; then technical Sales Handoff; Phase 7b = Creator Intelligence. Further Phase 8 work follows Phase 7b. The historical disabled Website-AI foundation remains started.
+- Related tasks: FM-ROADMAP-001 (this recording), FM-CREATOR-001 (future implementation).
+- Boundary: no new pre-sales requirement, pricing change, additional database, provider activation, feature implementation or Production release.
+## FM-CR-024
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Related task: FM-SEC-002
+- Risk: R3
+- Source: current PR #1089 dependency audit failure blocks the requested normal release.
+- Decision: bounded security patch updates for Next.js, Sharp and affected browser/YAML/XML tooling, including lockfiles and existing version-contract tests. Keep zero root vulnerabilities and the unchanged Mobile exception limits/expiry; no bypass or broader feature upgrade.
+
+## FM-CR-023
+- Date: 2026-09-10
+- Status: ACCEPTED
+- Source: owner continuation toward Social implementation and real registrations; observed existing Web recovery defects.
+- Classification: bounded authentication correction, Risk R3.
+- Related task: FM-REG-001
+- Decision: preserve the current FanMind environment in password-reset redirects and validate/scrub existing implicit recovery callbacks. Keep registration, payment terms, provider configuration and Ubuntu recovery permissions unchanged.
+
+Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFERRED, REJECTED, DUPLICATE or merged into an existing task.
+
+## FM-CR-001
+- Date: 2026-08-19
+- Status: ACCEPTED
+- Source: owner
+- Idea: Introduce a durable project-memory, duplicate-check and change-intake mechanism for ongoing development.
+- Classification: New governance capability.
+- Affected areas: repository governance, PR workflow, engineering execution.
+- Related task: FM-MEM-001
+- Decision: Implement Project Memory Protocol v1 across active FanMind/WellFit repositories.
+
+## FM-CR-002
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: The authenticated demo account must show the already stored sample messages for all demo contacts directly in the Mobile contact detail.
+- Classification: Bounded Mobile product correction and replacement Android preview build.
+- Affected areas: `apps/mobile` contact detail/data access, Mobile documentation, regression tests and signed Android preview evidence.
+- Existing task/decision checked: FM-MOB-001, FM-DEC-003, FM-DEP-002, ASM-FM-005 and FM-LOOP-003.
+- Dependencies: Existing RLS-protected `conversation_messages` rows, current Mobile Supabase binding, exact-head repository checks and a new exact-commit Android internal build.
+- Decision: Track the implementation and replacement build as FM-MOB-002 without reopening or replacing the native Mobile foundation.
+- Related task: FM-MOB-002
+
+## FM-CR-003
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: Mobile must let every fan switch among all stored message platforms, use the account start screen as a dashboard containing only fans with unseen inbound messages, remove the owner's explicitly rejected placeholder logo symbol, and let an owner create a manual Follow-up directly on a fan from the phone.
+- Classification: Bounded Mobile core-demo workflow correction and replacement Android preview build.
+- Affected areas: Mobile dashboard, contact detail, authenticated Supabase reads/seen update, Follow-up form, policy tests, Mobile documentation and signed Android preview evidence.
+- Existing task/decision checked: FM-MOB-001/002, FM-DEC-003, FM-DEP-002, FM-LOOP-003, existing web `seen_at` semantics and owner-only Mobile mutation boundary.
+- Dependencies: current RLS-protected `conversation_messages`/`contacts`/`followups` contracts, exact-head CI and one new exact-commit Android preview.
+- Decision: implement together as FM-MOB-003 because the three changes form one phone demo loop: unseen fan -> channel-specific history -> manual Follow-up.
+- Related task: FM-MOB-003
+
+## FM-CR-004
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: Move `iOS-TestFlight` out of Phase 6 and into Phase 8.
+- Classification: Roadmap and current-finishline scope reclassification; no runtime or provider mutation.
+- Affected areas: canonical roadmap, Mobile finishline/dependencies, external acceptance wording and central reader/tests.
+- Existing task/decision checked: FM-MOB-001, FM-DEP-002, FM-LOOP-003, EXT-MOBILE-IOS, `FINISHLINE_STATE.json`, `FANMIND_FINISHLINE.md` and the current Phase-8 boundary.
+- Dependencies: Phase 8 must remain not started during the current finishline; existing iOS code/build foundations remain untouched.
+- Decision: Phase 6 no longer requires iOS/TestFlight acceptance. `iOS-TestFlight` becomes a Phase-8 roadmap item and is not a blocker for the current through-Phase-7 finishline. This reclassification does not start Phase 8 and does not remove native iOS support or CI/build foundations.
+- Related task: FM-MOB-001
+
+## FM-CR-005
+- Date: 2026-08-29
+- Status: ACCEPTED
+- Source: owner
+- Idea: Refine the Mobile fan detail into three consistent sections for every fan, keep the identifier on one line, expose safe fan analysis under contact knowledge, make Follow-ups navigate back to their fan, show today's Follow-ups on Start and replace the cropped startup asset with `FM` above `FanMind`.
+- Classification: Bounded Mobile usability correction and replacement Android preview build.
+- Affected areas: Mobile contact detail/dashboard/follow-up navigation, authenticated AI route, RLS data reads, native splash branding, documentation and tests.
+- Existing task/decision checked: FM-MOB-001/002/003, FM-CR-004, existing Web fan-analysis action, RLS-protected `fan_analysis_reports`/`followups`, no-auto-send and owner-only mutation boundaries.
+- Dependencies: exact-head CI, existing Mobile Bearer session, server-side analysis capability/retention gates, one merged-commit Android preview and owner device confirmation.
+- Decision: implement as FM-MOB-004 without schema, demo-row, provider,
+  Production or automatic-send changes. PR review tightened the decision:
+  stored analysis is provenance-bound and generation remains visibly in
+  preparation without an active Mobile control until the separate Production
+  capability/privacy contract is truly activated and verified.
+- Related task: FM-MOB-004
+
+## FM-CR-006
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Finish the accepted Android app, bind its release build to FanMind Production and bring it through Google Play.
+- Classification: Android Production/Store continuation of the existing Mobile release task; no iOS Phase-8 start and no automatic public release.
+- Affected areas: Mobile version, Production EAS/AAB control, Supabase Auth redirect acceptance, Android private device runbook, Google Play listing/data-safety/testing/submission evidence and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-MOB-003/004 acceptance, FM-DEC-009, EXT-MOBILE-REDIRECT, EXT-MOBILE-ANDROID and EXT-MOBILE-PUSH-STORE.
+- Dependencies: exact reviewed `main`, verified `mobile-production`/EAS/FanMind targets, existing frozen Android signing credentials, complete private Android acceptance, live Supabase recovery redirect, Google developer identity/phone verification, Play app record and applicable test-program eligibility.
+- Decision: Resume FM-MOB-001 at Risk R3. Prepare a separate main-only Production Android AAB workflow with Submit/Update disabled, then perform external Supabase/device/Play controls separately. Publishing remains an action-time-confirmed external step and cannot be claimed while Google account review blocks app creation.
+- Related task: FM-MOB-001
+
+## FM-CR-007
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue the blocked Store work now, prepare the iPhone App Store in parallel without an available iPhone, and defer the complete Android device acceptance until FanMind can be downloaded from Google Play.
+- Classification: Repository-only dual-store preparation and Android acceptance-sequence correction; no new Mobile binary or portal submission.
+- Affected areas: public Support route, Google Play graphics, Apple/Google metadata and review/tester handoffs, Mobile Store checks, canonical readers and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-CR-006, FM-DEC-009, EXT-MOBILE-ANDROID, EXT-MOBILE-IOS and EXT-MOBILE-PUSH-STORE.
+- Dependencies: unchanged verified Android `1.0.0` AAB, pending Google account review, later Play test-track download, Apple Developer/App Store Connect and later signed iOS/TestFlight/device evidence.
+- Decision: Prepare both Store packages now. Android full 19-check acceptance and final screenshots begin only after installation from the Play test track. Apple metadata/support/review/screenshot planning is allowed now, but iOS signing, build, TestFlight and device acceptance remain Phase 8 and unverified.
+- Related task: FM-MOB-001
+
+## FM-CR-008
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with safe work while Google Play approval is pending and ensure the known project state is fully incorporated rather than leaving stale trackers that trigger duplicate work.
+- Classification: Repository/issue governance reconciliation; no product runtime, provider, database, payment, signing or release mutation.
+- Affected areas: Project Memory issue reconciliation, quality controls, #642/#643/#644 and bounded current-status wording in #874.
+- Existing task/decision checked: FM-STG-001, FM-LOOP-011, FM-AI-001, #642/#643/#644/#874, STAGING_ACCEPTED and the current Mobile/Restore/AI owner-deferred boundaries.
+- Dependencies: exact immutable Staging evidence and successful exact-head repository review before external issue metadata is changed.
+- Decision: keep genuine #642/#643 gates open, supersede only the historical #644 umbrella, and make the mapping machine-checkable so later work cannot mistake stale checkboxes for missing implementation.
+- Related task: FM-MEM-009
+
+## FM-CR-009
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with the next safe FanMind completion work while Google Play approval remains pending.
+- Classification: Bounded repository-only Stripe runtime conformance correction; no provider, price, webhook-endpoint, database, payment, refund, tax-registration or tier-activation mutation.
+- Affected areas: server-side Stripe client construction, outbound API-version pin, Checkout dynamic payment-method contract, request integration identifier, billing/referral Stripe calls, focused regression tests and AI/Billing Project Memory.
+- Existing task/decision checked: FM-AI-001, FM-LOOP-004, FM-AI-OWNER-001/002, FM-EV-022 and the accepted 2026-08-26 AI/Billing read-only reconciliation.
+- Dependencies: exact reviewed main, Stripe SDK/API contract, fail-closed tax readiness, existing disabled Plus/Ultra/runtime gates, and later owner/protected action for any provider-side webhook-version migration or transactional acceptance.
+- Decision: complete only the explicitly listed code conformance review. Keep eligible Checkout payment methods Dashboard-managed, pin outbound SDK requests independently from the verified older inbound Staging webhook endpoint, and leave all provider/runtime activation work blocked.
+- Related task: FM-AI-001
+
+## FM-CR-010
+- Date: 2026-08-30
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with all safe App-Store preparation that can be completed while Google Play account approval remains pending.
+- Classification: Repository-only App Store Connect field reconciliation and fail-closed release worksheet; no Mobile binary, signing, portal or provider mutation.
+- Affected areas: Apple portal handoff, Mobile Store readiness validator, regression tests, canonical Mobile readers and Project Memory.
+- Existing task/decision checked: FM-MOB-001, FM-CR-006/007, FM-DEC-010, EXT-MOBILE-ANDROID, EXT-MOBILE-IOS, EXT-MOBILE-PUSH-STORE and the existing verified Android `1.0.0` AAB.
+- Dependencies: unchanged Mobile identity and prepared metadata, current Apple App Store Connect field requirements, later owner/legal/account decisions and Phase-8 signed-build/device evidence.
+- Decision: Add one machine-checked 33-field App Store Connect worksheet that separates thirteen repository-ready values, twelve owner/legal/account decisions and eight Phase-8 binary/device controls. Keep all unresolved values explicit; do not start iOS signing/build/TestFlight, create a portal record or rebuild Android.
+- Related task: FM-MOB-001
+
+## FM-CR-011
+- Date: 2026-08-31
+- Closed: 2026-09-01
+- Status: ACCEPTED
+- Source: owner
+- Idea: During the Google Play approval wait, make Production/Staging/test-data separation machine-checkable and prepare privacy-minimal incoming-message push plus at most one delayed reminder.
+- Classification: Bounded repository-only Mobile Push/data-boundary hardening; no provider, database, Production, Store or build mutation.
+- Affected areas: message-push policy, native notification routing/seen semantics, data-environment guard, Mobile/root product readers, tests and Project Memory.
+- Existing task/decision checked: FM-MOB-001/003/004, FM-DEC-009/010, FM-DEP-002, FM-LOOP-003, existing dormant Follow-up Push foundation and external Push/Store acceptance boundaries.
+- Dependencies: exact reviewed repository state, fail-closed CI/review, later separate Push Staging/Delivery-Ledger/provider/device gates for real delivery.
+- Decision: Accepted for repository scope through PR #1050 final head `09ec3c8a73d57f7a0f0552e6ba89440b27e89ec7`, squash merge `953fcc56de0d02d5c2c5d41468226ba051624b53`, eight green exact-head workflows, completed Codex review and zero unresolved threads. Real provider delivery, Delivery-Ledger apply, Production push, Google Play/build/device acceptance remain open under FM-MOB-001/external acceptance.
+- Related task: FM-MOB-005
+
+## Intake template
+
+```text
+## FM-CR-XXX
+- Date: YYYY-MM-DD
+- Status: NEW
+- Source: owner/team/agent
+- Idea:
+- Classification:
+- Affected areas:
+- Existing task/decision checked:
+- Dependencies:
+- Decision:
+- Related task:
+```
+## FM-CR-012
+- Date: 2026-09-03
+- Status: ACCEPTED
+- Source: owner
+- Idea: Assign the already-started embeddable Website AI assistant to Phase 8. Users receive an embed code; visitor conversations are visible in FanMind; when AI cannot continue reliably it hands the conversation to the FanMind user; a visitor who explicitly provides an email address can receive the user's later reply.
+- Classification: Roadmap correction and product-scope clarification. Existing disabled Website Chat security, session, widget and ingestion work counts as started foundation; this decision does not authorize Production activation, provider sending or personal-data collection without consent/legal acceptance.
+- Affected areas: canonical roadmap, Website Chat foundation, public project summary and roadmap invariants.
+- Decision: Phase 8 now explicitly includes the Website AI assistant. Foundation is `partial`; AI dialogue, escalation, full conversation UX, email capture/verification and reply delivery remain open.
+
+## FM-CR-013
+- Date: 2026-09-03
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue autonomously with the next safe Mobile completion block after the closed Play Alpha publication.
+- Classification: Repository-only atomic Mobile Push Delivery-Ledger foundation. No database apply, provider send, route, timer, worker, Production activation or Android build.
+- Affected areas: controlled Supabase SQL, server-only ledger adapter, checksum control, rollback-only Staging acceptance preparation, Mobile Push documentation/tests and Project Memory.
+- Existing task/decision checked: FM-MOB-001, closed FM-MOB-005, FM-CR-011, EXT-MOBILE-PUSH-STORE and the published Android `1.0.0` Alpha baseline.
+- Dependencies: exact reviewed `main`, existing service-role-only registration schema, transactionally revalidated target binding, fail-closed tests and later separate protected Staging apply/acceptance.
+- Decision: Implement as FM-MOB-006 at R3 while keeping all external mutation and provider/device acceptance open.
+- Related task: FM-MOB-006
+## FM-CR-014
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner
+- Idea: Continue Phase 8 autonomously toward the Website AI assistant handoff: keep complete visitor conversations visible in FanMind, let a visitor explicitly leave an email address, and raise a manual human handoff when automation cannot continue.
+- Classification: Repository-only, dormant Website Chat handoff and processing-boundary preparation. No database apply, installation activation, AI/provider request or outbound email.
+- Affected areas: Website Chat policy, public API/widget contract, controlled Supabase SQL, CRM inbox linkage, retention/runbook documentation and tests.
+- Existing task/decision checked: FM-CR-012, the disabled Website Chat session/message foundation, canonical Workspace processing policy and the existing RLS-protected contact/conversation timeline.
+- Dependencies: exact reviewed `main`, active Workspace processing entitlement, separately approved controlled Staging apply/acceptance, legal/privacy acceptance and a later separately gated email transport.
+- Decision: Implement as FM-WEB-001 at R3. The repository may prepare one explicit consent-bound handoff per visitor session and mark the linked CRM conversation urgent, but must remain fail-closed and must not send email or invoke AI.
+- Related task: FM-WEB-001
+
+## FM-CR-015
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue the Website Chat Phase-8 handoff work autonomously toward the Gerhard handoff without activating the feature or changing external state.
+- Classification: Repository-only protected Staging control preparation for the existing checksum-pinned Website Chat handoff SQL.
+- Affected areas: exact-main Staging policy, schema/apply runner, rollback-only synthetic acceptance, manual GitHub workflows, tests, runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014, FM-WEB-001 and the unapplied controlled Website Chat handoff SQL.
+- Dependencies: exact reviewed `main`, dedicated isolated-Staging Supabase/DB bindings, protected Staging environment, separate confirmations for read-only verify, apply and rollback-only acceptance.
+- Decision: Implement as FM-WEB-002 at R3. Repository publication is authorized; no workflow dispatch, database apply, Production mutation, installation activation, AI/provider request, outbound email or real visitor data is authorized.
+- Related task: FM-WEB-002
+
+## FM-CR-016
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue autonomously with the next safe Phase-8 Website Chat prerequisite after publishing the protected handoff controls.
+- Classification: Repository-only, dormant and bounded retention contract for technical Website Chat session/evidence rows. No database apply, timer, Production mutation, CRM deletion, AI/provider request or outbound email.
+- Affected areas: controlled Supabase SQL, checksum/offline verification, Website Chat tests, retention runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014/FM-CR-015, FM-WEB-001/FM-WEB-002, existing session/message/handoff foreign-key lifecycle and the requirement to preserve the CRM conversation history.
+- Dependencies: exact reviewed `main`, applied Website Chat handoff schema, later separately protected Staging verify/apply/rollback-only acceptance and legal/privacy acceptance before any operational schedule.
+- Decision: Implement as FM-WEB-003 at R3. Deletion may target only expired/revoked technical sessions after any Handoff evidence also expires; contacts, Conversations and messages remain outside the deletion boundary.
+- Related task: FM-WEB-003
+
+## FM-CR-017
+- Date: 2026-09-04
+- Status: ACCEPTED
+- Source: owner continuation authorization
+- Idea: Continue autonomously with the next safe Website Chat prerequisite toward handoff readiness after the bounded retention contract passed exact-main checks.
+- Classification: Repository-only protected Staging controls for the checksum-pinned Website Chat retention SQL. No workflow dispatch, database apply, schedule, Production mutation, installation activation, AI/provider request, outbound email or real visitor data.
+- Affected areas: retention SQL workspace scope, exact-main Staging policy, schema/apply runner, rollback-only synthetic acceptance, manual workflows, tests, runbook and Project Memory.
+- Existing task/decision checked: FM-CR-012/FM-CR-014/FM-CR-015/FM-CR-016 and FM-WEB-001/FM-WEB-002/FM-WEB-003.
+- Dependencies: exact reviewed `main`, isolated Staging bindings, marked synthetic Workspace, applied handoff schema, protected Staging environment and independent confirmations for verify, apply and acceptance.
+- Decision: Implement as FM-WEB-004 at R3. Repository publication is authorized; every workflow dispatch and database action remains separately authorized. Acceptance must be Workspace-scoped, rollback-only, browser-denied and preserve CRM history.
+- Related task: FM-WEB-004
+
+## FM-CR-022
+- Date: 2026-09-06
+- Closed: 2026-09-07
+- Status: ACCEPTED
+- Source: owner-resumed `FM-AI-001` finishline work
+- Idea: Reconcile Project Memory after the exact isolated-Staging deploy `34058028839` and rollback-only canonical Billing acceptance `34058118450` / job `101553652111` succeeded on `62e6a11858e85996af03f6740819b0fc6194b4a4`.
+- Classification: R4 evidence/reconciliation closeout only; no new runtime, provider, database, payment or paid-tier activation.
+- Affected areas: canonical AI/Billing and Mobile restart readers, evidence/freshness register, next-action bookkeeping and do-not-repeat boundaries.
+- Existing task/decision checked: FM-AI-001, FM-CR-020, `LOCK-FINISHLINE-RESUME-20260906`, FM-EV-035, AI-tier acceptance `34039968946`, general Billing Apply/capture/unfreeze and canonical Billing acceptance.
+- Dependencies: exact immutable workflow/run evidence, independent read-only counterchecks, complete rollback/cleanup evidence and exact-head CI/review before merge.
+- Decision: Accept only the bounded documentation/evidence closeout. Preserve `FM-AI-001=PARTIAL`, `ai_billing=PARTIAL`, `sales_ready=false`, disabled canonical Production projection and disabled Plus/Ultra. Product/private/provider/Legal/Tax/Production gates, Mobile real-device/Play and Restore remain open under their existing controls.
+- Related task: FM-AI-001
+## FM-CR-034 — expose safe Production audit failure evidence
+- Final receipt: #1110 comment 5640486486 closes this bounded Production-confirmed diagnostic package; the overall Operations and reboot gates remain open.
+- Date: 2026-09-11; Status: PRODUCTION_CONFIRMED; Task FM-OPS-001; Risk R4.
+- Source: Bernd requests continuing the open reboot/Creator/Restore work after the verified status report.
+- Scope: preserve the failed probe and exit code through the private-output workflow, report validated runtime/host measurements, keep every existing Operations acceptance rule. No backup redesign, repeated database restore, SQL, runtime activation or OS reboot.
+- Acceptance: executable failure/redaction/gate tests, reviewed exact-head CI and an installed current-release audit diagnostic. Whole Operations acceptance remains separate until the real fault and reboot evidence are closed.
+
+## FM-CR-035 — accept the approved hardened trigger in backup capture
+- Final superseding receipt: https://github.com/FanMind/FanMind/pull/1111#issuecomment-5644711203 confirms reviewed #1111 on c2342d66ff0fa9f9656360f326cc9ec60f1aaa80, scheduled database backup at 2026-09-12T00:31:01.985Z (validated and encrypted offsite), and full installed audit 34648286758 / 103525002411 PASS at 08:20:31 UTC. This bounded package and lock are closed; earlier pending fields below are historical. No extra backup or database Restore is required.
+- Date: 2026-09-11
+- Status: PRODUCTION_CONFIRMED
+- Task: FM-OPS-001
+- Risk: R4
+- Source: continue the owner's requested Operations completion using the newly proven blocker.
+- Observation: Production catalog at 20:50:08 UTC has the 13 public SECURITY DEFINER functions and the retained trigger is now browser-denied with the approved fixed search path. The backup source snapshot still requires that exact trigger to be browser-executable, so the hardened state is deterministically rejected. No historical job stack is available; this is a proven current blocker, not a claim that no other failure exists.
+- Scope: support the precise approved hardened state while preserving the historical legacy tuple and immutable Restore receipt schema/fingerprints; current source/PG17/security proof, reviewed publication, one controlled fresh database-backup proof. No rights change, database restore or weakening of the overall audit.
+
+## FM-CR-036 — Production boot-readiness and controlled reboot
+- Date: 2026-09-12
+- Status: IN_PROGRESS
+- Task: FM-OPS-001
+- Risk: R4
+- Source: Bernd explicitly requested controlled Ubuntu reboot and pre/post documentation; latest continuation resumes that accepted request after the completed backup blocker.
+- Scope: read-only installed boot-readiness collector/verifier and normal reviewed publication; then exact-target controlled reboot only after concrete start/recovery facts, with pre/post evidence. No generic remote command, migration, backup or restore repetition.
+- Acceptance: negative/redaction tests, current-head CI/security/review, installed target-bound readout and changed host boot ID plus exact release/nginx/PM2/process Node/eight health postchecks. Source-only proof cannot accept a reboot.
+# FM-CR-037 — manual Daily beta admission
+- Status: IN_PROGRESS
+- Decision: implement FM-DEC-019 as a server-owned, Platform-Admin-controlled manual Daily beta without countdown. Disabled means no public visibility or new admission/checkout; existing Daily subscriptions continue unchanged.
+- Scope: source, readers and tests only in this change. No Production database migration, payment, Price creation, account mutation or unrelated product work.
+
+## FM-CR-038 — Daily PR merge and review closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: merge current `main` into the existing Daily branch; close the open-session, lock-ownership, workflow-validation, CI-ownership and Admin-explanation findings. No Production apply, activation, payment or account deletion.
+- Acceptance: current-main ancestry, focused Daily/security/workflow regression tests, Product Truth, lint, TypeScript and production build; GitHub Current-Head CI/review remain publication gates.
+
+## FM-CR-039 — Daily post-merge security closeout
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: close the remaining CodeQL lock race, expose and retry incomplete open-Checkout cleanup, and make Production apply structurally unreachable below the verify-only workflow. No Production action or data mutation.
+
+## FM-CR-040 — durable Daily disable cleanup
+- Date: 2026-09-15
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Task: FM-CR-037
+- Risk: R4
+- Scope: persist and revision-bind incomplete open-Checkout cleanup, block re-enable until cleanup completes, and reconcile PR #1131 with current main. No Production action.
+# FM-CR-041 — confirmed-user Admin CRM access
+- Date: 2026-09-15
+- Status: PRODUCTION_CONFIRMED
+- Task: FM-REG-003
+- Risk: R4
+- Source: Bernd approved the Admin-CRM design and later explicitly authorized the exact Production DB rollout.
+- Decision/result: confirmed Supabase Auth registrations can be listed before Workspace creation; Platform Admin can provision exactly one 0-EUR Admin-CRM Workspace, later temporary or blocked, with atomic membership/audit and no Stripe coupling.
+- Source acceptance: PR #1134 passed current-head CI/review and merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`; Production deploy `35431328695` passed exact release/version/health smoke.
+- Production apply: exact migration `supabase/migrations/20260915221500_admin_crm_access.sql`, SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd`, applied once to exact Production Supabase `drqkpdvtbbrrdwmtrodz` as `20260919081945 admin_crm_access` after explicit owner authorization. Independent postflight proves the three functions, service-role-only mutation RPC, 19 restrictive entitlement policies and Workspace boundary.
+- Safety: no Stripe/Tax/Checkout/payment/provider/Mobile mutation was part of the rollout. The first real permanent grant later succeeded and created a correct 0-EUR/no-Stripe Workspace.
+- Acceptance gap: the runbook-required synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle was not completed before the first real grant. This sequencing deviation is recorded separately; no further real Admin-CRM grants are permitted until that synthetic lifecycle is accepted. The existing real Workspace is retained and must not be regranted or deleted.
+- Follow-up: FM-CR-043 is a separate Web routing defect found by the first real login; it does not reopen or repeat the completed R4 database rollout.
+
+## FM-CR-042 — Expo SDK 57 patch compatibility
+- Date: 2026-09-16
+- Status: ACCEPTED
+- Task: FM-MOB-001
+- Risk: R2
+- Source: PR #1132 exposed compatible Expo SDK 57 patch drift; the bounded correction was later incorporated into PR #1134.
+- Result: Expo/Constants/Notifications/Router were aligned to the then-current SDK-57 Doctor contract with deterministic lockfile and renewed bounded Mobile dependency review; PR #1134 current-head checks/review passed and merged as `630aef3ccb53fed9b46284cb1d4bf1825a57687e`.
+- Boundary: this accepts only the repository source/CI compatibility patch. It does not prove a newer signed binary, device acceptance, Push, Store, cohort or TestFlight.
+- Current owner timing: FM-DEC-021 defers all remaining Mobile/Handy work until company registration is complete and the owner explicitly resumes Mobile. Do not create another Expo patch PR for the already accepted #1134 correction.
+
+## FM-CR-043 — Admin-CRM active login must bypass paid Billing
+- Date: 2026-09-19
+- Status: PRODUCTION_CONFIRMED
+- Task: FM-REG-003
+- Risk: R2
+- Source: real Production owner browser acceptance after the separately authorized Admin-CRM rollout.
+- Observation: registration, email confirmation and permanent Admin grant succeed; exact Production Workspace is `admin_crm_access=true`, permanent, 0 EUR, manual/no-payment and has no Stripe binding, but login renders `/billing/start`.
+- Root cause: `getPreActivationRedirect()` handles only the denied Admin-CRM case and then lets an allowed Admin-CRM Workspace fall through to the generic `plan_id=starter` paid pre-activation branch.
+- Scope: active Admin-CRM returns no paid pre-activation redirect; blocked/expired remains `/workspace/access-paused`; direct Billing start/checkout/pending/success/cancel/suspended surfaces redirect Admin-CRM before any payment path.
+- Acceptance/result: PR #1136 final head `40da6a14e05ee977d6ebadc94d34f9db648a8343` passed all current-head checks and independent/security review, merged as `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`, and Production deploy `35434847795` passed exact `/api/version` plus 7-component health. Owner then re-used the same already-granted account and confirmed normal CRM access instead of `/billing/start`. No DB/user/payment/Stripe/Tax/provider/Mobile mutation was part of this hotfix.
+
+
+## FM-CR-044 — Facebook/Instagram inbound continuation after Admin-CRM login acceptance
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R3
+- Source: Bernd confirmed the same permanently free Admin-CRM account now reaches FanMind CRM successfully and explicitly requested continuing with Facebook/Instagram connection and permitted message import.
+- Baseline: current Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; Production read-only countercheck shows zero Facebook/Instagram `social_connections` for Admin-CRM workspaces.
+- Scope: preserve the existing Facebook/Instagram OAuth, explicit Facebook Page selection, Instagram Professional binding, encrypted server token handling, bounded initial DM import, incremental sync/webhook, tenant isolation and no-auto-send boundaries; port only still-valid current-main clarification/evidence from stale PR #1121.
+- Current source change: show a specific `workspace_inactive` explanation for Facebook/Instagram without weakening authorization or provider checks.
+- External boundary: no provider login/consent/App Review/permission/webhook activation is inferred from repository work. No passwords or tokens in chat. No DB, Stripe/Tax/payment, user-grant or Mobile mutation in this change.
+- Acceptance: current-head Social/Meta/core-flow tests, TypeScript/lint/build, Project Memory/Truth/Drift, Browser E2E, CodeQL and independent review. After publication, owner uses the already granted account in `/channels` for the real Facebook connection first, then Instagram.
+
+
+## FM-CR-045 — Production Meta OAuth placeholder configuration must fail closed
+- Date: 2026-09-19
+- Status: IN_PROGRESS
+- Task: FM-SOC3-001
+- Risk: R2
+- Source: real Production owner test after PR #1137. FanMind displayed Facebook “Serverkonfiguration: bereit”, but the generated Meta OAuth URL visibly contained the deploy placeholders `client_id=replace_with_facebook_app_id` and callback host `your-domain.example`; Meta therefore returned “Ungültige App-ID”.
+- Root cause: readiness and OAuth helpers treated any non-empty ENV string as configured, so example placeholders were accepted as live Production configuration.
+- Scope: reject placeholder App IDs/secrets/callbacks before provider navigation; show fail-closed configuration status in `/channels`; suppress misleading Coming-Soon/reservation UI for the actual Facebook/Instagram Beta controls; expose the existing Facebook comment-sync action after the separate comment permission is granted.
+- Expected real flow after external configuration: existing FanMind account -> Facebook connect -> official Meta consent -> explicit Page selection when needed -> callback back to FanMind -> saved connection -> bounded automatic initial Messenger import; comments remain a separate Meta permission and can then be synchronized into FanMind.
+- External boundary: repository code cannot invent the real central Meta App ID/secret or change the owner-controlled Meta Developer configuration. Production ENV must later receive the real server-side values securely, and the exact `https://fanmind.ch/api/integrations/facebook/callback` URI must be allowed in Meta. No secret may enter chat, Git, screenshots or logs.
+- No DB migration, user grant, Stripe/Tax/payment, automatic send or Mobile work.
+- Consolidation: PR #1138 is the sole canonical FM-CR-045 implementation. PR #1139 is closed as duplicate/superseded; its P1/P2 findings are folded into #1138 and must not create a second lock or merge path.
+- Final-review follow-through: the reviewed current-token scope, validated callback-origin fallback, comment-contact isolation, provider timestamp preservation and Page-authored-comment filtering are part of the same #1138 scope. No provider/DB schema/payment/Mobile mutation is added.
+- Second review follow-through: nested Facebook comment pagination is completed (or fails closed at an explicit safety cap) instead of silently truncating after 50; comment attachments are normalized and media-only comments receive bounded fallback text/message-kind metadata. These remain repository-only corrections under #1138.
+- Third review follow-through: timestamp-less comments sort after provider-timestamped history, and each manual comment-sync request is bounded to 100 processed comments / 8 seconds of persistence work. Partial progress stores an opaque, non-secret continuation marker in the existing server-written comment-status field and the UI renders only a friendly continuation state; no schema/DB migration is introduced.
+- Fourth review follow-through: completed comment sync retains a provider-timestamp high-water in existing `last_comment_fetch_at` while pending/error state remains separate in `last_comment_fetch_error`; later syncs start at the high-water (inclusive for same-timestamp dedupe safety) instead of replaying the full history. Top-level Page feed reads are bounded to the 25 most recent posts without failing merely because older feed pages exist; comment-edge pagination remains strict and separately capped.
+- Final current-head review follow-through: Facebook callback origin must match the configured active FanMind app outside the explicit local fixture; manual comment syncs are connection-scoped single-flight; imported comments are ordered oldest-first so provider timestamps cannot regress conversation recency.
+
+## FM-CR-046 — AI Capacity Billing v2
+- Date: 2026-09-30
+- Status: ACCEPTED_FOR_IMPLEMENTATION
+- Risk: R4
+- Contract: FM-CONTRACT-AI-BILLING-001
+- Integration gate: FM-IGATE-AI-BILLING-001
+- Source: Owner replaces the customer-facing KI Plus/Ultra add-on model with package-bound AI capacity.
+- Contract: EUR 99/199/312 base packages; monthly included AI cost budget per package (exact values deliberately open); Fast/Balanced/Premium quality modes; actual provider/model/token cost accounting; included capacity expires monthly; purchased capacity survives reset with explicit validity; included bucket consumed before purchased bucket; top-ups target about 33% gross margin.
+- Boundary: no Production payment/top-up activation, no invented package budgets, no automatic customer migration, and no Legal/Tax acceptance is implied.
+- Implementation: reuse existing cost/usage infrastructure and replace Plus/Ultra product semantics with an atomic workspace/month capacity ledger, reset and top-up lifecycle. Canonical design: docs/operations/AI_CAPACITY_BILLING_V2.md.
+
+
+## FM-CR-047 — AI Capacity policy foundation
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continued implementation after PR #1230 established the accepted Capacity-v2 contract.
+- Scope: dormant repository-only capacity package/mode/admin admission policy with exact 99/199/312 EUR package identities, Fast/Balanced/Premium modes, legacy-v1/capacity-v2 discrimination and default-off fail-closed controls.
+- Boundaries: no Supabase schema/apply, no Stripe/provider call, no Production activation, no real customer migration and no invented included AI budget.
+- Acceptance: focused positive/negative tests plus exact-head CI/CodeQL/Browser/God Mode/Project Memory and independent review.
+
+
+## FM-CR-048 — AI Capacity ledger/Admin persistence
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Scope: repository-only source for default-off AI Capacity persistence and Platform-Admin controls; no database apply or external activation.
+
+## FM-CR-049 — Creator-Building collapsible AI suggestions
+- Date: 2026-09-30
+- Status: IMPLEMENTED_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: rename the Owner-only ChatAdmin page heading to `Creator-Building`; group each stored suggestion sequence under its preceding inbound Fan message; place one accessible `▼`/`▲` control directly left of that message; keep stored suggestions collapsed when a Fan is opened and open the newest group once immediately after generation.
+- Acceptance: Fan and confirmed messages remain visible; the toggle exposes and hides exactly the associated AI suggestions; actionable copies follow the newest expanded group; Character/Fan/workspace authority, persistence, manual confirmation and no-auto-send boundaries remain unchanged.
+- Evidence: focused ChatAdmin/API suite 31/31, ESLint 0 errors, production build and diff check passed locally. PR #1240 exact-head Browser E2E, CI, CodeQL and Project Memory checks remain the publication gates.
+- Preflight: accepted-state drift passed. Evidence freshness passed with only unrelated already-open Restore, Mobile, Meta/Security, AI/Billing and older ChatAdmin/Creator evidence revalidation notices; none is used to support this bounded UI conclusion.
+
+
+## FM-CR-050 — Versioned OpenAI price catalog
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested official OpenAI pricing as the cost basis and clarified the FanMind modes: Premium uses the strongest suitable approved model, Ausgewogen a middle model, Schnell the fastest/lower-cost model for communication analysis and replies.
+- Scope: versioned provider-price catalog, stable mode-to-model policy, exact cost-engine resolver, canonical docs and tests.
+- Current mapping: Schnell = `gpt-6-luna`/low, Ausgewogen = `gpt-6.1-sol`/medium, Premium = `gpt-6-astra`/max; Standard processing only.
+- Boundaries: no external activation, no runtime provider switching yet, no package-budget decision, no Stripe/Tax/customer mutation.
+- Acceptance: official source snapshot, integer provider prices, long-context treatment, fail-closed unsupported price paths, required CI/security/governance and independent review.
+
+## FM-CR-051 — Fan row action menu and compact conversation
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Scope: remove the selected-Fan header, edit button and permanently visible facts/notes cards from the conversation pane; add a three-dot action menu to each Fan row with profile editing, focused notes/facts editing, activation/deactivation and revision-bound deletion.
+- Deletion contract: the authorized same-origin DELETE targets one workspace/Character/Fan/revision tuple; the existing database cascade removes that Fan's conversation and messages. A browser confirmation is required before the request.
+- Acceptance: the conversation starts at the top of the right pane; all Fan controls remain reachable from the row menu; inactive state remains visible and blocks new generation; no Character, workspace, manual-send or external-platform boundary changes.
+- Evidence: focused ChatAdmin/API suite 32/32, ESLint 0 errors, production build and diff check passed locally. PR current-head Browser E2E, CI, CodeQL and Project Memory checks remain publication gates.
+
+## FM-CR-052 — AI Capacity reserve/settle runtime foundation
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: owner requested continuation immediately after merged versioned OpenAI price catalog #1242.
+- Scope: atomic included/purchased grant allocation, reserve, actual-usage settle, release, indeterminate/reconciliation handling, explicit versioned FX conversion, server-only adapter/runtime coordinator and required tests.
+- Boundaries: repository-only; no Staging/Production APPLY, productive route switch, provider call, customer migration, package-budget decision or Stripe/top-up activation.
+- Acceptance: exact-head CI/security/governance, independent review and fail-closed evidence for missing usage/FX, insufficient balance, idempotency conflicts and actual cost above reserve.
+- No-free-reserve owner clarification: customer capacity is displayed as remaining percent; both analysis and reply generation use the same pool; 0% blocks all new Capacity-v2 AI reservations until paid additional capacity or the next billing-period grant. No free/throttled fallback and no automatic downgrade.
+
+## FM-CR-053 — Capacity-v2 Stripe catalog cutover and setup-fee retirement
+- Date: 2026-09-30
+- Status: ACCEPTED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner requested the old 312-EUR and one-time setup/pilot catalog to be retired and confirmed that FanMind will no longer charge any one-time setup fee.
+- Stripe evidence: live Capacity-v2 prices exist for EUR 99, 199 and 312; legacy Starter 312 and both 990-EUR setup/pilot Products were marked inactive for new sale. Existing references remain migration/audit evidence.
+- Repository scope: introduce Capacity-v2 Stripe env slots, remove setup-fee dependency from legacy checkout compatibility, set legacy setup terms to zero, and reconcile canonical product truth.
+- Boundary: no package AI-budget invention, no automatic customer migration, no Capacity-v2 sales activation, no top-up activation and no Legal/Tax acceptance.
+- Acceptance: exact-head CI/security/governance and independent review; public/product truth contains no new setup-fee promise; remaining activation gates continue fail-closed.
+
+
+## FM-CR-054 — Creator-Building taller conversation pane
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Owner requested that the unused vertical space in the desktop Creator-Building be used for the conversation instead of ending the chat at the previous 39vh cap.
+- Scope: make the desktop Creator-Building workspace consume the available viewport height and let the conversation history flex into that space while leaving the composer/actions below it; keep the existing compact mobile history cap.
+- Boundary: layout-only CSS change; no chat persistence, AI generation, Fan/Character authority, billing, provider, database or external-platform behavior changes.
+- Acceptance: desktop conversation history is materially taller on large screens, retains its own scroll when needed, composer remains reachable below it, and mobile retains the bounded layout.
+
+
+## FM-CR-055 — Creator-Building auto-scroll to latest message
+- Date: 2026-09-30
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: Follow-up to the taller conversation pane: a long conversation should open at the newest message rather than forcing the creator to scroll down manually.
+- Scope: keep a local reference to the Creator-Building conversation history and scroll that container to its current bottom whenever the selected Fan changes or freshly loaded conversation messages change.
+- Boundary: client-side navigation behavior only; no persistence, message ordering, AI generation, Fan/Character authority, billing, database or external-platform behavior changes.
+- Acceptance: opening another Fan or reloading the conversation after generation/confirmation presents the newest conversation content; expanding or collapsing stored AI suggestions alone does not trigger a forced jump.
+
+
+## FM-CR-056 — Apply owner-approved Capacity-v2 package budgets
+- Date: 2026-09-30
+- Status: IN_PROGRESS
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner approved 15 / 30 / 50 EUR included AI cost budgets for the 99 / 199 / 312 EUR Capacity-v2 packages.
+- Scope: encode canonical package budgets in server policy, seed the controlled policy schema with those values, update reader/admin surfaces, types/tests and canonical truth.
+- Boundary: no Production activation, no customer migration and no top-up sale.
+- Acceptance: exact-head CI/security/governance, independent exact-head review, and fail-closed runtime/package-sales/top-up switches remain off.
+
+## FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck
+- Date: 2026-09-30
+- Status: COUNTERCHECKED
+- Task: FM-AI-001
+- Risk: R4
+- Source: Owner explicitly requested continuing with the isolated-Staging Capacity-v2 budget/RLS/negative acceptance step.
+- Target: FanMind Staging `vshyhvgcmrlagvfnvomc`.
+- Result: policy revision advanced 1 -> 2 with EUR 15 / 30 / 50 budgets; one audit row `ai_capacity_staging_budget_seed` / `FM-DEC-027`; global runtime, all package-sales switches, all quality modes, top-ups and all three activation-ready flags remained false, emergency freeze remained true.
+- Negative evidence: runtime/package-sales/top-up activation attempts were transactionally rejected by their activation guards; anon/authenticated have no SELECT privilege on policy/grants; grants/reservations/ledger-events remained 0.
+- Open blocker: reserve/settle RPCs are not installed on Staging. The current controlled reserve/settle SQL on main contains an actual source defect in `ai_capacity_grant_credit` (policy variables referenced there without declarations) and cannot be applied unchanged. Fix and review that source separately before any Staging ledger APPLY.
+- Boundary: no Production mutation, no AI runtime activation, no package-sale activation, no top-up sale, no customer migration.
+
+
+## FM-CR-058 — Creator-Building fixed shell with three scroll panes
+- Date: 2026-10-04
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R1
+- Task: FM-CHATADMIN-002
+- Source: continuation of open PR #1251 after integrating current main; the earlier branch-local FM-CR-056 identifier now belongs to the accepted Capacity-v2 budget task on main and is not reused.
+- Scope: fix the desktop Creator-Building to the viewport and give Character list, Fan list and conversation pane independent vertical scrolling; retain the flowing mobile layout and latest-message positioning.
+- Boundary: layout and client-side scroll targeting only; no persistence, AI generation, Fan/Character authority, billing, database, provider or external-platform behavior changes.
+- Acceptance: desktop has no outer page scrollbar from Creator-Building content; all three panes scroll independently; conversation opens at newest content; mobile remains responsive; exact-head relevant CI passes.
+
+## Root React dependency coupling — 2026-10-05
+- Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
+
+2026-10-05 — Orchestrator authorization: New Owner-direct manual preparations bind an unchanged authenticated existing Owner-comment snapshot and the complete fresh-main task contract; the authorized Parent remains responsible for confirming that the original prose semantically covers that bounded contract, while the accepted historical COMPLETED receipt remains valid. Evidence: the first post-acceptance reuse exposed the circular new-task main-registration requirement; bounded correction PR #1278 final head `0bdb2e1de89307b47564da76d67e2b75c9c4111f` passed all eight applicable exact-head workflows and two independent counterchecks, then merged normally as `f7c1606c07006d95884fb81992c0a30f28b47904` at `2026-10-05T14:57:52Z`; automatic deploy, readiness and audit confirmed that live revision, with only the pre-existing stale database/full-backup evidence still open.
+
+
+## FM-CR-059 — ChatAdmin manual customer color tier
+- Date: 2026-10-06
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Source: Owner requested a manual customer classification in ChatAdmin, visually represented by red/new customer, blue/regular customer, yellow/premium customer and green/VIP while keeping technical active/inactive status separate.
+- Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
+- Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
+- Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
+
+## FM-CR-060 — Website support confirmed message-sync repair
+- Date: 2026-10-22; Updated: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Risk: R3 (Auth/workspace/provider-read and audit-schema source)
+- Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
+- Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
+- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all emitted workflows. PR #1352 source head 44a9cd9e2a1313df0c5a90be8ceafe831dc0684e passed its two emitted governance workflows, a 16/16 focused Node 24 harness and independent R3 countercheck with P0/P1/P2/P3 = 0/0/0. No full stacked-PR CI, PostgreSQL, browser, Staging or provider run was available; the audit schema remains unapplied and both flags remain off.
+- Acceptance: source preflight is complete but runtime acceptance remains open. Merge #1351 then #1352 normally, deploy the resulting exact main, classify the isolated Staging schema read-only, and obtain separate target/commit/checksum-bound approvals for schema APPLY, temporary no-provider runtime-negative acceptance and any later provider-positive test.
+

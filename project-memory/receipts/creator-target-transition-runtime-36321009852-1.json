@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "task": "FM-CREATOR-001",
+  "action": "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME",
+  "status": "RECONCILED_FAIL_CLOSED",
+  "scope": "creator_target_transition_runtime_staging",
+  "observed_at": "2026-09-27T13:04:07Z",
+  "authorization": "FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927",
+  "workflow": {
+    "run_id": 36321009852,
+    "attempt": 1,
+    "event": "issue_comment",
+    "source_sha": "8bf23be6af739086354c58548ea43c3910c17ee1",
+    "triggering_actor_login": "Bernds-tech",
+    "triggering_actor_id": 270165082,
+    "command_comment_id": 5856097930,
+    "consumption_comment_id": 5856099043,
+    "conclusion": "failure"
+  },
+  "jobs": {
+    "authorize": {
+      "job_id": 108624693455,
+      "conclusion": "success"
+    },
+    "deploy_staging": {
+      "job_id": 108624718097,
+      "conclusion": "success"
+    },
+    "transition": {
+      "job_id": 108624905760,
+      "conclusion": "failure",
+      "target_state": "DRIFT",
+      "apply": "not_requested",
+      "runtime_activated": false
+    },
+    "runtime": {
+      "conclusion": "skipped"
+    },
+    "recovery": {
+      "job_id": 108624950593,
+      "conclusion": "failure",
+      "cause": "runner_sudo_policy_rejected_file_operations"
+    }
+  },
+  "effects": {
+    "sql_apply_count": 0,
+    "runtime_activation_count": 0,
+    "production_mutation_count": 0,
+    "staging_deploy_completed": true
+  },
+  "diagnosis": {
+    "transition_output_missing_bounded_drift_sections": true,
+    "recovery_file_operations_required_passwordless_sudo": true,
+    "runtime_file_operations_would_share_failure_class": true
+  },
+  "required_correction": {
+    "repository_source": "emit bounded validated drift diagnostics; use the staging deploy user for recovery-file operations; reserve sudo -n for allowed service commands; preserve the recovery snapshot across deploy rsync",
+    "protected_retry": "after corrected exact main is merged, obtain one new owner-authenticated issue command bound to that then-current main"
+  },
+  "boundaries": "This receipt records a failed protected Staging execution. It is not target acceptance, SQL APPLY, runtime acceptance or Production evidence."
+}

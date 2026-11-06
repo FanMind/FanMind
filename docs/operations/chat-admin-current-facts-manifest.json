@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "sql": "supabase/controlled/chat_admin_current_facts.sql",
+  "sha256": "a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947",
+  "state": "SOURCE_ONLY_UNAPPLIED",
+  "runtimeDefault": "disabled",
+  "genericDeployApply": false
+}

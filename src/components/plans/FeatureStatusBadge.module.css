@@ -1,0 +1,47 @@
+.badge {
+  align-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.28rem 0.55rem;
+  text-transform: uppercase;
+}
+
+.badge[data-status="active"] {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.32);
+  color: #bbf7d0;
+}
+
+.badge[data-status="demo"] {
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.36);
+  color: #bfdbfe;
+}
+
+.badge[data-status="limited"] {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.34);
+  color: #fde68a;
+}
+
+.badge[data-status="upgrade"] {
+  background: rgba(168, 85, 247, 0.14);
+  border-color: rgba(168, 85, 247, 0.34);
+  color: #e9d5ff;
+}
+
+.badge[data-status="coming_soon"] {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: rgba(20, 184, 166, 0.34);
+  color: #99f6e4;
+}
+
+.badge[data-status="preview"] {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.34);
+  color: #e2e8f0;
+}

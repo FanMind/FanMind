@@ -1,0 +1,136 @@
+name: FanMind Uptime Monitor
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: fanmind-public-uptime
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ALERT_TITLE: "[Uptime] FanMind public healthcheck failed"
+    steps:
+      - name: Checkout monitor
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Run public checks
+        id: checks
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          node scripts/monitor-public-uptime.mjs \
+            --base-url https://fanmind.ch \
+            --expected-runtime-environment production \
+            --timeout-ms 15000 \
+            --attempts 3 \
+            --json > uptime-report.json
+          status=$?
+          cat uptime-report.json
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit "$status"
+
+      - name: Prepare redacted issue report
+        if: always()
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          let report;
+          try {
+            report = JSON.parse(fs.readFileSync('uptime-report.json', 'utf8'));
+          } catch {
+            report = {
+              ok: false,
+              checkedAt: new Date().toISOString(),
+              releaseCommit: null,
+              total: 0,
+              passed: 0,
+              failed: 1,
+              results: [{ name: 'monitor', path: null, ok: false, error: 'report_unavailable' }],
+            };
+          }
+          const lines = [
+            '## FanMind public uptime monitor',
+            '',
+            `- Checked at: ${report.checkedAt}`,
+            `- Result: ${report.ok ? 'healthy' : 'failed'}`,
+            `- Release commit: ${report.releaseCommit ?? 'unknown'}`,
+            `- Passed: ${report.passed}/${report.total}`,
+            `- Workflow: ${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+            '',
+            '| Check | Result | HTTP | Duration | Error |',
+            '| --- | --- | ---: | ---: | --- |',
+          ];
+          for (const item of report.results ?? []) {
+            lines.push(
+              `| ${item.name} | ${item.ok ? 'OK' : 'FAILED'} | ${item.status ?? '-'} | ${item.durationMs ?? '-'} ms | ${item.error ?? '-'} |`,
+            );
+          }
+          lines.push('', 'No credentials, response bodies or customer data are included in this report.');
+          fs.writeFileSync('uptime-issue.md', `${lines.join('\n')}\n`);
+          NODE
+          cat uptime-issue.md
+
+      - name: Open or update one alert issue
+        if: steps.checks.outputs.status != '0'
+        shell: bash
+        run: |
+          existing="$({
+            gh issue list \
+              --repo "$GITHUB_REPOSITORY" \
+              --state open \
+              --limit 100 \
+              --json number,title \
+              --jq '.[] | select(.title == "[Uptime] FanMind public healthcheck failed") | .number'
+          } | head -n 1)"
+
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body-file uptime-issue.md
+          else
+            gh issue create \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "$ALERT_TITLE" \
+              --body-file uptime-issue.md
+          fi
+
+      - name: Close alert after recovery
+        if: steps.checks.outputs.status == '0'
+        shell: bash
+        run: |
+          existing="$({
+            gh issue list \
+              --repo "$GITHUB_REPOSITORY" \
+              --state open \
+              --limit 100 \
+              --json number,title \
+              --jq '.[] | select(.title == "[Uptime] FanMind public healthcheck failed") | .number'
+          } | head -n 1)"
+
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" \
+              --repo "$GITHUB_REPOSITORY" \
+              --comment "FanMind public healthcheck recovered successfully in workflow run $GITHUB_RUN_ID."
+          fi
+
+      - name: Enforce monitor result
+        if: steps.checks.outputs.status != '0'
+        run: exit 1

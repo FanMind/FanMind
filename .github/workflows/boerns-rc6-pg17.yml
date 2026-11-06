@@ -1,0 +1,75 @@
+name: Boerns RC6 PostgreSQL 17 Manual CI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rc6_pg17:
+    name: RC6 isolated synthetic PG17 proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      rc6_primary:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: boerns-rc6-ci-only
+          POSTGRES_DB: boerns_rc6
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=boerns_rc6"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+      rc6_rollback:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: boerns-rc6-ci-only
+          POSTGRES_DB: boerns_rc6
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=boerns_rc6"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout manual harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout exact RC6 source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: f1568c42f3ae08c9014ac659a7030d115b76654e
+          path: .boerns-rc6-source
+          persist-credentials: false
+
+      - name: Verify frozen inputs and run isolated PG17 harness
+        env:
+          BOERNS_RC6_SOURCE_REPO: ${{ github.workspace }}/.boerns-rc6-source
+          BOERNS_RC6_PRIMARY_CONTAINER_ID: ${{ job.services.rc6_primary.id }}
+          BOERNS_RC6_ROLLBACK_CONTAINER_ID: ${{ job.services.rc6_rollback.id }}
+        run: timeout --signal=TERM --kill-after=10s 13m bash scripts/boerns_rc6_pg17_ci.sh
+
+      - name: Emit bounded service diagnostics and clean owned paths
+        if: always()
+        shell: bash
+        env:
+          BOERNS_RC6_PRIMARY_CONTAINER_ID: ${{ job.services.rc6_primary.id }}
+          BOERNS_RC6_ROLLBACK_CONTAINER_ID: ${{ job.services.rc6_rollback.id }}
+        run: |
+          set -euo pipefail
+          for container_id in "$BOERNS_RC6_PRIMARY_CONTAINER_ID" "$BOERNS_RC6_ROLLBACK_CONTAINER_ID"; do
+            if [[ -n "$container_id" ]]; then
+              docker logs --tail 120 "$container_id" 2>&1 || true
+              docker exec "$container_id" sh -c                 'rm -rf /tmp/boerns-rc6 /tmp/boerns-artifacts' || true
+            fi
+          done

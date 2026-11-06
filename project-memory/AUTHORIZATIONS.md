@@ -1,0 +1,184 @@
+## FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927
+- Status: OWNER_ACTION_REQUIRED
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R3 protected read-only Staging observation.
+- Source: run `36321009852` established DRIFT without bounded differing sections. PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged normally as exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`, satisfying the technical prerequisite. After this reconciliation merges, the activating authorization is one exact owner-authenticated issue #874 command: `run-creator-target-drift-diagnosis <then-current-main-sha>`, where the supplied SHA must equal the then-current `main`.
+- Authorized target: FanMind Staging `vshyhvgcmrlagvfnvomc` only. Production is forbidden.
+- Authorized operation: one exact-main, private-reference-bound, repeatable-read catalog classification that emits only validated state, differing-section and blocker tokens. No SQL APPLY, deploy, runtime activation or Production mutation; no raw/private catalog, credential or customer data may be logged.
+- Completion boundary: the result is diagnosis only. DRIFT/INCOMPLETE/PARTIAL/unknown requires a separately reviewed remediation before any new transition/runtime authorization. It must not automatically dispatch or reactivate the consumed transition command.
+
+## FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Status: CONSUMED_FAIL_CLOSED
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
+- Risk: R4
+- Source: Bernd explicitly instructed on 2026-09-27 that Creator Closeout / Memory-Reconciliation and Creator Target APPLY / Runtime-Aktivierung must be completed today, then explicitly said to continue.
+- Authorized target: FanMind Staging `vshyhvgcmrlagvfnvomc` only. Production is forbidden.
+- Authorized source/integration: use only the accepted PR #1207 independent profile/reference evidence, accepted PR #1209 transition generator, final Creator closeout main, and the separately reviewed R4 runner/workflow from this scope. Deploy only the exact reviewed current main to isolated Staging through the existing protected Staging deploy workflow.
+- Authorized database mutation: one fail-closed Legacy-to-Current Creator Foundation transition on Staging only, and only when a fresh exact target classification is LEGACY_EXACT, all four Creator tables are empty, active Creator RPC sessions are zero, the accepted private reference hash/pins match, Production exclusion and TLS verify-full are proven, and the full Legacy catalog is rechecked under the same transaction/advisory/table-lock protection immediately before the seven pinned transition steps. Full Current postflight must pass before COMMIT. CURRENT_EXACT means no transition write. DRIFT/INCOMPLETE/PARTIAL/unknown means stop without write.
+- Authorized runtime mutation: after exact-main Staging deployment and successful Current postflight, set server-only `FANMIND_CREATOR_INTELLIGENCE_ENABLED=true` on the isolated Staging host, restart only `fanmind-staging.service`, verify exact `/api/version`, authenticate only the existing marked synthetic Staging owner and require `GET /api/creators` to return `available:true` with zero Creator rows. On runtime verification failure, restore only the prior Staging flag file and restart the same service; do not roll back a successfully verified schema transition blindly.
+- Dispatch: one exact owner-authenticated command on master issue #874, `run-creator-target-transition-runtime <current-main-sha>`, consumed by one protected workflow run. The command must match current main exactly and may not be replayed unchanged after successful consumption.
+- Boundaries: no Production database/runtime/config mutation; no customer/real Creator/fan fixture; no model/provider call; no external send; no Billing/Stripe/Tax/Restore/Mobile mutation; no secrets or raw private catalog/reference artifacts in logs, Git or chat.
+- Completion evidence required: exact source PR/head/CI/review, exact main/deploy run, protected transition run with Legacy preflight + committed Current postflight, private-artifact cleanup, Staging runtime flag readback via authenticated synthetic API, independent read-only target countercheck, lock/receipt reconciliation. Merge, deploy, target APPLY and runtime acceptance remain separate claims.
+- Consumption: exact issue #874 command comment `5856097930` was authenticated and consumed by marker `5856099043` and protected run `36321009852` on main `8bf23be6af739086354c58548ea43c3910c17ee1`. Authorization and exact deploy passed; classification returned DRIFT, so APPLY was not requested, runtime was skipped and no SQL/runtime/Production mutation occurred. Recovery failed on disallowed passwordless `sudo` file operations. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Reuse: forbidden. The repository defect may be corrected under the active lock and normal PR authority. Because the target is already known DRIFT, the next protected action after merge is only FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927; any later transition/runtime run requires reviewed drift remediation plus a distinct fresh authorization.
+
+## FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
+- Status: CONSUMED
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-STAGING-CATALOG
+- Risk: R3
+- Source: Bernd's existing autonomous continuation instruction and FM-DEC-024 Creator-second priority; distinct bounded observation after completed PR #1204 source.
+- Authorized: Bounded owner-authorized read-only Staging catalog observation under FM-AUTH-CREATOR-FOUNDATION-STAGING-CATALOG-20260926, priority 2 under FM-DEC-024. Use only the reviewed PR #1204 catalog SELECT in its repeatable-read, read-only transaction against FanMind Staging vshyhvgcmrlagvfnvomc; bind fresh Staging project identity/health and exact reviewed source/query. Application-release context is separate: the live version probe is unavailable (browser ERR_BLOCKED_BY_CLIENT and public retrieval unavailable); retain only historical release 9652ae62928c70d8f39d8f184857a34fcd4de74f observed 2026-09-26T16:27:14.666Z with release_fresh=false and release_probe=UNAVAILABLE. This read-only database catalog observation does not depend on app runtime and provides no fresh deployed-version or runtime acceptance. Validate the actual successful final-head CI run/job and reference artifact, tested checkout and PR-head identities, manifest/source/query/catalog/provider/parent pins and hashes, parent RLS and authority-helper contracts, and independently reviewed Supabase provider-role provenance plus the full supported provider contract. Build/classify references offline with their SHA256 recorded outside the reference. CI fixture roles and the target under test are never their own approved provider-role reference. Missing or untrusted reference/profile/coverage means INCOMPLETE; the supported upstream provider profile is not a Hosted-default claim. Preserve actual LEGACY_EXACT/CURRENT_EXACT/DRIFT/INCOMPLETE without promoting it to feature acceptance. Keep targetAccepted=false, applyAllowed=false, learningState=UNDETERMINED and runtimeActivated=false. Record an actual separately dated observation receipt and private credential/artifact cleanup; no result is claimed yet. No schema APPLY, target DDL/data/role changes, temporary helper, customer fixture, runtime activation, provider/model call, workflow dispatch or Production/Billing/Restore/Mobile mutation. Existing user authorization covers this narrow read-only continuation; no repeated permission question. Keep NBA-CREATOR-INTELLIGENCE CONSUMED and the failed learning VERIFY consumed.
+- Consumption: one scoped observation and its private cleanup/reconciliation; no unchanged retry or target mutation.
+
+
+- Consumed by: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
+- Continuations consumed: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN is ACCEPTED by PR #1207 / merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR is ACCEPTED by PR #1209 / merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`. Prior target observation authorization cannot be reused, and any later target observation/reference acceptance or transition needs its own current protected authorization and exact target binding.
+
+## FM-AUTH-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: CONSUMED
+- Source: Bernd's autonomous continuation and FM-DEC-024.
+- Consumed observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Evidence: `project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json`.
+- Boundary: no schema APPLY, runtime activation, provider/customer/Production mutation. No unchanged retry; further source diagnosis uses its separate bounded action.
+
+## FM-AUTH-CHATADMIN-MANUAL-FLOW-20260926
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly requested fresh preflight, synthetic fixture preparation, actual Staging manual flow, negative tests, cleanup, independent countercheck and Project Memory/Finishline reconciliation on 2026-09-26.
+- Scope: FM-CHATADMIN-002 / NBA-CHATADMIN-MANUAL-FLOW; necessary bounded source corrections and their tested/reviewed normal PR path, exact reviewed Staging deployment, temporary synthetic non-customer capability/runtime fixtures, actual Character -> pasted synthetic Fan message -> three bound AI suggestions -> copy/manual handoff, cleanup and independent zero-residue countercheck.
+- Target: only FanMind Staging (`vshyhvgcmrlagvfnvomc`, `https://staging.fanmind.ch`), with fresh exact release/schema/identity checks before every protected action.
+- Boundary: no real customer/fan fixture, OnlyFans/Social send, automatic send, Production capability/schema activation, Billing/Stripe/Tax/Restore/Mobile mutation. Prior APPLY and DB/RLS ACCEPT remain consumed; no repeat.
+- Necessary deployment recovery remains bounded to preserving the already-running Staging configuration: reviewed source-copy exclusion and explicit exact-service reconstruction of a missing generated `.release.env` from its existing nonsecret values. No Billing setting may change, missing proof may not be invented, no secret file is read and no Stripe/capture action is authorized. The original `preserve` requirement remains mandatory.
+- Exact consumed result: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Reuse: forbidden for this completed action. Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+
+## FM-AUTH-CHATADMIN-STAGING-ACCEPT-20260926
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly initiated the protected ChatAdmin Staging ACCEPT, then corrected the required protected Staging fixture configuration and authorized continuation of the same exact action after the first fail-closed attempt.
+- Exact scope consumed: GitHub Actions run `36238536613`, successful attempt 2 / job `108396358120`, exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`, target FanMind Staging Supabase `vshyhvgcmrlagvfnvomc`, mode `ACCEPT`, confirmation `run-chat-admin-acceptance`.
+- Result: same-run schema preverify returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`; rollback-only DB/RLS acceptance returned `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS` and `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`; password-file cleanup passed.
+- Independent postflight: Staging capability/character/conversation/message row counts are all zero, all four ChatAdmin tables retain RLS, and Production `drqkpdvtbbrrdwmtrodz` still has none of the ChatAdmin tables.
+- First attempt: run attempt 1 / job `108394659516` failed before fixture mutation with `CHAT_ADMIN_ACCEPTANCE_ERROR=fixture_identity` because the protected fixture variables were empty. This was corrected by protected environment configuration, not by bypassing the workflow.
+- Not authorized/consumed: no real capability grant/customer data, no real manual application-flow acceptance, no Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation and no automatic send.
+- Reuse: forbidden. The later manual ChatAdmin application-flow acceptance is a separate protected action.
+
+## FM-AUTH-CHATADMIN-STAGING-APPLY-20260926
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly authorized only the controlled ChatAdmin Staging APPLY and then manually dispatched the protected workflow after the exact inputs were checked.
+- Exact scope consumed: one `FanMind ChatAdmin Staging Rollout` run `36235870895` / job `108387398410` against reviewed commit `2aaf225fec29fd91c20f822185c770f87eb3d10d`, target Supabase Staging `vshyhvgcmrlagvfnvomc`, mode `APPLY`, confirmation `apply-chat-admin-migration`.
+- Pinned migration: `supabase/controlled/20260920230000_chat_admin_multi_character.sql`, SHA-256 `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`.
+- Result: workflow APPLY and its built-in postflight succeeded with `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`. Independent read-only Supabase countercheck confirms all four expected ChatAdmin tables, RLS/policies/grants, the SECURITY INVOKER helper and global uniqueness index; all four tables contain zero rows. Production `drqkpdvtbbrrdwmtrodz` has none of the four ChatAdmin tables.
+- Not authorized/consumed: no ACCEPT run, real capability grant, real customer data, Production/provider/Billing/Stripe/Tax/Restore/Mobile mutation, automatic send or manual application-flow acceptance.
+- Reuse: forbidden. Any later protected mutation, including ChatAdmin ACCEPT or Production apply, is a distinct exact action.
+
+## FM-AUTH-ADMIN-CRM-PRODUCTION-APPLY-20260919
+- Status: CONSUMED
+- Risk: R4
+- Source: Bernd explicitly authorized: “Production-DB-Rollout für Admin-CRM freigegeben”.
+- Exact scope consumed: one application of `supabase/migrations/20260915221500_admin_crm_access.sql` SHA-256 `7d1201fc5b45b571d2944b301eb1f5f197ea4f25ad643c8e8010d9d0ba3c1efd` to exact Production Supabase `drqkpdvtbbrrdwmtrodz` bound to deployed release `630aef3ccb53fed9b46284cb1d4bf1825a57687e`.
+- Result: migration `20260919081945 admin_crm_access` applied once; independent postflight PASS.
+- Not authorized by this receipt: additional migration, rollback/drop, generic db push, user grant, Stripe/Tax/payment/provider/Mobile mutation.
+- Reuse: forbidden. Any later Production DB mutation requires new exact action-time authorization.
+
+# Project Authorizations
+
+## FM-AUTH-CREATOR-SOCIAL-20260910
+- Source: Bernd's current explicit instruction to continue Creator Intelligence and Social/AI handoff now and finish Android afterwards.
+- Status: ACTIVE
+- Authorized: necessary source/model/UI/route implementation, isolated synthetic local verification, branch/PR and existing normal roadmap publication workflow.
+- Boundary: no automatic migration, real platform message, provider approval, payment, new Android binary or invented legal/customer evidence. FM-DEC-015 supersedes only older scheduling restrictions.
+
+## FM-AUTH-PAID-ACTIVATION-20260910
+- Source: Bernd explicitly requested "ok nun bitte Aktivieren" and then "arbeite bitte weiter und wir wollen alles nun aktivieren".
+- Status: ACTIVE
+- Authorized: necessary implementation, tests, reviewed branch/PR/merge/publication and technically validated controlled Production activation of the three approved plans. Do not ask for the same activation permission again.
+- Factual boundary: no invented tax treatment/UID, legal review, customer acceptance, email receipt or provider evidence. Follow the target-bound rollout with verified prerequisites; preserve existing successful releases and controls.
+
+## FM-AUTH-THREE-OFFERS-PUBLISH-20260910
+- Status: ACTIVE
+- Source: owner requests all three listed payment models and "alles bitte voll freigeben", while asking to close/reconcile Restore, genuine registration, AI/Billing and Security/Meta.
+- Authorized: necessary implementation, relevant verification and normal reviewed FanMind/FanMind PR/merge/Production publication; reuse the existing prices and previously accepted work.
+- Retained boundaries: no fabricated tax/UID/contract-consent/provider acceptance, unapproved email recipient, automatic customer charge, destructive Restore cleanup or reuse of the previously rejected Restore password-change action.
+
+## FM-AUTH-REGISTRATION-PUBLISH-20260910
+- Source: current owner instruction to finish registration and publish it now.
+- Scope: implement, test, review and publish the registration correction through branch/PR, green CI and the existing normal Web deployment.
+- Boundary: the instruction does not constitute external legal/tax evidence, consent by future customers, permission to send test emails to unapproved recipients, or a protected database/provider activation. Preserve those factual and operational gates.
+
+## FM-AUTH-ROADMAP-VISIBLE-20260910
+- Source: current owner follow-up reports the approved Phase-7 addition missing on fanmind.ch and asks for reliable retention plus the open points.
+- Scope: complete that visible roadmap correction through existing PR #1090, green checks/review and the normal Web release path. Correct stale Staging/Android presentation only from recorded evidence.
+- Boundary: no Creator implementation, migration, payment, credential/access change, provider activation, Mobile build or acceptance inferred from publication. Existing protected gates remain applicable.
+
+## FM-AUTH-RST-SSH-20260910
+- Granted by: Bernd in this session immediately after the exact prepared rule was presented; owner replied that if needed, save it.
+- Scope: one ingress TCP 22/22 rule from the specifically reviewed owner IPv4 /32 to fanmind-restore-isolated, which is attached only to the existing fanmind-restore-01.
+- Result: saved once and read back; rule prefix eb474b38. Source address remains private. Owner independently reached SSH authentication, but login failed after passphrase/password attempts. Network reachability is confirmed; host authentication remains open.
+- Boundary: no default-group change, broad source range, extra port, new key, database Restore, new provider target/cost or Storage operation. This is a new scope and does not reuse retired FM-RST-OWNER-005.
+
+## Protected AI run authorization reconciliation — 2026-09-10
+- Run 34273836166 technically passed on 7f681d26, but a separate exact action-time protected-Staging authorization is not verified in the available record.
+- FM-AUTH-FINISHLINE-PUBLISH-20260908 is publication/normal-release/Restore scope; it does not establish the independent AI fixture-write approval.
+- No new or retrospective authorization is created by this documentation. Keep CTR-FM-AI-AUTH-20260910 open, retain observed technical results, and do not automatically repeat the run.
+
+## Standing authorizations from Bernd
+
+- Maintain and extend the Project Memory system.
+- Create implementation branches and pull requests for project-memory governance changes.
+- Update documentation, ledgers, open loops, dependencies, evidence, decisions and handoff files when needed.
+- Continue FanMind work according to the recorded roadmap, repository rules and project-memory state.
+
+## Not covered by standing authorization
+
+- production database writes or restores;
+- destructive infrastructure changes;
+- production secrets, key rotation or secret disclosure;
+- payment/billing changes;
+- publishing production releases;
+- bypassing failing security, supply-chain or governance checks;
+- real external account integrations without available credentials/permissions.
+
+## Operating rule
+
+If an action is covered here and technically possible through connected tools, proceed without asking again. If the platform requires confirmation or the action is outside this file, record the blocker in project-memory/OPEN_LOOPS.md or project-memory/SESSION_HANDOFF.md.
+
+## Current caution
+
+FanMind has stricter governance gates than the WellFit repositories. A green Project Memory Guard alone is not enough to merge when other FanMind gates are red.
+
+## FM-AUTH-RST-STORAGE-LOCAL-ONLY-20260907
+
+- Granted by: Bernd in the current session after reviewing the additional-target cost and purpose.
+- Initial scope: continue the Storage Restore work after the repository preparation merge.
+- Final owner choice: `Nur lokal testen`; do not create a Supabase project or Preview branch and do not mutate FanMind Production or FanMind Staging.
+- Authorized result: repository implementation and synthetic local verification of the fail-closed Storage write/postcheck/rollback controller.
+- Not authorized/proven: real backup decryption, provider upload, remote bucket creation, external `STORAGE_RESTORED`, server-config activation or target deletion.
+
+## FM-AUTH-MOB-REDIRECT-CLOSEOUT-20260830
+
+- Granted by: Bernd through explicit action-time confirmation in the current session.
+- Scope 1: save exactly `fanmind://reset-password` in the already confirmed FanMind Production Supabase Auth redirect list; do not change Site URL, existing redirects, Auth providers, users, database/schema/RLS or any other provider setting.
+- Scope 2: transmit local closeout commit `ecaa9ec` plus the immediately resulting exact redirect evidence amendments to the existing `github.com/FanMind/FanMind` repository, create a PR, validate exact-head CI and merge only if green.
+- Result: Scope 1 is consumed and verified by FM-EV-029. Scope 2 remains active only for the current closeout branch/PR and does not authorize Store submission/publication, another AAB, push activation, iOS/TestFlight or unrelated external changes.
+
+## FM-AUTH-FINISHLINE-PUBLISH-20260908
+- Granted by: Bernd in this session after the explicit public-disclosure approval question.
+- Owner instruction: yes, publish and finish Restore.
+- Scope: publish the reviewed correction and updated Project Memory in the existing public FanMind/FanMind repository and create its PR; complete publication through review/green CI and the normal release path. Continue the resumed Restore work from DB_POSTCHECKED.
+- Boundary: no second database Restore, no Production/FanMind Staging Storage target, no inferred acceptance of a new provider target/cost, no secret or private artifact publication. Existing prices remain complete.
+
+## FM-AUTH-OPS-BOOT-PUBLISH-20260912
+- Explicit continuation: Bernd now says "ok mach das bitte" to the stated remaining PM2 startup, independent server reference and recovery checks. Existing reviewed source-publication/rollout authority continues for bounded read-only diagnosis of those measured failures; actual boot/reference and recovery gates remain necessary before the requested restart. No credential reset, gate bypass or unreviewed reference bootstrap is implied.
+- Status: ACTIVE
+- Granted by: Bernd in the current session, replying "ja darf er" directly to the concrete publication/rollout question for local eef3f26b.
+- Authorized payload/destination: the prepared read-only boot-readiness collector, its existing-audit/deploy integration, tests and project documentation in the existing public FanMind/FanMind repository, followed by review, green current-head CI and the normal rollout.
+- Transport proof: local Git lacked a GitHub credential after authorization; connected GitHub published a33eedad075d506f566ac5347fc3c0ac74f9a2ff with exactly the approved tree fb61de76fc59b65802ac2937af7d6061b4e55d8e. No code change was needed for that transport. This receipt reconciles the now resolved automatic publication block; normal bounded review corrections and evidence updates remain part of that workflow.
+- Retained boundary: no secret/private payload, bypass of CI/review, source or database Restore, extra backup, provider activation or startup-state mutation. The separately owner-requested Ubuntu reboot still requires actual boot/recovery preflight and before/after proof.

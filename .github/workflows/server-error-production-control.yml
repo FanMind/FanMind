@@ -1,0 +1,193 @@
+name: FanMind Server Error Tracking Production Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Verify/apply schema, run email-disabled acceptance, or activate tracking"
+        required: true
+        default: verify
+        type: choice
+        options:
+          - verify
+          - apply
+          - accept
+          - activate
+      confirmation:
+        description: "Type the action-specific Production confirmation"
+        required: true
+        type: string
+      expected_commit:
+        description: "Exact 40-character main commit expected on Production"
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-server-error-production-control
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    name: Control privacy-sparing Production server-error tracking
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        (
+          (inputs.action == 'verify' && inputs.confirmation == 'server-error-tracking-production-verify') ||
+          (inputs.action == 'apply' && inputs.confirmation == 'server-error-tracking-production-apply') ||
+          (inputs.action == 'accept' && inputs.confirmation == 'accept-server-error-tracking-production') ||
+          (inputs.action == 'activate' && inputs.confirmation == 'activate-server-error-tracking-production')
+        )
+      }}
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 20
+    env:
+      EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+      REVIEWED_COMMIT: ${{ github.sha }}
+      CONTROL_ACTION: ${{ inputs.action }}
+      SCHEMA_ACTION: ${{ inputs.action == 'apply' && 'apply' || 'verify' }}
+
+    steps:
+      - name: Verify installed Production runtime before the control action
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_COMMIT" == "$REVIEWED_COMMIT" ]]
+
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-server-error-preflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"
+
+      - name: Run the installed checksum-pinned schema action
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$SCHEMA_ACTION" in
+            verify|apply) ;;
+            *)
+              echo "SERVER_ERROR_MIGRATION_RESULT=action_invalid" >&2
+              exit 1
+              ;;
+          esac
+
+          MIGRATION_LOG="$(mktemp "$RUNNER_TEMP/fanmind-server-error-migration.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          UNIT="fanmind-server-error-migration@${SCHEMA_ACTION}.service"
+          trap 'rm -f "$MIGRATION_LOG"' EXIT
+
+          sudo -n systemctl daemon-reload
+          sudo -n systemctl reset-failed "$UNIT" >/dev/null 2>&1 || true
+          set +e
+          sudo -n systemctl start "$UNIT" >/dev/null 2>&1
+          start_status="$?"
+          set -e
+
+          service_result="$(sudo -n systemctl show "$UNIT" --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show "$UNIT" --property=ExecMainStatus --value --no-pager)"
+          sudo -n journalctl -u "$UNIT" --since "$NOT_BEFORE" --no-pager -o cat > "$MIGRATION_LOG"
+
+          set +e
+          node /usr/local/lib/fanmind-audit/verify-server-error-migration-log.mjs \
+            "$MIGRATION_LOG" \
+            "$NOT_BEFORE" \
+            "$SCHEMA_ACTION"
+          diagnostic_status="$?"
+          set -e
+          if [[ "$diagnostic_status" -ne 0 ]]; then
+            echo "SERVER_ERROR_MIGRATION_DIAGNOSIS=unavailable"
+          fi
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" || "$diagnostic_status" -ne 0 ]]; then
+            exit 1
+          fi
+
+      - name: Prove warning critical and cleanup without email
+        if: ${{ inputs.action == 'accept' || inputs.action == 'activate' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACCEPTANCE_LOG="$(mktemp "$RUNNER_TEMP/fanmind-server-error-acceptance.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          UNIT="fanmind-server-error-acceptance.service"
+          trap 'rm -f "$ACCEPTANCE_LOG"' EXIT
+
+          sudo -n systemctl reset-failed "$UNIT" >/dev/null 2>&1 || true
+          set +e
+          sudo -n systemctl start "$UNIT" >/dev/null 2>&1
+          start_status="$?"
+          set -e
+          service_result="$(sudo -n systemctl show "$UNIT" --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show "$UNIT" --property=ExecMainStatus --value --no-pager)"
+
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" ]]; then
+            sudo -n journalctl -u "$UNIT" --since "$NOT_BEFORE" --no-pager -o cat > "$ACCEPTANCE_LOG"
+            if ! node /usr/local/lib/fanmind-audit/verify-server-error-acceptance-log.mjs \
+              "$ACCEPTANCE_LOG" \
+              "$NOT_BEFORE"; then
+              echo "SERVER_ERROR_ACCEPTANCE=failed"
+              echo "SERVER_ERROR_ACCEPTANCE_ERROR=diagnosis_unavailable"
+            fi
+            exit 1
+          fi
+          echo "SERVER_ERROR_ACCEPTANCE=success"
+          echo "SERVER_ERROR_ACCEPTANCE_TRANSITIONS=warning,critical,cleanup"
+          echo "SERVER_ERROR_ACCEPTANCE_EMAIL_ENABLED=false"
+
+      - name: Activate Production tracking while email stays disabled
+        if: ${{ inputs.action == 'activate' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/lib/fanmind-ops/enable-server-error-tracking.sh \
+            "$EXPECTED_COMMIT" \
+            "activate-server-error-tracking-production"
+
+      - name: Repeat email-disabled storage acceptance after activation
+        if: ${{ inputs.action == 'activate' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ACCEPTANCE_LOG="$(mktemp "$RUNNER_TEMP/fanmind-server-error-post-acceptance.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          UNIT="fanmind-server-error-acceptance.service"
+          trap 'rm -f "$ACCEPTANCE_LOG"' EXIT
+
+          sudo -n systemctl reset-failed "$UNIT" >/dev/null 2>&1 || true
+          set +e
+          sudo -n systemctl start "$UNIT" >/dev/null 2>&1
+          start_status="$?"
+          set -e
+          service_result="$(sudo -n systemctl show "$UNIT" --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show "$UNIT" --property=ExecMainStatus --value --no-pager)"
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" ]]; then
+            sudo -n journalctl -u "$UNIT" --since "$NOT_BEFORE" --no-pager -o cat > "$ACCEPTANCE_LOG"
+            if ! node /usr/local/lib/fanmind-audit/verify-server-error-acceptance-log.mjs \
+              "$ACCEPTANCE_LOG" \
+              "$NOT_BEFORE"; then
+              echo "SERVER_ERROR_POST_ACCEPTANCE=failed"
+              echo "SERVER_ERROR_POST_ACCEPTANCE_ERROR=diagnosis_unavailable"
+            fi
+            exit 1
+          fi
+          echo "SERVER_ERROR_POST_ACCEPTANCE=success"
+          echo "SERVER_ERROR_POST_ACCEPTANCE_EMAIL_ENABLED=false"
+
+      - name: Verify installed Production runtime after the control action
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-server-error-postflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"

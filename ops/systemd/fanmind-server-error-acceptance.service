@@ -1,0 +1,34 @@
+[Unit]
+Description=FanMind email-disabled server-error storage acceptance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/var/www/fanmind/.env.production
+EnvironmentFile=/etc/fanmind-backup/release.env
+Environment=FANMIND_RUNTIME_ENVIRONMENT=production
+Environment=FANMIND_SERVER_ERROR_TRACKING_ENABLED=true
+Environment=FANMIND_SERVER_ERROR_EMAIL_ENABLED=false
+Environment=FANMIND_SERVER_ERROR_ACCEPTANCE_ACK=server-error-production-email-disabled-acceptance
+WorkingDirectory=/usr/local/lib/fanmind-ops
+ExecStart=/usr/bin/flock --exclusive --wait 120 /run/lock/fanmind-server-error.lock /usr/bin/node /usr/local/lib/fanmind-ops/server-error-production-acceptance.mjs
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/lock
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+ReadOnlyPaths=/var/www/fanmind/.env.production /etc/fanmind-backup /usr/local/lib/fanmind-ops

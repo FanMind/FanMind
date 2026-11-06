@@ -1,0 +1,122 @@
+name: FanMind Meta Catch-up Queue Staging Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit for the rollback-only queue acceptance'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type run-meta-catchup-queue-staging-acceptance to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-meta-catchup-queue-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  meta-catchup-queue-staging-acceptance:
+    name: Prove queue isolation, leases and retry budget with rollback
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'run-meta-catchup-queue-staging-acceptance'
+      }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_META_CATCHUP_QUEUE_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_META_CATCHUP_QUEUE_ACCEPTANCE_CONFIRM: run-meta-catchup-queue-staging-acceptance
+      FANMIND_META_CATCHUP_QUEUE_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_WORKSPACE_PROCESSING_STAGING_WORKSPACE_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify rollback-only acceptance contract offline
+        run: npm run meta:catchup-queue:staging:check
+
+      - name: Verify pinned controlled queue SQL offline
+        run: npm run db:meta-catchup-queue:check
+
+      - name: Prepare dedicated private database password file
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-meta-catchup-acceptance.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*)
+              echo "Staging database password is missing or contains an unsupported line break." >&2
+              exit 1
+              ;;
+          esac
+          ESCAPED_DB_PASSWORD="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED_DB_PASSWORD="${ESCAPED_DB_PASSWORD//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' \
+            "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" \
+            "$ESCAPED_DB_PASSWORD" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+
+      - name: Require shared read-only rollout state
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-meta-catchup-acceptance.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          FANMIND_STAGING_DATABASE_ROLLOUT_STATE_CONFIRM: verify-staging-database-rollout-state
+        run: |
+          set -euo pipefail
+          ROLLOUT_STATE="$(npm run db:staging-rollout-state:run)"
+          printf '%s\n' "$ROLLOUT_STATE"
+          grep -Fxq 'STAGING_DATABASE_ROLLOUT_META_CATCHUP=verify' <<< "$ROLLOUT_STATE"
+          grep -Fxq 'STAGING_DATABASE_ROLLOUT_STATE=PASS' <<< "$ROLLOUT_STATE"
+
+      - name: Require read-only queue metadata postflight
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-meta-catchup-acceptance.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_META_CATCHUP_QUEUE_VERIFY_CONFIRM: verify-meta-catchup-queue
+        run: npm run db:meta-catchup-queue:verify
+
+      - name: Run rollback-only synthetic queue acceptance
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-meta-catchup-acceptance.pgpass
+        run: npm run meta:catchup-queue:staging:run
+
+      - name: Remove dedicated private database password file
+        if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-meta-catchup-acceptance.pgpass
+        run: rm -f "$PGPASSFILE"

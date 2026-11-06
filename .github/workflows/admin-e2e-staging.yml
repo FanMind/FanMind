@@ -1,0 +1,162 @@
+name: FanMind Admin Browser E2E Staging Read-only
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit for the read-only Staging admin check'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type verify-staging-admin-readonly to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-admin-browser-e2e-staging-readonly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  staging-admin-readonly:
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'verify-staging-admin-readonly'
+      }}
+    name: Prove positive and negative Staging admin boundaries without writes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: staging
+    env:
+      FANMIND_E2E_STAGING_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_E2E_STAGING_ACK: fanmind-staging-readonly
+      FANMIND_E2E_STAGING_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_E2E_STAGING_PRODUCTION_SUPABASE_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_E2E_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_WORKSPACE_ID }}
+      FANMIND_E2E_STAGING_CONTACT_ID: ${{ vars.FANMIND_STAGING_E2E_CONTACT_ID }}
+      FANMIND_E2E_STAGING_SECONDARY_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID }}
+      FANMIND_E2E_STAGING_SECONDARY_CONTACT_ID: ${{ vars.FANMIND_STAGING_E2E_SECONDARY_CONTACT_ID }}
+      FANMIND_E2E_STAGING_ADMIN_EMAILS: ${{ vars.FANMIND_STAGING_ADMIN_EMAILS }}
+      CI: "1"
+
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+
+      - name: Validate isolated Staging admin boundary without outputting values
+        shell: bash
+        env:
+          FANMIND_E2E_STAGING_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_E2E_STAGING_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_E2E_STAGING_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_E2E_STAGING_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+          FANMIND_E2E_STAGING_ADMIN_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
+          FANMIND_E2E_STAGING_ADMIN_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const rawTarget = process.env.FANMIND_E2E_STAGING_URL || '';
+          const rawSupabase = process.env.FANMIND_E2E_STAGING_SUPABASE_URL || '';
+          const productionSupabaseRef =
+            process.env.FANMIND_E2E_STAGING_PRODUCTION_SUPABASE_REF || '';
+          const primaryEmail = process.env.FANMIND_E2E_STAGING_EMAIL || '';
+          const primaryPassword = process.env.FANMIND_E2E_STAGING_PASSWORD || '';
+          const secondaryEmail =
+            process.env.FANMIND_E2E_STAGING_SECONDARY_EMAIL || '';
+          const secondaryPassword =
+            process.env.FANMIND_E2E_STAGING_SECONDARY_PASSWORD || '';
+          const adminEmail = process.env.FANMIND_E2E_STAGING_ADMIN_EMAIL || '';
+          const adminPassword =
+            process.env.FANMIND_E2E_STAGING_ADMIN_PASSWORD || '';
+          const adminEmails = (
+            process.env.FANMIND_E2E_STAGING_ADMIN_EMAILS || ''
+          )
+            .split(',')
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean);
+          const fixtureIds = [
+            process.env.FANMIND_E2E_STAGING_WORKSPACE_ID || '',
+            process.env.FANMIND_E2E_STAGING_CONTACT_ID || '',
+            process.env.FANMIND_E2E_STAGING_SECONDARY_WORKSPACE_ID || '',
+            process.env.FANMIND_E2E_STAGING_SECONDARY_CONTACT_ID || '',
+          ];
+
+          let target;
+          let supabase;
+          try {
+            target = new URL(rawTarget);
+            supabase = new URL(rawSupabase);
+          } catch {
+            throw new Error('staging_admin_e2e_target_invalid');
+          }
+
+          const host = target.hostname.toLowerCase();
+          const supabaseHost = supabase.hostname.toLowerCase();
+          const supabaseRef = supabaseHost.endsWith('.supabase.co')
+            ? supabaseHost.slice(0, -'.supabase.co'.length)
+            : '';
+          const uuid =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+          const synthetic = (value) => /staging|synthetic|test/i.test(value);
+          const normalizedPrimary = primaryEmail.trim().toLowerCase();
+          const normalizedSecondary = secondaryEmail.trim().toLowerCase();
+          const normalizedAdmin = adminEmail.trim().toLowerCase();
+
+          if (
+            target.protocol !== 'https:' ||
+            host === 'fanmind.ch' ||
+            host === 'www.fanmind.ch' ||
+            !host.includes('staging') ||
+            supabase.protocol !== 'https:' ||
+            supabase.pathname !== '/' ||
+            !supabaseRef ||
+            !productionSupabaseRef ||
+            supabaseRef === productionSupabaseRef.toLowerCase() ||
+            process.env.FANMIND_E2E_STAGING_ACK !== 'fanmind-staging-readonly' ||
+            !normalizedPrimary ||
+            !primaryPassword ||
+            !normalizedSecondary ||
+            !secondaryPassword ||
+            !normalizedAdmin ||
+            !adminPassword ||
+            normalizedPrimary === normalizedSecondary ||
+            normalizedAdmin === normalizedPrimary ||
+            normalizedAdmin === normalizedSecondary ||
+            !synthetic(normalizedPrimary) ||
+            !synthetic(normalizedSecondary) ||
+            !adminEmails.includes(normalizedAdmin) ||
+            fixtureIds.some((value) => !uuid.test(value)) ||
+            new Set(fixtureIds).size !== fixtureIds.length
+          ) {
+            throw new Error('staging_admin_e2e_boundary_rejected');
+          }
+
+          console.log('STAGING_ADMIN_E2E_BOUNDARY=accepted');
+          console.log('STAGING_ADMIN_E2E_IDENTITIES=separated');
+          NODE
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium only
+        run: npx playwright install --with-deps chromium
+
+      - name: Run positive and negative read-only Staging admin flows
+        env:
+          FANMIND_E2E_STAGING_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_E2E_STAGING_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_E2E_STAGING_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_E2E_STAGING_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+          FANMIND_E2E_STAGING_ADMIN_EMAIL: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_EMAIL }}
+          FANMIND_E2E_STAGING_ADMIN_PASSWORD: ${{ secrets.FANMIND_STAGING_ADMIN_E2E_PASSWORD }}
+        run: npm run test:e2e:staging

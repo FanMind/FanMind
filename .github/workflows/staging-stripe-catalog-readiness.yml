@@ -1,0 +1,57 @@
+name: FanMind Staging Stripe Catalog Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit for the read-only Stripe test catalog check'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type verify-staging-stripe-catalog to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-stripe-catalog-readiness
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify-staging-stripe-catalog:
+    name: Verify all five isolated Stripe test prices without writes
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'verify-staging-stripe-catalog'
+      }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      FANMIND_STAGING_STRIPE_CATALOG_CONFIRM: verify-staging-stripe-catalog
+      STRIPE_SECRET_KEY: ${{ secrets.FANMIND_STAGING_STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.FANMIND_STAGING_STRIPE_WEBHOOK_SECRET }}
+      STRIPE_PRICE_STARTER_SETUP: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_STARTER_SETUP }}
+      STRIPE_PRICE_STARTER_MONTHLY: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_STARTER_MONTHLY }}
+      STRIPE_PRICE_INTERNAL_DAILY_TEST: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_INTERNAL_DAILY_TEST }}
+      STRIPE_PRICE_AI_PLUS: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_AI_PLUS }}
+      STRIPE_PRICE_AI_ULTRA: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_AI_ULTRA }}
+
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify the catalog contract offline
+        run: npm run stripe:staging-catalog:check
+
+      - name: Verify the isolated Stripe test catalog read-only
+        run: npm run stripe:staging-catalog:verify

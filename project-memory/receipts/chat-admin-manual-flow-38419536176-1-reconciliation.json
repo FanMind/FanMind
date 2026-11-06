@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "taskId": "FM-ADMINCHAT-STAGING-HARNESS-20261011-01",
+  "run": "38419536176",
+  "attempt": "1",
+  "job": "115372947501",
+  "sha": "1c991782526cbfba973a9e601e1f90cb22c80866",
+  "target": "vshyhvgcmrlagvfnvomc",
+  "originalReceipt": "chat-admin-manual-flow-38419536176-1.json",
+  "originalReceiptBlobSha": "038c57d71f6339fd7e9a8925823fe4345b0e8845",
+  "artifactId": "11826246359",
+  "artifactZipSha256": "4a3638b0c2b98e038f98e046d0e47d7885ea18afa9975f046cd3c4f05cf16abe",
+  "marker": "4dc2fb1e8541a06dda4727eb940c0312",
+  "resolution": "RECONCILED_TERMINAL_RESPONSE_NO_RESIDUE",
+  "manualAcceptance": "FAILED_NOT_ACCEPTED",
+  "originalReceiptUnchanged": true,
+  "reconciledAt": "2026-10-13T16:16:28Z",
+  "causalEvidence": {
+    "terminalStage": "invented_price",
+    "terminalHttpClass": "4xx",
+    "failureKind": "assertion",
+    "networkDiagnostic": "none",
+    "sessionCleanupDiagnostic": "passed",
+    "terminalResponseObserved": true,
+    "providerResponseBodyAwaitedBeforePolicyDecision": true,
+    "policyFailurePrecedesMessagePersistence": true,
+    "usageWriteAwaitedBeforeErrorResponse": true,
+    "detachedAfterResponseWorkInHistoricalPath": false,
+    "browserBoundaryTracksAndDrainsStartedTransports": true,
+    "historicalSourceBlobs": {
+      "e2e-chatadmin-staging/network-boundary.mjs": "975bd53044c73b67f7af074a7314bd98075b7f11",
+      "e2e-chatadmin-staging/manual-flow.spec.mts": "2dba60bc018d88354614494d8bb19f36d2b28ab3",
+      "src/app/api/chatadmin/reply-suggestions/route.ts": "8b08b998403337b11b97d57e66c1705102099be6",
+      "src/lib/aiUsage.ts": "dd67df0962cb739de93b20bce55f4dca6d556e3e"
+    }
+  },
+  "diagnosticLimitation": {
+    "separateBoundaryDrainSuccessBitExposed": false,
+    "assertionClassificationAloneIdentifiesExactAssertion": false,
+    "disposition": "Terminal 4xx receipt plus the exact awaited server path closes request uncertainty; the boundary diagnostics and later absence checks are corroborating evidence, not the sole basis."
+  },
+  "strongestFalsifier": {
+    "condition": "A detached server write after the 4xx response or an unsettled allowed write transport.",
+    "result": "FALSIFIED_BY_EXACT_SOURCE_AND_BOUNDARY",
+    "evidence": [
+      "The historical route has no detached or after-response hook on this path.",
+      "All reachable usage work is awaited before the error response and message persistence is not reached.",
+      "The browser boundary retains started transports, blocks new teardown writes and recorded no write or transport violation."
+    ]
+  },
+  "absenceEvidence": {
+    "transactionMode": "BEGIN READ ONLY; transaction_read_only=on; ROLLBACK",
+    "checks": [
+      {
+        "observedAt": "2026-10-13T15:54:25.478902Z",
+        "syntheticWorkspaces": 2,
+        "capabilities": 0,
+        "characters": 0,
+        "fans": 0,
+        "conversations": 0,
+        "messages": 0,
+        "usage": 0,
+        "sessions": 0
+      },
+      {
+        "observedAt": "2026-10-13T15:55:12.376466Z",
+        "capabilityAbsent": true,
+        "charactersAbsent": true,
+        "fansAbsent": true,
+        "conversationsAbsent": true,
+        "messagesAbsent": true,
+        "usageAbsent": true,
+        "markerAbsent": true
+      },
+      {
+        "observedAt": "2026-10-13T16:07:01.850064Z",
+        "capabilities": 0,
+        "characters": 0,
+        "fans": 0,
+        "conversations": 0,
+        "messages": 0,
+        "usage": 0,
+        "sessions": 0,
+        "markerAbsent": true
+      }
+    ],
+    "reusableBaseWorkspacesPreserved": true,
+    "customerContentRead": false
+  },
+  "recoveryAction": {
+    "cleanupRequired": false,
+    "cleanupPerformed": false,
+    "writingAcceptancePerformed": false,
+    "deploymentPerformed": false,
+    "productionChangePerformed": false
+  },
+  "basisExcludes": [
+    "elapsed_time_alone",
+    "zero_counts_alone",
+    "new_successful_run",
+    "retrospective_acceptance",
+    "original_receipt_rewrite"
+  ]
+}

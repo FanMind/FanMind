@@ -1,0 +1,28 @@
+.stack { display: grid; gap: 18px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 10px; }
+.tabs a { border: 1px solid rgba(15, 23, 42, 0.12); border-radius: 999px; color: #0f172a; font-weight: 800; padding: 10px 14px; text-decoration: none; }
+.tabs .activeTab { background: #0f172a; color: #fff; }
+.heroCard, .card { border: 1px solid rgba(15, 23, 42, 0.10); border-radius: 24px; background: #fff; box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08); }
+.heroCard { display: flex; justify-content: space-between; gap: 18px; padding: 24px; }
+.eyebrow { color: #2563eb; font-size: 12px; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+.heroCard h1 { margin: 8px 0; color: #0f172a; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.04em; }
+.heroCard p { max-width: 720px; margin: 0; color: #475569; line-height: 1.6; }
+.configBadge, .errorBox { align-self: start; border-radius: 16px; font-size: 13px; font-weight: 800; line-height: 1.45; padding: 12px 14px; }
+.configBadge { background: #eff6ff; color: #1d4ed8; }
+.errorBox { border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; }
+.card { overflow: hidden; }
+.tableHead, .tableRow { display: grid; grid-template-columns: 1.1fr 1.3fr 0.7fr 0.65fr 0.8fr 1fr; gap: 14px; align-items: start; padding: 16px 18px; }
+.tableHead { background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
+.tableRow { border-top: 1px solid #e2e8f0; color: #334155; }
+.tableRow strong { display: block; color: #0f172a; overflow-wrap: anywhere; }
+.tableRow small { color: #64748b; }
+.tableRow p { margin: 0; color: #334155; line-height: 1.5; white-space: pre-wrap; }
+.statusBadge { justify-self: start; border-radius: 999px; font-size: 12px; font-weight: 900; padding: 7px 10px; }
+.statusBadge[data-status="new"] { background: #dcfce7; color: #166534; }
+.statusBadge[data-status="contacted"] { background: #dbeafe; color: #1d4ed8; }
+.statusBadge[data-status="archived"] { background: #f1f5f9; color: #475569; }
+.actions { display: grid; gap: 7px; }
+.actions button { width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; background: #fff; color: #0f172a; cursor: pointer; font-weight: 800; padding: 9px 10px; text-align: left; }
+.actions button:hover { border-color: #2563eb; color: #1d4ed8; }
+.emptyState { padding: 28px; color: #64748b; font-weight: 700; }
+@media (max-width: 1100px) { .tableHead { display: none; } .tableRow { grid-template-columns: 1fr; } .heroCard { flex-direction: column; } }

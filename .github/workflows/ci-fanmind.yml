@@ -1,0 +1,268 @@
+name: FanMind CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - "fix/**"
+      - "feat/**"
+      - "chore/**"
+      - "p0/**"
+
+concurrency:
+  group: fanmind-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Truth, lint, tests and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      NEXT_PUBLIC_APP_URL: https://fanmind.ch
+      NEXT_PUBLIC_SITE_URL: https://fanmind.ch
+      FANMIND_PUBLIC_DEMO_ENABLED: "false"
+      FANMIND_ENABLE_REFERRAL_BILLING: "false"
+      FANMIND_ENABLE_TELEGRAM_SEND: "false"
+      FANMIND_ADMIN_EMAILS: admin@example.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify Mobile EAS project-info parser
+        id: mobile_eas_project_info
+        continue-on-error: true
+        run: node scripts/operations/mobile-eas-project-info-verify.mjs --self-test
+
+      - name: Verify commercial and product truth
+        id: truth
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run verify:truth 2>&1 | tee truth-report.txt
+
+      - name: Upload truth report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-truth-report
+          path: truth-report.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee lint-report.txt
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-lint-report
+          path: lint-report.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Operations tests
+        id: operations
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          { npm run test:operations && node --test src/lib/supportOwnerAcceptance.test.mjs; } 2>&1 | tee operations-test-report.txt
+
+      - name: Staging Stripe catalog policy tests
+        id: staging_stripe_catalog
+        continue-on-error: true
+        run: npm run test:staging-stripe-catalog
+
+      - name: Staging Stripe webhook policy tests
+        id: staging_stripe_webhook
+        continue-on-error: true
+        run: npm run test:staging-stripe-webhook
+
+      - name: Website Chat and Inbox integration policies
+        id: release_integrations
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:release-integrations 2>&1 | tee release-integration-report.txt
+
+      - name: Upload release integration report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-release-integration-report
+          path: release-integration-report.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload operations test report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-operations-test-report
+          path: operations-test-report.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Production build
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build-report.txt
+
+      - name: Upload build report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-build-report
+          path: build-report.txt
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Enforce Mobile EAS project-info verifier result
+        if: always() && steps.mobile_eas_project_info.outcome != 'success'
+        run: |
+          echo "Mobile EAS project-info verifier self-test failed." >&2
+          exit 1
+
+      - name: Enforce truth result
+        if: always() && steps.truth.outcome != 'success'
+        run: |
+          echo "Commercial/product truth verification failed. See fanmind-truth-report artifact." >&2
+          exit 1
+
+      - name: Enforce lint result
+        if: always() && steps.lint.outcome != 'success'
+        run: |
+          echo "Lint failed. See fanmind-lint-report artifact." >&2
+          exit 1
+
+      - name: Enforce operations test result
+        if: always() && steps.operations.outcome != 'success'
+        run: |
+          echo "Operations tests failed. See fanmind-operations-test-report artifact." >&2
+          exit 1
+
+      - name: Enforce Staging Stripe catalog policy result
+        if: always() && steps.staging_stripe_catalog.outcome != 'success'
+        run: |
+          echo "Staging Stripe catalog policy tests failed." >&2
+          exit 1
+
+      - name: Enforce Staging Stripe webhook policy result
+        if: always() && steps.staging_stripe_webhook.outcome != 'success'
+        run: |
+          echo "Staging Stripe webhook policy tests failed." >&2
+          exit 1
+
+      - name: Enforce release integration result
+        if: always() && steps.release_integrations.outcome != 'success'
+        run: |
+          echo "Release integration policies failed. See fanmind-release-integration-report artifact." >&2
+          exit 1
+
+      - name: Enforce build result
+        if: always() && steps.build.outcome != 'success'
+        run: |
+          echo "Production build failed. See fanmind-build-report artifact." >&2
+          exit 1
+
+  pg17_authorization_roundtrip:
+    name: PostgreSQL 17 authorization roundtrip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      pg17_source:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: fanmind-ci-only-pg17
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+      pg17_target:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: fanmind-ci-only-pg17
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+
+      - name: Prove PostgreSQL 17 authorization backup and restore
+        env:
+          FANMIND_PG17_SOURCE_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_PG17_TARGET_CONTAINER_ID: ${{ job.services.pg17_target.id }}
+          FANMIND_PG17_PASSWORD: fanmind-ci-only-pg17
+          FANMIND_PG17_REQUIRE_SERVICE_CONTAINERS: "true"
+        run: npm run test:database-authorization:pg17
+
+      - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_CAPACITY_PG17_REQUIRED: "true"
+        run: npm run test:ai-capacity
+
+      - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
+        id: creator_pg17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_CREATOR_PG17_REQUIRED: "true"
+          FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
+          FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs tests/chat-admin-media-pg17.test.mjs
+          npm run test:creator-foundation-transition
+
+      - name: Upload verified isolated Creator foundation references
+        if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-creator-foundation-reference-${{ github.sha }}
+          path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+          if-no-files-found: error
+          retention-days: 90

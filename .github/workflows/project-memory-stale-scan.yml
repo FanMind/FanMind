@@ -1,0 +1,80 @@
+name: Project Memory Stale Scan
+
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Scan active memory for stale work
+        id: scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY' > /tmp/project-memory-report.md
+          from pathlib import Path
+          from datetime import date, datetime
+          import re
+
+          today=date.today()
+          findings=[]
+          def scan(path, statuses):
+              text=Path(path).read_text()
+              for sec in re.split(r'(?m)^## ', text)[1:]:
+                  lines=sec.splitlines(); ident=lines[0].strip()
+                  sm=re.search(r'(?m)^- Status: (.+)$', sec)
+                  if not sm or sm.group(1).strip() not in statuses: continue
+                  um=re.search(r'(?m)^- Updated: (\d{4}-\d{2}-\d{2})$', sec)
+                  if not um:
+                      findings.append((ident, sm.group(1).strip(), 'missing Updated date', path)); continue
+                  d=datetime.strptime(um.group(1),'%Y-%m-%d').date()
+                  age=(today-d).days
+                  if age>14: findings.append((ident, sm.group(1).strip(), f'{age} days since update', path))
+          scan('project-memory/TASK_LEDGER.md', {'IN_PROGRESS','BLOCKED','PARTIAL','IMPLEMENTED_NOT_VERIFIED'})
+          scan('project-memory/OPEN_LOOPS.md', {'OPEN','BLOCKED'})
+          scan('project-memory/STARTED_WORK.md', {'IN_PROGRESS','PARTIAL','BLOCKED','IMPLEMENTED_NOT_VERIFIED'})
+          print('# Project Memory stale/open-loop report')
+          print(f'Generated: {today.isoformat()}')
+          if findings:
+              print('\nThe following active records require review:\n')
+              for i,s,r,p in findings: print(f'- `{i}` — {s} — {r} — `{p}`')
+          else:
+              print('\nNo stale active records older than 14 days were found.')
+          PY
+          cat /tmp/project-memory-report.md
+          if grep -q 'require review' /tmp/project-memory-report.md; then echo 'has_findings=true' >> "$GITHUB_OUTPUT"; else echo 'has_findings=false' >> "$GITHUB_OUTPUT"; fi
+
+      - name: Create or update stale-work issue
+        if: steps.scan.outputs.has_findings == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title='Project Memory: stale/open-loop review required'
+          number="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [[ -n "$number" ]]; then
+            gh issue edit "$number" --body-file /tmp/project-memory-report.md
+          else
+            gh issue create --title "$title" --body-file /tmp/project-memory-report.md
+          fi
+
+      - name: Close resolved stale-work issue
+        if: steps.scan.outputs.has_findings == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title='Project Memory: stale/open-loop review required'
+          number="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [[ -n "$number" ]]; then gh issue close "$number" --comment 'Automated scan found no stale active records older than 14 days.'; fi

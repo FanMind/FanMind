@@ -1,0 +1,152 @@
+@import "./landing-v2-six-steps-refine.css";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html {
+  height: 100%;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+:root,
+.fanmind-theme-standard {
+  --fanmind-page-text: #f8fbff;
+  --fanmind-page-bg:
+    radial-gradient(circle at 10% 0%, rgba(37, 99, 235, 0.2), transparent 28%),
+    radial-gradient(circle at 92% 2%, rgba(124, 58, 237, 0.16), transparent 30%),
+    linear-gradient(135deg, #020617 0%, #07111f 48%, #090518 100%);
+  --fanmind-shell-card: rgba(15, 23, 42, 0.74);
+  --fanmind-shell-card-strong: rgba(15, 23, 42, 0.86);
+  --fanmind-shell-sidebar: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.96)), #020617;
+  --fanmind-shell-border: rgba(148, 163, 184, 0.16);
+  --fanmind-shell-text: #ffffff;
+  --fanmind-shell-muted: #cbd5e1;
+  --fanmind-shell-soft: #94a3b8;
+  --fanmind-shell-accent: #67e8f9;
+  --fanmind-input-bg: rgba(2, 6, 23, 0.68);
+  --fanmind-brightness-filter: 1;
+  --fanmind-dimmer: 80;
+}
+
+html[style*="--fanmind-dimmer"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      rgba(0, 0, 0, calc(max(0, 80 - var(--fanmind-dimmer, 80)) * 0.009333)),
+      rgba(0, 0, 0, calc(max(0, 80 - var(--fanmind-dimmer, 80)) * 0.009333))
+    ),
+    rgba(255, 255, 255, calc(var(--fanmind-dimmer-bg-lift, 0) * 0.035));
+  z-index: 2147483000;
+  transition: background 120ms ease;
+}
+
+.fanmind-theme-brighter {
+  --fanmind-page-text: #f8fbff;
+  --fanmind-page-bg:
+    radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.2), transparent 28%),
+    radial-gradient(circle at 92% 2%, rgba(129, 140, 248, 0.15), transparent 30%),
+    linear-gradient(135deg, #07111f 0%, #0f1f35 52%, #111827 100%);
+  --fanmind-shell-card: rgba(30, 41, 59, 0.78);
+  --fanmind-shell-card-strong: rgba(30, 41, 59, 0.9);
+  --fanmind-shell-sidebar: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.96)), #111827;
+  --fanmind-shell-border: rgba(186, 230, 253, 0.22);
+  --fanmind-shell-text: #ffffff;
+  --fanmind-shell-muted: #e2e8f0;
+  --fanmind-shell-soft: #bad2ee;
+  --fanmind-shell-accent: #7dd3fc;
+  --fanmind-input-bg: rgba(15, 23, 42, 0.62);
+}
+
+.fanmind-theme-light {
+  color-scheme: dark;
+  --fanmind-page-text: #eef7ff;
+  --fanmind-page-bg:
+    radial-gradient(circle at 10% 0%, rgba(56, 189, 248, 0.18), transparent 30%),
+    radial-gradient(circle at 92% 2%, rgba(167, 139, 250, 0.14), transparent 32%),
+    linear-gradient(135deg, #102033 0%, #172b43 52%, #1f2a44 100%);
+  --fanmind-shell-card: rgba(51, 65, 85, 0.8);
+  --fanmind-shell-card-strong: rgba(51, 65, 85, 0.92);
+  --fanmind-shell-sidebar: linear-gradient(180deg, rgba(51, 65, 85, 0.98), rgba(30, 41, 59, 0.96)), #243449;
+  --fanmind-shell-border: rgba(219, 234, 254, 0.28);
+  --fanmind-shell-text: #ffffff;
+  --fanmind-shell-muted: #eaf2ff;
+  --fanmind-shell-soft: #c9ddf5;
+  --fanmind-shell-accent: #a5f3fc;
+  --fanmind-input-bg: rgba(30, 41, 59, 0.58);
+}
+
+/* Hard global fallback for the public landing navigation.
+   The rendered element exposes data-landing-header="root"; this selector bypasses
+   CSS-module class mismatches and keeps the public header fixed at the viewport. */
+[data-landing-header="root"] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  z-index: 2147483646 !important;
+  display: flex !important;
+  justify-content: center !important;
+  padding: 10px clamp(12px, 3vw, 48px) !important;
+  pointer-events: none !important;
+  background: linear-gradient(180deg, rgba(2, 8, 22, 0.92), rgba(2, 8, 22, 0.74) 72%, rgba(2, 8, 22, 0)) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  transform: translateZ(0) !important;
+  contain: layout paint !important;
+}
+
+[data-landing-header="root"] > * {
+  pointer-events: auto !important;
+}
+
+@media (max-width: 720px) {
+  [data-landing-header="root"] {
+    padding: 8px 10px !important;
+  }
+}

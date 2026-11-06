@@ -1,0 +1,22 @@
+[Unit]
+Description=FanMind bounded webhook diagnostic retention
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/usr/local/lib/fanmind-ops
+Environment=FANMIND_ENV_FILE=/var/www/fanmind/.env.production
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/webhook-diagnostic-retention.mjs --execute
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictSUIDSGID=true

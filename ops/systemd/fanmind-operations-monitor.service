@@ -1,0 +1,29 @@
+[Unit]
+Description=FanMind privacy-sparing operations monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+EnvironmentFile=-/var/www/fanmind/.env.production
+ExecStart=/usr/bin/flock --exclusive --wait 120 /run/lock/fanmind-operations-monitor.lock /usr/bin/node /usr/local/lib/fanmind-monitor/operations-monitor.mjs
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/run/lock
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

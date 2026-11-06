@@ -1,0 +1,52 @@
+name: FanMind Staging Stripe Webhook Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit for the read-only Stripe test webhook check'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type verify-staging-stripe-webhook to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-stripe-webhook-readiness
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify-staging-stripe-webhook:
+    name: Verify the isolated Stripe test webhook without writes
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        inputs.reviewed_commit == github.sha &&
+        inputs.confirmation == 'verify-staging-stripe-webhook'
+      }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      FANMIND_STAGING_STRIPE_WEBHOOK_CONFIRM: verify-staging-stripe-webhook
+      STRIPE_SECRET_KEY: ${{ secrets.FANMIND_STAGING_STRIPE_SECRET_KEY }}
+      STRIPE_WEBHOOK_SECRET: ${{ secrets.FANMIND_STAGING_STRIPE_WEBHOOK_SECRET }}
+
+    steps:
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify the webhook contract offline
+        run: npm run stripe:staging-webhook:check
+
+      - name: Verify the isolated Stripe test webhook read-only
+        run: npm run stripe:staging-webhook:verify

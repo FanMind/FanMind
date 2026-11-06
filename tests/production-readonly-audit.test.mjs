@@ -1,0 +1,1654 @@
+import assert from "node:assert/strict";
+import { execFile, spawn } from "node:child_process";
+import { chmod, chown, copyFile, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from "node:fs/promises";
+import { homedir, tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { promisify } from "node:util";
+import { once } from "node:events";
+import { closeSync, openSync, realpathSync } from "node:fs";
+import fs from "node:fs";
+import { createHash } from "node:crypto";
+import test from "node:test";
+import yaml from "js-yaml";
+
+import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import {
+  BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties, readUnit,
+  readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
+  MANAGED_UNIT_HASHES, parseBootReference, unitDefinitionMatches, runnerPathMatches,
+  savedAppDiagnostic, readSavedAppDiagnostic, startupDiagnostic, bootNodeDiagnostic,
+} from "../scripts/operations/production-boot-readiness.mjs";
+import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+
+const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
+const execFileAsync = promisify(execFile);
+const expectedCommit = "a".repeat(40);
+
+async function readAuditScript() {
+  return readFile(auditScriptPath, "utf8");
+}
+
+function validBootLines() {
+  return bootReadinessLines({
+    units: Object.fromEntries(BOOT_ROLES.map(role => [role, {
+      LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active", NeedDaemonReload: "no",
+    }])),
+    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true, REFERENCE_BOUND: true, UNIT_CONTRACTS: true },
+    diagnostics: { PM2_STARTUP: "ok", PM2_SAVED_APP: "ok", BOOT_NODE: "ok" },
+  });
+}
+
+function savedApp() {
+  return {
+    name: "fanmind", exec_mode: "cluster_mode", autorestart: true,
+    pm_cwd: "/var/www/fanmind-current",
+    pm_exec_path: "/var/www/fanmind-current/node_modules/next/dist/bin/next",
+    exec_interpreter: "node", args: ["start"],
+    NODE_ENV: "production", FANMIND_RUNTIME_ENVIRONMENT: "production", FANMIND_RELEASE_COMMIT: expectedCommit,
+    env: { FANMIND_RELEASE_COMMIT: expectedCommit, PRIVATE_SECRET: "RAW_SECRET_CANARY" },
+  };
+}
+
+test("boot preflight rejects missing, duplicate, masked, transient and inactive units", () => {
+  const valid = validBootLines().join("\n");
+  assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid)).verified, true);
+  for (const role of BOOT_ROLES) {
+    const line = `BOOT_UNIT_${role}=loaded|enabled|active|no`;
+    for (const altered of [
+      valid.replace(line, ""), `${valid}\n${line}`,
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|active|yes`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|active`),
+      valid.replace(line, `BOOT_UNIT_${role}=not-found|disabled|inactive|no`),
+      valid.replace(line, `BOOT_UNIT_${role}=masked|masked|inactive`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled-runtime|active`),
+      valid.replace(line, `BOOT_UNIT_${role}=loaded|enabled|failed`),
+      valid.replace(line, `BOOT_UNIT_${role}=RAW_SECRET_CANARY|enabled|active`),
+    ]) {
+      const result = bootSummaryFromValues(parseProductionAuditOutput(altered));
+      assert.equal(result.verified, false, role);
+      assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
+    }
+  }
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE", "RUNNER_BOUND", "RELEASE_TARGET", "REFERENCE_BOUND", "UNIT_CONTRACTS"]) {
+    assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, `BOOT_${key}=false`))).verified, false);
+  }
+});
+
+test("saved PM2 app binds exactly one cluster app and the current release without returning private environment", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-dump-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = join(root, "dump.pm2");
+  await writeFile(file, JSON.stringify([savedApp()]), { mode: 0o600 });
+  assert.equal(readSavedApp(file, expectedCommit), true);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "ok");
+  assert.equal(savedAppMatches([{ ...savedApp(), instances: 1 }], expectedCommit), true);
+  assert.equal(readSavedApp(file, "b".repeat(40)), false);
+  assert.equal(readSavedAppDiagnostic(file, "b".repeat(40)), "release_binding");
+  assert.equal(savedAppMatches([], expectedCommit), false);
+  assert.equal(savedAppMatches([savedApp(), savedApp()], expectedCommit), false);
+  for (const overrides of [
+    { name: "other" }, { exec_mode: "fork_mode" }, { instances: 2 }, { autorestart: false },
+    { pm_cwd: "/var/www/old-release" }, { pm_exec_path: "/private/RAW_SECRET_CANARY" },
+    { exec_interpreter: "/private/node" }, { args: ["dev"] }, { NODE_ENV: "development" },
+    { FANMIND_RUNTIME_ENVIRONMENT: "staging" }, { FANMIND_RELEASE_COMMIT: "b".repeat(40) },
+    { env: { FANMIND_RELEASE_COMMIT: "b".repeat(40) } },
+  ]) assert.equal(savedAppMatches([{ ...savedApp(), ...overrides }], expectedCommit), false);
+  const link = join(root, "link.pm2");
+  await symlink(file, link);
+  assert.equal(readSavedApp(link, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(link, expectedCommit), "file_unverified");
+  await chmod(file, 0o664);
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "file_unverified");
+  await chmod(file, 0o600);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "ok");
+  await writeFile(file, "RAW_SECRET_CANARY");
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(file, expectedCommit), "json_invalid");
+  await writeFile(file, "x".repeat(1024 * 1024 + 1));
+  assert.equal(readSavedApp(file, expectedCommit), false);
+  assert.equal(readSavedApp(root, expectedCommit), false);
+  assert.equal(readSavedApp(join(root, "missing"), expectedCommit), false);
+  assert.equal(readSavedAppDiagnostic(join(root, "RAW_SECRET_CANARY"), expectedCommit), "file_unverified");
+});
+
+test("saved app diagnostics identify the failed contract without publishing values", () => {
+  for (const [overrides, code] of [
+    [{ pm_exec_path: "/private/RAW_SECRET_CANARY" }, "script"],
+    [{ args: ["RAW_SECRET_CANARY"] }, "args"],
+    [{ exec_interpreter: "/private/RAW_SECRET_CANARY" }, "interpreter"],
+    [{ NODE_OPTIONS: "RAW_SECRET_CANARY" }, "loader_override"],
+    [{ node_args: ["RAW_SECRET_CANARY"] }, "node_args"],
+    [{ NODE_ENV: "RAW_SECRET_CANARY" }, "runtime_environment"],
+    [{ env: { FANMIND_RELEASE_COMMIT: "RAW_SECRET_CANARY" } }, "release_binding"],
+  ]) {
+    assert.equal(savedAppDiagnostic([{ ...savedApp(), ...overrides }], expectedCommit), code);
+    assert.equal(savedAppMatches([{ ...savedApp(), ...overrides }], expectedCommit), false);
+  }
+});
+
+function startupUnit() {
+  return parseUnitProperties([
+    "Id=pm2-ubuntu.service", "LoadState=loaded", "NeedDaemonReload=no", "DropInPaths=",
+    "User=ubuntu", "Type=forking", "PIDFile=/home/ubuntu/.pm2/pm2.pid",
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => `${key}=`),
+    "Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin PM2_HOME=/home/ubuntu/.pm2",
+    "ExecStop={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 kill ; ignore_errors=no ; pid=0 ; code=(null) ; status=0/0 }",
+    "ExecStart={ path=/usr/lib/node_modules/pm2/bin/pm2 ; argv[]=/usr/lib/node_modules/pm2/bin/pm2 resurrect ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }",
+  ].join("\n"));
+}
+
+function unitText(unit) {
+  return Object.entries(unit).map(([key, value]) => `${key}=${value}`).join("\n");
+}
+
+const nginxStandardSha = "6c759c229d4dacf65c1f98c1733646f8b979d3e75e13a98bfbcfe26f8a2f793c";
+const nginxConditionReply = 'a(sbbsi) 1 "ConditionFileIsExecutable" false false "/usr/sbin/nginx" 1';
+
+function nginxUnitWithReply(reply, overrides = {}) {
+  const unit = { Id: "nginx.service", LoadState: "loaded", NeedDaemonReload: "no",
+    DropInPaths: "", Conditions: "[unprintable]", Asserts: "", ...overrides };
+  return readUnit(unit.Id, [], (command, args) => {
+    if (command === "/bin/systemctl") return unitText(unit);
+    if (args.includes("GetUnit")) {
+      assert.equal(args.at(-1), unit.Id);
+      return 'o "/org/freedesktop/systemd1/unit/nginx_2eservice"';
+    }
+    assert.deepEqual(args.slice(7), ["/org/freedesktop/systemd1/unit/nginx_2eservice",
+      "org.freedesktop.systemd1.Unit", "Conditions"]);
+    if (reply instanceof Error) throw reply;
+    return reply;
+  });
+}
+
+test("official nginx condition requires its complete independent pin and a fresh executable check", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  assert.equal(createHash("sha256").update(source).digest("hex"), nginxStandardSha);
+  for (const result of [-1, 0, 1]) {
+    const unit = nginxUnitWithReply(nginxConditionReply.replace(/ 1$/u, ` ${result}`));
+    assert.equal(unit.Conditions, "[unprintable]", "a real condition stays nonempty");
+    const checks = [];
+    const executableCheck = file => { checks.push(file); return true; };
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, executableCheck), true);
+    assert.deepEqual(checks, ["/usr/sbin/nginx"]);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => false), false,
+      "a cached success cannot substitute for a current executable check");
+    for (const pin of [undefined, "a".repeat(64)]) {
+      assert.equal(unitDefinitionMatches(unit, unit.Id, source, pin, () => assert.fail("unbound executable check")), false);
+    }
+    const altered = source + "\nExecStartPost=/private/RAW_SECRET_CANARY\n";
+    const alteredSha = createHash("sha256").update(altered).digest("hex");
+    for (const pin of [nginxStandardSha, alteredSha]) {
+      assert.equal(unitDefinitionMatches(unit, unit.Id, altered, pin, () => true), false);
+    }
+  }
+});
+
+test("nginx rejects empty, extra, negated, triggered, wrong-path and unverified condition replies", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  const replies = ["", "a(sbbsi) 0", "[unprintable]", "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY"),
+    nginxConditionReply.replace("false false", "true false"), nginxConditionReply.replace("false false", "false true"),
+    nginxConditionReply.replace("/usr/sbin/nginx", "/private/RAW_SECRET_CANARY"),
+    nginxConditionReply.replace("ConditionFileIsExecutable", "ConditionPathExists"),
+    nginxConditionReply.replace("a(sbbsi)", "a(sbbss)"), nginxConditionReply.replace(/ 1$/u, " 2"),
+    nginxConditionReply.replace("a(sbbsi) 1", "a(sbbsi) 2"), `${nginxConditionReply}\n${nginxConditionReply}`,
+    `${nginxConditionReply} "ConditionPathExists" false false "/private/RAW_SECRET_CANARY" 1`];
+  for (const reply of replies) {
+    const unit = nginxUnitWithReply(reply);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => assert.fail("unproven condition")), false);
+    assert.doesNotMatch(bootReadinessLines({ units: { NGINX: unit }, checks: {} }).join("\n"), /RAW_SECRET_CANARY/u);
+  }
+  for (const Conditions of ["", "ConditionFileIsExecutable=/usr/sbin/nginx", "verified-nginx-executable-condition"]) {
+    const unit = nginxUnitWithReply(nginxConditionReply, { Conditions });
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => true), false,
+      "a displayed string is not private typed D-Bus proof");
+  }
+});
+
+test("nginx default executable check rejects missing, nonregular, nonexecuting and writable paths", async t => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  const unit = nginxUnitWithReply(nginxConditionReply);
+  const original = { stat: fs.statSync, lstat: fs.lstatSync, realpath: fs.realpathSync };
+  let state;
+  const metadata = () => {
+    if (state.missing) throw Object.assign(new Error("missing"), { code: "ENOENT" });
+    return { uid: state.uid ?? 0, mode: state.mode ?? 0o755,
+      isFile: () => !state.directory, isSymbolicLink: () => false };
+  };
+  t.mock.method(fs, "statSync", (file, ...args) => file === "/usr/sbin/nginx" ? metadata() : original.stat(file, ...args));
+  t.mock.method(fs, "lstatSync", (file, ...args) => {
+    if (file === "/usr/sbin/nginx") return metadata();
+    if (file === "/usr/sbin" && state.writableParent) {
+      return { uid: 0, mode: 0o777, isSymbolicLink: () => false };
+    }
+    return original.lstat(file, ...args);
+  });
+  t.mock.method(fs, "realpathSync", (file, ...args) => file === "/usr/sbin/nginx" ? file : original.realpath(file, ...args));
+  for (const candidate of [{}, { missing: true }, { directory: true }, { mode: 0o644 },
+    { mode: 0o775 }, { uid: 1000 }, { writableParent: true }]) {
+    state = candidate;
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha), Object.keys(candidate).length === 0);
+  }
+});
+
+test("nginx exception cannot bypass unit identity, assertions, drop-ins or reload state", async () => {
+  const source = await readFile("tests/fixtures/nginx-1.24.0-2ubuntu7.17.service", "utf8");
+  for (const overrides of [
+    { Id: "pm2-ubuntu.service" }, { LoadState: "not-found" }, { NeedDaemonReload: "yes" },
+    { DropInPaths: "/private/RAW_SECRET_CANARY" }, { DropInPaths: undefined },
+    { Asserts: "AssertPathExists=/private/RAW_SECRET_CANARY" }, { Asserts: undefined },
+  ]) {
+    const unit = nginxUnitWithReply(nginxConditionReply, overrides);
+    assert.equal(unitDefinitionMatches(unit, unit.Id, source, nginxStandardSha, () => true), false);
+  }
+  const unit = nginxUnitWithReply(nginxConditionReply);
+  const transported = JSON.parse(JSON.stringify(unit));
+  assert.equal(unitDefinitionMatches(transported, unit.Id, source, nginxStandardSha, () => true), false,
+    "serialized properties cannot carry the private proof");
+});
+
+test("systemctl omitted struct arrays require typed D-Bus emptiness on the same loaded unit", () => {
+  const omitted = startupUnit();
+  const emptyTypes = {
+    ExecCondition: "a(sasbttttuii)", ExecStartPre: "a(sasbttttuii)", ExecStartPost: "a(sasbttttuii)",
+    ExecStopPost: "a(sasbttttuii)", EnvironmentFiles: "a(sb)", Conditions: "a(sbbsi)", Asserts: "a(sbbsi)",
+  };
+  for (const key of Object.keys(emptyTypes)) delete omitted[key];
+  // v255's generic printer cannot render the Conditions/Asserts struct type.
+  omitted.Conditions = "[unprintable]";
+  omitted.Asserts = "[unprintable]";
+  assert.equal(startupDiagnostic(omitted), "hooks");
+  const calls = [];
+  const result = readUnit("pm2-ubuntu.service", Object.keys(startupUnit()), (command, args, options) => {
+    calls.push([command, args]);
+    assert.equal(options.timeout, 10_000);
+    assert.equal(options.maxBuffer, 128 * 1024);
+    assert.deepEqual(options.stdio, ["ignore", "pipe", "pipe"]);
+    if (command === "/bin/systemctl") return unitText(omitted);
+    assert.equal(command, "/usr/bin/busctl");
+    assert.deepEqual(args.slice(0, 5), ["--system", "--no-pager", "--auto-start=no", "--allow-interactive-authorization=no", "--timeout=10"]);
+    if (args[5] === "call") {
+      assert.deepEqual(args.slice(6), ["org.freedesktop.systemd1", "/org/freedesktop/systemd1", "org.freedesktop.systemd1.Manager", "GetUnit", "s", "pm2-ubuntu.service"]);
+      return 'o "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice"\n';
+    }
+    assert.equal(args[5], "get-property");
+    assert.equal(args[7], "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice");
+    assert.equal(args[8], `org.freedesktop.systemd1.${args[9] === "Conditions" ? "Unit" : "Service"}`);
+    return args.slice(9).map(key => `${emptyTypes[key]} 0`).join("\n") + "\n";
+  });
+  assert.equal(startupDiagnostic(result), "ok");
+  assert.deepEqual(result, startupUnit());
+  assert.equal(calls.length, 4);
+});
+
+test("typed emptiness never accepts a failed, missing, malformed, wrong-type or nonempty reply", () => {
+  for (const [key, type, marker, code] of [
+    ["ExecStartPre", "a(sasbttttuii)", undefined, "hooks"],
+    ["Conditions", "a(sbbsi)", "[unprintable]", "conditions"],
+  ]) {
+    for (const reply of [
+      "", "as 0", `${type} 1 /private/RAW_SECRET_CANARY`, `${type} -0`,
+      `${type} 0 extra`, `${type} 0\n${type} 0`, "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY"),
+    ]) {
+      const unit = startupUnit();
+      if (marker === undefined) delete unit[key];
+      else unit[key] = marker;
+      const result = readUnit(unit.Id, [key], (command, args) => {
+        if (command === "/bin/systemctl") return unitText(unit);
+        if (args.includes("GetUnit")) return 'o "/org/freedesktop/systemd1/unit/pm2_2dubuntu_2eservice"';
+        if (reply instanceof Error) throw reply;
+        return reply;
+      });
+      assert.equal(result[key], marker);
+      assert.equal(startupDiagnostic(result), code);
+      assert.doesNotMatch(bootReadinessLines({ units: { PM2: result }, checks: {}, diagnostics: {
+        PM2_STARTUP: startupDiagnostic(result),
+      } }).join("\n"), /RAW_SECRET_CANARY/u);
+    }
+  }
+});
+
+test("structured fallback preserves measured commands and rejects an unresolved or different unit", () => {
+  for (const value of ["", "/private/RAW_SECRET_CANARY"]) {
+    const unit = { ...startupUnit(), ExecStartPre: value };
+    const result = readUnit(unit.Id, ["ExecStartPre"], (command) => {
+      assert.equal(command, "/bin/systemctl");
+      return unitText(unit);
+    });
+    assert.equal(result.ExecStartPre, value);
+    assert.equal(startupDiagnostic(result), value ? "hooks" : "ok");
+  }
+  for (const resolution of ["", 'o "/org/freedesktop/systemd1/unit/other_2eservice"', "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY")]) {
+    const unit = startupUnit();
+    delete unit.ExecStartPre;
+    const result = readUnit(unit.Id, ["ExecStartPre"], (command, args) => {
+      if (command === "/bin/systemctl") return unitText(unit);
+      assert.ok(args.includes("GetUnit"));
+      if (resolution instanceof Error) throw resolution;
+      return resolution;
+    });
+    assert.equal(startupDiagnostic(result), "hooks");
+  }
+  for (const source of ["Id=pm2-ubuntu.service\nId=other.service", "RAW_SECRET_CANARY", new Error("RAW_SECRET_CANARY")]) {
+    assert.deepEqual(readUnit("pm2-ubuntu.service", ["ExecStop"], command => {
+      assert.equal(command, "/bin/systemctl");
+      if (source instanceof Error) throw source;
+      return source;
+    }), {});
+  }
+});
+
+test("runner empty ExecStop and timer Conditions use their exact interfaces and array signatures", () => {
+  for (const [name, extra, expectedPath, signature, interfaceName] of [
+    ["actions.runner.FanMind-FanMind.production.service", "ExecStop", "actions_2erunner_2eFanMind_2dFanMind_2eproduction_2eservice", "a(sasbttttuii)", "Service"],
+    ["fanmind-backup-server_config.timer", "Conditions", "fanmind_2dbackup_2dserver_5fconfig_2etimer", "a(sbbsi)", "Unit"],
+  ]) {
+    const unit = { Id: name, LoadState: "loaded", Conditions: "", Asserts: "" };
+    delete unit[extra];
+    const result = readUnit(name, [extra], (command, args) => {
+      if (command === "/bin/systemctl") return unitText(unit);
+      if (args.includes("GetUnit")) return `o "/org/freedesktop/systemd1/unit/${expectedPath}"`;
+      assert.deepEqual(args.slice(7), [`/org/freedesktop/systemd1/unit/${expectedPath}`, `org.freedesktop.systemd1.${interfaceName}`, extra]);
+      return `${signature} 0`;
+    });
+    assert.equal(result[extra], "");
+  }
+});
+
+test("PM2 startup and current runner binding fail closed on alternate commands, users and unparseable inputs", () => {
+  const unit = startupUnit();
+  assert.equal(startupContract(unit).executable, "/usr/lib/node_modules/pm2/bin/pm2");
+  assert.equal(startupDiagnostic(unit), "ok");
+  for (const [overrides, code] of [
+    [{ ExecStartPre: "/private/RAW_SECRET_CANARY" }, "hooks"],
+    [{ EnvironmentFiles: "/private/RAW_SECRET_CANARY" }, "service_inputs"],
+    [{ Environment: 'PATH="RAW_SECRET_CANARY"' }, "environment_format"],
+    [{ Environment: `${unit.Environment} EXTRA=RAW_SECRET_CANARY` }, "environment_binding"],
+    [{ ExecStart: "RAW_SECRET_CANARY" }, "start_command"],
+    [{ ExecStop: "RAW_SECRET_CANARY" }, "stop_command"],
+  ]) assert.equal(startupDiagnostic({ ...unit, ...overrides }), code);
+  for (const overrides of [
+    { User: "root" }, { Type: "simple" }, { PIDFile: "/tmp/pm2.pid" },
+    { ExecStop: undefined }, { ExecStop: unit.ExecStop.replace(" kill ", " kill extra ") },
+    { ExecStop: unit.ExecStop.replaceAll("/usr/lib/node_modules/pm2", "/tmp/other") },
+    ...["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage"].flatMap(key => [{ [key]: undefined }, { [key]: "/private/RAW_SECRET_CANARY" }]),
+    { Environment: `${unit.Environment} NODE_OPTIONS=--require=/tmp/hook.cjs` },
+    { ExecStart: unit.ExecStart.replace(" resurrect ", " resurrect extra ") },
+    { ExecStart: `${unit.ExecStart} ${unit.ExecStart}` },
+    { Environment: `${unit.Environment} PM2_HOME=/private/RAW_SECRET_CANARY` },
+    { Environment: unit.Environment.replace("/usr/bin", "relative") },
+    { Environment: 'PATH="$(RAW_SECRET_CANARY)" PM2_HOME=/home/ubuntu/.pm2' },
+  ]) assert.equal(startupContract({ ...unit, ...overrides }), null);
+  assert.throws(() => parseUnitProperties("User=ubuntu\nUser=root"), /duplicate/u);
+  assert.throws(() => parseUnitProperties("RAW_SECRET_CANARY"), /invalid/u);
+  const runner = "actions.runner.FanMind-FanMind.production.service";
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}`), runner);
+  assert.equal(runnerUnitFromCgroup("0::/user.slice/session.scope"), null);
+  assert.equal(runnerUnitFromCgroup(`0::/system.slice/${runner}/actions.runner.other.service`), null);
+});
+
+test("saved PM2 launch rejects Node arguments and loader environment overrides", () => {
+  assert.equal(savedAppMatches([{ ...savedApp(), node_args: [], interpreter_args: "" }], expectedCommit), true);
+  for (const key of ["node_args", "interpreter_args"]) {
+    for (const value of [["--require=/tmp/RAW_SECRET_CANARY"], "--inspect", null, {}]) {
+      assert.equal(savedAppMatches([{ ...savedApp(), [key]: value }], expectedCommit), false);
+    }
+  }
+  for (const key of ["NODE_OPTIONS", "NODE_PATH", "LD_PRELOAD", "LD_LIBRARY_PATH", "LD_AUDIT", "BASH_ENV", "ENV", "OPENSSL_CONF", "OPENSSL_MODULES"]) {
+    assert.equal(savedAppMatches([{ ...savedApp(), [key]: "/tmp/RAW_SECRET_CANARY" }], expectedCommit), false);
+    assert.equal(savedAppMatches([{ ...savedApp(), env: { [key]: "/tmp/RAW_SECRET_CANARY" } }], expectedCommit), false);
+  }
+});
+
+test("next-boot release rejects a repointed symlink, wrong deployment ID and missing build artifacts", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-release-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const releases = join(root, "releases"), current = join(root, "current"), release = join(releases, expectedCommit);
+  await mkdir(join(release, ".next"), { recursive: true });
+  await mkdir(join(release, "node_modules/next/dist/bin"), { recursive: true });
+  const metadata = join(release, ".next/required-server-files.json");
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: expectedCommit } }));
+  await writeFile(join(release, ".next/BUILD_ID"), "build-id");
+  const launcher = join(release, "node_modules/next/dist/bin/next");
+  await writeFile(launcher, "// synthetic non-executed Next launcher");
+  await symlink(release, current);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), true);
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: "b".repeat(40) } }));
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  await writeFile(metadata, JSON.stringify({ config: { deploymentId: expectedCommit } }));
+  await rm(launcher);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  await writeFile(launcher, "// synthetic non-executed Next launcher");
+  await rm(current);
+  await symlink(root, current);
+  assert.equal(releaseTargetMatches(expectedCommit, current, releases), false);
+  assert.equal(releaseTargetMatches(expectedCommit, release, releases), false);
+});
+
+async function runnerConfigurationFixture(t, overrides = {}) {
+  // The startup path must have protected ancestors too; /tmp is deliberately
+  // not a valid runner installation parent, even for an owner-only leaf.
+  const parent = await mkdtemp(join(realpathSync(homedir()), "fanmind-boot-runner-"));
+  t.after(() => rm(parent, { recursive: true, force: true }));
+  const root = join(parent, "runner");
+  await mkdir(root);
+  await mkdir(join(root, "bin"));
+  await mkdir(join(root, "externals/node20/bin"), { recursive: true });
+  const unitName = "actions.runner.FanMind-FanMind.production.service";
+  const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
+  const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/", ...overrides };
+  context.registrationSha256 = createHash("sha256").update(JSON.stringify(settings)).digest("hex");
+  await writeFile(join(root, ".runner"), JSON.stringify(settings), { mode: 0o600 });
+  await writeFile(join(root, ".service"), unitName, { mode: 0o600 });
+  // GitHub runner images may grant the build user writes under /usr/local;
+  // the positive fixture uses only the protected distro paths proven below.
+  await writeFile(join(root, ".path"), "/usr/bin:/bin", { mode: 0o600 });
+  await writeFile(join(root, ".env"), "LANG=C.UTF-8\n", { mode: 0o600 });
+  for (const relative of [".credentials", ".credentials_rsaparams"]) await writeFile(join(root, relative), "synthetic-not-a-credential", { mode: 0o600 });
+  for (const relative of ["bin/Runner.Listener", "externals/node20/bin/node"]) await writeFile(join(root, relative), "synthetic-not-executed", { mode: 0o700 });
+  const runsvc = await readFile("tests/fixtures/runner-startup-v2.337.0/runsvc.sh.txt", "utf8");
+  await writeFile(join(root, "runsvc.sh"), runsvc, { mode: 0o700 });
+  await writeFile(join(root, "bin/RunnerService.js"), await readFile("tests/fixtures/runner-startup-v2.337.0/RunnerService.js.txt"));
+  const unit = {
+    User: "ubuntu", Type: "simple", WorkingDirectory: root, Environment: "", ExecStop: "",
+    ExecStart: `{ path=${root}/runsvc.sh ; argv[]=${root}/runsvc.sh ; ignore_errors=no ; pid=1 ; code=(null) ; status=0/0 }`,
+    ...Object.fromEntries(["ExecCondition", "ExecStartPre", "ExecStartPost", "ExecStopPost", "EnvironmentFiles", "PassEnvironment", "UnsetEnvironment", "PAMName", "RootDirectory", "RootImage", "Conditions", "Asserts"].map(key => [key, ""])),
+  };
+  return { root, unitName, context, settings, unit, runsvc };
+}
+
+async function useVersionedRunnerLayout(root) {
+  for (const directory of ["bin", "externals"]) {
+    const target = join(root, `${directory}.2.337.0`);
+    await rename(join(root, directory), target);
+    await symlink(target, join(root, directory));
+  }
+}
+
+test("official runner versioned layout retains complete registration and artifact contracts", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "official updater links must not require a host layout rewrite");
+  assert.equal(runnerStartupMatches(unit, unitName, context), false, "a valid layout is not a live-image proof");
+  assert.equal(fs.lstatSync(join(root, "bin")).isSymbolicLink(), true);
+  assert.equal(fs.lstatSync(join(root, "externals")).isSymbolicLink(), true);
+  for (const relative of [".runner", ".service", ".path", ".env", ".credentials", ".credentials_rsaparams"]) {
+    const file = join(root, relative), target = `${file}.original`;
+    await rename(file, target);
+    await symlink(target, file);
+    assert.equal(check(), false, `${relative} never inherits the artifact-link exception`);
+    await rm(file);
+    await rename(target, file);
+  }
+  await writeFile(join(root, "bin.2.337.0/RunnerService.js"), "RAW_SECRET_CANARY");
+  assert.equal(check(), false, "approved layout cannot replace the complete script pin");
+});
+
+test("runner layout rejects unknown targets, mixed updates, nested links and unprotected parents", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  const bin = join(root, "bin"), approved = join(root, "bin.2.337.0");
+  const other = join(root, "bin.2.338.0");
+  await mkdir(other);
+  for (const name of ["Runner.Listener", "RunnerService.js"]) await copyFile(join(approved, name), join(other, name));
+  await chmod(join(other, "Runner.Listener"), 0o700);
+  for (const target of [other, "bin.2.337.0", `${root}/./bin.2.337.0`, join(root, "missing")]) {
+    await rm(bin); await symlink(target, bin);
+    assert.equal(check(), false, "only the exact reviewed absolute sibling is permitted");
+  }
+  await rm(bin); await symlink(approved, bin);
+  const external = join(root, "externals"), externalTarget = `${external}.2.337.0`;
+  await rm(external); await rename(externalTarget, external);
+  assert.equal(check(), false, "an in-progress mixed layout cannot pass");
+  await rename(external, externalTarget); await symlink(externalTarget, external);
+  for (const directory of [dirname(root), root, approved, externalTarget, join(externalTarget, "node20"), join(externalTarget, "node20/bin")]) {
+    const mode = fs.statSync(directory).mode & 0o777;
+    await chmod(directory, mode | 0o020);
+    assert.equal(check(), false, "every alias/target parent must be protected");
+    await chmod(directory, mode);
+  }
+  for (const file of [join(approved, "RunnerService.js"), join(externalTarget, "node20/bin/node")]) {
+    await rename(file, `${file}.original`); await symlink(`${file}.original`, file);
+    assert.equal(check(), false, "nested artifact links remain rejected");
+    await rm(file); await rename(`${file}.original`, file);
+  }
+  await rename(approved, `${approved}.original`); await symlink(`${approved}.original`, approved);
+  assert.equal(check(), false, "a versioned directory must itself be direct");
+  await rm(approved); await rename(`${approved}.original`, approved);
+  const lstat = fs.lstatSync;
+  const wrongOwner = t.mock.method(fs, "lstatSync", (file, ...args) => {
+    const value = lstat(file, ...args);
+    return file === bin ? Object.assign(Object.create(Object.getPrototypeOf(value)), value,
+      { uid: typeof value.uid === "bigint" ? value.uid + 1n : value.uid + 1 }) : value;
+  });
+  assert.equal(check(), false, "the alias itself must belong to the runner owner");
+  wrongOwner.mock.restore();
+  assert.equal(check(), true);
+});
+
+test("runner layout detects alias replacement during a protected artifact read", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(root);
+  const file = join(root, "bin.2.337.0/RunnerService.js"), link = join(root, "bin");
+  const open = fs.openSync, read = fs.readSync;
+  let watched, changed = false;
+  t.mock.method(fs, "openSync", (candidate, ...args) => {
+    const fd = open(candidate, ...args);
+    if (candidate === file) watched = fd;
+    return fd;
+  });
+  t.mock.method(fs, "readSync", (fd, ...args) => {
+    const count = read(fd, ...args);
+    if (fd === watched && !changed) {
+      changed = true;
+      fs.unlinkSync(link);
+      fs.symlinkSync(join(root, "bin.2.337.0"), link);
+    }
+    return count;
+  });
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "same-target replacement invalidates the snapshot");
+  assert.equal(changed, true, "the canonical artifact was actually read");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true, "a fresh stable observation can pass");
+});
+
+test("runner configuration binds the actual registration and rejects missing or replaced startup artifacts", async (t) => {
+  const { root, unitName, context, settings, unit, runsvc } = await runnerConfigurationFixture(t);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
+  assert.equal(runnerStartupMatches(unit, unitName, context), false, "synthetic files are not live runner images");
+  // IOUtil.SaveObject's Encoding.UTF8 can emit a BOM, unlike our original
+  // JSON.stringify-only fixture. Its presence remains part of the reference.
+  const bomRegistration = "\uFEFF" + JSON.stringify(settings);
+  await writeFile(join(root, ".runner"), bomRegistration);
+  const bomContext = { ...context, registrationSha256: createHash("sha256").update(bomRegistration).digest("hex") };
+  assert.equal(runnerConfigurationMatches(unit, unitName, bomContext), true);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "the BOM cannot be removed before hashing");
+  for (const registration of ["\uFEFF" + bomRegistration, " " + bomRegistration, "\uFEFFRAW_SECRET_CANARY"]) {
+    await writeFile(join(root, ".runner"), registration);
+    assert.equal(runnerConfigurationMatches(unit, unitName, {
+      ...context, registrationSha256: createHash("sha256").update(registration).digest("hex"),
+    }), false);
+  }
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  assert.equal(runnerConfigurationMatches(unit, unitName, bomContext), false, "changed original bytes fail their old pin");
+  for (const overrides of [
+    { User: "root" }, { WorkingDirectory: "/tmp/absent" }, { ExecStart: unit.ExecStart.replace(" ; ignore", " extra ; ignore") },
+    { ExecStartPre: "/tmp/RAW_SECRET_CANARY" }, { Environment: "NODE_OPTIONS=--require=/tmp/hook.cjs" },
+  ]) assert.equal(runnerConfigurationMatches({ ...unit, ...overrides }, unitName, context), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, name: "foreign" }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, workspace: root }), false);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, registrationSha256: undefined }), false);
+  await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, serverUrl: settings.serverUrl.replace("11111111-1111", "22222222-2222") }));
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false, "valid URL shape is not the reviewed endpoint identity");
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  await writeFile(join(root, ".path"), "/usr/bin NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".path"), "/usr/bin:/bin");
+  await writeFile(join(root, ".env"), "NODE_OPTIONS=--require=/tmp/RAW_SECRET_CANARY\n");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".env"), "LANG=C.UTF-8\n");
+  await writeFile(join(root, "runsvc.sh"), "#!/bin/bash\nexit 1\n");
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, "runsvc.sh"), runsvc);
+  await writeFile(join(root, ".runner"), JSON.stringify({ ...settings, gitHubUrl: "https://github.com/other/repo" }));
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await writeFile(join(root, ".runner"), JSON.stringify(settings));
+  for (const relative of ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", "externals/node20/bin/node", ".service", ".credentials", ".credentials_rsaparams"]) {
+    const file = join(root, relative), content = await readFile(file);
+    await rm(file);
+    assert.equal(runnerConfigurationMatches(unit, unitName, context), false, relative);
+    await writeFile(file, content, { mode: 0o700 });
+  }
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), true);
+  await chmod(join(root, ".credentials"), 0o644);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+});
+
+test("runner migration accepts only byte-identical protected settings under the independent pin", async (t) => {
+  const { root, unitName, context, settings, unit } = await runnerConfigurationFixture(t, {
+    serverUrl: `https://pipelines.actions.githubusercontent.com/${"Synthetic_".repeat(5)}A`,
+  });
+  const file = join(root, ".runner_migrated"), source = "\uFEFF" + JSON.stringify(settings);
+  await writeFile(join(root, ".runner"), source);
+  context.registrationSha256 = createHash("sha256").update(source).digest("hex");
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "absence uses the existing independently pinned registration");
+  await writeFile(file, source, { mode: 0o644 });
+  assert.equal(check(), true, "the optional file has exactly the same original BOM and bytes");
+  for (const replacement of [source.slice(1), source + "\n", source.replace("Synthetic_", "Different_"), "RAW_SECRET_CANARY"]) {
+    await writeFile(file, replacement);
+    assert.equal(check(), false, "valid syntax or equal parsed settings cannot replace byte identity");
+  }
+  await writeFile(file, source);
+  await chmod(file, 0o664);
+  assert.equal(check(), false, "a group-writable migration is not trusted");
+  await rm(file);
+  await symlink(join(root, ".runner"), file);
+  assert.equal(check(), false, "a same-content link is still a different startup path");
+  await rm(file);
+  await mkdir(file);
+  assert.equal(check(), false, "a non-file is not absence");
+  await rm(file, { recursive: true });
+  assert.equal(check(), true);
+});
+
+test("runner alternate credentials and unavailable migration state remain blocked without reading credentials", async (t) => {
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t);
+  const file = join(root, ".credentials_migrated"), settingsFile = join(root, ".runner_migrated");
+  const open = fs.openSync, lstat = fs.lstatSync;
+  let credentialReads = 0;
+  t.mock.method(fs, "openSync", (file, ...args) => {
+    if (typeof file === "string" && file.startsWith(join(root, ".credentials"))) {
+      credentialReads += 1;
+      throw new Error("RAW_SECRET_CANARY");
+    }
+    return open(file, ...args);
+  });
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), true, "the observed absent sidecar keeps the original credential path");
+  await writeFile(file, "RAW_SECRET_CANARY", { mode: 0o600 });
+  assert.equal(check(), false, "alternate credentials need a separate reviewed binding even at mode 0600");
+  await rm(file);
+  await symlink(join(root, "absent-credential-target"), file);
+  assert.equal(check(), false, "a dangling link is present");
+  await rm(file);
+  for (const target of [file, settingsFile]) {
+    for (const code of ["EACCES", "EIO", "ENOTDIR"]) {
+      const mock = t.mock.method(fs, "lstatSync", (candidate, ...args) => {
+        if (candidate === target) throw Object.assign(new Error("RAW_SECRET_CANARY"), { code });
+        return lstat(candidate, ...args);
+      });
+      assert.equal(check(), false, "only ENOENT can prove absence");
+      mock.mock.restore();
+    }
+  }
+  assert.equal(credentialReads, 0);
+  assert.equal(check(), true);
+});
+
+test("runner registration byte pins reject malformed UTF-8 that decodes like the approved text", async (t) => {
+  const { root, unitName, context, settings, unit } = await runnerConfigurationFixture(t, { poolName: "\uFFFD" });
+  const source = Buffer.from(JSON.stringify(settings)), at = source.indexOf(Buffer.from("\uFFFD"));
+  assert.notEqual(at, -1);
+  const malformed = Buffer.concat([source.subarray(0, at), Buffer.from([0xff]), source.subarray(at + 3)]);
+  assert.equal(malformed.toString("utf8"), source.toString("utf8"), "lossy decoding alone hides the different bytes");
+  assert.notEqual(createHash("sha256").update(malformed).digest("hex"), context.registrationSha256);
+  await writeFile(join(root, ".runner_migrated"), malformed, { mode: 0o600 });
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+  await rm(join(root, ".runner_migrated"));
+  await writeFile(join(root, ".runner"), malformed);
+  assert.equal(runnerConfigurationMatches(unit, unitName, context), false);
+});
+
+test("actual workflow keeps boot readiness separate and never publishes private unit values", async (t) => {
+  const good = await runAuditWorkflow(t, validAuditOutput(), 0);
+  assert.equal(good.code, 0);
+  assert.match(good.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=true$/mu);
+  assert.match(good.stdout, /^PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP=ok$/mu);
+  const bad = await runAuditWorkflow(t, validAuditOutput().replace(
+    "BOOT_UNIT_PM2=loaded|enabled|active|no", "BOOT_UNIT_PM2=RAW_SECRET_CANARY|disabled|inactive").replace(
+    "BOOT_DIAGNOSTIC_PM2_STARTUP=ok", "BOOT_DIAGNOSTIC_PM2_STARTUP=RAW_SECRET_CANARY"), 0);
+  assert.equal(bad.code, 0, "the prior live Operations contract remains independent");
+  assert.match(bad.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.match(bad.stdout, /^PRODUCTION_BOOT_READINESS_VERIFIED=false$/mu);
+  assert.match(bad.stdout, /^PRODUCTION_BOOT_DIAGNOSTIC_PM2_STARTUP=unknown$/mu);
+  assert.doesNotMatch(bad.stdout, /RAW_SECRET_CANARY/u);
+});
+
+test("diagnostics accept only fixed codes once and cannot supply a missing or failed boot check", () => {
+  const valid = validBootLines().join("\n");
+  for (const key of ["PM2_STARTUP", "PM2_SAVED_APP", "BOOT_NODE"]) {
+    const line = `BOOT_DIAGNOSTIC_${key}=ok`;
+    for (const altered of [
+      valid.replace(line, ""), `${valid}\n${line}`,
+      valid.replace(line, `BOOT_DIAGNOSTIC_${key}=RAW_SECRET_CANARY`),
+    ]) {
+      const result = bootSummaryFromValues(parseProductionAuditOutput(altered));
+      assert.equal(result.diagnostics[key], "unknown");
+      assert.equal(result.verified, true, "diagnostics do not alter the established acceptance contract");
+      assert.doesNotMatch(JSON.stringify(result), /RAW_SECRET_CANARY/u);
+    }
+    for (const replacement of ["", `BOOT_${key}=false`]) {
+      assert.equal(bootSummaryFromValues(parseProductionAuditOutput(valid.replace(`BOOT_${key}=true`, replacement))).verified, false);
+    }
+  }
+  const emitted = bootReadinessLines({ units: {}, checks: {}, diagnostics: {
+    PM2_STARTUP: "RAW_SECRET_CANARY", PM2_SAVED_APP: "json_invalid", BOOT_NODE: "startup_unverified", PRIVATE_SECRET: "RAW_SECRET_CANARY",
+  } }).join("\n");
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_PM2_STARTUP=unknown$/mu);
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_PM2_SAVED_APP=json_invalid$/mu);
+  assert.match(emitted, /^BOOT_DIAGNOSTIC_BOOT_NODE=startup_unverified$/mu);
+  assert.doesNotMatch(emitted, /RAW_SECRET_CANARY|PRIVATE_SECRET/u);
+});
+
+test("runner registration endpoints reject missing, foreign and untrusted targets", () => {
+  const valid = { agentId: 1, poolId: 1, serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/" };
+  assert.equal(runnerEndpointsMatch(valid), true);
+  assert.equal(runnerEndpointsMatch({ ...valid, useV2Flow: false, serverUrlV2: undefined }), true);
+  for (const pathname of ["/", "/A", `/${"Synthetic_".repeat(5)}A`, `/${"a".repeat(256)}/`]) {
+    assert.equal(runnerEndpointsMatch({ ...valid, serverUrl: `https://pipelines.actions.githubusercontent.com${pathname}` }), true);
+  }
+  for (const pathname of [`/${"a".repeat(257)}/`, "/one/two/", "/%41/", "/one%2Ftwo/", "/one/../two/", "/./", "/../", "/one//", "/a.b/", "/?", "/#"]) {
+    assert.equal(runnerEndpointsMatch({ ...valid, serverUrl: `https://pipelines.actions.githubusercontent.com${pathname}` }), false, pathname);
+  }
+  assert.equal(runnerEndpointsMatch({ ...valid, serverUrlV2: "https://broker.actions.githubusercontent.com/opaque/" }), false, "the Broker path contract is not broadened");
+  for (const key of ["serverUrl", "serverUrlV2"]) {
+    for (const value of [undefined, null, "", 1, "https://example.com/", "http://broker.actions.githubusercontent.com/", "https://secret@broker.actions.githubusercontent.com/", "https://broker.actions.githubusercontent.com/?private=RAW_SECRET_CANARY", "https://pipelines.actions.githubusercontent.com.evil.example/", "https://pipelines.actions.githubusercontent.com:443/", " https://pipelines.actions.githubusercontent.com/", "https://pipelines.actions.githubusercontent.com/\n"]) {
+      assert.equal(runnerEndpointsMatch({ ...valid, [key]: value }), false);
+    }
+  }
+  for (const overrides of [{ agentId: undefined }, { poolId: 0 }, { useV2Flow: "true" }, { useRunnerAdminFlow: true }, { useRunnerAdminFlow: "false" }]) assert.equal(runnerEndpointsMatch({ ...valid, ...overrides }), false);
+  for (const settings of [null, undefined, [], 1]) assert.equal(runnerEndpointsMatch(settings), false);
+});
+
+test("complete managed unit definitions reject substituted commands, drop-ins, conditions and asserts", async () => {
+  for (const [name, fingerprint] of Object.entries(MANAGED_UNIT_HASHES)) {
+    const source = await readFile(`ops/systemd/${name}`, "utf8");
+    const unit = { Id: name, LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+    assert.equal(unitDefinitionMatches(unit, name, source, fingerprint), true, name);
+    assert.equal(unitDefinitionMatches(unit, name, `${source}\n[Service]\nExecStart=/usr/bin/false\n`, fingerprint), false, name);
+    for (const overrides of [
+      { Id: "foreign.service" }, { LoadState: "not-found" }, { NeedDaemonReload: "yes" },
+      { DropInPaths: "/etc/systemd/system/override.conf" }, { DropInPaths: undefined },
+      { Conditions: "ConditionPathExists=/tmp/missing" }, { Conditions: undefined },
+      { Asserts: "AssertPathExists=/tmp/missing" }, { Asserts: undefined },
+    ]) assert.equal(unitDefinitionMatches({ ...unit, ...overrides }, name, source, fingerprint), false, name);
+    assert.equal(unitDefinitionMatches(unit, name, source, undefined), false, "missing independent pin");
+  }
+  const source = "[Service]\nExecStart=/usr/sbin/nginx\n";
+  const unit = { Id: "nginx.service", LoadState: "loaded", NeedDaemonReload: "no", DropInPaths: "", Conditions: "", Asserts: "" };
+  const reference = createHash("sha256").update(source).digest("hex");
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source, reference), true);
+  assert.equal(unitDefinitionMatches(unit, unit.Id, source.replace("nginx", "false"), reference), false);
+});
+
+test("boot reference requires all independent fingerprints and rejects missing or unknown fields", () => {
+  const reference = { schemaVersion: 1, runnerRegistrationSha256: "a".repeat(64), nginxUnitSha256: "b".repeat(64), pm2UnitSha256: "c".repeat(64), runnerUnitSha256: "d".repeat(64) };
+  assert.deepEqual(parseBootReference(JSON.stringify(reference)), reference);
+  for (const key of Object.keys(reference)) {
+    const missing = { ...reference }; delete missing[key];
+    assert.equal(parseBootReference(JSON.stringify(missing)), null);
+    assert.equal(parseBootReference(JSON.stringify({ ...reference, [key]: "RAW_SECRET_CANARY" })), null);
+  }
+  for (const source of ["", "{}", "null", "[]", "RAW_SECRET_CANARY", JSON.stringify({ ...reference, extra: true })]) assert.equal(parseBootReference(source), null);
+});
+
+test("runner saved PATH rejects writable and missing directories in every position", async (t) => {
+  assert.equal(runnerPathMatches("/usr/bin:/bin"), true);
+  for (const source of ["/tmp:/usr/bin", "/usr/bin:/tmp", "/usr/bin:/fanmind-missing-path", "/usr/bin:", ".:/usr/bin", "/usr/bin/../bin", ""]) {
+    assert.equal(runnerPathMatches(source), false, source);
+  }
+  const root = await mkdtemp(join(tmpdir(), "fanmind-runner-path-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  await symlink("/usr/bin", join(root, "system-bin"));
+  assert.equal(runnerPathMatches(`${root}/system-bin:/usr/bin`), false, "writable symlink ancestor");
+});
+
+test("Linux kernel image and versioned runner startup proofs reject replaced files and aliases", async (t) => {
+  try { closeSync(openSync(`/proc/${process.pid}/exe`, "r")); }
+  catch (error) {
+    assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), false);
+    // Native Linux CI must run this proof, never skip it. The local managed
+    // workspace denies even /proc/self/exe; that is not a positive boot result.
+    if (process.env.GITHUB_ACTIONS === "true" || !["EACCES", "EPERM", "ENOENT"].includes(error.code)) throw error;
+    t.skip("local kernel image access denied; native GitHub Linux proof required");
+    return;
+  }
+  assert.equal(loadedExecutableMatches(realpathSync(process.execPath), process.pid), true);
+  const root = await mkdtemp(join(tmpdir(), "fanmind-boot-image-"));
+  const candidate = join(root, "runner-image");
+  // Copy the installed native Node executable, never an audit-supplied file.
+  // A spawn event alone does not prove the synthetic process has reached its
+  // stable running image. Wait for its fixed readiness marker before inspecting
+  // /proc, just as the versioned runner fixture below does.
+  await copyFile(realpathSync(process.execPath), candidate);
+  await chmod(candidate, 0o700);
+  const child = spawn(candidate, ["-e", 'process.stdout.write("SYNTHETIC_IMAGE_READY"); setInterval(() => {}, 1000);'], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) {
+      const exited = once(child, "exit"); child.kill("SIGTERM"); await exited;
+    }
+    await rm(root, { recursive: true, force: true });
+  });
+  await new Promise((resolveReady, reject) => {
+    let output = "";
+    const timer = setTimeout(() => reject(new Error("synthetic image startup timed out")), 10000);
+    child.once("error", error => { clearTimeout(timer); reject(error); });
+    child.once("exit", () => { clearTimeout(timer); reject(new Error("synthetic image stopped before readiness")); });
+    child.stdout.on("data", data => {
+      output += data.toString("utf8");
+      if (output === "SYNTHETIC_IMAGE_READY") { clearTimeout(timer); resolveReady(); }
+      else if (output.length > 128) { clearTimeout(timer); reject(new Error("synthetic image output invalid")); }
+    });
+  });
+  assert.equal(loadedExecutableMatches(candidate, child.pid), true);
+  await rename(candidate, join(root, "old-running-image"));
+  await copyFile(realpathSync(process.execPath), candidate);
+  await chmod(candidate, 0o700);
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  await writeFile(candidate, "synthetic-not-an-executable");
+  assert.equal(loadedExecutableMatches(candidate, child.pid), false);
+  assert.equal(loadedExecutableMatches(candidate, 0), false);
+
+  const fixture = await runnerConfigurationFixture(t);
+  await useVersionedRunnerLayout(fixture.root);
+  // Only known installed Node copies execute, inside a synthetic installation.
+  // The pinned official service script launches our inert local 'run' file;
+  // there is no GitHub client, credential read or network request in that file.
+  const listenerFile = join(fixture.root, "bin.2.337.0/Runner.Listener");
+  const nodeFile = join(fixture.root, "externals.2.337.0/node20/bin/node");
+  for (const file of [listenerFile, nodeFile]) {
+    await copyFile(realpathSync(process.execPath), file);
+    // Privileged copies can preserve the installed binary's foreign owner.
+    // These private test artifacts must belong to the synthetic runner user.
+    await chown(file, process.getuid(), process.getgid());
+    await chmod(file, 0o700);
+  }
+  await writeFile(join(fixture.root, "package.json"), '{"type":"commonjs"}');
+  await writeFile(join(fixture.root, "run"), 'console.log("SYNTHETIC_RUNNER_READY"); setInterval(() => {}, 1000);');
+  const service = spawn(join(fixture.root, "externals/node20/bin/node"), ["./bin/RunnerService.js"], {
+    cwd: fixture.root, env: { PATH: "/usr/bin:/bin" }, stdio: ["ignore", "pipe", "pipe"],
+  });
+  let listenerPid;
+  t.after(async () => {
+    if (service.exitCode === null && service.signalCode === null) {
+      const exited = once(service, "exit");
+      const timer = setTimeout(() => {
+        service.kill("SIGKILL");
+        if (listenerPid) { try { process.kill(listenerPid, "SIGKILL"); } catch {} }
+      }, 5000);
+      service.kill("SIGTERM");
+      await exited; clearTimeout(timer);
+    }
+  });
+  await new Promise((resolveReady, reject) => {
+    let output = "";
+    const timer = setTimeout(() => reject(new Error("synthetic runner startup timed out")), 10000);
+    service.once("error", error => { clearTimeout(timer); reject(error); });
+    service.stdout.on("data", data => {
+      output += data.toString("utf8");
+      listenerPid = Number(output.match(/Started listener process, pid: ([1-9][0-9]*)/u)?.[1]) || listenerPid;
+      if (listenerPid && output.includes("SYNTHETIC_RUNNER_READY")) { clearTimeout(timer); resolveReady(); }
+      if (output.length > 8192) { clearTimeout(timer); reject(new Error("synthetic runner output oversized")); }
+    });
+    service.once("exit", () => { clearTimeout(timer); reject(new Error("synthetic runner stopped before readiness")); });
+  });
+  const group = `/system.slice/${fixture.unitName}`;
+  const members = join(fixture.root, "members.fixture"), membership = join(fixture.root, "membership.fixture");
+  const badArguments = join(fixture.root, "arguments.fixture");
+  await writeFile(members, `${service.pid}\n${listenerPid}\n`);
+  await writeFile(membership, `0::${group}\n`);
+  const redirects = new Map([
+    [`/sys/fs/cgroup${group}/cgroup.procs`, members],
+    [`/proc/${service.pid}/cgroup`, membership], [`/proc/${listenerPid}/cgroup`, membership],
+  ]);
+  // Only cgroup membership is simulated: cmdline, cwd, executable descriptors,
+  // inodes, ELF bytes and hashes are from the real native child processes.
+  const originalOpen = fs.openSync;
+  let replaceAlias = false, aliasReplaced = false;
+  t.mock.method(fs, "openSync", (file, ...args) => {
+    const fd = originalOpen(redirects.get(file) ?? file, ...args);
+    if (replaceAlias && !aliasReplaced && file === `/proc/${listenerPid}/exe`) {
+      aliasReplaced = true;
+      fs.unlinkSync(join(fixture.root, "bin"));
+      fs.symlinkSync(join(fixture.root, "bin.2.337.0"), join(fixture.root, "bin"));
+    }
+    return fd;
+  });
+  fixture.unit.ControlGroup = group;
+  const check = () => runnerStartupMatches(fixture.unit, fixture.unitName, fixture.context);
+  assert.equal(check(), true, "real native images match the protected versioned targets");
+  await writeFile(membership, "0::/system.slice/foreign.service\n");
+  assert.equal(check(), false, "the correct binary in another cgroup is not the bound runner");
+  await writeFile(membership, `0::${group}\n`);
+  for (const [pid, args] of [
+    [listenerPid, [join(fixture.root, "bin/Runner.Listener"), "run", "--startuptype", "interactive"]],
+    [service.pid, ["./externals/node20/bin/node", "./bin/other.js"]],
+  ]) {
+    await writeFile(badArguments, args.join("\0") + "\0");
+    redirects.set(`/proc/${pid}/cmdline`, badArguments);
+    assert.equal(check(), false, "a matching kernel image cannot substitute different launch arguments");
+    redirects.delete(`/proc/${pid}/cmdline`);
+  }
+  replaceAlias = true;
+  assert.equal(check(), false, "a same-target alias replacement during native inspection is not stable");
+  assert.equal(aliasReplaced, true);
+  assert.equal(check(), true, "the next complete stable observation can pass");
+  await rename(listenerFile, `${listenerFile}.running`);
+  await copyFile(realpathSync(process.execPath), listenerFile);
+  await chown(listenerFile, process.getuid(), process.getgid());
+  await chmod(listenerFile, 0o700);
+  assert.equal(runnerConfigurationMatches(fixture.unit, fixture.unitName, fixture.context), true);
+  assert.equal(check(), false, "same native bytes under the versioned path do not replace the kernel-held inode");
+});
+
+test("boot Node rejects a writable or missing earlier PATH directory", () => {
+  // The test runtime need not be root-installed (for example hostedtoolcache
+  // on CI), but an unsafe prefix must reject independently of that runtime.
+  assert.equal(bootNodeMatches([tmpdir(), dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), false);
+  assert.equal(bootNodeMatches([]), false);
+  assert.equal(bootNodeDiagnostic([tmpdir(), dirname(process.execPath)]), "path_unverified");
+  assert.equal(bootNodeDiagnostic(["/fanmind-nonexistent-boot-path", dirname(process.execPath)]), "path_unverified");
+  assert.equal(bootNodeDiagnostic([]), "node_missing");
+});
+
+function validAuditOutput(overrides = {}) {
+  const values = {
+    NODE_VERSION: "v22.13.1",
+    PM2_NODE_VERSION: "24.19.0",
+    HOST_UPTIME_SECONDS: "9000",
+    HOST_BOOT_ID: "01234567-89ab-cdef-0123-456789abcdef",
+    SERVER_HEAD: expectedCommit,
+    ORIGIN_MAIN: expectedCommit,
+    LIVE_RELEASE: expectedCommit,
+    LIVE_ENVIRONMENT: "production",
+    LIVE_RUNTIME_ENVIRONMENT: "production",
+    LIVE_HEALTH: "healthy",
+    PM2_STATUS: "online",
+    PM2_EXEC_MODE: "cluster_mode",
+    PM2_CWD: "/var/www/fanmind-current",
+    PM2_RESTARTS: "12",
+    PM2_UNSTABLE_RESTARTS: "0",
+    PM2_UPTIME_SECONDS: "7200",
+    SERVER_ERROR_TRACKING_ENABLED: "true",
+    SERVER_ERROR_EMAIL_ENABLED: "false",
+    NGINX_CONFIG: "ok",
+    NGINX_ACTIVE: "active",
+    LOCAL_LOGIN_HTTP: "200",
+    PUBLIC_LOGIN_HTTP: "200",
+    ROOT_DISK_USED_PERCENT: "41",
+    MEMORY_AVAILABLE_KIB: "2048000",
+    REBOOT_REQUIRED: "false",
+    FANMIND_SYSTEMD_UNIT_COUNT: "17",
+    BACKUP_ROOT: "available",
+    BACKUP_COMPLETE_PAIR_COUNT: "7",
+    BACKUP_ORPHAN_PAIR_COUNT: "0",
+    BACKUP_VERIFY_OK: "true",
+    BACKUP_VERIFY_MODE: "checksum_only",
+    BACKUP_VERIFY_TYPE: "full",
+    BACKUP_VERIFY_SIZE_BYTES: "5000000",
+    OFFSITE_ENABLED: "true",
+    OFFSITE_STATUS: "reachable",
+    OFFSITE_COMPLETE_PAIR_COUNT: "38",
+    OFFSITE_ORPHAN_PAIR_COUNT: "0",
+    OFFSITE_LATEST_FULL: "fanmind-full-redacted.tar.gz.age",
+    BACKUP_WORKER_STRUCTURED_EVENT_COUNT: "40",
+    BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "0",
+    BACKUP_WORKER_1H_FAILURE_FREE: "true",
+    AUDIT_RESULT: "success",
+    ...overrides,
+  };
+  const health = [
+    "application",
+    "supabase_config",
+    "supabase_database",
+    "supabase_storage",
+    "stripe_config",
+    "openai_config",
+    "shared_rate_limit_config",
+    "email_config",
+  ].map((component) => `HEALTH_COMPONENT=${component}:healthy`);
+  const backups = [
+    ["database", "12.50"],
+    ["storage", "11.25"],
+    ["server_config", "10.75"],
+    ["full", "120.00"],
+  ].map(
+    ([type, age]) =>
+      `BACKUP_LATEST=${type}|file=fanmind-${type}-redacted.age|age_hours=${age}|size_bytes=1000|pair=complete`,
+  );
+  return [
+    ...validBootLines(),
+    "AUDIT_UTC=2026-07-30T12:00:00Z",
+    `NODE_VERSION=${values.NODE_VERSION}`,
+    `PM2_NODE_VERSION=${values.PM2_NODE_VERSION}`,
+    `HOST_UPTIME_SECONDS=${values.HOST_UPTIME_SECONDS}`,
+    `HOST_BOOT_ID=${values.HOST_BOOT_ID}`,
+    `SERVER_HEAD=${values.SERVER_HEAD}`,
+    `ORIGIN_MAIN=${values.ORIGIN_MAIN}`,
+    `LIVE_RELEASE=${values.LIVE_RELEASE}`,
+    `LIVE_ENVIRONMENT=${values.LIVE_ENVIRONMENT}`,
+    `LIVE_RUNTIME_ENVIRONMENT=${values.LIVE_RUNTIME_ENVIRONMENT}`,
+    `LIVE_HEALTH=${values.LIVE_HEALTH}`,
+    ...health,
+    `PM2_STATUS=${values.PM2_STATUS}`,
+    `PM2_RESTARTS=${values.PM2_RESTARTS}`,
+    `PM2_UNSTABLE_RESTARTS=${values.PM2_UNSTABLE_RESTARTS}`,
+    `PM2_UPTIME_SECONDS=${values.PM2_UPTIME_SECONDS}`,
+    `PM2_CWD=${values.PM2_CWD}`,
+    `PM2_EXEC_MODE=${values.PM2_EXEC_MODE}`,
+    "PM2_MEMORY_BYTES=100000000",
+    `SERVER_ERROR_TRACKING_ENABLED=${values.SERVER_ERROR_TRACKING_ENABLED}`,
+    `SERVER_ERROR_EMAIL_ENABLED=${values.SERVER_ERROR_EMAIL_ENABLED}`,
+    `NGINX_CONFIG=${values.NGINX_CONFIG}`,
+    `NGINX_ACTIVE=${values.NGINX_ACTIVE}`,
+    `LOCAL_LOGIN_HTTP=${values.LOCAL_LOGIN_HTTP}`,
+    `PUBLIC_LOGIN_HTTP=${values.PUBLIC_LOGIN_HTTP}`,
+    `ROOT_DISK_USED_PERCENT=${values.ROOT_DISK_USED_PERCENT}`,
+    `MEMORY_AVAILABLE_KIB=${values.MEMORY_AVAILABLE_KIB}`,
+    `REBOOT_REQUIRED=${values.REBOOT_REQUIRED}`,
+    `FANMIND_SYSTEMD_UNIT_COUNT=${values.FANMIND_SYSTEMD_UNIT_COUNT}`,
+    `BACKUP_ROOT=${values.BACKUP_ROOT}`,
+    `BACKUP_COMPLETE_PAIR_COUNT=${values.BACKUP_COMPLETE_PAIR_COUNT}`,
+    `BACKUP_ORPHAN_PAIR_COUNT=${values.BACKUP_ORPHAN_PAIR_COUNT}`,
+    ...backups,
+    "LATEST_FULL_BACKUP=fanmind-full-redacted.tar.gz.age",
+    `BACKUP_VERIFY_OK=${values.BACKUP_VERIFY_OK}`,
+    `BACKUP_VERIFY_MODE=${values.BACKUP_VERIFY_MODE}`,
+    `BACKUP_VERIFY_TYPE=${values.BACKUP_VERIFY_TYPE}`,
+    "BACKUP_VERIFY_ARTIFACT=fanmind-full-redacted.tar.gz.age",
+    `BACKUP_VERIFY_SIZE_BYTES=${values.BACKUP_VERIFY_SIZE_BYTES}`,
+    `OFFSITE_ENABLED=${values.OFFSITE_ENABLED}`,
+    `OFFSITE_STATUS=${values.OFFSITE_STATUS}`,
+    "OFFSITE_RELEVANT_OBJECT_COUNT=76",
+    `OFFSITE_COMPLETE_PAIR_COUNT=${values.OFFSITE_COMPLETE_PAIR_COUNT}`,
+    `OFFSITE_ORPHAN_PAIR_COUNT=${values.OFFSITE_ORPHAN_PAIR_COUNT}`,
+    `OFFSITE_LATEST_FULL=${values.OFFSITE_LATEST_FULL}`,
+    `BACKUP_WORKER_STRUCTURED_EVENT_COUNT=${values.BACKUP_WORKER_STRUCTURED_EVENT_COUNT}`,
+    `BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=${values.BACKUP_WORKER_1H_FAILURE_EVENT_COUNT}`,
+    `BACKUP_WORKER_1H_FAILURE_FREE=${values.BACKUP_WORKER_1H_FAILURE_FREE}`,
+    `AUDIT_RESULT=${values.AUDIT_RESULT}`,
+    "",
+  ].join("\n");
+}
+
+async function runWithResult(command, args, options) {
+  try {
+    return { ...(await execFileAsync(command, args, options)), code: 0 };
+  } catch (error) {
+    if (typeof error.code !== "number") throw error;
+    return { code: error.code, stdout: error.stdout, stderr: error.stderr };
+  }
+}
+
+async function runAuditWorkflow(t, output, exitCode, {
+  eventName = "workflow_dispatch",
+  expected = expectedCommit,
+  versionPayload = JSON.stringify({
+    application: "fanmind",
+    runtimeEnvironment: "production",
+    releaseCommit: expectedCommit,
+  }),
+} = {}) {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-audit-workflow-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const runnerTemp = join(root, "runner");
+  const bin = join(root, "bin");
+  await mkdir(runnerTemp);
+  await mkdir(bin);
+  const audit = join(root, "audit.sh");
+  const liveLookupLog = join(root, "live-lookup.log");
+  await writeFile(audit, '#!/bin/bash\nprintf "%s" "$AUDIT_TEST_OUTPUT"\nprintf "%s\\n" "RAW_SECRET_CANARY" >&2\nexit "$AUDIT_TEST_EXIT"\n', { mode: 0o700 });
+  await writeFile(
+    join(bin, "curl"),
+    '#!/bin/bash\nprintf "called\\n" >> "$AUDIT_TEST_LIVE_LOOKUP_LOG"\nprintf "%s" "$AUDIT_TEST_VERSION_PAYLOAD"\n',
+    { mode: 0o700 },
+  );
+  const workflow = yaml.load(await readFile(".github/workflows/production-readonly-audit.yml", "utf8"));
+  // Execute the actual production step, substituting only its installed paths.
+  const step = workflow.jobs.audit.steps[0].run
+    .replaceAll("/usr/local/lib/fanmind-audit/read-only-production-audit.sh", '"$AUDIT_TEST_SCRIPT"')
+    .replaceAll("/usr/local/lib/fanmind-audit/verify-production-audit-output.mjs", '"$AUDIT_TEST_VERIFIER"');
+  const result = await runWithResult("bash", ["-euo", "pipefail", "-c", step], {
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      GITHUB_EVENT_NAME: eventName,
+      RUNNER_TEMP: runnerTemp,
+      EXPECTED_COMMIT: expected,
+      AUDIT_TEST_SCRIPT: audit,
+      AUDIT_TEST_VERIFIER: resolve("scripts/operations/verify-production-audit-output.mjs"),
+      AUDIT_TEST_OUTPUT: output,
+      AUDIT_TEST_EXIT: String(exitCode),
+      AUDIT_TEST_LIVE_LOOKUP_LOG: liveLookupLog,
+      AUDIT_TEST_VERSION_PAYLOAD: versionPayload,
+    },
+  });
+  assert.deepEqual(await readdir(runnerTemp), [], "both private files must be removed");
+  assert.doesNotMatch(result.stdout + result.stderr, /RAW_SECRET_CANARY/u);
+  const liveLookupCount = await readFile(liveLookupLog, "utf8")
+    .then(value => value.trim().split("\n").filter(Boolean).length)
+    .catch(error => {
+      if (error.code === "ENOENT") return 0;
+      throw error;
+    });
+  return { ...result, liveLookupCount };
+}
+
+test("manual and workflow-run audits reject missing or invalid commits before live lookup", async (t) => {
+  for (const eventName of ["workflow_dispatch", "workflow_run"]) {
+    for (const expected of ["", "not-a-commit"]) {
+      const result = await runAuditWorkflow(t, validAuditOutput(), 0, {
+        eventName,
+        expected,
+      });
+      assert.equal(result.code, 1, `${eventName} must reject ${expected || "missing commit"}`);
+      assert.equal(result.liveLookupCount, 0, `${eventName} must not query Production`);
+      assert.match(result.stderr, /Expected Production commit is invalid\./u);
+    }
+  }
+});
+
+test("scheduled audit resolves the live Production commit exactly once", async (t) => {
+  const result = await runAuditWorkflow(t, validAuditOutput(), 0, {
+    eventName: "schedule",
+    expected: "",
+  });
+  assert.equal(result.code, 0);
+  assert.equal(result.liveLookupCount, 1);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+});
+
+test("actual workflow preserves successful full audit and measured runtime versions", async (t) => {
+  const result = await runAuditWorkflow(t, validAuditOutput(), 0);
+  assert.equal(result.code, 0);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.match(result.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  assert.match(result.stdout, /^PRODUCTION_SHELL_NODE_VERSION=v22\.13\.1$/mu);
+  assert.match(result.stdout, /^PRODUCTION_PM2_NODE_VERSION=24\.19\.0$/mu);
+  assert.equal(result.stdout.match(/^PRODUCTION_HEALTH_COMPONENT=.+:healthy$/gmu)?.length, 8);
+});
+
+test("actual workflow diagnoses a silent shell failure and cannot turn it into a pass", async (t) => {
+  const output = validAuditOutput({ AUDIT_RESULT: "failed" }) + "AUDIT_FAILED_STAGE=backup_inventory\nAUDIT_EXIT_CODE=7\n";
+  const result = await runAuditWorkflow(t, output, 7);
+  assert.equal(result.code, 1);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=false$/mu);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_FAILED_STAGE=backup_inventory$/mu);
+  assert.match(result.stdout, /^PRODUCTION_AUDIT_EXIT_CODE=7$/mu);
+  assert.match(result.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  assert.doesNotMatch(result.stdout, /^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  const forgedSuccess = await runAuditWorkflow(t, validAuditOutput(), 7);
+  assert.equal(forgedSuccess.code, 1, "process failure overrides a success marker");
+  const empty = await runAuditWorkflow(t, "", 7);
+  assert.equal(empty.code, 1);
+  assert.match(empty.stdout, /^PRODUCTION_RUNTIME_VERIFIED=false$/mu);
+});
+
+test("actual workflow keeps backup and runtime validation failures fail-closed and redacted", async (t) => {
+  for (const [override, code] of [
+    [{ BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "1" }, "backup_worker_failures_present"],
+    [{ OFFSITE_ORPHAN_PAIR_COUNT: "1" }, "offsite_orphans_present"],
+    [{ PM2_NODE_VERSION: "RAW_SECRET_CANARY" }, "pm2_node_version_invalid"],
+    [{ PM2_EXEC_MODE: "fork_mode" }, "pm2_launch_contract_invalid"],
+    [{ PM2_CWD: "/var/www/RAW_SECRET_CANARY" }, "pm2_launch_contract_invalid"],
+    [{ NGINX_ACTIVE: "inactive" }, "nginx_inactive"],
+  ]) {
+    const result = await runAuditWorkflow(t, validAuditOutput(override), 0);
+    assert.equal(result.code, 1);
+    assert.match(result.stdout, new RegExp(`^PRODUCTION_AUDIT_FAILURE_CODE=production_audit_${code}$`, "mu"));
+  }
+  const injected = await runAuditWorkflow(t, validAuditOutput({ AUDIT_RESULT: "failed" }) + "AUDIT_FAILED_STAGE=RAW_SECRET_CANARY\n", 7);
+  assert.equal(injected.code, 1);
+  assert.match(injected.stdout, /^PRODUCTION_AUDIT_FAILED_STAGE=unknown$/mu);
+  const malformed = await runAuditWorkflow(t, "RAW_SECRET_CANARY\n", 0);
+  assert.equal(malformed.code, 1);
+});
+
+test("actual workflow publishes only allowlisted backup failure diagnostics", async (t) => {
+  const valid = validAuditOutput();
+  const cases = [
+    {
+      name: "stale",
+      source: valid.replace(
+        /^BACKUP_LATEST=database.*$/mu,
+        "BACKUP_LATEST=database|file=/private/RAW_SECRET_CANARY.age|age_hours=36.01|size_bytes=1000|pair=complete",
+      ),
+      code: "backup_latest_stale_or_empty",
+      diagnostic: "database|classification=stale|age_hours=36.01|size_bytes=1000|max_age_hours=36",
+    },
+    {
+      name: "empty",
+      source: valid.replace(
+        /^BACKUP_LATEST=storage.*$/mu,
+        "BACKUP_LATEST=storage|file=/private/RAW_SECRET_CANARY.age|age_hours=11.25|size_bytes=0|pair=complete",
+      ),
+      code: "backup_latest_stale_or_empty",
+      diagnostic: "storage|classification=empty|age_hours=11.25|size_bytes=0|max_age_hours=36",
+    },
+    {
+      name: "collector missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=missing|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "unknown missing marker",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|unknown",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "malformed missing sentinel",
+      source: valid.replace(
+        /^BACKUP_LATEST=server_config.*$/mu,
+        "BACKUP_LATEST=server_config|missing|credential=RAW_SECRET_CANARY",
+      ),
+      code: "backup_latest_invalid",
+      diagnostic: "server_config|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+    {
+      name: "invalid values",
+      source: valid.replace(
+        /^BACKUP_LATEST=full.*$/mu,
+        "BACKUP_LATEST=full|file=/private/RAW_SECRET_CANARY.age|age_hours=RAW_SECRET_CANARY|size_bytes=999999999999999999999|pair=complete",
+      ),
+      code: "backup_latest_age_invalid",
+      diagnostic: "full|classification=invalid_age_and_size|age_hours=unavailable|size_bytes=unavailable|max_age_hours=192",
+    },
+    {
+      name: "manipulated fields",
+      source: valid.replace(
+        /^BACKUP_LATEST=database.*$/mu,
+        "BACKUP_LATEST=database|file=/private/RAW_SECRET_CANARY.age|age_hours=36.01|age_hours=RAW_SECRET_CANARY|size_bytes=1000|pair=complete|credential=RAW_SECRET_CANARY",
+      ),
+      code: "backup_latest_age_invalid",
+      diagnostic: "database|classification=invalid_record|age_hours=unavailable|size_bytes=unavailable|max_age_hours=36",
+    },
+  ];
+
+  for (const candidate of cases) {
+    const result = await runAuditWorkflow(t, candidate.source, 0);
+    assert.equal(result.code, 1, candidate.name);
+    assert.match(
+      result.stdout,
+      new RegExp(
+        `^PRODUCTION_AUDIT_FAILURE_CODE=production_audit_${candidate.code}$`,
+        "mu",
+      ),
+      candidate.name,
+    );
+    assert.match(
+      result.stdout,
+      new RegExp(
+        `^PRODUCTION_BACKUP_DIAGNOSTIC=${candidate.diagnostic}$`,
+        "mu",
+      ),
+      candidate.name,
+    );
+    assert.equal(
+      result.stdout.match(/^PRODUCTION_BACKUP_DIAGNOSTIC=/gmu)?.length,
+      4,
+      candidate.name,
+    );
+    assert.doesNotMatch(
+      result.stdout,
+      /RAW_SECRET_CANARY|\/private\/|file=|pair=|credential=/u,
+      candidate.name,
+    );
+    assert.doesNotMatch(
+      result.stdout,
+      /^PRODUCTION_AUDIT_VERIFIED=true$/mu,
+      candidate.name,
+    );
+  }
+});
+
+test("runtime subset rejects release drift and an omitted eighth health component", () => {
+  assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput({ LIVE_RELEASE: "b".repeat(40) }), expectedCommit), /release_drift/u);
+  assert.throws(() => verifyProductionRuntimeOutput(validAuditOutput().replace("HEALTH_COMPONENT=email_config:healthy\n", ""), expectedCommit), /health_components_unhealthy/u);
+});
+
+test("real audit shell captures early probe failure and later explicit exit without leaking PM2 environment", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-audit-shell-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const bin = join(root, "bin");
+  await mkdir(bin);
+  await symlink(process.execPath, join(bin, "node"));
+  const checks = ["application", "supabase_config", "supabase_database", "supabase_storage", "stripe_config", "openai_config", "shared_rate_limit_config", "email_config"].map(component => ({ component, status: "healthy" }));
+  const mock = `#!/bin/bash
+case "\${0##*/}" in
+  npm) echo 10.8.0 ;;
+  git) printf '%s\\n' "$AUDIT_TEST_COMMIT" ;;
+  pm2)
+    if [[ "$1" == --version ]]; then echo 6.0.14; else
+      printf '%s\\n' '[{"name":"fanmind","pm2_env":{"status":"online","exec_mode":"cluster_mode","pm_cwd":"/var/www/fanmind-current","node_version":"24.19.0","restart_time":12,"unstable_restarts":0,"pm_uptime":1,"SECRET":"RAW_SECRET_CANARY"}}]'
+    fi ;;
+  curl)
+    case "\${!#}" in
+      */api/version)
+        if [[ "$AUDIT_TEST_MODE" == early ]]; then echo RAW_SECRET_CANARY >&2; exit 7; fi
+        printf '%s\\n' '{"releaseCommit":"${expectedCommit}","environment":"production","runtimeEnvironment":"production"}' ;;
+      */api/health) printf '%s\\n' '${JSON.stringify({ status: "healthy", checks })}' ;;
+      *) printf '200' ;;
+    esac ;;
+  sudo) shift; exec "$@" ;;
+  nginx) exit 0 ;;
+  systemctl)
+    if [[ "$1" == list-unit-files ]]; then echo 'fanmind-monitor.service enabled'; else echo active; fi ;;
+  journalctl) exit 1 ;;
+esac
+`;
+  for (const command of ["npm", "git", "pm2", "curl", "sudo", "nginx", "systemctl", "journalctl"]) {
+    await writeFile(join(bin, command), mock, { mode: 0o700 });
+  }
+  const envPath = join(root, "production.env");
+  await writeFile(envPath, "FANMIND_SERVER_ERROR_TRACKING_ENABLED=true\nFANMIND_SERVER_ERROR_EMAIL_ENABLED=false\nOTHER_SECRET=RAW_SECRET_CANARY\n", { mode: 0o600 });
+  for (const [mode, stage] of [["early", "release"], ["later", "backup_inventory"]]) {
+    const result = await runWithResult("bash", [auditScriptPath], {
+      env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TMPDIR: root,
+        AUDIT_TEST_MODE: mode, AUDIT_TEST_COMMIT: expectedCommit,
+        FANMIND_AUDIT_BACKUP_ROOT: join(root, "absent"), FANMIND_AUDIT_PRODUCTION_ENV_PATH: envPath },
+    });
+    assert.notEqual(result.code, 0);
+    assert.match(result.stdout, new RegExp(`^AUDIT_FAILED_STAGE=${stage}$`, "mu"));
+    assert.match(result.stdout, /^AUDIT_RESULT=failed$/mu);
+    assert.doesNotMatch(result.stdout, /RAW_SECRET_CANARY/u);
+    assert.equal((await readdir(root)).filter(name => name.startsWith("tmp.")).length, 0, "internal private files cleaned on explicit exit");
+    const published = await runAuditWorkflow(t, result.stdout, result.code);
+    assert.equal(published.code, 1);
+    assert.match(published.stdout, new RegExp(`^PRODUCTION_AUDIT_FAILED_STAGE=${stage}$`, "mu"));
+    if (mode === "later") assert.match(published.stdout, /^PRODUCTION_RUNTIME_VERIFIED=true$/mu);
+  }
+});
+
+test("production audit is valid bash", async () => {
+  await execFileAsync("bash", ["-n", auditScriptPath]);
+});
+
+test("production audit exposes only read-only runtime and backup checks", async () => {
+  const source = await readAuditScript();
+
+  assert.match(source, /^#!\/usr\/bin\/env bash\nset -euo pipefail/u);
+  assert.match(source, /verify-backup-artifact\.mjs/u);
+  assert.match(source, /--artifact "\$latest_full" --json/u);
+  assert.match(source, /BACKUP_VERIFY_MODE/u);
+  assert.match(source, /BACKUP_VERIFY_TYPE/u);
+  assert.match(
+    source,
+    /sudo -n "\$rclone_bin" --config "\$config" lsf "\$\{remote\}:\$\{remote_path\}" --files-only --recursive/u,
+  );
+  assert.match(source, /journalctl -u fanmind-backup-worker\.service/u);
+  assert.match(source, /pm2 jlist \| PM2_APP_NAME="\$PM2_APP_NAME" node -e/u);
+  assert.match(source, /read_config_value\(\)/u);
+  assert.match(source, /LIVE_RUNTIME_ENVIRONMENT/u);
+  assert.match(source, /FANMIND_AUDIT_PRODUCTION_ENV_PATH/u);
+  assert.match(source, /MAX_ENV_BYTES = 64 \* 1024/u);
+  assert.match(source, /fs\.constants\.O_NOFOLLOW/u);
+  assert.match(source, /fs\.realpathSync\(filePath\)/u);
+  assert.match(source, /entries\.length !== 1/u);
+  assert.match(source, /\['true', 'false'\]\.includes\(entries\[0\]\)/u);
+  assert.match(source, /SERVER_ERROR_TRACKING_ENABLED/u);
+  assert.match(source, /SERVER_ERROR_EMAIL_ENABLED/u);
+
+  assert.doesNotMatch(source, /--identity\b/u);
+  assert.doesNotMatch(source, /\bage\s+(?:--decrypt|-d)\b/u);
+  assert.doesNotMatch(source, /\bpg_restore\b|\bpsql\b/u);
+  assert.doesNotMatch(
+    source,
+    /\brclone\s+(?:copy|copyto|sync|move|moveto|delete|deletefile|purge)\b/u,
+  );
+  assert.doesNotMatch(
+    source,
+    /\bsystemctl\s+(?:start|restart|stop|enable|disable|daemon-reload|mask|unmask)\b/u,
+  );
+  assert.doesNotMatch(
+    source,
+    /\bpm2\s+(?:start|restart|reload|stop|delete|save|startup|unstartup)\b/u,
+  );
+  assert.doesNotMatch(source, /\bgit\s+(?:reset|checkout|pull|push|clean)\b/u);
+  assert.doesNotMatch(source, /curl[^\n]*\s-X\s*(?:POST|PUT|PATCH|DELETE)\b/iu);
+  assert.doesNotMatch(source, /\bsource\s+["']?\$?env_file\b/u);
+  assert.doesNotMatch(source, /\bcat\s+[^\n]*worker\.env/u);
+  assert.doesNotMatch(source, /sudo\s+-n\s+bash\b/u);
+  assert.doesNotMatch(source, /BACKUP_VERIFY_CHECKSUM/u);
+  assert.doesNotMatch(source, /console\.log\(`FANMIND_/u);
+  assert.doesNotMatch(source, /console\.log\(source\)/u);
+});
+
+test("production audit output verifier accepts one complete redacted pass", () => {
+  const result = verifyProductionAuditOutput(
+    validAuditOutput(),
+    expectedCommit,
+  );
+
+  assert.equal(result.releaseCommit, expectedCommit);
+  assert.equal(result.healthComponentCount, 8);
+  assert.equal(result.pm2Restarts, 12);
+  assert.equal(result.serverErrorTrackingEnabled, true);
+  assert.equal(result.serverErrorEmailEnabled, false);
+  assert.equal(result.backupCompletePairCount, 7);
+  assert.equal(result.offsiteCompletePairCount, 38);
+});
+
+test("production audit output verifier fails closed on drift and degraded safeguards", () => {
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ LIVE_RELEASE: "b".repeat(40) }),
+        expectedCommit,
+      ),
+    /production_audit_release_drift/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ LIVE_RUNTIME_ENVIRONMENT: "staging" }),
+        expectedCommit,
+      ),
+    /production_audit_runtime_environment_invalid/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ OFFSITE_ORPHAN_PAIR_COUNT: "1" }),
+        expectedCommit,
+      ),
+    /production_audit_offsite_orphans_present/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "1" }),
+        expectedCommit,
+      ),
+    /production_audit_backup_worker_failures_present/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ SERVER_ERROR_TRACKING_ENABLED: "false" }),
+        expectedCommit,
+      ),
+    /production_audit_server_error_tracking_disabled/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        validAuditOutput({ SERVER_ERROR_EMAIL_ENABLED: "true" }),
+        expectedCommit,
+      ),
+    /production_audit_server_error_email_enabled/u,
+  );
+  assert.throws(
+    () =>
+      verifyProductionAuditOutput(
+        `${validAuditOutput()}SERVER_ERROR_TRACKING_ENABLED=true\n`,
+        expectedCommit,
+      ),
+    /production_audit_server_error_tracking_enabled_cardinality_invalid/u,
+  );
+});
+
+test("permanent Production audit runs installed root-owned code only", async () => {
+  const [workflow, deploy, readiness, manifest, runbook] = await Promise.all([
+    readFile(".github/workflows/production-readonly-audit.yml", "utf8"),
+    readFile(".github/workflows/deploy-fanmind.yml", "utf8"),
+    readFile(".github/workflows/final-go-live-readiness.yml", "utf8"),
+    readFile("package.json", "utf8"),
+    readFile("docs/operations/READ_ONLY_PRODUCTION_AUDIT.md", "utf8"),
+  ]);
+
+  const deployment = yaml.load(deploy);
+  assert.deepEqual(Object.keys(deployment.on), ["workflow_dispatch"]);
+  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit","support_must_remain_disabled"]);
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.type, "boolean");
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.default, false);
+  assert.equal(deployment.jobs.deploy.steps[0].env.FANMIND_REQUIRE_SUPPORT_DISABLED, "${{ inputs.support_must_remain_disabled }}");
+  assert.equal(deployment.jobs.deploy.if, "github.ref == 'refs/heads/main'");
+  assert.equal(deployment.jobs.deploy.needs, "validate");
+  assert.equal(deployment.jobs.deploy.environment, "production");
+  assert.equal(deployment.jobs.validate["runs-on"], "ubuntu-24.04");
+  assert.equal(deployment.jobs.sealed, undefined);
+  assert.match(deploy, /production-release-preflight\.mjs/u);
+  assert.match(deploy, /EXPECTED_CURRENT_RELEASE/u);
+  assert.match(
+    readiness,
+    /github\.event\.workflow_run\.conclusion == 'success'/u,
+  );
+
+  const auditWorkflow = yaml.load(workflow);
+  assert.equal(
+    auditWorkflow.jobs.audit.env.EXPECTED_COMMIT,
+    "${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}",
+  );
+  assert.match(
+    auditWorkflow.jobs.audit.if,
+    /github\.event\.workflow_run\.conclusion == 'success'/u,
+  );
+  assert.match(
+    auditWorkflow.jobs.audit.steps[0].run,
+    /if \[ -z "\$EXPECTED_COMMIT" \]; then[\s\S]*GITHUB_EVENT_NAME:-[\s\S]*!= "schedule"[\s\S]*https:\/\/fanmind\.ch\/api\/version/u,
+  );
+
+  assert.match(workflow, /workflow_run:[\s\S]*Deploy FanMind/u);
+  assert.match(workflow, /schedule:[\s\S]*17 4 \* \* \*/u);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/u);
+  assert.match(workflow, /run-read-only-production-audit/u);
+  assert.match(workflow, /runs-on: \[self-hosted, fanmind-prod, exoscale, linux, x64\]/u);
+  assert.match(workflow, /environment: production/u);
+  assert.match(
+    workflow,
+    /^\s+\/usr\/local\/lib\/fanmind-audit\/read-only-production-audit\.sh \\/mu,
+  );
+  assert.match(
+    workflow,
+    /\/usr\/local\/lib\/fanmind-audit\/verify-production-audit-output\.mjs/u,
+  );
+  assert.match(
+    workflow,
+    /FANMIND_AUDIT_VERIFIER_PATH=\/usr\/local\/lib\/fanmind-ops\/verify-backup-artifact\.mjs/u,
+  );
+  assert.match(workflow, /trap 'rm -f "\$AUDIT_OUTPUT" "\$AUDIT_STDERR"' EXIT/u);
+  assert.doesNotMatch(workflow, /actions\/checkout|upload-artifact/u);
+  assert.doesNotMatch(
+    workflow,
+    /sudo -n \/usr\/local\/lib\/fanmind-audit\/read-only-production-audit\.sh/u,
+  );
+
+  assert.match(
+    deploy,
+    /sudo install -d -o root -g root -m 0700 \/usr\/local\/lib\/fanmind-ops/u,
+  );
+  assert.match(
+    deploy,
+    /sudo install -d -o root -g root -m 0755 \/usr\/local\/lib\/fanmind-audit/u,
+  );
+  assert.match(
+    deploy,
+    /sudo install -o root -g root -m 0755 scripts\/operations\/read-only-production-audit\.sh \/usr\/local\/lib\/fanmind-audit\/read-only-production-audit\.sh/u,
+  );
+  assert.match(
+    deploy,
+    /sudo install -o root -g root -m 0755 scripts\/operations\/verify-production-audit-output\.mjs \/usr\/local\/lib\/fanmind-audit\/verify-production-audit-output\.mjs/u,
+  );
+  assert.match(deploy, /scripts\/public-health-policy\.mjs \/usr\/local\/lib\/public-health-policy\.mjs/u);
+
+  const parsed = JSON.parse(manifest);
+  assert.equal(
+    parsed.scripts["production:audit:verify"],
+    "node scripts/operations/verify-production-audit-output.mjs",
+  );
+  assert.match(runbook, /checkt keinen Repository-Code aus/u);
+  assert.match(runbook, /kein Audit-Artefakt hochgeladen/u);
+});
+
+test("production audit uses stable timer properties instead of localized timer columns", async () => {
+  const source = await readAuditScript();
+
+  assert.match(source, /systemctl show "\$unit" --property=NextElapseUSecRealtime --value/u);
+  assert.match(source, /systemctl show "\$unit" --property=NextElapseUSecMonotonic --value/u);
+  assert.match(source, /systemctl show "\$unit" --property=LastTriggerUSec --value/u);
+  assert.match(
+    source,
+    /SYSTEMD_TIMER=%s\|next_realtime=%s\|next_monotonic=%s\|last=%s/u,
+  );
+  assert.doesNotMatch(source, /systemctl list-timers/u);
+});
+
+test("production audit reports backup worker events by bounded time window without raw failures", async () => {
+  const source = await readAuditScript();
+
+  assert.match(source, /\{ name: '1h', since:/u);
+  assert.match(source, /\{ name: '24h', since:/u);
+  assert.match(source, /\{ name: '14d', since:/u);
+  assert.match(source, /BACKUP_WORKER_WINDOW=\$\{window\.name\}/u);
+  assert.match(source, /BACKUP_WORKER_EVENT=\$\{window\.name\}\|\$\{event\}:/u);
+  assert.match(source, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT/u);
+  assert.match(source, /BACKUP_WORKER_1H_FAILURE_FREE/u);
+
+  assert.doesNotMatch(source, /payload\.job_id/u);
+  assert.doesNotMatch(source, /payload\.error/u);
+  assert.doesNotMatch(source, /error_message/u);
+});
+
+test("worker release window counts the exact one-hour boundary and retains older diagnostic failures", async t => {
+  const source = await readAuditScript();
+  const collector = source.split("WORKER_LOG=\"$worker_log\" node <<'NODE'\n")[1].split("\nNODE")[0];
+  const root = await mkdtemp(join(tmpdir(), "fanmind-worker-window-"));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const file = join(root, "worker.log");
+  const now = Date.parse("2026-10-14T13:30:00Z");
+  const run = async ages => {
+    await writeFile(file, ages.map(age => JSON.stringify({
+      ts: new Date(now - age).toISOString(), event: "job_failed", error: "RAW_SECRET_CANARY",
+    })).join("\n"));
+    const result = await execFileAsync(process.execPath, ["-e", `Date.now = () => ${now};\n${collector}`], {
+      env: { ...process.env, WORKER_LOG: file },
+    });
+    assert.doesNotMatch(result.stdout, /RAW_SECRET_CANARY/u);
+    return result.stdout;
+  };
+  const old = await run([3_600_001]);
+  assert.match(old, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0/u);
+  assert.match(old, /BACKUP_WORKER_1H_FAILURE_FREE=true/u);
+  assert.match(old, /BACKUP_WORKER_EVENT=24h\|job_failed:1/u);
+  const recent = await run([3_600_000, 3_599_999]);
+  assert.match(recent, /BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=2/u);
+  assert.match(recent, /BACKUP_WORKER_1H_FAILURE_FREE=false/u);
+});
+
+test("one-hour release evidence cannot be replaced by legacy or contradictory counters", () => {
+  const valid = validAuditOutput();
+  for (const output of [
+    valid.replaceAll("BACKUP_WORKER_1H_", "BACKUP_WORKER_24H_"),
+    valid.replace("BACKUP_WORKER_1H_FAILURE_FREE=true", "BACKUP_WORKER_1H_FAILURE_FREE=false"),
+    `${valid}\nBACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0`,
+  ]) assert.throws(() => verifyProductionAuditOutput(output, expectedCommit));
+});
+
+test("production audit never logs backup configuration values or raw PM2 payloads", async () => {
+  const source = await readAuditScript();
+
+  assert.match(source, /OFFSITE_ENABLED/u);
+  assert.match(source, /OFFSITE_STATUS/u);
+  assert.match(source, /OFFSITE_COMPLETE_PAIR_COUNT/u);
+  assert.match(source, /BACKUP_WORKER_EVENT/u);
+
+  assert.doesNotMatch(source, /echo\s+.*FANMIND_BACKUP_RCLONE_REMOTE/u);
+  assert.doesNotMatch(source, /echo\s+.*SUPABASE_SERVICE_ROLE_KEY/u);
+  assert.doesNotMatch(source, /echo\s+.*DATABASE_URL/u);
+  assert.doesNotMatch(source, /echo\s+.*\.env\.production/u);
+  assert.doesNotMatch(source, /console\.log\([^\n]*JSON\.stringify\(rows/u);
+  assert.doesNotMatch(source, /console\.log\([^\n]*processRow\.pm2_env/u);
+});

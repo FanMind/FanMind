@@ -1,0 +1,140 @@
+name: FanMind Staging Push Registration Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed and deployed main commit'
+        required: true
+        type: string
+      acceptance_run:
+        description: 'Successful same-commit Mobile Push Staging Acceptance run ID'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type prepare-staging-push-registration to configure registration only'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify-acceptance:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == 'prepare-staging-push-registration'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Verify successful same-commit protected registration acceptance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCEPTANCE_RUN: ${{ inputs.acceptance_run }}
+        run: |
+          node --input-type=module <<'NODE'
+          try {
+            const id = process.env.ACCEPTANCE_RUN;
+            if (!/^[0-9]{1,20}$/.test(id ?? '')) throw Error();
+            const response = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/runs/${id}`, {
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' },
+              redirect: 'error', signal: AbortSignal.timeout(15000),
+            });
+            if (!response.ok) throw Error();
+            const run = await response.json();
+            if (run.status !== 'completed' || run.conclusion !== 'success' ||
+                run.head_sha !== process.env.GITHUB_SHA || run.head_branch !== 'main' ||
+                run.event !== 'workflow_dispatch' ||
+                run.path !== '.github/workflows/mobile-push-staging-acceptance.yml' ||
+                run.repository?.full_name !== 'FanMind/FanMind' ||
+                !Number.isFinite(Date.parse(run.updated_at)) ||
+                Date.now() - Date.parse(run.updated_at) > 7200000 ||
+                Date.parse(run.updated_at) > Date.now()) throw Error();
+            const jobsResponse = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/runs/${id}/jobs?filter=latest&per_page=100`, {
+              headers: { Authorization: `Bearer ${process.env.GH_TOKEN}`, Accept: 'application/vnd.github+json' },
+              redirect: 'error', signal: AbortSignal.timeout(15000),
+            });
+            if (!jobsResponse.ok) throw Error();
+            const jobs = await jobsResponse.json();
+            const job = jobs.jobs?.[0];
+            if (jobs.total_count !== 1 || jobs.jobs?.length !== 1 ||
+                job.name !== 'Verify browser denial, service-role CRUD and complete rollback' ||
+                job.status !== 'completed' || job.conclusion !== 'success' ||
+                !['Verify applied schema without writes', 'Run synthetic rollback-only Staging acceptance']
+                  .every(name => job.steps?.some(step => step.name === name && step.status === 'completed' && step.conclusion === 'success'))) throw Error();
+            console.log('STAGING_PUSH_RUNTIME_ACCEPTANCE=PASS');
+          } catch { console.error('STAGING_PUSH_RUNTIME_ACCEPTANCE=FAIL'); process.exit(1); }
+          NODE
+  prepare-registration:
+    needs: verify-acceptance
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == 'prepare-staging-push-registration'
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact reviewed control
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Prepare private registration configuration and restart Staging
+        env:
+          FANMIND_PUSH_RUNTIME_CONFIRM: prepare-staging-push-registration
+          FANMIND_PUSH_RUNTIME_EXPECTED_EAS_PROJECT: ${{ vars.FANMIND_MOBILE_PUSH_STAGING_EAS_PROJECT_ID }}
+          FANMIND_PUSH_RUNTIME_EXPECTED_PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+          FANMIND_PUSH_RUNTIME_ACCEPTANCE_VERIFIED: 'true'
+          FANMIND_PUSH_RUNTIME_EXPECTED_DB_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          ENV_FILE=/var/www/fanmind-staging/.env.production
+          SECRET_FILE=/etc/fanmind-staging/runtime-secrets.env
+          RELEASE_FILE=/var/www/fanmind-staging/.release.env
+          for file in "$ENV_FILE" "$SECRET_FILE" "$RELEASE_FILE"; do
+            test -f "$file" && test ! -L "$file"
+          done
+          test "$(stat -c '%a' "$ENV_FILE")" = 600
+          test "$(stat -c '%U:%G:%a' "$SECRET_FILE")" = root:fanmind-staging:640
+          test "$(stat -c '%a' "$RELEASE_FILE")" = 600
+          cmp -s ops/systemd/fanmind-staging.service /etc/systemd/system/fanmind-staging.service
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          set -a
+          . "$ENV_FILE"
+          . "$SECRET_FILE"
+          . "$RELEASE_FILE"
+          set +a
+          BACKUP="$RUNNER_TEMP/fanmind-push-runtime.backup"
+          test ! -e "$BACKUP" && test ! -L "$BACKUP"
+          trap 'rm -f "$BACKUP"' EXIT
+          node scripts/operations/staging-push-runtime.mjs prepare "$BACKUP"
+          # Preserve the key even if restart fails: a device may already have
+          # registered with it. Never roll a generated encryption key back.
+          sudo systemctl restart fanmind-staging.service
+          sudo systemctl is-active --quiet fanmind-staging.service
+          node --input-type=module <<'NODE'
+          let verified = false;
+          for (let attempt = 0; attempt < 10; attempt++) {
+            try {
+              const response = await fetch('https://staging.fanmind.ch/api/version', {
+                cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(5000),
+              });
+              const body = await response.json();
+              if (response.ok && body.application === 'fanmind' &&
+                  body.runtimeEnvironment === 'staging' && body.releaseCommit === process.env.GITHUB_SHA) {
+                verified = true; break;
+              }
+            } catch {}
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          if (!verified) { console.error('STAGING_PUSH_RUNTIME_RESTART=FAIL'); process.exit(1); }
+          console.log('STAGING_PUSH_RUNTIME_RESTART=PASS');
+          console.log('STAGING_PUSH_RUNTIME_DEVICE_ACCEPTANCE=pending');
+          NODE

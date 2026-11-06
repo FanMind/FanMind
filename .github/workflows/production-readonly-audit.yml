@@ -1,0 +1,103 @@
+name: FanMind Read-only Production Audit
+
+on:
+  workflow_run:
+    workflows: ["Deploy FanMind"]
+    types: [completed]
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type run-read-only-production-audit'
+        required: true
+        type: string
+      expected_commit:
+        description: 'Exact 40-character main commit expected on Production'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-production-readonly-audit
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Verify installed Production runtime without writes
+    if: >-
+      ${{
+        (github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_branch == 'main') ||
+        github.event_name == 'schedule' ||
+        (github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main' &&
+          inputs.confirmation == 'run-read-only-production-audit')
+      }}
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 15
+    env:
+      EXPECTED_COMMIT: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_commit || github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+
+    steps:
+      - name: Run installed root-owned audit and verify redacted result
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ -z "$EXPECTED_COMMIT" ]; then
+            if [ "${GITHUB_EVENT_NAME:-}" != "schedule" ]; then
+              echo "Expected Production commit is invalid." >&2
+              exit 1
+            fi
+            EXPECTED_COMMIT="$(
+              curl -fsS --connect-timeout 15 --max-time 30 https://fanmind.ch/api/version |
+                node -e '
+                  let body = "";
+                  process.stdin.setEncoding("utf8");
+                  process.stdin.on("data", chunk => { body += chunk; });
+                  process.stdin.on("end", () => {
+                    const value = JSON.parse(body);
+                    if (
+                      value?.application !== "fanmind" ||
+                      value?.runtimeEnvironment !== "production" ||
+                      typeof value?.releaseCommit !== "string"
+                    ) process.exit(1);
+                    process.stdout.write(value.releaseCommit);
+                  });
+                '
+            )"
+          fi
+
+          if [[ ! "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected Production commit is invalid." >&2
+            exit 1
+          fi
+
+          if [[ ! -x /usr/local/lib/fanmind-audit/read-only-production-audit.sh ]]; then
+            echo "Installed Production audit is unavailable." >&2
+            exit 1
+          fi
+          if [[ ! -r /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs ]]; then
+            echo "Installed Production audit verifier is unavailable." >&2
+            exit 1
+          fi
+
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-production-audit.XXXXXX")"
+          AUDIT_STDERR=""
+          trap 'rm -f "$AUDIT_OUTPUT" "$AUDIT_STDERR"' EXIT
+          AUDIT_STDERR="$(mktemp "$RUNNER_TEMP/fanmind-production-audit-stderr.XXXXXX")"
+
+          AUDIT_EXIT_CODE=0
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+          /usr/local/lib/fanmind-audit/read-only-production-audit.sh \
+            > "$AUDIT_OUTPUT" 2> "$AUDIT_STDERR" || AUDIT_EXIT_CODE=$?
+          node \
+            /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT" \
+            "$AUDIT_EXIT_CODE"

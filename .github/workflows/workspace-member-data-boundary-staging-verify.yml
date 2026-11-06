@@ -1,0 +1,138 @@
+name: FanMind Workspace Member Data Boundary Staging Verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact reviewed main commit deployed to isolated Staging'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type verify-workspace-member-data-boundary for the read-only Staging postflight'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-core-csv-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate-dispatch:
+    name: Validate exact read-only boundary request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      REQUESTED_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Reject an unreviewed request without loading secrets
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == 'refs/heads/main' ]]
+          [[ "$REQUESTED_REVIEWED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$REQUESTED_REVIEWED_COMMIT" == "$GITHUB_SHA" ]]
+          [[ "$REQUESTED_CONFIRMATION" == 'verify-workspace-member-data-boundary' ]]
+
+  verify-workspace-member-data-boundary:
+    name: Verify the applied boundary without writes
+    needs: validate-dispatch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+      FANMIND_WORKSPACE_MEMBER_DATA_BOUNDARY_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_WORKSPACE_MEMBER_DATA_BOUNDARY_VERIFY_CONFIRM: verify-workspace-member-data-boundary
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: '5432'
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+
+    steps:
+      - name: Checkout exact reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify the pinned controlled SQL offline
+        run: npm run db:workspace-member-data-boundary:check
+
+      - name: Bind verification to the deployed Staging release
+        env:
+          FANMIND_DEPLOYED_VERSION_URL: ${{ format('{0}/api/version', vars.FANMIND_STAGING_APP_URL) }}
+          FANMIND_EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
+        run: |
+          set -euo pipefail
+          VERSION_JSON="$(curl --fail --silent --show-error --max-time 20 --max-filesize 65536 "$FANMIND_DEPLOYED_VERSION_URL")"
+          VERSION_JSON="$VERSION_JSON" node <<'NODE'
+          const payload = JSON.parse(process.env.VERSION_JSON || '{}');
+          if (
+            payload.releaseCommit !== process.env.FANMIND_EXPECTED_RELEASE_COMMIT ||
+            payload.runtimeEnvironment !== 'staging'
+          ) {
+            throw new Error('workspace_member_boundary_deployed_release_mismatch');
+          }
+          console.log('WORKSPACE_MEMBER_DATA_BOUNDARY_DEPLOYED_RELEASE=PASS');
+          NODE
+      - name: Require healthy Staging application dependencies
+        env:
+          FANMIND_DEPLOYED_HEALTH_URL: ${{ format('{0}/api/health', vars.FANMIND_STAGING_APP_URL) }}
+        run: |
+          set -euo pipefail
+          HEALTH_JSON="$(curl --fail --silent --show-error --max-time 20 --max-filesize 65536 "$FANMIND_DEPLOYED_HEALTH_URL")"
+          HEALTH_JSON="$HEALTH_JSON" node --input-type=module <<'NODE'
+          import { evaluatePublicHealth } from './scripts/public-health-policy.mjs';
+          const payload = JSON.parse(process.env.HEALTH_JSON || '{}');
+          if (!evaluatePublicHealth(payload).ok) {
+            throw new Error('workspace_member_boundary_deployed_health_failed');
+          }
+          console.log('WORKSPACE_MEMBER_DATA_BOUNDARY_DEPLOYED_HEALTH=PASS');
+          NODE
+
+      - name: Prepare dedicated private database password file
+        id: passfile
+        env:
+          FANMIND_STAGING_DB_PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/fanmind-workspace-member-boundary-verify.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$FANMIND_STAGING_DB_PASSWORD" in
+            ''|*$'\n'*|*$'\r'*) exit 1 ;;
+          esac
+          ESCAPED="${FANMIND_STAGING_DB_PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' \
+            "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          chmod 600 "$PGPASSFILE"
+
+      - name: Run independent read-only database postflight
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-workspace-member-boundary-verify.pgpass
+        run: npm run db:workspace-member-data-boundary:verify
+
+      - name: Remove dedicated private database password file
+        if: ${{ always() }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/fanmind-workspace-member-boundary-verify.pgpass
+        run: rm -f -- "$PGPASSFILE"

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "updated": "2026-08-19",
+  "repository": "FanMind/FanMind",
+  "rules": {
+    "accepted_gate_may_need_revalidation_after_relevant_change": true,
+    "unrelated_changes_must_not_force_revalidation": true,
+    "automatic_downgrade_target": "NEEDS_REVALIDATION",
+    "never_auto_promote": true
+  },
+  "mappings": [
+    {
+      "patterns": [".github/workflows/restore-drill-*.yml", "scripts/operations/*restore*", "docs/operations/RESTORE_DRILL.md"],
+      "affected_gates": ["restore"],
+      "reason": "Restore execution/security contract changed"
+    },
+    {
+      "patterns": ["mobile/**", "app.json", "eas.json", "**/*deep*link*", "**/*push*"],
+      "affected_gates": ["mobile"],
+      "reason": "Mobile build/auth/deep-link/push contract changed"
+    },
+    {
+      "patterns": ["src/config/aiTiers.mjs", "**/*stripe*", "**/*billing*", "**/*entitlement*"],
+      "affected_gates": ["ai_billing"],
+      "reason": "AI tier or billing lifecycle contract changed"
+    },
+    {
+      "patterns": ["**/*meta*", "**/*pixel*", "**/*consent*", "**/*security*"],
+      "affected_gates": ["meta_security"],
+      "reason": "Meta/security acceptance boundary changed"
+    },
+    {
+      "patterns": ["**/*facebook*", "**/*instagram*", "**/*whatsapp*"],
+      "affected_gates": ["phase3_social"],
+      "reason": "Phase 3 connector contract changed"
+    },
+    {
+      "patterns": ["**/*tiktok*", "**/*twitter*", "**/*discord*", "**/*onlyfans*"],
+      "affected_gates": ["phase7_social"],
+      "reason": "Phase 7 connector contract changed"
+    },
+    {
+      "patterns": ["docs/SOURCE_OF_TRUTH.md", "src/config/roadmap.ts", "project-memory/**"],
+      "affected_gates": [],
+      "reason": "Governance/truth change requires reconciliation but does not automatically invalidate technical gates"
+    }
+  ]
+}

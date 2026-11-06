@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="mind" x1="470" y1="230" x2="690" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#20d5ff"/>
+      <stop offset=".52" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <g aria-label="FM" transform="translate(286 190) scale(2.45)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 102V18H80M24 58H72" stroke="#f8fdff" stroke-width="20"/>
+    <path d="M94 102V18L129 62L164 18V102" stroke="url(#mind)" stroke-width="19"/>
+  </g>
+  <text x="512" y="650" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="146" font-weight="900" letter-spacing="-9">
+    <tspan fill="#f8fdff">Fan</tspan><tspan fill="#38bdf8">Mind</tspan>
+  </text>
+</svg>

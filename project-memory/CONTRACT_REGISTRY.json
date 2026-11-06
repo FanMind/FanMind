@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-21",
+  "task": "FM-GOV-GODMODE-001",
+  "contracts": [
+    {
+      "id": "FM-CONTRACT-CREATOR-AI-001",
+      "name": "Creator <-> AI context/reply contract",
+      "owner_module": "creator_intelligence",
+      "consumers": [
+        "AI reply generation",
+        "Creator CRM",
+        "confirmed-chat learning"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R3",
+      "revalidate_on": [
+        "creator_schema_change",
+        "ai_context_change",
+        "reply_profile_change",
+        "entitlement_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-CHATADMIN-AI-001",
+      "name": "ChatAdmin <-> AI suggestion contract",
+      "owner_module": "chatadmin",
+      "consumers": [
+        "ChatAdmin manual reply UI",
+        "AI suggestion service"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R3",
+      "revalidate_on": [
+        "character_schema_change",
+        "chatadmin_authority_change",
+        "ai_context_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-CHATADMIN-STORAGE-001",
+      "name": "ChatAdmin <-> private storage contract",
+      "owner_module": "chatadmin",
+      "consumers": [
+        "character profile images",
+        "storage RLS/policies"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R3",
+      "revalidate_on": [
+        "storage_policy_change",
+        "path_contract_change",
+        "workspace_or_character_schema_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-SOCIAL-CRM-001",
+      "name": "Social inbound <-> CRM contract",
+      "owner_module": "social",
+      "consumers": [
+        "Facebook inbound",
+        "Instagram inbound",
+        "CRM conversations",
+        "contact/fan identity"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R3",
+      "revalidate_on": [
+        "provider_payload_change",
+        "crm_schema_change",
+        "identity_mapping_change",
+        "delete_disclosure_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-REG-ENTITLEMENT-001",
+      "name": "Registration <-> entitlement contract",
+      "owner_module": "registration_admin_crm",
+      "consumers": [
+        "login routing",
+        "CRM access",
+        "workspace provisioning",
+        "temporary/block entitlement"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R3",
+      "revalidate_on": [
+        "registration_change",
+        "workspace_change",
+        "entitlement_change",
+        "billing_route_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-AI-BILLING-001",
+      "name": "AI usage <-> Billing/Entitlement contract",
+      "owner_module": "ai_billing",
+      "consumers": [
+        "AI cost engine",
+        "usage ledger",
+        "tier entitlement",
+        "Stripe lifecycle"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R4",
+      "revalidate_on": [
+        "price_catalog_change",
+        "usage_schema_change",
+        "entitlement_change",
+        "stripe_lifecycle_change"
+      ]
+    },
+    {
+      "id": "FM-CONTRACT-DISCLOSURE-DELETE-001",
+      "name": "Disclosure/Delete <-> Creator/ChatAdmin contract",
+      "owner_module": "privacy",
+      "consumers": [
+        "Creator disclosure",
+        "ChatAdmin disclosure",
+        "contact delete",
+        "account delete",
+        "provider cleanup"
+      ],
+      "version": "1",
+      "status": "REGISTERED",
+      "minimum_risk": "R4",
+      "revalidate_on": [
+        "schema_change",
+        "new_personal_data_field",
+        "new_provider_payload",
+        "delete_flow_change"
+      ]
+    }
+  ]
+}

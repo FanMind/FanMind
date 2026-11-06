@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "directory": "project-memory/milestones",
+  "required_fields": ["schema_version", "milestone", "snapshot_date", "snapshot_commit", "state", "evidence", "open_followups"],
+  "milestones": [
+    "MEMORY_V6_ACCEPTED",
+    "STAGING_ACCEPTED",
+    "RESTORE_ACCEPTED",
+    "MOBILE_ACCEPTED",
+    "AI_BILLING_ACCEPTED",
+    "META_SECURITY_ACCEPTED",
+    "PHASE3_ACCEPTED",
+    "PHASE7_ACCEPTED",
+    "SALES_HANDOFF_ACCEPTED"
+  ],
+  "rule": "Create a new immutable snapshot when a listed milestone first reaches ACCEPTED or PRODUCTION_CONFIRMED. Never overwrite an older snapshot; later invalidation is recorded separately."
+}

@@ -1,0 +1,240 @@
+name: FanMind Mobile CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/mobile/**"
+      - "docs/mobile/STORE_LISTING.md"
+      - "docs/mobile/STORE_PRIVACY_DECLARATIONS.md"
+      - "src/lib/requestAccessToken.ts"
+      - "src/lib/workspaceAuthorization.ts"
+      - "src/lib/supabase/server.ts"
+      - "src/app/api/ai/reply-suggestions/route.ts"
+      - ".github/workflows/ci-mobile.yml"
+  push:
+    branches:
+      - "feat/mobile-**"
+      - "p0/**"
+    paths:
+      - "apps/mobile/**"
+      - "docs/mobile/STORE_LISTING.md"
+      - "docs/mobile/STORE_PRIVACY_DECLARATIONS.md"
+      - "src/lib/requestAccessToken.ts"
+      - "src/lib/workspaceAuthorization.ts"
+      - "src/lib/supabase/server.ts"
+      - "src/app/api/ai/reply-suggestions/route.ts"
+      - ".github/workflows/ci-mobile.yml"
+
+concurrency:
+  group: fanmind-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate-mobile:
+    name: Typecheck, doctor, native prebuild and JS bundles
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: apps/mobile
+    env:
+      EXPO_PUBLIC_SUPABASE_URL: https://exampleproject.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-public-anon-key-1234567890
+      EXPO_PUBLIC_FANMIND_API_URL: https://fanmind.ch
+      EXPO_NO_TELEMETRY: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci --no-audit --no-fund 2>&1 | tee mobile-install-report.txt
+
+      - name: Upload mobile install report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-install-report
+          path: apps/mobile/mobile-install-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Typecheck independent mobile app
+        id: typecheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee mobile-typecheck-report.txt
+
+      - name: Upload mobile typecheck report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-typecheck-report
+          path: apps/mobile/mobile-typecheck-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Validate Expo configuration
+        id: doctor
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run doctor 2>&1 | tee expo-doctor-report.txt
+
+      - name: Upload Expo Doctor report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-expo-doctor-report
+          path: apps/mobile/expo-doctor-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Validate Store metadata, branding and EAS profiles
+        id: store_readiness
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run store:check 2>&1 | tee mobile-store-readiness-report.txt
+
+      - name: Upload Mobile Store readiness report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-store-readiness-report
+          path: apps/mobile/mobile-store-readiness-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Build Android JavaScript bundle
+        id: android_bundle
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run export:android 2>&1 | tee mobile-android-export-report.txt
+
+      - name: Upload Android export report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-android-export-report
+          path: apps/mobile/mobile-android-export-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Build iOS JavaScript bundle
+        id: ios_bundle
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run export:ios 2>&1 | tee mobile-ios-export-report.txt
+
+      - name: Upload iOS export report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-ios-export-report
+          path: apps/mobile/mobile-ios-export-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Verify Android and iOS native prebuild
+        id: native_prebuild
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run native:prebuild:check 2>&1 | tee mobile-native-prebuild-report.txt
+
+      - name: Upload native prebuild report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-native-prebuild-report
+          path: apps/mobile/mobile-native-prebuild-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Enforce mobile boundary
+        id: boundary
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run boundary 2>&1 | tee mobile-boundary-report.txt
+
+      - name: Upload mobile boundary report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-boundary-report
+          path: apps/mobile/mobile-boundary-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload Android JavaScript export artifact
+        if: always() && steps.android_bundle.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-android-javascript-export
+          path: apps/mobile/dist-android
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload iOS JavaScript export artifact
+        if: always() && steps.ios_bundle.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-ios-javascript-export
+          path: apps/mobile/dist-ios
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Enforce mobile typecheck result
+        if: always() && steps.typecheck.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce Expo Doctor result
+        if: always() && steps.doctor.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce Mobile Store readiness result
+        if: always() && steps.store_readiness.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce Android JavaScript export result
+        if: always() && steps.android_bundle.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce iOS JavaScript export result
+        if: always() && steps.ios_bundle.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce native prebuild result
+        if: always() && steps.native_prebuild.outcome != 'success'
+        run: exit 1
+
+      - name: Enforce mobile boundary result
+        if: always() && steps.boundary.outcome != 'success'
+        run: exit 1

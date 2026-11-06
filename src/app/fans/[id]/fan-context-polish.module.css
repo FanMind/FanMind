@@ -1,0 +1,187 @@
+.knowledgeList {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.knowledgeItem {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid rgba(125, 211, 252, 0.16);
+  border-radius: 13px;
+  padding: 9px;
+  background: rgba(2, 6, 23, 0.34);
+}
+
+.knowledgeHeader,
+.itemActions,
+.analysisControls,
+.analysisControlRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.knowledgeHeader {
+  justify-content: space-between;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border: 1px solid rgba(103, 232, 249, 0.18);
+  border-radius: 999px;
+  padding: 3px 7px;
+  color: #bae6fd;
+  font-size: 10px;
+  font-weight: 900;
+  background: rgba(8, 47, 73, 0.28);
+}
+
+.knowledgeContent {
+  margin: 0;
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.48;
+  overflow-wrap: anywhere;
+}
+
+.itemEditor {
+  min-width: 0;
+}
+
+.itemEditor summary,
+.analysisDetails summary {
+  width: fit-content;
+  color: #bae6fd;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.editorForm,
+.analysisForm {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.editorForm textarea,
+.analysisForm input,
+.analysisForm select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 11px;
+  padding: 8px 9px;
+  color: #f8fbff;
+  font: inherit;
+  background: rgba(2, 6, 23, 0.46);
+}
+
+.editorForm textarea {
+  min-height: 82px;
+  resize: vertical;
+}
+
+.editorGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.editorGrid select {
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 11px;
+  padding: 8px 9px;
+  color: #f8fbff;
+  font: inherit;
+  background: rgba(2, 6, 23, 0.46);
+}
+
+.deleteButton {
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: #fecaca;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(127, 29, 29, 0.2);
+  cursor: pointer;
+}
+
+.analysisControls {
+  align-items: stretch;
+}
+
+.analysisControlRow {
+  flex: 1 1 100%;
+  align-items: stretch;
+}
+
+.analysisControlRow label {
+  display: grid;
+  flex: 1 1 180px;
+  gap: 5px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.analysisDetails {
+  display: grid;
+  gap: 8px;
+}
+
+.analysisDetails[open] summary {
+  margin-bottom: 8px;
+}
+
+.primarySummary {
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(6, 78, 59, 0.16);
+}
+
+.primarySummary strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #ecfdf5;
+  font-size: 13px;
+}
+
+.primarySummary p {
+  margin: 0;
+  color: #d1fae5;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.compactHint {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .editorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledgeHeader {
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,73 @@
+name: FanMind Final Go-Live Readiness
+
+on:
+  workflow_run:
+    workflows:
+      - Deploy FanMind
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      expected_commit:
+        description: Optional erwarteter Production-Commit
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  public-readiness:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Resolve actual deployed release commit
+        id: release
+        env:
+          REQUESTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          LIVE_COMMIT="$(curl -fsS --max-time 15 https://fanmind.ch/api/version | python3 -c 'import json,sys; print(json.load(sys.stdin).get("releaseCommit", ""))')"
+          if [[ ! "$LIVE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Production returned no valid release commit." >&2
+            exit 1
+          fi
+          if [ -n "${REQUESTED_COMMIT:-}" ] && [ "$LIVE_COMMIT" != "$REQUESTED_COMMIT" ]; then
+            echo "Production commit $LIVE_COMMIT does not match requested commit $REQUESTED_COMMIT." >&2
+            exit 1
+          fi
+          echo "commit=$LIVE_COMMIT" >> "$GITHUB_OUTPUT"
+          echo "Readiness checks target deployed commit $LIVE_COMMIT."
+
+      - name: Checkout deployed revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.release.outputs.commit }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run final public go-live preflight
+        env:
+          FANMIND_GO_LIVE_BASE_URL: https://fanmind.ch
+          FANMIND_EXPECTED_RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+          FANMIND_EXPECTED_RUNTIME_ENVIRONMENT: production
+          FANMIND_GO_LIVE_REPORT_PATH: final-go-live-readiness-report.json
+        run: npm run smoke:go-live:public
+
+      - name: Upload readiness report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: final-go-live-readiness-report
+          path: final-go-live-readiness-report.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,130 @@
+{
+  "decision": "READY_FOR_MERGE",
+  "scope": "PR #1331 development/source repair only; not target authorization",
+  "repository": "FanMind/FanMind",
+  "pr": 1331,
+  "head": "e9df302f1fd066e8396a385d875c1ff3f669f152",
+  "main": "dc269fd80407bfa2a3e1885e19e432b0ebaed68e",
+  "reviewDate": "2026-10-15",
+  "reviewTimezone": "Europe/Vienna",
+  "ruleset": 24945113,
+  "requiredContextCount": 12,
+  "requiredChecks": [
+    {
+      "context": "Truth, lint, tests and build",
+      "integration": 15368,
+      "matching": [
+        116623482744,
+        116623367342
+      ]
+    },
+    {
+      "context": "CodeQL",
+      "integration": 57789,
+      "matching": [
+        116624131745
+      ]
+    },
+    {
+      "context": "JavaScript and TypeScript security analysis",
+      "integration": 15368,
+      "matching": [
+        116623088942
+      ]
+    },
+    {
+      "context": "PostgreSQL 17 authorization roundtrip",
+      "integration": 15368,
+      "matching": [
+        116623482430,
+        116623366819
+      ]
+    },
+    {
+      "context": "Synthetic regular-user core flow on local providers",
+      "integration": 15368,
+      "matching": [
+        116623222404
+      ]
+    },
+    {
+      "context": "Public no-write flows on desktop and mobile Chromium",
+      "integration": 15368,
+      "matching": [
+        116623222709
+      ]
+    },
+    {
+      "context": "Immutable Actions, dependency audit and CycloneDX SBOM",
+      "integration": 15368,
+      "matching": [
+        116623087159
+      ]
+    },
+    {
+      "context": "god-mode",
+      "integration": 15368,
+      "matching": [
+        116623085664
+      ]
+    },
+    {
+      "context": "language-runtime-guard",
+      "integration": 15368,
+      "matching": [
+        116623089071
+      ]
+    },
+    {
+      "context": "project-memory-guard",
+      "integration": 15368,
+      "matching": [
+        116623086042
+      ]
+    },
+    {
+      "context": "project-memory-quality",
+      "integration": 15368,
+      "matching": [
+        116623088211
+      ]
+    },
+    {
+      "context": "generate-status",
+      "integration": 15368,
+      "matching": [
+        116623088336
+      ]
+    }
+  ],
+  "openReviewThreads": 0,
+  "submittedGitHubReviews": 0,
+  "requiredApprovingGitHubReviews": 0,
+  "independentCountercheck": {
+    "reviewer": "capacity_countercheck",
+    "originalNativeLifecycleTestsPassed": 22,
+    "currentHeadDiffFromIndependentlyTestedSource": "Only existing Next-Action projection",
+    "finalSourceReview": "PASS; no open P0/P1/P2",
+    "separatePreparationNativeTestsPassed": 28,
+    "separatePreparationFinalReview": "PASS; source review only"
+  },
+  "lifecycleSha256": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
+  "githubCapacityTests": {
+    "passed": 48,
+    "failed": 0,
+    "skipped": 0,
+    "job": 116623366819
+  },
+  "preparation": {
+    "separateBranch": "prepare/capacity-v2-staging-preflight-20261015",
+    "targetExecution": "NOT_PERFORMED",
+    "apply": "disabled",
+    "sourceNativeTests": {
+      "passed": 28,
+      "failed": 0,
+      "skipped": 0
+    },
+    "remainingIntegration": "Existing protected read-only staging rollout path; Capacity family not yet registered"
+  },
+  "invalidation": "Recheck when head, main, ruleset, checks, findings or relevant source changes"
+}

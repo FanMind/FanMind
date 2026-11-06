@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "milestone": "MEMORY_V6_ACCEPTED",
+  "snapshot_date": "2026-08-19",
+  "snapshot_commit": "50d9e09d3a5700c3c994ea9563fef7d968b5f9d3",
+  "state": "ACCEPTED",
+  "evidence": [
+    "PR #975 merged after Project Memory Guard/Quality/Status, FanMind CI, Browser E2E, Landing, Supply Chain and CodeQL were green",
+    "PR #976 merged the post-merge reconciliation and recorded FM-MEM-005 as ACCEPTED"
+  ],
+  "open_followups": [
+    "Remote main branch protection/ruleset activation remains an owner-admin action",
+    "Current finishline work continues through Restore, Mobile, AI/Billing, Meta/Security, Phase 3 and Phase 7"
+  ]
+}

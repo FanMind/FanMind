@@ -1,0 +1,12 @@
+[Unit]
+Description=Run FanMind expired public demo cleanup every ten minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+RandomizedDelaySec=60
+Persistent=true
+Unit=fanmind-demo-cleanup.service
+
+[Install]
+WantedBy=timers.target

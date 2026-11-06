@@ -1,0 +1,13 @@
+[Unit]
+Description=Run FanMind operations monitor every ten minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+RandomizedDelaySec=60
+AccuracySec=30s
+Persistent=true
+Unit=fanmind-operations-monitor.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,152 @@
+name: FanMind Operations Monitor Production Control
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Run the one-shot probe, warning/critical/recovery lifecycle, or activate the timer"
+        required: true
+        default: probe
+        type: choice
+        options:
+          - probe
+          - lifecycle
+          - activate
+      confirmation:
+        description: "Type the action-specific Production confirmation"
+        required: true
+        type: string
+      expected_commit:
+        description: "Exact 40-character main commit expected on Production"
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-operations-monitor-production-control
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    name: Probe or activate the Production operations monitor
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        (
+          (inputs.action == 'probe' && inputs.confirmation == 'probe-operations-monitor-production') ||
+          (inputs.action == 'lifecycle' && inputs.confirmation == 'lifecycle-operations-monitor-production') ||
+          (inputs.action == 'activate' && inputs.confirmation == 'activate-operations-monitor-production')
+        )
+      }}
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 15
+    env:
+      EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+      REVIEWED_COMMIT: ${{ github.sha }}
+
+    steps:
+      - name: Verify installed Production runtime before the probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_COMMIT" == "$REVIEWED_COMMIT" ]]
+
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-monitor-preflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"
+
+      - name: Run email-disabled one-shot monitor probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROBE_LOG="$(mktemp "$RUNNER_TEMP/fanmind-monitor-probe.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          trap 'rm -f "$PROBE_LOG"' EXIT
+          sudo -n systemctl daemon-reload
+
+          set +e
+          sudo -n systemctl start fanmind-operations-monitor-probe.service >/dev/null 2>&1
+          start_status="$?"
+          set -e
+
+          service_result="$(sudo -n systemctl show fanmind-operations-monitor-probe.service --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show fanmind-operations-monitor-probe.service --property=ExecMainStatus --value --no-pager)"
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" ]]; then
+            sudo -n journalctl \
+              -u fanmind-operations-monitor-probe.service \
+              --since "$NOT_BEFORE" \
+              --no-pager \
+              -o cat > "$PROBE_LOG"
+            echo "OPERATIONS_MONITOR_PROBE=failed"
+            if ! node /usr/local/lib/fanmind-audit/verify-operations-monitor-probe-log.mjs \
+              "$PROBE_LOG" \
+              "$NOT_BEFORE"; then
+              echo "OPERATIONS_MONITOR_PROBE_DIAGNOSIS=unavailable"
+            fi
+            exit 1
+          fi
+          echo "OPERATIONS_MONITOR_PROBE=success"
+          echo "OPERATIONS_MONITOR_PROBE_EMAIL_ENABLED=false"
+
+      - name: Activate the Production timer
+        if: ${{ inputs.action == 'activate' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo -n /usr/local/lib/fanmind-ops/enable-operations-monitor.sh \
+            "$EXPECTED_COMMIT" \
+            "activate-operations-monitor-production"
+
+      - name: Prove warning critical and recovery lifecycle without email
+        if: ${{ inputs.action == 'lifecycle' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          LIFECYCLE_LOG="$(mktemp "$RUNNER_TEMP/fanmind-monitor-lifecycle.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          trap 'rm -f "$LIFECYCLE_LOG"' EXIT
+
+          set +e
+          sudo -n systemctl start fanmind-operations-monitor-lifecycle.service >/dev/null 2>&1
+          start_status="$?"
+          set -e
+
+          service_result="$(sudo -n systemctl show fanmind-operations-monitor-lifecycle.service --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show fanmind-operations-monitor-lifecycle.service --property=ExecMainStatus --value --no-pager)"
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" ]]; then
+            sudo -n journalctl \
+              -u fanmind-operations-monitor-lifecycle.service \
+              --since "$NOT_BEFORE" \
+              --no-pager \
+              -o cat > "$LIFECYCLE_LOG"
+            if ! node /usr/local/lib/fanmind-audit/verify-operations-monitor-lifecycle-log.mjs \
+              "$LIFECYCLE_LOG" \
+              "$NOT_BEFORE"; then
+              echo "OPERATIONS_MONITOR_LIFECYCLE=failed"
+              echo "OPERATIONS_MONITOR_LIFECYCLE_ERROR=diagnosis_unavailable"
+            fi
+            exit 1
+          fi
+          echo "OPERATIONS_MONITOR_LIFECYCLE=success"
+          echo "OPERATIONS_MONITOR_LIFECYCLE_TRANSITIONS=warning,critical,recovered"
+          echo "OPERATIONS_MONITOR_LIFECYCLE_EMAIL_ENABLED=false"
+
+      - name: Verify installed Production runtime after control action
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-monitor-postflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"

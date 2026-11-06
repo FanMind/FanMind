@@ -1,0 +1,79 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import test from "node:test";
+import ts from "typescript";
+import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
+import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
+import { WorkspaceAuthorizationError } from "../src/lib/workspaceAuthorizationPolicy.mjs";
+import { deleteOwnedChatAdminMedia } from "../src/lib/chatAdminMediaDeletion.mjs";
+const w="11111111-1111-4111-8111-111111111111",c="22222222-2222-4222-8222-222222222222",id="33333333-3333-4333-8333-333333333333";
+const compile=path=>ts.transpileModule(readFileSync(path,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+class NextResponse extends Response{static json(value,init){return new NextResponse(JSON.stringify(value),{...init,headers:{"content-type":"application/json",...init?.headers}});}}
+function harness(options={}){
+ let revision=1;const calls={objects:[],writes:[],providers:0,usage:0};
+ const asset={id,workspace_id:w,character_id:c,description:"",tags:[],folder:"",offer_id:"",reviewed:false,available:true,deleted:false,revision:1,...options.asset};
+ const character=()=>({id:c,workspace_id:w,revision,status:"active",sales_playbook:{offers:[]}});
+ const context={workspace:{id:w},user:{id:"owner"}};
+ const deps={
+  "next/server":{NextResponse},
+  "@/lib/chatAdmin":{requireChatAdminCapability:async()=>{if(options.denied||options.revokeAfterProvider&&calls.providers)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return context;}},
+  "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
+  "@/lib/chatAdminMedia":{
+   requireMediaEnabled(){if(options.disabled)throw new mediaPolicy.ChatAdminMediaError("media_not_enabled");},
+   async assertMediaCharacter(workspaceId,characterId,expected){if(workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
+   async getMediaAsset(workspaceId,characterId,assetId){if(workspaceId!==w||characterId!==c||assetId!==id)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {...asset};},
+   loadCharacterMedia:async()=>({assets:[{...asset}],policy:{enabled:false,revision:0}}),
+   mediaScope:(workspaceId,characterId)=>`workspace_id=eq.${workspaceId}&character_id=eq.${characterId}`,
+   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}")});revision++;return [{...asset}];},
+   mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");return Buffer.from("synthetic-private-image");},
+   updateMediaAsset:async(workspaceId,characterId,previous,patch)=>{calls.writes.push({patch,workspaceId,characterId});Object.assign(asset,patch,{revision:asset.revision+1});revision++;return {...asset};},
+  },
+  "@/lib/chatAdminMediaImage":{normalizeMediaImage:async bytes=>bytes},
+  "@/lib/httpMutationPolicy.mjs":mutationPolicy,
+  "@/lib/workspaceAuthorization":{WorkspaceAuthorizationError},
+  "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed:!options.rateDenied})},
+  "@/lib/chatAdminModelPolicy.mjs":{getChatAdminModelProfile:()=>({model:"synthetic-test"}),CHAT_ADMIN_MODEL_TIMEOUT_MS:55_000},
+  "@/lib/aiUsage":{recordAiUsageEvent:async()=>{calls.usage++;}},
+ };
+ const load=path=>{const exports={};runInNewContext(compile(path),{exports,process:{env:{FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED:options.analysisDisabled?"false":"true",OPENAI_API_KEY:"synthetic-placeholder"}},Request,Response,Buffer,AbortSignal,crypto,fetch:async()=>{calls.providers++;return Response.json({status:"completed",usage:{input_tokens:100,output_tokens:20,total_tokens:120},output_text:JSON.stringify({description:"Rotes Kleid am Strand",tags:["Strand","rotes Kleid"]})});},require:name=>{assert.ok(Object.hasOwn(deps,name),name);return deps[name];}});return exports;};
+ const route=load("src/app/api/chatadmin/media/route.ts"),analyze=load("src/app/api/chatadmin/media/analyze/route.ts");
+ const request=(body={},method="PATCH",origin="https://fanmind.invalid")=>new Request("https://fanmind.invalid/api/chatadmin/media",{method,headers:{origin,"Content-Type":"application/json"},body:JSON.stringify({character_id:c,character_revision:1,id,revision:1,description:"Strand",tags:["Strand"],folder:"Sommer",offer_id:"",reviewed:true,available:true,...body})});
+ const get=(query="")=>{const request=new Request(`https://fanmind.invalid/api/chatadmin/media?character_id=${c}${query}`);Object.defineProperty(request,"nextUrl",{value:new URL(request.url)});return request;};
+ return {route,analyze,request,get,calls,asset};
+}
+test("media API refuses foreign origin, missing capability, inactive runtime and stale binding before writes",async()=>{
+ for(const [options,body,origin,status] of [[{}, {},"https://foreign.invalid",403],[{denied:true},{},undefined,403],[{disabled:true},{},undefined,503],[{}, {character_revision:0},undefined,409],[{}, {character_id:crypto.randomUUID()},undefined,403],[{}, {id:crypto.randomUUID()},undefined,403]]){
+  const h=harness(options);const result=await h.route.PATCH(h.request(body,"PATCH",origin));assert.equal(result.status,status);assert.equal(h.calls.writes.length,0);assert.equal(h.calls.objects.length,0);
+ }
+});
+test("media metadata uses authorized Workspace and Character and requires an explicit review",async()=>{
+ const h=harness();const result=await h.route.PATCH(h.request({workspace_id:crypto.randomUUID()}));assert.equal(result.status,200);assert.equal(h.calls.writes[0].workspaceId,w);assert.equal(h.calls.writes[0].characterId,c);assert.equal(h.calls.writes[0].patch.reviewed,true);
+ const invalid=harness();assert.equal((await invalid.route.PATCH(invalid.request({description:"",tags:[]}))).status,400);assert.equal(invalid.calls.writes.length,0);
+ const foreignOffer=harness();assert.equal((await foreignOffer.route.PATCH(foreignOffer.request({offer_id:"foreign-offer"}))).status,400);assert.equal(foreignOffer.calls.writes.length,0);
+});
+test("private preview reauthorizes, denies tombstones and disables browser caching",async()=>{
+ const h=harness();const result=await h.route.GET(h.get(`&id=${id}`));assert.equal(result.status,200);assert.equal(result.headers.get("cache-control"),"private, no-store");assert.equal(result.headers.get("content-type"),"image/webp");
+ const deleted=harness({asset:{deleted:true}});assert.equal((await deleted.route.GET(deleted.get(`&id=${id}`))).status,400);assert.equal(deleted.calls.objects.length,0);
+ const denied=harness({denied:true});assert.equal((await denied.route.GET(denied.get(`&id=${id}`))).status,403);assert.equal(denied.calls.objects.length,0);
+});
+test("deletion revokes availability before deleting the file and preserves metadata after a failed file delete",async()=>{
+ const h=harness({objectFails:true});const result=await h.route.DELETE(h.request({},"DELETE"));assert.equal(result.status,503);assert.equal(h.calls.writes.length,1);assert.equal(h.calls.writes[0].patch.deleted,true);assert.equal(h.calls.writes[0].patch.available,false);
+ const retry=harness({asset:{deleted:true}});assert.equal((await retry.route.DELETE(retry.request({},"DELETE"))).status,200);assert.equal(retry.calls.objects[0][3],"DELETE");assert.ok(retry.calls.writes.some(call=>call.path));
+});
+test("analysis requires explicit consent, rate budget and authority, then stores unreviewed output",async()=>{
+ for(const [options,body,status] of [[{}, {analysis_consent:false},400],[{analysisDisabled:true},{analysis_consent:true},400],[{rateDenied:true},{analysis_consent:true},429],[{denied:true},{analysis_consent:true},403]]){
+  const h=harness(options);assert.equal((await h.analyze.POST(h.request(body,"POST"))).status,status);assert.equal(h.calls.providers,0);assert.equal(h.calls.writes.length,0);
+ }
+ const h=harness();const result=await h.analyze.POST(h.request({analysis_consent:true},"POST"));assert.equal(result.status,200);assert.equal(h.calls.providers,1);assert.equal(h.calls.usage,1);assert.equal(h.calls.writes[0].patch.reviewed,false);
+ const revoked=harness({revokeAfterProvider:true});assert.equal((await revoked.analyze.POST(revoked.request({analysis_consent:true},"POST"))).status,403);assert.equal(revoked.calls.writes.length,0);assert.equal(revoked.calls.usage,1);
+});
+test("account deletion requires exact owned metadata, physical absence and fails closed before removing metadata",async()=>{
+ const config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"},path=`${w}/${c}/${id}.webp`;
+ for(const absent of [true,false]){
+  const calls=[];
+  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET"});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:absent?404:200});return new Response(null,{status:204});};
+  if(absent){await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.at(-1).url.includes("deleted=eq.true"));}
+  else{await assert.rejects(deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]}),/media_deletion_absence_failed/u);assert.ok(!calls.some(call=>call.method==="DELETE"&&call.url.includes("/rest/")));}
+ }
+});

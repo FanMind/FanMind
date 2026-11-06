@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "milestone": "STAGING_ACCEPTED",
+  "snapshot_date": "2026-08-19",
+  "snapshot_commit": "cdf4a59517b5ea1c34e672b207878b95145d2d01",
+  "state": "ACCEPTED",
+  "evidence": [
+    "Issue #874 Gate 1 records separate Supabase/Web Staging, DNS/TLS, synthetic isolated workspaces/users and required Staging resources as complete",
+    "Referral/Billing lifecycle was executed in Staging with rollback-protected evidence",
+    "Project Memory FM-STG-001 is ACCEPTED"
+  ],
+  "open_followups": [
+    "Feature-specific external acceptance remains separate for Mobile, AI Plus/Ultra, Meta and Social",
+    "Older #642/#643/#644 checkboxes must be reconciled against current evidence rather than treated as a zero-state"
+  ]
+}

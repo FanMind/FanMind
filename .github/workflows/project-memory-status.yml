@@ -1,0 +1,28 @@
+name: Project Memory Status
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '47 5 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  generate-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Generate project status
+        run: python3 scripts/project_memory_status.py
+      - name: Ensure generated status is current
+        run: |
+          set -euo pipefail
+          git diff -- project-memory/PROJECT_STATUS.md
+          test -z "$(git status --short project-memory/PROJECT_STATUS.md)" || {
+            echo "PROJECT_STATUS.md is stale. Run scripts/project_memory_status.py and commit the result."
+            exit 1
+          }

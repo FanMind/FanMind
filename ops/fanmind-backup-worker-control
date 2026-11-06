@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$EUID" == 0 && "$#" == 4 ]] || exit 64
+case "$1" in verify|install|rollback) ;; *) exit 64;; esac
+[[ "$2" =~ ^[a-f0-9]{40}$ && "$3" =~ ^[a-f0-9]{40}$ && "$4" =~ ^[a-f0-9]{40}$ ]] || exit 64
+# The fixed wrapper is bootstrapped root:root/0750 only after separate approval.
+# No repository code is executed as root by the GitHub job.
+exec /usr/bin/env -i PATH=/usr/lib/postgresql/17/bin:/usr/bin:/bin LANG=C LC_ALL=C \
+  /usr/bin/flock --nonblock /run/lock/fanmind-backup-worker-install.lock \
+  /usr/bin/node /usr/local/lib/fanmind-ops/backup-worker-install-control.mjs "$@"

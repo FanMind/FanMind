@@ -1,0 +1,10 @@
+[Unit]
+Description=FanMind scheduled database backup
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=fanmind-backup-enqueue@backup_database.service
+
+[Install]
+WantedBy=timers.target

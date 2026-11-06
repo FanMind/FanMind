@@ -1,0 +1,547 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { buildManualFlowSql, createManualFlowReceiptDataIds, MANUAL_FLOW_TASK_ID, CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { CHAT_ADMIN_POSTFLIGHT_SQL } from "../scripts/operations/chat-admin-staging-runner.mjs";
+import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH } from "../scripts/operations/chat-admin-fan-staging-runner.mjs";
+import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH } from "../scripts/operations/chat-admin-structured-offers-staging-runner.mjs";
+
+import { POSTFLIGHT_SQL as TIER_POSTFLIGHT_SQL, SQL_PATH as TIER_SQL_PATH, buildApplySql } from "../scripts/operations/chat-admin-customer-tier-staging-runner.mjs";
+
+const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID ?? "";
+const enabled=process.env.FANMIND_CREATOR_PG17_REQUIRED==="true";
+const database="fanmind_chatadmin_manual_ci";
+const ids=Array.from({length:10},(_,i)=>`${(i+1).toString(16).repeat(8)}-1111-4111-8111-${(i+1).toString(16).repeat(12)}`);
+const keys=["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
+const env={
+  GITHUB_REF:"refs/heads/main",GITHUB_SHA:"a".repeat(40),FANMIND_CHAT_ADMIN_REVIEWED_COMMIT:"a".repeat(40),
+  FANMIND_RUNTIME_ENVIRONMENT:"staging",NEXT_PUBLIC_APP_URL:"https://staging.fanmind.ch",FANMIND_TARGET_API_ORIGIN:"https://staging.fanmind.ch",FANMIND_PRODUCTION_API_ORIGIN:"https://fanmind.ch",
+  NEXT_PUBLIC_SUPABASE_URL:"https://stagingref123.supabase.co",FANMIND_TARGET_SUPABASE_PROJECT_REF:"stagingref123",FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:"productionref123",
+  PGHOST:"aws-0-eu.pooler.supabase.com",FANMIND_TARGET_DB_HOST:"aws-0-eu.pooler.supabase.com",FANMIND_PRODUCTION_DB_HOST:"db.productionref123.supabase.co",PGUSER:"postgres.stagingref123",PGPORT:"5432",PGDATABASE:"postgres",PGSSLMODE:"verify-full",PGSSLROOTCERT:"/repo/config/certificates/supabase-root-2021-ca.crt",
+  FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true",FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",
+  FANMIND_CHAT_ADMIN_TASK_ID:MANUAL_FLOW_TASK_ID,
+  FANMIND_STAGING_E2E_EMAIL:"primary-staging@example.invalid",FANMIND_STAGING_E2E_PASSWORD:"synthetic-password-primary",FANMIND_STAGING_E2E_SECONDARY_EMAIL:"secondary-staging@example.invalid",FANMIND_STAGING_E2E_SECONDARY_PASSWORD:"synthetic-password-secondary",
+  FANMIND_ADMIN_EMAILS:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_EMAIL:"admin-staging@example.invalid",FANMIND_STAGING_ADMIN_E2E_PASSWORD:"synthetic-password-admin",
+  ...Object.fromEntries(keys.map((key,i)=>[`FANMIND_CHAT_ADMIN_${key}`,ids[i]])),
+};
+function sql(query,db=database){assert.match(container,/^[0-9a-f]{12,64}$/u);return execFileSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",db,"-v","ON_ERROR_STOP=1","-At"],{input:query,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"]});}
+
+test("native PG17 proves committed fixture ownership, identity negatives, read-only authority and cleanup",{skip:!enabled},()=>{
+  sql(`create database ${database};`,"postgres");
+  const marker="f".repeat(32);
+  const receipt={marker,startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds(marker)};
+  try {
+    sql(`do $$ begin
+      if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if;
+      if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if;
+      if not exists(select 1 from pg_roles where rolname='service_role') then create role service_role nologin bypassrls; end if;
+    end $$;
+    create schema auth;
+    create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,raw_user_meta_data jsonb);
+    create table auth.sessions(id uuid primary key default gen_random_uuid(),user_id uuid references auth.users(id),created_at timestamptz default now());
+    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+    grant usage on schema auth,public to authenticated,anon,service_role;
+    grant execute on function auth.uid() to authenticated;
+    create table public.workspaces(id uuid primary key,owner_user_id uuid references auth.users(id),name text,test_access_flags jsonb,workspace_access_mode text,billing_status text,stripe_customer_id text,stripe_subscription_id text,stripe_checkout_session_id text,stripe_payment_intent_id text,stripe_mandate_id text);
+    create table public.workspace_members(workspace_id uuid,user_id uuid,role text);
+    create table public.ai_usage_events(id uuid primary key default gen_random_uuid(),workspace_id uuid,user_id uuid,feature text,source_route text,status text,created_at timestamptz default now());
+    grant select on public.workspaces to authenticated;
+    alter table public.workspaces enable row level security;
+    create policy workspace_owner_read on public.workspaces for select to authenticated using(owner_user_id=auth.uid());
+    insert into auth.users values
+      ('${ids[2]}','primary-staging@example.invalid',now(),'{"fanmind_staging_fixture":"primary","fanmind_staging_fixture_version":1}'),
+      ('${ids[4]}','secondary-staging@example.invalid',now(),'{"fanmind_staging_fixture":"secondary","fanmind_staging_fixture_version":1}'),
+      ('${ids[3]}','fanmind-ai-member-staging@example.invalid',now(),'{"fanmind_staging_fixture":"ai_member","fanmind_staging_fixture_version":1}'),
+      ('${ids[5]}','admin-staging@example.invalid',now(),'{}');
+    insert into public.workspaces(id,owner_user_id,name,test_access_flags,workspace_access_mode,billing_status) values
+      ('${ids[0]}','${ids[2]}','FanMind Staging Processing Acceptance','{"staging_synthetic_fixture":true}','active','active'),
+      ('${ids[1]}','${ids[4]}','FanMind Staging Secondary E2E','{"staging_synthetic_fixture":true}','active','active');
+    insert into public.workspace_members values('${ids[0]}','${ids[2]}','owner'),('${ids[1]}','${ids[4]}','owner'),('${ids[0]}','${ids[3]}','member');`);
+    sql(readFileSync(new URL("../supabase/controlled/20260920230000_chat_admin_multi_character.sql",import.meta.url),"utf8"));
+    const absentPostflight=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.equal(absentPostflight.status,0,absentPostflight.stderr||absentPostflight.stdout);
+    assert.match(`${absentPostflight.stdout}${absentPostflight.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
+    sql("grant execute on function public.is_current_chat_admin_workspace(uuid) to authenticated with grant option;");
+    const parentHelperGrantOption=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(parentHelperGrantOption.status,0,"ABSENT must reject grant option on the parent authority helper");
+    assert.match(`${parentHelperGrantOption.stdout}${parentHelperGrantOption.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("revoke grant option for execute on function public.is_current_chat_admin_workspace(uuid) from authenticated;");
+    const parentHelperRestored=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.equal(parentHelperRestored.status,0,parentHelperRestored.stderr||parentHelperRestored.stdout);
+    assert.match(`${parentHelperRestored.stdout}${parentHelperRestored.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT/u);
+    sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (true) with check (true);");
+    const baselinePolicy=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(baselinePolicy.status,0,"ABSENT must require the parent conversation owner policy");
+    assert.match(`${baselinePolicy.stdout}${baselinePolicy.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter policy chat_admin_conversations_owner_all on public.chat_character_conversations using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
+
+    sql("alter table public.chat_characters alter column status drop default;");
+    const absentParentDefault=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(absentParentDefault.status,0,"ABSENT must reject parent runtime drift before APPLY");
+    assert.match(`${absentParentDefault.stdout}${absentParentDefault.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter table public.chat_characters alter column status set default 'active';");
+
+    sql("alter table public.chat_characters add constraint unexpected_chat_character_revision_check check (revision < 3);");
+    const absentParentConstraint=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(absentParentConstraint.status,0,"ABSENT must reject unexpected parent runtime constraints");
+    assert.match(`${absentParentConstraint.stdout}${absentParentConstraint.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("alter table public.chat_characters drop constraint unexpected_chat_character_revision_check;");
+
+    sql("create function public.require_chat_admin_fan_binding() returns trigger language plpgsql as $$begin return new; end$$; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+    const orphanedFanObjects=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:FAN_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.notEqual(orphanedFanObjects.status,0,"an orphaned fan helper and trigger must not be classified ABSENT");
+    assert.match(`${orphanedFanObjects.stdout}${orphanedFanObjects.stderr}`,/CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; drop function public.require_chat_admin_fan_binding();");
+
+    // Exercise the exact fan migration and its read-only catalog verifier on native PG17.
+    const fanSql = readFileSync(new URL(`../${FAN_SQL_PATH}`, import.meta.url), "utf8");
+    sql(fanSql);
+    const postflight = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+      input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let diagnostics = "";
+    if (postflight.status !== 0) {
+      const diagnosticSql = FAN_POSTFLIGHT_SQL.replace(
+        "  if rls_enabled <> 5",
+        `  raise notice 'CHAT_ADMIN_FAN_DIAGNOSTIC=%', jsonb_build_object(
+    'schema',schema_mismatch,'owner',table_owner_mismatch,'persistence',persistence_mismatch,
+    'constraints',persistence_constraint_mismatch,'defaults',persistence_default_mismatch,
+    'routine_acl',routine_acl_mismatch,'fan_indexes',fan_unique_index_mismatch,
+    'conversation_indexes',conversation_unique_index_mismatch,'extension_markers',extension_markers,
+    'triggers',trigger_mismatch,'identity',identity_mismatch,'rewrite_rules',rewrite_rule_mismatch,
+    'policy',policy_valid,'table_acl',table_privilege_mismatch,
+    'generated_columns',generated_column_mismatch,'parent_character',parent_character_runtime_mismatch,
+    'routine_grant_options',routine_grant_option_mismatch,'schema_usage',schema_usage_mismatch,'fan_constraints',constraint_mismatch,
+    'persistence_constraints',persistence_constraint_mismatch,
+    'trigger_catalog', (select jsonb_agg(jsonb_build_object('name',tgname,'type',tgtype,'attrs',tgattr::text,'enabled',tgenabled,'fn',tgfoid::regprocedure::text,'qual',tgqual::text)) from pg_trigger where tgrelid in ('public.chat_character_fans'::regclass,'public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass) and not tgisinternal),
+    'persistence_catalog', (select jsonb_agg(jsonb_build_object('table',c.relname,'name',con.conname,'type',con.contype,'definition',pg_get_constraintdef(con.oid,true))) from pg_constraint con join pg_class c on c.oid=con.conrelid where con.conrelid in ('public.chat_character_conversations'::regclass,'public.chat_character_messages'::regclass)),
+    'column_acl',protected_column_privilege_mismatch,
+    'authenticated_writes',authenticated_conversation_message_write_grant_mismatch);
+  if rls_enabled <> 5`,
+      );
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: diagnosticSql, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      diagnostics = `${result.stdout}${result.stderr}`;
+    }
+    assert.equal(postflight.status, 0, `${postflight.stderr || postflight.stdout}${diagnostics}`);
+    assert.match(`${postflight.stdout}${postflight.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
+    const assertPostflightRejectsPartial = () => {
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      assert.notEqual(result.status, 0, "the postflight must reject the injected catalog drift");
+      assert.match(`${result.stdout}${result.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL/u);
+    };
+    const assertPostflightVerified = () => {
+      const result = spawnSync("docker", ["exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", database, "-v", "ON_ERROR_STOP=1", "-At"], {
+        input: FAN_POSTFLIGHT_SQL, encoding: "utf8", timeout: 60_000, maxBuffer: 2 * 1024 * 1024,
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+      assert.equal(result.status, 0, result.stderr || result.stdout);
+      assert.match(`${result.stdout}${result.stderr}`, /CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED/u);
+    };
+    const restoreAndVerify = (statement) => {
+      sql(statement);
+      assertPostflightVerified();
+    };
+
+    sql("alter table public.chat_characters alter column status drop not null;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters alter column status set not null;");
+
+    sql("alter table public.chat_characters alter column revision type bigint using revision::bigint;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters alter column revision type integer using revision::integer;");
+
+    sql("alter table public.chat_characters drop constraint chat_characters_revision_check; alter table public.chat_characters add constraint chat_characters_revision_check check (revision > 0) not valid;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters validate constraint chat_characters_revision_check;");
+
+    sql("alter table public.chat_characters add constraint unexpected_chat_character_runtime_unique unique (revision,id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters drop constraint unexpected_chat_character_runtime_unique;");
+
+    sql("create unique index unexpected_chat_character_status_unique on public.chat_characters(status,id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_character_status_unique;");
+
+    sql("create unique index unexpected_chat_character_expression_unique on public.chat_characters ((lower(status)),id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_character_expression_unique;");
+
+    sql("create unique index unexpected_chat_character_predicate_unique on public.chat_characters(id) where status='active';");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_character_predicate_unique;");
+
+    sql(`insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values
+      ('${ids[6]}','${ids[0]}','${ids[2]}','Index test first',25,'','','','','','',''),
+      ('${ids[7]}','${ids[0]}','${ids[2]}','Index test second',25,'','','','','','','');`);
+    assert.throws(()=>sql("create unique index concurrently unexpected_invalid_chat_character_status on public.chat_characters(status);"),"a failed concurrent unique build must leave an invalid index for catalog verification");
+    assertPostflightRejectsPartial();
+    restoreAndVerify(`drop index concurrently public.unexpected_invalid_chat_character_status; delete from public.chat_characters where id in ('${ids[6]}','${ids[7]}');`);
+
+    sql("alter table public.chat_characters add constraint unexpected_character_revision_exclusion exclude using gist ((int4range(revision,revision,'[]')) with &&);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters drop constraint unexpected_character_revision_exclusion;");
+
+    sql("alter table public.chat_character_fans add constraint unexpected_fan_overlap exclude using gist ((daterange('2026-01-01'::date, '2026-01-02'::date)) with &&);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_fan_overlap;");
+
+    sql("grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to authenticated with grant option;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke grant option for execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from authenticated;");
+
+    sql("revoke usage on schema public from public, authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("grant usage on schema public to public, authenticated;");
+
+    sql("grant create on schema public to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke create on schema public from authenticated;");
+
+    sql("create role fanmind_chatadmin_schema_creator nologin; grant create on schema public to fanmind_chatadmin_schema_creator; grant fanmind_chatadmin_schema_creator to authenticated with inherit true;");
+    assert.equal(sql("select has_schema_privilege('authenticated','public','CREATE');").trim(),"t","the inherited grant must actually confer browser CREATE");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke fanmind_chatadmin_schema_creator from authenticated; revoke create on schema public from fanmind_chatadmin_schema_creator; drop role fanmind_chatadmin_schema_creator;");
+
+    sql(`grant create on database ${database} to authenticated; alter schema public owner to authenticated;`);
+    assertPostflightRejectsPartial();
+    restoreAndVerify(`alter schema public owner to pg_database_owner; revoke create on database ${database} from authenticated;`);
+
+    sql("alter function public.is_current_chat_admin_workspace(uuid) owner to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter function public.is_current_chat_admin_workspace(uuid) owner to postgres; grant execute on function public.is_current_chat_admin_workspace(uuid) to authenticated;");
+
+    sql("alter table public.chat_characters disable row level security;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_characters enable row level security;");
+
+    sql("alter table public.chat_character_conversations disable trigger require_chat_admin_conversation_fan;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_conversations enable trigger require_chat_admin_conversation_fan;");
+
+    sql("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (true) with check (true);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter policy chat_admin_fans_owner_all on public.chat_character_fans using (public.is_current_chat_admin_workspace(workspace_id)) with check (public.is_current_chat_admin_workspace(workspace_id));");
+
+    sql("alter index public.chat_character_conversations_one_per_fan rename to chat_character_conversations_one_per_fan_invalid;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter index public.chat_character_conversations_one_per_fan_invalid rename to chat_character_conversations_one_per_fan;");
+
+    sql("drop index public.one_chat_admin_workspace_global;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("create unique index one_chat_admin_workspace_global on public.workspace_chat_admin_capabilities using btree (chat_admin_multi_character) where chat_admin_multi_character;");
+
+    sql("create unique index unexpected_chat_message_content_unique on public.chat_character_messages(content);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_message_content_unique;");
+
+    sql("create unique index unexpected_chat_conversation_character_unique on public.chat_character_conversations(workspace_id,character_id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_conversation_character_unique;");
+
+    sql("create unique index unexpected_chat_fan_character_unique on public.chat_character_fans(workspace_id,character_id);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop index public.unexpected_chat_fan_character_unique;");
+
+    sql("alter table public.chat_character_messages add column unexpected_required_column text not null default 'temporary';");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_messages drop column unexpected_required_column;");
+
+    sql("alter table public.chat_character_messages add constraint unexpected_message_direction_check check (direction <> 'suggested_reply');");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_messages drop constraint unexpected_message_direction_check;");
+
+    sql("alter table public.chat_character_messages drop constraint chat_character_messages_direction_check; alter table public.chat_character_messages add constraint chat_character_messages_direction_check check (direction <> 'suggested_reply');");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_messages drop constraint chat_character_messages_direction_check; alter table public.chat_character_messages add constraint chat_character_messages_direction_check check (direction in ('fan_inbound','suggested_reply','confirmed_reply'));");
+
+    sql("alter table public.chat_character_messages set unlogged;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_messages set logged;");
+
+    sql("alter table public.chat_character_fans owner to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans owner to postgres; grant select,update,delete on table public.chat_character_fans to authenticated,service_role;");
+
+    sql("alter role authenticated bypassrls;");
+    try { assertPostflightRejectsPartial(); }
+    finally { restoreAndVerify("alter role authenticated nobypassrls;"); }
+
+    sql("alter table public.chat_character_conversations alter column fan_id set default '00000000-0000-4000-8000-000000000001'::uuid;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_conversations alter column fan_id drop default;");
+
+    sql("alter table public.chat_character_messages alter column id drop default;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_messages alter column id set default gen_random_uuid();");
+
+    sql("alter sequence public.chat_character_messages_sequence_seq increment by -1;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter sequence public.chat_character_messages_sequence_seq increment by 1;");
+
+    sql("alter sequence public.chat_character_messages_sequence_seq cache 2;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter sequence public.chat_character_messages_sequence_seq cache 1;");
+
+    sql("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update of fan_id on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop trigger require_chat_admin_conversation_fan on public.chat_character_conversations; create trigger require_chat_admin_conversation_fan before insert or update on public.chat_character_conversations for each row execute function public.require_chat_admin_fan_binding();");
+
+    sql("create rule unexpected_message_insert_ignore as on insert to public.chat_character_messages do instead nothing;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop rule unexpected_message_insert_ignore on public.chat_character_messages;");
+
+    sql("create rule unexpected_fan_insert_ignore as on insert to public.chat_character_fans do instead nothing;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("drop rule unexpected_fan_insert_ignore on public.chat_character_fans;");
+
+    sql("grant insert (summary) on table public.chat_character_fans to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke insert (summary) on table public.chat_character_fans from authenticated;");
+
+    sql("grant insert (summary) on table public.chat_character_fans to service_role;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke insert (summary) on table public.chat_character_fans from service_role;");
+
+    sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_table_reader') then create role fanmind_chatadmin_unexpected_table_reader nologin; end if; end $$; grant select on table public.chat_character_fans to fanmind_chatadmin_unexpected_table_reader;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke select on table public.chat_character_fans from fanmind_chatadmin_unexpected_table_reader; drop role fanmind_chatadmin_unexpected_table_reader;");
+
+    sql("revoke insert on table public.chat_characters from authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("grant insert on table public.chat_characters to authenticated;");
+
+    sql("grant delete on table public.workspace_chat_admin_capabilities to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke delete on table public.workspace_chat_admin_capabilities from authenticated;");
+
+    sql("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to authenticated;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) owner to postgres; grant execute on function public.persist_chat_admin_generation(uuid,uuid,uuid,uuid,integer,integer,uuid,uuid[],text,text[]) to authenticated;");
+
+    sql("do $$ begin if not exists(select 1 from pg_roles where rolname='fanmind_chatadmin_unexpected_executor') then create role fanmind_chatadmin_unexpected_executor nologin; end if; end $$; grant execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) to fanmind_chatadmin_unexpected_executor;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("revoke execute on function public.create_chat_admin_fan(uuid,uuid,uuid,jsonb) from fanmind_chatadmin_unexpected_executor; drop role fanmind_chatadmin_unexpected_executor;");
+
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120); alter table public.chat_character_fans add constraint chat_character_fans_unrelated_check check (true);");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans drop constraint chat_character_fans_display_name_check; alter table public.chat_character_fans drop constraint chat_character_fans_unrelated_check; alter table public.chat_character_fans add constraint chat_character_fans_display_name_check check (char_length(btrim(display_name)) between 1 and 120);");
+
+    sql("alter table public.chat_character_fans add constraint unexpected_unvalidated_fan_check check (false) not valid;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans drop constraint unexpected_unvalidated_fan_check;");
+
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans alter column status drop default; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text generated always as ('active'::text) stored not null; alter table public.chat_character_fans add constraint chat_character_fans_status_check check (status in ('active','inactive'));");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("alter table public.chat_character_fans drop constraint chat_character_fans_status_check; alter table public.chat_character_fans drop column status; alter table public.chat_character_fans add column status text not null default 'active' check (status in ('active','inactive'));");
+
+    sql("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='D' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
+    assertPostflightRejectsPartial();
+    restoreAndVerify("set allow_system_table_mods = on; update pg_catalog.pg_trigger t set tgenabled='O' from pg_constraint c where c.oid=t.tgconstraint and c.conname='chat_character_conversations_fan_fk' and t.tgisinternal;");
+
+    const offersSql=readFileSync(new URL(`../${OFFERS_SQL_PATH}`,import.meta.url),"utf8");
+    sql(offersSql);
+    const offersPostflight=spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:OFFERS_POSTFLIGHT_SQL,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    assert.equal(offersPostflight.status,0,offersPostflight.stderr||offersPostflight.stdout);
+    assert.match(`${offersPostflight.stdout}${offersPostflight.stderr}`,/CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED/u);
+
+    const currentBaseCheck = query => spawnSync("docker",["exec","-i",container,"psql","-X","-U","postgres","-d",database,"-v","ON_ERROR_STOP=1","-At"],{
+      input:query,encoding:"utf8",timeout:60_000,maxBuffer:2*1024*1024,stdio:["pipe","pipe","pipe"],
+    });
+    const legacyBase = currentBaseCheck(CHAT_ADMIN_POSTFLIGHT_SQL);
+    assert.notEqual(legacyBase.status,0,"the legacy exact base cannot verify the installed fan/offers schema");
+    assert.match(legacyBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=PARTIAL/u);
+    const currentBase = currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL);
+    assert.equal(currentBase.status,0,currentBase.stderr);
+    assert.match(currentBase.stderr,/CHAT_ADMIN_SCHEMA_STATE=VERIFIED/u);
+    sql("alter table public.chat_characters alter column public_age drop not null;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"current verification must retain original Character column checks");
+    sql("alter table public.chat_characters alter column public_age set not null;");
+    sql("alter table public.chat_characters add column unreviewed_character_column text;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"only the separately verified sales_playbook addition is delegated");
+    sql("alter table public.chat_characters drop column unreviewed_character_column;");
+    sql("grant update on public.workspace_chat_admin_capabilities to authenticated;");
+    assert.notEqual(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0,"the capability must remain read-only for browser roles");
+    sql("revoke update on public.workspace_chat_admin_capabilities from authenticated;");
+    assert.equal(currentBaseCheck(CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL).status,0);
+
+
+    const tierSource=readFileSync(new URL(`../${TIER_SQL_PATH}`,import.meta.url),"utf8");
+    const tierAbsent=currentBaseCheck(TIER_POSTFLIGHT_SQL);
+    assert.equal(tierAbsent.status,0,tierAbsent.stderr);
+    assert.match(tierAbsent.stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT/u);
+    const badAtomic=currentBaseCheck(buildApplySql(tierSource).replace("do $verify$", "alter table public.chat_character_fans alter column customer_tier set default 'green';\ndo $verify$"));
+    assert.notEqual(badAtomic.status,0,"a wrong post-apply contract must abort before COMMIT");
+    assert.equal(sql("select count(*) from pg_attribute where attrelid='public.chat_character_fans'::regclass and attname='customer_tier' and not attisdropped;").trim(),"0","failed apply rolls back column and RPC replacement");
+    assert.match(currentBaseCheck(TIER_POSTFLIGHT_SQL).stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT/u);
+    sql(buildApplySql(tierSource));
+    const verifyTier=()=>{const result=currentBaseCheck(TIER_POSTFLIGHT_SQL);assert.equal(result.status,0,result.stderr);assert.match(result.stderr,/CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=VERIFIED/u);};
+    verifyTier();
+    sql("alter table public.chat_character_fans alter column customer_tier set default 'green';");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans alter column customer_tier set default 'red';");verifyTier();
+    sql("alter table public.chat_character_fans rename constraint chat_character_fans_customer_tier_check to unreviewed_tier_check;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans rename constraint unreviewed_tier_check to chat_character_fans_customer_tier_check;");verifyTier();
+    sql("alter table public.chat_character_fans add column unreviewed_fan_extension text;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans drop column unreviewed_fan_extension;");verifyTier();
+    sql("alter table public.chat_character_fans drop constraint chat_character_fans_customer_tier_check;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0);sql("alter table public.chat_character_fans add constraint chat_character_fans_customer_tier_check check(customer_tier in ('red','blue','yellow','green'));");verifyTier();
+    sql("create or replace function public.create_chat_admin_fan(target_workspace_id uuid,target_character_id uuid,target_creation_id uuid,fan_data jsonb) returns setof public.chat_character_fans language plpgsql security definer set search_path='' as $$begin return; end$$;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0,"tier column with a different RPC is PARTIAL");sql("begin;\n"+tierSource.slice(tierSource.indexOf("create or replace function")));verifyTier();
+    sql("alter table public.chat_character_fans disable row level security;");
+    assert.notEqual(currentBaseCheck(TIER_POSTFLIGHT_SQL).status,0,"tier composition retains all original RLS checks");sql("alter table public.chat_character_fans enable row level security;");verifyTier();
+
+    const sentinelCharacter="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const sentinelFan="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+    const sentinelCreation="cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+    sql(`insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values
+      ('${sentinelCharacter}','${ids[1]}','${ids[4]}','Unrelated sentinel',30,'foreign preserved row','','','','','','');
+      insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,status,summary,notes,creation_id)
+      values('${sentinelFan}','${ids[1]}','${sentinelCharacter}','Unrelated fan','OnlyFans','active','','foreign preserved row','${sentinelCreation}');`);
+
+    sql(`update public.workspaces set test_access_flags='{}' where id='${ids[0]}';`);
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)));
+    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    sql(`update public.workspaces set test_access_flags='{"staging_synthetic_fixture":true}' where id='${ids[0]}';`);
+    sql(`update auth.users set email='ordinary-staging@example.invalid' where id='${ids[5]}';`);
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"an existing ordinary user cannot stand in for the protected admin identity");
+    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    sql(`update auth.users set email='admin-staging@example.invalid',email_confirmed_at=null where id='${ids[5]}';`);
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"unconfirmed admin identity must fail before mutation");
+    assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"0");
+    sql(`update auth.users set email_confirmed_at=now() where id='${ids[5]}';`);
+
+    assert.match(sql(buildManualFlowSql("prepare",env,receipt)),/CHAT_ADMIN_MANUAL_PREPARE=PASS/u);
+    const foreignCharacter=receipt.dataIds.FOREIGN_CHARACTER_ID;
+    assert.equal(sql(`select count(*) from public.chat_characters where id='${foreignCharacter}' and workspace_id='${ids[1]}' and created_by_user_id='${ids[4]}' and bio='FanMind synthetic manual acceptance ${receipt.marker}' and created_at='${receipt.startedAt}'::timestamptz;`).trim(),"1","foreign denial must target an existing, exactly bound Character");
+    assert.equal(sql(`select count(*) from public.workspace_chat_admin_capabilities where workspace_id='${ids[1]}';`).trim(),"0","foreign fixture must not add another capability");
+    assert.throws(()=>sql(buildManualFlowSql("prepare",env,receipt)),"existing capability must never be overwritten");
+    assert.throws(()=>sql(buildManualFlowSql("cleanup",env,{...receipt,startedAt:"2026-09-26T10:00:01.000Z"})),"wrong receipt must not delete rows");
+    for(const [column,wrong,original] of [["workspace_id",ids[0],ids[1]],["created_by_user_id",ids[2],ids[4]]]) {
+      sql(`update public.chat_characters set ${column}='${wrong}' where id='${foreignCharacter}';`);
+      assert.throws(()=>sql(buildManualFlowSql("cleanup",env,receipt)),`foreign ${column} drift must prevent every cleanup delete`);
+      assert.equal(sql("select count(*) from public.workspace_chat_admin_capabilities;").trim(),"1");
+      sql(`update public.chat_characters set ${column}='${original}' where id='${foreignCharacter}';`);
+    }
+
+    const offersA={positioning:"A",offers:[
+      {id:"photo",name:"Foto",category:"photo",description:"",currency:"EUR",minimumPriceMinor:1000,recommendedPriceMinor:1000,maximumPriceMinor:1000,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"video",name:"Video",category:"video",description:"",currency:"EUR",minimumPriceMinor:2000,recommendedPriceMinor:2000,maximumPriceMinor:2000,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:2500,recommendedPriceMinor:2500,maximumPriceMinor:2500,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"private_video",name:"Privates Video",category:"private_video",description:"",currency:"EUR",minimumPriceMinor:4000,recommendedPriceMinor:4000,maximumPriceMinor:4000,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+    ],minimumHoursBetweenOffers:48,aftercareHours:48,contentBoundaries:[],confirmationRequired:[],noGos:[]};
+    const offersB={...offersA,positioning:"B",offers:[
+      {id:"photo",name:"Foto",category:"photo",description:"",currency:"EUR",minimumPriceMinor:5100,recommendedPriceMinor:5100,maximumPriceMinor:5100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"video",name:"Video",category:"video",description:"",currency:"EUR",minimumPriceMinor:6100,recommendedPriceMinor:6100,maximumPriceMinor:6100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+      {id:"private_photo",name:"Privates Foto",category:"private_photo",description:"",currency:"EUR",minimumPriceMinor:7100,recommendedPriceMinor:7100,maximumPriceMinor:7100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:false,requiresConfirmation:false},
+      {id:"private_video",name:"Privates Video",category:"private_video",description:"",currency:"EUR",minimumPriceMinor:9100,recommendedPriceMinor:9100,maximumPriceMinor:9100,maximumDiscountPercent:0,delivery:"",exclusivity:"",active:true,requiresConfirmation:false},
+    ]};
+    sql(`update public.chat_characters set sales_playbook='${JSON.stringify(offersA)}'::jsonb,revision=2 where id='${ids[6]}';
+      update public.chat_characters set sales_playbook='${JSON.stringify(offersB)}'::jsonb,revision=2 where id='${ids[7]}';`);
+
+    const fanA=receipt.dataIds.FAN_A_ID, fanB=receipt.dataIds.FAN_B_ID;
+    sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      update public.chat_character_fans set customer_tier='blue',revision=2 where id='${fanA}';
+      update public.chat_character_fans set customer_tier='green',revision=2 where id='${fanB}'; commit;`);
+    assert.throws(()=>sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true); update public.chat_character_fans set customer_tier='unknown' where id='${fanA}'; commit;`));
+    assert.equal(sql(`select customer_tier from public.chat_character_fans where id='${fanA}';`).trim(),'blue');
+    const batches=[
+      [ids[6],fanA,ids[8],"10101010-1010-4010-8010-101010101010","Foto fuer 10 EUR",["Foto A kostet 10 EUR","Gern das Foto fuer 10 EUR","Ich kann dir das Foto fuer 10 EUR senden"]],
+      [ids[6],fanA,ids[8],"20202020-2020-4020-8020-202020202020","Privates Foto fuer 25 EUR",["Privates Foto A kostet 25 EUR","Das private Foto gibt es fuer 25 EUR","Gern fuer 25 EUR"]],
+      [ids[6],fanA,ids[8],"30303030-3030-4030-8030-303030303030","Privates Foto mit erfundenem Preis 999 EUR",["Das private Foto kostet 25 EUR","Gern das private Foto fuer 25 EUR","Ich biete das private Foto fuer 25 EUR an"]],
+      [ids[6],fanA,ids[8],"40404040-4040-4040-8040-404040404040","Character B Video fuer 61 EUR",["Mein Video kostet 20 EUR","Gern mein Video fuer 20 EUR","Ich biete mein Video fuer 20 EUR an"]],
+      [ids[7],fanB,ids[9],"50505050-5050-4050-8050-505050505050","Video fuer 61 EUR",["Video B kostet 61 EUR","Gern das Video fuer 61 EUR","Ich sende das Video fuer 61 EUR"]],
+      [ids[7],fanB,ids[9],"60606060-6060-4060-8060-606060606060","Privates Video fuer 91 EUR",["Privates Video B kostet 91 EUR","Das private Video gibt es fuer 91 EUR","Gern fuer 91 EUR"]],
+      [ids[6],fanA,ids[8],"81818181-8181-4181-8181-818181818181","Nettes Foto",["Danke dir","Freut mich","Lieb von dir"]],
+      [ids[6],fanA,ids[8],"82828282-8282-4282-8282-828282828282","Meine Lieblingsfarbe?",["Türkis","Du magst türkis","Deine Farbe ist türkis"]],
+      [ids[7],fanB,ids[9],"83838383-8383-4383-8383-838383838383","Meine Lieblingsfarbe?",["Orange","Du magst orange","Deine Farbe ist orange"]],
+      [ids[7],fanB,ids[9],"70707070-7070-4070-8070-707070707070","Deaktiviertes privates Foto fuer 71 EUR",["Dazu ist kein aktives Angebot gespeichert","Dieses Angebot ist nicht verfügbar","Ich kann dazu nichts anbieten"]],
+    ];
+    for(const [character,fan,conversation,generation,inbound,suggestions] of batches) {
+      sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
+        select public.persist_chat_admin_generation('${ids[0]}','${character}','${fan}','${conversation}',2,2,'${generation}',
+          coalesce((select array_agg(id order by sequence) from (select id,sequence from public.chat_character_messages where workspace_id='${ids[0]}' and character_id='${character}' and fan_id='${fan}' and conversation_id='${conversation}' order by sequence desc limit 20) recent),'{}'::uuid[]),
+          '${inbound}',array[${suggestions.map((value)=>`'${value}'`).join(",")}]); commit;`);
+    }
+    sql(`begin; set local role authenticated; select set_config('request.jwt.claim.sub','${ids[2]}',true);
+      select * from public.persist_chat_admin_confirmed_reply('${ids[0]}','${ids[6]}','${fanA}','${ids[8]}',2,2,'80808080-8080-4080-8080-808080808080','Foto A kostet 10 EUR'); commit;
+      `);
+    const eventId=(prefix,index)=>`${(prefix+index).toString(16)}-1111-4111-8111-111111111111`;
+    const insertAttempt=attempt=>`insert into public.ai_usage_events(id,workspace_id,user_id,feature,source_route,status,created_at) values('${attempt.id}','${ids[0]}','${ids[2]}','chat_admin_reply','/api/chatadmin/reply-suggestions','${attempt.status}','${receipt.startedAt}'::timestamptz+interval '1 second');`;
+    // Exact per-attempt proofs: a clean provider result must not require two
+    // invented failures; real quality rewrites still require their own rows.
+    for(const errors of [0,2,10]){
+      sql('delete from public.ai_usage_events;');
+      receipt.usageWitness=batches.map((batch,index)=>({generationId:batch[3],attempts:[
+        ...(index<errors?[{id:eventId(0xcb000000,index),status:'error'}]:[]),
+        {id:eventId(0xcc000000,index),status:'ok'},
+      ]}));
+      sql(receipt.usageWitness.flatMap(row=>row.attempts).map(insertAttempt).join('\n'));
+      assert.match(sql(buildManualFlowSql('verify',env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
+    }
+    const missing=receipt.usageWitness[0].attempts.at(-1);
+    const extra={id:'cd000000-1111-4111-8111-111111111111',status:'ok'};
+    sql(`delete from public.ai_usage_events where id='${missing.id}';`+insertAttempt(extra));
+    // All six totals still match: an unrelated replacement cannot conceal a
+    // missing witnessed event, even when it has the same scope and status.
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_usage_witness_mismatch/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`+insertAttempt(missing));
+    sql(`update public.ai_usage_events set status='error' where id='${missing.id}';`);
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_effect_missing/u);
+    sql(`update public.ai_usage_events set status='ok' where id='${missing.id}';`);
+    sql(`update public.ai_usage_events set workspace_id='${ids[1]}' where id='${missing.id}';`);
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)));
+    sql(`update public.ai_usage_events set workspace_id='${ids[0]}' where id='${missing.id}';`);
+    sql(insertAttempt(extra));
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_effect_missing/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`);
+    sql(insertAttempt({...extra,status:'skipped'}));
+    assert.throws(()=>sql(buildManualFlowSql('verify',env,receipt)),/runtime_usage_witness_mismatch/u);
+    sql(`delete from public.ai_usage_events where id='${extra.id}';`);
+    assert.match(sql(buildManualFlowSql('verify',env,receipt)),/CHAT_ADMIN_MANUAL_VERIFY=PASS/u);
+
+    const attachedFan="dddddddd-dddd-4ddd-8ddd-dddddddddddd",attachedCreation="eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+    sql(`insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,status,summary,notes,creation_id)
+      values('${attachedFan}','${ids[0]}','${ids[6]}','Foreign same-parent fan','OnlyFans','active','','not owned by receipt','${attachedCreation}');`);
+    assert.equal(sql(`select count(*) from public.chat_character_conversations where fan_id='${attachedFan}';`).trim(),"1","fan trigger must create a same-parent conversation");
+    for(let attempt=1;attempt<=2;attempt+=1){
+      assert.throws(()=>sql(buildManualFlowSql("cleanup",env,receipt)),`cleanup attempt ${attempt} must fail closed on a foreign same-parent child`);
+      assert.equal(sql(`select count(*) from public.chat_character_fans where id='${attachedFan}' and character_id='${ids[6]}';`).trim(),"1","failed cleanup must preserve the foreign fan");
+      assert.equal(sql(`select count(*) from public.chat_character_conversations where fan_id='${attachedFan}';`).trim(),"1","failed cleanup must preserve the trigger-created conversation");
+      assert.equal(sql(`select count(*) from public.chat_characters where id='${ids[6]}';`).trim(),"1","failed cleanup must preserve the reserved parent and all receipt rows");
+    }
+    sql(`delete from public.chat_character_fans where id='${attachedFan}';`);
+    sql(`insert into auth.sessions(user_id,created_at) values('${ids[2]}','2026-09-26T10:00:10Z');`);
+    assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup must commit even while session absence still fails");
+    assert.throws(()=>sql(buildManualFlowSql("absence",env,receipt)),"independent absence must reject a run-bound session");
+    sql(`delete from auth.sessions where user_id='${ids[2]}' and created_at>='${receipt.startedAt}'::timestamptz;`);
+    assert.match(sql(buildManualFlowSql("absence",env,receipt)),/CHAT_ADMIN_MANUAL_ABSENCE=PASS/u);
+    assert.match(sql(buildManualFlowSql("cleanup",env,receipt)),/CHAT_ADMIN_MANUAL_CLEANUP=PASS/u,"cleanup remains idempotent");
+    assert.equal(sql(`select count(*) from public.chat_characters where id='${sentinelCharacter}';`).trim(),"1","cleanup must preserve a foreign Character");
+    assert.equal(sql(`select count(*) from public.chat_character_fans where id='${sentinelFan}';`).trim(),"1","cleanup must preserve a foreign fan and its conversation");
+    assert.equal(sql("select count(*) from public.workspaces;").trim(),"2");
+    assert.equal(sql("select count(*) from auth.users;").trim(),"4");
+  } finally {sql(`drop database ${database} with (force);`,"postgres");}
+});

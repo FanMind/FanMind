@@ -1,0 +1,220 @@
+name: FanMind Mobile Native CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/mobile/app.json"
+      - "apps/mobile/app.config.js"
+      - "apps/mobile/eas.json"
+      - "apps/mobile/package.json"
+      - "apps/mobile/package-lock.json"
+      - "apps/mobile/plugins/**"
+      - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-build-prerequisite.mjs"
+      - "apps/mobile/scripts/check-android-fcm-config.mjs"
+      - "apps/mobile/scripts/check-native-prebuild.mjs"
+      - "apps/mobile/src/lib/mobilePushRegistration.ts"
+      - ".github/workflows/ci-mobile-native.yml"
+  push:
+    branches:
+      - "feat/mobile-**"
+      - "p0/**"
+    paths:
+      - "apps/mobile/app.json"
+      - "apps/mobile/app.config.js"
+      - "apps/mobile/eas.json"
+      - "apps/mobile/package.json"
+      - "apps/mobile/package-lock.json"
+      - "apps/mobile/plugins/**"
+      - "apps/mobile/assets/**"
+      - "apps/mobile/scripts/check-android-fcm-build-prerequisite.mjs"
+      - "apps/mobile/scripts/check-android-fcm-config.mjs"
+      - "apps/mobile/scripts/check-native-prebuild.mjs"
+      - "apps/mobile/src/lib/mobilePushRegistration.ts"
+      - ".github/workflows/ci-mobile-native.yml"
+
+concurrency:
+  group: fanmind-mobile-native-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  EXPO_PUBLIC_SUPABASE_URL: https://exampleproject.supabase.co
+  EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-public-anon-key-1234567890
+  EXPO_PUBLIC_FANMIND_API_URL: https://fanmind.ch
+  EXPO_NO_TELEMETRY: "1"
+
+jobs:
+  android-debug:
+    name: Android debug APK without release credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install mobile dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify Android FCM consent and config contract
+        run: npm run fcm:check
+
+      - name: Verify Android FCM secret-metadata preflight contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          GOOD_REPORT="$RUNNER_TEMP/fanmind-fcm-metadata-good.txt"
+          BAD_REPORT="$RUNNER_TEMP/fanmind-fcm-metadata-bad.txt"
+          trap 'rm -f "$GOOD_REPORT" "$BAD_REPORT"' EXIT
+          cat >"$GOOD_REPORT" <<'EOF'
+          Environment: preview
+          Variables for this project:
+          ID            test-id
+          Name          GOOGLE_SERVICES_JSON
+          Value         *****
+          Scope         PROJECT
+          Visibility    SECRET
+          Environments  preview
+          type          file
+          Created at    Sep 05 22:00:00
+          Updated at    Sep 05 22:00:00
+          EOF
+          node scripts/check-android-fcm-build-prerequisite.mjs "$GOOD_REPORT"
+          sed 's/Visibility    SECRET/Visibility    PLAINTEXT/' "$GOOD_REPORT" >"$BAD_REPORT"
+          if node scripts/check-android-fcm-build-prerequisite.mjs "$BAD_REPORT" >/dev/null 2>&1; then
+            echo "FCM metadata checker accepted a non-secret file variable" >&2
+            exit 1
+          fi
+
+      - name: Verify isolated Android and iOS native configuration
+        run: npm run native:prebuild:check
+
+      - name: Generate Android project
+        run: npx expo prebuild --clean --no-install --platform android
+
+      - name: Confirm prebuild leaves tracked configuration unchanged
+        run: git diff --exit-code
+
+      - name: Compile Android APK with the local debug key
+        id: android_compile
+        continue-on-error: true
+        shell: bash
+        working-directory: apps/mobile/android
+        run: |
+          set -o pipefail
+          ./gradlew :app:assembleDebug --no-daemon --stacktrace 2>&1 | tee ../android-native-build-report.txt
+
+      - name: Upload Android native build report
+        if: always() && steps.android_compile.outcome != 'skipped'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-android-debug-build-report
+          path: apps/mobile/android-native-build-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload Android debug APK
+        if: always() && steps.android_compile.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-android-debug-apk-not-for-release
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Enforce Android native compile result
+        if: always() && steps.android_compile.outcome != 'success'
+        run: exit 1
+
+  ios-simulator:
+    name: iOS Simulator app without code signing
+    runs-on: macos-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install mobile dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate iOS project
+        run: npx expo prebuild --clean --no-install --platform ios
+
+      - name: Confirm prebuild leaves tracked configuration unchanged
+        run: git diff --exit-code
+
+      - name: Install iOS pods
+        working-directory: apps/mobile/ios
+        run: pod install
+
+      - name: Compile code-signing-free iOS Simulator app
+        id: ios_compile
+        continue-on-error: true
+        shell: bash
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -workspace FanMind.xcworkspace \
+            -scheme FanMind \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath "$RUNNER_TEMP/fanmind-ios-derived" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build 2>&1 | tee ../ios-native-build-report.txt
+
+      - name: Upload iOS native build report
+        if: always() && steps.ios_compile.outcome != 'skipped'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-ios-simulator-build-report
+          path: apps/mobile/ios-native-build-report.txt
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload iOS Simulator app
+        if: always() && steps.ios_compile.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-mobile-ios-simulator-app-not-for-release
+          path: ${{ runner.temp }}/fanmind-ios-derived/Build/Products/Debug-iphonesimulator/FanMind.app
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Enforce iOS native compile result
+        if: always() && steps.ios_compile.outcome != 'success'
+        run: exit 1

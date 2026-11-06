@@ -1,0 +1,23 @@
+[Unit]
+Description=FanMind expired public demo cleanup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/usr/local/lib/fanmind-ops
+Environment=FANMIND_ENV_FILE=/var/www/fanmind/.env.production
+Environment=FANMIND_DEMO_CLEANUP_URL=https://fanmind.ch/api/demo/cleanup
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/run-demo-cleanup.mjs
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+LockPersonality=true
+RestrictSUIDSGID=true

@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-11-06",
+  "operator": {
+    "legalName": "Brigitte Erika Guggenberger",
+    "legalForm": "Einzelunternehmen",
+    "businessName": "FanMind",
+    "address": "Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich",
+    "tradeAuthority": "Bezirkshauptmannschaft Mödling",
+    "vatId": {
+      "status": "pending",
+      "value": null,
+      "confirmedAt": null,
+      "evidenceRef": null
+    },
+    "companyRegisterNumber": {
+      "status": "pending",
+      "value": null,
+      "confirmedAt": null,
+      "evidenceRef": null
+    },
+    "companyRegisterCourt": {
+      "status": "pending",
+      "value": null,
+      "confirmedAt": null,
+      "evidenceRef": null
+    },
+    "gisaNumber": {
+      "status": "pending",
+      "value": null,
+      "confirmedAt": null,
+      "evidenceRef": null
+    },
+    "taxMode": {
+      "status": "pending",
+      "value": "stripe_tax_net_prices_at_20_percent_austria",
+      "confirmedAt": null,
+      "evidenceRef": null
+    }
+  },
+  "approvals": {
+    "legalReview": {
+      "status": "pending",
+      "reviewedVersion": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "taxReview": {
+      "status": "pending",
+      "reviewedVersion": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "retentionDecision": {
+      "status": "pending",
+      "reviewedVersion": null,
+      "approvedAt": null,
+      "evidenceRef": null
+    },
+    "customerDpa": {
+      "status": "pending",
+      "reviewedVersion": "docs/legal/AVV_WORKING_DRAFT.md",
+      "approvedAt": null,
+      "evidenceRef": null
+    }
+  },
+  "providers": [
+    {
+      "id": "exoscale",
+      "serviceStatus": "production",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "applicable from 2025-05-05",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    },
+    {
+      "id": "supabase",
+      "serviceStatus": "production",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "current dashboard PandaDoc version",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    },
+    {
+      "id": "openai",
+      "serviceStatus": "production",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "effective 2026-01-01",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    },
+    {
+      "id": "stripe",
+      "serviceStatus": "prepared",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "updated 2025-11-18",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    },
+    {
+      "id": "meta",
+      "serviceStatus": "conditional",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "current Meta Business Tools terms",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    },
+    {
+      "id": "resend",
+      "serviceStatus": "conditional",
+      "dpa": {
+        "status": "pending",
+        "documentVersion": "updated 2025-12-31",
+        "acceptedAt": null,
+        "evidenceRef": null
+      },
+      "dataLocation": {
+        "status": "pending",
+        "value": null,
+        "confirmedAt": null,
+        "evidenceRef": null
+      },
+      "transferAssessment": {
+        "status": "pending",
+        "reviewedVersion": null,
+        "approvedAt": null,
+        "evidenceRef": null
+      }
+    }
+  ]
+}

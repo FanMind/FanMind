@@ -1,0 +1,15 @@
+[Unit]
+Description=Enqueue FanMind backup job %i
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/fanmind-backup/worker.env
+WorkingDirectory=/usr/local/lib/fanmind-ops
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/enqueue-backup-job.mjs %i
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

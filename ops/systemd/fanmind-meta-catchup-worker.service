@@ -1,0 +1,24 @@
+[Unit]
+Description=FanMind durable Meta conversation catch-up worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/fanmind-meta-catchup/worker.env
+WorkingDirectory=/usr/local/lib/fanmind-ops
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/meta-catchup-worker.mjs
+Restart=on-failure
+RestartSec=15
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/usr/local/lib/fanmind-ops /etc/fanmind-meta-catchup
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

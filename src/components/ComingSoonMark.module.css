@@ -1,0 +1,21 @@
+.comingSoonMark {
+  display: inline-block;
+  height: auto;
+  max-width: 100%;
+  pointer-events: none;
+  user-select: none;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.28));
+}
+
+.small {
+  width: clamp(74px, 8vw, 104px);
+}
+
+.medium {
+  width: clamp(112px, 12vw, 152px);
+}
+
+.overlay {
+  width: clamp(128px, 14vw, 184px);
+}

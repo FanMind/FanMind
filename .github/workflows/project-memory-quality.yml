@@ -1,0 +1,42 @@
+name: Project Memory Quality
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '27 5 * * *'
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  project-memory-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate V7 controls
+        run: python3 scripts/project_memory_quality_check.py
+      - name: Validate FanMind sales readiness state
+        run: python3 scripts/fanmind_sales_readiness.py
+      - name: Scan FanMind canonical truth drift
+        run: python3 scripts/fanmind_truth_drift_check.py
+      - name: Validate Builder Manager safe-ready contract
+        run: python3 scripts/fanmind_next_best_action.py --manager-check
+      - name: Select FanMind next best action
+        run: python3 scripts/fanmind_next_best_action.py --check
+      - name: Validate evidence freshness
+        run: python3 scripts/fanmind_evidence_freshness.py
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Run accepted-state drift preflight
+        run: python3 scripts/fanmind_drift_preflight.py
+      - name: Validate milestone snapshots
+        run: python3 scripts/fanmind_milestone_snapshot_check.py
+      - name: Validate cross-chat, impact and automatic handoff controls
+        run: python3 scripts/fanmind_memory_v8.py --check
+      - name: Validate legacy issue reconciliation
+        run: python3 scripts/fanmind_legacy_issue_reconciliation.py --check
+      - name: Test legacy issue reconciliation fail-closed paths
+        run: node --test tests/legacy-issue-reconciliation.test.mjs

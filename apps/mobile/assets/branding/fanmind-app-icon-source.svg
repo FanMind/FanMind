@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="background" x1="150" y1="80" x2="880" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#02040a"/>
+      <stop offset="0.52" stop-color="#050816"/>
+      <stop offset="1" stop-color="#0b1024"/>
+    </linearGradient>
+    <radialGradient id="cyan-glow" cx="0" cy="0" r="1" gradientTransform="translate(328 238) rotate(46) scale(560)">
+      <stop stop-color="#0ea5e9" stop-opacity=".28"/>
+      <stop offset=".62" stop-color="#0ea5e9" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#0ea5e9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mind" x1="470" y1="310" x2="830" y2="710" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#20d5ff"/>
+      <stop offset=".52" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <filter id="ring-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="mark-glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="12" flood-color="#38bdf8" flood-opacity=".48"/>
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#000814" flood-opacity=".55"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#background)"/>
+  <rect width="1024" height="1024" fill="url(#cyan-glow)"/>
+  <circle cx="512" cy="512" r="428" fill="none" stroke="#06142c" stroke-width="48"/>
+  <circle cx="512" cy="512" r="425" fill="none" stroke="#f8fdff" stroke-opacity=".92" stroke-width="13"/>
+  <circle cx="512" cy="512" r="401" fill="none" stroke="#38bdf8" stroke-width="12" filter="url(#ring-glow)"/>
+  <g transform="translate(178 292) scale(3.63)" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#mark-glow)">
+    <path d="M24 102V18H80M24 58H72" stroke="#f8fdff" stroke-width="20"/>
+    <path d="M94 102V18L129 62L164 18V102" stroke="url(#mind)" stroke-width="19"/>
+  </g>
+</svg>

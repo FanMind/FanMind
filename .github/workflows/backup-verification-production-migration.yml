@@ -1,0 +1,123 @@
+name: FanMind Backup Verification Production Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Verify or apply the pinned backup verification migration"
+        required: true
+        default: verify
+        type: choice
+        options:
+          - verify
+          - apply
+      confirmation:
+        description: "Type backup-verification-production-verify or backup-verification-production-apply"
+        required: true
+        type: string
+      expected_commit:
+        description: "Exact 40-character main commit expected on Production"
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-backup-verification-production-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Verify or apply the pinned Production backup verification schema
+    if: >-
+      ${{
+        github.ref == 'refs/heads/main' &&
+        (
+          (inputs.action == 'verify' && inputs.confirmation == 'backup-verification-production-verify') ||
+          (inputs.action == 'apply' && inputs.confirmation == 'backup-verification-production-apply')
+        )
+      }}
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 15
+    env:
+      EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+      REVIEWED_COMMIT: ${{ github.sha }}
+      MIGRATION_ACTION: ${{ inputs.action }}
+
+    steps:
+      - name: Verify installed Production runtime before the schema action
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$EXPECTED_COMMIT" == "$REVIEWED_COMMIT" ]]
+
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-backup-verification-preflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"
+
+      - name: Run the installed checksum-pinned schema action
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$MIGRATION_ACTION" in
+            verify|apply) ;;
+            *)
+              echo "BACKUP_VERIFICATION_MIGRATION_RESULT=action_invalid" >&2
+              exit 1
+              ;;
+          esac
+
+          MIGRATION_LOG="$(mktemp "$RUNNER_TEMP/fanmind-backup-verification-migration.XXXXXX")"
+          NOT_BEFORE="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+          UNIT="fanmind-backup-verification-migration@${MIGRATION_ACTION}.service"
+          trap 'rm -f "$MIGRATION_LOG"' EXIT
+
+          sudo -n systemctl daemon-reload
+          sudo -n systemctl reset-failed "$UNIT" >/dev/null 2>&1 || true
+
+          set +e
+          sudo -n systemctl start "$UNIT" >/dev/null 2>&1
+          start_status="$?"
+          set -e
+
+          service_result="$(sudo -n systemctl show "$UNIT" --property=Result --value --no-pager)"
+          exec_status="$(sudo -n systemctl show "$UNIT" --property=ExecMainStatus --value --no-pager)"
+          sudo -n journalctl \
+            -u "$UNIT" \
+            --since "$NOT_BEFORE" \
+            --no-pager \
+            -o cat > "$MIGRATION_LOG"
+
+          set +e
+          node /usr/local/lib/fanmind-audit/verify-backup-verification-migration-log.mjs \
+            "$MIGRATION_LOG" \
+            "$NOT_BEFORE" \
+            "$MIGRATION_ACTION"
+          diagnostic_status="$?"
+          set -e
+
+          if [[ "$diagnostic_status" -ne 0 ]]; then
+            echo "BACKUP_VERIFICATION_MIGRATION_DIAGNOSIS=unavailable"
+          fi
+          if [[ "$start_status" -ne 0 || "$service_result" != "success" || "$exec_status" != "0" || "$diagnostic_status" -ne 0 ]]; then
+            exit 1
+          fi
+
+      - name: Verify installed Production runtime after the schema action
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUDIT_OUTPUT="$(mktemp "$RUNNER_TEMP/fanmind-backup-verification-postflight.XXXXXX")"
+          trap 'rm -f "$AUDIT_OUTPUT"' EXIT
+          FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
+            /usr/local/lib/fanmind-audit/read-only-production-audit.sh > "$AUDIT_OUTPUT"
+          node /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
+            "$AUDIT_OUTPUT" \
+            "$EXPECTED_COMMIT"

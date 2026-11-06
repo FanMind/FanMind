@@ -1,0 +1,150 @@
+Owner clarification 2026-10-17 / FM-DEC-031: all actions depending on complete
+company details including ATU/UID or required external registrations remain
+DEFERRED_BY_OWNER. This covers Mobile/Store approvals, Stripe/Billing activation,
+external Social-app registration and tax/company verification. Preserve existing
+tasks/artifacts and unfinished gates. Pure repository Creator/ChatAdmin completion
+may continue with synthetic tests; no live/provider/deployment/migration/merge
+permission follows. Existing action identities and resume approvals remain intact.
+
+## FM-CREATOR-DEFER-CHATADMIN-GODMODE-20260921 — Creator Feature-Arbeit nach ChatAdmin VERIFY/God Mode fortsetzen
+- Status: RESOLVED
+- Task: FM-CREATOR-001
+- Resolution: protected ChatAdmin VERIFY run `35652258052` was reconciled as `ABSENT`, and God Mode v1 PR #1157 merged cleanly as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`.
+- Resume rule: bounded Creator work may resume under existing authorization/evidence. Do not rebuild accepted Creator source or Staging foundations.
+
+# Deferred Owner Actions
+
+## FM-MOB-OWNER-CREATOR-SOCIAL-20260910 — Mobile after company registration
+- Related task: FM-MOB-001.
+- Status: DEFERRED_BY_OWNER.
+- Decision: superseded timing on 2026-09-19 by FM-DEC-021. Bernd explicitly defers every remaining Mobile/Handy step until after company registration. Retain all existing builds, closed-Alpha evidence and open device/push/cohort/store gaps; do not start a new build, device acceptance, Push completion, Play cohort, Store action or TestFlight during this interval.
+- Resume when: company registration is complete and the owner explicitly resumes Mobile.
+
+## FM-BILL-OWNER-TAX-20260910 — paid activation pause
+- Related task: FM-BILL-003.
+- Status: DEFERRED_BY_OWNER.
+- Decision: keep activation paused until actual tax/UID facts exist. The final PR #1098 receipt confirms this owner instruction and completed code publication; do not ask again during the pause.
+- Resume when: genuine tax facts are supplied and the owner resumes the existing controlled activation work.
+
+Updated: 2026-09-07 Europe/Vienna
+
+## FM-RST-OWNER-001 — GitHub runner-group policy evidence
+- Related task: `FM-RST-001`.
+- Status: COMPLETED.
+- Result: protected read-only run `32582640853` revalidated the exact selected repository/workflow policy and host/toolchain boundary, then advanced through `RESOURCE_READY` and `TARGET_COMPATIBLE` without writes.
+- Evidence: all three jobs succeeded on exact `b75f68ecc7999a9b492051aecc2421b9b597dd18`; Host-2 runner ID `42` cleaned credentials/configuration, exited 0 and was removed.
+- Revalidation rule: mutable runner policy/host evidence must be checked again immediately before any later R4 write.
+
+## FM-RST-OWNER-002 — Exact isolated database-Restore authorization
+- Related task: `FM-RST-001`.
+- Status: CONSUMED_FAIL_CLOSED.
+- Decision: The exact one-run authorization was consumed by `restore-drill-database.yml` run `32594374666` on reviewed `main` `8bc8855a6de928cf38ef2e8fb9e9e0860fc477db`.
+- Result: Gate and Host-1 passed. Host-2 job `97082992861` stopped at `database_authorization_preflight_failed` before the first target write because the empty target exposed only 2 of the 5 receipt-bound extensions. Independent read-only reconciliation proved the target remains empty, TLS is `verify-full`, quarantine is retained and runner/JIT/credential/plaintext residue is absent.
+- Resume rule: this authorization cannot be retried, rerun or reused. Any later database Restore requires a new exact authorization after the extension contract is independently satisfied.
+- Safety: no database Restore was applied; Production and Supabase Staging were not written.
+
+## FM-RST-OWNER-003 — Exact isolated extension-baseline provisioning
+- Related task: `FM-RST-001`.
+- Status: COMPLETED.
+- Decision: The exact extension-only authorization was consumed successfully on exact `main` `c627fc2d8956768091c88e3a3baaf0b882b8d2d6`.
+- Result: only `pg_stat_statements` 1.11, `supabase_vault` 0.3.1 and `uuid-ossp` 1.1 plus the proven member-owner correction were committed. The final read-only receipt checks returned the exact 97-record extension fingerprint `6704956613ca8e58a527336d67b622a043e48a568858873ca5a6fa6b8bd08012` and canonical ACL fingerprint `abedaf76740b6a7fc1e53433a41337a2f8248d79abfac4ac22c9cf835a1373e3`.
+- Evidence: issue #944 comment `5385843508`; final controller `LOCAL_EXTENSION_BASELINE_CONTROLLER=PASS`.
+- Safety: no database Restore, target reset, JIT/workflow dispatch, Production write, Supabase-Staging write or unrelated R4 mutation occurred. This authorization is consumed and must not be reused.
+
+## FM-RST-OWNER-004 — Exact isolated database-Restore authorization after extension closeout
+- Related task: `FM-RST-001`.
+- Status: CONSUMED_PRE_DISPATCH_FAIL_CLOSED.
+- Decision: owner authorization comment `5385992305` and controller SHA-256 `45054c41...` were attempted on 2026-08-26, but the controller stopped at its first SSH connection before remote preflight/JIT/approval/dispatch/database access.
+- Result: no Restore workflow or database mutation occurred; highest accepted state remains `TARGET_COMPATIBLE` with side state `RECONCILIATION_REQUIRED`.
+- Resume rule: never reuse this controller or authorization and never automatically retry.
+- Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
+
+## FM-RST-OWNER-005 — Restore-host SSH reachability evidence
+- Related task: `FM-RST-001`.
+- Status: SUPERSEDED.
+- Superseded by: later authorization/execution evidence in issue #944 comments `5453497602`, `5453599115`, `5453727223` and `5453857592` proved the isolated database Restore committed and its bounded ACL completion passed. SSH reachability is no longer a prerequisite for the completed database phase.
+- Safety: do not revive this action to repeat the Restore or change an Exoscale allowlist. Any genuinely later infrastructure mutation requires a new, separately reviewed scope.
+
+## FM-RST-OWNER-006 — New exact isolated database-Restore authorization after SSH reconciliation
+- Related task: `FM-RST-001`.
+- Status: SUPERSEDED.
+- Superseded by: consumed authorization `5453497602`, committed Restore workflow `33178878764` / job `98874745740`, and bounded ACL completion authorization `5453727223`. The database phase is complete and non-repeatable.
+- Resume rule: continue only with receipt/read-only reconciliation for `DB_POSTCHECKED`; never create a JIT or dispatch a new database Restore from this retired action.
+- Safety: Production, Supabase Staging, target reset and every unrelated R4 mutation remain forbidden.
+
+## FM-RST-OWNER-007 — Real isolated Supabase Storage target
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+
+- Related task: `FM-RST-001`.
+- Status: OWNER_ACTION_REQUIRED.
+- Decision: on 2026-09-07 the owner selected `Nur lokal testen` after comparing a permanent project at 10 EUR/month with an isolated Preview branch at 0.01344 EUR/hour.
+- Current result: only the repository controller and synthetic local API contract may proceed. No additional Supabase project/branch may be created and neither FanMind Production nor FanMind Staging may be used as the Restore target.
+- Resume rule: a real `DB_POSTCHECKED -> STORAGE_RESTORED` transition needs a new action-time decision for a distinct disposable Supabase target plus exact current commit/artifact/project/bucket/cleanup bindings.
+
+## FM-SEC-OWNER-001 — Exact protected Production trigger-function hardening Apply
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+- Related task: `FM-SEC-001`.
+- Status: RESOLVED.
+- Proven pre-state: protected read-only run `32997946812`, job `98271985321`, on exact deployed `main` `5cb9c193e262f8939b5fc0c700fce154dde616e6` returned `hardening_not_ready`; both full Production audits passed and the fresh advisor set remained unchanged.
+- Deferred action: separately authorize exactly one protected `apply` through `trigger-function-hardening-production-control.yml`, bound to the then-current reviewed and deployed commit, checksum-pinned controlled SQL, full preflight/postflight and fresh advisor re-scan.
+- Safety: this read-only session does not authorize Apply. No unrelated SQL, Auth, RLS, provider, Restore or Supabase-Staging mutation may be bundled into the action.
+
+- Completion 2026-09-10: current owner release/security authorization FM-AUTH-THREE-OFFERS-PUBLISH-20260910; Production Apply 34496892707 / job 102937525772 returned applied; independent Verify 34497099991 / job 102938240926 returned verified. Full before/after Production audits passed on 9a6e9d016cb0928e58b89c6c2d5b6183379c50ed. Supabase advisors at 2026-09-10T15:38:41Z independently show no mutable-search-path or browser EXECUTE warning for these trigger functions. Earlier deferred-apply instructions are historical. Do not repeat the successful Apply.
+
+## FM-SEC-OWNER-002 — Leaked-password protection and Staging RPC exception decision
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+- Related task: `FM-SEC-001`.
+- Status: OWNER_ACTION_REQUIRED.
+- Current classification: leaked-password protection is disabled on both exact Supabase targets and is a real Auth-control gap. Staging `ensure_current_user_workspace(...)` is technically constrained and intentionally authenticated-callable, but explicit exception acceptance is still missing.
+- Deferred action: decide and separately authorize the exact provider setting change for leaked-password protection on each target; explicitly accept or reject the documented Staging RPC exception after reviewing the evidence. Keep these actions separate from trigger hardening and Restore.
+- Safety: no automatic Auth-setting change, RPC revoke/grant or invented browser RLS policy.
+- Current additional RPC: get_current_workspace_member_safe_dashboard() is authenticated-only, has pinned search_path and row_security=on, and returns only five safe membership fields. Full schema rollout verify passed; current body MD5 9b7e87c856d33d3ab3b97e2941faa519 matches the canonical SQL. Both RPC exceptions remain decision-required; no blind revoke.
+
+- Completion 2026-09-10 supersedes the old Auth-setting gap/permission request: Production drqkpdvtbbrrdwmtrodz and isolated FanMind Staging vshyhvgcmrlagvfnvomc: Prevent use of leaked passwords enabled through the authenticated provider UI. Saved and reopened switches are checked; independent advisors at 16:11:50Z (Production) and 16:19:32Z (Staging), 2026-09-10, no longer report auth_leaked_password_protection. Production retains only 14 service-only RLS INFO findings; Staging retains 29 INFO findings and two intentional-RPC warnings pending bounded exception review. Only bounded Staging RPC exception review remains under this action. Do not request another password-protection activation.
+
+## FM-MOB-OWNER-001 — Protected Mobile preview resource configuration
+- Related task: `FM-MOB-001`.
+- Status: RESOLVED.
+- Prior blocker: exact read-only run `33000433320`, job `98280538304`, failed closed when the protected Preview binding was still blank.
+- Resolution evidence: protected exact-merge run `33298699290`, job `99222705186`, verified the existing EAS project and Preview public environment, then completed one authorized Android internal build for merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` with artifact verification, redacted receipt and cleanup. The owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime observation on that build. Submit, Update and Production remained disabled.
+- Remaining owner action: the complete receipt-bound 19-check Android runbook/private validator and the separate Supabase Auth redirect/recovery proof remain open under their existing external controls; iOS is Phase 8 and Store/push are separate. Never expose credential or artifact values in Project Memory.
+- Safety: successful Preview configuration does not authorize EAS project reinitialization, another automatic build, Submit, Update, Store action, Supabase/Auth/DB mutation or Production-target crossover.
+
+## FM-AI-OWNER-001 — AI product, quality and financial decision pack
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+- Related task: `FM-AI-001`.
+- Status: OWNER_ACTION_REQUIRED.
+- Proven foundation: FM-EV-022 currently verifies the synthetic Staging resource, Plus/Ultra and five-price Test catalog, exact 22-event Test webhook, installed empty AI ledger and 50/100/150 context policy. These are not activation evidence.
+- Deferred action: decide model classes/distinct fallbacks, request/token quotas, usage/overage, switching/proration/refund and cost/margin; provide four representative weeks of privacy-safe usage/cost evidence and the real blinded private quality result; obtain Legal/Tax acceptance separately.
+- Safety: no guessing, no private raw evaluation material or provider mapping in Git/issues, no environment flag or Plus/Ultra activation from the recommendation alone.
+
+## FM-AI-OWNER-002 — Remaining protected Staging provider/lifecycle evidence
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+- Related task: `FM-AI-001`.
+- Status: RECONCILIATION_REQUIRED.
+- Current bounded evidence: Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically. Historical canonical Billing rollback 34058118450 remains a passed September 6 run; later deploy 34273614070 invalidated its current-state use, not its recorded completion.
+- Required next evidence: reconcile the existing run authorization first. Then assess exact current release/target and evidence freshness before planning only the genuinely missing provider-side inbound webhook/current lifecycle, failed-payment, ordering/idempotency/conflict and canonical downstream Billing -> AI/referral evidence. Any new protected write requires its own exact authorization. Do not repeat SQL installation, catalog setup or a successful historical run merely to repair documentation. Product/private quality-cost, Legal/Tax and Production activation remain separate.
+- Safety: no automatic rerun of the invalidated AI-tier acceptance, no duplicate canonical Billing acceptance while its own evidence remains current, no live Stripe action, Production, automatic canonical projection enablement, unreviewed SQL or paid-tier activation.
+- Current reconciliation 2026-09-10: PR #1087 is merged as 7f681d26; Production release checks and Staging deploy 34273614070 passed. FM-FAIL-022 is resolved as a workflow-origin defect. Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically. Overall FM-AI-001 remains PARTIAL; prices stay complete.
+
+## FM-META-OWNER-001 — External Meta Events/App Review/legal acceptance
+- Resumed: 2026-09-08 by Bernd for completion; former deferral is lifted, but exact protected/target/cost/legal boundaries remain. See FM-EV-038 for current evidence.
+- Related task: `FM-META-001` / `FM-SOC3-001`.
+- Status: OWNER_ACTION_REQUIRED.
+- Proven foundation: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only technical path. FM-EV-023 counterchecks the 2026-08-26 exact-main repository no-PII/security boundary and observed isolated Staging content/continuation/catch-up objects/metadata without writes, activation or provider events; it does not independently prove the ledger-managed continuation timestamp, while the controlled queue is intentionally ledger-free. Mutable Staging freshness is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
+- Deferred action: in an owner-controlled normal browser and the correct Meta Business/Dataset, capture positive and negative Events Manager/Test Events evidence: no event before consent, exact PageView-only reception after consent/safe navigation, no unexpected conversions and no PII/Advanced Matching. Obtain final privacy/legal acceptance separately. Meta Business permissions/App Review and real Facebook/Instagram provider E2E remain part of the later Social gate.
+- Resume rule: do not rerun FM-EV-023 merely to close the technical reconciliation or repeat Production ENV/build/deploy. After its Staging freshness expires/invalidation or before any later Meta Staging database action, use a new lock and fresh shared rollout-state-first verification. Any real event emission, provider/account/OAuth/App Review action, credential use, SQL Apply, worker/runtime activation or Production change requires its own exact scope and current evidence.
+- Safety: no CompleteRegistration/Lead/Purchase, Advanced Matching, CAPI, customer data, CRM identifiers or secret values may be introduced through this action.
+
+## FM-GOV-OWNER-001 — Protect `main` with GitHub Ruleset / Branch Protection
+- Related area: FanMind governance / Project Memory V7 hardening.
+- Status: COMPLETED.
+- Updated: 2026-10-31.
+- Current remote fact: active ruleset `24945113` protects the default branch. It requires pull requests, conversation resolution and twelve strict status contexts; deletion and non-fast-forward updates are blocked.
+- Independent readback: enforcement is `active`, `current_user_can_bypass=never`, and no bypass actors are configured.
+- Completion boundary: this closes only the historical remote-protection activation action. It does not authorize weakening checks, direct pushes, repository-setting changes or any protected runtime action.
+- Canonical contract: `BRANCH_PROTECTION_CONTRACT.json`.
+
+
+## General rule
+When a FanMind finishline action requires owner-only UI access, external provider approval, payment authorization, legal/tax evidence or another capability unavailable to the assistant, record it here and continue with unrelated safe work. Do not repeatedly interrupt the owner with the same deferred request.

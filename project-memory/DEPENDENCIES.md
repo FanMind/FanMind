@@ -1,0 +1,221 @@
+## DEP-CREATOR-TARGET-TRANSITION-RUNTIME-20260927
+- Status: IN_PROGRESS; source correction dependency SATISFIED, protected diagnosis owner-gated.
+- Action/task: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME / FM-CREATOR-001
+- Accepted source dependency: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383` merged as exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`; prior PR #1207 reference/profile and PR #1209 transition source remain accepted/consumed.
+- Attempt-1 evidence: run `36321009852` deployed prior main, target state DRIFT, APPLY not requested, runtime skipped; no SQL/runtime/Production mutation. Receipt: `project-memory/receipts/creator-target-transition-runtime-36321009852-1.json`.
+- Current dependency: after this reconciliation merges, one owner-authenticated read-only diagnosis on the exact then-current `main` via `run-creator-target-drift-diagnosis <then-current-main-sha>`.
+- After diagnosis: Builder may implement/review only the proven differing-section remediation. A later transition/runtime execution requires a distinct fresh authorization and revalidated exact target prerequisites.
+- Runtime dependency remains: successful CURRENT_EXACT database postflight plus exact deployed release before any flag enable; authenticated synthetic `GET /api/creators` must prove enabled runtime with zero Creator rows.
+- Boundary: Staging diagnosis only at this step; no Production/provider/customer/Billing/Restore/Mobile mutation.
+
+## DEP-CREATOR-FOUNDATION-TRANSITION-GENERATOR-20260926
+- Status: ACCEPTED; exact bounded repository source continuation consumed.
+- Action: NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR
+- Task: FM-CREATOR-001
+- Depends on: ACCEPTED NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN / PR #1207, its immutable receipt/freshness evidence and the pinned auth.uid, Daily and Hosted profiles.
+- Completion contract: emit only the helper, two RPC bodies and four policy USING replacements; fail closed on every unsupported profile/pin/state; prove native rollback, negative isolation and unchanged data; publish a reproducible manifest through exact-head CI and independent review.
+- Boundary: repository source/tests only. No target/provider call, SQL APPLY, workflow dispatch, runtime activation or deployment acceptance. A later target-bound continuation requires a distinct protected action and current authorization.
+- Completion: PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`; all nine exact-head workflows, native PG17 job `108523066296`, independent review and review-thread closure passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`.
+- Remaining dependency: target observation/reference acceptance and any transition execution are not part of this accepted source dependency. They require a distinct protected action, current authorization and exact target binding. Creator aggregate remains IN_PROGRESS.
+
+## DEP-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN
+- Risk: R3
+- Status: ACCEPTED
+- Requires: creator_foundation_reconciliation_preflight=ACCEPTED and action NBA-CREATOR-FOUNDATION-STAGING-CATALOG completed through its RECONCILED state.
+- Completion: Repository-only source dependency satisfied by PR #1207 head `3cd67cedbcdc051be855d09de8d5ea3225179217`, merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`, exact-head green CI/native PG17 and independent review. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.
+- Remaining dependency: the repository-only `NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR` source package is already ACCEPTED/CONSUMED by PR #1209 and is not a remaining dependency. Only a later target observation/reference acceptance or transition execution remains distinct protected work requiring current authorization and exact target binding. Creator aggregate remains IN_PROGRESS; no target acceptance, APPLY or runtime activation is inferred.
+
+## DEP-CREATOR-FOUNDATION-STAGING-CATALOG-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-FOUNDATION-STAGING-CATALOG
+- Risk: R3
+- Status: RECONCILED
+- Requires: creator_foundation_reconciliation_preflight=ACCEPTED, immutable trusted CI references, independently reviewed provider-role profile, exact Staging/source/query binding.
+- Sequence: actual catalog INCOMPLETE recorded; the subsequent NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN source package is ACCEPTED/CONSUMED. No unchanged observation retry; any target continuation is a distinct protected action.
+- Rule: no learning-schema ABSENT/INSTALLED proof, target acceptance, write authorization or aggregate Creator acceptance follows from catalog equality.
+
+
+- Actual evidence: Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`.
+
+## DEP-CREATOR-CONFIRMED-CHAT-VERIFY-20260926
+- Task: FM-CREATOR-001
+- Action: NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY
+- Risk: R3
+- Status: RECONCILED
+- Observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof.
+- Sequence: source preflight accepted, catalog observation RECONCILED and NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN ACCEPTED/CONSUMED. Any target transition and fresh learning VERIFY remain separate protected scopes.
+
+## DEP-SOCIAL-CONNECT-FLOW-20260911
+- Task: FM-SOC7-001 / FM-CR-032
+- Engineering uses verified #1102 source and existing isolated Staging; no new database/server. The Social schema setup is complete (#1104 / 34591339718); full provider activation still depends on central FanMind apps, per-Creator consent, X budget and current external evidence under NBA-CREATOR-SOCIAL-EXTERNAL (Meta/Phase 3) and NBA-PHASE7-EXTERNAL (Phase 7).
+- The earlier database-backup blocker is closed by #1111 final receipt 5644711203 and the September 12 full audit. The acceptance rules and historical failure records remain unchanged. Controlled reboot and remaining Restore are separate.
+
+## TikTok / X resumed dependencies — FM-DEC-017
+- FM-SOC7-001 source may proceed now independently of Android under the owner's explicit instruction.
+- The controlled Social schema was installed on isolated Staging by 34591339718. A real pilot still depends on current exact-target, provider app/account/permission/budget and privacy evidence. Production remains structurally disabled.
+- Reuse FM-CREATOR-001 single-account writing style; do not create provider-specific style profiles. Its source/schema/JWT/revision/PDF foundation is accepted by 34629009649; actual deployed-flag/UI/delete/quality evidence remains separate.
+
+# FanMind Dependencies
+
+## FM-DEP-011
+- From: FM-CREATOR-001
+- Requires: existing isolated Staging and reviewed Creator model/authorization contract. FM-DEC-015 resumes development now before Android; sales_handoff is no longer a development prerequisite. One Creator per independent account/Workspace; target/provider acceptance remains separate.
+- Type: owner-confirmed post-handoff product sequencing
+- Status: ACTIVE
+- Updated: 2026-09-10
+- Rule: Phase 7b is not a prerequisite of sales_handoff or any required_for_sales gate. FM-DEC-015 permits the current Creator/Social engineering as parallel_safe before the unfinished sales handoff; its external and sales prerequisites remain separate. Further Phase 8 work follows accepted Phase 7b; existing disabled Website-AI preparation remains historical.
+
+Track ordering and prerequisites here. Do not mark dependent work accepted while a required prerequisite remains unresolved.
+
+## FM-DEP-001
+- From: FM-RST-001
+- Requires: reviewed restore workflows, protected `restore-drill` environment, exact Organization runner-group/workflow-allowlist/JIT policy, isolated existing PostgreSQL-17.11 target, TLS `verify-full`, exact accepted Schema-2 Full Backup/Receipt, current host gate/toolchain and the complete receipt-bound database authorization contract.
+- Type: internal + external control
+- Status: ACTIVE
+- Updated: 2026-09-07
+- Current evidence: issue #944 comments `5453599115`, `5453727223` and `5453857592` prove the isolated database phase; PR #1079 merged the exact `DB_POSTCHECKED` reconciliation. PR #1081 merged the private Storage archive/receipt preparation. The follow-on local controller proves target-empty, exact postwrite and rollback behavior against a synthetic API double; the owner declined an additional Supabase project/Preview branch, so no real artifact or provider was used.
+- Rule: `DB_POSTCHECKED` is accepted. Repository preparation does not equal `STORAGE_RESTORED`. A later upload requires a new exact R4 authorization, current non-Production environment boundary, distinct isolated Storage target, fail-closed target-empty/prewrite and postwrite equality checks, rollback/cleanup evidence and explicit Production/Supabase-Staging denial. Never repeat the database Restore or reuse a consumed controller/JIT.
+
+## FM-DEP-002
+- From: FM-MOB-001
+- Requires: exact Supabase redirect/recovery evidence, current EAS project/environments/token, existing Android signing credentials, signed Android build, real Android device acceptance and separate applicable Push/Store evidence for the current through-Phase-7 finishline.
+- Type: external platform + technical acceptance
+- Status: ACTIVE
+- Updated: 2026-08-30
+- Current evidence: Preview EAS project/environment/token binding is accepted and protected run `33298699290` / job `99222705186` produced the verified exact-merge FM-MOB-004 signed Android internal artifact for `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522`. The bounded FM-MOB-003/FM-MOB-004 UI/runtime observation is owner-accepted. PR #1028 merged as `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`; protected Production readiness run `33316105624` / job `99269748215` passed, Store-build run `33316172583` / job `99269924756` produced exactly one verified Production AAB with no Submit/Update, and the exact Production Supabase Recovery redirect was saved and re-read on 2026-08-30. FM-EV-030 provides the fail-closed private pending-template preparer; FM-EV-031 adds the dual-store graphics/metadata/support/review preparation without a build. On 2026-09-03 the same AAB was published in the closed Alpha track for Germany, Austria and Switzerland. The complete receipt-bound 19-check Android runbook/private validator, real screenshots, at least 12 opted-in testers for at least 14 days and the later Production-access request remain open.
+- Deferred boundary: Apple Developer/App Store Connect, signed iOS build, TestFlight and real iOS device acceptance were moved by owner decision FM-DEC-009 to Phase 8. They remain future external work and do not block FM-MOB-001/current sales finishline.
+- Rule: repository CI, signed-artifact success, one Production AAB and the bounded UI observation do not satisfy the complete Android runbook or Store acceptance. Preserve the existing AAB, install it from the Play test track, then run the complete private Android acceptance; do not automatically rebuild, submit, update or invent external identifiers. iPhone metadata preparation is allowed by FM-DEC-010, but no iOS build/signing/TestFlight/device work may start before Phase 8.
+
+## FM-DEP-003
+- Current reconciliation 2026-09-10: PR #1087 is merged as 7f681d26; Production release checks and Staging deploy 34273614070 passed. FM-FAIL-022 is resolved as a workflow-origin defect. Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically. Overall FM-AI-001 remains PARTIAL; prices stay complete.
+- From: FM-AI-001
+- Requires: tier-specific written model/fallback, request/token quota, usage/overage, switching/proration/refund and cost/margin decisions; private quality/cost evidence; separately authorized provider-side inbound webhook/current lifecycle and downstream AI/referral reconciliation through the installed AI and general Billing ledgers; Legal/Tax boundary; runtime integration and explicit Production activation. The 50/100/150 context policy, synthetic resource, Test prices, exact observed webhook configuration, AI ledger installation, general Billing ledger/capture-only foundation, exact isolated-Staging deploy `34058028839`, rollback-only canonical Billing acceptance `34058118450` / job `101553652111`, and merged FM-CR-009 Stripe code-conformance correction are historical evidence; current-state reuse requires the freshness register.
+- Type: product + financial + technical + external
+- Status: ACTIVE
+- Updated: 2026-10-04
+- Current runtime dependency: Capacity-v2 source uses recurring package Price IDs only. Retired one-time Pilot/Starter setup Price IDs are no longer general runtime inputs or Stripe readiness fields; retained Staging/migration evidence remains separate.
+- Rule: the bounded general Billing ledger/canonical Staging acceptance sub-gate is complete and must not be repeated merely to resume work. Plus/Ultra and canonical Production projection stay fail-closed until every remaining product/private/provider/Legal/Production prerequisite is current.
+
+- Required next evidence: reconcile the existing run authorization first. Then assess exact current release/target and evidence freshness before planning only the genuinely missing provider-side inbound webhook/current lifecycle, failed-payment, ordering/idempotency/conflict and canonical downstream Billing -> AI/referral evidence. Any new protected write requires its own exact authorization. Do not repeat SQL installation, catalog setup or a successful historical run merely to repair documentation. Product/private quality-cost, Legal/Tax and Production activation remain separate.
+
+## FM-DEP-004
+- From: FM-META-001
+- Requires: Meta Events Manager normal-browser evidence, Meta test/business assets, App Review/permissions for real integrations, provider-side no-PII/no-unexpected-conversion evidence, privacy/legal acceptance and final Security/Production smoke.
+- Type: provider + legal + technical
+- Status: ACTIVE
+- Updated: 2026-08-26
+- Current evidence: FM-EV-007 Production-confirms the consent-gated parameterless PageView-only path. FM-EV-023 read-only counterchecks the 2026-08-26 exact-main Meta Staging content, continuation and catch-up foundation without writes or activation; its mutable Staging observation is tracked by `EV-META-STAGING-FOUNDATION-20260826`.
+- Rule: the technical Pixel path and observed Staging metadata are proven foundations, not external Meta Events Manager/App Review/legal acceptance. Do not repeat Production activation or the FM-EV-023 runs as a substitute for external evidence. After freshness expiry/invalidation or before another Meta Staging database action, use a new lock and fresh shared rollout-state-first verification.
+
+## FM-DEP-005
+- From: FM-SOC3-001
+- Requires: FM-DEC-015 allows selected Social development now. Real activation still needs Facebook/Instagram/WhatsApp credentials, permissions, test assets and legal boundaries; earlier accepted non-Social gates are not rewritten.
+- Type: finishline ordering + provider
+- Status: ACTIVE
+- Updated: 2026-08-19
+- Rule: reuse existing Meta/WhatsApp foundations. FM-DEC-015 overrides the earlier development-after-Mobile sequence; genuine external activation gates remain.
+
+## FM-DEP-006
+- From: FM-SOC7-001
+- Requires: prior non-Social/Phase-3 finishline, current official platform capability, X cost/API approval where needed, Discord official bot/guild model, OnlyFans official/contractual feasibility.
+- Type: finishline ordering + provider + possible financial/legal
+- Status: ACTIVE
+- Updated: 2026-08-19
+- Rule: no scraping, self-bot, reverse engineering or unofficial bypass.
+
+## FM-DEP-007
+- From: FM-SALES-001
+- Requires: FM-SOC3-001 and FM-SOC7-001 accepted as required by #874, exact-release 5-minute Production demo, synchronized sales material/roadmap/product truth.
+- Type: milestone
+- Status: BLOCKED
+- Updated: 2026-08-19
+- Rule: Phase 4 completion and existing sales docs are not equivalent to technical sales handoff.
+
+## FM-DEP-008
+- From: FM-LEGAL-001
+- Requires: genuine advisor/register/provider/customer evidence.
+- Type: external
+- Status: BLOCKED
+- Updated: 2026-08-19
+- Rule: do not guess UID/register/tax/legal/AVV/provider facts; technical checks cannot self-approve legal status.
+
+## FM-DEP-009
+- From: FM-MEM-005 / FM-MEM-008
+- Requires: exact governance PR heads and terminal green Project Memory/FanMind/Security/Browser gates.
+- Type: repository governance
+- Status: SATISFIED
+- Updated: 2026-08-20
+- Evidence: V6 exact head `2a62dc8337673be0b33acfd4338d0f452224e779` passed all applicable checks and PR #975 merged as `b4bef882a55e8c0dd1dd33d0ad1c1664c3078d0d`; V8 exact head `704fec4b6264dd5a0dd83cc8e0029352672485d0` passed the full gate set including Browser E2E and PR #980 merged as `22eb6aed5da4fde47860bbe12b118d3780c8a4a0`.
+- Rule: V8 is now the active mainline memory layer; reopen only on material drift/contradiction.
+
+## FM-DEP-010
+- Current completion 2026-09-10: FM-EV-040 closes the Production trigger Apply/postflight dependency through runs 34496892707 and 34497099991 plus independent advisors. FM-SEC-OWNER-001 is RESOLVED. Prior pre-state/authorization instructions below are historical; only Auth provider access/protection and bounded RPC exception review remain under FM-SEC-OWNER-002.
+- From: FM-SEC-001
+- Requires: exact live Production/Staging Supabase target identity and health; exact deployed Production commit; read-only catalog/ACL/advisor evidence; checksum-pinned controlled trigger-hardening runner/runbook; explicit provider/owner authorization before any Production DB or Auth-setting mutation; fresh post-action advisor evidence.
+- Type: security + external provider + protected mutation
+- Status: ACTIVE
+- Updated: 2026-08-26
+- Evidence: FM-EV-020 and protected read-only run `32997946812` prove the exact Production pre-state and healthy pre/post runtime without mutation; 24/24 focused tests support the constrained Staging RPC classification.
+- Rule: read-only reconciliation is complete for the current state. Production DB/Auth mutation must remain fail-closed under its existing protected control and explicit owner actions `FM-SEC-OWNER-001`/`002`; do not revoke intentional RPC access or add browser RLS policies merely to silence an advisor without policy review.
+
+## Dependency states
+`ACTIVE`, `SATISFIED`, `BLOCKED`, `SUPERSEDED`.
+
+Cross-domain dependencies must be linked to the same FanMind task IDs and #874. Do not create a parallel finishline tracker unless #874 is explicitly superseded.
+
+
+## FM-DEP-CHATADMIN-STAGING-VERIFY-20260921
+- From: FM-CHATADMIN-002
+- Requires: merged reviewed source PR #1146 source commit `648912cc2e9958cc8bc2e39c11b7977dabff862b` present in current `main`; protected `staging` environment; `reviewed_commit` equal to the exact current `main` SHA at dispatch time; read-only mode `VERIFY`; confirmation `verify-chat-admin-schema`; no write acknowledgement.
+- Type: protected read-only external observation
+- Status: SATISFIED
+- Updated: 2026-09-21
+- Evidence: protected run `35652258052` / job `106507223598` on exact main `973e70f6d243984d95ec1420a79701faad04a39a` completed read-only VERIFY and returned `ABSENT`; APPLY/ACCEPT skipped.
+- Result contract: observed result is exactly ABSENT. VERIFY never authorizes APPLY/ACCEPT, capability grants or Production activation.
+- Downstream: reconcile the exact result first; only then proceed to FM-GOV-GODMODE-001. If ABSENT, prepare a separate later APPLY owner action after God Mode v1 merge; if PARTIAL, bounded reconciliation/fix before any apply request; if VERIFIED, never re-apply and continue after God Mode to the actually missing acceptance/runtime step.
+
+
+## FM-DEP-GODMODE-001
+- From: FM-GOV-GODMODE-001
+- Requires: satisfied ChatAdmin read-only observation dependency; current Project Memory; repository-only implementation of system invariants, contract registry, integration gates, impact map, fail-closed release decision, adversarial tests and CI gate.
+- Type: repository governance + integration control
+- Status: SATISFIED
+- Updated: 2026-09-22
+- Evidence: PR #1157 final head `79510c8bc35371aa657cf42ca7cded5810341d88` merged as exact main `1c5e1232f0893b0730a985c6e717b5c27c535f35`; post-merge God Mode Gate, Deploy, Browser E2E, CodeQL, Supply Chain and Go-Live Readiness passed. Read-only Production Audit verifies the exact runtime and remains red only for the pre-existing backup-freshness Operations loop. The repository-only governance scope is accepted.
+- Rule: repository God Mode scope is complete and non-repeatable. This completion satisfies repository prerequisites but does not authorize any protected action.
+
+## FM-DEP-CHATADMIN-STAGING-APPLY-AFTER-GODMODE-20260921
+- From: FM-CHATADMIN-002
+- Requires: exact observed Staging state `ABSENT`; cleanly merged/reconciled God Mode v1; fresh current-main/target binding; separate protected owner authorization.
+- Type: protected Staging write
+- Status: SATISFIED
+- Updated: 2026-09-26
+- Evidence: protected APPLY run `36235870895` / job `108387398410` on exact reviewed `2aaf225fec29fd91c20f822185c770f87eb3d10d`, checksum `9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b`, target Staging `vshyhvgcmrlagvfnvomc`; workflow postflight returned `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`. Independent read-only countercheck confirms exact tables/RLS/policies/grants, zero ChatAdmin rows and Production absence.
+- Rule: APPLY authorization is consumed and must not be reused.
+
+## FM-DEP-CHATADMIN-STAGING-ACCEPT-20260926
+- From: FM-CHATADMIN-002
+- Requires: `chatadmin_staging_apply=ACCEPTED`; fresh exact current-main/target binding; same-target read-only pre-ACCEPT VERIFY; clean/distinct protected synthetic fixture variables; separate protected owner/environment action.
+- Type: protected Staging rollback-only DB/RLS acceptance
+- Status: SATISFIED
+- Updated: 2026-09-26
+- Evidence: run `36238536613`, successful attempt 2 / job `108396358120` on exact reviewed `7655aed2cae6ff3588207fee6f2227fd5b8db41c`; same-run `CHAT_ADMIN_SCHEMA_STATE=VERIFIED`, `CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS`, `CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN`, cleanup PASS; independent zero-row/RLS postflight PASS.
+- Historical negative: attempt 1 failed at `fixture_identity` before mutation because the protected fixture variables were empty; protected environment configuration corrected the prerequisite.
+- Rule: DB/RLS ACCEPT is consumed and must not be repeated. Manual application acceptance remains a distinct later gate.
+
+## FM-DEP-CHATADMIN-MANUAL-FLOW-20260926
+- From: FM-CHATADMIN-002
+- Type: protected Staging application/runtime acceptance
+- Status: SATISFIED
+- Updated: 2026-09-26
+- Evidence: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`.
+- Rule: Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed.
+
+## FM-DEP-EVENT-MANAGER-20260924
+- From: FM-GOV-EVENT-ORCH-001
+- Requires: repository dispatcher merged; a published FanMind Workspace Manager with API channel `agtch_...`; a Workspace Agent access token permitted to trigger that agent; repository variable/secret configured outside Git.
+- Type: repository governance + external ChatGPT workspace configuration
+- Status: ACTIVE
+- Rule: repository merge alone does not prove event activation. Until one configured manual dispatch returns HTTP 202 and a real merge event is observed, the hourly Builder remains authoritative fallback. The event payload is never acceptance evidence and never grants protected authorization.

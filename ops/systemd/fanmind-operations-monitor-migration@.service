@@ -1,0 +1,31 @@
+[Unit]
+Description=FanMind controlled operations monitor schema %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/var/www/fanmind/.env.production
+EnvironmentFile=/etc/fanmind-backup/worker.env
+EnvironmentFile=/etc/fanmind-backup/release.env
+Environment=FANMIND_RUNTIME_ENVIRONMENT=production
+WorkingDirectory=/usr/local/lib/fanmind-ops
+ExecStart=/usr/bin/node /usr/local/lib/fanmind-ops/operations-monitor-migration-runner.mjs --%i operations-monitor-components-production-%i
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+ReadOnlyPaths=/var/www/fanmind/.env.production /etc/fanmind-backup /usr/local/lib/fanmind-ops

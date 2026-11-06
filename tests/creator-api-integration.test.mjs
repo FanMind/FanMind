@@ -1,0 +1,229 @@
+import * as replyQualityPolicy from "../src/lib/replyQualityPolicy.mjs";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import test from "node:test";
+import ts from "typescript";
+import * as creatorPolicy from "../src/lib/creatorIntelligencePolicy.mjs";
+import * as executionPolicy from "../src/lib/aiExecutionPolicy.mjs";
+import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
+import * as authPolicy from "../src/lib/workspaceAuthorizationPolicy.mjs";
+
+const workspaceId = "11111111-1111-4111-8111-111111111111";
+const contactId = "22222222-2222-4222-8222-222222222222";
+const creatorId = "33333333-3333-4333-8333-333333333333";
+const conversationId = "44444444-4444-4444-8444-444444444444";
+function compile(path) { return ts.transpileModule(readFileSync(path, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText; }
+const replyCode = compile("src/app/api/ai/reply-suggestions/route.ts");
+const fanCode = compile("src/app/api/creators/fan/route.ts");
+const loaderCode = compile("src/lib/creatorIntelligence.ts");
+function evaluate(code, dependencies, extra = {}) {
+  const exports = {};
+  runInNewContext(code, { exports, Response, Request, URL, AbortSignal, Date, ...extra,
+    require(name) { assert.ok(Object.hasOwn(dependencies, name), `Unexpected dependency ${name}`); return dependencies[name]; },
+  });
+  return exports;
+}
+function context() {
+  const bundle = creatorPolicy.defaultCreatorBundle();
+  return { creatorId, revision: 1, persona: { ...bundle.persona, displayName: "Synthetic Sophie" },
+    voice: { ...bundle.voice, tone: "Warm and playful", avoidedPhrases: ["forbidden phrase"] }, playbook: bundle.playbook,
+    strategy: creatorPolicy.deriveCreatorStrategy({ playbook: bundle.playbook }) };
+}
+function harness({ denied = false, owner = true, changed = false, summaryMismatch = false, enabled = true, creator = true, outputs = null, history = null, abortController = null, revokeAfterFirst = false, retryRateLimited = false } = {}) {
+  const calls = { promptModes: [], ai: [], voices: 0, memories: 0, contexts: 0, saves: [], signals: [], usage: [], rateLimitCalls: 0 };
+  const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
+    "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
+    "@/lib/creatorIntelligencePolicy.mjs": creatorPolicy,
+    "@/lib/aiExecutionPolicy.mjs": executionPolicy,
+    "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedFanMindMutationRequest: (request) => mutationPolicy.isTrustedFanMindMutationRequest(request, {}) },
+    "@/lib/workspaceProcessingPolicy.mjs": { evaluateWorkspaceProcessingEntitlement: () => ({ allowed: true }) },
+    "@/config/aiTiers.mjs": { getAiTierConfig: () => ({ contextMessageLimit: 50 }) },
+    "@/lib/requestAccessToken": { BearerAccessTokenError: class extends Error {}, getOptionalBearerAccessToken: () => undefined },
+    "@/lib/rateLimit": { getClientIp: () => "192.0.2.1" },
+    "@/lib/sharedRateLimit": { consumeSharedRateLimit: async () => ({ allowed: ++calls.rateLimitCalls===1 || !retryRateLimited }) },
+    "@/lib/subscriptionCancellation": { isWorkspaceArchivedAfterSubscriptionEnd: () => false },
+    "@/lib/workspaceAiTierEntitlements": { getResolvedWorkspaceAiTier: async () => ({ entitlement: { effectiveTierId: "starter" } }) },
+    "@/lib/aiUsage": { getFanMindAiModel: () => "synthetic-model", recordAiUsageEvent: async event => { calls.usage.push(event); } },
+    "@/lib/workspaceAiPrompts": { getWorkspaceAiPromptContext: async (_workspace, _profile, companyOnly) => { calls.promptModes.push(companyOnly); return { companyPrompt: "Agency rules", profileName: companyOnly ? "" : "Default", profilePrompt: companyOnly ? "" : "Follow approved rules" }; } },
+    "@/lib/workspaceAuthorization": { ...authPolicy, requireContactInActiveAuthorizedWorkspace: async (id) => {
+      if (denied || id !== contactId) throw new authPolicy.WorkspaceAuthorizationError("Denied", "resource_forbidden");
+      return { workspace: { id: workspaceId, owner_user_id: "owner" }, user: { id: owner ? "owner" : "member" }, contact: { id: contactId, workspace_id: workspaceId, display_name: "Synthetic fan" } };
+    } },
+    "@/lib/creatorIntelligence": {
+      creatorIntelligenceEnabled: () => enabled,
+      loadCreatorReplyContext: async (workspace, contact) => { assert.equal(workspace, workspaceId); assert.equal(contact, contactId); calls.contexts++; if (!creator) return null; return changed && calls.contexts > 1 ? { ...context(), revision: 2 } : context(); },
+      getCreatorFanData: async () => ({ configured: true, events: [], offers: [], commercial: {} }),
+      saveCreatorFanReview: async (...args) => { calls.saves.push(args); creatorPolicy.normalizeCreatorFanReview(args[2]); },
+    },
+    "@/lib/supabase/server": {
+      getRecentContactConversationMessages: async () => ({ messages: history ?? [{ conversation_id: conversationId, direction: "inbound", content: "Wie geht es dir?" }], error: null }),
+      getFanAnalysisReport: async () => ({ report: null }), getContactAiProfile: async () => ({ profile: null }),
+      getWorkspaceVoiceProfile: async () => { calls.voices++; return { profile: { tone: "Chatter voice" } }; },
+      getRecentContactMemories: async (workspace, contact) => { assert.equal(workspace, workspaceId); assert.equal(contact, contactId); calls.memories++; return { memories: [{ content: "Synthetic fan likes hiking." }] }; },
+      getConversationSummary: async () => ({ summary: { contact_id: summaryMismatch ? creatorId : contactId, summary: "Synthetic summary" } }),
+    },
+  };
+  const runtime = {
+    process: { env: { OPENAI_API_KEY: "synthetic-no-provider" } },
+    fetch: async (_url, options) => {
+      calls.ai.push(JSON.parse(options.body)); calls.signals.push(options.signal);
+      if (calls.ai.length === 1 && revokeAfterFirst) denied = true;
+      if (calls.ai.length === 1 && abortController) abortController.abort();
+      return Response.json({ usage:{input_tokens:1000,output_tokens:100,total_tokens:1100}, output_text: JSON.stringify({ reply_options: (outputs?.[calls.ai.length - 1] ?? ["Hey!", "Schön von dir zu hören.", "Was machst du heute?"]).map((text) => ({ text })), suggested_memory: { content: "", importance: "normal" }, suggested_followup: { recommended: false, in_days: null, reason: "" } }) });
+    },
+  };
+  return { calls, reply: evaluate(replyCode, dependencies, runtime), fan: evaluate(fanCode, dependencies, runtime) };
+}
+function post(path, body, origin = "https://fanmind.invalid") { return new Request(`https://fanmind.invalid${path}`, { method: "POST", headers: { origin, "content-type": "application/json" }, body: JSON.stringify(body) }); }
+
+test("actual reply route auto-loads the account Creator, memory and summary and ignores a caller's Creator override", async () => {
+  const h = harness();
+  const response = await h.reply.POST(post("/api/ai/reply-suggestions", { contactId, creatorId: "forged", creatorContext: { persona: "forged" } }));
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.creator_context.name, "Synthetic Sophie");
+  assert.deepEqual(result.reply_options.map((option) => option.label), ["Recommended", "Softer", "Stronger"]);
+  assert.equal(h.calls.voices, 0); assert.equal(h.calls.memories, 1); assert.equal(h.calls.contexts, 2);
+  const sent = JSON.parse(h.calls.ai[0].input[1].content);
+  assert.equal(sent.creatorContext.creatorId, creatorId);
+  assert.match(sent.fanMemory, /likes hiking/); assert.equal(sent.conversationSummary, "Synthetic summary");
+  assert.doesNotMatch(JSON.stringify(sent), /forged|Chatter voice/);
+  assert.equal(h.calls.ai[0].store, false);
+  assert.deepEqual(h.calls.promptModes, [true]);
+  assert.equal(sent.promptProfilePrompt, null);
+});
+
+test("foreign contact and mixed summary produce no AI request, while a changed profile discards the generated draft", async () => {
+  for (const config of [{ denied: true }, { summaryMismatch: true }]) {
+    const h = harness(config);
+    assert.notEqual((await h.reply.POST(post("/api/ai/reply-suggestions", { contactId }))).status, 200);
+    assert.equal(h.calls.ai.length, 0);
+  }
+  const h = harness({ changed: true });
+  const response = await h.reply.POST(post("/api/ai/reply-suggestions", { contactId }));
+  assert.equal(response.status, 500); assert.equal((await response.json()).reply_options, undefined);
+});
+
+test("actual fan review route checks contact ownership, origin and rollout before any write", async () => {
+  const payload = { confirmed: true, event: null, commercial: { fanStage: "unknown", engagementScore: null, purchaseIntentScore: null, offerFatigue: null, salesHold: true, offerRequested: false, requestedOfferId: null, sourceReference: "synthetic-evidence", preferredContent: [], preferredStyle: "" } };
+  for (const config of [{ denied: true }, { owner: false }, { enabled: false }]) {
+    const h = harness(config);
+    assert.notEqual((await h.fan.POST(post(`/api/creators/fan?contactId=${contactId}`, payload))).status, 200);
+    assert.equal(h.calls.saves.length, 0);
+  }
+  const h = harness();
+  assert.equal((await h.fan.POST(post(`/api/creators/fan?contactId=${contactId}`, payload, "https://foreign.invalid"))).status, 403);
+  assert.equal(h.calls.saves.length, 0);
+  assert.equal((await h.fan.POST(post(`/api/creators/fan?contactId=${contactId}`, payload))).status, 200);
+  assert.equal(h.calls.saves[0][0], workspaceId); assert.equal(h.calls.saves[0][1], contactId);
+});
+
+test("actual loader uses the user's JWT and Workspace filter, and disabled rollout makes zero requests", async () => {
+  const calls = [];
+  const dependencies = {
+    "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
+    "server-only": {}, "next/headers": { cookies: async () => { throw new Error("bearer must not read cookies"); } },
+    "@/lib/creatorIntelligencePolicy.mjs": creatorPolicy,
+    "@/lib/supabase/config": { SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic", getSupabaseRestUrl: (table) => `https://supabase.invalid/rest/v1/${table}`, getSupabaseHeaders: (token) => ({ Authorization: `Bearer ${token}` }) },
+  };
+  const env = { FANMIND_CREATOR_INTELLIGENCE_ENABLED: "false" };
+  const loader = evaluate(loaderCode, dependencies, { process: { env }, fetch: async (url, options) => { calls.push({ url, options }); return Response.json([]); } });
+  assert.equal(await loader.loadCreatorReplyContext(workspaceId, contactId, "synthetic-jwt"), null);
+  assert.equal(calls.length, 0);
+  env.FANMIND_CREATOR_INTELLIGENCE_ENABLED = "true";
+  assert.equal(await loader.loadCreatorReplyContext(workspaceId, contactId, "synthetic-jwt"), null);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url.searchParams.get("workspace_id"), `eq.${workspaceId}`);
+  assert.equal(calls[0].options.headers.Authorization, "Bearer synthetic-jwt");
+  assert.equal(calls[0].options.cache, "no-store");
+});
+
+
+test("actual prompt loader excludes default and explicitly selected legacy styles in Creator mode", async () => {
+  const policy = await import("../src/lib/aiPromptPolicy.mjs");
+  const promptLoader = evaluate(compile("src/lib/workspaceAiPrompts.ts"), {
+    "@/lib/aiPromptPolicy.mjs": policy,
+    "@/lib/supabase/config": { getSupabaseHeaders: () => ({}), getSupabaseRestUrl: table => `https://synthetic.invalid/${table}` },
+  }, { process: { env: { SUPABASE_SERVICE_ROLE_KEY: "synthetic" } },
+    fetch: async () => Response.json([{ workspace_id: workspaceId, company_prompt: "Approved business rules", profiles: [{ id: creatorId, name: "OTHER STYLE", instruction: "ALTERNATE STYLE", isActive: true, isDefault: true }] }]),
+  });
+  for (const profile of [undefined, creatorId]) {
+    const result = await promptLoader.getWorkspaceAiPromptContext(workspaceId, profile, true);
+    assert.equal(result.companyPrompt, "Approved business rules");
+    assert.doesNotMatch(JSON.stringify(result), /OTHER STYLE|ALTERNATE STYLE/);
+  }
+  assert.match(JSON.stringify(await promptLoader.getWorkspaceAiPromptContext(workspaceId, creatorId, false)), /ALTERNATE STYLE/);
+});
+
+
+const duplicateQualityReplies=["Gerne", "Gerne!", "Gerne."];
+const variedQualityReplies=["Die Größe fehlt noch. Welche brauchst du?", "Gerne, schick mir bitte die gewünschte Größe.", "Welche Größe soll ich prüfen?"];
+test("Creator and ordinary FanMind both share quality guidance and repair with one absolute deadline", async () => {
+ for(const creator of [true,false]){
+  const h=harness({creator,outputs:[duplicateQualityReplies,variedQualityReplies]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId})); const body=await response.json();
+  assert.equal(response.status,200); assert.deepEqual(body.reply_options.map(o=>o.text),variedQualityReplies);
+  assert.equal(h.calls.ai.length,2); assert.equal(h.calls.signals[0],h.calls.signals[1]);
+  assert.ok(h.calls.ai[0].input[0].content.includes(replyQualityPolicy.FANMIND_REPLY_QUALITY_INSTRUCTIONS));
+  assert.deepEqual(h.calls.ai[0].input,h.calls.ai[1].input.slice(0,2));
+  assert.deepEqual(h.calls.usage.map(e=>e.status),["error","ok"]);
+  assert.equal(h.calls.usage[0].providerUsage.input_tokens,1000); assert.equal(h.calls.usage[1].providerUsage.output_tokens,100);
+  assert.equal(h.calls.voices,creator?0:1);
+ }
+});
+test("persistently repetitive replies and new prices in a Creator rewrite are never returned", async () => {
+ for(const second of [duplicateQualityReplies,["Für 20 EUR.","Das kostet 20 EUR.","Der Preis ist 20 EUR."]]){
+  const h=harness({outputs:[duplicateQualityReplies,second]}); const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+  assert.notEqual(response.status,200); assert.equal((await response.json()).reply_options,undefined);
+  assert.equal(h.calls.ai.length,2); assert.equal(h.calls.usage.length,2); assert.deepEqual(h.calls.usage.map(e=>e.status),["error","error"]);
+ }
+});
+
+test("actual Creator route rejects named, written, unsupported and bare prices before returning drafts",async()=>{
+  for(const price of ["Das kostet 20 Euro.","That costs twenty dollars.","Das kostet 25.–","Das kostet 100 JPY."]){
+    const h=harness({outputs:[[price,...variedQualityReplies.slice(1)]]});
+    const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+    const body=await response.json();
+    assert.notEqual(response.status,200);assert.equal(body.reply_options,undefined);
+    assert.equal(body.creator_context,undefined);assert.equal(h.calls.ai.length,1);
+    assert.equal(h.calls.usage.length,1);assert.equal(h.calls.usage[0].status,"error");
+    assert.equal(h.calls.saves.length,0);
+  }
+});
+
+test("a price introduced by the single corrective attempt is rejected with both usages retained",async()=>{
+  const h=harness({outputs:[duplicateQualityReplies,["Das kostet 20 Euro.",...variedQualityReplies.slice(1)]]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+  assert.notEqual(response.status,200);assert.equal((await response.json()).reply_options,undefined);
+  assert.equal(h.calls.ai.length,2);assert.deepEqual(h.calls.usage.map(event=>event.status),["error","error"]);
+  assert.equal(h.calls.saves.length,0);
+});
+test("profile change, permission loss or abort after a rejected draft prevent the second general provider call", async () => {
+ for(const options of [{changed:true},{revokeAfterFirst:true},{abortController:new AbortController()}]){
+  const h=harness({...options,outputs:[duplicateQualityReplies,variedQualityReplies]});
+  const baseRequest=post("/api/ai/reply-suggestions",{contactId});
+  const response=await h.reply.POST(options.abortController?new Request(baseRequest,{signal:options.abortController.signal}):baseRequest);
+  assert.notEqual(response.status,200); assert.equal(h.calls.ai.length,1); assert.equal(h.calls.usage.length,1);
+ }
+});
+test("general history guard compares real outbound only and keeps newest complete turns", async () => {
+ const copied="Vielen Dank für deine ausführliche Nachricht und dein Interesse, ich möchte gerne mit dir gemeinsam die nächsten Schritte in Ruhe besprechen.";
+ for(const direction of ["inbound","outbound"]){
+  const history=Array.from({length:30},(_,i)=>({conversation_id:conversationId,direction:"inbound",content:`old-${i}:`+"x".repeat(950)}));
+  history.push({conversation_id:conversationId,direction,content:copied});
+  const h=harness({creator:false,history,outputs:[[copied,...variedQualityReplies.slice(1)],variedQualityReplies]});
+  const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId,incomingMessage:"Was ist der nächste Schritt?"}));
+  assert.equal(response.status,200); assert.equal(h.calls.ai.length,direction==="outbound"?2:1);
+  const sent=JSON.parse(h.calls.ai[0].input[1].content);
+  assert.ok(sent.conversationContext.includes(copied)); assert.ok(!sent.conversationContext.includes("old-0:"));
+  assert.ok(sent.conversationContext.length<=12000);
+ }
+});
+
+test("general correction must obtain a second rate-limit slot before a second billable call", async () => {
+ const h=harness({retryRateLimited:true,outputs:[duplicateQualityReplies,variedQualityReplies]});
+ const response=await h.reply.POST(post("/api/ai/reply-suggestions",{contactId}));
+ assert.equal(response.status,429); assert.equal(h.calls.ai.length,1); assert.equal(h.calls.rateLimitCalls,2); assert.equal(h.calls.usage.length,1);
+});

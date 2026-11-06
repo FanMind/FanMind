@@ -1,0 +1,58 @@
+{
+  "cli": {
+    "version": "21.2.0",
+    "requireCommit": true,
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "credentialsSource": "remote",
+      "environment": "development",
+      "node": "22.13.1",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "native-validation": {
+      "extends": "development",
+      "withoutCredentials": true,
+      "ios": {
+        "simulator": true
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "credentialsSource": "remote",
+      "environment": "preview",
+      "node": "22.13.1",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "credentialsSource": "remote",
+      "environment": "production",
+      "node": "22.13.1",
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft",
+        "changesNotSentForReview": true
+      },
+      "ios": {
+        "language": "de-DE",
+        "appName": "FanMind"
+      }
+    }
+  }
+}

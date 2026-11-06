@@ -1,0 +1,252 @@
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.accountTabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.accountTab,
+.accountTabActive {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 13px;
+  padding: 9px 11px;
+  color: #cbd5e1;
+  text-decoration: none;
+  background: rgba(15, 23, 42, 0.62);
+}
+
+.accountTabActive {
+  border-color: rgba(34, 211, 238, 0.46);
+  color: #ecfeff;
+  background: rgba(14, 116, 144, 0.24);
+}
+
+.accountTab span,
+.accountTabActive span {
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.accountTab small,
+.accountTabActive small {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.hero,
+.card,
+.tableCard {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 16px;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.14);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.hero h2,
+.card h3,
+.tableCard h3 {
+  margin: 0;
+  color: #f8fbff;
+}
+
+.hero p,
+.card p,
+.tableCard p {
+  margin: 5px 0 0;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status,
+.statusWarning,
+.statusActive {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+.status {
+  color: #dbeafe;
+  background: rgba(30, 64, 175, 0.25);
+}
+
+.statusWarning {
+  color: #fde68a;
+  background: rgba(146, 64, 14, 0.28);
+}
+
+.statusActive {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.28);
+}
+
+.metricGrid,
+.codeGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.codeGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metric,
+.codeCard {
+  min-width: 0;
+  border: 1px solid rgba(125, 211, 252, 0.14);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(2, 6, 23, 0.32);
+}
+
+.metric span,
+.codeCard span,
+.tableLabel {
+  display: block;
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 5px;
+  color: #f8fbff;
+  font-size: 20px;
+}
+
+.metric small {
+  display: block;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.codeCard strong {
+  display: block;
+  margin: 6px 0 9px;
+  color: #ecfeff;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.progressTrack {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.progressValue {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0891b2, #22c55e);
+}
+
+.progressCopy {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 7px;
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.notice,
+.errorNotice {
+  border-radius: 13px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.notice {
+  border: 1px solid rgba(250, 204, 21, 0.2);
+  color: #fef3c7;
+  background: rgba(113, 63, 18, 0.16);
+}
+
+.errorNotice {
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.16);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  color: #e2e8f0;
+  font-size: 11px;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: #94a3b8;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rules {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #cbd5e1;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .accountTabs,
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    display: grid;
+  }
+
+  .accountTabs,
+  .metricGrid,
+  .codeGrid {
+    grid-template-columns: 1fr;
+  }
+}

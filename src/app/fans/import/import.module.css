@@ -1,0 +1,61 @@
+.importStack {
+  display: grid;
+  gap: 12px;
+}
+
+.explainer {
+  margin: 0 0 16px;
+  max-width: 780px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.importForm {
+  display: grid;
+  gap: 12px;
+}
+
+.importForm textarea {
+  min-height: 220px;
+  resize: vertical;
+}
+
+.fileRow input[type="file"] {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 12px;
+  padding: 10px 11px;
+  color: #dbeafe;
+  font: inherit;
+  font-size: 13px;
+  background: rgba(2, 6, 23, 0.62);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.success {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(74, 222, 128, 0.42);
+  border-radius: 16px;
+  padding: 14px;
+  color: #bbf7d0;
+  background: rgba(20, 83, 45, 0.24);
+}
+
+.success strong,
+.success span {
+  display: block;
+}
+
+.resultList {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+}

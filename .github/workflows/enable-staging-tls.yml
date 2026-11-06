@@ -1,0 +1,84 @@
+name: Enable FanMind Staging TLS
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type enable-fanmind-staging-tls to confirm certificate provisioning'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-tls
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  enable-staging-tls:
+    name: Verify DNS and enable HTTPS for staging only
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      inputs.confirmation == 'enable-fanmind-staging-tls'
+    environment: staging
+    runs-on:
+      - self-hosted
+      - fanmind-prod
+      - exoscale
+      - linux
+      - x64
+    env:
+      STAGING_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+
+    steps:
+      - name: Verify isolated DNS target
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${RUNNER_NAME:-}" != "fanmind-prod-01-exoscale" ]; then
+            echo "Unexpected TLS bootstrap runner." >&2
+            exit 1
+          fi
+          if [ "$STAGING_APP_URL" != "https://staging.fanmind.ch" ]; then
+            echo "Unexpected staging TLS target." >&2
+            exit 1
+          fi
+
+          SERVER_IPV4="$(
+            ip -4 -o addr show scope global | awk '{split($4, address, "/"); print address[1]; exit}'
+          )"
+          DNS_IPV4="$(
+            getent ahostsv4 staging.fanmind.ch | awk '$2 == "STREAM" {print $1; exit}'
+          )"
+          if [ -z "$SERVER_IPV4" ] || [ "$DNS_IPV4" != "$SERVER_IPV4" ]; then
+            echo "staging.fanmind.ch does not resolve to the Exoscale host." >&2
+            exit 1
+          fi
+          echo "STAGING_DNS_BINDING=verified"
+
+      - name: Enable existing-account Let's Encrypt certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -x /usr/bin/certbot
+          sudo test -d /etc/letsencrypt/accounts
+          sudo certbot --nginx --domain staging.fanmind.ch --non-interactive --redirect --keep-until-expiring
+          sudo nginx -t
+          sudo systemctl reload nginx
+          echo "STAGING_TLS=enabled"
+
+      - name: Verify certificate and HTTPS boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error --head --max-time 20 https://staging.fanmind.ch/ >/dev/null || {
+              status="$?"
+              if [ "$status" -ne 22 ]; then
+                exit "$status"
+              fi
+            }
+          echo "STAGING_HTTPS_CERTIFICATE=trusted"

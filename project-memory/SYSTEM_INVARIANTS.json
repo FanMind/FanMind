@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "updated": "2026-09-21",
+  "task": "FM-GOV-GODMODE-001",
+  "rules": {
+    "uncertainty_is_stop": true,
+    "unknown_is_not_success": true,
+    "missing_evidence_is_not_success": true
+  },
+  "invariants": [
+    {
+      "id": "FM-INV-001",
+      "name": "workspace_tenant_isolation",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Workspace/tenant data must never cross an authorized workspace boundary.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-002",
+      "name": "chatadmin_authority_boundary",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "ChatAdmin is never Platform Admin, Admin CRM, Billing, Operations or service_role.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-003",
+      "name": "no_browser_service_role",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Browser/client code must never receive or exercise service_role authority.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-004",
+      "name": "no_social_or_onlyfans_auto_send_v1",
+      "risk": "R3",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Social and OnlyFans V1 remain human-send/manual-handoff only unless a separately approved contract supersedes this invariant.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-005",
+      "name": "creator_workspace_uniqueness",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Normal Creator semantics require creators.workspace_id uniqueness for the ordinary Creator path.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-006",
+      "name": "character_context_isolation",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Character context must never cross character or workspace boundaries.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-007",
+      "name": "payment_activation_gate",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "No payment or paid-tier activation without satisfied Tax, Billing and Entitlement gates.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-008",
+      "name": "no_normal_web_deploy_db_migration",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Controlled database migrations must never be applied by the normal Web deploy path.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-009",
+      "name": "no_implementation_only_acceptance",
+      "risk": "R3",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Implementation-only evidence can never produce ACCEPTED or PRODUCTION_CONFIRMED.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-010",
+      "name": "no_automerge_with_blockers",
+      "risk": "R3",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Auto-merge is forbidden with P1/P2, unresolved review threads, pending required checks or red required checks.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-011",
+      "name": "no_rebuild_closed_scope",
+      "risk": "R2",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "ACCEPTED, VERIFIED, PRODUCTION_CONFIRMED, SUPERSEDED, FAILED or owner-deferred scope must not be rebuilt without a recorded revalidation/reopen reason.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    },
+    {
+      "id": "FM-INV-012",
+      "name": "no_secrets_in_repo_logs_chat",
+      "risk": "R4",
+      "required": true,
+      "status": "REGISTERED",
+      "description": "Secrets, passwords, tokens, private keys and raw protected credentials must never enter Git, logs or chat.",
+      "revalidate_on": [
+        "relevant_contract_change",
+        "schema_or_authority_change",
+        "target_change",
+        "before_protected_release"
+      ],
+      "evidence": []
+    }
+  ]
+}

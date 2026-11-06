@@ -1,0 +1,10 @@
+[Unit]
+Description=FanMind scheduled full backup
+
+[Timer]
+OnCalendar=Sun *-*-* 03:30:00
+Persistent=true
+Unit=fanmind-backup-enqueue@backup_full.service
+
+[Install]
+WantedBy=timers.target

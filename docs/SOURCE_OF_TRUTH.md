@@ -1,0 +1,1621 @@
+# FanMind Source of Truth
+
+ChatAdmin aktuelles Fanwissen (18.10.2026, vorbereitete Source-Erweiterung): Ein
+separater, standardmäßig deaktivierter Speicher hält je Fan/Thema genau eine
+aktuelle, wörtlich belegte Interessenaussage. Native isolierte PostgreSQL-17-Tests
+belegen Ersetzung neben unveränderten 4.000 Zeichen manueller Notizen, Quellen- und
+Revisionsbindung sowie Race-/Replay-Schutz. Bestehende unabhängige Legacy-Themen
+bleiben im Reader ausdrücklich als Legacy-Provenienz erhalten; neuere Themenzeilen
+ersetzen nur ihr Thema. Keine automatische Konvertierung alter Quellen.
+Kontrolliertes SQL ist nicht auf Staging/Production installiert. Aktivierung,
+Legacy-/Rollback-Freigabe und reale Ziel-/Modellabnahme bleiben getrennt offen.
+Details: docs/operations/CHAT_ADMIN_CURRENT_FACTS.md.
+
+
+ChatAdmin-Interessenwiderruf (18.10.2026, Draft/PARTIAL): Explizite deutsche/englische
+Widerrufe werden im vorhandenen v1-Fanwissen quellengeordnet gespeichert und nach
+History-Kürzung an den Modellkontext übergeben. Ältere Interessen-Generationen werden
+konservativ gegenüber der höchsten erhaltenen Faktensequenz verworfen, auch bei
+unabhängigen Themen. Spätere ausdrückliche Neubestätigung bleibt möglich.
+Schutzgrenzen haben im begrenzten Extractor Vorrang, danach Widerrufe; höchstens drei
+Fakten je Nachricht und acht gespeicherte Fakten. Reicht der 4.000-Zeichen-Speicher
+nicht, meldet die Route `not_saved`; der alte Stand bleibt bestehen. Das ist eine
+offene funktionale Grenze, keine vollständige Persistenzabnahme. Keine Aktivierung,
+keine neue Speicherarchitektur; echte Modellqualität und Zielabnahme bleiben offen.
+
+
+ChatAdmin-Fanpräferenzen (17.10.2026): Beim bestehenden Acht-Fakten-Limit
+bleiben Schutzgrenzen zuerst und bestätigte Kommunikationspräferenzen vor
+weiteren Interessen erhalten. Länge, Stil und Emojis werden getrennt
+zusammengeführt; neuere Aussagen ersetzen nur betroffene Dimensionen. Wörtliche
+Restzitate behalten Quelle/Sequenz. Format und Limits bleiben gleich.
+Synthetisch geprüfte Sourcekorrektur; reale Antwortqualität und Zielabnahme
+bleiben offen. Keine neue Memory- oder Qualitätsarchitektur.
+
+
+ChatAdmin-Gesprächssteuerung (17.10.2026): Mehrere ausdrücklich benannte aktive
+Artikel bleiben ohne Angebots-/Preisfreigabe, auch wenn ein späterer Filter
+nur einen übrigließe. Begrenzte synthetisch geprüfte Sourcehärtung; kein Kauf-
+oder Versandnachweis und keine vollständige Absichts-/Negationserkennung.
+Phase7b und reale Ziel-/Qualitätsabnahme bleiben offen.
+
+
+Phase 7b (17.10.2026): Creator-Antworten verwenden den bestehenden ChatAdmin-
+Preisschutz mit ihrem strengeren Vertrag ohne Freitextpreise. Synthetische
+Policy-/Route-Prüfungen schließen diese Source-Lücke; reale Qualität und
+Zielabnahme bleiben offen. Firmenabhängige externe Freigaben bleiben bis zu
+vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
+[Creator Intelligence](CREATOR_INTELLIGENCE.md).
+
+
+ChatAdmin-Angebotsablehnung (17.10.2026): #1335–#1337 sind gemergt.
+Die neue Source-Ergänzung lässt nur vollständig begrenzte Preisfragen wie
+„Nicht schlecht, was kostet das Foto?“ bzw. „Not bad. How much is the photo?“
+durch das bestehende Negationsveto zur normalen Artikelprüfung. Erkannte Namen
+müssen zur abschließenden Medienbezeichnung gehören. Weitere Sätze,
+Ablehnungen und gemischte Wünsche bleiben gesperrt. Kein allgemeines NLP,
+keine persistente Verkaufspause; Phase7b und reale Zielabnahme bleiben offen.
+
+
+Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt
+Grant-/Reserve-Policy und revisionsgebundene Workspace-/Periodenberechtigung.
+Echte PostgreSQL-17-Lifecycletests laufen im erforderlichen CI-Pfad. Das ist keine
+Staging-/Production-Installation oder Billingfreigabe; kanonische Entitlement-
+Projektion/Befüllung, Zielabnahme, Routeverdrahtung und Top-up-/Refund-Folgeumfang
+bleiben getrennt. Vertrag: `docs/operations/AI_CAPACITY_RESERVE_SETTLE.md`.
+
+
+## Antwortqualität für ganz FanMind — 15. Oktober 2026
+
+Der Owner erweitert den Auftrag ausdrücklich auf alle produktiven KI-Antworten,
+mit jeweils eigener freigegebener Creator-/Character- bzw. Workspace-Stimme.
+`src/lib/replyQualityPolicy.mjs` liefert gemeinsame Regeln, acht originale
+synthetische Miniaturen und einen konservativen Wiederholungswächter für die
+allgemeine Reply-Route (auch Copilot/Mobile) und ChatAdmin. Keine Übernahme
+privater ChatGPT-Einstellungen, kein fremder Chat-Import und kein dauerhaftes
+Modelltraining. Keine Aktivierung zurückgestellter Kanäle oder Creator-Pfade.
+
+Identische Varianten, sehr nahe lange Textkopien und bestimmte wiederkehrende
+Standard-Einstiege können höchstens einen Korrekturaufruf auslösen. Verglichen
+werden maximal sechs tatsächliche ausgehende Antworten im autorisierten,
+ans Modell übergebenen Verlauf, keine ungenutzten Entwürfe. Neueste vollständige
+CRM-Beiträge haben innerhalb des bestehenden Kontextbudgets Vorrang.
+
+Jeder tatsächlich gestartete Provideraufruf erhält Usage und benötigt einen
+Slot des bestehenden Ratenlimits. Beide Versuche teilen das ursprüngliche
+Provider-Zeitbudget; Kontext plus Korrekturfeedback bleibt unter dem bisherigen
+Zeichenlimit. Nach erneutem Qualitätsfehler keine Freigabe/Persistenz und kein
+Fanlernen aus der verworfenen Generation. Zugriff, Creator-Kontext, ChatAdmin-
+Abschlusszustand, Preisverträge und manuelle Versandgrenze bleiben verbindlich.
+Normale Aufrufe benötigen einen, Korrekturen höchstens zwei Provideraufrufe.
+
+Das ist ein technischer Mindestschutz, keine Garantie gegen semantisch ähnliche
+Antworten oder für Natürlichkeit. Neue Mehrturn-Modellantworten müssen nach
+separatem Deployment stilbezogen bewertet werden. Keine Modell-, Datenbank-,
+Entitlement- oder Stripe-Änderung. Details: `docs/AI_REPLY_QUALITY.md`.
+
+## Administrativ gewährter Starter-CRM-Zugang — 15. September 2026
+
+Ein bestätigtes Registrierungskonto kann durch einen Platform-Admin einen
+administrativ gewährten Starter-CRM-Zugang erhalten. Dieser interne Zugang ist
+kein öffentliches Angebot, kein Demo-Workspace und kein Stripe-Vertrag. Er hat
+0 EUR Setup und 0 EUR monatliche Gebühr und ist entweder dauerhaft kostenlos
+oder bis zum ausdrücklich gesetzten Ende des gewählten Kalendertags in
+`Europe/Zurich` aktiv. Der Admin kann ihn sofort sperren, ohne Workspace- oder
+CRM-Daten zu löschen.
+
+Nur die eigene CRM-Zugangssteuerung darf diesen Workspace umstellen. Generische
+Billing-, Test-, Daily- und Stripe-Aktionen sind gesperrt. Eine spätere
+kommerzielle Umstellung muss über einen getrennten Billing-Ablauf erfolgen.
+Nach Sperre oder Fristablauf werden Anwendung und direkte authentifizierte
+Supabase-Zugriffe durch dieselbe Datenbankberechtigung blockiert. Die atomare
+RPC-/RLS-Grundlage ist erst nach dem getrennt freigegebenen Datenbank-Rollout
+gemäß `docs/operations/ADMIN_CRM_ACCESS_ROLLOUT.md` produktiv nutzbar; ein
+normaler Web-Deploy wendet sie nicht an.
+
+Der interne Admin-CRM-Zugang wird trotz seines technischen 0-EUR-Status nicht
+als öffentliche Demo behandelt: reguläre CRM-, Kanal- und Mobile-Grundlagen
+bleiben nutzbar, während generische Billing- und Stripe-Übergänge weiterhin
+gesperrt sind. Nach Sperre oder Ablauf schützt die restriktive Grenze auch die
+Workspace-Stammdaten. Eine minimale RPC meldet der Anwendung den Zustand `inactive` samt ausschließlich
+für die Pausenroute erforderlicher Workspace-Projektion, damit sie weder Login
+noch Onboarding anzeigt. Die browserfähigen Creator-Schreib-RPCs und ihre
+Tabellen-Lesegrenzen delegieren rollout-order-unabhängig an dieselbe kanonische
+Zugangsprüfung; normale Nicht-Admin-CRM-Workspaces bleiben davon unberührt.
+
+## Meta-Erstimport und ein Creator-Schreibstil — 11. September 2026
+
+Nach einer tatsächlich bestätigten und gespeicherten Facebook-/Instagram-
+Nachrichtenverbindung startet der vorhandene begrenzte historische Import.
+Bei mehreren Facebook-Seiten geschieht dies erst nach der expliziten Auswahl.
+Die Verbindung wird anhand Account, Workspace, Plattform, Seite und
+Verbindungsrevision erneut geladen; aktuelle Verarbeitungs- und Ownerrechte
+bleiben erforderlich. Kommentar-/Insights-Anmeldungen und Kanalseiten-URLs
+starten keinen Nachrichtenimport. Eine bestehende abgeschlossene Synchronisation
+wird nicht automatisch wiederholt. Der gemeinsame Datenbank-Ratenbegrenzer
+erlaubt höchstens einen automatischen Versuch je Verbindung und 15-Minuten-
+Fenster; bei Fehlern gibt es keinen unkontrollierten Wiederholungsabruf.
+
+Der Abruf bleibt bei den bestehenden Grenzen (bis 25 Gespräche und 150
+Nachrichten je Gespräch im ersten Durchlauf, Zeitbudget und Fortsetzung).
+Ein begrenzter Durchlauf bedeutet nicht den vollständigen Download aller
+Nachrichten. Teilimporte und Fehler bleiben sichtbar; der manuelle Abgleich
+und Webhook-Pfad bleiben erhalten. Kein Versand, keine neue externe Freigabe
+und kein automatisches Stil-Lernen aus eingehenden Nachrichten.
+
+Bei konfiguriertem Creator werden weder ausgewählte noch voreingestellte
+Legacy-Antwortprofile als weiterer Stil in die KI geladen. Bei aktiviertem
+Creator-Rollout zeigt die Oberfläche ein Creator-Profil und ergänzende
+Geschäftsregeln. Alle Antwortvarianten bleiben im einzigen Account-Schreibstil.
+Die Creator-Datenbankgrundlage ist auf isoliertem Staging installiert:
+Verify 34622658443 und Apply 34623104141 auf Main 3f6178bd bestanden am
+11. September 2026, einschließlich exakter Nachprüfung. Vier neue RLS-Tabellen
+waren anschließend leer; direkte Browser-Änderungen bleiben gesperrt.
+Der geschützte Staging-Lauf [34629009649](https://github.com/FanMind/FanMind/actions/runs/34629009649)
+auf Main f0c7a84e bestand am 11. September 2026 die reale Creator-Grundlagenabnahme:
+Owner-/Member-/Fremdkonto-Trennung, genau ein Stil pro Konto, Freigabeentzug bei
+Änderungen, veraltete und gleichzeitige Speicherungen sowie beide echten
+PDF-Datenauskünfte. Unabhängige Bereinigung und Sperrung des temporären
+Testzugangs bestanden. Die Nachprüfung um 17:42:49 UTC bestätigt vier leere
+Creator-Tabellen und keine hängenden Creator-RPCs.
+
+Die gezielte PT409-Funktionskorrektur wurde zuvor durch Verify 34628681395 und
+Upgrade 34628886294 geprüft/installiert; die ursprüngliche Foundation wurde
+nicht erneut angewendet. Staging Deploy 34628740980, Web Deploy 34628626636
+und öffentliche Readiness 34628752787 bestanden. Das belegt diese technische
+Grundlage. Der Lauf hat keine Creator-Aktivierung vorgenommen. Der tatsächliche
+Creator-Schalter im laufenden Staging-Prozess wurde nicht unabhängig geprüft.
+Aktivierte Creator-Runtime, reale Zielabnahme der repository-seitig vorbereiteten Kontakt-/Kontolöschung, echte Schreibqualität, persistentes Lernen und
+Plattformfreigaben bleiben offen; eine Production-Aktivierung ist nicht belegt.
+
+
+## Mobile-Paketstand und signierte Artefakte — 10. September 2026
+
+Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
+geprüft; die Web-Korrekturen sind produktiv veröffentlicht. Die Mobile-
+Änderungen sind dadurch noch nicht in einer signierten App veröffentlicht.
+Der vorhandene signierte FCM-Preview `6801d687` (Lauf `34037085683`) und das
+ältere Production-AAB `e9641503` enthalten diese späteren Paketupdates nicht.
+Sie bleiben Belege ihrer jeweiligen älteren Revision. Für den neuen Mobile-
+Paketstand fehlen eine separat geprüfte signierte Veröffentlichung und ihre
+Geräteabnahme unter FM-MOB-001. Ein erneuter Build derselben alten Revision
+ist dafür kein Ersatz; allein für den bisherigen Registrierungsnachweis
+muss der vorhandene FCM-Preview nicht neu gebaut werden.
+
+Stand: 16. August 2026
+
+Dieses Dokument ist die fachliche Source of Truth für FanMind. README, AGENTS.md, Landingpage, Pricing, Legal-Texte, Datenbank-Dokumentation, Roadmap und Codex-Tasks müssen mit diesem Stand synchron bleiben.
+
+## AI-Kapazitätsmodell v2 — akzeptiertes Ziel, noch nicht produktiv aktiviert — 30. September 2026
+
+Owner-Entscheidung FM-DEC-026 ersetzt das künftige kundenbezogene KI-Plus/Ultra-Produktmodell durch drei Grundpakete zu **99 / 199 / 312 EUR** mit jeweils enthaltenem monatlichem AI-Kostenbudget. Owner-Fortsetzung vom 30. September 2026 setzt die Startbudgets verbindlich auf **15 / 30 / 50 EUR** AI-Kostenbudget je autoritativem Abrechnungszeitraum für die Pakete 99 / 199 / 312. Nutzer können künftig **Schnell / Ausgewogen / Premium** wählen; intern wird anhand tatsächlicher Modell-, Token- und Providerkosten abgerechnet. Inkludierte Kapazität verfällt mit dem autoritativen Abrechnungszeitraum, separat gekaufte Kapazität wird getrennt geführt. AI-Top-ups zielen auf ungefähr 33 % Bruttomarge.
+
+Owner-Fortsetzung 30. September 2026: **Für keines der neuen 99-/199-/312-EUR-Pakete wird eine einmalige Einrichtungs-/Setupgebühr verlangt.** Im Stripe-Live-Katalog wurden eigenständige Capacity-v2-Monatspreise für 99, 199 und 312 EUR angelegt. Die historischen 990-EUR-Setup-/Pilot-Produkte sowie das historische Starter-312-Produkt wurden für Neugeschäft deaktiviert; bestehende Referenzen bleiben nur als Legacy-/Migrationsnachweis erhalten.
+
+Isolierter Staging-Stand vom 30. September 2026: Die Capacity-v2-Policy enthält die freigegebenen **15 / 30 / 50 EUR** Budgets bei Revision 2. Runtime, Paketverkauf, Qualitätsmodi, Top-ups und alle drei Activation-Ready-Schalter bleiben aus; Emergency Freeze bleibt an. Es wurden keine Grants, Reservations oder Ledger-Events erzeugt. Der Reserve/Settle-RPC-Rollout bleibt blockiert, weil die aktuell kontrollierte SQL-Quelle vor APPLY einen Compile-Defekt in `ai_capacity_grant_credit` zeigt; sie wurde deshalb nicht auf Staging angewendet.
+
+Diese Entscheidung ist **Zielmodell, nicht aktuelle Production-Aktivierung**. Bestehende Starter-/KI-Standard-/KI-Plus-/KI-Ultra-Quellen, Stripe-IDs und Verträge bleiben bis zur kontrollierten Migration gültige Legacy-/Migrationsbasis. Es erfolgt weder automatische Kundenmigration noch Aktivierung neuer Preise oder Top-ups. Maßgeblich für die Implementierung ist `docs/operations/AI_CAPACITY_BILLING_V2.md`; die registrierte R4-Grenze `FM-CONTRACT-AI-BILLING-001` / `FM-IGATE-AI-BILLING-001` bleibt bindend.
+
+## 1. Produktdefinition
+
+FanMind ist ein KI-gestütztes CRM und Copy-&-Open-Kommunikationssystem für Fan- und Kontaktbeziehungen.
+
+FanMind ist:
+
+- ein CRM-Kern für Kontakte und Fans;
+- ein Arbeitsbereich für Nachrichtenkontext, Kontaktwissen und Follow-ups;
+- ein serverseitiger KI-Assistent für Antwortvorschläge;
+- ein Copy-&-Open-Assistent: Antwort vorbereiten, kopieren, Originalkanal öffnen, Mensch sendet selbst;
+- ein System mit klarer Roadmap für Integrationen, Kampagnen, Analytics und spätere Erweiterungen;
+- ein System mit einer ausdrücklich freigegebenen, aber noch nicht produktiv aktivierten Grundlage für mandantengetrennte Facebook-/Instagram-Konten, eigene Content-Insights und vorsichtige Kommunikationsanalyse;
+- ein eigenständiger nativer Mobile-App-Kern für Android und iOS, nicht als WebView-Hülle.
+
+FanMind ist nicht:
+
+- ein Bot oder Autoresponder;
+- eine Scraping-Plattform;
+- eine allgemein freigegebene Social-Media-Vollintegration;
+- eine Kampagnenversand-Maschine;
+- eine vollständige Enterprise-Rollen-, Analytics- oder Payment-Suite.
+
+## 2. Aktiver CRM-Kern
+
+Aktiv beziehungsweise produktnah:
+
+- deutsche und englische Landingpage mit automatischer Sprachprüfung;
+- Login und vorbereitete öffentliche Starter-Registrierung; die entgeltliche Aktivierung bleibt bis zur bestätigten Zahlungsbedingungen-Version gesperrt (`payment_terms_version_unresolved`). Web-Passwort-Recovery hält den Rücksprung auf derselben FanMind-Umgebung, bereinigt Callback-Parameter vor der Provider-Prüfung und zeigt das Passwortformular erst nach bestätigter Benutzer-ID. Externe E-Mail-/Redirect-Abnahme bleibt separat (`docs/operations/WEB_AUTH_RECOVERY.md`);
+- kostenloser temporärer Demo-Workspace, getrennt vom entgeltlichen Angebot;
+- geschütztes Dashboard;
+- Kontakte, Kontaktdetail und Suche;
+- CSV-Import und manuelle Kontaktpflege;
+- gespeicherter Nachrichten- und Gesprächskontext;
+- Kontaktwissen mit Bearbeiten und Löschen;
+- Follow-ups;
+- serverseitige KI-Antwortvorschläge;
+- Kontaktwissen- und Follow-up-Vorschläge aus der KI-Ausgabe;
+- Kopieren von Antwortvorschlägen ohne automatische Sendung;
+- eigenständiger React-Native-/Expo-App-Kern mit Login, Passwort-Recovery,
+  Dashboard, Kontaktanlage/-bearbeitung, sichtbarem read-only
+  Gesprächsverlauf, Kontaktwissen, KI und Follow-ups;
+- Admin-, Billing-, Operations- und Backup-Grundlagen;
+- getrennte kompakte Konto-Seiten:
+  - `/settings/profile` für Profil und Workspace-Basisdaten;
+  - `/settings/package` für Paket, Status, Betrag, Setup und kontrollierte Paketoptionen;
+  - `/settings/invoices` für eigene Stripe-Rechnungen mit Öffnen- und PDF-Links;
+  - Self-Service-Kündigung für Starter-Abos zum serverseitig erzwungenen Vertragsende mit separatem Account-/DSGVO-Löschprozess;
+- Admin-only Asset-Upload in den Supabase-Storage-Bucket `fanmind-assets`;
+- Legal-Seiten, Zahlungsbedingungen und AVV-Anforderungsseite;
+- deterministischer lokaler Browser-Code-Nachweis über
+  `npm run test:e2e:core-flow`: Login, Dashboard, Inbox, Fan-Detail,
+  KI-Antwort, Kopieren, Kontaktwissen, Follow-up samt
+  Abschließen/Wiederöffnen und Roadmap laufen durch echte FanMind-Routen und
+  Server-Actions gegen eine ausschließlich lokale In-Memory-Provider-Fixture;
+  nur die KI-Antwort ist synthetisch. Der Nachweis ersetzt keine isolierte
+  Staging-, Provider- oder Production-Abnahme;
+- commitgenauer manueller Staging-Kern-/CSV-Abnahmepfad: Der vorbereitete
+  Workflow bindet den tatsächlich deployten `main`-Commit, den markierten
+  synthetischen Owner-/Member-Workspace, reale KI Standard, CSV-Duplikat- und
+  Fehlerzeilen, Zwei-Workspace-RLS sowie ein `always()`-Cleanup. Das
+  Member-Passwort wird nicht persistent konfiguriert: Es entsteht maskiert im
+  geschützten Hosted Runner, darf erst nach exakter Auth-Marker- und einzelner
+  Workspace-Membership-Prüfung gesetzt werden und wird im Cleanup durch ein
+  unbekanntes Passwort ersetzt; der bekannte Wert muss danach real als
+  `invalid_credentials` abgewiesen werden. Profilbindung, Auth, Membership und
+  Workspace werden nach jedem Admin-Write vollständig neu gelesen; Drift oder
+  ein unbestimmtes Providerergebnis bleibt auch nach einer bestmöglichen
+  unbekannten Rotation auf der zuvor gebundenen UUID rot. Die private
+  `GITHUB_ENV`-Datei muss regulär, Runner-eigen, einfach verlinkt und exakt
+  `0600` sein. Owner-/Secondary-Zugangsdaten bleiben davon unberührt. Bis zum
+  tatsächlichen grünen Lauf bleibt die externe Staging-Abnahme offen;
+- consent-gesteuerte Meta-Pixel-Infrastruktur als ausdrücklich begrenzte Marketing-Messung auf einer festen Allowlist öffentlicher Seiten: ausschließlich `PageView` ohne Eventparameter; keine geschützten CRM-/Admin-/Billing-Routen, keine Produkt-Analytics-Suite, kein Laden ohne Einwilligung, keine PII-/CRM-/Billing-Daten, blockierte geschützte same-origin Referrer, kein Advanced Matching und keine Conversions API; vorbereitete Conversion-Events bleiben ohne separate fachliche und datenschutzrechtliche Freigabe unverdrahtet; ohne gültige `NEXT_PUBLIC_META_PIXEL_ID` vollständig deaktiviert;
+- Daily (0 € Setup + 1 €/Tag) ist gemäß FM-DEC-019 eine manuell vom Platform-Admin gesteuerte interne Beta, täglich kündbar und ohne Referral-Rabatt. Die bestehende Engine samt `internal_daily_test` und Stripe-Preis bleibt kompatibel erhalten. Es gibt keinen automatischen Countdown. Bei ausgeschalteter Beta ist Daily öffentlich unsichtbar und für neue Provisionierung/Checkouts gesperrt; bestehende Daily-Abos laufen unverändert weiter. Authentifizierte Workspace-Provisionierung und Checkout benötigen weiterhin sichere RPCs, Browser-INSERT-Verbot, aktuelle ausdrückliche Zustimmung sowie vollständige Tax-/Stripe-/Webhook-/Billing-Readiness. Die historische Beta-Fensterlogik ist kein Ersatz für diese Freigaben; generische Migrationen bleiben ausgeschlossen.
+
+Das entgeltliche öffentliche Pilot-/Setup-Paket ist eingestellt. Legacy-Pilot-Checkout bleibt gesperrt. Die kostenlose Demo ist kein entgeltliches Paket.
+
+Vorbereitet, aber in Production noch nicht aktiviert:
+
+- Inbox-Handoff: Production besitzt `assigned_user_id` noch nicht; die
+  Anwendung erkennt die fehlende Spalte und blendet Übernehmen und Freigeben
+  fail-closed aus. Der Codepfad darf erst nach einem getrennten, in Staging
+  abgenommenen Datenbank-, RLS- und Spaltenrechte-Rollout aktiviert werden.
+  Danach dürfen autorisierte Workspace-Mitglieder eine Conversation exklusiv
+  übernehmen und nur ihre eigene Zuweisung freigeben; Status, nächster Schritt
+  und Nachrichtentext bleiben unverändert und es wird nichts automatisch
+  versendet.
+
+## 3. Eigenständige Mobile-App
+
+Der Mobile-App-Kern liegt unter `apps/mobile` und wird unabhängig von der Next.js-Website gebaut und veröffentlicht. Er ist keine eingebettete Website und importiert keine Website-CSS- oder Next.js-UI-Komponenten.
+
+Aktiv im App-Kern:
+
+- native Supabase-E-Mail-/Passwort-Anmeldung;
+- PKCE-basierte Passwort-Recovery über `fanmind://reset-password` mit strikter Callback-Validierung;
+- verschlüsselte Sitzung über `expo-secure-store` und zentralen lokalen Purge beim Abmelden;
+- geschützte Expo-Router-Navigation;
+- Start-Dashboard mit ausschließlich Fans mit ungesehenen eingehenden
+  Nachrichten und den heute fälligen Follow-ups; beide führen direkt zum
+  betroffenen Fan. Der Tageszähler ist exakt; Einträge werden begrenzt
+  seitenweise und mit stabiler `created_at`-/`id`-Reihenfolge je semantischer
+  Prioritätsgruppe geladen, sodass die wichtigsten Einträge bereits vor der
+  1.000er-Grenze ausgewählt werden; unbekannte/null Altdaten bilden die letzte
+  Fallback-Gruppe. Jede Begrenzung und jeder Ladefehler wird im Follow-up-Bereich
+  sichtbar ausgewiesen. Dazu Kontaktliste, Suche und Kontaktdetail;
+- Kontakt als Workspace-Owner in Mobile anlegen und bearbeiten, jeweils mit Workspace-Filter und RLS; Teammitglieder bleiben im CRM-Nur-Lese-Modus;
+- bis zu 100 aktuelle Nachrichten je Kontakt als sichtbarer read-only
+  Gesprächsverlauf, ausdrücklich nach Workspace und Kontakt gefiltert und
+  vollständig vom Offline-Cache ausgeschlossen; der Verlauf lässt sich für
+  jeden Fan über `Alle` und seine tatsächlich vorhandenen Plattformen filtern;
+- Kontaktwissen mit eigenem Ladefehlerzustand, damit ein fehlgeschlagener Read
+  nie als gültig leer erscheint;
+- pro Fan die drei Mobile-Bereiche `Nachrichten`, `Follow-ups` und
+  `Kontaktwissen`; die Kontaktkennung bleibt einzeilig, Profil/Tags liegen im
+  Kontaktwissen;
+- gespeicherte Fan-Analyse im Kontaktwissen ausschließlich mit sichtbarem
+  Herkunftszeitraum, Stichprobenumfang, Konfidenz und Prüfstatus; fehlen diese
+  Nachweise, bleibt die Darstellung fail-closed. Die Owner-only Neuerzeugung
+  über eine Bearer-authentifizierte Serverroute ist vorbereitet, bleibt in
+  Mobile und Web aber ohne aktiven Aktionsbutton als `In Vorbereitung` markiert, bis die
+  Workspace-Datenschutz-/Aufbewahrungsfreigabe, der aktive
+  Verarbeitungsanspruch und das vollständige Analyse-Report-Schema technisch
+  aktiviert und geprüft sind; die Route unterscheidet Berechtigungs-, Raten-, Kontext- und
+  Dienstfehler semantisch und behandelt einen fehlgeschlagenen
+  Capability-Read als Dienstfehler, nicht als Workspace-Verbot. Nachrichten
+  ohne gültigen Zeitstempel werden vor Begrenzung, Modellkontext,
+  Stichprobenzähler und Konfidenzberechnung ausgeschlossen. Menschlich
+  verworfene Berichte zeigen ausschließlich Ablehnungsmetadaten und niemals
+  ihre Schlussfolgerungen; verworfene oder unvollständig provenienzgebundene
+  Berichte werden auch aus dem produktiven Kontext für KI-Antwortvorschläge
+  ausgeschlossen. Auch die Bearer-Route verlangt die aktive
+  Workspace-Owner-Autorisierung; Mitglieder dürfen weder Analysezustand noch
+  KI-Verbrauch verändern. Ein Analyse-Ladefehler oder ein gespeicherter, wegen
+  unvollständiger Nachweise ausgeblendeter Altbericht unterdrückt den
+  Leerzustand, weil beides die Abwesenheit eines Berichts nicht beweist. Solange die
+  kontrollierte Provenienz-Migration in
+  Production noch vollständig fehlt, hält ein eng begrenzter Server-Read-Fallback
+  bestehende Web-Kontexte lesbar. Er wird nur nach paralleler Einzelprüfung aller neuen
+  Spalten aktiv; jeder partielle Schema-Zustand bleibt ein Fehler. Legacy-Zeilen
+  erhalten fehlende Provenienzfelder, und weder Mobile noch Web zeigen daraus
+  Analyse-Schlussfolgerungen an;
+- Bearer-authentifizierte serverseitige KI-Antwortvorschläge;
+- Antwort kopieren oder ausschließlich den ausgewählten Antworttext an die
+  native Android-/iOS-Teilen-Auswahl übergeben; Zielwahl und finaler Versand
+  bleiben beim Menschen;
+- Follow-ups als Owner direkt im Fan-Detail oder aus einem KI-Vorschlag
+  anlegen, global oder pro Fan anzeigen, aus globaler Liste und Dashboard zum
+  jeweiligen Fan öffnen und mit dem kanonischen Status `completed`
+  abschließen; Teammitglieder lesen nur, bestehende `done`-Altdaten bleiben
+  lesekompatibel und ein historisch leerer Status gilt weiterhin als offen.
+  Die globale Liste lädt alle offenen Einträge stabil in 200er-Seiten, statt
+  ältere Aufgaben nach einer festen Grenze auszublenden, und lädt beim erneuten
+  Fokussieren nach der Rückkehr aus einem Fan-Detail automatisch neu. Die Fan-Detail-Liste
+  liefert einen exakten Zähler und weist eine Begrenzung auf 100 sichtbare
+  offene Einträge ausdrücklich aus;
+  ein fehlgeschlagener Tages-Read unterdrückt neben dem Leerzustand auch die
+  Anzahl, damit ein unbekannter Wert nie als grüne Null erscheint;
+- verschlüsselte, User-/Workspace-gebundene Offline-Kontaktübersicht mit maximal 50 Einträgen, Nur-Lesen-Oberfläche und einer Gültigkeit bis zum früheren Zeitpunkt aus 24-Stunden-Ablauf oder befristetem Admin-CRM-Zugangsende;
+- native Push-Grundlage mit validierter Follow-up-Navigation, Auth-Handoff,
+  Einmalverarbeitung und ausdrücklichem Opt-in für eine verschlüsselte,
+  kontogebundene Ein-Gerät-Registrierung für Owner oder autorisierte
+  Workspace-Mitglieder. Zusätzlich verarbeitet der native Response-Handler die
+  vorbereiteten Ereignisse `message_received` und `message_reminder`
+  fail-closed: Ein gültiger Nachrichten-Push wartet auf Auth und öffnet nur den
+  exakt gebundenen Fan im Bereich `Nachrichten`. Öffentliche Demo-Workspaces,
+  ungebundene Requests und nicht serverseitig freigegebene EAS-Projekte werden
+  abgelehnt; die Migration, Serverkey-Aktivierung und echte Geräteabnahme
+  bleiben getrennt. Die repositoryseitige Nachrichten-Policy bereitet einen
+  datenschutzarmen Soforthinweis und höchstens eine gebundene Erinnerung vor;
+  sichtbarer Text enthält weder Fanname noch Nachrichtentext oder anderen CRM-
+  Inhalt. Ein Staging-only Serververtrag für genau eine inhaltsfreie Follow-up-
+  Erinnerung mit einstündiger TTL ist synthetisch getestet. Nachrichten-
+  Providerzustellung, Route, Timer/Worker und Production-Aktivierung bleiben
+  deaktiviert. Der checksum-gebundene service-role-only Follow-up-Delivery-
+  Ledger ist auf isoliertem Staging angewendet und rollback-only abgenommen:
+  Commit `18a6ad79`, Apply `33867831888`, Acceptance `33867922978`.
+  Der Service ist weiterhin unverdrahtet. Geschützter Einzelsende-Auslöser,
+  Receipt-Integration, aktuelle Geräte-/Provider-Abnahme und produktiver
+  Versand fehlen; die unabhängig geprüften EAS-, Staging-App-, Staging-
+  Supabase- und Production-Supabase-Bindings bleiben Pflicht. Die zusätzliche
+  Nachrichten-Reservation ist durch die Follow-up-Abnahme nicht akzeptiert;
+- checksum-festgeschriebener, strikt Staging-only Kontrollpfad für diese
+  Push-Tabelle: ein read-only Ressourcencheck, ein separat bestätigter
+  Migrations-Apply und eine rollback-only Acceptance sind vorbereitet. Jeder
+  Lauf ist an `main`, den manuell bestätigten exakten Commit und das geschützte
+  `staging`-Environment gebunden; Production-API, -Supabase und -DB-Host sind
+  ausgeschlossen. Die Acceptance verwendet nur synthetische Nicht-Demo-
+  Owner/-Member/-Geräte, prüft Browserverweigerung und service-role CRUD und
+  aktiviert weder echte Tokens noch Zustellung;
+- nativer Splashscreen mit bestätigter FanMind-Wortmarke, eigenständiges
+  hochauflösendes FanMind-App-Icon für iOS/Legacy-Android, sicher skaliertes
+  Android-Adaptive-Foreground sowie vorbereitete deutsche/englische
+  Store-Metadaten;
+- iOS-Privacy-Manifest mit den Required-Reason-APIs der installierten nativen
+  Bibliotheken, ohne Tracking-Domains, fail-closed Android-API-36-Nachweis und
+  getrennte technische Entwürfe für Apple App Privacy sowie Google Play Data
+  Safety;
+- fail-closed Store-Preflight für Apple-/Google-Zeichenlimits, bestätigte
+  Wortmarke, native 1024×1024-Iconverträge, reproduzierbares
+  512×512-Play-Icon und 1024×500-Feature-Grafik, App-IDs, sechs synthetische
+  Screenshot-Slots, Apple-Metadaten-Handoff und eine 33-Felder-
+  App-Store-Connect-Matrix mit exakter 13/12/8-Trennung in technisch bereit,
+  Owner-/Rechtsentscheidung und Phase-8-Nachweis, exakt EAS CLI `21.2.0` und
+  eine ausschließlich interne Android-Draft-Submission ohne Portalzugriff;
+- erster iOS-Store-Scope bewusst iPhone-only; iPad bleibt bis zu einer
+  separaten Layout-, Geräte- und Screenshot-Abnahme nicht freigegeben;
+- eigener SDK-57-Development-Client sowie explizite EAS-Umgebungen;
+- separate Mobile-CI mit TypeScript, Expo Doctor, Architekturgrenze, Android-/iOS-JavaScript-Bundles, isoliertem Native-Prebuild sowie echtem Android-Debug-APK und codesign-freier iOS-Simulator-App als reine Build-Nachweise.
+- manueller, `main`-gebundener Read-only-Ressourcencheck für die externe
+  EAS-Projektbindung, App-Identität und getrennte öffentliche
+  Development-/Preview-/Production-Konfiguration. Die geschützten
+  Owner-/Projektwerte ergänzen die statische Expo-Konfiguration erst bei der
+  Laufzeitauswertung; ohne Build, Submit, Update oder Signing-Credentials.
+- separater manueller, `main`- und Environment-gebundener Queue-Ablauf für
+  genau einen signierten internen Development- oder Preview-Build; erst nach
+  demselben Ressourcencheck, mit eingefrorenen vorhandenen Credentials und
+  ohne Submit, Update, Production-Profil oder Ausgabe von Build-IDs/URLs. Nach
+  einer validierten Queue-Antwort bindet eine read-only `build:view`-Prüfung
+  den Endstatus und das interne HTTPS-Artefakt an denselben Commit, dieselbe
+  Plattform und dasselbe Profil.
+
+Noch nicht als ausgelieferte Store-App freigegeben:
+
+- realer E-Mail-/Gerätetest für `fanmind://reset-password`; der exakte Redirect
+  ist seit 30. August 2026 in der bestätigten Production-Auth-Allowlist
+  gespeichert, ersetzt aber noch keinen positiven/negativen Recovery-Beleg;
+- vollständiger privater, receipt-gebundener 19-Punkte-Gerätenachweis auf
+  Android einschließlich Recovery, Offline-Grenzen, Branding und
+  Account-Löschanfrage; auf Owner-Entscheidung erst nach Installation des
+  bestehenden AAB aus dem Play-Test-Track;
+- visuelle App-Icon-Abnahme sowie reale Push-Berechtigungs- und
+  Registrierungsabnahme im signierten Build; echte Zustellung erst nach
+  separater Server-/Staging-Freigabe;
+- Der Play-App-Datensatz, die Store-Angaben und das bereits verifizierte
+  Android-`1.0.0`-AAB wurden am 3. September 2026 im geschlossenen Alpha-Track
+  für Deutschland, Österreich und die Schweiz veröffentlicht. Offen bleiben
+  der Start und Nachweis des vom Portal verlangten Tests mit mindestens zwölf
+  angemeldeten Testern über mindestens 14 Tage, der vollständige private
+  Gerätenachweis und der spätere Antrag auf Produktionszugang. Die Alpha-
+  Veröffentlichung ist keine öffentliche Production-Freigabe. Dieses AAB
+  bleibt der bestehende Android-Baseline-Nachweis, wurde aber vor dem nativen
+  `message_received`-/`message_reminder`-
+  Tap-Handler gebaut und kann deshalb die neue Nachrichten-Push-Funktion nicht
+  abnehmen. Deren späterer realer Gerätenachweis erfordert nach den Push-
+  Staging-/Delivery-Ledger-Gates einen separat geprüften signierten Android-
+  Build mit dem gemergten Handler;
+- iPhone-App-Store-Texte, Review-/Tester-Handoff, Screenshotplan, öffentliche
+  HTTPS-Supportseite und die 33-Felder-App-Store-Connect-Arbeitsmatrix sind
+  vorab vorbereitet; Konto-/Rechts-/Steuerwerte bleiben ausdrücklich offen.
+  Apple Developer / App Store Connect, iOS-Build, Gerätenachweis und TestFlight
+  folgen erst in der bewusst nach Phase 7 verschobenen Phase 8.
+
+Mobile führt kein Billing, Referral-Reconciliation, Admin-Operationen, Webhook-Ingestion, externe Kanal-Credentials oder automatische Kommunikation aus. Verbindliche Architektur- und Beta-Details stehen in `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md`.
+
+## 4. Roadmap- und Go-Live-Stand
+
+Die Kanalzuordnung ist verbindlich und darf nicht zwischen Phasen verschoben
+oder doppelt geführt werden: Phase 3 umfasst Facebook, Instagram und WhatsApp.
+Phase 7 umfasst TikTok, X/Twitter, Discord und OnlyFans. Phase 8 bündelt den
+einbettbaren Website-KI-Assistenten, iOS/TestFlight, LinkedIn sowie alle
+weiteren noch zu verbindenden Medien-, Creator-, Review-, Shop- und
+internationalen Plattformen. Für den Website-KI-Assistenten ist bereits eine
+deaktivierte Sicherheits-, Sitzungs-, Widget- und Nachrichteningestion-Basis
+vorbereitet; dieser Teil von Phase 8 ist deshalb begonnen. Zusätzlich ist im
+Repository eine weiterhin inaktive, kontrollierte Übergabestufe vorbereitet:
+Sie bindet Website-Nachrichten atomar an den Workspace-Processing-Vertrag,
+erfasst nach einer vorhandenen Nachricht genau eine ausdrücklich eingewilligte
+Besucher-E-Mail und markiert dieselbe in der bestehenden Fan-Detail-Timeline
+sichtbare Conversation als dringende menschliche Übergabe. Datenbank-Apply,
+Installation und Versand sind nicht aktiviert. KI-Dialog,
+Unsicherheits-gesteuerte Übergabe, E-Mail-Verifizierung und der manuell
+freigegebene Antwortweg zum Besucher bleiben offen. Die übrigen Phase-8-Anbindungen beginnen weiterhin erst nach
+Abschluss von Phase 7 und zählen nicht zum aktuellen Verkaufsübergabe-Gate.
+OnlyFans bleibt auch in Phase 7 eine unverbindliche, vor Umsetzung technisch
+und rechtlich zu prüfende Plattform.
+
+Owner-Entscheidung FM-DEC-015 vom 10. September 2026: Creator Intelligence
+(Phase 7b) und ausgewählte Facebook-/Instagram-/OnlyFans- und KI-Handoff-Arbeit
+beginnen jetzt; Android wird danach abgeschlossen. Jeder Creator erhält einen
+eigenen FanMind-Account mit eigenem Workspace und genau einem Creator-Profil.
+Das bestehende workspace_id trennt Fanwissen, Gespräche, Prompts und Kanäle.
+Teamzugänge, erweiterte Rollen/Rechte, auditierbare Freigaben und die Verwaltung
+mehrerer Workspaces bleiben spätere Phase-11/12-Arbeit.
+
+Das aktuelle Umsetzungspaket erweitert die bestehende Reply-Engine um
+strukturierte Creator-Stimmen/Playbooks, automatische Workspace-Kontextauflösung,
+Memories/Summary-Kontext und Recommended/Softer/Stronger mit konservativer
+Gesprächsempfehlung. Profile sind im KI-Einstellungsbereich editierbar. Neue
+Creator-SQL-Objekte sind auf isoliertem Staging installiert und durch
+34629009649 samt JWT-/Revisions-/PDF-Abnahme belegt. Der tatsächliche
+Prozessschalter und die aktivierte Oberfläche sind noch nicht unabhängig
+abgenommen; Code allein bedeutet keine Live-Aktivierung.
+Bestätigte Kauf-/Angebotsereignisse und Fan-Commercial-Daten sind modelliert
+und über eine quellengestützte manuelle Prüfung erfassbar; die vollständige
+Feedback-Lernschleife und die verblindete Bewertung
+realer Creator-Antworten bleiben offen. Der manuelle OnlyFans-Originalkanalweg
+führt keinen API-Abruf oder Versand aus. Meta bleibt bis zur echten technischen,
+Provider- und Rechtsabnahme Beta. Phase 7b ist keine zusätzliche Voraussetzung
+für die Verkaufsübergabe; alle tatsächlichen Sales-Gates bleiben bestehen.
+Scope und Abnahme: `docs/CREATOR_INTELLIGENCE.md`.
+
+FM-DEC-017 / FM-CR-031 vom 11. September 2026 nimmt auch TikTok und X/Twitter in
+die aktuelle Anbindungsarbeit auf. Implementiert sind offizielle Kontoanmeldung,
+verschlüsselte accountgebundene Tokens, Trennen und eine begrenzte X-DM-Lesevorschau.
+TikTok gibt in diesem Umfang ausschließlich das eigene Profil frei. Der zusätzliche
+Pilot bleibt standardmäßig aus und strukturell auf isoliertes Staging begrenzt;
+das kontrollierte Schema wurde am 11. September durch #1104 / Apply 34591339718
+auf d19254f0 installiert und unabhängig nachgeprüft. App-/Provider-/Budget-/
+Datenschutzabnahme, tatsächlicher Pilotbetrieb und spätere Production-Aktivierung
+bleiben offen. Die Vorschau speichert keine Fans oder Chats im
+CRM und erzeugt keinen weiteren Schreibstil. Discord bleibt später.
+Details: `docs/integrations/TIKTOK_X_CONNECTIONS.md`.
+
+FM-DEC-018 / FM-CR-032 konkretisiert die Anmeldung: FanMind-Login, Kanal auswählen,
+eigene Anmeldung und Zustimmung auf der offiziellen Plattformseite, Rückkehr zum
+gewählten Kanal. FanMind erhält kein Plattform-Passwort; die Entwickler-App wird
+zentral eingerichtet. X hat einen einmaligen, datenbankgebundenen Erstabruf und
+danach manuelle Vorschauen mit unveränderter Begrenzung. Der kontrollierte
+Staging-Schema-Workflow hat die Installation mit Verify 34591253931 und Apply
+34591339718 / POSTFLIGHT=PASS abgeschlossen; Staging Deploy 34591566257 auf
+d19254f0 bestand ebenfalls. Diese datierte Grundlagenabnahme ist keine aktuelle
+Provider-/Pilotabnahme. Vor neuer Zielarbeit Zustand und Berechtigungen prüfen;
+keine erneute Installation der bereits angewendeten Grundlage. Der historische
+Nachweis ist unter EV-SOCIAL-STAGING-FOUNDATION-20260911 registriert; spätere
+Staging-Deploys haben seine Verwendung als aktuellen Zielnachweis bereits
+ungültig gemacht. Für neue Ziel-/Pilotabnahmen ist eine aktuelle Prüfung nötig,
+keine Wiederholung der abgeschlossenen Installation. Der unter #1102 dokumentierte nächtliche Backup-Fehler
+bleibt offen und ist keine neue Voraussetzung für unabhängige Social-Quellarbeit;
+er verhindert weiterhin eine vollständig grüne aktuelle Betriebsabnahme.
+
+FM-DEC-016 vom 11. September 2026 präzisiert: Ein normaler Nutzer ist der
+Creator seines Accounts; jeder Account hat genau einen persönlichen
+Schreibstil. "Stimme"/"Voice" meint ausschließlich geschriebenen Text, keine
+Audioerzeugung oder echte Stimme. Alle Antwortvarianten und Kanäle des Accounts
+verwenden denselben Schreibstil. Nur ein späterer Managerzugang darf mehrere
+getrennte Nutzer-/Creator-Accounts und deren Kanäle betreuen; jede Aktion
+verwendet den Stil und das getrennte Fanwissen des ausgewählten Accounts.
+Managerrechte sind damit nicht aktiviert. Bestehende Legacy-Antwortprofile
+sind keine zusätzlichen Schreibstile; ihr UI-/Runtime-Abgleich bleibt Teil
+der offenen Creator-Aktivierung. Technische Voice-Bezeichner bleiben kompatibel.
+
+Die sichtbaren Phase-5/6-Zeilen werden anhand der bereits vorhandenen Nachweise
+geführt: getrenntes Staging ist abgenommen, der Datenbank-Restore bis
+`DB_POSTCHECKED` geprüft und signierte Android-Artefakte sind vorhanden.
+Offen bleiben der vollständige Restore einschließlich Storage/Server-Konfiguration/
+Bereinigung, echte Registrierungs-/E-Mail-/Workspace-Abnahme und Vertragsfreigabe,
+KI-/Billing-Gesamtabnahme, Security-/Meta-Nachweise sowie Android-Geräte- und
+Push-Zustellung. Die dokumentierte Google-Play-Testveröffentlichung bedeutet
+keine öffentliche Store-Freigabe. Die Roadmap-Korrektur aktualisiert keine
+Provider-Abnahme und aktiviert keine Funktion; die Gesamt-Gates bleiben offen.
+
+Phasen 9 und 10 sind ausschließlich später geplante Roadmap-Richtungen; weder
+"In Arbeit", "In Kürze" noch eine unmittelbare Verfügbarkeit sind dafür belegt.
+Issue #1259 ordnet eine spätere read-only KI-Analyse und Dashboard-Erklärung ein.
+Sie setzt kanonische Analytics-Daten, Tenant-Isolation und AuthZ,
+Datenminimierung, Auditierbarkeit, Capacity-/Kostenkontrolle sowie separate
+Providerfreigaben voraus und aktiviert aktuell keine Funktion. Ein
+TagFilter-Snapshot ist nicht ausgeliefert. ChatAdmin-Fortschritt und
+-Abnahmen bleiben aus der öffentlichen FanMind-Roadmap ausgeschlossen.
+
+Die technische Verkaufsübergabe erfolgt erst nach realer technischer Abnahme
+der erforderlichen Phase-3- und Phase-7-Kanäle. Phase 4 ist deshalb keine
+Verkaufsfreigabe mehr, sondern ausschließlich die abgeschlossene technische
+Produktions- und Billing-Basis. Nach der technischen Übergabe können
+Verkaufsansprache und die separat dokumentierte Rechts-/Steuer-/AVV-Arbeit
+parallel laufen; entgeltliche Aktivierung bleibt dort fail-closed, wo eine
+zwingende externe Freigabe noch fehlt.
+
+### Phase 4 – Produktions- & Billing-Basis technisch abgeschlossen
+
+- Stripe-Live-Schritte: erledigt.
+- Abrechnung & Admin-Basis: erledigt.
+- Profil/Paket/Rechnungen: erledigt.
+- Sales-Unterlagen: vorbereitet unter `docs/sales/`.
+- Produktionsfreigabe: erledigt.
+- Finaler Go-Live-Smoke-Test: erledigt.
+
+### Phase 5 – Produktion und Testumgebung
+
+- Operations-Grundlage: produktiv aktiv. Das Admin Operations Center lädt nach
+  einer erfolgreichen Job-Anforderung sofort neue serverseitige Daten. Solange
+  ein Job `queued`, `claimed` oder `running` ist, aktualisiert die sichtbare
+  Seite alle 15 Sekunden sowie beim Zurückkehren in den sichtbaren Tab; bei
+  erledigten Jobs und im Hintergrund findet kein Polling-Verkehr statt. Jede
+  manuelle Backup- oder Checksum-Verifikationsanforderung verlangt eine
+  ausdrückliche Bestätigung und teilt ein serverseitiges atomares Limit von fünf
+  Anforderungen je Platform-Admin in zehn Minuten. Die Limiter-Identität ist
+  HMAC-SHA256-pseudonymisiert; bei fehlendem Limiter wird kein Job eingereiht.
+  Die notwendige `verify_backup`-Constraint-Erweiterung besitzt einen eigenen
+  checksum-, `main`-, Environment- und Release-gebundenen Production-
+  Verify/Apply-Ablauf mit read-only Vor-/Nachprüfung. Ein normaler Web-Deploy
+  installiert nur diesen root-owned Kontrollpfad und wendet die Migration
+  nicht automatisch an.
+- Release-Checks: automatisch aktiv.
+- Operations-Monitor: Die SHA-256-gebundene Komponenten-Constraint-Migration
+  wurde am 1. August 2026 kontrolliert auf Production angewendet und
+  unabhängig read-only verifiziert. Der Zehn-Minuten-Timer ist aktiv,
+  Operations-E-Mail bleibt deaktiviert. Ein normaler Web-Deploy führt
+  weiterhin keine Datenbankmigration aus. Der manuelle Production-Control-
+  Workflow kann nach gesundem Probe zusätzlich eine feste, E-Mail-freie
+  Warnung-Kritisch-Recovery-Abnahme auf der reservierten technischen
+  Komponente `operations_monitor` ausführen. Timer, Probe und Lifecycle teilen
+  ein exklusives Host-Lock; GitHub erhält nur allowlist-redigierte Ergebnisse.
+  Der reguläre Monitor persistiert zusätzlich den ausschließlich normalisierten
+  Aktivzustand von `nginx.service` über einen unprivilegierten Read-only-Aufruf.
+  nginx-Konfiguration und Journal bleiben ungelesen; ein einzelner CPU-
+  Momentwert wird wegen seines Fehlalarmrisikos nicht als eigener
+  Zehn-Minuten-Zustand geführt.
+- Server-Fehlertelemetrie: Der datensparsame Next.js-Hook, die RLS-geschützte
+  Aggregation und das Admin-Operations-Reader-Modul sind implementiert. Die
+  SHA-256-gebundene Migration wurde am 1. August 2026 auf Production für den
+  exakt erkannten Legacy-Zustand kontrolliert repariert und unabhängig
+  verifiziert. Die reservierte E-Mail-freie Folge Warnung, Kritisch und
+  vollständiges Cleanup war vor und nach der rollback-gesicherten Aktivierung
+  erfolgreich. Auf Release `04f2a472c57559393dd2d9c89575edf0ce8141ba` ist
+  Tracking aktiv; kritische E-Mail bleibt deaktiviert. Der normale Web-Deploy
+  wendet keine Migration an und aktiviert keinen Schalter für eine neue
+  Umgebung. Eine öffentliche Fehler-Teststrecke existiert nicht. Der getrennte
+  read-only Betriebsfenster-Nachweis vom 1. August 2026 bestätigte nach dem
+  erwarteten Aktivierungs-Reload unveränderte 40 PM2-Restarts, 2.213 Sekunden
+  kontinuierliche Uptime, 8/8 Health, denselben Release-Commit, gesunde lokale
+  und externe Backups sowie die unverändert E-Mail-freie laufende Instanz.
+- Production-Audit: Ein dauerhaft installierter, commitgebundener und
+  fail-closed Read-only-Audit läuft nach jedem erfolgreichen
+  Production-Deploy sowie täglich um 04:17 UTC. Er prüft ohne
+  Repository-Checkout und ohne Artifact-Upload den exakten Release,
+  Production-Runtime, alle acht öffentlichen Health-Komponenten, PM2, nginx,
+  Login, Hostressourcen, lokale und Offsite-Backup-Paare, das aktuelle
+  Vollbackup checksum-only und Backup-Worker-Fehler. Audit und
+  Ergebnis-Verifier liegen getrennt vom root-only Operationsverzeichnis
+  root-owned unter `/usr/local/lib/fanmind-audit`; Service-Restarts,
+  Datenbankverbindungen, Entschlüsselung, Restore und Remote-Mutationen sind
+  ausgeschlossen.
+- isolierter Release-Deploy mit atomischem Release-Symlink, PM2-Rolling-Reload,
+  commit-gebundener Next.js-Deployment-ID und öffentlicher
+  Übergangs-Verfügbarkeitsprüfung, Health, Version, Public Smoke, Product
+  Truth, Lint, Operations-Tests, Build und Sprachprüfung sind aktiv. Der
+  steady-state Deploy löscht den laufenden PM2-Prozess nicht mehr; ein
+  nicht-`200` während des Release-Wechsels verwirft den neuen Stand und löst
+  den Rolling-Rollback aus. Die einmalige Fork-zu-Cluster-Umstellung bleibt
+  ein kontrollierter Übergang.
+- Produktions- und Testdaten-Trennung: Fail-closed-Policy, Preflight, Staging-Vorlage und ein ausschließlich manuell auslösbarer, commit-genauer Deploy-Workflow für einen getrennten `fanmind-staging`-Runner sind implementiert.
+- Staging-E-Mail bleibt in der öffentlich erreichbaren App absichtlich
+  unkonfiguriert (`email_config=unknown`). Ein separater, geschützter
+  Provider-Control ist vorbereitet: Er prüft den exakt deployten Main-Commit,
+  GitHub-Environment-Schutz, feste SPF-/MX-/DKIM-Evidenz und einen
+  `sending_access`-Key und darf ausschließlich ein idempotentes synthetisches
+  Resend-Ereignis an `delivered+fanmind-staging@resend.dev` auslösen. Der
+  Control wurde noch nicht ausgeführt; Domain, Key-Scope und Environment sind
+  externe Blocker. Er ersetzt keine reale Signup-, Reset- oder App-Mail-
+  Abnahme und aktiviert keinen App-Mailpfad.
+- Staging-Workspace-Vertrag: Der Browser-INSERT für `anon` und `authenticated`
+  ist im getrennten Supabase-Staging gesperrt; Owner-UPDATE ist auf die
+  definierte zehnspaltige Allowlist begrenzt. Zwei synthetische Nutzer in zwei
+  getrennten Workspaces wurden transaktional auf bidirektionale
+  Mandantentrennung/RLS geprüft und vollständig zurückgerollt.
+- Staging-Daily-Provisioning: Der service-role-only RPC wurde real gegen das
+  getrennte Supabase-Staging ausgeführt. Ein dabei gefundener mehrdeutiger
+  PL/pgSQL-Conflict-Target wurde auf den kanonischen benannten Unique
+  Constraint korrigiert. Erstaufruf, idempotenter Wiederholungsaufruf und genau
+  eine Owner-Membership sind nachgewiesen; die Readiness-Funktion liefert
+  unter dem vorgesehenen `service_role`-Claim `ready=true`. Production wurde
+  dafür nicht verändert.
+- Triggerfunktions-Härtung: Der checksum-gebundene Staging-Pfad ist abgenommen.
+  Der getrennte Production-Kontrollpfad ist vorbereitet: Der normale Deploy
+  installiert ausschließlich root-eigene, nicht aktivierte Artefakte. Verify
+  und Apply sind manuell, aktionsspezifisch bestätigt, an `main`, den exakten
+  Live-Commit, den Production-Runner und das geschützte `production`-
+  Environment gebunden; davor und danach muss der vollständige read-only
+  Production-Audit grün sein. In Production sind derzeit drei veränderliche
+  Triggerfunktions-Suchpfade und beim optionalen alten Retention-Trigger zwei
+  Browser-`EXECUTE`-Warnungen offen. Production-DDL wurde nicht ausgeführt und
+  bleibt bis zu einer erneuten ausdrücklichen Freigabe gesperrt. Runbook:
+  `docs/operations/TRIGGER_FUNCTION_HARDENING_PRODUCTION.md`.
+- Umgebungs-Governance: schreibende Remote-Tests sind außerhalb eindeutig identifizierter Staging- oder Testumgebungen blockiert.
+- Restore-Drill: Zielgrenzen, transaktionaler Runner und ein strikt redigierter Evidence-Validator sind implementiert. Vor jeder geschützten Phase prüft ein root-owned, SHA-gebundenes und secretfreies Host-Gate die erwartete Runner-Identität `fanmind-restore-01` und die feste lokale Toolchain. Das Repository ist als `FanMind/FanMind` organisationsgeführt; die Self-hosted-Jobs verlangen die ausgewählte Organisationsgruppe `fanmind-restore-drill` plus fünf exakte Labels und die auf genau drei `main`-Restore-Workflows begrenzte Allowlist. Die Labels allein sind keine Sicherheitsgrenze, und die veränderliche Gruppenrichtlinie muss vor jedem späteren R4-Schreibschritt erneut geprüft werden. Der geschützte Read-only-Lauf `32582640853` auf Commit `b75f68ecc7999a9b492051aecc2421b9b597dd18` bestätigte am 2026-08-22 die Host-/Gruppenbindung, einen mit dem root-owned Ubuntu-Truststore verifizierten TLS-Checkout, das verschlüsselte Full-Backup im checksum-only-Modus sowie den isolierten PostgreSQL-17-Zielkatalog mit TLS `verify-full`, allen drei Rollen und `pgcrypto`; keine Entschlüsselung und kein Write liefen. Ressourcen- und Datenbankworkflow benötigen jeweils zwei frische One-Job-JIT-Runner; ein persistenter Host oder das Label allein genügt nicht. Der getrennte commit-genaue Datenbank-Workflow wiederholt alle Gates, friert age-Identity, Passfile und CA symlink-sicher ein, erzwingt TLS `verify-full` und stellt nach dem Restore ausschließlich drei kurzlebige private Receipts bereit. Das vertrauliche Full-Backup-Receipt enthält die begrenzte Liste erforderlicher Datenbankrollennamen für die Prewrite-Prüfung; Runner- und Postcheck-Receipt bleiben namenfrei. Der Datenbankpfad verwendet einen isolierten, selbst kontrollierten PostgreSQL-17-Cluster statt eines gehosteten Supabase-Ziels, archiviert Owner und ACLs aus demselben exportierten Snapshot und bindet Objekt-/ACL-, Rollen- und Datenbank-Containerfingerprints durch Manifest und Receipts. Der abgeschlossene Datenbank-Restore ist mit vollständigem Owner-/ACL-/Rollen-/Container-/Extension- und 5/5-Kerntabellen-/RLS-/Policy-Postcheck als `DB_POSTCHECKED` akzeptiert und darf nicht wiederholt werden. Für die nächste Phase kann der Full-Backup-Verifier das verschlüsselte Storage-Teil nur nach exakter Manifest-, Pfadset-, Größen- und Hashprüfung als privates mode-`0600`-Archiv plus bindendes Receipt vorbereiten; der getrennte Receipt-Validator prüft diese Bindung erneut. Ein lokaler synthetischer Write-Controller beweist zusätzlich Target-empty, exakte Postwrite-Gleichheit, Sperren gegen Production und das kanonische FanMind Staging sowie Rollback nach einem simulierten Teilfehler. Die Owner-Entscheidung vom 2026-09-07 lehnt ein zusätzliches Supabase-Wegwerfziel ab; deshalb fand keine externe Storage-Mutation statt und `STORAGE_RESTORED` bleibt unbewiesen. Server-Konfiguration, Wegwerfziel-Cleanup und finale Evidenznachweise bleiben ebenfalls offen.
+- Mobile-Release: Ein eigener manueller `main`-gebundener
+  Read-only-Ressourcencheck prüft pro geschützter
+  `mobile-development`-, `mobile-preview`- oder `mobile-production`-Umgebung
+  nur die EAS-Projektbindung, die native App-Identität und die drei erlaubten
+  öffentlichen Clientwerte. Build, Submit, Update und Signing bleiben
+  deaktiviert. Preview ist über den geschützten Lauf `33298699290` auf dem
+  exakten Merge `6a2f5b6c9bac1607ecc2ccae11c6ade3cb418522` bestätigt; Production
+  wurde über Lauf `33316105624` auf dem exakten Merge
+  `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` erneut bestätigt.
+- Mobile-Signing: Ein getrennter manueller Workflow ist als kontrollierte
+  Brücke zu signierten internen Builds vorhanden. Er akzeptiert nur
+  `development` oder `preview`, Android oder iOS, prüft zuerst Projektbindung
+  und öffentliche Umgebung, friert bestehende Credentials ein und reiht genau
+  einen Build ohne blockierenden Queue-Aufruf ein. Anschließend prüft er den
+  EAS-Endstatus read-only und akzeptiert nur ein erfolgreich abgeschlossenes
+  internes HTTPS-Artefakt für exakt denselben Commit, dieselbe Plattform und
+  dasselbe Profil. Ohne externe EAS-Einrichtung und vorher
+  vorhandene Signing-Credentials schlägt er vor dem Queue-Versuch fail-closed
+  fehl. Nach begonnenem EAS-Aufruf wird eine fehlende oder ungültige
+  Queue- oder Abschlussantwort als nicht automatisch wiederholbarer, unklarer Zustand
+  ausgewiesen und muss zuerst direkt im geschützten EAS-Projekt geprüft werden;
+  auch ein bestätigtes internes Artefakt ist noch kein Geräte-, Push-, Recovery-
+  oder Store-Nachweis. Der geschützte Android-Preview-Lauf `33298699290`
+  lieferte ein verifiziertes internes Artefakt; die begrenzte UI-/Runtime-
+  Abnahme ist akzeptiert, der vollständige private 19-Punkte-Nachweis bleibt
+  getrennt offen.
+- Mobile-Android-Store-Build: Ein zweiter, ausschließlich Android/
+  `production` erlaubender manueller `main`-Workflow führt
+  nach der Lockfile-Installation auf dem exakten Commit zuerst
+  `npm run store:check` aus, revalidiert anschließend EAS-Projekt und
+  öffentliche FanMind-Production-Ziele und verwendet nur bereits vorhandene,
+  eingefrorene Signing-Credentials. Er akzeptiert genau ein terminal
+  erfolgreiches Store-Artefakt für denselben Commit und speichert nur einen
+  redaktierten Receipt. Der geschützte Lauf `33316172583` schloss auf
+  `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00` genau ein Android-`1.0.0`-AAB
+  erfolgreich ab. Submit und Update blieben technisch deaktiviert; der
+  Workflow erzeugte weder einen Play-App-Datensatz noch eine Veröffentlichung.
+  Das bestehende AAB bleibt das Artefakt für den späteren Play-App-Datensatz,
+  Test-Track und den bestehenden Android-Baseline-Nachweis; es wurde vor dem
+  nativen `message_received`-/`message_reminder`-Tap-Handler gebaut und kann
+  deshalb die neue Nachrichten-Push-Funktion nicht abnehmen. Deren späterer
+  realer Gerätenachweis erfordert nach den Push-Staging-/Delivery-Ledger-Gates
+  einen separat geprüften signierten Android-Build mit dem gemergten Handler.
+- Mobile-Geräteabnahme: Der erfolgreiche signierte Build erzeugt nur einen
+  kurzlebigen redigierten Receipt ohne Build-ID oder Artefakt-URL. Der private
+  Android-/iOS-Gerätenachweis wird an dessen SHA sowie den exakten geprüften
+  `main`-Commit gebunden und umfasst Login, Recovery-Negativgrenzen, Neustart,
+  Offline-Fail-closed-Grenzen, Logout-Purge, Branding und Account-Löschanfrage
+  samt Widerruf. Push bleibt darin optional und bis zu den getrennten
+  Staging-Gates gesperrt.
+- Mobile-Push-Staging: Die Migration
+  `20260729120000_mobile_push_registrations.sql` ist mit ihrer SHA-256-Prüfsumme
+  festgeschrieben und auf dem getrennten Supabase-Staging mit aktivem RLS
+  angewendet. Der getrennte Ressourcenworkflow liest nur Staging-Ziel und
+  synthetische Nicht-Demo-Principals und kann vor dem Apply laufen. Migration
+  und rollback-only Acceptance besitzen unterschiedliche Freigaben und einen
+  gemeinsamen exklusiven Staging-Schreib-Lock. Die Acceptance prüft `anon`,
+  Owner und Member als nicht schreibberechtigt, führt synthetisches
+  service-role CRUD vollständig transaktional aus und verlangt danach einen
+  leeren Cleanup-Nachweis. Kein normaler Deploy kann den Runner aufrufen; reale
+  Geräte-/Provider-Abnahme und Delivery bleiben offen. Die Registrierungs-
+  Migration und ihre rollback-only Acceptance sind durch `33800376282` und
+  `33800742158` auf `084e19c8` belegt; die spätere Registrierungs-Runtime ist
+  konfiguriert. Ein aktueller realer Gerätebeleg fehlt weiterhin.
+- Mobile-Push-Delivery: feste Expo-HTTPS-Endpunkte, unabhängige EAS-
+  Projektbindung, Workspace-/Member-/Kontakt-/Follow-up-/Registrierungsprüfung,
+  Minimalpayload mit einstündiger TTL sowie Retry-, Ticket- und Receipt-
+  Entscheidung sind lokal mit einem synthetischen Provider geprüft. Zusätzlich
+  ist repositoryseitig eine datenschutzarme Policy für `message_received` und
+  höchstens eine gebundene `message_reminder`-Entscheidung vorbereitet; ein
+  gültiger Tap wartet auf Auth und öffnet ausschließlich den exakt gebundenen
+  Fan in `Nachrichten`. Nachrichten-Providerzustellung, Route/Timer/Worker
+  und Production-Aktivierung bleiben deaktiviert. Der atomare Follow-up-Ledger
+  ist auf isoliertem Staging angewendet und rollback-only abgenommen; sein
+  Service besitzt weiterhin keinen Runtime-Aufrufer. Der
+  server-only Loader und die spätere Ledger-Reservation erhalten exakt
+  dasselbe bereits geprüfte Supabase-URL-/Ref-/Service-Role-Binding; die
+  Reservation muss außerdem den aktuellen Registrierungs-/Token-Fingerprint
+  atomar binden. Die installierte service-role-only Revalidierungs-RPC allein
+  aktiviert keinen Sender; die eigenständige Versandintegration und ihre
+  Abnahme fehlen. Eine CI-Invariante schützt diese Dormanz. Production bleibt
+  strukturell gesperrt.
+  Der erste geschützte read-only Staging-Postflight gegen `main`
+  `283797c1fe6c14d5e9e814d8f8ec83cf9e249483` bestätigte am 2026-09-03
+  Zielbindung und Ledger-Prüfsumme, endete aber erwartungsgemäß mit
+  `postflight_failed`, weil das Delivery-Ledger damals noch nicht angewendet
+  war. Dieser historische Ausgang wurde durch den erfolgreichen Apply
+  `33867831888` und die rollback-only Acceptance `33867922978` auf `18a6ad79`
+  abgelöst. Diese Läufe sind keine Lieferfreigabe und kein Auftrag zur
+  Wiederholung; aktuelle Geräte-/Provider-Evidenz bleibt offen.
+- Website-Chat bleibt bis zur getrennten Staging- und Rechtsabnahme
+  deaktiviert. Seine Sicherheitsgrundlage darf nur workspace-gebundene,
+  standardmäßig deaktivierte Installationen, exakt verifizierte HTTPS-Origins,
+  ausdrücklichen versionsgebundenen Consent und kurzlebige HMAC-referenzierte
+  Besuchersitzungen verwenden. `public`, `anon` und `authenticated` erhalten
+  keinen direkten Tabellenzugriff. Der öffentliche Session-Endpunkt muss
+  bounded, atomar rate-limitiert, fail-closed und CORS-exakt bleiben. Ein
+  öffentlicher Installationswert ist kein Geheimnis. Die getrennte
+  Nachrichteningestion akzeptiert nur ein gültiges Sitzungstoken derselben
+  Installation und Origin, verarbeitet Client-UUIDs idempotent und erzeugt
+  ausschließlich einen workspace-gebundenen Kontakt, eine Conversation und
+  eine eingehende Inbox-Nachricht. Receipt-Daten enthalten keinen
+  Nachrichtentext. Die Ingestion benötigt zusätzlich einen atomaren
+  DB-Processing-Entitlement-Check in derselben Transaktion; ohne diesen Check
+  bleibt jede Installation gesperrt. Das vorbereitete cookie-freie
+  Einweg-Widget verlangt aktiv bestätigten Consent, hält sein Sitzungstoken
+  ausschließlich im Speicher und
+  sendet je Nachricht eine Client-UUID. Es stellt keinen Zweiweg-Chat dar;
+  Besucher-KI, automatische Antworten und Outbound-Versand bleiben
+  unverdrahtet.
+- Die vorhandene Source für öffentlichen Website-Support und authentifizierte
+  In-App-Hilfe wird gemäß Issue #1350 und
+  `docs/operations/WEBSITE_SUPPORT_ASSISTANT_PLAN.md` weiterverwendet, nicht
+  neu gebaut. Offen bleiben die Web-/Staging-Zielabnahme, kontrollierte
+  Schema-Installation, Feature-Flag-Freigaben sowie Provider-, Rechts- und
+  Datenschutzabnahme. Diese Support-Gates sind von Mobile-Geräte- und
+  Store-Abnahmen getrennt; kein Mobile- oder Store-Gate blockiert Websupport.
+- Meta-Content-Staging: Die zwei Migrationen
+  `20260803120000_meta_content_intelligence_foundation.sql` und
+  `20260803210000_preserve_incremental_conversation_history.sql` sind
+  checksum-festgeschrieben und auf dem getrennten Supabase-Staging
+  angewendet. RLS, die neuen Analyseobjekte und Indizes, die fortlaufende
+  Historie, das Entfernen des alten 50er-Löschtriggers und die
+  tenant-spezifischen Meta-Idempotenzindizes wurden katalogseitig
+  nachgeprüft. Ein vorgelagerter manueller Read-only-
+  Ressourcencheck bindet ohne Schreibfreigabe den exakten `main`-Commit, das
+  getrennte Ziel, den IPv4-kompatiblen Supabase-Supavisor-Session-Pooler auf
+  Port `5432`, den aus der Staging-Projektreferenz abgeleiteten DB-Benutzer und
+  den Schema-Zustand; partielle oder driftende Zustände werden gesperrt. Der
+  getrennte manuelle Apply läuft ausschließlich auf
+  `main`, für den exakt geprüften Commit und gegen ein per Origin,
+  Supabase-Projektreferenz und projektqualifizierter Datenbankidentität von
+  Production getrenntes, TLS-verifiziertes Staging. Der read-only Postflight
+  prüft RLS, nur lesende
+  Browser-Policies und -Spaltenrechte, Tokenausschluss, Service-Role-Zugriff,
+  Indizes, Kontextbedingungen und die Entfernung des alten 50er-Löschtriggers.
+  Ein Wiederholungslauf überspringt SQL nur nach vollständigem Postflight;
+  partielle oder abweichende Schemata bleiben fail-closed. Web-Deploy,
+  Meta-Kontoverbindung, Analyse, App-Review-Einreichung und Production-
+  Migration bleiben davon getrennt und deaktiviert. Runbook:
+  `docs/operations/META_CONTENT_STAGING_MIGRATION.md`.
+- Die begrenzte Facebook-/Instagram-Conversation-Pagination und ihre
+  server-only Fortsetzungsfelder sind mit
+  `20260811220000_meta_conversation_sync_continuation.sql` vorbereitet. Die
+  zugehörigen Spalten und Constraints wurden am 26. August 2026 im getrennten
+  Supabase-Staging als vorhanden beobachtet; FM-EV-023 hat den exakten
+  Migration-Ledger-Zeitstempel jedoch nicht separat nachgewiesen. Production
+  bleibt unangewendet. Pro
+  Ausführung wird innerhalb eines festen 45-Sekunden-Zeitbudgets höchstens eine
+  Provider-Seite mit bis zu 25 Conversations verarbeitet. Solange Meta eine
+  Folgeseite liefert, bleibt
+  `last_messenger_sync_at` unverändert; erst nach vollständiger Erschöpfung
+  rückt der globale Abschlusszeitpunkt auf den Start des ursprünglichen
+  Intervalls vor. Fehler bewahren den Cursor und Wiederholungen bleiben über
+  externe Nachrichten-IDs idempotent. Der exakte read-only Staging-Verify-Lauf
+  `33007311870` bestätigte am 26. August 2026 die vorhandenen Spalten, den
+  gemeinsamen Rollout-State `PASS`, Paar-/Cursor-Constraint, Browser-Sperren
+  und den vollständigen Transaktions-Rollback; Apply wurde nicht angefordert.
+  Der checksum-gebundene, exakter-Commit-, TLS- und Staging-gebundene
+  Apply-/Verify-Pfad bleibt für kontrollierte Revalidierung erhalten. Vor jeder
+  späteren Staging-Datenbankaktion muss zuerst ein frischer gemeinsamer
+  read-only Rollout-Entscheid für denselben Commit und dasselbe Ziel vorliegen;
+  aus vorhandenen Objekten allein darf weder „Apply abgeschlossen“ noch ein
+  erneutes Apply abgeleitet werden. Eine spätere Aktion muss Ledger und Objekte
+  gemeinsam als `verify`, `skip`, `apply` oder `block` klassifizieren; partielle oder
+  widersprüchliche Zustände blockieren. Der echte Meta-Kontotest und jede
+  Production-Migration bleiben vor Aktivierung getrennt offen. Runbook:
+  docs/operations/META_CONVERSATION_CONTINUATION_STAGING.md.
+- Inbound-Meta-Webhooks führen keine Graph-Historien- oder Profilabfrage mehr
+  innerhalb des HTTP-Requests aus. Die vorbereitete
+  `meta_conversation_catchup_jobs`-Queue ist strikt an Workspace,
+  Social Connection, Plattform und Fan-Thread gebunden, bündelt doppelte
+  offene Aufträge atomar und verwendet generationserhaltende Leases,
+  höchstens fünf Versuche, Backoff sowie `dead_letter`/`cancelled`. Tabellen-
+  und RPC-Zugriff sind ausschließlich serverseitig für `service_role`
+  vorgesehen; Worker-Protokolle enthalten nur feste Status-/Fehlercodes und
+  Zähler. Vertragsende oder fehlender Verarbeitungsanspruch stoppt den
+  Hintergrundabruf fail-closed, ohne vorhandene CRM-Historie zu löschen.
+  Controlled SQL ist vorbereitet; Queue-Tabelle, Indizes und drei server-only
+  Funktionen wurden am 26. August 2026 im getrennten Supabase-Staging als
+  vorhanden beobachtet. Als kontrollierter Schritt liegt die Queue absichtlich
+  nicht im Supabase-Migrationsledger. Der exakte read-only Lauf `33007481167`
+  bestätigte Postflight und vollständigen Transaktions-Rollback, ohne Apply
+  anzufordern. Erst der vollständige Objekt-/ACL-/Funktions-Postflight, nicht
+  die bloße Tabellenpräsenz, entscheidet zwischen `verify`, `apply` und
+  `block`. Worker und Systemd-Vorlage
+  bleiben nur vorbereitet; `FANMIND_META_CATCHUP_QUEUE_ENABLED` ist
+  standardmäßig aus. Weder Worker-Aktivierung noch Staging-/Production-Deploy
+  werden durch den normalen Web-Deploy ausgeführt. Zusätzlich ist ein
+  exakter-Commit-gebundener,
+  rollback-only Staging-Acceptance-Pfad vorbereitet. Er akzeptiert nur den
+  markierten synthetischen Workspace, verlangt eine bereits vollständig
+  verifizierte Queue-Migration und prüft ohne Meta-, Analyse- oder Versandaufruf
+  Browser-Sperren, Workspace-/Connection-/Kontakt-Scope, Coalescing,
+  Generationserhalt, Lease-Exklusivität und -Übernahme sowie fünf Retries bis
+  `dead_letter`; danach müssen alle synthetischen Zeilen verschwunden sein. Der
+  getrennte synthetische Acceptance-Ablauf steht in
+  `docs/operations/META_CATCHUP_QUEUE.md` und ist noch nicht extern ausgeführt.
+  Worker-/Webhook-E2E, Aktivierung und Meta-Testkonto bleiben eigene offene
+  Gates.
+- Die gemeinsame Workspace-Verarbeitungsgrenze besitzt zusätzlich einen
+  getrennten rollback-only Staging-Acceptance-Pfad. Er ist an `main`, den
+  exakten geprüften Commit, das geschützte Staging, den gemeinsamen read-only
+  Rollout-State und einen speziell markierten synthetischen Workspace
+  gebunden. Innerhalb einer vollständig zurückgerollten Transaktion werden
+  aktives Billing, Archivierung, Vertragsende, Suspendierung, Grace, manueller
+  Override, temporärer Testzugang, Ablauf und Reaktivierung gegen die
+  kanonische Policy geprüft. Der Pfad ruft weder Meta noch Stripe auf,
+  aktiviert keinen Worker und ersetzt nicht den späteren Webhook-/Cursor-E2E-
+  Test. Runbook:
+  `docs/operations/WORKSPACE_PROCESSING_STAGING_ACCEPTANCE.md`.
+- Das separate Supabase-Staging-Projekt sowie die getrennte Web-Staging-
+  Runtime mit eigenem `fanmind-staging`-Runner, eigener DNS-/TLS-Bindung und
+  eigenem Exoscale-Ziel sind vorhanden. Der isolierte Stripe-Testkatalog mit
+  fünf Testpreisen einschließlich KI Plus/Ultra ist read-only nachgewiesen.
+  Die exakte Test-Webhook-Konfiguration ist read-only nachgewiesen und der
+  signierte mutationsfreie Bindungs-Smoke wurde mit HTTP 200 abgeschlossen;
+  eine echte Stripe-Testzustellung und der Billing-Lifecycle bleiben getrennt
+  offen. Für die
+  dauerhaften synthetischen E2E-Identitäten ist ein kontrollierter,
+  commit-genauer Staging-Provisionierungspfad vorbereitet. Er verwendet die
+  vorhandene Workspace-Provisionierungs-RPC, erzeugt zwei getrennte Workspaces
+  und einen zusätzlichen AI-Member und gibt nur die sechs nicht geheimen
+  UUID-Zuordnungen aus. Der reale Lauf und die anschließenden Browser-/Billing-
+  Abnahmen sind noch nicht erfolgt. Runbook:
+  `docs/operations/STAGING_SYNTHETIC_FIXTURES.md`. Die Core-/CSV-Abnahme nutzt
+  danach keinen persistenten Member-Zugang, sondern den getrennten
+  kurzlebigen Lifecycle aus
+  `docs/operations/STAGING_EPHEMERAL_MEMBER_CREDENTIAL.md`.
+
+Die noch fehlenden Stripe-Webhook-/Lifecycle-Abnahmen blockieren nicht den
+read-only Produktions-Smoke-Test. Sie bleiben Voraussetzung für Referral-
+Lifecycle- und andere schreibende Nicht-Production-Tests. Der Restore-Drill
+verwendet niemals die bereits migrierte Staging-Datenbank, sondern ein eigenes
+leeres Wegwerfziel.
+
+## 5. Kommerzielle Wahrheit
+
+Alte Preise wie `299 €/Monat`, `499 €/Monat` oder `Agency ab 990 €/Monat` dürfen nicht wieder eingeführt werden.
+
+| Paket | Status | Preis / Logik |
+| --- | --- | --- |
+| Öffentliche Demo | aktiv | kostenloser temporärer Demo-Zugang; kein entgeltliches Paket |
+| Starter Flex | aktiv | 990 € Einrichtung + 312 €/Monat; Kündigung zum Ende des laufenden bezahlten Abrechnungsmonats |
+| Starter 12 Monate | aktiv | 0 € Setup + 312 €/Monat; 12 Monate Mindestlaufzeit, danach monatliche Verlängerung |
+
+Starter-Abos können unter `/settings/package` sicher zum Vertragsende gekündigt werden. Starter Flex endet frühestens zum bezahlten Periodenende; Starter 12 Monate frühestens zum Ende der Mindestlaufzeit. Nach Vertragsende bleiben Account, Login, CRM-Historie, Rechnungen und Export sichtbar; neue Nachrichten, Channel-Sync, externe Ingress-Webhooks, KI-Vorschläge, KI-Analysen und kostenpflichtige Hintergrundverarbeitung sind fail-closed zu deaktivieren.
+| Daily | Interne, manuell ein-/ausschaltbare Beta, FM-DEC-019 | 0 € Setup + 1 €/Tag; täglich kündbar; kein Referral-Rabatt; vorhandene Daily-Engine/Prices bleiben erhalten. Kontoauswahl offen, kostenpflichtige Aktivierung benötigt weiterhin Vertrags-, Tax-, Workspace- und Billing-Nachweise. |
+| Growth | Coming Soon | nicht produktiv buchbar |
+| Agency | Coming Soon / auf Anfrage | nicht als Vollversion freigeschaltet |
+| Enterprise / Custom | später | individuelle Prüfung |
+
+### KI-Leistungsstufen
+
+KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
+
+- **KI Standard** ist im Starter-Basispaket enthalten.
+- **KI Plus** kostet zusätzlich 100 €/Monat und bleibt bis zur Freigabe der Modelle, Kontingente und Billing-Items Coming Soon.
+- **KI Ultra** kostet zusätzlich 200 €/Monat und bleibt bis zur Freigabe der Modelle, Kontingente und Billing-Items Coming Soon.
+- FanMind Core umfasst einen Creator/Workspace, KI Standard und zehn
+  Social-/Kommunikations-Connections. Je weitere fünf Connections sind als
+  getrenntes Add-on für 49 €/Monat vorgesehen.
+- Agency bleibt Coming Soon. Selbstzahlende Creator werden der Agentur nicht
+  nochmals verrechnet. Bei Agenturzahlung gelten ein Hub zu 312 €/Monat plus
+  Creator-Lizenzen mit 0 % für 1-4, 5 % für 5-9, 10 % für 10-19 und 15 % ab
+  20 Creator.
+- `src/config/aiTiers.mjs` ist die technische Source of Truth.
+- `npm run ai:tiers:readiness` gleicht Status, Modell-/Fallback-Zuordnung,
+  Kontingente, Stripe-Items, Workspace-Contract, serverseitige
+  Kontingentdurchsetzung, Stripe-Lifecycle, Qualitäts-/Kostenfreigabe,
+  Staging-Akzeptanz, Recht/Steuer, Runtime-Integration und ausdrückliche
+  Production-Aktivierung stufenspezifisch und redigiert ab; aktuell muss
+  Standard bereit und Plus/Ultra blockiert sein.
+- `docs/operations/AI_TIER_DECISION_PROPOSAL.md` bündelt die noch offenen
+  Modell-, Kontingent-, Overage- und Wechselentscheidungen ohne
+  Aktivierungswirkung. Solange die Matrix nicht vollständig schriftlich
+  freigegeben ist, bleiben Plus und Ultra fail-closed.
+- `docs/operations/AI_TIER_COST_AND_QUOTA_RECOMMENDATION.md` und
+  `src/config/aiTierRecommendation.mjs` liefern dazu eine datierte,
+  reproduzierbare Arbeitsempfehlung mit Kosten-Szenarien. Sie werden von
+  produktiven KI-Pfaden nicht importiert, ersetzen keine schriftliche
+  Entscheidung und aktivieren keine Stufe.
+- `npm run ai:tiers:recommendation` prüft diese Arbeitsmatrix offline und
+  redigiert; die aktive Policy behält bis zur Freigabe ihre `null`-Felder.
+- `npm run ai:reply-quality:eval` prüft ein privates, von Git ausgeschlossenes
+  Ergebnis eines verblindeten Antwortqualitäts-Evals. Der Prüfer akzeptiert
+  keine Prompt- oder Antworttexte, Reviewer-Identitäten, Kontaktwerte oder
+  Provider-Modellnamen, gibt nur aggregierte Basiswerte je KI-Stufe aus und
+  meldet immer `activation=none`. Ein valides Ergebnis füllt keinen
+  `UNENTSCHIEDEN`-Wert und aktiviert weder Plus noch Ultra.
+- Die Admin-KI-Auswertung zählt Kontakte je Workspace über exakte
+  PostgREST-Count-Header, unabhängig von Zeilen-Pagination, und zeigt
+  geschätzte Kosten pro Fan sowie pro 100/1.000 Fans. Ohne positive Fan-Basis
+  bleibt die Verhältnisanzeige leer statt eine scheinpräzise Zahl zu erfinden.
+  Der Zeitraum ist auf validierte Schnellansichten für 24 Stunden sowie 7, 30
+  und 90 Tage begrenzt; zusätzlich werden Anfragen, geschätzte Kosten, Tokens
+  und Fehler je verwendetem Modell aggregiert. Erfolgreiche, konsistente
+  Usage-Ereignisse werden je Feature zusätzlich als nearest-rank P50-, P90-
+  und P95-Verteilung für Input-, Output- und Gesamttokens ausgewertet; Fehler,
+  Null-Usage und widersprüchliche Werte zählen nicht zur Stichprobe. Die
+  Auswertung lädt aktuelle und vorherige gleich lange Zeiträume stabil
+  paginiert bis jeweils 10.000 Ereignisse. Optionale interne Monatsbudget- und
+  Spike-Hinweise sind rein
+  beobachtend: ohne Budgetkonfiguration oder bei begrenzten Daten behaupten
+  sie weder Quote noch Entwarnung, blockieren keine KI-Anfrage und ändern
+  weder Billing noch KI-Stufe.
+- Der gemeinsame serverseitige Entitlement-Resolver in `src/config/aiTiers.mjs`
+  behandelt KI Standard als sicheren Default. Plus/Ultra werden nur bei
+  serververwaltetem, aktivem Stripe-Lifecycle, verknüpftem Subscription-Item,
+  gültigem Zeitraum und vollständig positiver zentraler Readiness wirksam.
+  Die Readiness verlangt zusätzlich getrennte Provider-/Fallback-Modelle,
+  Kontingentdurchsetzung, Lifecycle-/Staging-/Qualitäts-/Kosten-/Rechts-/
+  Steuer-Nachweise, produktive Runtime-Integration und eine ausdrückliche
+  Production-Aktivierung je Stufe; jeder andere Zustand fällt auf Standard
+  zurück.
+- Die server-only Tabelle `workspace_ai_tier_entitlements` und ihr redigierender
+  Loader sind als deploy-before-migrate-Brücke vorbereitet. Die Migration ist
+  auf dem getrennten Supabase-Staging angewendet und mit RLS, fehlenden
+  Browser-Policies sowie server-only Zugriff nachgeprüft; auf Production ist
+  sie nicht angewendet. Der echte Stripe-Webhook ruft die serverseitige
+  Lifecycle-Brücke nur auf, wenn ihr eigenes Persistence-Gate, der
+  Workspace-Vertrag und beide unterschiedlichen KI-Price-IDs explizit
+  konfiguriert sind. Produktive KI-Routen verwenden den Speicher weiterhin
+  nicht; Plus/Ultra bleiben zusätzlich durch ihre zentrale Readiness
+  blockiert.
+- Der checksum-gebundene Entitlement-Migrationsrunner besitzt getrennte
+  Offline-Check-, Read-only-Verify- und explizite Apply-Modi. Merge und
+  Web-Deploy wenden die Migration nicht automatisch an; Staging-Abnahme bleibt
+  vor jedem Production-Schritt verpflichtend.
+- Der manuelle Workflow `FanMind AI Tier Staging Migration` bindet den
+  schreibenden Apply zusätzlich an `main`, das GitHub-Environment `staging`,
+  zwei unabhängige Nicht-Production-Schreibfreigaben, getrennte
+  Supabase-Projekt-/Datenbankziele und eine private Passwortdatei. Er endet
+  mit dem read-only Metadaten-Postflight und startet weder die rollback-only
+  Abnahme noch einen Production-Schritt automatisch.
+- Der serverseitige Stripe-Lifecycle-Vertrag akzeptiert nur
+  zwei vollständige, unterschiedliche Price-IDs, eine explizit vollständige
+  Item-Liste, genau ein passendes Subscription-Item und ein zuvor verifiziertes
+  Workspace-Ziel. Alle direkten Workspace-IDs müssen gültig und untereinander
+  sowie mit vorhandenen Stripe-Referenzen identisch sein. Jeder mutierende
+  Eventtyp muss außerdem seine vollständige typisierte Referenzmenge liefern:
+  Invoice und Subscription benötigen Customer plus Basis-Subscription.
+  PaymentIntent-Events müssen Customer plus die neue, typisierte
+  PaymentIntent-ID liefern, werden aber über den stabil gespeicherten Customer
+  aufgelöst, weil wiederkehrende Zahlungen neue PaymentIntent-IDs erzeugen.
+  Refund/Dispute benötigen den PaymentIntent und nutzen den Customer, wenn das
+  Objekt ihn enthält; andernfalls bleibt nur ein bereits gespeicherter
+  PaymentIntent auflösbar. Tax-ID benötigt den Customer. Ein einzelner Treffer
+  neben einer
+  unbekannten oder fremden Referenz innerhalb dieser erforderlichen Menge ist
+  kein Zielnachweis, sondern verlangt Stripe-Retry. Event-lokale Zusatz-IDs,
+  etwa der neue PaymentIntent einer wiederkehrenden Invoice, werden nicht
+  fälschlich als bereits persistierte Tenant-Bindung verlangt. Nur Checkout
+  darf eine noch nicht
+  persistierte Bindung aus übereinstimmender servergesetzter Workspace-
+  Metadatenbindung plus Customer kontrolliert anlegen. Subscription-Events
+  dürfen vor jedem Billing-Write nur die exakt gespeicherte Customer- und
+  Basis-Subscription-Bindung verwenden; ein separates KI-Abo darf die
+  Basis-Subscription nicht überschreiben. Doppelte und
+  ältere Events werden nicht erneut angewendet; unvollständige Item-Listen
+  und beschädigte Perioden stoppen fail-closed. Entfernt ein neueres
+  Subscription-Event das zuvor
+  gespeicherte Plus-/Ultra-Item, wird der Datensatz `canceled` statt stale
+  aktiv belassen. Insert und Update verwenden ohne Upsert eine persistente
+  Event-Grenze. Die auf Staging angewendete, aber nicht für die Runtime
+  aktivierte kontrollierte Erweiterung
+  `workspace_ai_tier_stripe_event_ledger` ersetzt direkte Lifecycle-Writes
+  durch ein service-role-only Event-Ledger und eine atomare RPC mit internem
+  Revisions-CAS. Gleichzeitige Events werden weder nach Event-ID noch
+  willkürlich sortiert: Bei identischer Stripe-Sekunde oder Subscription-
+  Konflikt wird `reconciliation_needed` dauerhaft gespeichert, der Loader
+  fällt auf Standard zurück und der unveränderliche Event darf ohne endlosen
+  Retry bestätigt werden. Eine zweite RPC kann den Zustand nur mit
+  Workspace-/Customer-/kanonischer Basis-Subscription-Bindung, exakt
+  erwarteter bisheriger Entitlement-Subscription, Stripe-Request-ID, Snapshot-
+  Fingerprint und exakt erwarteter Revision auflösen. Der Snapshot-Zeitpunkt
+  wird als dauerhafte Event-Cutoff-Grenze in der Quittung gespeichert und
+  schützt dadurch auch einen Starter-only-Zustand ohne Entitlement-Zeile vor
+  verspäteter Reaktivierung. Der dafür nötige
+  kanonische Stripe-Abruf ist noch nicht verdrahtet. Der aktuelle read-only
+  Katalog-Postcheck bestätigt den installierten leeren Ledger und seine
+  Rechte-/RLS-Grenzen. Die ältere rollback-only Lifecycle-Abnahme lief vor
+  diesem Apply und belegt den angewendeten Ledger-Pfad deshalb nicht. Die
+  Brücke aktiviert keine KI-Stufe und bleibt ohne ihr zusätzliches
+  Ledger-Gate inaktiv.
+- Dieses KI-Ledger umfasst nicht die allgemeinen Billing-Felder auf
+  `workspaces`. Checkout-, Invoice-, Subscription-, PaymentIntent-, Refund-
+  und Tax-Mutationen besitzen nun ein kontrolliertes, auf Staging angewendetes
+  gemeinsames Basis-Billing-Event-Ledger mit kanonischer Reconciliation.
+  Aktualisierung 6. September 2026: Der kontrollierte Staging-Apply und die
+  signierte dauerhafte Capture-only-Abnahme sind inzwischen erfolgreich; die
+  Checkout-Wartungssperre ist aufgehoben. Kanonische Projektion und echte
+  Zahlungs-/Abo-Abnahme bleiben offen. Der Test-Snapshot-Leser und die
+  belegsgebundene Operator-/RPC-Verbindung sind als unverdrahtete Bausteine
+  vorbereitet; KI-/Referral-Adapter und vollständige Provider-Abdeckung fehlen.
+  Nach dem kontrollierten Apply ersetzt zunächst eine zweifach
+  bestätigte Capture-only-Stufe den Legacy-PATCH, ohne Projektionen zuzulassen;
+  erst die dritte kanonische Bestätigung erlaubt Projektionen.
+  Für Apply→Capture gilt ein dokumentierter Billing-Write-Freeze mit
+  anschließender vollständiger DB-Re-Inventarisierung. Ein fehlender Stream mit
+  bestehender Stripe-Identität oder historischer Objektbindung darf selbst bei
+  offenem dritten Gate nicht automatisch `in_sync` werden; nur ein erster
+  signierter Checkout eines vollständig unberührten Workspace darf
+  bootstrapen. Vor der dritten Bestätigung müssen die DB-Postflight-Zähler für
+  offene und nicht inventarisierte Cutover-Zustände beide exakt `0` sein.
+  Insbesondere darf ein
+  verspätetes `invoice.paid` nach `customer.subscription.deleted` nicht ohne
+  eine solche Grenze reaktivieren. Bis Apply, vollständiger kanonischer
+  Cutover, der gemeinsame Basis-/KI-/Referral-Reconciliation-Operator und der
+  echte Stripe-Testlebenszyklus abgeschlossen sind, bleiben produktives
+  Billing und Plus/Ultra blockiert.
+- Die beiden kontrollierten Ledger-Apply-Transporte verlangen denselben exakt
+  eingegebenen und ausgeführten `main`-Commit, das geschützte Staging-
+  Environment, den Session-Pooler mit projektqualifiziertem Datenbankbenutzer,
+  einen separaten und tatsächlich gegen das Ziel verglichenen Production-Host
+  als negativen Vergleichsanker und TLS
+  `verify-full` mit der eingecheckten Supabase-Root-CA. Sie aktivieren keine
+  Runtime-Flags und führen keinen Stripe-Aufruf aus. Vor jedem Apply binden
+  sie den gemeinsamen read-only Rollout-State auf denselben Commit, dasselbe
+  Ziel und dieselbe Passfile und verlangen exakt ihre Ledger-Aktion `apply`
+  plus Gesamtzustand `PASS`; absent, vollständig und partiell werden getrennt
+  ermittelt. Der Basis-Ledger verifiziert Spalten, Constraints/FKs/CHECKs,
+  Indizes, RLS/ACLs und Funktionen einmal in der Apply-Transaktion und danach
+  mit bytegenau an das checksum-gepinnte Control gebundenem Verifier erneut in
+  einer unabhängigen read-only Transaktion.
+- Ein manueller, rollback-only Staging-Abnahmeworkflow ist vorbereitet. Er
+  prüft bei bereits angewendeter Staging-Migration beide aktiven
+  Stripe-Testpreise, Owner-/Member-Sperren, Service-Role-CRUD sowie
+  Duplikat-/Reihenfolgeverhalten, gibt keine internen IDs aus und wendet
+  selbst keine Migration an. Der echte Lauf bleibt bis zur Bereitstellung der
+  Stripe-Testpreise und synthetischen Owner-/Member-Ressourcen offen.
+- Davor steht ein eigener manueller, strikt read-only Ressourcencheck auf
+  `main` und im GitHub-Environment `staging`. Er bestätigt die getrennte
+  Supabase-/Datenbankbindung, zwei aktive Stripe-Testpreise zu 100/200 Euro
+  pro Monat und einen synthetischen Workspace mit unterschiedlichem Owner und
+  Member. Schreibfreigaben bleiben aus; Entitlement-Zeilen und Migrationen
+  werden nicht berührt.
+- Einrichtung und KI-Add-ons sind nicht referral-rabattfähig.
+- Keine KI-Stufe aktiviert automatische Sendung.
+- Nicht festgelegte Modelle oder Limits bleiben `null` und dürfen nicht erfunden werden.
+
+### Betreiber- und Steuerstatus
+
+- Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind.
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich.
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger.
+- zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
+- Kontakt: fanmind@fanmind.ch, +43 676 5367236.
+- Angebot ausschließlich für B2B-Unternehmer.
+- `FanMind e.U.` darf erst nach bestätigter Firmenbucheintragung verwendet werden.
+- Die veröffentlichten Beträge sind Nettopreise. Für steuerpflichtige Umsätze in Österreich gilt die technische Vorgabe von 20 % Umsatzsteuer; international bestimmt Stripe Tax anhand Rechnungsadresse und steuerlichem Kundenstatus den anwendbaren Satz oder Reverse Charge.
+- Checkout ist fail-closed an `FANMIND_TAX_MODE=stripe_tax` und die getrennte Bestätigung der tatsächlich eingerichteten Stripe-Tax-Registrierung gebunden. Eine fehlende oder alte Kleinunternehmer-Konfiguration erzeugt keinen steuerfreien Checkout.
+- Die technische Entscheidung ersetzt nicht die im externen Freigaberegister weiterhin offene steuerliche Prüfung von UID, internationalen Fällen, Pflichtangaben und Aufbewahrungsfristen.
+
+### Registrierung und kostenpflichtige Aktivierung
+
+- `/register` erstellt ein kostenloses Anmeldekonto. Es schreibt weder Workspace- noch Billing- oder Zahlungsannahmewerte. Paket- und Referral-Auswahl sind unverbindliche, begrenzte Profilpräferenzen.
+- `/register/confirm` akzeptiert nur den unterstützten Signup-Callback einschließlich des optionalen einzelnen leeren Supabase-Markers `sb`, bereinigt die URL sofort und prüft die bestätigte E-Mail über Supabase. Nach erfolgreicher Prüfung synchronisiert die Seite die Session automatisch und führt unmittelbar zu `/workspace/setup`. Nur nach fehlgeschlagener Sitzungsübernahme erscheint ein ausdrücklich auszulösender Wiederholungsbutton; eine erneute Bestätigungsmail ist dafür nicht erforderlich. Ein ersetzter Callback oder das Verlassen der Seite bricht eine noch ausstehende Sitzungsübernahme ab. Ein gültiger Signup-Rücksprung zur bestehenden Site URL wird in diesen Ablauf übernommen.
+- Nach der Anmeldung führt `/workspace/setup` die bestehende serverseitige Paket-/Zustimmungsprüfung aus. Das Verfahren für Workspace-RPC, Preise und Vertragsversion sowie Checkout-, Tax- und Billing-Ledger-Gates bleiben unverändert.
+- Beobachtung vom 10. September 2026: Im verbundenen FanMind-Stripe-Live-Konto existieren keine Tax-Registrierungen. Aktive Tax-Settings allein sind keine Freigabe. Kostenpflichtige Aktivierung, echte E-Mail-Zustellung und anschließende vollständige Workspace-/Referral-/Zahlungsabnahme sind daher nicht durch diesen Code-Nachweis erledigt.
+- Ausführlicher Ablauf und verbleibende Voraussetzungen: `docs/operations/WEB_REGISTRATION.md`; Task `FM-REG-002`. Die separate abgeschlossene Passwort-Recovery-Korrektur bleibt `FM-REG-001`.
+
+### Datenschutz- und AVV-Readiness
+
+- `docs/legal/AVV_WORKING_DRAFT.md` enthält eine ausdrücklich nicht
+  unterschriftsreife Arbeitsfassung mit Rollen, Verarbeitung, Datenarten,
+  Personengruppen, TOM, Unterstützung, Löschung und technischer Anbieterliste.
+- `docs/legal/RETENTION_REGISTER.md` trennt implementierte technische
+  Grenzen von noch offenen rechtlichen, steuerlichen und geschäftlichen
+  Endfristen.
+- Die öffentliche Datenschutzerklärung nennt das aktive, consent-gesteuerte
+  und parameterlose Meta-Event `PageView` sowie die im Code belegten Demo-,
+  Consent-, Diagnose-, Log-, Mobile-,
+  Account-Lösch- und Backup-Kriterien.
+- Eine öffentliche Anbieter-DPA ist nur Prüfeinstieg. Wirksame Annahme,
+  kontobezogene Unterauftragsliste, Region und Transfergrundlage müssen je
+  aktivem FanMind-Konto extern bestätigt werden.
+- `docs/legal/EXTERNAL_APPROVAL_REGISTER.md` definiert dafür jetzt die
+  zuständige Fachprüfung, den konto- und versionsbezogenen Mindestbeleg, den
+  Fristenvorschlag und den AVV-Unterschriftsweg. Das zugehörige JSON enthält
+  nur Status und spätere SHA-256-Beweis-Hashes; private Vertragsunterlagen
+  bleiben außerhalb von GitHub.
+- `npm run legal:evidence:check` validiert die Registerstruktur. Der
+  absichtlich strengere Check `npm run legal:evidence:require-complete` muss
+  vor echtem Drittpersonen-Onboarding grün sein und bleibt bis zu den realen
+  externen Freigaben rot.
+- `npm run legal:evidence:hash` liest ausschließlich private, lokal
+  zugriffsbeschränkte Belegdateien unter dem von Git ausgeschlossenen
+  Evidenzverzeichnis und gibt nur die registrierbare SHA-256-Referenz aus.
+  Registeränderung, fachliche Freigabe und Vertragsannahme bleiben getrennte
+  manuelle Schritte.
+- `npm run legal:evidence:handoff` leitet aus demselben Register ausschließlich
+  die offenen Control-IDs und benötigten Belegarten ab und gruppiert sie nach
+  externer Zuständigkeit. Werte, Beleg-Hashes, Pfade, Kontokennungen und
+  abgeschlossene Controls bleiben aus der Ausgabe ausgeschlossen; der Befehl
+  besitzt keine Freigabe- oder Aktivierungswirkung.
+- Die technische Vorbereitung ersetzt weder Rechts-/Steuerberatung noch eine
+  unterschriebene AVV oder den isolierten Backup-Lösch-/Restore-Nachweis.
+
+## 6. Verbindliche Terminologie
+
+- Deutsch: **KI**; Englisch: **AI**.
+- Nutzerseitig: **Kontaktwissen**, nicht Memory oder Fan-Gedächtnis.
+- Analysebereich: **Kommunikationsübersicht**.
+- öffentliche Seiten verwenden Produkt oder aktuelle Version, keinen MVP-Jargon.
+- Datenschutz wird konkret beschrieben; keine pauschale Konformitätsgarantie.
+- Plattformlogos verwenden die gemeinsame `PlatformLogo`-Komponente.
+- Funktionssymbole verwenden die gemeinsame `FanMindFunctionIcon`-Registry.
+
+## 7. Referral Growth Window
+
+Die technische Policy ist vorbereitet, die produktive automatische Verrechnung bleibt deaktiviert.
+
+- 5 % Rabatt je aktiv zahlendem geworbenen Workspace;
+- maximal 20 aktive Referrals beziehungsweise 100 % auf die Starter-Grundgebühr;
+- globales Growth Window bis 2.000 aktive zahlende Workspaces;
+- Rabatt nur auf 312 €/Monat Grundgebühr;
+- kein Rabatt auf Einrichtung, KI-Add-ons, Connection-Pakete oder
+  Agency-Erweiterungen;
+- ein Creator ist entweder Referral oder rabattierte Agency-Lizenz, niemals
+  beides gleichzeitig;
+- Demo- und interne Test-Workspaces ausgeschlossen;
+- Kündigung, Zahlungsausfall oder Inaktivität entfernt den betreffenden Rabatt;
+- keine Barauszahlung und kein negativer Rechnungsbetrag.
+
+Vor Aktivierung erforderlich:
+
+- vorhandenes separates Supabase-Staging plus vollständig getrenntes
+  Stripe-Test-Staging;
+- vollständige Lifecycle-Tests;
+- Missbrauchsschutz;
+- Rechts- und Steuerfreigabe der Teilnahmebedingungen.
+
+## 8. Gefrorener Demo-Pfad
+
+1. Landingpage öffnen.
+2. Login oder kostenlose Demo starten.
+3. Dashboard zeigen.
+4. Kontakte öffnen.
+5. CSV-Import kurz zeigen oder Sandra M. öffnen.
+6. Kontaktdetail und Nachrichtenkontext zeigen.
+7. letzte eingehende Nachricht als KI-Kontext verwenden.
+8. KI-Antwortvorschläge erzeugen.
+9. Antwort kopieren.
+10. Kontaktwissen-Vorschlag speichern.
+11. Follow-up-Vorschlag speichern.
+12. Follow-up-Liste und Roadmap zeigen.
+13. Abschlussfrage: „Wäre dieser Ablauf für euer Team nützlich?“
+
+Das vollständige Sales-Skript steht in `docs/sales/FANMIND_DEMO_SCRIPT.md`.
+
+## 9. Integrationsstatus
+
+Aktiv im Standardprodukt:
+
+- manuelle Kontaktpflege;
+- CSV-Import;
+- gespeicherter Nachrichtenkontext;
+- Webformular- und Inquiry-Grundlagen.
+
+Vorbereitet / Beta / nicht allgemein live verkaufen:
+
+- mandantengetrennte Meta-/Facebook-/Instagram-Grundlagen: jeder Kunde verbindet sein eigenes Geschäftskonto mit seinem eigenen Workspace; verschlüsselte Tokens bleiben serverseitig; eine externe Konto-ID darf nur einem aktiven Workspace gehören;
+- Facebook-Messenger-/Kommentar-Grundlage und Graph API `v25.0`; Instagram-Webhook- und begrenzte DM-Verlaufsgrundlage; Instagram Business Login, explizite Mehrfachkontoauswahl, App Review und reale Ende-zu-Ende-Abnahme bleiben offen. Reale Production-Evidence vom 19.09.2026: der erste Facebook-Connect nach erfolgreichem Admin-CRM-Login wurde von Meta mit `Ungültige App-ID` abgewiesen, weil die Production-OAuth-ENV noch Beispielwerte für App-ID und Callback enthielt. Diese Beispielwerte gelten ab FM-CR-045 als `nicht konfiguriert` und dürfen keine Provider-Navigation mehr auslösen. Die realen Meta-App-/Callback-/Permission-Werte bleiben eine geschützte externe Konfiguration;
+- eigener Post-/Insight-Cache, fortlaufend und inkrementell gespeicherte autorisierte Chats/Kommentare sowie vorsichtige Fan-/Nutzer-Schreibstilanalyse als fail-closed Meta-Datenmodell; der einmalige Facebook- oder Instagram-DM-Erstabruf ist auf 150 aktuelle Nachrichten je Thread begrenzt, danach werden nur neue Ereignisse ergänzt. Verbindungsweite Conversation-Seiten bleiben auf 25 Einträge je Ausführung begrenzt und dürfen den globalen Abschlusszeitpunkt erst nach vollständiger Provider-Pagination fortschreiben. Webhook-Requests rufen keine Provider-Historie ab; ein gezielter Thread-Catch-up darf erst über die vorbereitete, standardmäßig deaktivierte service-role-Queue laufen. KI Standard/Plus/Ultra erhalten serverseitig ausschließlich die letzten 50/100/150 Nachrichten. Persönliche fremde Profile/Posts werden nicht gespiegelt oder gescrapt. Alle Analysearten bleiben standardmäßig aus, bis Rechtsgrundlage, Transparenz, AVV/Anbieterprüfung, Betroffenenrechte und Aufbewahrung je Workspace bestätigt sind;
+- Meta Pixel als consent-gesteuerte Marketing-Messung ausschließlich mit parameterlosem `PageView` auf freigegebenen öffentlichen Seiten; geschützte und dynamische CRM-Routen sowie unsichere Query-/Fragmentwerte sind fail-closed ausgeschlossen; `CompleteRegistration`, `Lead` und weitere Conversion-Events bleiben vorbereitet und unverknüpft, bis sie einzeln fachlich und datenschutzrechtlich freigegeben sind;
+- Facebook-Reply-Target- und Messenger-Hilfen;
+- Telegram-Webhook- und Bot-Grundlagen;
+- WhatsApp-Cloud-API-Inbound-Textpfad als standardmäßig deaktivierte,
+  nicht-produktive Vorbereitung mit getrennten Secrets, exakter
+  Phone-ID-Tenant-Bindung, Connection-/Phone-/WAMID-Identity,
+  SHA-256-Payload-Fingerprint, connection-gebundenen Kontakten/Threads,
+  atomarem Store und Disconnect. Ein Receipt-Tombstone verhindert nach einer
+  CRM-Nachrichtenlöschung die Wiederanlage per Provider-Retry; seine konkrete
+  Retention und Legal-Grenze bleibt extern freizugeben. Der unvermeidliche
+  GET-Query-Transport des Verify-Tokens ist im versionierten Staging-nginx für
+  die exakte Route aus Access- und route-lokalen Error-Logs ausgeschlossen;
+  ein zukünftiger Edge-Layer braucht dieselbe Grenze. Schema-Apply, realer
+  Staging-/Meta-Lauf, externe Freigaben und Production-Aktivierung bleiben
+  offen; Production ist technisch verboten;
+- Stripe Checkout für Starter.
+
+Roadmap / Coming Soon:
+
+- WhatsApp (trotz vorbereiteten deaktivierten Inbound-Codes nicht live),
+  TikTok, X, Discord und weitere Kanäle;
+- vollständige Social-Synchronisation jenseits der ausdrücklich abgegrenzten Meta-Pilotfunktionen;
+- Kampagnen und vollständige Analytics-Suite; die abgegrenzte Meta-Content-Intelligence-Grundlage ist separat in `docs/integrations/META_CONTENT_INTELLIGENCE.md` definiert;
+- komplexe Rollen und Enterprise-Governance;
+- Referral-Billing-Automation;
+- KI Plus/Ultra Auto-Buchung.
+
+Pflichtsatz:
+
+> Geplante Integrationen werden erst nach technischer und rechtlicher Prüfung umgesetzt. FanMind sendet keine Nachrichten automatisch. Der Mensch prüft, kopiert und sendet final selbst im Originalkanal.
+
+## 10. Security, RLS und Umgebungsgrenzen
+
+- keine Secrets im Repository;
+- OpenAI- und Supabase-Service-Role-Keys nur serverseitig;
+- KI-Prompt-Migrationen werden nicht durch den Web-Deploy angewendet; der
+  festgeschriebene Apply-/Postflight-Ablauf steht in
+  `docs/operations/AI_PROMPT_MIGRATION.md`;
+- die KI-Stufen-Speichermigration wird ebenfalls nicht durch den Web-Deploy
+  angewendet; ihr checksum-gebundener Apply-/Postflight-Ablauf steht in
+  `docs/operations/AI_TIER_ENTITLEMENT_STORAGE.md`;
+- `FANMIND_ADMIN_EMAILS` ist die einzige Admin-Quelle;
+- alle workspace-bezogenen Daten benötigen RLS und serverseitige Autorisierung;
+- Der App-/Renderer-Vertrag gibt Membern ausschließlich ein minimales
+  Workspace-Safe-DTO und hält CRM-/AI-/Content-Mutationen sowie Connector-
+  Administration Owner-only und processing-gebunden. Die direkte
+  PostgREST-/JWT-Grenze für volle Workspace-/Legal-Zeilen,
+  Connector-Bindungen, Token-/Syncdaten und zwölf Member-writable Tabellen
+  ist auf Staging durch den vollständigen read-only Postflight des Controls
+  `20260816120000_workspace_member_data_boundary.sql` belegt.
+  Member-Datengrenze auf Staging: `SCHEMA_VERIFIED`; reale Browser-Abnahme weiterhin offen.
+  Beleg: gemeinsamer Rollout `34267504075` vom 8. September 2026,
+  `WORKSPACE_MEMBER_BOUNDARY=verify`. Dies ist keine neue Apply-Ausführung
+  und keine Production-Abnahme. Reale Chromium-/CSV-Abnahme und finaler
+  unabhängiger Verify bleiben ein Go-live- und Member-Aktivierungsblocker.
+  Der getrennte geschützte Apply-/Verify-Pfad bleibt für ungeprüfte Ziele
+  App-first gebunden. Auch ein erfolgreicher RLS-Postflight aktiviert keine
+  Member-Schreibrechte (`docs/operations/WORKSPACE_MEMBER_DATA_BOUNDARY.md`).
+- jede Mutation prüft User, Workspace und Ressource;
+- Demo-Workspaces enthalten keine echten Kundendaten;
+- externe Plattform-Login-Daten werden nicht gespeichert;
+- Meta-Zugriffstokens sind verschlüsselt. Erst nach dem kontrollierten
+  Member-Datengrenzen-Apply ist auch die direkte Browser-ACL nachgewiesen auf
+  nicht geheime Owner-Statusfelder begrenzt; serverseitige Token-Nutzung bleibt
+  davon unabhängig geschützt;
+- schreibende Staging-/Testläufe benötigen alle Bedingungen aus `docs/operations/ENVIRONMENT_SEPARATION.md`;
+- kein Restore gegen Production.
+
+## 11. Datenbank-Source-of-Truth
+
+Verbindliche Quellen:
+
+- `docs/database/fanmind_current_schema.md`;
+- `supabase/migrations/`;
+- `supabase/controlled/` für einzeln freizugebende Contract-Schritte;
+- `src/lib/supabase/server.ts`.
+
+Relevante Objekte umfassen unter anderem:
+
+- `profiles`, `workspaces`, `workspace_members`;
+- `contacts`, `memories`, `followups`;
+- `conversations`, `conversation_messages`, `conversation_summaries`;
+- `contact_ai_profiles`, `workspace_voice_profiles`, `workspace_ai_prompt_settings`, `fan_analysis_reports`, `workspace_analysis_settings`;
+- `content_sources`, `content_metric_snapshots`, `communication_analysis_reports`, `contact_reply_targets`, `social_connections`, `meta_webhook_events`;
+- Billing-, Referral-, Inquiry-, Operations- und Backup-Tabellen laut aktueller Migrationen.
+
+Interne Tabellen- oder Feature-Keys wie `memories`, `memory` oder `pilot` dürfen aus Kompatibilitätsgründen bestehen bleiben, sind aber keine öffentliche Terminologie.
+
+## 12. KI und Kostenbeobachtung
+
+- serverseitige Endpunkte;
+- Workspace-Unternehmens-Prompt plus bis zu acht Antwortprofile unter `/settings/ai-usage`; Prompttexte werden nach Workspace-/Kontakt-Autorisierung serverseitig geladen, der Browser übergibt an die Antwort-Route nur die gewählte Profil-ID;
+- Owner-/Admin-geschützte Prompt-Mutationen, RLS-gebundene Speicherung und feste Grenzen von 3.000 Zeichen global sowie 1.500 Zeichen je Profil;
+- Workspace-Prompts steuern nur Stil und belegte Geschäftshinweise; Sicherheits-, Wahrheits-, Datenschutz-, Schema- und Manuell-Senden-Regeln bleiben höherrangig;
+- kein API-Key im Browser;
+- begrenzte Eingabelänge, begrenzte Datenbank-Kontextzeilen,
+  Provider-Ausgabe und gemeinsame fail-closed Kurzzeit-Rate-Limits;
+- strukturierte Ausgabe;
+- Usage-Logging mit bevorzugten vollständigen OpenAI-Responses-Tokenwerten
+  sowie sicherem Zeichenlängen-Schätz-Fallback; Kosten und gemischte
+  historische Werte bleiben konservativ als geschätzt gekennzeichnet;
+- Admin-Dashboard `/admin/ai-usage`;
+- optionale Soft-Hinweise sind weder vertragliche Kontingente noch automatische Sperren;
+- technische Aufruf-/Kontext-/Ausgabegrenzen sind Missbrauchs- und
+  Kostenschutz, keine Standard-/Plus-/Ultra-Monatskontingente;
+- der Vertragsende-Check an den beiden produktiven KI-Pfaden ist
+  Lifecycle-Verhalten, keine autoritative Billing-Freigabe;
+- **Rollout-Blocker vor Standard-/Plus-/Ultra-Aktivierung:** atomare
+  Starter-Workspace-Erstellung und exakte Spaltenrechte sind technisch
+  vorbereitet. Erst Production-Preflight, Anwendung der additiven Migration
+  und des separat kontrollierten Contract-Schritts sowie die
+  positive/negative Abnahme gemäß
+  `docs/operations/WORKSPACE_SERVER_OWNED_FIELDS.md` belegen, dass normale
+  Workspace-Owner Billing-, Stripe-, Subscription- und
+  `test_access_flags`-Felder nicht mehr direkt ändern können;
+- keine automatische Sendefunktion.
+
+Details: `docs/AI_COST_MONITORING.md` und `docs/AI_PROMPT_PROFILES.md`.
+
+## 13. Finale technische Go-Live-Freigabe
+
+- automatischer read-only Preflight: `npm run smoke:go-live:public`;
+- permanenter Workflow `FanMind Final Go-Live Readiness` nach erfolgreichem Production-Deploy;
+- vollständiges Runbook: `docs/operations/FINAL_GO_LIVE_SMOKE_TEST.md`;
+- Sales-One-Pager, Demo-Skript und Einwandbehandlung: `docs/sales/`;
+- die technische Production-Basis ist nicht mit der Verkaufsübergabe gleichzusetzen; die Verkaufsübergabe erfolgt erst nach technischer Abnahme der erforderlichen Phase-3- und Phase-7-Kanäle;
+- technische Freigabe und externe Steuer-/Rechtsfreigabe werden getrennt dokumentiert und können nach der technischen Verkaufsübergabe parallel zur Verkaufsansprache weiterlaufen;
+- entgeltliche Aktivierung bleibt dort fail-closed, wo eine zwingende externe Rechts-/Vertragsfreigabe noch fehlt;
+- Referral-Attribution wird vor der rollback-only Lifecycle-Acceptance über
+  einen getrennten checksum-, commit- und Staging-gebundenen
+  Integritäts-Verify/Apply-Pfad abgenommen; dieser Pfad aktiviert weder
+  Billing noch Stripe;
+- Referral-Billing, KI Plus/Ultra Auto-Buchung und schreibende Staging-Tests bleiben bis zur separaten Freigabe deaktiviert.
+
+## 14. Reader-Synchronisierung
+
+Bei Änderungen an Preis, Paketen, Referral, aktivem Scope, Demo, Integrationen, Billing, KI, Datenbank, Security oder öffentlichen Versprechen müssen mindestens geprüft werden:
+
+- `docs/SOURCE_OF_TRUTH.md`;
+- `README.md`;
+- `AGENTS.md`;
+- `docs/database/fanmind_current_schema.md`;
+- `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md` und `docs/mobile/BETA_RELEASE.md` bei Mobile- oder Backend-Vertragsänderungen;
+- relevante Security-, KI-, Referral-, Landingpage- und Legal-Dateien.
+
+## 15. ChatAdmin-Sonderfeature (FM-DEC-022, vorbereitet/nicht aktiviert)
+
+Für genau einen explizit gebundenen normalen Owner/Workspace ist eine getrennte,
+standardmäßig deaktivierte Capability `chat_admin_multi_character` als
+Repository-/Controlled-Schema-Vertrag vorbereitet. ChatAdmin ist kein Platform
+Admin und erteilt keinerlei Admin-, Billing-, Operations-, Provider-,
+Impersonation- oder service-role-Rechte. Konfigurierte Platform Admins werden von der
+ChatAdmin-Anwendungsautorisierung auch bei sonst vorhandener Owner-Capability
+ausdrücklich abgewiesen. Normale Accounts bleiben bei genau einem
+Creator und einem Schreibstil; `creators.workspace_id UNIQUE` wird nicht geändert.
+Der additive, kontrolliert noch nicht angewendete Fan-Vertrag ergänzt persistente
+`chat_character_fans` mit minimalem Wissen (Zusammenfassung und Notizen) und
+bindet Conversations und Messages über zusammengesetzte Workspace-/Character-/
+Fan-Schlüssel. Die Oberfläche führt Character → dessen Fans → Fanwissen und
+Verlauf; tatsächlich manuell verwendete Antworten können als `confirmed_reply`
+gespeichert werden. Der Server lädt Character, exakte Revision, Fan, Conversation
+und Verlauf neu, bevor er genau drei Vorschläge ausgibt. Keine OnlyFans-Verbindung,
+kein Scraping und kein Auto-Send. Der Fan-Vertrag benötigt einen neuen geschützten
+Staging-Apply; Production-Aktivierung und Providerintegration sind nicht Teil
+dieses Source-Pakets. Die neue Oberfläche bleibt zusätzlich mit
+`FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED=false` fail-closed, bis Schema,
+Postflight und Runtime-Aktivierung separat kontrolliert abgenommen sind. Der
+bestehende rote Backup-Freshness-Audit bleibt als
+getrennter Operations-Punkt offen und wurde nicht verändert.
+Fan-Zusammenfassung, Fan-Notizen, die jüngste vollständig in das kanonische
+Eingabelimit passende Nachrichtenhistorie und die neue eingehende Nachricht können
+dabei für den serverseitigen Reply-Vorschlag verarbeitet werden. Produktive
+Responses-API-Aufrufe setzen `store: false`. Die frühere Character-only-Abnahme
+belegt weder Fan-Schema noch Fan-Runtime; vor der separaten Fan-Aktivierung bleiben
+Schema-Apply, RLS/Privilege-Postflight, rollback-only Staging-Acceptance,
+Runtime-Gate sowie Disclosure-/Löschabnahme erforderlich. Ist das Fan-Gate aus
+oder das Schema nicht nachweislich vollständig, bleibt der bestehende V1-
+Character-Flow verfügbar und die Fan-UI fragt keine Fan-Daten ab.
+
+
+## AI Capacity v2 · OpenAI-Preiskatalog und Qualitätsmodi — 30. September 2026
+
+Für Capacity v2 sind **Schnell**, **Ausgewogen** und **Premium** stabile
+FanMind-Produktmodi. Die konkrete OpenAI-Modellauswahl ist serverseitig und
+versioniert:
+
+- Schnell -> `gpt-6-luna`, Reasoning `low`;
+- Ausgewogen -> `gpt-6.1-sol`, Reasoning `medium`;
+- Premium -> `gpt-6-astra`, Reasoning `max`.
+
+Premium bedeutet das stärkste für FanMind ausdrücklich freigegebene Modell der
+aktuellen Katalogversion. Es wird kein unkontrolliertes `latest`-Alias
+verwendet; ein später besser geeignetes Modell benötigt eine neue geprüfte
+Katalogversion.
+
+Der aktuelle Preis-Snapshot
+`openai-2026-09-30-gpt6-standard-v1` speichert die offiziellen
+OpenAI-Standardpreise serverseitig in integerbasierten USD-Microeinheiten und
+unterscheidet Short-/Long-Context an der veröffentlichten Grenze von mehr als
+272.000 Input-Tokens. FanMind "Schnell" ist nicht OpenAI "Fast mode"; alle drei
+aktuellen Profile verwenden Standard processing. Nicht katalogisierte
+Processing-Tiers, regionale Aufschläge oder fehlende Preisversionen schlagen
+fail-closed.
+
+Der Katalog ist die Provider-Kostenbasis für die nachfolgende
+Reserve -> Settle/Release -> Guthabenverbrauch-Implementierung. Legacy
+ENV-basierte Kostenschätzungen bleiben reine Observability und dürfen den
+Capacity-v2-Ledger nicht setteln. Maßgeblich:
+`docs/operations/OPENAI_PRICE_CATALOG.md`.
+
+
+## AI Capacity v2 · Verbrauchsanzeige und Null-Prozent-Verhalten — 30. September 2026
+
+AI-Kapazität wird kundenbezogen als **verbleibender Prozentwert** angezeigt, nicht als primäres Tokenkontingent. Schnell, Ausgewogen und Premium greifen auf dasselbe Capacity-v2-Guthaben zu; wegen unterschiedlicher realer Providerkosten sinkt die Anzeige je nach gewählter Qualitätsstufe unterschiedlich schnell. Kommunikationsanalyse und Antworterstellung verbrauchen denselben Pool.
+
+Reservierte sowie indeterminate/reconciliation-required Beträge gelten bis zur Freigabe oder Abrechnung als nicht verfügbar. Die Anzeige wird konservativ abgerundet.
+
+Bei **0 %** gibt es **keine kostenlose und keine gedrosselte Reserve**. Neue Capacity-v2-KI-Aufrufe werden gesperrt, bis zusätzliche bezahlte Kapazität verfügbar ist oder der nächste autoritative Abrechnungszeitraum neues inkludiertes Guthaben gewährt. Es erfolgt kein automatisches Downgrade auf Schnell, um die Sperre zu umgehen.
+
+## ChatAdmin: natürliche Antwortalternativen
+
+Die serverseitigen Gesprächsregeln verwenden die bestehenden Character-Felder
+für Schreibstil, Satzstil, Emojis, Beispiele und No-Gos. Vorschläge reagieren
+zuerst auf die konkrete Nachricht, ohne routinemäßige Rückfrage oder Verkaufsdruck.
+Im persönlichen Kennenlernen soll passende Neugier das Gespräch durch einen
+eigenen kontextbezogenen Gedanken oder höchstens eine Anschlussfrage je Vorschlag
+weiterführen. Eine Frage darf Interesse zeigen, ohne eine Sachlücke schließen zu
+müssen. Keine Fragepflicht, kein Nachhaken bei einer noch offenen Frage, keine
+erneute Abfrage bekannter Angaben und keine erfundenen Gemeinsamkeiten.
+Neue und gespeicherte Vorschläge können vor Verwendung bearbeitet werden. Nur
+die endgültige bestätigte Fassung wird über den bestehenden Bestätigungspfad
+gespeichert; Originalentwürfe bleiben unverändert. Kein automatischer Versand.
+Ein reines Kompliment über Medien berechtigt nicht zur Preisnennung; ausdrückliche
+Medien-/Preisanfragen behalten die gebundene Offer-Auflösung. Der KI-Verlauf enthält
+nur `fan_inbound` und `confirmed_reply`; unbenutzte `suggested_reply` bleiben
+gespeichert und Teil der atomaren History-Bindung, aber sind kein geführter Dialog.
+Fan-Zusammenfassung und Notizen werden weiter gebunden geladen. Eine verwendete
+Antwort beweist keine Lieferung, Zahlung oder Kaufzusage. Die Details stehen in
+`docs/CHAT_ADMIN_REPLY_STYLE.md`; Natürlichkeit und Gedächtniswirkung im echten
+Gespräch benötigen weiterhin eine gesonderte Runtime-Abnahme.
+
+## ChatAdmin: Kundenstatus und Staging-Abnahme — 13. Oktober 2026
+
+Die vorbereitete Kundenstatus-Erweiterung hat einen eigenen checksum-, exact-main-,
+TLS- und Staging-gebundenen Verify/Apply-Pfad. Der vollständige Fan-Postflight prüft
+entweder den originalen Vertrag oder genau die genehmigte Erweiterung; Mischzustände
+bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag und
+prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
+begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
+oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.
+
+
+## ChatAdmin: eigene Angebote — 14. Oktober 2026
+
+Im Character-Editor kann der berechtigte Nutzer mit „+ Angebot“ bis zu 20 eigene
+Angebote anlegen, Namen bearbeiten und Angebote entfernen. Name und empfohlener
+Preis werden selbst gepflegt; leere Mindest-/Höchstpreise übernehmen den empfohlenen
+Preis. Währungen bleiben EUR/CHF/USD/GBP. Erst „Speichern“ übernimmt die Änderungen.
+Bestehende IDs, Flags und ergänzende Angebotsdaten bleiben erhalten. Umbenannte
+Standardangebote werden als eigene Kategorie geführt, damit der alte Medienname
+nicht versehentlich auf einen anderen Inhalt verweist. Leere Preiszeilen bleiben
+unveröffentlicht. Die vorhandene Character-gebundene JSON-Speicherung wird verwendet;
+keine neue Migration oder Zahlungs-/Upload-/Versandfunktion ist enthalten.
+
+Die KI erkennt wörtliche Angebotsnamen in ausdrücklichen Anfragen oder einer kurzen
+reinen Namensanfrage. Mehrere Treffer, doppelte Namen, bestätigungspflichtige oder
+inaktive Angebote geben keinen Preis frei. Standard-Medienkategorien bleiben
+kompatibel, aber ein öffentliches Video ersetzt keine private Videoanfrage. Bei
+fehlender Eindeutigkeit bleibt eine Rückfrage möglich. Preiswächter, Character-/Fan-
+Trennung und Speicherverfügbarkeit bleiben wirksam. Diese Erweiterung aktiviert
+kein stärkeres Modell und erweitert nicht das automatische Fan-Gedächtnis.
+
+Source-/CI-Nachweise ersetzen keine echte Production-Abnahme mit vom Nutzer
+gepflegten Preisen oder eine manuelle Bewertung der Antwortqualität.
+
+
+## ChatAdmin: stärkeres Modell — 14. Oktober 2026
+
+Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
+Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
+„Premium“ aus dem versionierten Provider-Katalog, einschließlich dessen
+Standard-Verarbeitungswerten. Für kurze Chatantworten verwendet ChatAdmin
+Reasoning „medium“, während das allgemeine Premium-Profil unverändert bleibt. Dies aktiviert keine allgemeinen
+bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
+Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
+
+Das gemeinsame Tokenlimit beträgt 8192 einschließlich Reasoning; die bestehenden
+kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
+auf 55 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
+Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
+Pfad. Fehlende Provider-Usage bleibt als Schätzung erkennbar.
+
+Vor dem Live-Wechsel prüft der geschützte isolierte Release-Weg den bestehenden
+Serverzugang durch genau eine begrenzte synthetische Responses-Anfrage mit
+store=false und vollständigem synthetischem Fan-/Character-Kontext sowie 20
+Gesprächseinträgen über denselben Kontextbuilder wie die Route. Modellbindung, vollständiges Ergebnis, drei Antworten und Preiswächter
+müssen bestehen; sonst bleibt der bisherige Release aktiv. Es gibt keinen stillen
+Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
+geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
+Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
+Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.
+
+
+## ChatAdmin: Beschreibung je Artikel — 14. Oktober 2026
+
+Jedes Character-Angebot hat direkt unter seinem eigenen Namen ein optionales
+Feld „Beschreibung / enthaltene Leistung“ (maximal 400 Zeichen). Es gehört zum
+konkreten Artikel, etwa Foto, Fotoset oder Video, und wird mit dessen Preis und
+ID im bestehenden sales_playbook gespeichert. Speichern, erneutes Bearbeiten
+und Leeren verwenden dieselbe Character-Revision; keine Migration ist nötig.
+
+Die serverseitig ausgewählte requested_offer enthält diese Beschreibung und die
+bereits vorhandenen Liefer-/Exklusivitätsangaben. Die KI darf daraus enthaltene
+Leistungen erklären, aber keine fehlenden Mengen, Motive oder Lieferzeiten
+erfinden. Beschreibungen sind Daten, keine privilegierten Anweisungen.
+
+Eine kurze Inhaltsnachfrage wie „Was bekomme ich da?“ kann auf den letzten
+Fan-Eintrag und die letzte manuell verwendete Antwort Bezug nehmen, wenn beide
+dasselbe eindeutige, aktuell aktive und nicht bestätigungspflichtige Angebot
+benennen. Nur die letzten 20 gebundenen Dialogeinträge werden betrachtet; beide
+Quelleneinträge müssen im tatsächlich übergebenen Kontext bleiben. Ungenutzte
+Entwürfe, neue Themen, Mehrdeutigkeit, andere Characters/Fans und Verkaufspausen
+geben kein Angebot frei. Preis und Inhalt stammen immer aus dem aktuellen
+Artikel, niemals aus früheren KI-Zusagen. Bei fehlender Zuordnung bleibt eine
+Rückfrage nötig. Keine Änderung an Astra, Fan-Gedächtnisgrenzen oder Versand.
+
+Automatisierte Formular-/Route-/Kontextprüfungen belegen Speicherung und Bindung;
+die Formulierung einer echten Antwort bleibt manuell zu beurteilen.
+
+
+## ChatAdmin: Verkauf und Ende ohne Antwortschleife — 14. Oktober 2026
+
+Bei einer eindeutigen aktiven Artikelanfrage führt die KI vom belegten Inhalt und
+Nutzen über den aktuellen Artikelpreis zu einer kurzen Kaufentscheidung. Kein
+Vertrösten durch eine spätere Beziehung, keinen Druck und keine erfundenen
+Leistungen. Aufgezeichnete Videos ersetzen niemals Videoanrufe; ein Anruf wird
+nur über ein eigenes eindeutig angefragtes aktives Angebot freigegeben.
+
+Eine klare, manuell verwendete Abschlussantwort pausiert weitere KI-Antworten.
+Die Route lädt dafür die letzte bestätigte Antwort mit exakter Workspace-,
+Character-, Fan- und Conversation-Bindung unabhängig vom 20-Zeilen-Verlauf.
+Fan-Nachrichten, ungenutzte Entwürfe, zitierte Beispiele und bedingte Warnungen
+lösen keine Pause aus. Die Oberfläche zeigt den Zustand; der Server prüft ihn
+vor dem Provideraufruf, vor der Rückgabe und vor weiteren Bestätigungen. Im
+pausierten Zustand werden keine neuen Vorschläge, Fan-Fakten oder KI-Aufrufe
+erzeugt. Eine während des Provideraufrufs verwendete Abschlussantwort sperrt die
+Rückgabe und Speicherung; tatsächlich verbrauchte Usage bleibt erfasst.
+
+Der Owner kann mit „Gespräch bewusst fortsetzen“ gezielt wieder freigeben. Die
+Freigabe ist an die bestätigte Antwort-ID gebunden, wird innerhalb des vorhandenen
+Fan-Notizformats mit Revision gespeichert und hebt bestehende Verkaufspausen
+oder Fan-Grenzen nicht auf. Notizen und gelerntes Fanwissen bleiben erhalten.
+Keine automatische Nachricht, kein Blockieren auf OnlyFans und keine Migration.
+Astra medium und das begrenzte Provider-Zeitbudget bleiben unverändert.
+
+Erkannt werden explizite Abschlussformulierungen wie „Das Gespräch ist beendet“
+oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jeder
+möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
+Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
+nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+
+
+### KI-Support-Zentrale — source implementation, 4 November 2026
+
+Issue #1350 / PR #1416 reuses the existing public Website AI/Widget/Inbox and
+adds /admin/support with existing login, separate platform Owner authority,
+coarse global critical/security notifications, combined repair history and
+one-shot approvals. Automatic correction remains limited to read-only checks
+and internal stale-support-state recovery; no provider/customer-content repair
+is activated. Private authenticated support conversations persist by user plus
+Workspace, with idempotent retry, paged history, account/logout clearing and
+explicit handoff snapshots. FAQ answers use approved product guidance and the
+canonical commercial model; this adds no new provider/model call.
+Controlled SQL remains unapplied and runtime default-off. Staging setup, Owner
+provisioning, physical retention operation, support-text privacy/access handling
+and real Staging acceptance are separate activation gates. See
+`docs/operations/SUPPORT_CENTRE.md`; source merge is not runtime completion.
+
+
+## ChatAdmin: private Bilderbibliothek — Source-Erweiterung 5. November 2026
+
+Die private Bibliothek je Character mit Upload, geprüften Bildbeschreibungen, konservativer Motivsuche und konfigurierbaren kostenpflichtigen Anfertigungen ist im Repository vorbereitet. Preise bleiben an bestehende Character-Angebote gebunden; Lieferfristen werden ausdrücklich konfiguriert. Beide neuen Schalter bleiben aus; kontrolliertes Schema/Storage, tatsächliche Bildanalyse und Zielabnahme sind nicht als installiert oder aktiv bestätigt. Details: `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`. Die Erkennung konkreter Verfügbarkeitsfragen zu eigenen Angeboten korrigiert den reproduzierten Preis-Kontextfehler; die abschließende Staging-Abnahme bleibt offen.

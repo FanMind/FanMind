@@ -1,0 +1,345 @@
+.platformLogo {
+  --platform-logo-size: 22px;
+  --platform-logo-icon-size: calc(var(--platform-logo-size) * 0.68);
+  --platform-logo-bg: rgba(15, 23, 42, 0.82);
+  --platform-logo-fg: #e2e8f0;
+  --platform-logo-ring: rgba(148, 163, 184, 0.2);
+  display: inline-flex;
+  width: var(--platform-logo-size);
+  height: var(--platform-logo-size);
+  flex: 0 0 var(--platform-logo-size);
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--platform-logo-ring);
+  border-radius: 999px;
+  color: var(--platform-logo-fg);
+  line-height: 1;
+  vertical-align: middle;
+  background: var(--platform-logo-bg);
+  overflow: hidden;
+}
+
+.sm {
+  --platform-logo-size: 20px;
+}
+.md {
+  --platform-logo-size: 44px;
+  --platform-logo-icon-size: 28px;
+  border-radius: 14px;
+}
+.lg {
+  --platform-logo-size: 56px;
+  --platform-logo-icon-size: 36px;
+  border-radius: 18px;
+}
+
+.withLabel {
+  width: auto;
+  min-width: var(--platform-logo-size);
+  gap: 7px;
+  padding: 0 9px 0 0;
+}
+
+.icon {
+  width: var(--platform-logo-icon-size);
+  height: var(--platform-logo-icon-size);
+  display: block;
+}
+.assetIcon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  box-sizing: border-box;
+  object-fit: contain;
+  padding: max(2px, calc((var(--platform-logo-size) - var(--platform-logo-icon-size)) / 2));
+}
+.label {
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.facebook {
+  --platform-logo-bg: #1877f2;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.instagram {
+  --platform-logo-bg: radial-gradient(
+    circle at 30% 105%,
+    #feda75 0 20%,
+    #fa7e1e 31%,
+    #d62976 52%,
+    #962fbf 74%,
+    #4f5bd5 100%
+  );
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.2);
+}
+.whatsapp {
+  --platform-logo-bg: #25d366;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.telegram {
+  --platform-logo-bg: #229ed9;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.discord {
+  --platform-logo-bg: #5865f2;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.tiktok {
+  --platform-logo-bg: #050505;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.x,
+.twitter {
+  --platform-logo-bg: #fff;
+  --platform-logo-fg: #0f172a;
+  --platform-logo-ring: rgba(148, 163, 184, 0.38);
+}
+.youtube {
+  --platform-logo-bg: #ff0000;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.linkedin {
+  --platform-logo-bg: #0a66c2;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.email {
+  --platform-logo-bg: #2563eb;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.webform {
+  --platform-logo-bg: #7c3aed;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.onlyfans {
+  --platform-logo-bg: #00aff0;
+  --platform-logo-fg: #fff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.snapchat {
+  --platform-logo-bg: #fffc00;
+  --platform-logo-fg: #111827;
+}
+.threads,
+.reddit,
+.twitch,
+.pinterest,
+.patreon,
+.kofi,
+.substack,
+.review,
+.commerce,
+.international {
+  --platform-logo-bg: linear-gradient(135deg, #0f172a, #334155);
+  --platform-logo-fg: #e0f2fe;
+  --platform-logo-ring: rgba(103, 232, 249, 0.22);
+}
+.manual,
+.other,
+.notes,
+.unknown {
+  --platform-logo-bg: rgba(71, 85, 105, 0.72);
+  --platform-logo-fg: #e2e8f0;
+}
+.all {
+  --platform-logo-bg: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.9),
+    rgba(168, 85, 247, 0.9)
+  );
+  --platform-logo-fg: #fff;
+}
+
+.google {
+  --platform-logo-bg: #ffffff;
+  --platform-logo-fg: #4285f4;
+  --platform-logo-ring: rgba(66, 133, 244, 0.34);
+}
+.googleReviews {
+  --platform-logo-bg: #ffffff;
+  --platform-logo-fg: #4285f4;
+  --platform-logo-ring: rgba(66, 133, 244, 0.34);
+}
+.trustpilot {
+  --platform-logo-bg: #00b67a;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.shopify {
+  --platform-logo-bg: #95bf47;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.amazon {
+  --platform-logo-bg: #111827;
+  --platform-logo-fg: #ff9900;
+  --platform-logo-ring: rgba(255, 153, 0, 0.35);
+}
+.etsy {
+  --platform-logo-bg: #f1641e;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.wechat {
+  --platform-logo-bg: #07c160;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.line {
+  --platform-logo-bg: #06c755;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+.kakao {
+  --platform-logo-bg: #fee500;
+  --platform-logo-fg: #191919;
+  --platform-logo-ring: rgba(25, 25, 25, 0.18);
+}
+.viber {
+  --platform-logo-bg: #7360f2;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.18);
+}
+
+.douyin {
+  --platform-logo-bg: linear-gradient(135deg, #050505, #ff0050 52%, #00f2ea);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(0, 242, 234, 0.34);
+}
+.rednote {
+  --platform-logo-bg: #ff2442;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.2);
+}
+.weibo {
+  --platform-logo-bg: linear-gradient(135deg, #f9d423, #e6162d);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(249, 212, 35, 0.32);
+}
+.kuaishou {
+  --platform-logo-bg: #ff4906;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.2);
+}
+.bilibili {
+  --platform-logo-bg: #00a1d6;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.2);
+}
+.qq {
+  --platform-logo-bg: linear-gradient(180deg, #ffffff, #dbeafe);
+  --platform-logo-fg: #111827;
+  --platform-logo-ring: rgba(15, 23, 42, 0.24);
+}
+.sharechat {
+  --platform-logo-bg: linear-gradient(135deg, #f9c80e, #f86624, #43bccd);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(249, 200, 14, 0.3);
+}
+.moj {
+  --platform-logo-bg: linear-gradient(135deg, #111827, #f97316);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(249, 115, 22, 0.3);
+}
+.josh {
+  --platform-logo-bg: linear-gradient(135deg, #7c3aed, #ef4444);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(239, 68, 68, 0.3);
+}
+.websiteChat {
+  --platform-logo-bg: linear-gradient(135deg, #0f172a, #2563eb 58%, #14b8a6);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(125, 211, 252, 0.35);
+}
+.twitch {
+  --platform-logo-bg: #9146ff;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.22);
+}
+.pinterest {
+  --platform-logo-bg: #e60023;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.2);
+}
+.patreon {
+  --platform-logo-bg: linear-gradient(135deg, #141518, #ff424d);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 66, 77, 0.36);
+}
+.kofi {
+  --platform-logo-bg: linear-gradient(135deg, #29abe0, #ffffff 58%, #ff5f5f);
+  --platform-logo-fg: #0f172a;
+  --platform-logo-ring: rgba(41, 171, 224, 0.35);
+}
+.buymeacoffee {
+  --platform-logo-bg: linear-gradient(135deg, #ffdd00, #f59e0b);
+  --platform-logo-fg: #111827;
+  --platform-logo-ring: rgba(255, 221, 0, 0.35);
+}
+.substack {
+  --platform-logo-bg: #ff6719;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(255, 255, 255, 0.22);
+}
+.review {
+  --platform-logo-bg: linear-gradient(135deg, #0f766e, #facc15);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(250, 204, 21, 0.35);
+}
+.appstore {
+  --platform-logo-bg: linear-gradient(135deg, #0ea5e9, #2563eb);
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(147, 197, 253, 0.38);
+}
+.playstore {
+  --platform-logo-bg: #0f172a;
+  --platform-logo-fg: #ffffff;
+  --platform-logo-ring: rgba(34, 197, 94, 0.35);
+}
+.mercadolibre {
+  --platform-logo-bg: #ffe600;
+  --platform-logo-fg: #164b9b;
+  --platform-logo-ring: rgba(255, 230, 0, 0.34);
+}
+.iconText {
+  fill: currentColor;
+  font-size: 8px;
+  font-weight: 900;
+  font-family: Arial, Helvetica, sans-serif;
+  dominant-baseline: middle;
+}
+.badgeText {
+  fill: currentColor;
+  font-size: 7px;
+  font-weight: 950;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: -0.04em;
+  dominant-baseline: middle;
+}
+.marketText {
+  fill: currentColor;
+  font-size: 18px;
+  font-weight: 950;
+  font-family: Georgia, "Times New Roman", serif;
+  dominant-baseline: middle;
+}
+.kakaoText {
+  fill: #fee500;
+  font-size: 5px;
+  font-weight: 950;
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: -0.03em;
+  dominant-baseline: middle;
+}

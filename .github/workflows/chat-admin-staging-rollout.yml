@@ -1,0 +1,156 @@
+name: FanMind ChatAdmin Staging Rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: Exact reviewed main commit
+        required: true
+        type: string
+      mode:
+        description: Strict rollout mode
+        required: true
+        type: choice
+        options: [VERIFY, APPLY, ACCEPT]
+      confirmation:
+        description: Exact mode confirmation
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-chat-admin-staging-write
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: staging
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: ${{ vars.FANMIND_STAGING_DB_PORT }}
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      PGCONNECT_TIMEOUT: '10'
+      PGOPTIONS: '-c lock_timeout=5000 -c statement_timeout=120000'
+
+    steps:
+      - name: Validate reviewed main commit
+        env:
+          FANMIND_CHAT_ADMIN_REQUESTED_COMMIT: ${{ inputs.reviewed_commit }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/main" \
+            || ! "$FANMIND_CHAT_ADMIN_REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ \
+            || "$FANMIND_CHAT_ADMIN_REQUESTED_COMMIT" != "$GITHUB_SHA" ]]; then
+            echo "ChatAdmin reviewed commit must equal the exact dispatched main commit." >&2
+            exit 1
+          fi
+
+      - name: Checkout reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Validate mode and exact confirmation
+        env:
+          FANMIND_CHAT_ADMIN_REQUESTED_MODE: ${{ inputs.mode }}
+          FANMIND_CHAT_ADMIN_REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          case "${FANMIND_CHAT_ADMIN_REQUESTED_MODE}:${FANMIND_CHAT_ADMIN_REQUESTED_CONFIRMATION}" in
+            VERIFY:verify-chat-admin-schema|APPLY:apply-chat-admin-migration|ACCEPT:run-chat-admin-acceptance)
+              ;;
+            *)
+              echo "ChatAdmin rollout mode/confirmation mismatch." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Verify offline ChatAdmin contracts
+        run: npm run db:chat-admin:check
+
+      - name: Prepare private passfile
+        env:
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$PASSWORD" in
+            ''|*$'\n'*|*$'\r'*)
+              echo "Staging database password is missing or contains an unsupported line break." >&2
+              exit 1
+              ;;
+          esac
+          P="${PASSWORD//\\/\\\\}"
+          P="${P//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$P" > "$RUNNER_TEMP/chat-admin.pgpass"
+          chmod 600 "$RUNNER_TEMP/chat-admin.pgpass"
+
+      - name: VERIFY read-only
+        if: ${{ inputs.mode == 'VERIFY' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_CHAT_ADMIN_SCHEMA_CONFIRM: verify-chat-admin-schema
+        run: npm run db:chat-admin:verify
+
+      - name: APPLY controlled transaction
+        if: ${{ inputs.mode == 'APPLY' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+          FANMIND_CHAT_ADMIN_MIGRATION_CONFIRM: apply-chat-admin-migration
+        run: npm run db:chat-admin:apply
+
+      - name: Verify schema before ACCEPT
+        if: ${{ inputs.mode == 'ACCEPT' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+          FANMIND_CHAT_ADMIN_SCHEMA_CONFIRM: verify-chat-admin-schema
+        run: npm run db:chat-admin:verify
+
+      - name: ACCEPT synthetic rollback
+        if: ${{ inputs.mode == 'ACCEPT' }}
+        env:
+          PGPASSFILE: ${{ runner.temp }}/chat-admin.pgpass
+          FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+          FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+          FANMIND_CHAT_ADMIN_ACCEPTANCE_CONFIRM: run-chat-admin-acceptance
+          FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID }}
+          FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID }}
+          FANMIND_CHAT_ADMIN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_OWNER_ID }}
+          FANMIND_CHAT_ADMIN_MEMBER_ID: ${{ vars.FANMIND_CHAT_ADMIN_MEMBER_ID }}
+          FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID }}
+          FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID: ${{ vars.FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID }}
+          FANMIND_CHAT_ADMIN_CHARACTER_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_A_ID }}
+          FANMIND_CHAT_ADMIN_CHARACTER_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_B_ID }}
+          FANMIND_CHAT_ADMIN_CONVERSATION_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_A_ID }}
+          FANMIND_CHAT_ADMIN_CONVERSATION_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID }}
+        run: npm run chat-admin:staging:accept
+
+      - name: Remove dedicated private database password file
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/chat-admin.pgpass"

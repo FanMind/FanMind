@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-29",
+  "repository": "FanMind/FanMind",
+  "master_issue": 874,
+  "phase8_started": true,
+  "sales_ready": false,
+  "gates": {
+    "memory_v6": {
+      "task": "FM-MEM-005",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": true
+    },
+    "production_ops": {
+      "task": "FM-OPS-001",
+      "risk": "R3",
+      "state": "VERIFIED",
+      "required_for_sales": true
+    },
+    "staging": {
+      "task": "FM-STG-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": true
+    },
+    "restore": {
+      "task": "FM-RST-001",
+      "risk": "R4",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "mobile": {
+      "task": "FM-MOB-001",
+      "risk": "R3",
+      "state": "IMPLEMENTED_NOT_VERIFIED",
+      "required_for_sales": true,
+      "source_state": "MERGED_VERIFIED",
+      "source_evidence": "Expo SDK 58 repository source merged via PR #1378: exact head 89e7f3b737b2dd10ef28e9b913dbf9982772595d passed all 11 exact-head workflows; squash merge 37b64e1672260a8bf886af5ea07a220dbd9dec74 at 2026-10-28T20:10:37Z has no separate workflow run.",
+      "open_external_gates": [
+        "signed_android_device_acceptance",
+        "real_device_recovery",
+        "push_delivery_and_store_acceptance"
+      ]
+    },
+    "ai_billing": {
+      "task": "FM-AI-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "meta_security": {
+      "task": "FM-META-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "phase3_social": {
+      "task": "FM-SOC3-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "phase7_social": {
+      "task": "FM-SOC7-001",
+      "risk": "R3",
+      "state": "PARTIAL",
+      "required_for_sales": true
+    },
+    "sales_handoff": {
+      "task": "FM-SALES-001",
+      "risk": "R2",
+      "state": "BLOCKED",
+      "required_for_sales": true
+    },
+    "legal_tax_avv": {
+      "task": "FM-LEGAL-001",
+      "risk": "R3",
+      "state": "BLOCKED",
+      "required_for_sales": false
+    },
+    "creator_intelligence": {
+      "task": "FM-CREATOR-001",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false
+    },
+    "registration_admin_crm": {
+      "task": "FM-REG-003",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false
+    },
+    "chatadmin_staging_verify": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R3",
+      "state": "VERIFIED",
+      "required_for_sales": false,
+      "observed_result": "ABSENT",
+      "evidence": "GitHub Actions run 35652258052 / job 106507223598 on 973e70f6d243984d95ec1420a79701faad04a39a; read-only VERIFY succeeded, APPLY/ACCEPT skipped"
+    },
+    "governance_god_mode": {
+      "task": "FM-GOV-GODMODE-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": false
+    },
+    "chatadmin_staging_apply": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "Durable protected GitHub Actions run 36235870895 / job 108387398410 bound to exact reviewed 2aaf225fec29fd91c20f822185c770f87eb3d10d and checksum 9dd3674a3848303cd707aa89ad4b808c5bd9a12bfe3ff4b367e2c99121ad1e7b completed APPLY with built-in CHAT_ADMIN_SCHEMA_STATE=VERIFIED; mutable current Staging schema observation is tracked separately by EV-CHATADMIN-STAGING-SCHEMA-POSTFLIGHT-20260926."
+    },
+    "chatadmin_staging_accept": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "Durable protected GitHub Actions run 36238536613, successful attempt 2 / job 108396358120, exact reviewed 7655aed2cae6ff3588207fee6f2227fd5b8db41c; same-run CHAT_ADMIN_SCHEMA_STATE=VERIFIED; CHAT_ADMIN_ACCEPTANCE_DATABASE=PASS; CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=OPEN; independent Staging zero-row/RLS postflight PASS and Production schema absent"
+    },
+    "chatadmin_manual_flow": {
+      "task": "FM-CHATADMIN-002",
+      "risk": "R4",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`."
+    },
+    "creator_confirmed_chat_staging_verify": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "RECONCILED",
+      "required_for_sales": false,
+      "observed_result": "FOUNDATION_MISSING",
+      "workflow_conclusion": "failure",
+      "workflow_run_id": 36254337623,
+      "release_commit": "d91405d67792aa65a14964553a09a36fa0c87de0",
+      "target_project_ref": "vshyhvgcmrlagvfnvomc",
+      "evidence": "project-memory/receipts/creator-confirmed-chat-verify-36254337623-1.json"
+    },
+    "creator_foundation_reconciliation_preflight": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`."
+    },
+    "creator_foundation_staging_catalog": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "RECONCILED",
+      "required_for_sales": false,
+      "observed_result": "INCOMPLETE",
+      "evidence": "Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action and broad NBA-CREATOR-INTELLIGENCE remain consumed; no unchanged retry. Diagnostic comparison against isolated CI only, independently counterchecked: all seven legacy Creator core sections match. Current core differs by the missing workspace helper, both RPC bodies and all four policy USING clauses. Other differences are three workspace constraints, one auth.uid direct ACL entry and the Hosted role graph. This does not change INCOMPLETE or approve a target/reference. Safe diagnostic receipt: `project-memory/receipts/creator-foundation-staging-catalog-diagnostic.json`; raw catalog is private."
+    },
+    "creator_foundation_profile_transition_design": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "Repository source package accepted and consumed: PR #1207 final head 3cd67cedbcdc051be855d09de8d5ea3225179217, source tree 8b06776701f45000aa6acb27fd7fc3c590ea7f37, verified merge 08a4bfc82f080d58cbea5bde59e92244506c3e4e. All eight exact-head workflows passed, including FanMind CI 36273161074 / native PG17 job 108490997482; independent exact-head review had no P0-P3. Receipt project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json. No target/provider call, APPLY, target reference acceptance or runtime activation occurred; Creator aggregate remains IN_PROGRESS."
+    },
+    "creator_foundation_transition_generator": {
+      "task": "FM-CREATOR-001",
+      "risk": "R3",
+      "state": "ACCEPTED",
+      "required_for_sales": false,
+      "evidence": "Repository source package accepted and consumed: PR #1209 exact head 176efc9bfaf84b75b72591abb6a4bcc453e4a58c, tree bf2239fd01690be9b23c3a47f1b428759dc6179a, verified merge 08fba825d1228d5b57ff0d145919b6bdb51d7504. All nine exact-head workflows passed, including FanMind CI 36284679968 / native PG17 job 108523066296; independent exact-head review had no new blocking findings and zero review threads remain open. Receipt project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json. No target observation, reference acceptance, SQL APPLY, deployment acceptance or runtime activation occurred; Creator aggregate remains IN_PROGRESS."
+    },
+    "creator_foundation_target_transition_runtime": {
+      "task": "FM-CREATOR-001",
+      "risk": "R4",
+      "state": "IN_PROGRESS",
+      "required_for_sales": false,
+      "evidence": "PR #1214 final head 9ad10f2600d9b0b829f052287f81a202ef933383 merged normally as current main bc85493f8fc25ff90c965208bd20c7dc64641158, accepting the bounded drift-diagnostics/recovery source correction. Protected attempt 1 run 36321009852 on prior main deployed Staging, classified DRIFT, requested no APPLY and skipped runtime; SQL APPLY/runtime/Production mutation counts remain zero. The next step is owner-gated read-only diagnosis command run-creator-target-drift-diagnosis <then-current-main-sha>; reviewed remediation and a distinct fresh transition/runtime authorization are required before any later target mutation."
+    }
+  },
+  "sales_required_states": [
+    "ACCEPTED",
+    "PRODUCTION_CONFIRMED"
+  ],
+  "notes": {
+    "phase4": "Production/Billing base only; never sales handoff.",
+    "phase6": "Expo SDK 58 repository source is merged and exact-head CI-verified via PR #1378, while the aggregate Mobile gate remains IMPLEMENTED_NOT_VERIFIED. Existing signed artifacts predate SDK 58; signed Android/device acceptance, real-device Recovery, Push/Store evidence and Play cohort remain open and deferred by FM-DEC-021 until company registration plus explicit owner resume. iOS/TestFlight remains separate Phase 8 work.",
+    "phase3": "Facebook, Instagram, WhatsApp.",
+    "phase7": "FM-DEC-015 keeps Phase 7b Creator and selected Social engineering active. One Creator per independent account/Workspace. Actual Phase 3/7a acceptance still precedes technical Sales Handoff; Creator is not required_for_sales. FM-DEC-021 separately defers all remaining Mobile/Handy work until company registration plus explicit owner resume; Creator/Social completion alone does not restart Mobile.",
+    "phase8": "The disabled Website-AI security/widget/message-ingestion foundation plus dormant consent-bound email handoff are retained. FM-DEC-015 resumes selected AI-draft/human-handoff engineering now; target acceptance, visitor dialog, uncertainty escalation, verified email delivery, iOS/TestFlight, LinkedIn and other later platforms remain separate."
+  }
+}

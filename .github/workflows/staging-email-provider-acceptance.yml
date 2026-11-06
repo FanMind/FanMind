@@ -1,0 +1,134 @@
+name: FanMind Staging Email Provider Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: 'Exact current main commit already deployed to Staging'
+        required: true
+        type: string
+      confirmation:
+        description: 'Type send-one-staging-email-provider-acceptance to continue'
+        required: true
+        type: string
+
+concurrency:
+  group: fanmind-staging-email-provider-acceptance
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  validate-dispatch:
+    name: Validate exact non-secret dispatch contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    env:
+      REQUESTED_COMMIT: ${{ inputs.reviewed_commit }}
+      REQUESTED_CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Reject every non-main or inexact request
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF" == refs/heads/main ]]
+          [[ "$REQUESTED_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$REQUESTED_COMMIT" == "$GITHUB_SHA" ]]
+          [[ "$REQUESTED_CONFIRMATION" == send-one-staging-email-provider-acceptance ]]
+          echo "STAGING_EMAIL_DISPATCH=PASS"
+
+  accept-staging-email-provider:
+    name: Send one provider-controlled synthetic test email
+    needs: validate-dispatch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: staging-email-acceptance
+
+    steps:
+      - name: Checkout exact reviewed main commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Verify isolated email contract offline
+        run: node scripts/operations/staging-email-provider-acceptance.mjs --check
+
+      - name: Verify protected GitHub, release, runtime and DNS boundaries
+        env:
+          FANMIND_RUNTIME_ENVIRONMENT: staging
+          FANMIND_STAGING_APP_URL: https://staging.fanmind.ch
+          FANMIND_STAGING_EMAIL_ACCEPTANCE_ENVIRONMENT: staging-email-acceptance
+          FANMIND_STAGING_EMAIL_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          FANMIND_STAGING_EMAIL_CONFIRM: ${{ inputs.confirmation }}
+          FANMIND_STAGING_EMAIL_SCOPE_ATTESTATION: ${{ vars.FANMIND_STAGING_EMAIL_SCOPE_ATTESTATION }}
+          FANMIND_STAGING_EMAIL_EXPECTED_MX: ${{ vars.FANMIND_STAGING_EMAIL_EXPECTED_MX }}
+          FANMIND_STAGING_EMAIL_DKIM_SHA256: ${{ vars.FANMIND_STAGING_EMAIL_DKIM_SHA256 }}
+          FANMIND_STAGING_EMAIL_ACCEPTANCE_RESEND_KEY: ''
+          GITHUB_TOKEN: ${{ github.token }}
+          RESEND_API_KEY: ''
+          FANMIND_NOTIFICATION_FROM: ''
+          NODE_OPTIONS: ''
+          NODE_DEBUG: ''
+          NODE_DEBUG_NATIVE: ''
+          NODE_USE_ENV_PROXY: ''
+          NODE_EXTRA_CA_CERTS: ''
+          NODE_TLS_REJECT_UNAUTHORIZED: ''
+          OPENSSL_CONF: ''
+          OPENSSL_MODULES: ''
+          OPENSSL_ENGINES: ''
+          SSLKEYLOGFILE: ''
+          SSL_CERT_FILE: ''
+          SSL_CERT_DIR: ''
+          LD_PRELOAD: ''
+          LD_LIBRARY_PATH: ''
+          HTTP_PROXY: ''
+          HTTPS_PROXY: ''
+          ALL_PROXY: ''
+          NO_PROXY: ''
+        run: |
+          set -euo pipefail
+          unset http_proxy https_proxy all_proxy no_proxy
+          node scripts/operations/staging-email-provider-acceptance.mjs --preflight
+
+      - name: Recheck public boundary and send one safe Resend test event
+        env:
+          FANMIND_RUNTIME_ENVIRONMENT: staging
+          FANMIND_STAGING_APP_URL: https://staging.fanmind.ch
+          FANMIND_STAGING_EMAIL_ACCEPTANCE_ENVIRONMENT: staging-email-acceptance
+          FANMIND_STAGING_EMAIL_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          FANMIND_STAGING_EMAIL_CONFIRM: ${{ inputs.confirmation }}
+          FANMIND_STAGING_EMAIL_SCOPE_ATTESTATION: ${{ vars.FANMIND_STAGING_EMAIL_SCOPE_ATTESTATION }}
+          FANMIND_STAGING_EMAIL_EXPECTED_MX: ${{ vars.FANMIND_STAGING_EMAIL_EXPECTED_MX }}
+          FANMIND_STAGING_EMAIL_DKIM_SHA256: ${{ vars.FANMIND_STAGING_EMAIL_DKIM_SHA256 }}
+          FANMIND_STAGING_EMAIL_ACCEPTANCE_RESEND_KEY: ${{ secrets.FANMIND_STAGING_EMAIL_ACCEPTANCE_RESEND_KEY }}
+          RESEND_API_KEY: ''
+          FANMIND_NOTIFICATION_FROM: ''
+          NODE_OPTIONS: ''
+          NODE_DEBUG: ''
+          NODE_DEBUG_NATIVE: ''
+          NODE_USE_ENV_PROXY: ''
+          NODE_EXTRA_CA_CERTS: ''
+          NODE_TLS_REJECT_UNAUTHORIZED: ''
+          OPENSSL_CONF: ''
+          OPENSSL_MODULES: ''
+          OPENSSL_ENGINES: ''
+          SSLKEYLOGFILE: ''
+          SSL_CERT_FILE: ''
+          SSL_CERT_DIR: ''
+          LD_PRELOAD: ''
+          LD_LIBRARY_PATH: ''
+          HTTP_PROXY: ''
+          HTTPS_PROXY: ''
+          ALL_PROXY: ''
+          NO_PROXY: ''
+        run: |
+          set -euo pipefail
+          unset GITHUB_TOKEN http_proxy https_proxy all_proxy no_proxy
+          node scripts/operations/staging-email-provider-acceptance.mjs --send

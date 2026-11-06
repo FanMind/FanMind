@@ -1,0 +1,128 @@
+name: FanMind Browser E2E
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: fanmind-browser-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  public-no-write:
+    name: Public no-write flows on desktop and mobile Chromium
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+      NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
+      # Keep the long public identifier quoted; YAML must not coerce it to scientific notation.
+      NEXT_PUBLIC_META_PIXEL_ID: "2069553844439892"
+      FANMIND_PUBLIC_DEMO_ENABLED: "false"
+      FANMIND_ENABLE_REFERRAL_BILLING: "false"
+      FANMIND_ENABLE_TELEGRAM_SEND: "false"
+      FANMIND_ENABLE_SIDEBAR_PREVIEW_E2E: "true"
+      FANMIND_ADMIN_EMAILS: admin@example.com
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3100
+      CI: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Build Production-compatible web application
+        run: npm run build
+
+      - name: Install Chromium only
+        run: npx playwright install --with-deps chromium
+
+      - name: Run no-write public browser flows
+        run: npm run test:e2e
+
+      - name: Upload failure-oriented browser evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-browser-e2e-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: warn
+          include-hidden-files: false
+          retention-days: 7
+
+  regular-user-core-flow-local:
+    name: Synthetic regular-user core flow on local providers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-core-flow-anon-key
+      NEXT_PUBLIC_APP_URL: http://localhost:3100
+      NEXT_PUBLIC_SITE_URL: http://localhost:3100
+      NEXT_PUBLIC_META_PIXEL_ID: "2069553844439892"
+      FANMIND_CORE_FLOW_FIXTURE_ACK: fanmind-local-synthetic-core-flow
+      FANMIND_PUBLIC_DEMO_ENABLED: "false"
+      FANMIND_ENABLE_REFERRAL_BILLING: "false"
+      FANMIND_ENABLE_TELEGRAM_SEND: "false"
+      FANMIND_ADMIN_EMAILS: admin@example.com
+      SUPABASE_SERVICE_ROLE_KEY: fanmind-local-core-flow-service-role-key
+      NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED: "true"
+      CI: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+          cache: npm
+
+      - name: Install dependencies reproducibly
+        run: npm ci --no-audit --no-fund
+
+      - name: Build the isolated synthetic core-flow application
+        run: npm run build
+
+      - name: Install Chromium only
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the local regular-user core flow
+        run: npm run test:e2e:core-flow
+
+      - name: Run actual ChatAdmin component isolation regressions
+        run: npm run test:chat-admin-client
+
+      - name: Upload failure-oriented synthetic core-flow evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fanmind-core-flow-e2e-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            playwright-report-core-flow
+            test-results/playwright-core-flow
+          if-no-files-found: warn
+          include-hidden-files: false
+          retention-days: 7
+

@@ -1,0 +1,524 @@
+{
+  "schema_version": 1,
+  "updated": "2026-10-31",
+  "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
+  "actions": [
+    {
+      "id": "NBA-CHATADMIN-STAGING-VERIFY",
+      "priority": 0,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_verify",
+      "title": "Gemergten ChatAdmin-Stand read-only auf Staging verifizieren",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-VERIFY-20260921",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "RECONCILED"
+      ],
+      "instruction": "Completed read-only VERIFY run 35652258052 / job 106507223598 on exact main 973e70f6d243984d95ec1420a79701faad04a39a returned ABSENT; APPLY and ACCEPT were skipped. This action is complete. Do not repeat VERIFY merely because main advances. Proceed through FM-GOV-GODMODE-001 before any separate ChatAdmin APPLY request."
+    },
+    {
+      "id": "NBA-ADMIN-CRM-SYNTHETIC-LIFECYCLE",
+      "priority": 7,
+      "task": "FM-REG-003",
+      "gate": "registration_admin_crm",
+      "title": "Fehlende synthetische Admin-CRM-Lifecycle-Abnahme schließen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-REG-OWNER-SYNTHETIC-LIFECYCLE-20260919",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Echte Registrierung vollständig abnehmen" }
+      ],
+      "instruction": "The real existing 0-EUR Admin-CRM account is accepted for normal use and must not be re-registered or re-granted. Before any additional real Admin-CRM grant, complete the runbook-required synthetic confirmed-noncustomer lifecycle under a separately authorized protected scope: permanent -> future temporary -> blocked plus login/direct authenticated read denial/allowance and cleanup. Do not use the existing real customer as the synthetic fixture and do not repeat the Production migration."
+    },
+    {
+      "id": "NBA-RESTORE-STORAGE-R4-AUTH",
+      "priority": 10,
+      "task": "FM-RST-001",
+      "gate": "restore",
+      "title": "Isolierten Storage-Restore exakt freigeben",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "deferred_owner_id": "FM-RST-OWNER-007",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Vollständiger Restore-Test" }
+      ],
+      "instruction": "Owner resumed Restore completion on 2026-09-08. DB_POSTCHECKED and repository Storage preparation/controller are accepted. Obtain the exact distinct disposable Storage target/cost decision and artifact/commit/bucket/cleanup authorization; prior local-only choice did not authorize a provider target. Never repeat database Restore or use Production/FanMind Staging as target."
+    },
+    {
+      "id": "NBA-SECURITY-PROTECTED",
+      "priority": 15,
+      "task": "FM-SEC-001",
+      "gate": "meta_security",
+      "title": "Begrenzte Staging-RPC-Ausnahmen prüfen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "deferred_owner_id": "FM-SEC-OWNER-002",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 5, "label": "Security- und Meta-Abnahme" }
+      ],
+      "instruction": "Production trigger hardening is complete: Apply 34496892707 and independent Verify 34497099991 passed on 9a6e9d01; fresh Supabase advisors removed all five related warnings. Do not repeat the Apply or ask for its approval again. Leaked-password protection is now enabled and independently verified on Production and Staging (FM-EV-041); do not activate or request it again. Continue only the bounded Staging RPC exception review; Meta external acceptance remains separate. Do not invent browser policies or infer whole-gate completion."
+    },
+    {
+      "id": "NBA-MOBILE-READONLY",
+      "priority": 20,
+      "task": "FM-MOB-001",
+      "gate": "mobile",
+      "title": "Android Runbook, Recovery und Push/Store abnehmen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 6, "label": "Google-Play-Test & Geräteabnahme" },
+        { "phase": 6, "label": "Push für Follow-up-Erinnerungen" }
+      ],
+      "instruction": "FM-DEC-021 supersedes the prior Creator/Social-based Android timing. Preserve all existing Mobile artifacts and accepted evidence, but do not start any remaining Mobile/Handy activity until company registration is complete AND the owner explicitly resumes Mobile. This includes no new signed build, device acceptance, Push completion/provider delivery, Play tester cohort, Store production request, iOS signing or TestFlight. Creator/Social completion alone never resumes Mobile.",
+      "deferred_owner_id": "FM-MOB-OWNER-CREATOR-SOCIAL-20260910"
+    },
+    {
+      "id": "NBA-AI-LIFECYCLE-RECONCILE",
+      "priority": 30,
+      "task": "FM-AI-001",
+      "gate": "ai_billing",
+      "title": "KI/Billing Produkt- und Provider-Lifecycle abschließen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "deferred_owner_id": "FM-AI-OWNER-001",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 5, "label": "KI-/Billing-Gesamtabnahme" }
+      ],
+      "instruction": "Owner resumed KI/Billing and confirmed existing prices complete on 2026-09-08. Staging deploy 34267819029 and Stripe Test webhook readiness 34268317761 passed. AI acceptance 34268214078 failed before DB access because two API-origin bindings were missing; review the bounded workflow fix, then merge/deploy exact new main and obtain a fresh rollback-only acceptance. Historical general Billing Apply/capture/canonical acceptance remains complete. Continue only remaining product/private/provider/Legal/Production gates; no live payment, repricing or paid-tier activation."
+    },
+    {
+      "id": "NBA-META-TECHNICAL-RECONCILE",
+      "priority": 40,
+      "task": "FM-META-001",
+      "gate": "meta_security",
+      "title": "Externe Meta-Abnahme bereitstellen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "deferred_owner_id": "FM-META-OWNER-001",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 3, "label": "Technische & rechtliche Prüfung" }
+      ],
+      "instruction": "FM-EV-023 completes the bounded 2026-08-26 technical read-only reconciliation; mutable Staging freshness is tracked by EV-META-STAGING-FOUNDATION-20260826. Do not rerun its workflows merely for closeout or repeat Production activation/deploy. After expiry/invalidation or before a later Meta Staging database action, use a new lock and shared rollout-state-first verification. Require FM-META-OWNER-001 for normal-browser Events Manager positive/negative/no-PII evidence and legal acceptance; keep App Review and real provider-account E2E external."
+    },
+    {
+      "id": "NBA-SALES-HANDOFF",
+      "priority": 80,
+      "task": "FM-SALES-001",
+      "gate": "sales_handoff",
+      "title": "Finalen Production-Demo- und Sales-Handoff schließen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "restore",
+        "mobile",
+        "ai_billing",
+        "meta_security",
+        "phase3_social",
+        "phase7_social"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Run exact-release five-minute Production demo, synchronize sales truth and perform technical handoff only after all required gates are accepted. Creator development now proceeds under FM-DEC-015, without becoming an additional pre-sales prerequisite."
+    },
+    {
+      "id": "NBA-CREATOR-SOCIAL-EXTERNAL",
+      "priority": 9,
+      "task": "FM-SOC3-001",
+      "gate": "phase3_social",
+      "title": "Meta-App-Zugang und Creator-Freigaben herstellen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 3, "label": "WhatsApp" }
+      ],
+      "instruction": "External Meta account work only (Phase 3): reuse existing owner authorization for the FanMind Facebook/Instagram app and separately scoped WhatsApp Business resources, obtain missing access through secure personal sign-in, and establish each Creator's own consent, allowed callback/scopes and real Meta provider evidence for Facebook, Instagram and the separately gated WhatsApp foundation. EXT-META-CREATOR-APP-20260911, EXT-WHATSAPP and FM-SOC3-OWNER-APP-20260911 remain OPEN/OWNER_ACTION_REQUIRED. Missing credentials/consent/third-party approval cannot be supplied by repository tests or another Creator. Never ask for passwords or tokens in chat. No live payment, automatic sending or Production activation is implied. The dormant WhatsApp implementation is not activated by this queue; its approved credentials/permissions and Staging/E2E/revocation/reconnect/tenant/idempotency evidence are still required. TikTok/X work is tracked independently under NBA-PHASE7-EXTERNAL and phase7_social.",
+      "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
+    },
+    {
+      "id": "NBA-PHASE7-EXTERNAL",
+      "priority": 11,
+      "task": "FM-SOC7-001",
+      "gate": "phase7_social",
+      "title": "Externe Phase-7-Abnahme kanalweise abschließen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "owner_action_id": "FM-SOC7-OWNER-EXTERNAL-20260911",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 7, "label": "TikTok" },
+        { "phase": 7, "label": "X / Twitter" },
+        { "phase": 7, "label": "OnlyFans" }
+      ],
+      "instruction": "External Phase 7 gate work, covering EXT-TIKTOK-X-PILOT-20260911, EXT-TIKTOK, EXT-X, EXT-DISCORD and EXT-ONLYFANS. Start with the currently selected TikTok/X app access, per-Creator consent, callbacks/scopes, actual X budget and real positive/negative provider evidence using existing authorization. Read each external control's current status first; preserve any completed channel and advance only the remaining controls, never request completed TikTok/X work again merely because phase7_social is PARTIAL. Discord remains later under the owner decision: retain its open control without starting it or asking for early activation. OnlyFans retains the manual handoff; direct access requires actual official/contractual feasibility evidence. This action represents the whole Phase 7 gate, not only TikTok/X, and completes when that aggregate gate is accepted. Missing implementation remains open under its tasks and a bounded engineering action can use existing authorization. Installed Social schema is preserved; current target evidence needs revalidation. No password/token in chat, payment, automatic send or Production activation is implied.",
+      "external_controls": [
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-TIKTOK",
+        "EXT-X",
+        "EXT-DISCORD",
+        "EXT-ONLYFANS"
+      ]
+    },
+    {
+      "id": "NBA-SOCIAL-INBOUND-CURRENT-ACCOUNT",
+      "priority": 8,
+      "task": "FM-SOC3-001",
+      "gate": "phase3_social",
+      "title": "Reale Meta-Konfiguration und Facebook-Inbound abnehmen",
+      "requires_owner": true,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "roadmap_items": [
+        { "phase": 3, "label": "Facebook" },
+        { "phase": 3, "label": "Instagram" }
+      ],
+      "instruction": "FM-CR-045 is PRODUCTION_CONFIRMED by canonical PR #1138 (final head cea0d43108187a4dcd2510f17798f250d4a3c429, merge ccfe0ccef743e889d4ea16d454282cf66e465ed9), Production Deploy 35450031498, Production Audit 35450097882 and Public Go-Live Readiness 35450097892. Do not repeat its placeholder/OAuth fail-closed source work. The remaining step is owner/provider-controlled secure configuration of the real central Meta App ID/secret, exact FanMind callback, token-encryption key and matching permissions, followed by the bounded Facebook connection/inbound proof. No secrets in chat/Git; Instagram follows only after Facebook acceptance. Payment, automatic send and Mobile stay deferred.",
+      "owner_action_id": "FM-SOC3-OWNER-APP-20260911"
+    },
+    {
+      "id": "NBA-GOV-GODMODE-001",
+      "priority": 3,
+      "task": "FM-GOV-GODMODE-001",
+      "gate": "governance_god_mode",
+      "title": "FanMind God Mode v1 fail-closed integrieren",
+      "requires_owner": false,
+      "parallel_safe": true,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "COUNTERCHECKED",
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "God Mode v1 PR #1157 is merged and post-merge verified as exact main 1c5e1232f0893b0730a985c6e717b5c27c535f35. This repository scope is complete; do not rebuild or start another hardening loop. Later hardening ideas require a new bounded task/PR."
+    },
+    {
+      "id": "NBA-CHATADMIN-STAGING-APPLY",
+      "priority": 4,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_apply",
+      "title": "ChatAdmin-Schema geschützt auf Staging anwenden",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-APPLY-20260921",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "governance_god_mode"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Completed schema APPLY is consumed. DB/RLS ACCEPT is also completed and consumed; the distinct manual application-flow action is now ACCEPTED and consumed under FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926. Do not repeat these Staging actions. Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed."
+    },
+    {
+      "id": "NBA-CHATADMIN-STAGING-ACCEPT",
+      "priority": 5,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_staging_accept",
+      "title": "ChatAdmin synthetische DB/RLS-Acceptance auf Staging ausführen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-ACCEPT-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_staging_apply"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Completed and consumed DB/RLS ACCEPT run 36238536613 attempt 2 emitted the historical MANUAL_FLOW=OPEN marker. Actual manual acceptance is now consumed under FM-EXEC-CHATADMIN-MANUAL-FLOW-20260926. Do not repeat DB/RLS ACCEPT or manual acceptance. Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed."
+    },
+    {
+      "id": "NBA-CHATADMIN-MANUAL-FLOW",
+      "priority": 1,
+      "task": "FM-CHATADMIN-002",
+      "gate": "chatadmin_manual_flow",
+      "title": "ChatAdmin manuellen Staging-Anwendungsflow abnehmen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CHATADMIN-OWNER-MANUAL-FLOW-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_staging_apply",
+        "chatadmin_staging_accept"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Completed and consumed: run `36255475314`, attempt 1 / job `108441348490`, reviewed/deployed main `9652ae62928c70d8f39d8f184857a34fcd4de74f`; all required same-run probe/browser/verify/cleanup/absence/manual PASS markers; independent cleanup `2026-09-26T16:29:38.790838Z`, schema/RLS/ACL `2026-09-26T16:29:38.136543Z`, sessions `2026-09-26T16:29:38.790838Z` and Production absence `2026-09-26T16:29:39.531953Z`. Receipt: `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`. Do not repeat the manual application-flow action. Only synthetic Staging application acceptance is closed. Real capability grants, private image-storage APPLY and aggregate Production activation remain separate/open. No external social/fan message delivery, automatic send or Production ChatAdmin data/schema/capability mutation occurred; normal application deployments from reviewed main merges remain distinct; prior schema APPLY and DB/RLS ACCEPT remain consumed."
+    },
+    {
+      "id": "NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY",
+      "priority": 6,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_confirmed_chat_staging_verify",
+      "title": "Creator Confirmed-Chat-Schema read-only auf Staging verifizieren",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CREATOR-OWNER-CONFIRMED-CHAT-VERIFY-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "RECONCILED"
+      ],
+      "instruction": "Completed and consumed read-only observation: Protected read-only run 36254337623, attempt 1 / job 108438159538, exact reviewed/deployed d91405d67792aa65a14964553a09a36fa0c87de0, failed at 2026-09-26T16:07:56.0581882Z with verify_query_failed; private passfile removal succeeded. Independent exact SQL replay identifies creator_learning_foundation_missing: creator_workspace_access_allowed(uuid) is absent. Additional read-only checks identify two platform-role contract mismatches and two ungated Creator member-read policies. This is a reconciled failed observation, not a successful verifier or ABSENT/INSTALLED proof. The distinct source preflight and later profile-transition source package are consumed; no unchanged retry or target transition is authorized."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT",
+      "priority": 12,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_reconciliation_preflight",
+      "title": "Creator-Foundation-Verträge lesend abgleichen und Übergang vorbereiten",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CREATOR-OWNER-TARGET-TRANSITION-RUNTIME-RETRY-20260927",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-CONFIRMED-CHAT-STAGING-VERIFY"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Completed and consumed repository source package. PR #1204 final head `092e89ebb9757af2046f174796282bb237ddadd8`, source tree `2edf4d31418183fdddb71bd1cd7e95cad1933415`, verified merge `2a3af587593035a2975992744b2a9bf7a7f59783` at `2026-09-26T18:17:04Z`; final CI run `36261538537`, attempt 1 / job `108458188956` on tested checkout `f8d6083423bba16794896e64f6922f666debbee2` succeeded; independent final review had no P1/P2. CI reference artifact `10912722295` / SHA256 `26696239c1e7086faad0d461aaf5f68b41d237f66e3c2c4ca43a7be2b0bbcbd9`. Receipt: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Only the PR #1204 repository source package is accepted. Provider-profile trust and actual target catalogs remain separate; missing references or profile coverage yield INCOMPLETE. Creator aggregate stays IN_PROGRESS; learning schema remains UNDETERMINED. No target acceptance, APPLY, runtime activation or provider action is inferred. The later profile-transition source package is also ACCEPTED/CONSUMED; any target continuation is a distinct protected action."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-STAGING-CATALOG",
+      "priority": 13,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_staging_catalog",
+      "title": "Creator-Foundation-Katalog auf Staging lesend beobachten und Referenzen prüfen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "owner_action_id": "FM-CREATOR-OWNER-FOUNDATION-STAGING-CATALOG-20260926",
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_reconciliation_preflight"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "RECONCILED"
+      ],
+      "instruction": "Completed and consumed read-only catalog observation. Actual read-only Staging catalog observed `2026-09-26T18:24:28.937033Z`; application release probe UNAVAILABLE; historical release `9652ae62928c70d8f39d8f184857a34fcd4de74f` observed `2026-09-26T16:27:14.666Z` is context only from `project-memory/receipts/chat-admin-manual-flow-36255475314-1-acceptance.json`, not a current release binding; query SHA256 `252951c7b64adda2e52c92f2d2b141390e79275db61d09460d92bb7509ff2436`, private catalog SHA256 `c004ae7e7feacb2c286cc6cfe53f479b2fe3677663118011ee9deaed8ca651bc`. Classifier outcome `INCOMPLETE`; blockers `reference_pin_missing,auth_uid_provider_contract_missing`; trusted comparison not performed because reference/profile evidence is missing; the classifier returned an empty differingSections list, which is not a no-drift verdict. Credential disposition `NOT_CREATED` and private artifact disposition recorded at `2026-09-26T18:33:33.512088Z`. Actual redacted receipt: `project-memory/receipts/creator-foundation-staging-catalog-observation.json`; immutable source acceptance: `project-memory/receipts/creator-foundation-preflight-pr1204-source.json`. Creator aggregate stays IN_PROGRESS; learningState=UNDETERMINED, targetAccepted=false, applyAllowed=false and runtimeActivated=false. A catalog classifier outcome is a scoped observation, never target acceptance, learning-schema ABSENT/INSTALLED proof or authority to write. The catalog action, broad NBA-CREATOR-INTELLIGENCE and later profile-transition source package are consumed; no unchanged retry or target transition is authorized."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN",
+      "priority": 14,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_profile_transition_design",
+      "title": "Creator-Profile unabhängig abgleichen und begrenzten Quellenübergang entwerfen",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_reconciliation_preflight"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-RECONCILIATION-PREFLIGHT",
+        "NBA-CREATOR-FOUNDATION-STAGING-CATALOG"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Completed and consumed repository source package. PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e`; all eight exact-head workflows, native PG17 job `108490997482` and independent review passed. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`. No target/provider call, APPLY, target reference acceptance or runtime activation occurred. Creator aggregate remains IN_PROGRESS. The subsequent NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR source package is also ACCEPTED/CONSUMED by PR #1209; only a later target observation/reference acceptance or transition execution is a distinct protected action with current authorization and exact target binding. Do not repeat the consumed catalog observation unchanged."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR",
+      "priority": 2,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_transition_generator",
+      "title": "Begrenzten Creator-Foundation-Übergang fail-closed erzeugen und nativ beweisen",
+      "requires_owner": false,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_profile_transition_design"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-PROFILE-TRANSITION-DESIGN"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "instruction": "Completed and consumed repository source package. PR #1209 exact head `176efc9bfaf84b75b72591abb6a4bcc453e4a58c`, tree `bf2239fd01690be9b23c3a47f1b428759dc6179a`, verified merge `08fba825d1228d5b57ff0d145919b6bdb51d7504`; all nine exact-head workflows, FanMind CI `36284679968`, native PG17 job `108523066296`, independent review and zero open review threads passed. Receipt: `project-memory/receipts/creator-foundation-transition-generator-pr1209-source.json`. No target/provider call, target observation/reference acceptance, SQL APPLY, deployment acceptance or runtime activation occurred. Creator aggregate remains IN_PROGRESS. A target-bound observation/reference acceptance/transition requires a distinct newly admitted protected action with current authorization and exact target binding; do not repeat the consumed catalog observation unchanged."
+    },
+    {
+      "id": "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME",
+      "priority": -1,
+      "task": "FM-CREATOR-001",
+      "gate": "creator_foundation_target_transition_runtime",
+      "title": "Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6",
+        "staging",
+        "chatadmin_manual_flow",
+        "creator_foundation_transition_generator"
+      ],
+      "depends_on_actions": [
+        "NBA-CREATOR-FOUNDATION-TRANSITION-GENERATOR"
+      ],
+      "done_states": [
+        "ACCEPTED"
+      ],
+      "roadmap_items": [
+        { "phase": 7, "label": "Creator-Profile & getrenntes Fanwissen" },
+        { "phase": 7, "label": "Kaufdaten & Lernen aus bestätigten Chats" }
+      ],
+      "instruction": "PR #1214 source/recovery correction remains ACCEPTED on merge bc85493f8fc25ff90c965208bd20c7dc64641158. Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step remains owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874 using the then-current protected main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
+      "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
+    }
+  ],
+  "retired_actions": [
+    {
+      "id": "NBA-CREATOR-INTELLIGENCE",
+      "task": "FM-CREATOR-001",
+      "status": "CONSUMED",
+      "retired_at": "2026-09-26",
+      "bounded_source_evidence": "PR #1184 final head 12924950dfcfee263c48774c16c667d9bd5c6167 passed all required exact-head checks and independent review, then merged as 2dace28f6ab631261c60da1f3aa7920eaa40c849; PR #1185 reconciled that repository-only aggregate-summary scope on main 2aaf225fec29fd91c20f822185c770f87eb3d10d.",
+      "reason": "The broad Creator placeholder has no remaining concrete bounded repository continuation after #1184. Keeping it executable would let the Builder invent or rebuild scope. FM-CREATOR-001 remains IN_PROGRESS because private real samples, human style approval, blinded quality and protected/runtime/provider acceptance remain open; any distinct repository increment requires a new bounded engineering action with its own acceptance contract.",
+      "replacement_rule": "Do not reactivate this broad placeholder. Add a new bounded engineering action only when current approved requirements identify an exact repository outcome, files/contracts, negative tests and integration step. External and protected Creator/Social steps remain under their existing owner-required actions."
+    },
+    {
+      "id": "NBA-PHASE3-SOCIAL",
+      "task": "FM-SOC3-001",
+      "status": "SUPERSEDED",
+      "retired_at": "2026-09-11",
+      "bounded_source_evidence": "#1099 manual Creator/OnlyFans handoff, #1102-#1104 TikTok/X source and isolated Social schema, #1105 Meta first-import source are published. Whole Phase 3/7 provider and product gates remain PARTIAL.",
+      "reason": "Retire the broad engineering placeholder: its already-published source must not keep an aggregate phase gate executable forever and hide required external prerequisites. Remaining Creator UI/delete/learning source stays under NBA-CREATOR-INTELLIGENCE. Further connector/CRM-ingestion source remains open and can proceed under a new bounded engineering action using existing authorization; only actual provider operations depend on the factual external prerequisites. It is not declared complete here.",
+      "replaced_by": [
+        "NBA-CREATOR-INTELLIGENCE",
+        "NBA-CREATOR-SOCIAL-EXTERNAL",
+        "NBA-PHASE7-EXTERNAL"
+      ],
+      "retained_external_controls": [
+        "EXT-WHATSAPP",
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-ONLYFANS",
+        "EXT-DISCORD"
+      ]
+    },
+    {
+      "id": "NBA-PHASE7-SOCIAL",
+      "task": "FM-SOC7-001",
+      "status": "SUPERSEDED",
+      "retired_at": "2026-09-11",
+      "bounded_source_evidence": "#1099 manual Creator/OnlyFans handoff, #1102-#1104 TikTok/X source and isolated Social schema, #1105 Meta first-import source are published. Whole Phase 3/7 provider and product gates remain PARTIAL.",
+      "reason": "Retire the broad engineering placeholder: its already-published source must not keep an aggregate phase gate executable forever and hide required external prerequisites. Remaining Creator UI/delete/learning source stays under NBA-CREATOR-INTELLIGENCE. Further connector/CRM-ingestion source remains open and can proceed under a new bounded engineering action using existing authorization; only actual provider operations depend on the factual external prerequisites. It is not declared complete here.",
+      "replaced_by": [
+        "NBA-CREATOR-INTELLIGENCE",
+        "NBA-CREATOR-SOCIAL-EXTERNAL",
+        "NBA-PHASE7-EXTERNAL"
+      ],
+      "retained_external_controls": [
+        "EXT-WHATSAPP",
+        "EXT-TIKTOK-X-PILOT-20260911",
+        "EXT-ONLYFANS",
+        "EXT-DISCORD"
+      ]
+    }
+  ]
+}
