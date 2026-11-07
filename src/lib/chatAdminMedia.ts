@@ -42,9 +42,9 @@ export async function mediaObject(workspaceId:string,characterId:string,id:strin
   if(!response.ok)throw new ChatAdminMediaError("media_object_unavailable");
   if(method==="DELETE"){
     const result=await response.json();
-    if(Array.isArray(result)&&result.length===1&&result[0]?.name===path)return Buffer.alloc(0);
-    if(!Array.isArray(result)||result.length!==0)throw new ChatAdminMediaError("media_cleanup_unverified");
-    // Retry after a successful object delete but interrupted metadata cleanup.
+    if(!Array.isArray(result)||result.length>1||result.length===1&&result[0]?.name!==path)throw new ChatAdminMediaError("media_cleanup_unverified");
+    // Verify API-level absence after an acknowledged deletion and after an
+    // interrupted metadata-cleanup retry. An acknowledgment alone is not proof.
     const check=await fetch(`${requireSupabasePublicConfig().url}/storage/v1/object/authenticated/${MEDIA_BUCKET}/${path}`,{headers:getSupabaseHeaders(token),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
     await check.body?.cancel();
     if(check.status!==404)throw new ChatAdminMediaError("media_cleanup_unverified");
@@ -75,3 +75,4 @@ export async function groundChatAdminContext(context:string,character:ChatCharac
   for(const match of matches)await mediaObject(character.workspace_id,character.id,match.id,"GET");
   return grounded;
 }
+
