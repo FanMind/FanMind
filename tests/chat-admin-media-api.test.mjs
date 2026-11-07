@@ -7,6 +7,7 @@ import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
 import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
 import { WorkspaceAuthorizationError } from "../src/lib/workspaceAuthorizationPolicy.mjs";
 import { deleteOwnedChatAdminMedia } from "../src/lib/chatAdminMediaDeletion.mjs";
+import "./chat-admin-media-storage.cases.mjs";
 const w="11111111-1111-4111-8111-111111111111",c="22222222-2222-4222-8222-222222222222",id="33333333-3333-4333-8333-333333333333";
 const compile=path=>ts.transpileModule(readFileSync(path,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 class NextResponse extends Response{static json(value,init){return new NextResponse(JSON.stringify(value),{...init,headers:{"content-type":"application/json",...init?.headers}});}}
@@ -26,7 +27,7 @@ function harness(options={}){
    loadCharacterMedia:async()=>({assets:[{...asset}],policy:{enabled:false,revision:0}}),
    mediaScope:(workspaceId,characterId)=>`workspace_id=eq.${workspaceId}&character_id=eq.${characterId}`,
    mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}")});revision++;return [{...asset}];},
-   mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");return Buffer.from("synthetic-private-image");},
+   mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");if(options.cleanupUnverified)throw new mediaPolicy.ChatAdminMediaError("media_cleanup_unverified");return Buffer.from("synthetic-private-image");},
    updateMediaAsset:async(workspaceId,characterId,previous,patch)=>{calls.writes.push({patch,workspaceId,characterId});Object.assign(asset,patch,{revision:asset.revision+1});revision++;return {...asset};},
   },
   "@/lib/chatAdminMediaImage":{normalizeMediaImage:async bytes=>bytes},
@@ -61,6 +62,18 @@ test("deletion revokes availability before deleting the file and preserves metad
  const h=harness({objectFails:true});const result=await h.route.DELETE(h.request({},"DELETE"));assert.equal(result.status,503);assert.equal(h.calls.writes.length,1);assert.equal(h.calls.writes[0].patch.deleted,true);assert.equal(h.calls.writes[0].patch.available,false);
  const retry=harness({asset:{deleted:true}});assert.equal((await retry.route.DELETE(retry.request({},"DELETE"))).status,200);assert.equal(retry.calls.objects[0][3],"DELETE");assert.ok(retry.calls.writes.some(call=>call.path));
 });
+test("failed Storage absence verification retains revoked metadata for retry",async()=>{
+ for(const deleted of [false,true]){
+  const h=harness({cleanupUnverified:true,asset:{deleted}});
+  const result=await h.route.DELETE(h.request({},"DELETE"));
+  assert.equal(result.status,400);
+  assert.equal((await result.json()).error,"media_cleanup_unverified");
+  assert.equal(h.calls.objects[0][3],"DELETE");
+  assert.equal(h.calls.writes.some(call=>call.path),false);
+  assert.equal(h.asset.deleted,true);
+  if(!deleted){assert.equal(h.asset.available,false);assert.equal(h.asset.reviewed,false);}
+ }
+});
 test("analysis requires explicit consent, rate budget and authority, then stores unreviewed output",async()=>{
  for(const [options,body,status] of [[{}, {analysis_consent:false},400],[{analysisDisabled:true},{analysis_consent:true},400],[{rateDenied:true},{analysis_consent:true},429],[{denied:true},{analysis_consent:true},403]]){
   const h=harness(options);assert.equal((await h.analyze.POST(h.request(body,"POST"))).status,status);assert.equal(h.calls.providers,0);assert.equal(h.calls.writes.length,0);
@@ -77,3 +90,4 @@ test("account deletion requires exact owned metadata, physical absence and fails
   else{await assert.rejects(deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]}),/media_deletion_absence_failed/u);assert.ok(!calls.some(call=>call.method==="DELETE"&&call.url.includes("/rest/")));}
  }
 });
+
