@@ -42,6 +42,24 @@ export const STAGING_STRIPE_PRICE_CONTRACTS = Object.freeze([
 ]);
 
 const PRICE_ID_PATTERN = /^price_[A-Za-z0-9_]+$/u;
+// Separate catalog contracts: an equal amount never migrates a legacy subscription.
+export const STAGING_CAPACITY_PRICE_CONTRACTS = Object.freeze(
+  [99, 199, 312].map((amount) => Object.freeze({
+    slot: `capacity_${amount}`,
+    environmentName: `STRIPE_PRICE_CAPACITY_${amount}`,
+    unitAmount: amount * 100,
+    type: "recurring",
+    interval: "month",
+    taxBehavior: "exclusive",
+  })),
+);
+
+export function stagingStripePriceContracts(contract = "legacy_v1") {
+  if (contract === "legacy_v1") return STAGING_STRIPE_PRICE_CONTRACTS;
+  if (contract === "capacity_v2") return STAGING_CAPACITY_PRICE_CONTRACTS;
+  return null;
+}
+
 const WEBHOOK_SECRET_PATTERN = /^whsec_[A-Za-z0-9_]+$/u;
 
 function clean(value) {
@@ -50,6 +68,10 @@ function clean(value) {
 
 export function evaluateStagingStripeCatalogEnvironment(environment = {}) {
   const errors = [];
+  const contracts = stagingStripePriceContracts(
+    environment.FANMIND_STAGING_STRIPE_CATALOG_CONTRACT ?? "legacy_v1",
+  );
+  if (!contracts) errors.push("catalog_contract");
 
   if (clean(environment.FANMIND_RUNTIME_ENVIRONMENT) !== "staging") {
     errors.push("runtime_environment");
@@ -67,7 +89,7 @@ export function evaluateStagingStripeCatalogEnvironment(environment = {}) {
     errors.push("webhook_secret");
   }
 
-  const prices = STAGING_STRIPE_PRICE_CONTRACTS.map((contract) => ({
+  const prices = (contracts ?? []).map((contract) => ({
     ...contract,
     id: clean(environment[contract.environmentName]),
   }));
@@ -109,6 +131,13 @@ export function validateStripeTestPrice(payload, expected) {
       payload.type === expected.type &&
       payload.currency === "eur" &&
       payload.unit_amount === expected.unitAmount &&
+      (!expected.taxBehavior || (
+        payload.tax_behavior === expected.taxBehavior &&
+        payload.billing_scheme === "per_unit" &&
+        payload.recurring?.usage_type === "licensed" &&
+        payload.transform_quantity == null &&
+        payload.custom_unit_amount == null
+      )) &&
       recurringMatches &&
       product?.object === "product" &&
       product.active === true &&

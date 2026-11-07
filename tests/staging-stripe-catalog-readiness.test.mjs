@@ -7,6 +7,7 @@ import { promisify } from "node:util";
 import {
   STAGING_STRIPE_CATALOG_CONFIRMATION,
   STAGING_STRIPE_PRICE_CONTRACTS,
+  STAGING_CAPACITY_PRICE_CONTRACTS,
   classifyStripePriceResponseStatus,
   evaluateStagingStripeCatalogEnvironment,
   validateStripeTestPrice,
@@ -208,6 +209,103 @@ test("read-only verification fetches exactly the five configured prices", async 
         request.authorization === "Bearer rk_test_SyntheticCatalogKey",
     ),
   );
+});
+
+function capacityEnvironment(overrides = {}) {
+  return environment({
+    FANMIND_STAGING_STRIPE_CATALOG_CONTRACT: "capacity_v2",
+    STRIPE_PRICE_CAPACITY_99: "price_SyntheticCapacity99",
+    STRIPE_PRICE_CAPACITY_199: "price_SyntheticCapacity199",
+    STRIPE_PRICE_CAPACITY_312: "price_SyntheticCapacity312",
+    ...overrides,
+  });
+}
+
+function capacityPayload(expected) {
+  return {
+    ...stripePayload(expected),
+    tax_behavior: "exclusive",
+    billing_scheme: "per_unit",
+    recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+    transform_quantity: null,
+    custom_unit_amount: null,
+  };
+}
+
+test("Capacity-v2 selects only 99/199/312 monthly prices without legacy setup or add-ons", () => {
+  const evaluation = evaluateStagingStripeCatalogEnvironment(capacityEnvironment());
+  assert.equal(evaluation.ok, true);
+  assert.deepEqual(evaluation.prices.map((price) => price.unitAmount), [9900, 19900, 31200]);
+  assert.deepEqual(evaluation.prices.map((price) => price.slot), ["capacity_99", "capacity_199", "capacity_312"]);
+  assert.equal(STAGING_CAPACITY_PRICE_CONTRACTS.length, 3);
+  for (const price of evaluation.prices) {
+    assert.equal(validateStripeTestPrice(capacityPayload(price), price), true);
+    for (const mutate of [
+      (p) => { p.livemode = true; },
+      (p) => { p.product.livemode = true; },
+      (p) => { p.unit_amount += 1; },
+      (p) => { p.tax_behavior = "inclusive"; },
+      (p) => { p.recurring.interval = "year"; },
+      (p) => { p.recurring.usage_type = "metered"; },
+      (p) => { p.billing_scheme = "tiered"; },
+      (p) => { p.transform_quantity = { divide_by: 10, round: "up" }; },
+      (p) => { p.custom_unit_amount = { enabled: true }; },
+    ]) {
+      const payload = capacityPayload(price);
+      mutate(payload);
+      assert.equal(validateStripeTestPrice(payload, price), false);
+    }
+  }
+});
+
+test("Capacity-v2 missing mappings, live keys and unknown contracts fail before any request", async () => {
+  for (const overrides of [
+    { STRIPE_PRICE_CAPACITY_99: "" },
+    { STRIPE_PRICE_CAPACITY_199: "price_SyntheticCapacity99" },
+    { STRIPE_SECRET_KEY: "sk_live_DoNotUse" },
+    { FANMIND_RUNTIME_ENVIRONMENT: "production" },
+    { FANMIND_STAGING_STRIPE_CATALOG_CONTRACT: "capacity_v3" },
+    { FANMIND_STAGING_STRIPE_CATALOG_CONTRACT: "" },
+  ]) {
+    let calls = 0;
+    const result = await verifyStagingStripeCatalog(capacityEnvironment(overrides), {
+      fetchImplementation: async () => { calls += 1; throw new Error("unexpected network"); },
+    });
+    assert.equal(result.error, "environment_invalid");
+    assert.equal(calls, 0);
+  }
+});
+
+test("Capacity-v2 makes exactly three GETs and never falls back to legacy after a missing price", async () => {
+  const env = capacityEnvironment();
+  const evaluation = evaluateStagingStripeCatalogEnvironment(env);
+  for (const missing of [null, "capacity_199"]) {
+    const seen = [];
+    const result = await verifyStagingStripeCatalog(env, {
+      fetchImplementation: async (url, options) => {
+        assert.equal(options.method ?? "GET", "GET");
+        assert.equal(options.body, undefined);
+        seen.push(String(url));
+        const expected = evaluation.prices.find((price) => String(url).includes(price.id));
+        assert.ok(expected);
+        if (expected.slot === missing) return { ok: false, status: 404 };
+        return { ok: true, json: async () => capacityPayload(expected) };
+      },
+    });
+    assert.equal(seen.length, 3);
+    assert.equal(result.ok, missing === null);
+    assert.equal(result.slot, missing);
+    assert.equal(result.priceCount, missing === null ? 3 : 0);
+  }
+});
+
+test("the protected workflow defaults to the new capacity catalog and maps all three prices", async () => {
+  const workflow = await readFile(workflowPath, "utf8");
+  assert.match(workflow, /default: capacity_v2/u);
+  assert.match(workflow, /FANMIND_STAGING_STRIPE_CATALOG_CONTRACT: \$\{\{ inputs\.catalog_contract \}\}/u);
+  for (const amount of [99, 199, 312]) {
+    assert.ok(workflow.includes(`STRIPE_PRICE_CAPACITY_${amount}: \u0024{{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_${amount} }}`));
+  }
 });
 
 test("the workflow is exact-commit, protected, read-only and fully mapped", async () => {

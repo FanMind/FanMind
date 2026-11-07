@@ -3,6 +3,14 @@ name: FanMind Staging Stripe Catalog Readiness
 on:
   workflow_dispatch:
     inputs:
+      catalog_contract:
+        description: 'Catalog only: Capacity-v2 new prices or legacy contract regression'
+        required: true
+        type: choice
+        default: capacity_v2
+        options:
+          - capacity_v2
+          - legacy_v1
       reviewed_commit:
         description: 'Exact reviewed main commit for the read-only Stripe test catalog check'
         required: true
@@ -21,7 +29,7 @@ permissions:
 
 jobs:
   verify-staging-stripe-catalog:
-    name: Verify all five isolated Stripe test prices without writes
+    name: Verify the selected isolated Stripe test catalog without writes
     if: >-
       ${{
         github.ref == 'refs/heads/main' &&
@@ -32,6 +40,7 @@ jobs:
     environment: staging
     env:
       FANMIND_RUNTIME_ENVIRONMENT: staging
+      FANMIND_STAGING_STRIPE_CATALOG_CONTRACT: ${{ inputs.catalog_contract }}
       FANMIND_STAGING_STRIPE_CATALOG_CONFIRM: verify-staging-stripe-catalog
       STRIPE_SECRET_KEY: ${{ secrets.FANMIND_STAGING_STRIPE_SECRET_KEY }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.FANMIND_STAGING_STRIPE_WEBHOOK_SECRET }}
@@ -40,6 +49,9 @@ jobs:
       STRIPE_PRICE_INTERNAL_DAILY_TEST: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_INTERNAL_DAILY_TEST }}
       STRIPE_PRICE_AI_PLUS: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_AI_PLUS }}
       STRIPE_PRICE_AI_ULTRA: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_AI_ULTRA }}
+      STRIPE_PRICE_CAPACITY_99: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_99 }}
+      STRIPE_PRICE_CAPACITY_199: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_199 }}
+      STRIPE_PRICE_CAPACITY_312: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_312 }}
 
     steps:
       - name: Checkout reviewed main commit
