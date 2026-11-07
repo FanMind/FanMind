@@ -270,7 +270,10 @@ select jsonb_build_object(
     where marker_name='ai_capacity_reserve_settle' or marker_version='ai_capacity_reserve_settle'),
   'capacity_unknown_migration_marker_absent',not exists(
     select 1 from classified_capacity_migration_markers
-    where marker_name_is_unknown or marker_version_is_unknown),
+    where marker_name_is_unknown or marker_version_is_unknown)
+  -- Keep room for the emitter's four request-label pairs within PostgreSQL's
+  -- 100-argument function limit. JSONB concatenation preserves the observation.
+) || jsonb_build_object(
   'capacity_migration_marker_count',(select count(*) from classified_capacity_migration_markers),
   'capacity_known_migration_marker_count',(select count(*) from classified_capacity_migration_markers
     where marker_name_is_known or marker_version_is_known),
