@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import test from "node:test";
-import { evaluateObservation, evaluatePreparationEnvironment, verifyPreparation }
+import { emitReadOnlySql, evaluateObservation, evaluatePreparationEnvironment, verifyPreparation }
   from "../scripts/operations/ai-capacity-staging-preflight-preparation.mjs";
 
 const root = resolve(import.meta.dirname, "..");
@@ -116,6 +117,25 @@ test("prepared read-only Capacity verifier executes on PostgreSQL 17 and rejects
         "capacity_all_markers_have_statements",
         "capacity_single_unknown_name_only_marker_with_statements_present"])
         assert.equal(a[field],false,field);
+    });
+    await t.test("actual bound emitter executes with all request labels and unchanged observations",()=>{
+      fresh();
+      const before=observe();
+      const fixture=mkdtempSync(resolve(tmpdir(),"capacity-emission-pg17-"));
+      try {
+        execFileSync("git",["clone","--shared","--quiet",root,fixture],{stdio:"pipe"});
+        const actualHead=execFileSync("git",["-C",fixture,"rev-parse","HEAD"],{encoding:"utf8"}).trim();
+        execFileSync("git",["-C",fixture,"update-ref","refs/remotes/origin/main",actualHead]);
+        const bound={...environment(),GITHUB_SHA:actualHead,
+          FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT:actualHead};
+        const emitted=emitReadOnlySql(fixture,bound);
+        const observation=JSON.parse(sql(emitted));
+        assert.deepEqual(observation,{...before,requested_main_commit:actualHead,
+          requested_target_project:control.targetProject,
+          reviewed_lifecycle_commit:control.reviewedLifecycleHead,
+          recovery_sha256:control.sha256[control.recoveryPath]});
+        assert.deepEqual(observe(),before);
+      } finally { rmSync(fixture,{recursive:true,force:true}); }
     });
     await t.test("attributes Supabase provider defaults without hiding other catalog drift",()=>{
       fresh();
