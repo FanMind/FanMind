@@ -333,13 +333,18 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     hostedWorkflows.find((workflow) => workflow.file === ORCHESTRATOR_DISPATCH_WORKFLOW)?.checkoutShas,
     [HOSTED_CHECKOUT_V7_0_1_SHA],
   );
-  assert.equal(hostedWorkflows.length, 75);
+  const supportCustomer = hostedWorkflows.find(workflow => workflow.file === 'support-customer-staging-acceptance.yml');
+  assert.deepEqual(supportCustomer?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(supportCustomer.source, /environment: staging/u);
+  assert.match(supportCustomer.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.doesNotMatch(supportCustomer.source, /SERVICE_ROLE|permissions:\s*write-all/u);
+  assert.equal(hostedWorkflows.length, 76);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    84, // Existing retention workflow adds one separately gated Support job.
+    85, // Includes the separately protected customer Support acceptance job.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
