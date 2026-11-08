@@ -3,6 +3,7 @@
 import {
   STAGING_STRIPE_PRICE_CONTRACTS,
   STAGING_CAPACITY_PRICE_CONTRACTS,
+  STAGING_FULL_CAPACITY_PRICE_CONTRACTS,
   verifyStagingStripeCatalog,
 } from "../../src/lib/stagingStripeCatalogPolicy.mjs";
 
@@ -21,6 +22,8 @@ async function main() {
           (contract) => contract.environmentName,
         ),
       ).size !== 5 ||
+      STAGING_FULL_CAPACITY_PRICE_CONTRACTS.length !== 8 ||
+      new Set(STAGING_FULL_CAPACITY_PRICE_CONTRACTS.map((contract) => contract.environmentName)).size !== 8 ||
       STAGING_CAPACITY_PRICE_CONTRACTS.length !== 3 ||
       new Set(STAGING_CAPACITY_PRICE_CONTRACTS.map((contract) => contract.environmentName)).size !== 3
     ) {
@@ -41,7 +44,7 @@ async function main() {
   if (!result.ok) {
     if (
       typeof result.slot === "string" &&
-      /^(?:starter_setup|starter_monthly|internal_daily_test|ai_plus|ai_ultra|capacity_99|capacity_199|capacity_312)$/u.test(
+      /^(?:starter_setup|starter_monthly|internal_daily_test|ai_plus|ai_ultra|capacity_99|capacity_199|capacity_312|topup_10|topup_25|topup_50|topup_100)$/u.test(
         result.slot,
       )
     ) {

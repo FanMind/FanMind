@@ -1619,3 +1619,14 @@ and real Staging acceptance are separate activation gates. See
 ## ChatAdmin: private Bilderbibliothek — Source-Erweiterung 5. November 2026
 
 Die private Bibliothek je Character mit Upload, geprüften Bildbeschreibungen, konservativer Motivsuche und konfigurierbaren kostenpflichtigen Anfertigungen ist im Repository vorbereitet. Preise bleiben an bestehende Character-Angebote gebunden; Lieferfristen werden ausdrücklich konfiguriert. Beide neuen Schalter bleiben aus; kontrolliertes Schema/Storage, tatsächliche Bildanalyse und Zielabnahme sind nicht als installiert oder aktiv bestätigt. Details: `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`. Die Erkennung konkreter Verfügbarkeitsfragen zu eigenen Angeboten korrigiert den reproduzierten Preis-Kontextfehler; die abschließende Staging-Abnahme bleibt offen.
+
+## Stripe-Sandbox-Katalogprüfung — 8. November 2026
+
+Repositoryseitig prüft `capacity_v2_full` jetzt die acht konfigurierten
+Sandbox-Preise: 99/199/312 EUR monatlich, die vier einmaligen Datenpakete
+und den weiterhin beibehaltenen internen 1-EUR/Tag-Test. Preis-/Produkt-
+Metadaten und Providerwerte der Datenpakete werden read-only validiert.
+Dies aktiviert weder Verkauf noch Steuerregistrierung, Checkout oder Guthaben.
+Steuernummer/UID bleiben ausständig; Konfigurationsbindung und echte Zahlungs-/
+Webhook-Abnahme sind offen. Nachweisgrenzen und Sandbox-Zuordnung:
+`docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.

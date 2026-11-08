@@ -1,3 +1,4 @@
+import { STRIPE_AI_TOPUP_OPTIONS } from "./stripeAiTopupPolicy.mjs";
 import { isStripeTestSecretKey } from "./stripeKeyPolicy.mjs";
 
 export const STAGING_STRIPE_CATALOG_CONFIRMATION =
@@ -54,9 +55,42 @@ export const STAGING_CAPACITY_PRICE_CONTRACTS = Object.freeze(
   })),
 );
 
+// Full current sandbox inventory, including the explicitly retained internal Daily test.
+// Catalog verification does not approve tax registration, Checkout or runtime activation.
+export const STAGING_TOPUP_PRICE_CONTRACTS = Object.freeze(
+  Object.entries(STRIPE_AI_TOPUP_OPTIONS).map(([key, option]) => {
+    const amount = key.slice("topup_".length);
+    return Object.freeze({
+      slot: key,
+      environmentName: `STRIPE_PRICE_TOPUP_${amount}`,
+      unitAmount: option.saleAmountCents,
+      type: "one_time",
+      interval: null,
+      taxBehavior: "exclusive",
+      priceMetadata: Object.freeze({
+        fanmind_billing_contract: "capacity_v2",
+        fanmind_credit_type: "topup",
+        fanmind_provider_value_eur: amount,
+        fanmind_topup_key: `fanmind_${key}`,
+      }),
+      productMetadata: Object.freeze({
+        fanmind_billing_contract: "capacity_v2",
+        fanmind_credit_type: "topup",
+        fanmind_provider_value_eur: amount,
+      }),
+    });
+  }),
+);
+export const STAGING_FULL_CAPACITY_PRICE_CONTRACTS = Object.freeze([
+  ...STAGING_CAPACITY_PRICE_CONTRACTS,
+  ...STAGING_TOPUP_PRICE_CONTRACTS,
+  Object.freeze({ ...STAGING_STRIPE_PRICE_CONTRACTS[2], taxBehavior: "exclusive" }),
+]);
+
 export function stagingStripePriceContracts(contract = "legacy_v1") {
   if (contract === "legacy_v1") return STAGING_STRIPE_PRICE_CONTRACTS;
   if (contract === "capacity_v2") return STAGING_CAPACITY_PRICE_CONTRACTS;
+  if (contract === "capacity_v2_full") return STAGING_FULL_CAPACITY_PRICE_CONTRACTS;
   return null;
 }
 
@@ -134,11 +168,13 @@ export function validateStripeTestPrice(payload, expected) {
       (!expected.taxBehavior || (
         payload.tax_behavior === expected.taxBehavior &&
         payload.billing_scheme === "per_unit" &&
-        payload.recurring?.usage_type === "licensed" &&
+        (expected.type === "one_time" || payload.recurring?.usage_type === "licensed") &&
         payload.transform_quantity == null &&
         payload.custom_unit_amount == null
       )) &&
       recurringMatches &&
+      Object.entries(expected.priceMetadata ?? {}).every(([key, value]) => payload.metadata?.[key] === value) &&
+      Object.entries(expected.productMetadata ?? {}).every(([key, value]) => product?.metadata?.[key] === value) &&
       product?.object === "product" &&
       product.active === true &&
       product.livemode === false,
