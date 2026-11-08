@@ -4,10 +4,22 @@ import {readFileSync,rmSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {runSupportStaging} from './support-centre-staging.mjs';
 import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.mjs';
+import {canonical} from './support-centre-schema.mjs';
+export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBoundaryPolicy.mjs','src/lib/websiteChatStagingControlPolicy.mjs','src/lib/websiteChatRetentionStagingPolicy.mjs','scripts/operations/support-centre-staging.mjs','scripts/operations/support-centre-schema.mjs','scripts/operations/website-chat-retention-staging-runner.mjs','scripts/operations/website-chat-retention-migration-check.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','config/certificates/supabase-root-2021-ca.crt','package-lock.json'];
+export function assertRetentionSourceEquivalent(source,commit,cwd=process.cwd()){
+ if(!/^[a-f0-9]{40}$/.test(source??'')||! /^[a-f0-9]{40}$/.test(commit??''))throw Error('retention_source_invalid');
+ const git=args=>{const r=spawnSync('git',args,{cwd,encoding:'utf8',timeout:10000,maxBuffer:65536});if(r.error||r.status!==0)throw Error('retention_source_not_equivalent');return r.stdout;};
+ git(['merge-base','--is-ancestor',source,commit]);
+ for(const path of [...RETENTION_PROOF_PATHS,'package.json']){git(['cat-file','-e',`${source}:${path}`]);git(['cat-file','-e',`${commit}:${path}`]);}
+ git(['diff','--quiet',source,commit,'--',...RETENTION_PROOF_PATHS]);
+ // The pinned Support workflow invokes node directly, never an npm script.
+ const manifestAt=ref=>{try{const value=JSON.parse(git(['show',`${ref}:package.json`]));if(!value||Array.isArray(value)||typeof value!=='object')throw Error();delete value.scripts;return canonical(value);}catch{throw Error('retention_source_not_equivalent');}};
+ if(manifestAt(source)!==manifestAt(commit))throw Error('retention_source_not_equivalent');
+}
 
 // Source-derived function bodies: never adopt a desired body from a live target.
-export function mediaRuntimePreflightSql(source,commit,owner){
- if(!/^[a-f0-9]{40}$/.test(commit??'')||!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(owner??''))throw Error('invalid_binding');
+export function mediaRuntimePreflightSql(source,commit,owner,retentionSource=commit){
+ if(!/^[a-f0-9]{40}$/.test(commit??'')||!/^[a-f0-9]{40}$/.test(retentionSource??'')||!/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(owner??''))throw Error('invalid_binding');
  const functions=[...source.matchAll(/create function public\.(chat_admin_media_[a-z_]+)\([^]*?as \$\$([^]*?)\$\$;/g)];
  if(functions.length!==3)throw Error('media_source_contract');
  const bodies=functions.map(([,name,body])=>`EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='${name}' AND md5(p.prosrc)='${createHash('md5').update(body).digest('hex')}' AND p.proconfig=ARRAY['search_path=""'])`).join(' AND ');
@@ -15,7 +27,7 @@ export function mediaRuntimePreflightSql(source,commit,owner){
  SELECT 1/(CASE WHEN
  (SELECT count(*) FROM public.support_centre_owners)=1 AND EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id='${owner}')
  AND EXISTS(SELECT 1 FROM auth.users WHERE id='${owner}' AND email_confirmed_at IS NOT NULL AND deleted_at IS NULL AND (banned_until IS NULL OR banned_until<now()))
- AND EXISTS(SELECT 1 FROM public.support_retention_runs WHERE status='succeeded' AND source_commit='${commit}' AND completed_at BETWEEN clock_timestamp()-interval '30 hours' AND clock_timestamp())
+ AND EXISTS(SELECT 1 FROM public.support_retention_runs WHERE status='succeeded' AND source_commit='${retentionSource}' AND completed_at BETWEEN clock_timestamp()-interval '30 hours' AND clock_timestamp())
  AND (SELECT status='succeeded' FROM public.support_retention_runs ORDER BY started_at DESC LIMIT 1)
  AND (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relname IN('chat_character_media','chat_character_media_policies') AND c.relkind='r' AND c.relrowsecurity)=2
  AND EXISTS(SELECT 1 FROM storage.buckets WHERE id='chat-character-media' AND NOT public AND file_size_limit=5242880 AND allowed_mime_types=ARRAY['image/webp'])
@@ -38,12 +50,18 @@ export function preflight(env=process.env){
  if(reference.version!==1||reference.source!=='supabase/controlled/chat_admin_media.sql'||reference.sourceSha256!==createHash('sha256').update(source).digest('hex'))throw Error('media_reference_source_mismatch');
  const catalogue=readFileSync('scripts/operations/chat-admin-media-runtime-catalogue.sql','utf8').trim().replace(/;$/, '');
  const exact=mediaCatalogueEqualitySql(reference,catalogue);
- const sql=exact+'\n'+mediaRuntimePreflightSql(source,env.GITHUB_SHA,env.SUPPORT_OWNER_UUID);
  const {directory,snapshotPath}=privatePassfileSnapshot(env);
  try{
   const safe=Object.fromEntries(['PATH','PGHOST','PGPORT','PGDATABASE','PGUSER','PGSSLMODE','PGSSLROOTCERT'].map(k=>[k,env[k]]));
+  const proof=spawnSync('psql',['--no-password','--no-psqlrc','-qAt','-v','ON_ERROR_STOP=1'],{env:{...safe,PGPASSFILE:snapshotPath,PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c default_transaction_read_only=on'},input:"BEGIN READ ONLY;SET LOCAL statement_timeout='10s';SELECT source_commit FROM public.support_retention_runs WHERE status='succeeded' AND completed_at BETWEEN clock_timestamp()-interval '30 hours' AND clock_timestamp() ORDER BY started_at DESC LIMIT 1;ROLLBACK;",encoding:'utf8',timeout:30000,maxBuffer:65536});
+  if(proof.error||proof.status!==0)throw Error('retention_proof_read_failed');
+  const retentionSource=proof.stdout.trim();
+  assertRetentionSourceEquivalent(retentionSource,env.GITHUB_SHA);
+  const sql=exact+'\n'+mediaRuntimePreflightSql(source,env.GITHUB_SHA,env.SUPPORT_OWNER_UUID,retentionSource);
   const r=spawnSync('psql',['--no-password','--no-psqlrc','-qAt','-v','ON_ERROR_STOP=1'],{env:{...safe,PGPASSFILE:snapshotPath,PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c default_transaction_read_only=on'},input:sql,encoding:'utf8',timeout:30000,maxBuffer:65536});
   if(r.error||r.status!==0||!r.stdout.split(/\r?\n/).includes('STAGING_SUPPORT_MEDIA_PREFLIGHT=PASS'))throw Error('preflight_failed');
+  console.log(`STAGING_SUPPORT_RETENTION_PROOF_SOURCE=${retentionSource}`);
+  console.log('STAGING_SUPPORT_RETENTION_SOURCE_EQUIVALENT=PASS');
   console.log('STAGING_SUPPORT_MEDIA_PREFLIGHT=PASS');
  }finally{rmSync(directory,{recursive:true,force:true});}
 }

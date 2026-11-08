@@ -61,3 +61,41 @@ test('service startup waits for reachability but never accepts wrong source or e
  await assert.rejects(waitForStagingRelease(async()=>{throw Error('target_read_failed');},timing),/service_startup_timeout/);
  await assert.rejects(waitForStagingRelease(async()=>{throw Error('configuration_changed');},timing),/configuration_changed/);
 });
+
+test('daily retention proof reuse requires an ancestor with unchanged executable contract',async()=>{
+ const {mkdtempSync,mkdirSync,writeFileSync,rmSync}=await import('node:fs');
+ const {tmpdir}=await import('node:os');const {join,dirname}=await import('node:path');const {execFileSync}=await import('node:child_process');
+ const {RETENTION_PROOF_PATHS,assertRetentionSourceEquivalent}=await import('../scripts/operations/staging-support-media-preflight.mjs');
+ const root=mkdtempSync(join(tmpdir(),'fanmind-retention-proof-'));
+ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+ const write=(path,value)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),value);};
+ try{
+  git('init','-q');git('config','user.name','Synthetic QA');git('config','user.email','qa@example.test');
+  for(const path of RETENTION_PROOF_PATHS)write(['supabase/controlled','src/lib'].includes(path)?path+'/contract.probe':path,'retention-v1');
+  write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{}}));
+  git('add','.');git('commit','-qm','approved retention contract');const source=git('rev-parse','HEAD');
+  write('src/components/synthetic-ui.ts','presentation only');write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{'test:unrelated':'node unrelated-test.mjs'}}));git('add','.');git('commit','-qm','unrelated presentation and npm test script');const current=git('rev-parse','HEAD');
+  assert.doesNotThrow(()=>assertRetentionSourceEquivalent(source,current,root));
+  assert.throws(()=>assertRetentionSourceEquivalent('not-a-sha',current,root));
+  for(const path of ['scripts/operations/support-centre-staging.mjs','supabase/controlled/contract.probe','src/lib/environmentBoundaryPolicy.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','package-lock.json']){
+   git('reset','--hard',current);write(path,'changed retention contract');git('add','.');git('commit','-qm','contract drift');
+   assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
+  }
+  git('reset','--hard',current);write('package.json',JSON.stringify({type:'commonjs',dependencies:{}}));git('add','.');git('commit','-qm','runtime manifest drift');
+  assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
+  git('checkout','--orphan','unrelated-history');git('add','.');git('commit','-qm','unrelated source');
+  assert.throws(()=>assertRetentionSourceEquivalent(git('rev-parse','HEAD'),current,root),/not_equivalent/);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('retention proof binds every relative executable dependency of the retained runner',async()=>{
+ const {readFileSync}=await import('node:fs');const {posix}=await import('node:path');
+ const {RETENTION_PROOF_PATHS}=await import('../scripts/operations/staging-support-media-preflight.mjs');
+ const seen=new Set();
+ function inspect(path){
+  if(seen.has(path))return;seen.add(path);assert.ok(RETENTION_PROOF_PATHS.includes(path),`Unbound dependency: ${path}`);
+  const source=readFileSync(path,'utf8');assert.doesNotMatch(source,/\bimport\s*\(/,'Dynamic retention dependencies require explicit source-binding review');
+  for(const match of source.matchAll(/\bfrom\s*["'](\.[^"']+)["']/g))inspect(posix.normalize(posix.join(posix.dirname(path),match[1])));
+ }
+ inspect('scripts/operations/support-centre-staging.mjs');
+});
