@@ -1560,3 +1560,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: source revert before activation; media deletion revokes availability before object removal; existing Character revision serializes media invalidation against generation and confirmation. Independent Guardian required.
 
 - Source handoff: implemented locally, targeted308/308 + embedded SQL cases/build/lint/truth PASS; no publication or target activation. Receipt: receipts/chatadmin-media-1425-20261105.md.
+
+
+## LOCK-FM-STRIPE-PORTAL-20261108
+- Task: FM-AI-001; Owner-directed bounded Stripe continuation.
+- Risk/status: R3 / RELEASED_FOR_PR; portal source worker complete, no external runtime lock retained.
+- Baseline: e905c1859ab964f667649b5f1a15ff2f290796d6.
+- Boundary: no Support, controlled Capacity SQL, policy, entitlement, identity, Tax or external state mutation.
+- Recovery: source revert; missing explicit test portal configuration keeps the feature closed.
+
+- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 56 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.

@@ -4,7 +4,7 @@
   "captured": "2026-11-06",
   "last_source_of_truth_review": "2026-11-06 PR #1438 reviewed legal-operator change: Source of Truth identifies Brigitte Erika Guggenberger as the legal contracting sole proprietor and Bernd Guggenberger as operational contact only, consistent with owner-confirmed GISA 40314440. No implied delegated signing authority; UID, trade-register applicability, external legal/tax signoff, Stripe account-holder verification and commercial activation remain pending. Source-only; no Production/Staging/provider/DB mutation and no acceptance inferred.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "750ef335242b310115099571b2c3d94d23d0cda3",
+    "docs/SOURCE_OF_TRUTH.md": "b48dd72e28c18ef1d3ec9d54f61659fe9bceb99e",
     "src/config/roadmap.ts": "7179da112c26e357fb2d8f17e20aabf1b530c675",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
@@ -17,5 +17,6 @@
   "last_stripe_catalog_review": "2026-11-08 source-only full sandbox catalog verifier: eight configured prices, retained internal Daily, canonical one-time topup amounts and metadata. No catalog PASS implies global inventory, tax registration, runtime configuration, Checkout, webhook or credit acceptance. Tax number supplied and UID officially matched; actual Tax registration remains pending. Prior external/runtime acceptance is not refreshed by this source change.",
   "last_stripe_topup_review": "2026-11-08 Sandbox-only lifecycle source: explicit Checkout/PI mapping, canonical readback, net/tax validation, provider microcent correction, async fulfillment, isolated base/referral projection. No DB install or activation; observed Capacity baseline drift remains BLOCK.",
   "last_registration_price_review": "2026-11-08: public Capacity preferences replace legacy new-business offers, no paid admission. Reviewed registration/landing/setup/Support/legal consumers; historical contracts retained. Staging main-only deployment order and paid runtime evidence remain OPEN; no previous external evidence refreshed.",
-  "last_stripe_company_review": "2026-11-08 PR1452 documentation-only reconciliation: tax number supplied/stored, UID officially matched and invoice default confirmed. Legal individual identity, actual Tax registration, Capacity target reconcile/apply, monthly entitlement wiring and paid lifecycle remain BLOCKED. No sales gate or acceptance evidence refreshed."
+  "last_stripe_company_review": "2026-11-08 PR1452 documentation-only reconciliation: tax number supplied/stored, UID officially matched and invoice default confirmed. Legal individual identity, actual Tax registration, Capacity target reconcile/apply, monthly entitlement wiring and paid lifecycle remain BLOCKED. No sales gate or acceptance evidence refreshed.",
+  "last_stripe_portal_review": "2026-11-08 source-only restricted Staging/test Customer Portal. Explicit server configuration, owner and canonical Customer binding; no Live/default fallback or contract mutation. Synthetic route/provider checks and local build only; no hosted session or runtime acceptance. Existing AI Billing/Tax/identity gates remain BLOCKED."
 }

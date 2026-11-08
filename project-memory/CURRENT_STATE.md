@@ -784,3 +784,15 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Independent Staging version baf0be3 at21:16:23UTC; Production a798d793 unchanged at21:16:29UTC. No deploy, real payment, real subscription change, new account/database or Support implementation change in this follow-up.
 
 - Owner clarification during PR1452: actual technical/organizational/content leadership is Bernd's. Do not infer economic ownership/control solely from trade/tax documents or a mandatory representative replacement. Existing legal/company fields retained pending accurate Stripe KYC/authority review; support draft amended, not sent; private background stays outside Git. No account or legal-page mutation.
+
+
+## Stripe Customer Portal – 2026-11-08
+- Task: FM-AI-001, Owner continuation of Stripe completion.
+- Risk/status: R3 / RELEASED_FOR_PR; local source validation passed; exact-head CI and runtime acceptance pending.
+- Baseline: e905c1859ab964f667649b5f1a15ff2f290796d6.
+- Scope: invoice settings button, Staging/test-only portal route and verifier, registered Stripe route tests and directly relevant readers.
+- Contract: FM-CONTRACT-REG-ENTITLEMENT-001 / FM-IGATE-REG-ENTITLEMENT-001; owner/customer authorization. No Capacity/AI entitlement lifecycle change; AI-BILLING gate stays BLOCKED.
+- Safety/recovery: owner-only, exact test environment, explicit restricted configuration, canonical customer binding, no default/Live fallback; no external mutations. Source revert/configuration absent keeps access closed.
+- Locks: LOCK-FM-STRIPE-PORTAL-20261108; does not overlap Support, Capacity SQL/budgets/reserve-settle, identity or Tax changes.
+
+- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 56 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.
