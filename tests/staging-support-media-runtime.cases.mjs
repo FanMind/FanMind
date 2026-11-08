@@ -38,3 +38,17 @@ test('media preflight is source-bound, read-only and checks private storage and 
  assert.throws(()=>mediaRuntimePreflightSql(source,"'; private",env.SUPPORT_OWNER_UUID));
  assert.throws(()=>mediaRuntimePreflightSql('',env.GITHUB_SHA,env.SUPPORT_OWNER_UUID));
 });
+
+test('support-only actions retain target gates and leave every media byte unchanged',()=>{
+ for(const action of ['verify-support','activate-support','deactivate-support']){
+  const scoped={...env,CONFIRMATION:`staging-support-media-${action}`};
+  assert.doesNotThrow(()=>assertStagingRuntimeTarget(scoped,action));
+  assert.throws(()=>assertStagingRuntimeTarget({...scoped,NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},action));
+  if(action==='activate-support')assert.throws(()=>assertStagingRuntimeTarget({...scoped,SUPPORT_RETENTION_VERIFIED:'false'},action));
+ }
+ const before='OTHER=unchanged\nFANMIND_SUPPORT_CENTRE_ENABLED=false\nFANMIND_CHAT_ADMIN_MEDIA_ENABLED=false\nFANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED=false\n';
+ assert.equal(renderStagingRuntimeFlags(before,[],true,true),before.replace('FANMIND_SUPPORT_CENTRE_ENABLED=false','FANMIND_SUPPORT_CENTRE_ENABLED=true'));
+ const withMedia=before.replace('FANMIND_CHAT_ADMIN_MEDIA_ENABLED=false','FANMIND_CHAT_ADMIN_MEDIA_ENABLED=true');
+ assert.equal(renderStagingRuntimeFlags(withMedia,[],true,true),withMedia.replace('FANMIND_SUPPORT_CENTRE_ENABLED=false','FANMIND_SUPPORT_CENTRE_ENABLED=true'));
+ assert.throws(()=>renderStagingRuntimeFlags(before,['FANMIND_SUPPORT_CENTRE_ENABLED=false'],true,true));
+});
