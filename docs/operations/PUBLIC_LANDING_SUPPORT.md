@@ -110,7 +110,7 @@ The subsequent retention dispatch42498764018 returned already_completed, referri
 to the existing daily success from d51bc747. It did not execute another purge or
 replace that immutable receipt. Activation now binds that exact receipt source
 only after proving it is an ancestor of reviewed main and that controlled SQL,
-all shared library code, retention runner/schema/reference, workflow, certificate
+shared retention policy code, retention runner/schema/reference, workflow, certificate
 and dependency locks are byte-identical. The full live schema equality,30hour
 freshness and latest-success checks remain. Drift, absent source history/files or
 an unrelated commit rejects reuse. No second daily success is fabricated.

@@ -76,11 +76,23 @@ test('daily retention proof reuse requires an ancestor with unchanged executable
   write('src/components/synthetic-ui.ts','presentation only');git('add','.');git('commit','-qm','unrelated presentation');const current=git('rev-parse','HEAD');
   assert.doesNotThrow(()=>assertRetentionSourceEquivalent(source,current,root));
   assert.throws(()=>assertRetentionSourceEquivalent('not-a-sha',current,root));
-  for(const path of ['scripts/operations/support-centre-staging.mjs','supabase/controlled/contract.probe','src/lib/contract.probe','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','package-lock.json']){
+  for(const path of ['scripts/operations/support-centre-staging.mjs','supabase/controlled/contract.probe','src/lib/environmentBoundaryPolicy.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','package-lock.json']){
    git('reset','--hard',current);write(path,'changed retention contract');git('add','.');git('commit','-qm','contract drift');
    assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
   }
   git('checkout','--orphan','unrelated-history');git('add','.');git('commit','-qm','unrelated source');
   assert.throws(()=>assertRetentionSourceEquivalent(git('rev-parse','HEAD'),current,root),/not_equivalent/);
  }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('retention proof binds every relative executable dependency of the retained runner',async()=>{
+ const {readFileSync}=await import('node:fs');const {posix}=await import('node:path');
+ const {RETENTION_PROOF_PATHS}=await import('../scripts/operations/staging-support-media-preflight.mjs');
+ const seen=new Set();
+ function inspect(path){
+  if(seen.has(path))return;seen.add(path);assert.ok(RETENTION_PROOF_PATHS.includes(path),`Unbound dependency: ${path}`);
+  const source=readFileSync(path,'utf8');assert.doesNotMatch(source,/\bimport\s*\(/,'Dynamic retention dependencies require explicit source-binding review');
+  for(const match of source.matchAll(/\bfrom\s*["'](\.[^"']+)["']/g))inspect(posix.normalize(posix.join(posix.dirname(path),match[1])));
+ }
+ inspect('scripts/operations/support-centre-staging.mjs');
 });
