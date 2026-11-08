@@ -54,7 +54,7 @@ export function capacityLandingPlans(language = "de") {
 
 export function capacityDataPackages(language = "de") {
   return Object.entries(STRIPE_AI_TOPUP_OPTIONS).map(([id, option]) => ({
-    id, name: `FanMind Datenpaket ${id.slice(6)}`,
+    id, name: language === "en" ? `FanMind data package ${id.slice(6)}` : `FanMind Datenpaket ${id.slice(6)}`,
     price: new Intl.NumberFormat(language === "en" ? "en-IE" : "de-AT", {style: "currency", currency: "EUR"}).format(option.saleAmountCents / 100),
     type: "one_time",
   }));
