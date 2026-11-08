@@ -6,6 +6,10 @@ on:
         description: Exact reviewed main commit already deployed to Staging
         type: string
         required: true
+      ui_only:
+        description: Retest customer UI using existing API acceptance evidence
+        type: boolean
+        default: false
       confirmation:
         description: Type run-staging-support-customer-acceptance
         type: string
@@ -30,6 +34,7 @@ jobs:
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
       FANMIND_SUPPORT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_SUPPORT_CUSTOMER_UI_ONLY: ${{ inputs.ui_only }}
       FANMIND_SUPPORT_CUSTOMER_CONFIRM: ${{ inputs.confirmation }}
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
       FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY

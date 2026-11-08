@@ -22,6 +22,7 @@ export function customerAcceptanceBoundary(env,checkout){
  return fixtures;
 }
 export async function runCustomerAcceptance(env=process.env){
+ const uiOnly=env.FANMIND_SUPPORT_CUSTOMER_UI_ONLY==='true';
  const checkout=spawnSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).stdout?.trim();
  const fixtures=customerAcceptanceBoundary(env,checkout);
  requireFact(spawnSync('git',['rev-parse','origin/main'],{encoding:'utf8'}).stdout?.trim()===checkout,'main_changed');
@@ -72,18 +73,21 @@ export async function runCustomerAcceptance(env=process.env){
    r=await request(actor,'/api/support/conversation',payload);requireFact(r.status===200&&r.data?.turns?.length===1,'send_replay');
    r=await request(actor,'/api/support/conversation',{...payload,requestId:actor.second,question:'FanMind Funktionen und Hilfe'});requireFact(r.status===200&&r.data?.turns?.length===2,'save_second');
    r=await request(actor,`/api/support/conversation?before=${actor.second}`);requireFact(r.status===200&&r.data.turns.length===1&&r.data.turns[0].request_id===actor.first,'older_page');
+   if(!uiOnly){
    r=await request(actor,`/api/support/privacy?scope=${actor.scope}`);requireFact(r.status===200&&r.data?.turns?.length===2&&r.data.turns.every(t=>[actor.first,actor.second].includes(t.request_id)),'own_export');
    r=await request(actor,`/api/support/privacy?scope=${actor.scope}&preview=erase`);requireFact(r.status===200&&uuid.test(r.data?.state?.thread??''),'own_preview');actor.state=r.data.state;
    requireFact((await request(actor,'/api/support/conversation',{scope:actor.scope,handoff:true})).status===200,'handoff');
    requireFact(query(`SELECT count(*) FROM public.support_chat_threads WHERE id='${actor.state.thread}' AND user_id='${actor.id}' AND handoff_consent AND shared_sequence=${actor.state.sequence}`)==='1','stored_consent');
+   }
    const help=page.getByRole('button',{name:'Hilfe',exact:true});
    if(await help.count()){
     await help.click();const section=page.getByRole('region',{name:'Dein Supportgespräch',exact:true});await section.getByText(payload.question,{exact:false}).waitFor();
     await page.getByRole('button',{name:'Hilfe schließen',exact:true}).click();await help.click();await section.getByText(payload.question,{exact:false}).waitFor();
     await page.reload();await help.click();await section.getByText(payload.question,{exact:false}).waitFor();
    }else uiMissing=true;
-   console.log(`SUPPORT_CUSTOMER_${i?'MOBILE':'DESKTOP'}_API=PASS`);
+   console.log(`SUPPORT_CUSTOMER_${i?'MOBILE':'DESKTOP'}_${uiOnly?'UI_RETEST':'API'}=PASS`);
   }
+  if(!uiOnly){
   const [a,b]=actors;
   for(const [own,foreign] of [[a,b],[b,a]]){
    requireFact((await request(own,`/api/support/privacy?scope=${foreign.scope}`)).status===400,'foreign_export');
@@ -92,6 +96,7 @@ export async function runCustomerAcceptance(env=process.env){
    const preserved=await request(foreign,'/api/support/conversation');requireFact(preserved.status===200&&preserved.data.turns.length===2,'foreign_preserved');
   }
   console.log('SUPPORT_CUSTOMER_TENANT_AND_PRIVACY=PASS');
+  }
   await version();
  }catch(error){failure=error;}
  finally{
@@ -119,7 +124,7 @@ export async function runCustomerAcceptance(env=process.env){
  }
  if(failure)throw failure;
  console.log(`SUPPORT_CUSTOMER_BROWSER_UI=${uiMissing?'BLOCKED_LAUNCHER_DISABLED':'PASS'}`);
- console.log('SUPPORT_CUSTOMER_API_ACCEPTANCE=PASS');
+ if(!uiOnly)console.log('SUPPORT_CUSTOMER_API_ACCEPTANCE=PASS');
  if(uiMissing)throw Error('launcher_disabled');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){

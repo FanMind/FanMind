@@ -164,3 +164,8 @@ Full catalogue/body/ACL postflight equals the independent pinned PG17 reference;
 This supersedes earlier UNAPPLIED/Production-excluded statements only for these Support schema objects. Staging remains absent and was not applied. No Owner binding, runtime feature flag, deletion/retention schedule, provider action or application deploy was performed.
 Operational privacy/monitoring, exact Owner approval, actual runtime and end-to-end acceptance remain separate/open. Issue1350 is not closed by the schema result.
 Evidence and authorization/recovery: [Production schema receipt](../../project-memory/receipts/support-production-schema-20261105.md).
+
+
+### Staging customer launcher continuation
+
+Run 42508753887 on 60f305f17368bdd3fbd8f5cb1e9c4c389235e2ad passed both customer API sessions, tenant/privacy negatives and independent cleanup, but correctly failed browser UI acceptance because the launcher build flag was absent. The protected Staging build now explicitly enables the existing customer launcher; server-side diagnostic and repair flags are unchanged. `ui_only` retests persistence and reopen with new synthetic conversations, then own erasure and independent read-only cleanup. It does not repeat or relabel the previous full privacy/tenant suite and avoids unnecessary privacy rate-limit consumption. Production build configuration is unchanged.

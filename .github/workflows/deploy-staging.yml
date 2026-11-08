@@ -179,7 +179,8 @@ jobs:
             npm run test:operations
           )
           npm run test:release-integrations
-          NEXT_DEPLOYMENT_ID="$EXPECTED_RELEASE_COMMIT" npm run build
+          # Staging-only customer help UI; diagnostics and repair retain their server gates.
+          NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID="$EXPECTED_RELEASE_COMMIT" npm run build
 
           FANMIND_REQUIRED_DEPLOYMENT_ID="$EXPECTED_RELEASE_COMMIT" \
             node -e '
