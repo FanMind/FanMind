@@ -108,7 +108,11 @@ export async function runCustomerAcceptance(env=process.env){
    await actor.context.close().catch(()=>{clean=false;});
   }
   if(browser)await browser.close();
-  try{requireFact(query(countSql)==='0','cleanup_residue');}catch{clean=false;}
+  try{
+   requireFact(query(countSql)==='0','cleanup_residue');
+   const threads=actors.map(a=>a.state?.thread).filter(id=>uuid.test(id??''));
+   if(threads.length)requireFact(query(`SELECT count(*) FROM public.support_centre_notifications WHERE reference_id IN(${threads.map(id=>`'${id}'`).join(',')})`)==='0','cleanup_notice_residue');
+  }catch{clean=false;}
   rmSync(directory,{recursive:true,force:true});
   console.log(`SUPPORT_CUSTOMER_INDEPENDENT_CLEANUP=${clean?'PASS':'FAIL'}`);
   if(!clean)failure=Error('cleanup_failed');
