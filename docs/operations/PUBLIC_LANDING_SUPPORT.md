@@ -105,3 +105,12 @@ probe for reachability, including rollback. A wrong release fails immediately;
 configuration/flag/source checks are unchanged. Fixed failure-stage codes contain
 no stderr, credentials, prompt or user identifiers. Existing restart authority is
 checked read-only before any configuration write; no sudo grant is installed.
+
+The subsequent retention dispatch42498764018 returned already_completed, referring
+to the existing daily success from d51bc747. It did not execute another purge or
+replace that immutable receipt. Activation now binds that exact receipt source
+only after proving it is an ancestor of reviewed main and that controlled SQL,
+all shared library code, retention runner/schema/reference, workflow, certificate
+and dependency locks are byte-identical. The full live schema equality,30hour
+freshness and latest-success checks remain. Drift, absent source history/files or
+an unrelated commit rejects reuse. No second daily success is fabricated.

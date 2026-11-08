@@ -33,3 +33,11 @@ within0.44seconds; independent host readback42497360607 confirms Support=false
 and the same source. Follow-up bounds application startup/rollback readiness,
 adds fixed stage diagnostics and checks existing restart authority before writes.
 Seven runtime cases pass. Actual activation and two real replies still pending.
+
+PR1445 merged/deployed as6723f3f9. Retention42498764018 correctly reused the
+existing daily success (already_completed); it did not create a new-source run.
+The preflight's exact-release requirement conflicts with this daily idempotence.
+Follow-up binds the original receipt only after ancestry and byte-equality proof
+of the complete retained executable contract. Live schema/freshness/latest-status
+checks remain. No receipt is rewritten, no database guard bypassed. Eight focused
+runtime cases include real Git-history drift and unrelated-source rejection.
