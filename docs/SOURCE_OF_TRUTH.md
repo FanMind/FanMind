@@ -1671,3 +1671,16 @@ ist gespeichert und UID amtlich abgeglichen.
 
 
 UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreiberin Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet. Das vorbereitete Impressum enthält die UID; Steuernummer und GISA bleiben getrennt. Die Bestätigung aktiviert weder Billing noch Stripe Tax, ersetzt keine Rechts-/Steuerfreigabe und ist kein Production-Deploy. Nachweise: `operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+
+## Stripe-Kundenportal – vorbereiteter Staging-Zugang, 08.11.2026
+
+Der Rechnungsbereich besitzt einen geschützten Zugang zum bestehenden Stripe
+Customer Portal. Quelle und negative Route-/Providerprüfungen sind implementiert;
+eine echte Portal-Sitzung ist noch nicht auf Staging abgenommen. Zugang nur für
+den authentifizierten Workspace-Owner, mit Testschlüssel, passendem vorhandenen
+Customer und expliziter eingeschränkter Testkonfiguration. Kein Default-Fallback,
+keine Production-/Live-Freigabe, keine Abo-/Stammdaten-/Zahlungsmitteländerung.
+Rechnungshistorie kann Stripe-Zahlungslinks enthalten; der Testmodus bleibt deshalb
+auch unabhängig von den gesperrten Portal-Änderungsfunktionen zwingend.
+Vertrag und offene Voraussetzungen: `docs/operations/STRIPE_CUSTOMER_PORTAL.md`.

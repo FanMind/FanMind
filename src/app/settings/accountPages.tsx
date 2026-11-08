@@ -1,3 +1,7 @@
+import { BillingPortalButton } from "@/components/BillingPortalButton";
+import { stripeCustomerPortalConfigured } from "@/lib/stripeCustomerPortal.mjs";
+import { isDemoWorkspace, isTemporaryDemoUser } from "@/lib/demoMode";
+import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { isWorkspaceBillingSuspended } from "@/lib/billing";
@@ -113,6 +117,7 @@ function AccountWorkspace({ workspace, user, activePage, userDisplayName, contac
         <SettingsHeaderBar activePage={activePage} locale={locale} />
         {activePage === "profile" ? <ProfileSettingsSection fields={fields} hasOnlyRealValues={hasOnlyRealValues} preferencesAction={saveAppearancePreferences} locale={locale} brightness={brightness} preferencesError={preferencesError} personalAction={savePersonalProfileData} workspaceAction={saveWorkspaceMasterData} taxAction={saveTaxMasterData} profileSaved={profileSaved} workspaceSaved={workspaceSaved} taxSaved={taxSaved} personalError={personalError} workspaceError={workspaceError} taxError={taxError} /> : null}
         {activePage === "package" ? <PackageSettingsSection workspace={workspace} cancelAction={requestSubscriptionCancellation} revokeCancelAction={revokeSubscriptionCancellation} cancelError={cancelError} cancelSaved={cancelSaved} /> : null}
+        {activePage === "invoices" && stripeCustomerPortalConfigured() && workspace.owner_user_id === user.id && workspace.stripe_customer_id && !isTemporaryDemoUser(user) && !isDemoWorkspace(workspace) && !isAdminCrmAccessWorkspace(workspace) ? <BillingPortalButton /> : null}
         {activePage === "invoices" ? <InvoicesSettingsSection invoices={invoices} invoiceError={invoiceError} taxNote={taxNote} /> : null}
       </div>
     </WorkspaceShell>
