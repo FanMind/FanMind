@@ -71,7 +71,7 @@ Gemäß GISA-Auszug vom 02.11.2026 und Owner-Bestätigung vom 06.11.2026:
 - Einzelunternehmen unter der Geschäftsbezeichnung FanMind;
 - Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich;
 - GISA-Zahl 40314440, Gewerbebeginn 29.10.2026;
-- Bernd Guggenberger als operativer Ansprechpartner (keine hiermit nachgewiesene rechtsgeschäftliche Vollmacht);
+- Bernd Guggenberger: operative und technische Leitung sowie Ansprechpartner für Inhalte und Datenschutzanfragen; Kontaktanschrift Turnerstrasse 18, 2345 Brunn am Gebirge, Österreich (keine hiermit nachgewiesene rechtsgeschäftliche Vollmacht);
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
 
 Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
@@ -183,3 +183,8 @@ Restore-/Löschtest erfolgen.
 6. `npm run legal:evidence:require-complete` muss grün sein, bevor echte
    Drittpersonendaten eines Pilotkunden verarbeitet werden.
 
+
+
+## Rollenklärung nach Owner-Ergänzung vom 08.11.2026
+
+Bernd beschreibt sich als Initiator sowie tatsächliche operative, technische und inhaltliche Leitung; Brigitte hält die Gewerbeberechtigung. Die frühere pauschale Ableitung der Datenschutz- und Medieninhaberschaft aus dem Gewerbeschein ist damit kein ausreichender Nachweis. Vor Veröffentlichung der geänderten Rechtstexte sind tatsächliche Unternehmens-/Vertretungsverhältnisse, Medieninhaberschaft und Verantwortlichkeit nach Art.4Z7 DSGVO (gegebenenfalls gemeinsame Verantwortlichkeit) fachlich zu klären. Eine Kontaktadresse oder Owner-Zustimmung bestätigt diese Rechtsrollen nicht. `legalReview` bleibt pending; keine Register-/Steuer-/Providerbelege werden umgeschrieben. Die Beschäftigungs-/Nebentätigkeitsfrage ist separat mit Arbeitsrechtsberatung zu klären und wird nicht öffentlich auf der Website dargestellt.

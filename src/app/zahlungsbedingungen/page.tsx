@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import { capacityRegistrationPackages, capacityDataPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -154,7 +155,7 @@ const sections: PaymentSection[] = [
   },
   {
     title: "Kontakt",
-    content: <p>Fragen zu Zahlungen, Rechnungen, Paketwechsel, Kündigung oder Freischaltung bitte an: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>.</p>,
+    content: <><p>Fragen zu Zahlungen, Rechnungen, Paketwechsel, Kündigung oder Freischaltung nimmt Bernd Guggenberger entgegen.</p><OperatorContactDetails /></>,
   },
 ];
 
