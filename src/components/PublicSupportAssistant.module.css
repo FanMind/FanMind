@@ -11,10 +11,10 @@
 .assistant,.visitor{white-space:pre-wrap;overflow-wrap:anywhere;max-width:92%;padding:12px 14px;border-radius:14px;margin:0;font-size:14px;line-height:1.55}
 .assistant{align-self:flex-start;background:#182c44}.visitor{align-self:flex-end;background:#075c9f}
 .speaker{display:block;font-size:11px;font-weight:700;opacity:.7;margin-bottom:4px}
-.composer{flex:none;padding:12px 14px;border-top:1px solid #28405d;background:#0e1e32}.notice{font-size:11px;line-height:1.4;color:#a6bbd3;margin:0 0 8px}
+.composer{flex:none;max-height:65%;overflow:auto;padding:12px 14px;border-top:1px solid #28405d;background:#0e1e32}.notice{font-size:11px;line-height:1.4;color:#a6bbd3;margin:0 0 8px}
 .consent{display:flex;gap:8px;align-items:flex-start;font-size:11px;line-height:1.45;color:#c0d0e3;margin-bottom:10px}.consent input{margin-top:3px;flex:none}.consent a{color:#6ed5ff;text-decoration:underline}
 .inputRow{display:flex;gap:8px;align-items:flex-end}.inputRow textarea{box-sizing:border-box;flex:1;min-width:0;min-height:56px;max-height:120px;resize:vertical;border:1px solid #3c5878;border-radius:12px;background:#142c46;color:#fff;padding:12px;font:inherit;line-height:1.4}
 .send{flex:none;padding:10px 14px;box-shadow:none;font-size:20px}.send:disabled{opacity:.45;cursor:not-allowed}
-.footer{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;font-size:10px;color:#9bb2cc}.footer button{border:0;background:none;color:#9adfff;font:inherit;padding:4px;cursor:pointer}.error{font-size:12px;color:#ffc5bb;margin:6px 0}
+.footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center;margin-top:8px;font-size:10px;color:#9bb2cc}.footer button{border:0;background:none;color:#9adfff;font:inherit;padding:4px;cursor:pointer}.error{font-size:12px;color:#ffc5bb;margin:6px 0}
 .root button:focus-visible,.root textarea:focus-visible,.root input:focus-visible,.root a:focus-visible{outline:3px solid #7de0ff;outline-offset:3px}
 @media(max-width:640px){.root{right:12px;bottom:12px}.panel,.panelLarge{width:calc(100vw - 24px);height:calc(100dvh - 92px);max-height:760px;margin-bottom:8px}.header{padding:12px}.conversation{padding:12px}.launcher{min-height:44px;padding:10px 16px}.composer{padding:10px 12px}.inputRow textarea{font-size:16px}}

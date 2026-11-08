@@ -71,3 +71,26 @@ reviewed Production deploy and a final public browser interaction remain separat
 from source completion. Actual model answer quality and final Owner acceptance
 are not inferred from mocks. No legal certification or general customer-embed
 activation is implied.
+
+## Staging continuation — 8 November 2026
+
+The Owner reproduced HTTP 503 on Staging release 204a9835. Anonymous conversation
+GET additionally returned 404, which the exact route emits before authentication
+only while Support is disabled. Owner binding and exactly one owned workspace
+were read-only confirmed; no public-support usage or rate buckets were present.
+Health confirms key/rate-limit configuration presence, not a successful provider call.
+
+The existing Staging runtime controller adds verify-support, activate-support and
+deactivate-support actions. They retain exact reviewed-main/live-source and target
+binding. Activation retains full schema/Owner/retention preflight and byte-exact
+rollback. Support-only actions preserve both media flags rather than activating
+Admin Chat. verify-support emits only fixed configuration/identity booleans.
+No key is created, copied or changed. Production is excluded.
+
+After opt-in the long consent checkbox is hidden. The footer keeps an accessible
+Withdraw consent action: it aborts pending work, invalidates late replies, clears
+visible history, and disables sending until renewed opt-in. It cannot retract an
+already processed provider request. No consent is stored across reloads.
+The composer is bounded and scrollable on short screens; the footer wraps.
+Actual host-control, deployed release and two real Staging replies remain separate
+acceptance evidence; source tests alone do not establish a live repair.

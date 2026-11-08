@@ -13,7 +13,7 @@ test("visitor chats inline without login or navigation; consent, history, resize
  const panel=page.getByRole("dialog",{name:"FanMind Support"});await expect(panel).toBeVisible();
  const question=panel.getByRole("textbox",{name:"Deine Frage"});await expect(question).toBeFocused();await question.fill("Was kann FanMind?");
  const send=panel.getByRole("button",{name:"Frage senden"});await expect(send).toBeDisabled();expect(calls).toBe(0);
- await panel.getByRole("checkbox").check();await send.click();await expect(panel.getByText("FanMind unterstützt manuelle Antworten.",{exact:true})).toBeVisible();
+ await panel.getByRole("checkbox").check();await expect(panel.getByRole("checkbox")).toHaveCount(0);await expect(panel.getByRole("button",{name:"Einwilligung widerrufen"})).toBeVisible();await send.click();await expect(panel.getByText("FanMind unterstützt manuelle Antworten.",{exact:true})).toBeVisible();
  await question.fill("Sendet die KI automatisch?");await question.press("Enter");await expect(panel.getByText("Ja, der Mensch sendet selbst.",{exact:true})).toBeVisible();
  expect(calls).toBe(2);expect(bodies[1].history).toHaveLength(2);expect(bodies[1].consent).toBe(true);expect(page.url()).toBe(url);
  await panel.getByRole("button",{name:"Chatgröße ändern"}).click();
@@ -32,4 +32,18 @@ test("public chat keeps failed input, does not retry automatically and clears a 
 });
 test("English visitors can open the public chat in place",async({page})=>{
  await page.goto("/?lang=en");const url=page.url();await page.getByRole("button",{name:"Help & Support",exact:true}).click();await expect(page.getByRole("textbox",{name:"Your question"})).toBeVisible();expect(page.url()).toBe(url);
+});
+
+test("withdrawing consent cancels pending work and requires a fresh opt-in",async({page})=>{
+ let release:()=>void=()=>{};
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ await page.route("**/api/public-support",async route=>{await pending;await route.fulfill({json:{reply:"Late synthetic answer"}}).catch(()=>{});});
+ await page.goto("/");await page.getByRole("button",{name:"Hilfe & Support",exact:true}).click();
+ const panel=page.getByRole("dialog",{name:"FanMind Support"}),question=panel.getByRole("textbox",{name:"Deine Frage"});
+ await question.fill("Was kann FanMind?");await panel.getByRole("checkbox").check();
+ await panel.getByRole("button",{name:"Frage senden"}).click();await expect(panel.getByRole("status")).toBeVisible();
+ await panel.getByRole("button",{name:"Einwilligung widerrufen"}).click();release();
+ await expect(panel.getByRole("checkbox")).not.toBeChecked();await expect(panel.getByRole("button",{name:"Frage senden"})).toBeDisabled();
+ await expect(panel.getByText("Late synthetic answer",{exact:true})).toHaveCount(0);await expect(panel.getByRole("status")).toHaveCount(0);
+ const bounds=await panel.boundingBox(),input=await question.boundingBox();expect(input!.y+input!.height).toBeLessThanOrEqual(bounds!.y+bounds!.height);
 });
