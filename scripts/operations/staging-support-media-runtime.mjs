@@ -130,6 +130,9 @@ export async function runStagingRuntime(action,env=process.env){
   console.log(`STAGING_SUPPORT_WORKSPACE_UNIQUE=${Array.isArray(workspaces)&&workspaces.length===1}`);
   console.log(`STAGING_SUPPORT_OPENAI_CONFIGURED=${Boolean(env.OPENAI_API_KEY?.trim())}`);
   console.log(`STAGING_SUPPORT_RATE_LIMIT_CONFIGURED=${(env.FANMIND_SHARED_RATE_LIMIT_SECRET?.trim().length??0)>=32}`);
+  const journal=spawnSync('/usr/bin/journalctl',['--unit=fanmind-staging.service','--since=-1 hour','--no-pager','--output=cat','--grep=^PUBLIC_SUPPORT_FAILURE=support_disabled$'],{encoding:'utf8',timeout:5000,maxBuffer:65536,stdio:['ignore','pipe','pipe']});
+  const disabledRequestObserved=!journal.error&&journal.status===0&&journal.stdout.split(/\r?\n/).some(line=>line==='PUBLIC_SUPPORT_FAILURE=support_disabled');
+  console.log(`STAGING_SUPPORT_DISABLED_REQUEST_LOG=${disabledRequestObserved?'observed':'not_confirmed'}`);
   console.log(`STAGING_SUPPORT_SOURCE=${env.GITHUB_SHA}`);
   return;
  }
