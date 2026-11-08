@@ -135,6 +135,7 @@ test("staging deploy is manual, isolated and fail-closed", async () => {
     workflow,
     /payload\?\.config\?\.deploymentId[\s\S]*FANMIND_REQUIRED_DEPLOYMENT_ID/u,
   );
+  assert.match(workflow, /NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID=/);
   assert.match(workflow, /npm run staging:preflight/);
   assert.match(workflow, /npm run verify:truth/);
   assert.match(workflow, /npm run test:operations/);
