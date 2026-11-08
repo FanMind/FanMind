@@ -795,4 +795,4 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Safety/recovery: owner-only, exact test environment, explicit restricted configuration, canonical customer binding, no default/Live fallback; no external mutations. Source revert/configuration absent keeps access closed.
 - Locks: LOCK-FM-STRIPE-PORTAL-20261108; does not overlap Support, Capacity SQL/budgets/reserve-settle, identity or Tax changes.
 
-- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 55 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.
+- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 56 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.

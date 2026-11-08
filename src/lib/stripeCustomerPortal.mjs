@@ -35,7 +35,8 @@ export async function createWorkspaceStripePortal(input, deps, env = process.env
   if (binding.status !== "found" || binding.workspaceId !== input.workspaceId) fail();
   const customer = await deps.stripe.customers.retrieve(input.customerId);
   if (customer?.object !== "customer" || customer.id !== input.customerId || customer.deleted === true ||
-      customer.livemode !== false || customer.metadata?.workspace_id !== input.workspaceId) fail();
+      customer.livemode !== false || (customer.metadata?.workspace_id !== undefined &&
+        customer.metadata.workspace_id !== input.workspaceId)) fail();
   const configuration = await deps.stripe.billingPortal.configurations.retrieve(configurationId);
   if (!validConfiguration(configuration, configurationId) || !stripeCustomerPortalConfigured(env) ||
       env.STRIPE_BILLING_PORTAL_CONFIGURATION !== configurationId) fail();

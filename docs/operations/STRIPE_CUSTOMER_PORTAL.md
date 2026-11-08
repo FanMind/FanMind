@@ -20,9 +20,11 @@ und STRIPE_BILLING_PORTAL_CONFIGURATION mit expliziter bpc-ID. Ohne diese Bindun
 erscheint kein Button. Freeze bleibt eine zusätzliche Sperre.
 
 Die Rückwärtsauflösung muss denselben Workspace eindeutig liefern. Der kanonisch
-abgerufene Customer muss im Testmodus existieren und metadata.workspace_id muss
-zur gespeicherten Workspace-/Customer-Bindung passen. Fehlende Provenienz wird
-nicht durch nachträgliches Schreiben oder bloße E-Mail-Gleichheit ersetzt.
+abgerufene Customer muss im Testmodus existieren. Eine vorhandene
+metadata.workspace_id darf der autoritativen gespeicherten Bindung nicht
+widersprechen. Legacy-Customer ohne diese Metadaten bleiben mit eindeutiger
+gespeicherter Vorwärts-/Rückwärtsbindung zulässig; keine Metadaten-Befüllung oder
+E-Mail-Gleichheit ersetzt eine fehlende gespeicherte Zuordnung.
 
 Die explizite aktive Testkonfiguration muss dem eigenen Konto zugeordnet sein
 (application=null), die öffentliche Loginseite deaktivieren und ausschließlich
@@ -51,7 +53,7 @@ Mutationsfunktionen, neue unbekannte Features, Providerfehler und Redirecttausch
 Providerantworten sind synthetisch; kein Hosted-Portal-Nachweis.
 
 Lokaler Build einschließlich TypeScript und gezieltes ESLint bestanden.
-55 gezielte/regressive Tests und 123 Governance-Tests bestanden. Eine lokale
+56 gezielte/regressive Tests und 123 Governance-Tests bestanden. Eine lokale
 Mutationsprobe entfernt vorübergehend die tatsächliche Route-Ownerprüfung:
 der Fremdzugriffstest wird rot; nach exakter Wiederherstellung bestehen alle
 Portaltests. Das ist ein Negativnachweis, keine unabhängige Zielabnahme.

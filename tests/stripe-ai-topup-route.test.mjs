@@ -183,7 +183,7 @@ test("portal refuses ambiguous/foreign/deleted/live Customers and writable, unkn
     f=>f.deps.findWorkspace=async()=>({status:"retryable_error"}),
     f=>f.deps.findWorkspace=async()=>({status:"found",workspaceId:"foreign"}),
     f=>f.customer.id="cus_Other",f=>f.customer.deleted=true,f=>f.customer.livemode=true,
-    f=>delete f.customer.metadata.workspace_id,f=>f.customer.metadata.workspace_id="foreign",
+    f=>f.customer.metadata.workspace_id="foreign",
     f=>f.config.id="bpc_Other",f=>f.config.active=false,f=>f.config.livemode=true,
     f=>f.config.application="ca_Unexpected",f=>f.config.login_page.enabled=true,
     f=>f.config.features.invoice_history.enabled=false,
@@ -208,4 +208,14 @@ test("portal refuses provider session substitution and unsafe redirects without 
     f=>f.deps.stripe.billingPortal.sessions.create=async()=>{throw Error("private provider detail");},
   ]) {const f=portalFixture();mutate(f);const response=await f.route.POST(f.request());
     assert.equal(response.status,503);const body=await response.text();assert.doesNotMatch(body,/private provider detail|session\/Synthetic|cus_Other/u);}
+});
+
+
+test("portal reuses authoritative legacy Customer mapping without inventing or backfilling metadata",async()=>{
+  const f=portalFixture();delete f.customer.metadata.workspace_id;
+  const response=await f.route.POST(f.request());assert.equal(response.status,200);
+  assert.equal(f.calls.filter(x=>x[0]==="create").length,1);
+  f.deps.findWorkspace=async()=>({status:"not_found"});
+  await assert.rejects(portalPolicy.createWorkspaceStripePortal({workspaceId:f.workspaceId,customerId:f.customer.id},f.deps,f.env));
+  assert.equal(f.calls.filter(x=>x[0]==="create").length,1);
 });

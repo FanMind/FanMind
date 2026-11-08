@@ -1569,4 +1569,4 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Boundary: no Support, controlled Capacity SQL, policy, entitlement, identity, Tax or external state mutation.
 - Recovery: source revert; missing explicit test portal configuration keeps the feature closed.
 
-- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 55 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.
+- Portal source validation: full Next build/TypeScript and focused ESLint PASS; 56 focused/regression tests and 123 governance tests PASS. Intentionally removing the actual route Owner guard turns its negative test red; guard restored and portal tests PASS. No hosted-session evidence or independent external acceptance inferred.
