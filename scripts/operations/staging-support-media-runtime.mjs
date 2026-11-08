@@ -43,9 +43,9 @@ export function renderStagingRuntimeFlags(original,overrides,enabled,onlySupport
  return text;
 }
 
-function execute(command,args){
+function execute(command,args,code='host_operation_failed'){
  const result=spawnSync(command,args,{encoding:'utf8',timeout:60000,maxBuffer:1024*1024,stdio:['ignore','pipe','pipe']});
- if(result.error||result.status!==0)fail('host_operation_failed');
+ if(result.error||result.status!==0)fail(code);
  return result.stdout;
 }
 function privateFile(path,{secret=false}={}){
@@ -64,17 +64,32 @@ function replace(text){
  try{writeFileSync(temporary,text,{mode:0o600,flag:'wx'});renameSync(temporary,ENV_FILE);}
  finally{try{unlinkSync(temporary);}catch{}}
 }
-async function json(url,headers){
- const r=await fetch(url,{headers,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
+async function json(url,headers,timeout=15000){
+ const r=await fetch(url,{headers,redirect:'error',cache:'no-store',signal:AbortSignal.timeout(timeout)});
  if(!r.ok)fail('target_read_failed');
  const reader=r.body.getReader();let size=0;const chunks=[];
  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>65536)fail('target_read_failed');chunks.push(value);}}
  finally{await reader.cancel().catch(()=>{});}
  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
-async function verifyRelease(env){
- const value=await json(ORIGIN+'/api/version');
+async function verifyRelease(env,timeout=15000){
+ const value=await json(ORIGIN+'/api/version',undefined,timeout);
  if(value.application!=='fanmind'||value.runtimeEnvironment!=='staging'||value.releaseCommit!==env.GITHUB_SHA)fail('live_release_mismatch');
+}
+export async function waitForStagingRelease(probe,{now=Date.now,pause=ms=>new Promise(resolve=>setTimeout(resolve,ms)),timeoutMs=45000}={}){
+ const deadline=now()+timeoutMs;
+ for(;;){
+  try{await probe();return;}
+  catch(error){
+   if(error?.message!=='target_read_failed'&&!['TypeError','TimeoutError'].includes(error?.name))throw error;
+   if(now()>=deadline)fail('service_startup_timeout');
+   await pause(Math.min(750,deadline-now()));
+  }
+ }
+}
+function failureStage(error){
+ const allowed=['target_read_failed','live_release_mismatch','service_startup_timeout','restart_command_failed','service_inactive','service_not_running','effective_flags_mismatch','rollback_effective_flags_mismatch','override_configuration_changed','configuration_changed'];
+ return allowed.includes(error?.message)?error.message:'operation_failed';
 }
 function processFlags(){
  const pid=execute('/usr/bin/systemctl',['show','fanmind-staging.service','--property=MainPID','--value']).trim();
@@ -86,11 +101,12 @@ function processFlags(){
 }
 export async function changeStagingRuntime({before,after,write,restart,verify,verifyRollback,read,restoreOnFailure=true}){
  try{write(after);restart();await verify();}
- catch{
+ catch(error){
+  console.error(`STAGING_SUPPORT_MEDIA_FAILURE_STAGE=${failureStage(error)}`);
   if(!restoreOnFailure)fail('deactivation_failed_reconciliation_required');
   // A concurrent config change must never be overwritten by rollback.
   if(read()!==after)fail('rollback_configuration_changed');
-  try{write(before);restart();await verifyRollback();}catch{fail('rollback_failed');}
+  try{write(before);restart();await verifyRollback();}catch(error){console.error(`STAGING_SUPPORT_MEDIA_ROLLBACK_STAGE=${failureStage(error)}`);fail('rollback_failed');}
   fail('activation_failed_rolled_back');
  }
 }
@@ -121,6 +137,7 @@ export async function runStagingRuntime(action,env=process.env){
  const verifyOverrides=()=>{if(OVERRIDES.some((p,i)=>privateFile(p,{secret:i===0})!==overrides[i]))fail('override_configuration_changed');};
  const after=renderStagingRuntimeFlags(before,overrides,enabledAction(action),supportOnly(action));
  const current=processFlags();
+ execute('/usr/bin/sudo',['-n','-l','/usr/bin/systemctl','restart','fanmind-staging.service'],'restart_authority_missing');
  if(current[ANALYSIS]!==undefined&&current[ANALYSIS]!=='false')fail('running_analysis_not_disabled');
  const prior=Object.fromEntries([...FLAGS,ANALYSIS].map(key=>[key,current[key]==='true']));
  const receiptPath=ROOT+`/.support-media-runtime-${env.GITHUB_RUN_ID}.json`;
@@ -135,20 +152,22 @@ export async function runStagingRuntime(action,env=process.env){
   try{const stat=fstatSync(fd);if(!stat.isFile()||stat.nlink!==1||stat.ino!==receiptStat.ino||stat.dev!==receiptStat.dev||stat.uid!==process.getuid()||(stat.mode&0o777)!==0o600)fail('receipt_changed');writeFileSync(fd,JSON.stringify({...receipt,phase})+'\n');fsyncSync(fd);}finally{closeSync(fd);}
  };
  try{await changeStagingRuntime({before,after,restoreOnFailure:!['deactivate','deactivate-support'].includes(action),read:()=>privateFile(ENV_FILE),write:text=>{verifyOverrides();if(privateFile(ENV_FILE)!==(text===after?before:after))fail('configuration_changed');replace(text);},restart:()=>{
-  execute('/usr/bin/sudo',['-n','/usr/bin/systemctl','restart','fanmind-staging.service']);
-  execute('/usr/bin/systemctl',['is-active','--quiet','fanmind-staging.service']);
+  execute('/usr/bin/sudo',['-n','/usr/bin/systemctl','restart','fanmind-staging.service'],'restart_command_failed');
+  execute('/usr/bin/systemctl',['is-active','--quiet','fanmind-staging.service'],'service_inactive');
  },verify:async()=>{
+  verifyOverrides();
+  await waitForStagingRelease(()=>verifyRelease(env,5000));
   verifyOverrides();
   const flags=processFlags();
   if(supportOnly(action)){
    if(flags.FANMIND_SUPPORT_CENTRE_ENABLED!==String(enabledAction(action))||['FANMIND_CHAT_ADMIN_MEDIA_ENABLED',ANALYSIS].some(key=>(flags[key]??'false')!==(current[key]??'false')))fail('effective_flags_mismatch');
   }else if(FLAGS.some(key=>flags[key]!==String(enabledAction(action)))||flags[ANALYSIS]!=='false')fail('effective_flags_mismatch');
-  await verifyRelease(env);
  },verifyRollback:async()=>{
+  verifyOverrides();
+  await waitForStagingRelease(()=>verifyRelease(env,5000));
   verifyOverrides();
   const restored=processFlags();
   if([...FLAGS,ANALYSIS].some(key=>(restored[key]??'false')!==(current[key]??'false')))fail('rollback_effective_flags_mismatch');
-  await verifyRelease(env);
  }});updateReceipt('verified');}
  catch(error){updateReceipt(error?.message==='activation_failed_rolled_back'?'rolled_back_verified':'reconciliation_required');throw error;}
  console.log(`STAGING_SUPPORT_MEDIA_ACTION=${action}`);
