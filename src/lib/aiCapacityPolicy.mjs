@@ -1,21 +1,22 @@
+import { AI_CAPACITY_PUBLIC_PACKAGES, AI_CAPACITY_PACKAGE_IDS } from "../config/aiCapacityPackages.mjs";
+export { AI_CAPACITY_PACKAGE_IDS };
 export const AI_BILLING_CONTRACT_VERSIONS = Object.freeze(["legacy_v1", "capacity_v2"]);
-export const AI_CAPACITY_PACKAGE_IDS = Object.freeze(["capacity_99", "capacity_199", "capacity_312"]);
 export const AI_CAPACITY_QUALITY_MODES = Object.freeze(["fast", "balanced", "premium"]);
 
 export const AI_CAPACITY_PACKAGES = Object.freeze({
   capacity_99: Object.freeze({
     id: "capacity_99",
-    monthlyPriceCents: 9_900,
+    monthlyPriceCents: AI_CAPACITY_PUBLIC_PACKAGES.capacity_99.monthlyPriceCents,
     includedBudgetEurMicrocents: 1_500_000_000,
   }),
   capacity_199: Object.freeze({
     id: "capacity_199",
-    monthlyPriceCents: 19_900,
+    monthlyPriceCents: AI_CAPACITY_PUBLIC_PACKAGES.capacity_199.monthlyPriceCents,
     includedBudgetEurMicrocents: 3_000_000_000,
   }),
   capacity_312: Object.freeze({
     id: "capacity_312",
-    monthlyPriceCents: 31_200,
+    monthlyPriceCents: AI_CAPACITY_PUBLIC_PACKAGES.capacity_312.monthlyPriceCents,
     includedBudgetEurMicrocents: 5_000_000_000,
   }),
 });

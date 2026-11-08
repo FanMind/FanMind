@@ -1,3 +1,13 @@
+## FM-REG-CAPACITY-20261108 — public new-price registration alignment
+- Status: IMPLEMENTED / IN_REVIEW; Staging and paid activation acceptance OPEN.
+- Owner request: use existing 99/199/312 monthly packages and four one-time data packs; free registration; preserve existing contracts and Production.
+- Baseline: main 4e6d422d0f556d193f7dde082d2942e3b982867d. Reused existing public-pricing work selectively, no duplicate Stripe products or migrations.
+- Scope: shared public catalog, registration preference, public/authenticated package readers, legal/Support copy, fail-closed legacy new admission. Existing subscriptions, cancellation, historical consent and Daily remain.
+- Risk: R4 cross-consumer source preparation under FM-CONTRACT-REG-ENTITLEMENT-001 / FM-CONTRACT-AI-BILLING-001; no target write or activation evidence.
+- Tests: build/TypeScript, focused regressions, product truth, lint and local rendered HTTP PASS. Browser execution blocked by malformed Chromium download. Full final committed-tree CI remains authoritative.
+- Blockers: current Staging deploy is main-only; no premerge deployment was attempted. Actual sandbox checkout/runtime Price-ID/tax/webhook/credit evidence and accepted terms/tax prerequisites remain open. No merge or Production deployment.
+- Receipt/recovery: docs/operations/CAPACITY_REGISTRATION_20261108.md; revert source only, no target mutation to reverse.
+
 ## FM-STAGING-CAPACITY-CATALOG-20261106 — approved new-price catalog verification
 - Date: 2026-11-06. Owner request: adapt the new prices in Staging, preserving Production and existing contracts. Risk: R2 repository preparation; no provider, database or runtime mutation.
 - Status: IMPLEMENTED / IN_REVIEW in PR #1439; not merged, deployed or accepted on the Stripe test target.

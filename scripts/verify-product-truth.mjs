@@ -211,6 +211,8 @@ const checkedFiles = [
   "src/app/admin/settings/page.tsx",
   "src/app/api/admin/settings/daily-test-plan/route.ts",
   "src/app/register/RegisterClient.tsx",
+  "src/lib/capacityRegistrationPolicy.mjs",
+  "src/app/workspace/setup/page.tsx",
   "src/components/landing/FooterInquiryForm.tsx",
   "src/components/marketing/MarketingConsentManager.tsx",
   "src/lib/metaPixel.ts",
@@ -1148,23 +1150,23 @@ requireText(
 );
 requireText(
   "src/app/landing-v2/page.tsx",
-  'name: "Starter Flex"',
-  "Die Landingpage muss Starter Flex aktiv zeigen.",
+  'capacityLandingPlans(language)',
+  "Die Landingpage muss die zentralen Capacity-Preise verwenden.",
 );
 requireText(
-  "src/app/landing-v2/page.tsx",
-  'name: "Starter 12 Monate"',
-  "Die Landingpage muss Starter 12 Monate aktiv zeigen.",
+  "src/app/register/RegisterClient.tsx",
+  'capacityRegistrationPackages(language)',
+  "Die Registrierung muss dieselben Capacity-Pakete anzeigen.",
 );
 requireText(
-  "src/app/landing-v2/page.tsx",
-  "990 € Setup + 312 €/Monat",
-  "Starter Flex muss die freigegebene Preislogik verwenden.",
+  "src/app/workspace/setup/page.tsx",
+  "<CapacityPackageSelection language={locale}",
+  "Die Kontoeinrichtung muss dieselben Capacity-Pakete anzeigen.",
 );
 requireText(
-  "src/app/landing-v2/page.tsx",
-  "12 Monate Mindestlaufzeit · danach monatliche Verlängerung",
-  "Starter 12 Monate muss die Verlängerungslogik offenlegen.",
+  "src/lib/capacityRegistrationPolicy.mjs",
+  "No subscription starts with registration",
+  "Paketwunsch und kostenpflichtige Aktivierung müssen getrennt bleiben.",
 );
 requireText(
   "src/app/agb/page.tsx",

@@ -1,3 +1,4 @@
+import { CapacityPackageSelection } from "@/components/CapacityPackageSelection";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -309,10 +310,7 @@ function OnboardingWorkspace({
             </div>
           ) : null}
           <div className={styles.emptyState}>
-            <strong>Starter Flex</strong>
-            <p>990 € Einrichtung + 312 €/Monat · monatlich kündbar</p>
-            <strong>Starter 12 Monate</strong>
-            <p>0 € Einrichtung + 312 €/Monat · 12 Monate Mindestlaufzeit</p>
+            <CapacityPackageSelection />
           </div>
           <div className={styles.emptyActions}>
             <Link className={styles.primaryButton} href="/fans#fans-list">

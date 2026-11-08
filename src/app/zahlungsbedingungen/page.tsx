@@ -1,3 +1,4 @@
+import { capacityRegistrationPackages, capacityDataPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -40,24 +41,10 @@ const trustItems = [
 ];
 
 const packageCards: PackageCard[] = [
-  {
-    title: "Starter Flex",
-    badge: "Aktiv / Produktiv",
-    price: `${euros(starterFlexTerms.setupFeeCents)} Setup + ${euros(starterFlexTerms.monthlyFeeCents)}/Monat`,
-    points: [
-      "Jederzeit zum Ende des bezahlten Abrechnungsmonats kündbar",
-      "Angefangene Monate werden vollständig verrechnet",
-      "Produktiver MVP-Workspace",
-      "1 Profil",
-      "Bis zu 1.000 Kontakte, sofern technisch/vertraglich so vorgesehen",
-    ],
-  },
-  {
-    title: "Starter 12 Monate",
-    badge: "Aktiv / 12 Monate",
-    price: `${euros(starterCommitmentTerms.setupFeeCents)} Setup + ${euros(starterCommitmentTerms.monthlyFeeCents)}/Monat`,
-    points: ["12 Monate Mindestlaufzeit", "danach monatliche Verlängerung", "1 Profil", "Keine Einrichtungsgebühr"],
-  },
+  ...capacityRegistrationPackages().map(plan => ({
+    title: plan.name, badge: "Aktivierung in Vorbereitung", price: plan.price,
+    points: [plan.setup, "Monatliche KI-Kapazität", "Kostenlose Registrierung ohne Abo", "Gesonderte Bestätigung vor kostenpflichtiger Aktivierung"],
+  })),
   {
     title: "Daily",
     badge: "Täglich kündbar",
@@ -78,11 +65,13 @@ const packageCards: PackageCard[] = [
 
 
 const sections: PaymentSection[] = [
+  { title: "Neue FanMind-Pakete",
+    content: <><p>{capacityRegistrationPackages().map(plan => `${plan.name}: ${plan.price}, ${plan.setup}`).join("; ")}. Alle Beträge netto. Registrierung kostenlos, keine automatische Subscription. Die Aktivierung wird vorbereitet und erfordert eine gesonderte Paket- und Vertragsbestätigung.</p><p>Monatliche KI-Kapazität; Schnell, Ausgewogen und Premium nutzen denselben Pool. Inkludierte Kapazität verfällt zum Ende des autoritativen Abrechnungszeitraums. Keine feste Nachrichtenmenge oder zusätzliche Mindestlaufzeit wird aus dem Monatspreis abgeleitet. Verbindliche Laufzeit- und Kündigungsbedingungen müssen vor Aktivierung gesondert bestätigt werden.</p><p>{capacityDataPackages().map(plan => `${plan.name}: ${plan.price} einmalig`).join("; ")}. Kein monatliches Abo. Verkauf, Gültigkeitsregel und Zahlungs-/Guthabenzuordnung müssen vor Freischaltung abgenommen sein.</p><p>Die nachfolgenden Starter-/Legacy-Konditionen gelten ausschließlich für bestehende oder ausdrücklich individuell vereinbarte Verträge. Sie sind kein neues öffentliches Angebot. Bestehende Zustimmungen werden nicht auf das neue Preismodell übertragen. Capacity-v2-Pakete und Datenpakete sind ohne gesonderte Freigabe nicht referral-rabattfähig.</p></> },
   {
     title: "Geltungsbereich",
     content: (
       <>
-        <p>Diese Zahlungsbedingungen gelten für Starter- und künftig freigegebene Pakete von FanMind, soweit keine abweichende individuelle Vereinbarung getroffen wurde.</p>
+        <p>Diese Zahlungsbedingungen gelten für bestehende und künftig freigegebene Pakete von FanMind, soweit keine abweichende individuelle Vereinbarung getroffen wurde.</p>
         <p>Sie ergänzen die AGB / Vertragsbedingungen. Bei Widersprüchen gehen individuelle Angebote oder Auftragsbestätigungen vor.</p>
       </>
     ),
@@ -97,11 +86,11 @@ const sections: PaymentSection[] = [
     ),
   },
   {
-    title: "Starter Flex",
+    title: "Starter Flex (Bestandsvertrag)",
     content: <p>Starter Flex kostet {euros(starterFlexTerms.setupFeeCents)} einmalige Einrichtung plus {euros(starterFlexTerms.monthlyFeeCents)}/Monat. Es kann jederzeit gekündigt werden; die Kündigung wirkt zum Ende des laufenden, bereits bezahlten Abrechnungsmonats. Angefangene Monate werden vollständig verrechnet. Das Paket umfasst einen produktiven MVP-Workspace für ein Profil. Externe Integrationen bleiben Roadmap/Preview, soweit sie nicht ausdrücklich produktiv freigegeben und verbunden sind.</p>,
   },
   {
-    title: "Starter 12 Monate",
+    title: "Starter 12 Monate (Bestandsvertrag)",
     content: <p>Starter 12 Monate kostet {euros(starterCommitmentTerms.setupFeeCents)} Setup plus {euros(starterCommitmentTerms.monthlyFeeCents)}/Monat. Die Mindestlaufzeit beträgt {starterCommitmentTerms.commitmentMonths} Monate. Danach verlängert sich der Vertrag jeweils um einen Monat, sofern er nicht gekündigt wird. Die Setup-Gebühr entfällt aufgrund der Mindestlaufzeit.</p>,
   },
   {
@@ -109,7 +98,7 @@ const sections: PaymentSection[] = [
     content: <p>Daily kostet {euros(PUBLIC_DAILY_PLAN_SETUP_FEE_CENTS)} Setup plus {euros(PUBLIC_DAILY_PLAN_PRICE_CENTS)} pro Tag. Der Tarif wird täglich abgerechnet und ist täglich zum Ende des laufenden, bereits bezahlten Abrechnungstags kündbar. Referral-Rabatte sind ausgeschlossen. Daily ist während der manuell freigegebenen internen Beta ein kostenpflichtiges Zahlungsmodell und kein kostenloser Demo-Zugang. Die Registrierung startet kein Abo; ein Vertrag und eine Zahlung setzen die gesonderte Paketbestätigung und den freigegebenen Zahlungsprozess voraus.</p>,
   },
   {
-    title: "KI-Stufen und Referral-Rabatte",
+    title: "Legacy-KI-Stufen und Referral-Rabatte (Bestandsverträge)",
     content: <p>KI Standard ist in der Starter-Grundgebühr von 312 €/Monat enthalten. KI Plus kostet zusätzlich 100 €/Monat, KI Ultra zusätzlich 200 €/Monat. Referral-Rabatte gelten ausschließlich auf die Starter-Grundgebühr von 312 €. Einrichtungsgebühren und KI-Add-ons sind nicht rabattfähig.</p>,
   },
   {

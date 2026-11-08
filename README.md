@@ -1,3 +1,17 @@
+<!-- Capacity-v2 registration update: 2026-11-08 -->
+Neue öffentliche Registrierung: FanMind 99 / 199 / 312 zu 99 / 199 / 312 EUR
+monatlich, jeweils 0 EUR Einrichtung (netto). Zentrale Preisquelle:
+`src/config/aiCapacityPackages.mjs`; Datenpakete übernehmen die vier Einmalpreise
+aus `stripeAiTopupPolicy.mjs`. Auswahl und Auth-Metadaten sind ausschließlich
+Präferenzen. Kein Workspace, Zahlungsmandat oder Abo durch Registrierung.
+Legacy-Neuaufnahme im öffentlichen Provisionierungsweg ist geschlossen;
+Bestandsverträge, individuelle Freigaben und bestehende Checkouts bleiben erhalten.
+Capacity-v2-Aktivierung/Checkout/Upgrade und Datenpaketverkauf bleiben gesperrt,
+bis Entitlement-, Tax-, Vertrags- und Lifecycle-Abnahme abgeschlossen sind.
+Historische Starter-/Plus-/Ultra-Angaben weiter unten betreffen ausschließlich
+Bestandsverträge und historische Implementierungsnachweise, keine Neugeschäfte.
+Nachweise und offene Abnahme: `docs/operations/CAPACITY_REGISTRATION_20261108.md`.
+
 # FanMind
 
 ChatAdmin aktuelles Fanwissen (18.10.2026, vorbereitete Source-Erweiterung): Ein
@@ -188,7 +202,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Abschlussantwort darf nicht automatisch wiederholt werden, sondern muss
   zuerst direkt im geschützten EAS-Projekt geprüft werden; Gerätetest und
   Store-Verteilung bleiben externe Nachweise.
-- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Zwei dauerhafte öffentliche Zahlungsmodelle: Starter Flex (990 € Setup + 312 €/Monat) und Starter 12 Monate (0 € Setup + 312 €/Monat). Die manuell gesteuerte interne Daily-Beta (0 € Setup + 1 €/Tag) ist nur während der Admin-Freigabe sichtbar. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
+- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Neue öffentliche Monatspakete: FanMind 99, 199 und 312 ohne Setupgebühr; kostenpflichtige Aktivierung noch gesperrt. Die manuell gesteuerte interne Daily-Beta (0 € Setup + 1 €/Tag) ist nur während der Admin-Freigabe sichtbar. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
 - Kostenlose Demo: temporärer, geschützter Demo-Workspace; kein entgeltliches Pilot-Paket.
 - Daily: manuell vom Platform-Admin gesteuerte interne Beta, täglich kündbar und von Referral ausgeschlossen. Der bestehende technische Bezeichner `internal_daily_test`, der 1-€/Tag-Stripe-Preis und die Billing-Engine werden wiederverwendet. Es gibt keinen automatischen Countdown. Bei ausgeschalteter Beta ist Daily öffentlich unsichtbar und für neue Provisionierung/Checkouts gesperrt; bestehende Daily-Abos laufen unverändert weiter. Sichere Workspace-Provisionierung, Browser-INSERT-Verbot, Stripe/Webhook/Tax und aktuelle Zahlungszustimmung bleiben Pflicht. `docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md` beschreibt den weiter erforderlichen kontrollierten Datenbankvertrag.
 - Billing-Steuermodus: veröffentlichte Beträge sind Nettopreise. `FANMIND_TAX_MODE=stripe_tax` plus die getrennte Registrierungsbestätigung sind Pflicht; ohne beides bleibt Checkout fail-closed. Für steuerpflichtige Österreich-Umsätze gelten 20 %, international bestimmt Stripe Tax den anwendbaren Satz oder Reverse Charge. Die externe steuerliche Prüfung bleibt im Freigaberegister offen.

@@ -1,3 +1,4 @@
+import { capacityDataPackages, capacityLandingPlans } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { roadmapNotes, roadmapPhases } from "@/config/roadmap";
@@ -695,36 +696,6 @@ const landingFooterColumns = [
 
 const pricingPlans = [
   {
-    icon: "♙",
-    name: "Starter Flex",
-    eyebrow: "Monatlich kündbar",
-    audience: "Für kleine Teams, die produktiv starten und flexibel bleiben möchten.",
-    pricePrefix: "",
-    price: "990 € Setup + 312 €/Monat",
-    cadence: "jederzeit zum Ende des bezahlten Monats kündbar",
-    cta: "Registrieren",
-    href: "/register?plan=starter&option=starter_paid_setup",
-    tone: "blue",
-    featured: false,
-    status: "Aktiv",
-    features: ["Ein produktiver Workspace", "Kontakte/Fans und manuelle Kontaktpflege", "CSV-Import, Notizen und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "KI Standard enthalten", "KI Plus +100 €/Monat · KI Ultra +200 €/Monat", "Kein automatischer Versand"],
-  },
-  {
-    icon: "◎",
-    name: "Starter 12 Monate",
-    eyebrow: "Setup inklusive",
-    audience: "Für Teams, die FanMind langfristiger einführen und die Setup-Gebühr sparen möchten.",
-    pricePrefix: "",
-    price: "0 € Setup + 312 €/Monat",
-    cadence: "12 Monate Mindestlaufzeit · danach monatliche Verlängerung",
-    cta: "Registrieren",
-    href: "/register?plan=starter&option=starter_no_setup_commitment",
-    tone: "green",
-    featured: true,
-    status: "Aktiv",
-    features: ["Ein produktiver Workspace", "Setup ohne separate Setup-Gebühr", "Kontakte/Fans, CSV-Import und Kontaktwissen", "Follow-ups & Aufgaben inklusive /followups", "KI Standard enthalten", "KI Plus +100 €/Monat · KI Ultra +200 €/Monat", "Externe Integrationen nur Beta/Roadmap"],
-  },
-  {
     icon: "◷",
     name: "Daily",
     eyebrow: "Täglich kündbar",
@@ -820,7 +791,7 @@ const pricingProofs = [
   {
     icon: "▣",
     title: "Sicherer Zahlungsprozess",
-    text: "Starter-Nettopreise, Laufzeiten sowie Steuer- oder Reverse-Charge-Behandlung werden transparent dargestellt.",
+    text: "Paketpreise und die noch ausstehende kostenpflichtige Aktivierung werden transparent dargestellt.",
     tone: "green",
   },
 ];
@@ -941,7 +912,7 @@ export default async function LandingV2({ searchParams }: LandingV2Props) {
   }));
   const dailyBetaEnabled = await getPublicDailyTestPlanEnabled();
   const localizedPricingPlans = localizeFanMindValue(
-    pricingPlans.filter((plan) => plan.name !== "Daily" || dailyBetaEnabled),
+    [...capacityLandingPlans(language), ...pricingPlans].filter((plan) => plan.name !== "Daily" || dailyBetaEnabled),
     t,
   ).map((plan) => ({ ...plan, href: plan.href.startsWith("/register") ? localizedPath("/register", language, plan.href.includes("?") ? plan.href.slice(plan.href.indexOf("?")) : "") : plan.href }));
   const localizedPricingProofs = localizeFanMindValue(pricingProofs, t);
@@ -1828,6 +1799,11 @@ export default async function LandingV2({ searchParams }: LandingV2Props) {
           ))}
         </div>
 
+        <div className={styles.pricingTaxNote}>
+          <h3>{language === "en" ? "One-time data packages" : "Einmalige Datenpakete"}</h3>
+          <p>{capacityDataPackages(language).map(plan => `${plan.name}: ${plan.price}`).join(" · ")}</p>
+          <p>{language === "en" ? "One-time purchases, no subscription. Sales are being prepared and require separate confirmation." : "Einmalige Käufe, kein Abo. Der Verkauf wird vorbereitet und erfordert eine gesonderte Bestätigung."}</p>
+        </div>
         <div className={styles.pricingCtaPanel}>
           <div>
             <h3>
