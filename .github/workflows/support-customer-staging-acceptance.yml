@@ -1,0 +1,80 @@
+name: FanMind Support Customer Staging Acceptance
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: Exact reviewed main commit already deployed to Staging
+        type: string
+        required: true
+      confirmation:
+        description: Type run-staging-support-customer-acceptance
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  acceptance:
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == 'run-staging-support-customer-acceptance'
+    environment: staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_SUPPORT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_SUPPORT_CUSTOMER_CONFIRM: ${{ inputs.confirmation }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: I_UNDERSTAND_NON_PRODUCTION_ONLY
+      FANMIND_STAGING_E2E_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_WORKSPACE_ID }}
+      FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID: ${{ vars.FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: db.drqkpdvtbbrrdwmtrodz.supabase.co
+      PGPORT: '5432'
+      PGDATABASE: postgres
+      PGUSER: postgres.vshyhvgcmrlagvfnvomc
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      CI: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Prepare private read-only database proof connection
+        env:
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$PASSWORD" in ''|*$'\n'*|*$'\r'*) exit 1 ;; esac
+          ESCAPED="${PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+      - name: Test only synthetic customer sessions and prove cleanup
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
+        run: node scripts/operations/support-customer-staging-acceptance.mjs
+      - name: Remove private connection file
+        if: always()
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
+        run: rm -f "$PGPASSFILE"

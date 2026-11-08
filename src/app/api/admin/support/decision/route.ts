@@ -1,3 +1,4 @@
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { readSupportRequest } from "@/lib/supportCentreRequest";
 import { NextRequest, NextResponse } from "next/server";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
@@ -8,7 +9,7 @@ export async function POST(request: NextRequest) {
   const headers = { "Cache-Control": "no-store" };
   const reply = (error: string, status: number) => NextResponse.json({ error }, { status, headers });
   if (!supportCentreEnabled()) return reply("not_available", 404);
-  if (request.headers.get("origin") !== request.nextUrl.origin) return reply("invalid_origin", 403);
+  if (!isTrustedFanMindMutationRequest(request)) return reply("invalid_origin", 403);
   try {
     const actor = await supportCentreActor();
     if (!actor) return reply("unauthorized", 401);

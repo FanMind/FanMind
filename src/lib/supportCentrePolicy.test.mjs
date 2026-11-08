@@ -3,10 +3,11 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as http from "./httpMutationPolicy.mjs";
 function load(file, dependencies = {}) {
   const exports = {};
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: name => { if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder });
+    { exports, require: name => { if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder });
   return exports;
 }
 const { isSupportCase, supportCaseNeedsAttention, performSupportDecision } = load("src/lib/supportCentrePolicy.ts");
@@ -100,4 +101,23 @@ test("authenticated conversation actual route derives identity and forbids forei
  assert.equal(calls,0);assert.equal((await POST(req(message))).status,200);assert.equal(calls,1);
  assert.equal((await POST(req({scope:"bound",handoff:true}))).status,200);assert.equal(calls,2);
  identity=null;assert.equal((await GET()).status,401);enabled=false;assert.equal((await GET()).status,404);
+});
+
+test('Support POST routes accept the configured HTTPS origin behind an internal proxy and retain CSRF denial',async()=>{
+ const routes=[['support/conversation',401],['support/privacy',401],['support/escalate',401],['admin/support/decision',401],['admin/support/overview',403],['support/automatic-check',403],['support/repair-request',400]];
+ for(const [path,expected] of routes){
+  const exports={};
+  const dependencies={
+   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
+   '@/lib/httpMutationPolicy.mjs':{...http,isTrustedFanMindMutationRequest:r=>http.isTrustedFanMindMutationRequest(r,{NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch'})},
+   '@/lib/supportCentreServer':{supportCentreEnabled:()=>true,supportCentreActor:async()=>null},
+   '@/lib/supportContinuityServer':{supportCustomer:async()=>null},
+   '@/lib/supabase/server':{getSupabaseServerUser:async()=>({data:{user:null}})},
+   '@/lib/supportRepairPolicy':{getSupportRepairPolicy:()=>null},
+  };
+  runInNewContext(ts.transpileModule(readFileSync(`src/app/api/${path}/route.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>dependencies[n]??{},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:'true',FANMIND_INAPP_HELP_REPAIR_ENABLED:'true',FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED:'true',FANMIND_INAPP_HELP_AUTOMATIC_CHECKS_ENABLED:'true'}}});
+  const request=(origin,site='same-origin')=>{const r=new Request(`http://localhost:3001/api/${path}`,{method:'POST',headers:{...(origin?{origin}:{}),'sec-fetch-site':site,'content-type':'application/json'},body:'{}'});r.nextUrl=new URL(r.url);return r;};
+  assert.equal((await exports.POST(request('https://staging.fanmind.ch'))).status,expected,path);
+  for(const [origin,site] of [[null,'same-origin'],['https://foreign.invalid','same-origin'],['https://staging.fanmind.ch','cross-site']])assert.equal((await exports.POST(request(origin,site))).status,403,path);
+ }
 });

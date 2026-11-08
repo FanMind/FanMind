@@ -1,3 +1,4 @@
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { notifySupport } from "@/lib/supportCentreServer";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,8 +22,7 @@ export async function POST(request: NextRequest) {
   if (process.env.FANMIND_INAPP_HELP_AUTOMATIC_CHECKS_ENABLED !== "true") {
     return NextResponse.json({ error: "not_available" }, { status: 404, headers });
   }
-  const origin = request.headers.get("origin");
-  if (!origin || origin !== request.nextUrl.origin) {
+  if (!isTrustedFanMindMutationRequest(request)) {
     return NextResponse.json({ error: "invalid_origin" }, { status: 403, headers });
   }
   let body: unknown;

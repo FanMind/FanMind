@@ -1,3 +1,4 @@
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { NextRequest,NextResponse } from "next/server";
 import { supportCustomer,readSupportConversation } from "@/lib/supportContinuityServer";
 import { supportCentreDatabase,supportCentreEnabled } from "@/lib/supportCentreServer";
@@ -13,7 +14,7 @@ export async function GET(request:NextRequest){
 }
 export async function POST(request:NextRequest){
  if(!supportCentreEnabled())return fail(404);
- if(request.headers.get("origin")!==request.nextUrl.origin)return fail(403);
+ if(!isTrustedFanMindMutationRequest(request))return fail(403);
  try{
   const identity=await supportCustomer();if(!identity)return fail(401);
   const body=await readSupportRequest(request,5000);

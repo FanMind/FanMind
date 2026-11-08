@@ -1,3 +1,4 @@
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { NextRequest,NextResponse } from "next/server";
 import { listOwnerSupportNotifications,supportCentreActor,supportCentreEnabled,supportCentreDatabase } from "@/lib/supportCentreServer";
 import { readSupportRequest } from "@/lib/supportCentreRequest";
@@ -19,7 +20,7 @@ export async function GET(request:NextRequest){
 }
 export async function POST(request:NextRequest){
  if(!supportCentreEnabled())return fail(404);
- if(request.headers.get("origin")!==request.nextUrl.origin)return fail(403);
+ if(!isTrustedFanMindMutationRequest(request))return fail(403);
  try{
   const actor=await supportCentreActor();if(!actor?.owner)return fail(403);
   const input=await readSupportRequest(request,512);
