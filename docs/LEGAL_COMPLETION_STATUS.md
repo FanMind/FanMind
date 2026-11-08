@@ -1,6 +1,6 @@
 # FanMind Legal Completion Status
 
-Stand: 6. November 2026
+Stand: 8. November 2026
 
 Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch durch Bernd, Steuerberatung oder Rechtsberatung verbindlich freigegeben werden müssen. Es ist keine Rechtsberatung und ersetzt keine unterzeichneten Vertragsunterlagen.
 
@@ -22,7 +22,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 ## Noch verbindlich zu entscheiden oder zu prüfen
 
 - [ ] etwaiger künftiger Rechtsformzusatz nach einer bestätigten Firmenbucheintragung
-- [ ] Zuordnung und Veröffentlichung der korrekten UID
+- [x] UID ATU66320126 amtlich über EU-VIES am 08.11.2026 gültig und Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet; Veröffentlichung im vorbereiteten Impressum. Dies bestätigt keine Stripe-Identitäts- oder Steuerfreigabe.
 - [ ] etwaige Firmenbuchnummer und Firmenbuchgericht
 - [ ] finale AGB-Fassung für Pilot, Starter Flex und Starter 12 Monate
 - [ ] finale Zahlungs-, Kündigungs- und Referral-Bedingungen
@@ -61,7 +61,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 - `npm run legal:evidence:hash` erzeugt aus einer privaten, nicht verlinkten
   Belegdatei ausschließlich die registrierbare SHA-256-Referenz. Der Befehl
   gibt weder Pfad noch Inhalt aus und verändert den Freigabestatus nicht.
-- `npm run legal:evidence:handoff` erzeugt die verbleibende 26-von-27-Control-
+- `npm run legal:evidence:handoff` erzeugt die verbleibende 25-von-27-Control-
   Aufgabenliste nach Zuständigkeit. Sie gibt keine Werte, Pfade,
   Kontokennungen, Beleginhalte oder vorhandenen Hashes aus und verändert das
   Register nicht.
@@ -99,3 +99,8 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 ## Kommerzieller Start – Prüfung vom 06.11.2026
 
 Vorbereitung und konkrete Restarbeiten: `docs/legal/COMMERCIAL_LAUNCH_REVIEW_2026-11-06.md`. Das vorhandene Stripe-Konto ist technisch zahlungs- und auszahlungsfähig, aber auf Bernd statt auf die bestätigte Betreiberin registriert; alte Kontakt-/Adressdaten bleiben dort unverändert. Stripe Tax ist aktiv, jedoch ohne Steuerregistrierung. Es ist keine steuerliche Freigabe. Kein Merge, Deployment, Provider-/Kontoänderung oder echter Zahlungstest wurde damit autorisiert.
+
+
+## Stripe-Unternehmensdaten – 08.11.2026
+
+Steuernummer aus dem vorgelegten Nachweis im vorgesehenen Stripe-Steuerfeld gespeichert; nicht öffentlich im Impressum. UID amtlich bestätigt und separat gespeichert. Rechtsgültiger Unternehmensname, Supportadresse und Support-E-Mail korrigiert; Telefonnummer beibehalten. Der frühere Kontovertreter Bernd bleibt als verifizierte Einzelperson bestehen: vollständige rechtliche Identitätsberichtigung, Vollmacht und allfällige persönliche Prüfung sind noch offen. Stripe Tax hat weiterhin keine Registrierung; keine OSS- oder Steuerbefreiung abgeleitet. Aktuelle Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.

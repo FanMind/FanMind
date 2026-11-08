@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-11-06",
+  "asOf": "2026-11-08",
   "operator": {
     "legalName": "Brigitte Erika Guggenberger",
     "legalForm": "Einzelunternehmen",
@@ -8,10 +8,10 @@
     "address": "Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich",
     "tradeAuthority": "Bezirkshauptmannschaft Mödling",
     "vatId": {
-      "status": "pending",
-      "value": null,
-      "confirmedAt": null,
-      "evidenceRef": null
+      "status": "confirmed",
+      "value": "ATU66320126",
+      "confirmedAt": "2026-11-08",
+      "evidenceRef": "sha256:2edf2c8a98f835f2c8b6c087e7347141cf0c6a560e2283f63d90aa4f70e5ca04"
     },
     "companyRegisterNumber": {
       "status": "pending",

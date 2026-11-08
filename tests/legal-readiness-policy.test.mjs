@@ -21,7 +21,13 @@ test("operator correction preserves GISA identity and never grants Bernd signing
   assert.equal(evidence.operator.gisaNumber.status, "confirmed");
   assert.equal(evidence.operator.gisaNumber.value, "40314440");
   assert.match(evidence.operator.gisaNumber.evidenceRef, /^sha256:[a-f0-9]{64}$/u);
-  assert.equal(evidence.operator.vatId.status, "pending");
+  assert.equal(evidence.operator.vatId.status, "confirmed");
+  assert.equal(evidence.operator.vatId.value, "ATU66320126");
+  assert.match(evidence.operator.vatId.evidenceRef, /^sha256:[a-f0-9]{64}$/u);
+  assert.match(imprint, /ATU66320126/u);
+  assert.doesNotMatch(imprint, /\b\d{2}\s\d{3}\/\d{4}\b|fenment@fenment\.ch/u);
+  assert.match(imprint, /mailto:fanmind@fanmind\.ch/u);
+  assert.match(imprint, /tel:\+436765367236/u);
   assert.equal(evidence.approvals.legalReview.status, "pending");
   assert.equal(evidence.approvals.taxReview.status, "pending");
 });
