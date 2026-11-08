@@ -256,7 +256,11 @@ test("authenticated staging spec allows only auth session operations and exact-o
     source,
     /\/api\/demo\/start|\/api\/ai|signUp|\.insert\(|\.update\(|\.delete\(/u,
   );
-  assert.doesNotMatch(source, /console\.(?:log|warn|error)/u);
+  const withoutFixedRoleMarkers = source.replace(
+    /console\.log\("STAGING_SUPPORT_ADMIN_ROLE=(?:BOUND_OWNER_READ_ONLY|NON_OWNER_ADMIN_READ_ONLY)"\);/gu,
+    "",
+  );
+  assert.doesNotMatch(withoutFixedRoleMarkers, /console\.(?:log|warn|error)/u);
 });
 
 test("authenticated staging spec proves bidirectional contact RLS, admin denial and logout", async () => {
@@ -351,6 +355,11 @@ test("authenticated Staging spec separates admin credentials and proves both adm
   assert.match(source, /page\.goto\("\/admin\/billing"\)/u);
   assert.match(source, /page\.goto\("\/admin\/operations"\)/u);
   assert.match(source, /Admin Operations Center/u);
+  assert.match(source, /javaScriptEnabled: false/u);
+  assert.match(source, /STAGING_SUPPORT_ADMIN_ROLE=BOUND_OWNER_READ_ONLY/u);
+  assert.match(source, /STAGING_SUPPORT_ADMIN_ROLE=NON_OWNER_ADMIN_READ_ONLY/u);
+  assert.match(source, /supportBlockedWrites/u);
+  assert.match(source, /Support-Zentrale/u);
   assert.match(source, /closeAndClearBrowserSession\(page, session\)/u);
   assert.match(
     source,

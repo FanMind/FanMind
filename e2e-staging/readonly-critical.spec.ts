@@ -267,6 +267,10 @@ test("normaler synthetischer Nutzer bleibt aus Admin gesperrt und nach Logout oh
   await page.goto("/admin");
   await expect(page).not.toHaveURL(/\/admin(?:\/|\?|$)/u);
 
+  await page.goto("/admin/support");
+  await expect(page).not.toHaveURL(/\/admin(?:\/|\?|$)/u);
+  expect((await page.request.get(`${appOrigin}/api/admin/support/overview`)).status()).toBe(401);
+
   await page.goto("/logout");
   await expect(page).toHaveURL(`${appOrigin}/`);
   await page.goto("/dashboard");
@@ -299,6 +303,35 @@ test("freigegebener Staging-Admin erreicht Billing und Operations ausschließlic
     page.getByRole("heading", { name: "Admin Operations Center" }),
   ).toBeVisible();
 
+  // Suppress client-side automatic maintenance: this acceptance stays read-only.
+  // Session material is copied only in memory, never to logs or artifacts.
+  const browser = page.context().browser();
+  if (!browser) throw new Error("staging_support_browser_missing");
+  const supportContext = await browser.newContext({
+    javaScriptEnabled: false,
+    storageState: await page.context().storageState(),
+  });
+  try {
+    const supportPage = await supportContext.newPage();
+    const supportBlockedWrites = await installReadOnlyNetworkGuard(supportPage);
+    await supportPage.goto(`${appOrigin}/admin/support?workspace=${primary.workspaceId}`);
+    await expect(supportPage.getByRole("heading", { name: "KI-Support-Zentrale", exact: true })).toBeVisible();
+    await expect(supportPage.getByRole("heading", { name: "Owner-Freigaben", exact: true })).toBeVisible();
+    await expect(supportPage.getByRole("heading", { name: "Audit & Aktivitäten", exact: true })).toBeVisible();
+    const overview = await supportContext.request.get(`${appOrigin}/api/admin/support/overview`);
+    if (overview.status() === 200) {
+      await expect(supportPage.getByRole("heading", { name: "Owner-Meldungen aus allen Workspaces", exact: true })).toBeVisible();
+      console.log("STAGING_SUPPORT_ADMIN_ROLE=BOUND_OWNER_READ_ONLY");
+    } else {
+      expect(overview.status()).toBe(403);
+      await expect(supportPage.getByRole("heading", { name: "Owner-Meldungen aus allen Workspaces", exact: true })).toHaveCount(0);
+      await expect(supportPage.getByRole("button", { name: "Freigeben und einmal prüfen", exact: true })).toHaveCount(0);
+      console.log("STAGING_SUPPORT_ADMIN_ROLE=NON_OWNER_ADMIN_READ_ONLY");
+    }
+    expect(supportBlockedWrites).toEqual([]);
+  } finally {
+    await supportContext.close();
+  }
   await closeAndClearBrowserSession(page, session);
   expect(blockedWrites).toEqual([]);
 });
