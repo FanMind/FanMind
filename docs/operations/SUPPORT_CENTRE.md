@@ -1,5 +1,28 @@
 # Support assistant and KI-Support-Zentrale — #1350 / #1416
 
+## Staging continuation, 8 November 2026
+
+On live6d0eb20c, HTTPS same-origin Support POSTs returned403 before authentication
+while the corresponding GET returned401. The legacy nextUrl.origin comparison
+used the proxy-internal application URL. All seven Support mutation routes now
+reuse the existing canonical configured-origin/Fetch-Metadata check, as the public
+information chat already does. Foreign/missing origins and cross-site requests
+remain denied; identity, consent, scope, Owner, rate and feature gates are unchanged.
+
+The separate protected `support-customer-staging-acceptance.yml` uses existing
+synthetic customer credentials for two isolated Workspaces. It binds current main
+and the actual deployed release, rejects any pre-existing conversation fixture,
+uses real customer cookies for every tested API, and never accepts a service key.
+PostgreSQL is used only read-only to verify synthetic fixture identity, consent
+and independent physical cleanup. It tests persistence, UUID replay, older-page
+cursors, own export/erase, foreign scope/thread denial, direct browser-role denial,
+logout and the existing desktop/mobile help launcher. No provider or email call,
+schema apply, permission or credential change occurs. Logs contain fixed markers
+only; no traces, screenshots, session values or conversation artifacts are uploaded.
+A missing launcher is explicitly BLOCKED, never converted into API-only UI PASS.
+Full Owner/Admin role acceptance and organization/privacy/retention scheduling
+remain separate evidence gates; this source change alone establishes none of them.
+
 Repository implementation; runtime defaults off. On2026-11-05 the Owner selected Production for the schema-only rollout; the seven-table Support schema is installed and verified there. No application deployment or runtime activation is implied.
 
 ## Scope and reuse

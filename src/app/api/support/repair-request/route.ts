@@ -1,3 +1,4 @@
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { syncFacebookMessengerHistory } from "@/app/channels/facebookWebhookActions";
 import { syncInstagramMessengerHistory } from "@/app/channels/instagramWebhookActions";
@@ -33,8 +34,7 @@ export async function POST(request: NextRequest) {
   if (process.env.FANMIND_INAPP_HELP_REPAIR_ENABLED !== "true") {
     return NextResponse.json({ error: "not_available" }, { status: 404, headers });
   }
-  const origin = request.headers.get("origin");
-  if (!origin || origin !== request.nextUrl.origin) {
+  if (!isTrustedFanMindMutationRequest(request)) {
     return NextResponse.json({ error: "invalid_origin" }, { status: 403, headers });
   }
 

@@ -65,6 +65,12 @@ import {evaluateSupportEnvironment,CONFIRMATIONS} from '../../scripts/operations
 import {collectSupportExport} from './supportPrivacy.mjs';
 const sha='a'.repeat(40),ref='vshyhvgcmrlagvfnvomc';
 function env(mode='verify'){const write=!['verify','monitor'].includes(mode);return {GITHUB_REF:'refs/heads/main',GITHUB_SHA:sha,GITHUB_EVENT_NAME:'workflow_dispatch',FANMIND_RUNTIME_ENVIRONMENT:'staging',FANMIND_SUPPORT_REVIEWED_COMMIT:sha,FANMIND_SUPPORT_CONFIRM:CONFIRMATIONS[mode],NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:`https://${ref}.supabase.co`,FANMIND_TARGET_API_ORIGIN:'https://staging.fanmind.ch',FANMIND_PRODUCTION_API_ORIGIN:'https://fanmind.ch',FANMIND_TARGET_SUPABASE_PROJECT_REF:ref,FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz',FANMIND_TARGET_DB_HOST:`db.${ref}.supabase.co`,FANMIND_PRODUCTION_DB_HOST:'db.drqkpdvtbbrrdwmtrodz.supabase.co',PGHOST:`db.${ref}.supabase.co`,PGUSER:'postgres',PGPORT:'5432',PGDATABASE:'postgres',PGSSLMODE:'verify-full',FANMIND_ENABLE_NON_PRODUCTION_WRITES:String(write),FANMIND_NON_PRODUCTION_WRITE_ACK:write?'I_UNDERSTAND_NON_PRODUCTION_ONLY':''};}
+test('customer runtime acceptance cannot target Production, unmarked accounts, overlapping fixtures or an unreviewed ref',async()=>{
+ const {customerAcceptanceBoundary}=await import('../../scripts/operations/support-customer-staging-acceptance.mjs');
+ const valid={...env('apply'),GITHUB_REPOSITORY:'FanMind/FanMind',FANMIND_SUPPORT_CUSTOMER_CONFIRM:'run-staging-support-customer-acceptance',FANMIND_STAGING_E2E_EMAIL:'primary-staging@example.invalid',FANMIND_STAGING_E2E_PASSWORD:'synthetic-only',FANMIND_STAGING_E2E_WORKSPACE_ID:'10000000-0000-4000-8000-000000000001',FANMIND_STAGING_E2E_SECONDARY_EMAIL:'secondary-staging@example.invalid',FANMIND_STAGING_E2E_SECONDARY_PASSWORD:'synthetic-only',FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID:'10000000-0000-4000-8000-000000000002'};
+ assert.equal(customerAcceptanceBoundary(valid,sha).length,2);
+ for(const bad of [{GITHUB_REPOSITORY:'foreign/repo'},{GITHUB_EVENT_NAME:'schedule'},{GITHUB_REF:'refs/heads/feature'},{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{FANMIND_SUPPORT_REVIEWED_COMMIT:'b'.repeat(40)},{FANMIND_STAGING_E2E_EMAIL:'customer@example.invalid'},{FANMIND_STAGING_E2E_PASSWORD:''},{FANMIND_STAGING_E2E_SECONDARY_WORKSPACE_ID:valid.FANMIND_STAGING_E2E_WORKSPACE_ID},{FANMIND_STAGING_E2E_SECONDARY_EMAIL:valid.FANMIND_STAGING_E2E_EMAIL},{PGSSLMODE:'require'}])assert.throws(()=>customerAcceptanceBoundary({...valid,...bad},sha));
+});
 test('support rollout manifest covers entire base plus operations schema',()=>{const m=sourceManifest();assert.equal(m.tables.length,7);assert.equal(m.functions.length,20);assert.equal(m.triggers.length,2);assert.ok(m.sources.every(s=>/^[a-f0-9]{64}$/.test(s.sha256)));assert.ok(catalogueSql().includes('attacl'));});
 test('support protected path rejects Production, redirect, missing consent and wrong checkout',()=>{
  for(const mode of Object.keys(CONFIRMATIONS))assert.equal(evaluateSupportEnvironment(env(mode),mode,sha).ok,true,mode);
@@ -89,7 +95,9 @@ test('privacy mutation uses exact scope, explicit confirmation and a fresh auth-
 test('actual own-data route rejects stale scope/foreign Origin and never substitutes client identities',async()=>{
  const {runInNewContext}=await import('node:vm'),{default:ts}=await import('typescript');
  let identity={actor:'actor-a',workspace:'workspace-a',scope:'scope-a'},allowed=true,erased=0,failed=false;
+ const http=await import('./httpMutationPolicy.mjs');
  const exports={},dependencies={
+  '@/lib/httpMutationPolicy.mjs':http,
   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
   '@/lib/supportContinuityServer':{supportCustomer:async()=>identity,readSupportConversation:async()=>{if(failed)throw new Error('store_failed');return [];}},
   '@/lib/supportCentreServer':{supportCentreEnabled:()=>true,supportCentreDatabase:async(path,args)=>{assert.equal(args.p_actor,'actor-a');assert.equal(args.p_workspace,'workspace-a');if(path.endsWith('privacy_state'))return erased?null:{thread:'10000000-0000-4000-8000-000000000001',sequence:2};erased++;return true;}},
@@ -97,7 +105,7 @@ test('actual own-data route rejects stale scope/foreign Origin and never substit
   '@/lib/supportCentreRequest':{readSupportRequest:async r=>r.json()},'@/lib/supportCentrePolicy':{isSupportUuid:v=>typeof v==='string'&&/^[a-f0-9-]{36}$/.test(v)}
  };
  runInNewContext(ts.transpileModule(readFileSync('src/app/api/support/privacy/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>dependencies[n],Date,Number,Object});
- const request=(query='',body,origin='https://staging.fanmind.ch')=>({nextUrl:new URL(`https://staging.fanmind.ch/api/support/privacy${query}`),headers:new Headers({origin}),json:async()=>body});
+ const request=(query='',body,origin='https://staging.fanmind.ch')=>({url:`https://staging.fanmind.ch/api/support/privacy${query}`,nextUrl:new URL(`https://staging.fanmind.ch/api/support/privacy${query}`),headers:new Headers({origin}),json:async()=>body});
  assert.equal((await exports.GET(request('?scope=foreign'))).status,400);
  const data=await exports.GET(request('?scope=scope-a'));assert.equal(data.status,200);assert.equal(data.body.scope,'scope-a');
  failed=true;assert.equal((await exports.GET(request('?scope=scope-a'))).status,503);failed=false;
