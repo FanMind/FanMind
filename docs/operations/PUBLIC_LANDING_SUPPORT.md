@@ -114,3 +114,5 @@ shared retention policy code, retention runner/schema/reference, workflow, certi
 and dependency locks are byte-identical. The full live schema equality,30hour
 freshness and latest-success checks remain. Drift, absent source history/files or
 an unrelated commit rejects reuse. No second daily success is fabricated.
+The workflow invokes node directly. All package manifest fields except unrelated
+npm scripts must match structurally; the complete dependency lock stays byte-exact.

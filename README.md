@@ -1031,3 +1031,25 @@ Dies aktiviert weder Verkauf noch Steuerregistrierung, Checkout oder Guthaben.
 Steuernummer/UID bleiben ausständig; Konfigurationsbindung und echte Zahlungs-/
 Webhook-Abnahme sind offen. Nachweisgrenzen und Sandbox-Zuordnung:
 `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.
+
+
+## Datenpaket-Lifecycle — technische Fortsetzung 8. November 2026
+
+Die Source-Erweiterung verbindet die vier vorhandenen Sandbox-Preise mit einem
+Owner-autorisierten einmaligen Checkout und einem getrennten Webhook-Handler.
+Session und PaymentIntent erhalten explizite Workspace-/Top-up-Metadaten.
+Completed und async_payment_succeeded verwenden dieselbe PaymentIntent-Grant-ID;
+unbezahlte/fehlgeschlagene Käufe buchen nichts. Die Prüfung verwendet Nettopreis
+plus tatsächlich ausgewiesene Steuer und schreibt nur den Providerwert gut.
+Der zuvor um Faktor 100 falsche Top-up-Wert ist an die vorhandene Ledger-Einheit
+1 EUR = 100.000.000 EUR-Microcents angepasst. Käufe ändern keine Basisabo-,
+Rechnungs- oder Referral-Projektion. Details: `docs/operations/STRIPE_TOPUP_LIFECYCLE.md`.
+
+Dies ist keine abgeschlossene Staging-Zahlungsabnahme: Read-only-Prüfung am
+8. November bestätigt fehlende Grant-/Reversal-RPCs und fehlende Entitlement-
+Projektion. Der bestehende Capacity-Preflight blockiert bei abweichender Basis
+und zwei unbekannten Migrationseinträgen. Alle Capacity-/Verkaufs-/Readiness-
+Schalter bleiben aus, Emergency Freeze bleibt an. Keine Migration, keine
+Produktsteuercode-Entscheidung, keine Steuerregistrierung, kein Live-/Production-
+Zugriff mit Schreibwirkung und kein echter Zahlungs-/Guthabennachweis durch
+synthetische Tests. Steuernummer/UID bleiben offen.

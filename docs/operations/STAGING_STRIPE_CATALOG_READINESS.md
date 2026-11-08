@@ -116,7 +116,7 @@ steuercodes noch eine aktive Registrierung oder tatsächliche Steuerberechnung.
 Die beim Katalogabgleich fehlenden Produktsteuercodes sind vor Checkout gesondert
 zu klären; keine generische Kategorie zur Erzeugung eines Steuerbetrags einsetzen.
 
-Die Quellprüfung zeigt weitere echte Restpunkte: Der aktuelle Top-up-Webhook
+Die Quellprüfung auf dem Stand von PR #1442 zeigte folgende Restpunkte: Der aktuelle Top-up-Webhook
 liest Session-`topup_key=topup_10`, während Preis-Metadaten
 `fanmind_topup_key=fanmind_topup_10` tragen. Der zukünftige serverseitige
 Checkout muss diese Kennungen explizit zuordnen; Stripe vererbt Produkt-/Preis-
@@ -134,3 +134,10 @@ wurde auf korrigierte Owner-Anweisung samt bestehendem Preis und Standardpreis
 wiederhergestellt. Live wurde nur gelesen und blieb unverändert. Tatsächliche
 Checkout-/Webhook-/Guthabenabnahme, Runtime-Konfiguration und die abschließende
 Steuerfreigabe sind weiter offen.
+
+
+Fortsetzung nach #1442: Die technische Sourcekorrektur dieser Checkout-/Grant-
+Lücken ist in `STRIPE_TOPUP_LIFECYCLE.md` beschrieben. Sie ersetzt den damaligen
+Sourcebefund, nicht die noch fehlende echte Zielabnahme. Der unveränderte
+Staging-Capacity-Preflight blockiert die Datenbankinstallation; fehlende
+Produktsteuercodes und Host-Runtime-Bindung bleiben gesonderte Voraussetzungen.

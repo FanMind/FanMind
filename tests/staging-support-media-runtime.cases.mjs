@@ -72,14 +72,17 @@ test('daily retention proof reuse requires an ancestor with unchanged executable
  try{
   git('init','-q');git('config','user.name','Synthetic QA');git('config','user.email','qa@example.test');
   for(const path of RETENTION_PROOF_PATHS)write(['supabase/controlled','src/lib'].includes(path)?path+'/contract.probe':path,'retention-v1');
+  write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{}}));
   git('add','.');git('commit','-qm','approved retention contract');const source=git('rev-parse','HEAD');
-  write('src/components/synthetic-ui.ts','presentation only');git('add','.');git('commit','-qm','unrelated presentation');const current=git('rev-parse','HEAD');
+  write('src/components/synthetic-ui.ts','presentation only');write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{'test:unrelated':'node unrelated-test.mjs'}}));git('add','.');git('commit','-qm','unrelated presentation and npm test script');const current=git('rev-parse','HEAD');
   assert.doesNotThrow(()=>assertRetentionSourceEquivalent(source,current,root));
   assert.throws(()=>assertRetentionSourceEquivalent('not-a-sha',current,root));
   for(const path of ['scripts/operations/support-centre-staging.mjs','supabase/controlled/contract.probe','src/lib/environmentBoundaryPolicy.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','package-lock.json']){
    git('reset','--hard',current);write(path,'changed retention contract');git('add','.');git('commit','-qm','contract drift');
    assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
   }
+  git('reset','--hard',current);write('package.json',JSON.stringify({type:'commonjs',dependencies:{}}));git('add','.');git('commit','-qm','runtime manifest drift');
+  assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
   git('checkout','--orphan','unrelated-history');git('add','.');git('commit','-qm','unrelated source');
   assert.throws(()=>assertRetentionSourceEquivalent(git('rev-parse','HEAD'),current,root),/not_equivalent/);
  }finally{rmSync(root,{recursive:true,force:true});}
