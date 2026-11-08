@@ -3,7 +3,7 @@
 import { FormEvent, use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient, syncSupabaseSessionForServer } from "@/lib/supabase/client";
-import { isPlanId, resolvePlanId, type CommercialOption, type ProductiveCommercialOption } from "@/lib/plans";
+import { isPlanId, resolvePlanId, type CommercialOption } from "@/lib/plans";
 import { buildRegistrationAccountMetadata, buildWebRegistrationRedirect, registrationErrorMessage } from "@/lib/webRegistrationPolicy.mjs";
 import { isPublicDailyRegistrationRequest } from "@/lib/publicDailyPlanPolicy.mjs";
 import type { PlanId } from "@/config/plans";
@@ -15,12 +15,12 @@ import {
   buildRegistrationHref,
   isDailyTestRegistration,
   isProductiveRegistrationEntry,
-  normalizeStarterOfferOption,
 } from "@/lib/registrationEntryPolicy.mjs";
+import { capacityDataPackages, capacityRegistrationPackages, resolveCapacityRegistrationPackage, isCapacityRegistrationPackage, type CapacityRegistrationPackageId } from "@/lib/capacityRegistrationPolicy.mjs";
 import styles from "./register.module.css";
 
 type RegisterPlanId = PlanId;
-type StarterOfferOptionId = "starter_paid_setup" | "starter_no_setup_commitment";
+
 
 type RegisterPageProps = {
   searchParams: Promise<{ lang?: string | string[]; plan?: string | string[]; option?: string | string[]; ref?: string | string[]; referral_code?: string | string[]; test_plan?: string | string[] }> | { lang?: string | string[]; plan?: string | string[]; option?: string | string[]; ref?: string | string[]; referral_code?: string | string[]; test_plan?: string | string[] };
@@ -29,6 +29,7 @@ type RegisterPageProps = {
 };
 
 type PlanSelectionCopy = {
+  packageId?: CapacityRegistrationPackageId;
   label: string;
   badge: string;
   title: string;
@@ -40,13 +41,13 @@ type PlanSelectionCopy = {
 };
 
 function planStatusVariant(planId: RegisterPlanId): FeatureStatusLabelVariant {
-  if (planId === "growth") return "preview";
+  if (isCapacityRegistrationPackage(planId) || planId === "growth") return "preview";
   if (planId === "agency") return "roadmap";
   return "active";
 }
 
-type StarterOptionCopy = {
-  id: StarterOfferOptionId;
+type CapacityOptionCopy = {
+  id: CapacityRegistrationPackageId;
   title: string;
   price: string;
   description: string;
@@ -60,9 +61,9 @@ function firstParamValue(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function planCommercialOption(planId: RegisterPlanId, starterOption: StarterOfferOptionId): CommercialOption | StarterOfferOptionId {
+function planCommercialOption(planId: RegisterPlanId, capacityPackage: CapacityRegistrationPackageId): CommercialOption | CapacityRegistrationPackageId {
   if (planId === "pilot") return "pilot_only";
-  if (planId === "starter") return starterOption;
+  if (planId === "starter") return capacityPackage;
   if (planId === "growth") return "growth_preview";
   return "agency_preview";
 }
@@ -70,21 +71,21 @@ function planCommercialOption(planId: RegisterPlanId, starterOption: StarterOffe
 function LanguageSwitch({
   language,
   planId,
-  starterOption,
+  capacityPackage,
   referralCode,
   testPlan,
 }: {
   language: FanMindLanguage;
   planId: RegisterPlanId;
-  starterOption: StarterOfferOptionId;
+  capacityPackage: CapacityRegistrationPackageId;
   referralCode: string;
   testPlan?: "daily";
 }) {
   return (
     <div className={styles.languageSwitch} aria-label={language === "en" ? "Language selection" : "Sprachauswahl"}>
-      <a className={language === "de" ? styles.languageActive : undefined} href={buildRegistrationHref({ language: "de", planId, starterOption, referralCode, testPlan })} aria-current={language === "de" ? "true" : undefined}>DE</a>
+      <a className={language === "de" ? styles.languageActive : undefined} href={buildRegistrationHref({ language: "de", planId, capacityPackage, referralCode, testPlan })} aria-current={language === "de" ? "true" : undefined}>DE</a>
       <span>|</span>
-      <a className={language === "en" ? styles.languageActive : undefined} href={buildRegistrationHref({ language: "en", planId, starterOption, referralCode, testPlan })} aria-current={language === "en" ? "true" : undefined}>EN</a>
+      <a className={language === "en" ? styles.languageActive : undefined} href={buildRegistrationHref({ language: "en", planId, capacityPackage, referralCode, testPlan })} aria-current={language === "en" ? "true" : undefined}>EN</a>
     </div>
   );
 }
@@ -100,21 +101,11 @@ function showPlanStatusBadge(planId: RegisterPlanId) {
 function getPlanSelectionCopy(
   language: FanMindLanguage,
   enablePublicDailyTestPlan: boolean,
-  starterOption: StarterOfferOptionId,
   referralCode: string,
 ): PlanSelectionCopy[] {
   if (language === "en") {
     return [
-      {
-        label: "1",
-        badge: "Active",
-        title: "Choose Starter",
-        price: "€312/month",
-        description: "Two options for your productive start.",
-        bullets: ["Starter Flex: €990 setup", "Starter 12 months: €0 setup"],
-        href: buildRegistrationHref({ language, planId: "starter", starterOption, referralCode }),
-        cta: "Choose Starter",
-      },
+      ...capacitySelectionCopy(language, referralCode),
       ...(enablePublicDailyTestPlan ? [{
         label: "3",
         badge: "Daily",
@@ -149,16 +140,7 @@ function getPlanSelectionCopy(
   }
 
   return [
-    {
-      label: "1",
-      badge: "Aktiv",
-      title: "Starter wählen",
-      price: "312 €/Monat",
-      description: "Zwei Optionen für deinen Produktivstart.",
-      bullets: ["Starter Flex: 990 € Setup", "Starter 12 Monate: 0 € Setup"],
-      href: buildRegistrationHref({ language, planId: "starter", starterOption, referralCode }),
-      cta: "Starter wählen",
-    },
+    ...capacitySelectionCopy(language, referralCode),
     ...(enablePublicDailyTestPlan ? [{
       label: "3",
       badge: "Tagestarif",
@@ -192,42 +174,22 @@ function getPlanSelectionCopy(
   ];
 }
 
-function getStarterOptionsCopy(language: FanMindLanguage): StarterOptionCopy[] {
-  if (language === "en") {
-    return [
-      {
-        id: "starter_paid_setup",
-        title: "Starter Flex",
-        price: "€990 setup + €312/month",
-        description: "Cancel any time at the end of the paid billing month",
-        bullets: ["€990 one-time setup", "full current month remains payable"],
-      },
-      {
-        id: "starter_no_setup_commitment",
-        title: "Starter 12 months",
-        price: "€0 setup + €312/month",
-        description: "12-month minimum term, then renews monthly",
-        bullets: ["no setup fee", "monthly renewal after month 12"],
-      },
-    ];
-  }
-
-  return [
-    {
-      id: "starter_paid_setup",
-      title: "Starter Flex",
-      price: "990 € Setup + 312 €/Monat",
-      description: "Jederzeit zum Ende des bezahlten Abrechnungsmonats kündbar",
-      bullets: ["990 € einmalige Einrichtung", "laufender Monat wird vollständig bezahlt"],
-    },
-    {
-      id: "starter_no_setup_commitment",
-      title: "Starter 12 Monate",
-      price: "0 € Setup + 312 €/Monat",
-      description: "12 Monate Mindestlaufzeit, danach monatliche Verlängerung",
-      bullets: ["keine Einrichtungsgebühr", "nach 12 Monaten monatlich verlängerbar"],
-    },
-  ];
+function getCapacityOptionsCopy(language: FanMindLanguage): CapacityOptionCopy[] {
+  return capacityRegistrationPackages(language).map((plan) => ({
+    id: plan.id, title: plan.name, price: plan.price,
+    description: plan.setup, bullets: [plan.status,
+      language === "en" ? "Registration starts no subscription" : "Die Registrierung startet kein Abo"],
+  }));
+}
+function capacitySelectionCopy(language: FanMindLanguage, referralCode: string): PlanSelectionCopy[] {
+  return capacityRegistrationPackages(language).map((plan, index) => ({
+    packageId: plan.id, label: String(index + 1),
+    badge: language === "en" ? "Preview" : "Vorschau",
+    title: plan.name, price: plan.price, description: plan.setup,
+    bullets: [plan.status],
+    href: buildRegistrationHref({ language, planId: "starter", capacityPackage: plan.id, referralCode }),
+    cta: language === "en" ? "Choose package" : "Paket vormerken",
+  }));
 }
 
 export default function RegisterClient({ searchParams, enablePublicDailyTestPlan, paidActivationAvailable }: RegisterPageProps) {
@@ -241,9 +203,9 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
     testPlan: firstParamValue(params.test_plan),
   });
   const requestedTestPlan = dailyRequested ? "daily" : firstParamValue(params.test_plan);
-  const requestedStarterOption = normalizeStarterOfferOption(firstParamValue(params.option));
-  const hasInvalidPlan = Boolean(rawPlan && rawPlan !== "daily" && !isPlanId(rawPlan));
-  const resolvedPlanId = dailyRequested ? "pilot" : resolvePlanId(rawPlan, "starter");
+  const requestedCapacityPackage = resolveCapacityRegistrationPackage(rawPlan);
+  const hasInvalidPlan = Boolean(rawPlan && rawPlan !== "daily" && !isCapacityRegistrationPackage(rawPlan) && !isPlanId(rawPlan));
+  const resolvedPlanId = dailyRequested ? "pilot" : isCapacityRegistrationPackage(rawPlan) ? "starter" : resolvePlanId(rawPlan, "starter");
   const isDailyTestPlanSelected = isDailyTestRegistration({
     enabled: enablePublicDailyTestPlan,
     planId: resolvedPlanId,
@@ -262,13 +224,12 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
   const setupHref = language === "en" ? "/workspace/setup?lang=en" : "/workspace/setup";
   const loginHref = `${localizedPath("/login", language)}${language === "en" ? "&" : "?"}returnTo=${encodeURIComponent(setupHref)}`;
   const paymentTermsHref = language === "en" ? "/zahlungsbedingungen?lang=en" : "/zahlungsbedingungen";
-  const starterOptionsCopy = getStarterOptionsCopy(language);
-  const [starterOption, setStarterOption] =
-    useState<StarterOfferOptionId>(requestedStarterOption);
+  const capacityPackagesCopy = getCapacityOptionsCopy(language);
+  const [capacityPackage, setCapacityPackage] =
+    useState<CapacityRegistrationPackageId>(requestedCapacityPackage);
   const planSelectionCopy = getPlanSelectionCopy(
     language,
     enablePublicDailyTestPlan,
-    starterOption,
     referralCodeFromUrl,
   );
   const [success, setSuccess] = useState(false);
@@ -284,13 +245,13 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
     return () => window.clearTimeout(timer);
   }, [pendingEmail, resendReady]);
   const router = useRouter();
-  const commercialOption = isDailyTestPlanSelected ? "internal_daily_test" : planCommercialOption(selectedPlanId, starterOption);
+  const commercialOption = isDailyTestPlanSelected ? "internal_daily_test" : planCommercialOption(selectedPlanId, capacityPackage);
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting || success) return;
     if (!isProductiveRegistration || (selectedPlanId !== "pilot" && selectedPlanId !== "starter")) {
-      setError(language === "en" ? "Please select Starter to create an account." : "Bitte wähle Starter, um ein Konto anzulegen.");
+      setError(language === "en" ? "Please select a monthly package to create an account." : "Bitte wähle ein Monatspaket, um ein Konto anzulegen.");
       return;
     }
     setError(null);
@@ -298,10 +259,10 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
-    const commercialOptionValue = String(formData.get("commercialOption") ?? starterOption);
-    const selectedCommercialOption: ProductiveCommercialOption | StarterOfferOptionId = isDailyTestPlanSelected
+    const commercialOptionValue = String(formData.get("commercialOption") ?? capacityPackage);
+    const selectedCommercialOption = isDailyTestPlanSelected
       ? "internal_daily_test"
-      : normalizeStarterOfferOption(commercialOptionValue);
+      : resolveCapacityRegistrationPackage(commercialOptionValue);
     try {
       const supabase = createSupabaseBrowserClient();
       const { data, error: authError } = await supabase.auth.signUp({
@@ -363,7 +324,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
             <LanguageSwitch
               language={language}
               planId={selectedPlanId}
-              starterOption={starterOption}
+              capacityPackage={capacityPackage}
               referralCode={referralCodeFromUrl}
               testPlan={isDailyTestPlanSelected ? "daily" : undefined}
             />
@@ -382,19 +343,19 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
 
             {hasInvalidPlan && (
               <p className={styles.warning} role="status">
-                {language === "en" ? `Unknown package “${rawPlan}”. Starter is shown instead.` : `Unbekanntes Paket „${rawPlan}“. Starter wird stattdessen angezeigt.`}
+                {language === "en" ? `Unknown package “${rawPlan}”. The current monthly packages are shown instead.` : `Unbekanntes Paket „${rawPlan}“. Die aktuellen Monatspakete werden stattdessen angezeigt.`}
               </p>
             )}
             {isRetiredPilotRequested && (
               <p className={styles.warning} role="status">
-                {language === "en" ? "The former paid pilot offer is closed. Starter is shown instead." : "Das frühere entgeltliche Pilotangebot ist geschlossen. Stattdessen wird Starter angezeigt."}
+                {language === "en" ? "The former paid pilot offer is closed. The current monthly packages are shown instead." : "Das frühere entgeltliche Pilotangebot ist geschlossen. Stattdessen werden die aktuellen Monatspakete angezeigt."}
               </p>
             )}
 
             <div className={styles.planSelection}>
               {planSelectionCopy.map((plan) => {
                 const planId = plan.href.match(/plan=([^&]+)/)?.[1] as RegisterPlanId;
-                const isSelected = isDailyTestPlanSelected ? plan.href.includes("plan=daily") : planId === selectedPlanId;
+                const isSelected = isDailyTestPlanSelected ? plan.href.includes("plan=daily") : plan.packageId ? selectedPlanId === "starter" && plan.packageId === capacityPackage : planId === selectedPlanId;
                 return (
                   <a
                     key={plan.title}
@@ -429,7 +390,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 <h1>{language === "en" ? "Create your FanMind account" : "Erstelle dein FanMind-Konto"}</h1>
                 <p>{language === "en" ? "Create your account for free and confirm your email address. You choose and activate your paid package separately after signing in." : "Lege dein Konto kostenlos an und bestätige deine E-Mail-Adresse. Dein kostenpflichtiges Paket bestätigst und aktivierst du anschließend separat."}</p>
               </div>
-              {!paidActivationAvailable && <p className={styles.notice}>
+              {(!isDailyTestPlanSelected || !paidActivationAvailable) && <p className={styles.notice}>
                 {language === "en" ? "Account registration is available. Paid package activation is still being prepared; your account does not start a subscription." : "Du kannst dich bereits registrieren. Die Aktivierung kostenpflichtiger Pakete wird noch vorbereitet; dein Konto startet kein Abo."}
               </p>}
               {isDailyTestPlanSelected && <p className={styles.notice}>
@@ -439,23 +400,23 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
 
               {selectedPlanId === "starter" && (
                 <fieldset className={styles.commercialOptions}>
-                  <legend>{language === "en" ? "Starter options" : "Starter-Optionen"}</legend>
-                  {starterOptionsCopy.map((option) => (
-                    <label key={option.id} className={`${styles.optionCard} ${option.id === starterOption ? styles.optionCardSelected : ""}`}>
+                  <legend>{language === "en" ? "Monthly packages" : "Monatspakete"}</legend>
+                  {capacityPackagesCopy.map((option) => (
+                    <label key={option.id} className={`${styles.optionCard} ${option.id === capacityPackage ? styles.optionCardSelected : ""}`}>
                       <input
                         type="radio"
                         name="commercialOption"
                         value={option.id}
-                        checked={starterOption === option.id}
-                        onChange={() => setStarterOption(option.id)}
+                        checked={capacityPackage === option.id}
+                        onChange={() => setCapacityPackage(option.id)}
                       />
-                      <span className={styles.optionMarker} aria-hidden="true">{option.id === "starter_paid_setup" ? "A" : "B"}</span>
+                      <span className={styles.optionMarker} aria-hidden="true">{option.id === "capacity_99" ? "99" : option.id === "capacity_199" ? "199" : "312"}</span>
                       <span>
                         <span className={styles.optionTitleRow}>
                           <strong>{option.title}</strong>
                         </span>
                         <b>{option.price}</b>
-                        {option.id === starterOption ? <em className={styles.selectedOptionLabel}>{language === "en" ? "Selected" : "Ausgewählt"}</em> : null}
+                        {option.id === capacityPackage ? <em className={styles.selectedOptionLabel}>{language === "en" ? "Selected" : "Ausgewählt"}</em> : null}
                         <small>{option.description}</small>
                         <ul>
                           {option.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
@@ -465,6 +426,9 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                   ))}
                 </fieldset>
               )}
+
+              <p className={styles.notice}>{language === "en" ? "Net prices; applicable tax is shown before payment. Monthly AI capacity is included; no fixed message quota is promised." : "Nettopreise; anwendbare Steuern werden vor der Zahlung ausgewiesen. Monatliche KI-Kapazität ist enthalten; es wird keine feste Nachrichtenanzahl zugesagt."}</p>
+              <details className={styles.notice}><summary>{language === "en" ? "One-time data packages" : "Einmalige Datenpakete"}</summary><ul>{capacityDataPackages(language).map(plan => <li key={plan.id}>{plan.name}: {plan.price} · {language === "en" ? "one-time, no subscription" : "einmalig, kein Abo"}</li>)}</ul><p>{language === "en" ? "Separate purchase in preparation." : "Gesonderter Kauf in Vorbereitung."}</p></details>
 
               {selectedPlanId !== "starter" ? <input type="hidden" name="commercialOption" value={commercialOption} /> : null}
 
@@ -600,7 +564,7 @@ export default function RegisterClient({ searchParams, enablePublicDailyTestPlan
                 <span>{language === "en" ? "Growth and Agency remain Coming Soon / roadmap previews and are not productively activated here." : "Growth und Agency bleiben Coming Soon / Roadmap-Vorschau und werden hier nicht produktiv freigeschaltet."}</span>
               </div>
               <div className={styles.previewActions}>
-                <a className={styles.primaryLink} href={buildRegistrationHref({ language, planId: "starter", starterOption, referralCode: referralCodeFromUrl })}>{language === "en" ? "Start with Starter" : "Mit Starter starten"}</a>
+                <a className={styles.primaryLink} href={buildRegistrationHref({ language, planId: "starter", capacityPackage, referralCode: referralCodeFromUrl })}>{language === "en" ? "Choose monthly package" : "Monatspaket wählen"}</a>
                 <a className={styles.secondaryLink} href="mailto:fanmind@fanmind.ch?subject=FanMind%20Demo%20anfragen">{language === "en" ? "Request demo" : "Zugang anfragen"}</a>
               </div>
               {error && <p className={styles.error} role="alert">{error}</p>}

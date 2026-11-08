@@ -1,3 +1,4 @@
+import { CapacityPackageSelection } from "@/components/CapacityPackageSelection";
 import { BillingCheckoutButton } from "@/components/BillingCheckoutButton";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { AI_TIER_IDS, formatAiTierPrice, getAiTierConfig } from "@/config/aiTiers.mjs";
@@ -477,7 +478,7 @@ export function PackageSettingsSection({
   cancelError?: string | null;
   cancelSaved?: string | null;
 }) {
-  const packageCards = getPackageCards(workspace);
+  const packageCards = getPackageCards(workspace).filter(card => card.badge === "Aktuell");
   const cancellation = resolveSubscriptionCancellation(workspace);
   const hasCancellation = Boolean(workspace.subscription_cancel_requested_at);
 
@@ -518,6 +519,8 @@ export function PackageSettingsSection({
         )}
       </div>
 
+      <CapacityPackageSelection />
+      <p>Dein bestehender Vertrag und seine Kündigungsbedingungen bleiben erhalten. Ein Upgrade oder Downgrade wird durch die Auswahl nicht ausgelöst.</p>
       <div className={profileStyles.packageCardGrid}>
         {packageCards.map((card) => {
           const isCurrent = card.badge === "Aktuell";
@@ -601,8 +604,7 @@ export function PackageSettingsSection({
         <div>
           <p className={profileStyles.invoiceLabel}>Zusatzpakete / Add-ons</p>
           <p className={profileStyles.invoiceValue}>
-            KI Standard ist im Basispaket enthalten. KI Plus und KI Ultra sind
-            separat berechnete Erweiterungen und bleiben bis zur Preis-,
+            Die folgenden Legacy-Erweiterungen gehören ausschließlich zum bisherigen Vertragsmodell. KI Plus und KI Ultra bleiben bis zur Preis-,
             Kontingent- und Billing-Freigabe als Coming Soon markiert.
           </p>
         </div>

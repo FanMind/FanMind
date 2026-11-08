@@ -17,8 +17,8 @@ test("signup account metadata cannot grant a paid plan, billing state or terms a
   const metadata = buildRegistrationAccountMetadata({ name: " Person ", organization: "x".repeat(300), planId: "agency", commercialOption: "attacker", language: "en", referralCode: "REF-TEST", plan_id: "agency", payment_terms_accepted: true, payment_terms_version: "2026-06-v1", billing_status: "active", billing_provider: "stripe" });
   assert.equal(metadata.full_name, "Person");
   assert.equal(metadata.organization.length, 160);
-  assert.equal(metadata.registration_plan_preference, "starter");
-  assert.equal(metadata.registration_option_preference, "starter_paid_setup");
+  assert.equal(metadata.registration_plan_preference, "capacity_99");
+  assert.equal(metadata.registration_option_preference, "capacity_v2");
   assert.equal(metadata.referral_code, "REF-TEST");
   for (const key of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) assert.equal(Object.hasOwn(metadata, key), false);
 });

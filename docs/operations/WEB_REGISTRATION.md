@@ -1,10 +1,24 @@
+<!-- Capacity-v2 registration update: 2026-11-08 -->
+Neue öffentliche Registrierung: FanMind 99 / 199 / 312 zu 99 / 199 / 312 EUR
+monatlich, jeweils 0 EUR Einrichtung (netto). Zentrale Preisquelle:
+`src/config/aiCapacityPackages.mjs`; Datenpakete übernehmen die vier Einmalpreise
+aus `stripeAiTopupPolicy.mjs`. Auswahl und Auth-Metadaten sind ausschließlich
+Präferenzen. Kein Workspace, Zahlungsmandat oder Abo durch Registrierung.
+Legacy-Neuaufnahme im öffentlichen Provisionierungsweg ist geschlossen;
+Bestandsverträge, individuelle Freigaben und bestehende Checkouts bleiben erhalten.
+Capacity-v2-Aktivierung/Checkout/Upgrade und Datenpaketverkauf bleiben gesperrt,
+bis Entitlement-, Tax-, Vertrags- und Lifecycle-Abnahme abgeschlossen sind.
+Historische Starter-/Plus-/Ultra-Angaben weiter unten betreffen ausschließlich
+Bestandsverträge und historische Implementierungsnachweise, keine Neugeschäfte.
+Nachweise und offene Abnahme: `docs/operations/CAPACITY_REGISTRATION_20261108.md`.
+
 # Web registration and activation
 
 Task FM-REG-002 / FM-CR-026, 10 September 2026.
 
 ## Implemented account flow
 
-1. `/register` offers a free login account in DE/EN. Existing Starter prices and option links remain visible. Paid activation readiness is stated before submission. FM-DEC-019 permits the manually enabled internal Daily beta choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
+1. `/register` offers a free login account in DE/EN. The three Capacity-v2 monthly package preferences replace Starter new-business links. Historical Starter contracts remain unchanged. Paid activation readiness is stated before submission. FM-DEC-019 permits the manually enabled internal Daily beta choice at `/register?plan=daily` (EUR 0 setup + EUR 1/day); legacy `plan=pilot&test_plan=daily` URLs remain compatible. The retired paid Pilot and Growth/Agency activation remain unavailable.
 2. Signup submits only bounded personal profile data and non-authoritative package/referral preferences. No `plan_id`, `commercial_option`, billing state, payment-terms version or acceptance timestamp is written. It creates no Workspace and invokes no Stripe operation.
 3. The custom Supabase Auth client supplies an explicit same-environment `emailRedirectTo`. Success explains email confirmation, existing-account login and recovery without claiming that an obfuscated existing-account response represents a new account. Resend uses the existing provider signup-resend endpoint with a 60-second UI cooldown; provider rate limits remain authoritative.
 4. `/register/confirm` requires one bounded `type=signup` implicit session, accepts and discards Supabase's optional single empty `sb` marker, rejects errors/mixed/query/duplicate credentials, scrubs callback material before async work and checks the confirmed email through authenticated Supabase `/user`. After verification it automatically synchronizes the existing server session and continues to localized `/workspace/setup`. A failed session handoff retains the verified identity and offers an explicit retry or login; it does not automatically resend. Invalid, expired or used links offer a direct confirmation resend form, login and password recovery.

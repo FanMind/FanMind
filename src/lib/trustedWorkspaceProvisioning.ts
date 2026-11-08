@@ -15,21 +15,7 @@ export function parseTrustedProvisioningSelection(input: {
   planId?: unknown;
   commercialOption?: unknown;
 }): TrustedProvisioningSelection | null {
-  if (
-    input.planId === "starter" &&
-    input.commercialOption === "starter_paid_setup"
-  ) {
-    return { planId: "starter", commercialOption: "starter_paid_setup" };
-  }
-  if (
-    input.planId === "starter" &&
-    input.commercialOption === "starter_no_setup_commitment"
-  ) {
-    return {
-      planId: "starter",
-      commercialOption: "starter_no_setup_commitment",
-    };
-  }
+  // Legacy Starter terms remain for existing contracts, never new admission.
   if (
     input.planId === "pilot" &&
     input.commercialOption === "internal_daily_test"

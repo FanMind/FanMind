@@ -1,3 +1,4 @@
+import { CapacityPackageSelection } from "@/components/CapacityPackageSelection";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getBillingContinuationHref } from "@/lib/preActivation";
@@ -141,65 +142,22 @@ export default async function WorkspaceSetupPage({
         <div>
           <p className={styles.eyebrow}>FanMind Setup</p>
           <h1>
-            {activationEnabled
-              ? locale === "en"
-                ? "Confirm your package option"
-                : "Bestätige deine Paketoption"
-              : locale === "en"
-                ? "Your account is ready"
-                : "Dein Konto ist bereit"}
+            {locale === "en" ? "Your account is ready" : "Dein Konto ist bereit"}
           </h1>
           <p>
-            {activationEnabled
-              ? locale === "en"
-                ? "Choose your package and confirm the current payment terms. Payment starts only when you continue to checkout."
-                : "Wähle dein Paket und bestätige die aktuellen Zahlungsbedingungen. Die Zahlung startest du erst anschließend im Checkout."
-              : locale === "en"
+            {locale === "en"
                 ? "Your registration is complete. Paid package activation is still being prepared. Your account remains available, and you can return here after signing in. No subscription has started."
                 : "Deine Registrierung ist abgeschlossen. Die Aktivierung kostenpflichtiger Pakete wird noch vorbereitet. Dein Konto bleibt erhalten; du kannst nach der Anmeldung hier fortfahren. Es wurde kein Abo gestartet."}
           </p>
         </div>
 
-        {activationEnabled ? (
-          <div className={styles.emptyState}>
-            <form action={provisionWorkspace}>
-              <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
-              <input type="hidden" name="planId" value="starter" />
-              <input type="hidden" name="commercialOption" value="starter_paid_setup" />
-              <label>
-                <input type="checkbox" name="paymentTermsAccepted" required />
-                {" "}
-                {locale === "en" ? "I accept the current payment terms." : "Ich akzeptiere die aktuellen Zahlungsbedingungen."}
-              </label>
-              <p><Link href={paymentTermsHref}>{locale === "en" ? "Open payment terms" : "Zahlungsbedingungen öffnen"}</Link></p>
-              <button className={styles.primaryButton} type="submit">
-                {locale === "en" ? "Starter Flex · €990 setup + €312/month" : "Starter Flex · 990 € Setup + 312 €/Monat"}
-              </button>
-            </form>
-
-            <form action={provisionWorkspace}>
-              <input type="hidden" name="paymentTermsVersion" value={CURRENT_PAYMENT_TERMS_VERSION} />
-              <input type="hidden" name="planId" value="starter" />
-              <input type="hidden" name="commercialOption" value="starter_no_setup_commitment" />
-              <label>
-                <input type="checkbox" name="paymentTermsAccepted" required />
-                {" "}
-                {locale === "en" ? "I accept the current payment terms." : "Ich akzeptiere die aktuellen Zahlungsbedingungen."}
-              </label>
-              <p><Link href={paymentTermsHref}>{locale === "en" ? "Open payment terms" : "Zahlungsbedingungen öffnen"}</Link></p>
-              <button className={styles.primaryButton} type="submit">
-                {locale === "en" ? "Starter 12 months · €0 setup + €312/month" : "Starter 12 Monate · 0 € Setup + 312 €/Monat"}
-              </button>
-            </form>
-          </div>
-        ) : (
-          <div className={styles.emptyState}>
-            <p>{locale === "en" ? "The free demo remains available." : "Die kostenlose Demo bleibt verfügbar."}</p>
-            <Link className={styles.primaryButton} href={locale === "en" ? "/login?demo=1&lang=en" : "/login?demo=1"}>
-              {locale === "en" ? "Start free demo" : "Kostenlose Demo starten"}
-            </Link>
-          </div>
-        )}
+        <div className={styles.emptyState} aria-label={locale === "en" ? "Monthly packages" : "Monatspakete"}>
+          <CapacityPackageSelection language={locale} preference={data.user.user_metadata?.registration_plan_preference} />
+          <p>{locale === "en" ? "Your account is free. No paid package is activated here and no subscription has started." : "Dein Konto ist kostenlos. Hier wird kein kostenpflichtiges Paket aktiviert und es wurde kein Abo gestartet."}</p>
+          {!activationEnabled && <Link className={styles.primaryButton} href={locale === "en" ? "/login?demo=1&lang=en" : "/login?demo=1"}>
+            {locale === "en" ? "Start free demo" : "Kostenlose Demo starten"}
+          </Link>}
+        </div>
 
         {dailyBetaEnabled ? <div className={styles.emptyState}>
           <form action={provisionWorkspace}>
