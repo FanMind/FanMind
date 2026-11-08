@@ -10,7 +10,7 @@ import { startWorkspaceTopup } from "@/lib/stripeAiTopup";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 
 const reply = (code: string, status: number) => NextResponse.json({ code,
-  error: "Der Datenpaketkauf ist derzeit nicht verfügbar. Es wurde kein Guthaben gebucht." },
+  error: "Der Datenpaketkauf ist derzeit nicht verfügbar. Bitte erneut versuchen oder FanMind kontaktieren." },
 { status, headers: { "Cache-Control": "no-store" } });
 
 export async function POST(request: NextRequest) {

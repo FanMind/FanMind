@@ -90,3 +90,22 @@ test("actual webhook verifies signature first and isolates topup fulfillment fro
   const retry=await route.POST(request(signature));assert.equal(retry.status,503);assert.equal(projections,0);
   assert.equal(retry.headers.get("cache-control"),"no-store");
 });
+
+test("actual service preserves the write freeze even while the base event ledger captures events",async()=>{
+  const f=topupFixture();let frozen=true;
+  const service=loadRoute("src/lib/stripeAiTopup.ts",{
+    "server-only":{},
+    "@/lib/stripeClient":{getStripeClient:()=>f.deps.stripe},
+    "@/lib/stripeBilling":{findWorkspaceIdByStripeReferences:f.deps.findWorkspace},
+    "@/lib/aiCapacityAdmin":{},"@/lib/aiCapacityPolicy.mjs":{},
+    "@/lib/aiCapacityLedger":{grantAiCapacityCredit:f.deps.grant,reversePurchasedAiCapacity:f.deps.reverse},
+    "@/lib/stripeAiTopupLifecycle.mjs":{handleStripeTopupEvent:(event,deps)=>handleStripeTopupEvent(event,deps,f.env)},
+    "@/lib/supabase/config":{},
+    "@/lib/stripeBillingWriteFreeze.mjs":{isStripeBillingWriteFrozen:()=>frozen},
+  },f.env);
+  await assert.rejects(service.processStripeTopupEvent(f.event),/stripe_topup_frozen/u);
+  assert.equal(f.calls.grants.length,0);
+  frozen=false;
+  assert.equal(await service.processStripeTopupEvent(f.event),true);
+  assert.equal(f.calls.grants.length,1);
+});

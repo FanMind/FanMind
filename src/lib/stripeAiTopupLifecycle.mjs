@@ -91,6 +91,7 @@ export async function handleStripeTopupEvent(event, deps, env = process.env) {
     const intentId = reference(object.payment_intent);
     if (!id(intentId, "pi_")) return false;
     intent = await deps.stripe.paymentIntents.retrieve(intentId);
+    if (intent.id !== intentId) fail();
     if (!marked(intent)) return false;
   } else if (!marked(object)) return false;
   if (!stripeTopupSandboxReady(env) || event.livemode !== false) fail();
