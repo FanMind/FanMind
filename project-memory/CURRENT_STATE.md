@@ -773,3 +773,14 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - Focused policy tests cover permitted-offer guidance, fatigue suppression and aftercare suppression. Repository policy/tests only; no database, provider or Production mutation.
 
 - Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+
+## Stripe verified-state reconciliation — 2026-11-08 / PR1452
+- Documentation only, continuing the existing Stripe/Capacity work; no new queue or runtime implementation. Corrected obsolete missing-tax-number/UID and invoice-default statements after #1448.
+- Live readback confirms company Brigitte, individual still Bernd, tax/VAT fields present, default invoice UID set and charges/payouts enabled. Existing contacts/admin access retained; no new identity or registration mutation.
+- Existing Staging read-only preflight still BLOCK: missing lifecycle/projection, empty monetary tables, policy revision2, 15/30/50 budgets, all flags off/freeze on. Historical stored SQL compared: activation source identical; foundation differs only in budget defaults/initial seed. Supabase default-ACL differences remain. No marker deletion, schema repair or apply.
+- 54 existing legal/evidence/catalog/topup tests PASS, no skips. Exact-current-head CI remains required. These are synthetic/source checks, not hosted Checkout/subscription/invoice acceptance.
+- Prepared but did not send the precise Stripe support request for correcting the verified individual identity in the existing account. Tax scheme/actual registration and SaaS classification still require genuine confirmation; administrative roles alone create no representation authority.
+- Independent Staging version baf0be3 at21:16:23UTC; Production a798d793 unchanged at21:16:29UTC. No deploy, real payment, real subscription change, new account/database or Support implementation change in this follow-up.
+
+- Owner clarification during PR1452: actual technical/organizational/content leadership is Bernd's. Do not infer economic ownership/control solely from trade/tax documents or a mandatory representative replacement. Existing legal/company fields retained pending accurate Stripe KYC/authority review; support draft amended, not sent; private background stays outside Git. No account or legal-page mutation.
