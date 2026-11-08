@@ -467,3 +467,12 @@ For substantive R2+ work:
 - run the God Mode preflight/release-decision/adversarial tests before merge when the gate applies.
 
 `RELEASE_DECISION` is limited to `ALLOW`, `BLOCK`, `OWNER_REQUIRED`. A passing God Mode CI gate does not authorize Staging/Production mutation. Owner/environment-protected actions remain distinct even when technical evidence is otherwise clean.
+
+## Stripe sandbox full-catalog preparation — 2026-11-08
+
+The read-only catalog workflow defaults to `capacity_v2_full` (eight configured
+prices including four one-time topups and retained internal Daily). Preserve
+`capacity_v2` and `legacy_v1` regression choices. Catalog PASS is not a global
+inventory check, tax approval, runtime binding, Checkout or webhook acceptance.
+Owner tax number/UID are pending; never fabricate them or set registration
+confirmation from catalog success. See `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.

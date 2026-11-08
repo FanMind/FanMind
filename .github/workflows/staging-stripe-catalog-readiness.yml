@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       catalog_contract:
-        description: 'Catalog only: Capacity-v2 new prices or legacy contract regression'
+        description: 'Catalog only: eight current sandbox prices, three base prices or legacy regression'
         required: true
         type: choice
-        default: capacity_v2
+        default: capacity_v2_full
         options:
+          - capacity_v2_full
           - capacity_v2
           - legacy_v1
       reviewed_commit:
@@ -52,6 +53,10 @@ jobs:
       STRIPE_PRICE_CAPACITY_99: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_99 }}
       STRIPE_PRICE_CAPACITY_199: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_199 }}
       STRIPE_PRICE_CAPACITY_312: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_CAPACITY_312 }}
+      STRIPE_PRICE_TOPUP_10: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_TOPUP_10 }}
+      STRIPE_PRICE_TOPUP_25: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_TOPUP_25 }}
+      STRIPE_PRICE_TOPUP_50: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_TOPUP_50 }}
+      STRIPE_PRICE_TOPUP_100: ${{ vars.FANMIND_STAGING_STRIPE_PRICE_TOPUP_100 }}
 
     steps:
       - name: Checkout reviewed main commit

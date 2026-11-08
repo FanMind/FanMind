@@ -7,9 +7,9 @@ import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
 import { supportAnswer } from "@/lib/supportKnowledge";
 const headers={"Cache-Control":"no-store"};
 const fail=(status:number)=>NextResponse.json({error:"support_unavailable"},{status,headers});
-export async function GET(request?:NextRequest){
+export async function GET(request:NextRequest){
  if(!supportCentreEnabled())return fail(404);
- try{const identity=await supportCustomer();if(!identity)return fail(401);const before=request?.nextUrl.searchParams.get("before");if(before&&!isSupportUuid(before))return fail(400);return NextResponse.json({scope:identity.scope,turns:await readSupportConversation(identity,before??undefined)},{headers});}catch{return fail(503);}
+ try{const identity=await supportCustomer();if(!identity)return fail(401);const before=request.nextUrl.searchParams.get("before");if(before&&!isSupportUuid(before))return fail(400);return NextResponse.json({scope:identity.scope,turns:await readSupportConversation(identity,before??undefined)},{headers});}catch{return fail(503);}
 }
 export async function POST(request:NextRequest){
  if(!supportCentreEnabled())return fail(404);
