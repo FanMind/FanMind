@@ -2,6 +2,7 @@
 
 Status: SOURCE_PREPARED / runtime acceptance OPEN. No deployment or payment activation.
 Baseline: main `4e6d422d0f556d193f7dde082d2942e3b982867d` (includes #1442).
+Integrated subsequent main `d51bc747bfea55c4882b051b24868696ea6da030` (#1443) without conflicts.
 Existing uncommitted public-pricing work was inspected and selectively reused;
 unrelated Admin/SQL/provider changes were not copied.
 
@@ -76,7 +77,9 @@ not used to fabricate a sandbox context or modify any account/subscription.
   archive; no browser PASS or screenshot is claimed. PR CI must execute it.
 - An initial broad Operations run had one stale old-price assertion (updated)
   plus three `checkout_dirty` failures from tests requiring a committed clean tree.
-  Final clean-tree run is authoritative and reported separately in the PR.
+  Final clean-tree run: 2194 PASS, 0 FAIL, 9 environment-specific skips.
+  An initial CI status-generation failure was fixed by regenerating the existing
+  PROJECT_STATUS.md; no status guard was weakened.
 
 ## Open runtime acceptance / release order
 

@@ -6,6 +6,7 @@ export function PublicSupportAssistant({language}:{language:"de"|"en"}){
  const en=language==="en", [open,setOpen]=useState(false),[large,setLarge]=useState(false),[text,setText]=useState(""),[consent,setConsent]=useState(false),[turns,setTurns]=useState<Turn[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState("");
  const input=useRef<HTMLTextAreaElement>(null),launcher=useRef<HTMLButtonElement>(null),log=useRef<HTMLDivElement>(null),request=useRef<AbortController|null>(null),generation=useRef(0);
  function close(){setOpen(false);launcher.current?.focus();}
+ function withdraw(){generation.current++;request.current?.abort();setBusy(false);setConsent(false);setTurns([]);setError("");input.current?.focus();}
  function clear(){generation.current++;request.current?.abort();setBusy(false);setTurns([]);setText("");setError("");setConsent(false);}
  useEffect(()=>{if(!open)return;input.current?.focus();const escape=(e:KeyboardEvent)=>{if(e.key==="Escape"){setOpen(false);launcher.current?.focus();}};document.addEventListener("keydown",escape);return()=>document.removeEventListener("keydown",escape);},[open]);
  useEffect(()=>{if(log.current)log.current.scrollTop=log.current.scrollHeight;},[turns,busy,open]);
@@ -34,10 +35,10 @@ export function PublicSupportAssistant({language}:{language:"de"|"en"}){
    </div>
    <form className={styles.composer} onSubmit={e=>{e.preventDefault();void send();}}>
     <p className={styles.notice}>{en?"No login needed. This chat stays in this window. Please don’t enter passwords or customer data.":"Ohne Anmeldung. Dieser Chat bleibt in diesem Fenster. Bitte keine Passwörter oder Kundendaten eingeben."}</p>
-    <label className={styles.consent}><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{en?"I agree to my question and recent chat being processed by OpenAI to answer it.":"Ich stimme zu, dass meine Frage und der jüngste Verlauf zur Beantwortung durch OpenAI verarbeitet werden."} <a href="/datenschutz" target="_blank" rel="noreferrer">{en?"Privacy":"Datenschutz"}</a></span></label>
+    {!consent&&<label className={styles.consent}><input type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/><span>{en?"I agree to my question and recent chat being processed by OpenAI to answer it.":"Ich stimme zu, dass meine Frage und der jüngste Verlauf zur Beantwortung durch OpenAI verarbeitet werden."} <a href="/datenschutz" target="_blank" rel="noreferrer">{en?"Privacy":"Datenschutz"}</a></span></label>}
     {error&&<p className={styles.error} role="alert">{error}</p>}
     <div className={styles.inputRow}><textarea ref={input} value={text} maxLength={1000} disabled={busy} aria-label={en?"Your question":"Deine Frage"} placeholder={en?"Ask your question …":"Stelle deine Frage …"} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send();}}}/><button className={styles.send} disabled={!consent||!text.trim()||busy} aria-label={en?"Send question":"Frage senden"} type="submit">➤</button></div>
-    <div className={styles.footer}><span>{en?"AI can make mistakes.":"KI kann Fehler machen."}</span><button type="button" onClick={clear}>{en?"New conversation":"Neues Gespräch"}</button></div>
+    <div className={styles.footer}><span>{en?"AI can make mistakes.":"KI kann Fehler machen."}</span>{consent&&<button type="button" onClick={withdraw}>{en?"Withdraw consent":"Einwilligung widerrufen"}</button>}<button type="button" onClick={clear}>{en?"New conversation":"Neues Gespräch"}</button></div>
    </form>
   </section>}
   <button ref={launcher} type="button" className={styles.launcher} aria-expanded={open} aria-controls="fanmind-public-support" onClick={()=>setOpen(v=>!v)}>{open?(en?"Close chat":"Chat schließen"):(en?"Help & Support":"Hilfe & Support")}</button>

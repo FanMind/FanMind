@@ -17,20 +17,22 @@ const ANALYSIS='FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED';
 const SHA=/^[a-f0-9]{40}$/u;
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u;
 const fail=code=>{throw new Error(code);};
+const supportOnly=action=>['verify-support','activate-support','deactivate-support'].includes(action);
+const enabledAction=action=>['activate','activate-support'].includes(action);
 
 export function assertStagingRuntimeTarget(env,action){
- if(!['activate','deactivate'].includes(action)||env.GITHUB_REPOSITORY!=='FanMind/FanMind'||env.GITHUB_REF!=='refs/heads/main'||env.GITHUB_EVENT_NAME!=='workflow_dispatch')fail('execution_boundary');
+ if(!['activate','deactivate','verify-support','activate-support','deactivate-support'].includes(action)||env.GITHUB_REPOSITORY!=='FanMind/FanMind'||env.GITHUB_REF!=='refs/heads/main'||env.GITHUB_EVENT_NAME!=='workflow_dispatch')fail('execution_boundary');
  if(!SHA.test(env.GITHUB_SHA??'')||env.REVIEWED_COMMIT!==env.GITHUB_SHA||env.CONFIRMATION!==`staging-support-media-${action}`)fail('source_binding');
  if(env.FANMIND_RUNTIME_ENVIRONMENT!=='staging'||env.NEXT_PUBLIC_APP_URL!==ORIGIN||env.NEXT_PUBLIC_SUPABASE_URL!==`https://${STAGING_PROJECT}.supabase.co`||env.FANMIND_TARGET_SUPABASE_PROJECT_REF!==STAGING_PROJECT||env.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF!==PRODUCTION_PROJECT)fail('target_binding');
  if(env[ANALYSIS]!==undefined&&env[ANALYSIS]!=='false')fail('analysis_must_remain_disabled');
  for(const key of ['FANMIND_OPERATIONS_EMAIL_ENABLED','FANMIND_SERVER_ERROR_EMAIL_ENABLED','FANMIND_ENABLE_TELEGRAM_SEND'])if(env[key]!=='false')fail('external_delivery_not_disabled');
  if(!UUID.test(env.SUPPORT_OWNER_UUID??'')||!/^\d{1,20}$/u.test(env.GITHUB_RUN_ID??''))fail('owner_or_run_binding');
- if(action==='activate'&&(env.SUPPORT_SCHEMA_VERIFIED!=='true'||env.SUPPORT_RETENTION_VERIFIED!=='true'))fail('schema_verification_required');
+ if(enabledAction(action)&&(env.SUPPORT_SCHEMA_VERIFIED!=='true'||env.SUPPORT_RETENTION_VERIFIED!=='true'))fail('schema_verification_required');
 }
 
-export function renderStagingRuntimeFlags(original,overrides,enabled){
+export function renderStagingRuntimeFlags(original,overrides,enabled,onlySupport=false){
  let text=original;
- for(const key of [...FLAGS,ANALYSIS]){
+ for(const key of onlySupport?['FANMIND_SUPPORT_CENTRE_ENABLED']:[...FLAGS,ANALYSIS]){
   const pattern=new RegExp(`^[ \\t]*(?:export[ \\t]+)?${key}[ \\t]*=.*$`,'gm');
   const rows=[...text.matchAll(pattern)];
   if(rows.length>1||rows.some(r=>!/=\s*(?:true|false)\s*$/u.test(r[0])))fail('ambiguous_flag');
@@ -98,13 +100,26 @@ export async function runStagingRuntime(action,env=process.env){
  const headers=buildSupabaseApiKeyHeaders(env.SUPABASE_SERVICE_ROLE_KEY);
  if(!headers.apikey)fail('staging_service_key_missing');
  const api=`https://${STAGING_PROJECT}.supabase.co/rest/v1/`;
- if(action==='activate'){
+ if(enabledAction(action)){
   const owners=await json(api+'support_centre_owners?select=user_id&limit=2',headers);
   if(!Array.isArray(owners)||owners.length!==1||owners[0].user_id!==env.SUPPORT_OWNER_UUID)fail('existing_owner_binding_missing');
  }
+ if(action==='verify-support'){
+  const flags=processFlags();
+  const owners=await json(api+'support_centre_owners?select=user_id&limit=2',headers);
+  const ownerBound=Array.isArray(owners)&&owners.length===1&&owners[0].user_id===env.SUPPORT_OWNER_UUID;
+  const workspaces=ownerBound?await json(api+`workspaces?select=id&owner_user_id=eq.${encodeURIComponent(owners[0].user_id)}&limit=2`,headers):[];
+  console.log(`STAGING_SUPPORT_ENABLED=${flags.FANMIND_SUPPORT_CENTRE_ENABLED==='true'}`);
+  console.log(`STAGING_SUPPORT_OWNER_BOUND=${ownerBound}`);
+  console.log(`STAGING_SUPPORT_WORKSPACE_UNIQUE=${Array.isArray(workspaces)&&workspaces.length===1}`);
+  console.log(`STAGING_SUPPORT_OPENAI_CONFIGURED=${Boolean(env.OPENAI_API_KEY?.trim())}`);
+  console.log(`STAGING_SUPPORT_RATE_LIMIT_CONFIGURED=${(env.FANMIND_SHARED_RATE_LIMIT_SECRET?.trim().length??0)>=32}`);
+  console.log(`STAGING_SUPPORT_SOURCE=${env.GITHUB_SHA}`);
+  return;
+ }
  const before=privateFile(ENV_FILE),overrides=OVERRIDES.map((p,i)=>privateFile(p,{secret:i===0}));
  const verifyOverrides=()=>{if(OVERRIDES.some((p,i)=>privateFile(p,{secret:i===0})!==overrides[i]))fail('override_configuration_changed');};
- const after=renderStagingRuntimeFlags(before,overrides,action==='activate');
+ const after=renderStagingRuntimeFlags(before,overrides,enabledAction(action),supportOnly(action));
  const current=processFlags();
  if(current[ANALYSIS]!==undefined&&current[ANALYSIS]!=='false')fail('running_analysis_not_disabled');
  const prior=Object.fromEntries([...FLAGS,ANALYSIS].map(key=>[key,current[key]==='true']));
@@ -119,13 +134,15 @@ export async function runStagingRuntime(action,env=process.env){
   const fd=openSync(receiptPath,constants.O_WRONLY|constants.O_APPEND|constants.O_NOFOLLOW);
   try{const stat=fstatSync(fd);if(!stat.isFile()||stat.nlink!==1||stat.ino!==receiptStat.ino||stat.dev!==receiptStat.dev||stat.uid!==process.getuid()||(stat.mode&0o777)!==0o600)fail('receipt_changed');writeFileSync(fd,JSON.stringify({...receipt,phase})+'\n');fsyncSync(fd);}finally{closeSync(fd);}
  };
- try{await changeStagingRuntime({before,after,restoreOnFailure:action!=='deactivate',read:()=>privateFile(ENV_FILE),write:text=>{verifyOverrides();if(privateFile(ENV_FILE)!==(text===after?before:after))fail('configuration_changed');replace(text);},restart:()=>{
+ try{await changeStagingRuntime({before,after,restoreOnFailure:!['deactivate','deactivate-support'].includes(action),read:()=>privateFile(ENV_FILE),write:text=>{verifyOverrides();if(privateFile(ENV_FILE)!==(text===after?before:after))fail('configuration_changed');replace(text);},restart:()=>{
   execute('/usr/bin/sudo',['-n','/usr/bin/systemctl','restart','fanmind-staging.service']);
   execute('/usr/bin/systemctl',['is-active','--quiet','fanmind-staging.service']);
  },verify:async()=>{
   verifyOverrides();
   const flags=processFlags();
-  if(FLAGS.some(key=>flags[key]!==String(action==='activate'))||flags[ANALYSIS]!=='false')fail('effective_flags_mismatch');
+  if(supportOnly(action)){
+   if(flags.FANMIND_SUPPORT_CENTRE_ENABLED!==String(enabledAction(action))||['FANMIND_CHAT_ADMIN_MEDIA_ENABLED',ANALYSIS].some(key=>(flags[key]??'false')!==(current[key]??'false')))fail('effective_flags_mismatch');
+  }else if(FLAGS.some(key=>flags[key]!==String(enabledAction(action)))||flags[ANALYSIS]!=='false')fail('effective_flags_mismatch');
   await verifyRelease(env);
  },verifyRollback:async()=>{
   verifyOverrides();

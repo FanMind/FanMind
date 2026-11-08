@@ -21,7 +21,7 @@ async function usageWorkspace(){
 }
 export async function POST(request:NextRequest){
  if(!isTrustedFanMindMutationRequest(request))return failure(403);
- if(process.env.FANMIND_SUPPORT_CENTRE_ENABLED!=="true")return failure(503);
+ if(process.env.FANMIND_SUPPORT_CENTRE_ENABLED!=="true"){console.warn("PUBLIC_SUPPORT_FAILURE=support_disabled");return failure(503);}
  if(request.headers.get("content-type")?.split(";")[0].trim().toLowerCase()!=="application/json")return failure(400);
  const body=await readBoundedJsonRequest(request,32768);if(!body.ok)return failure(body.reason==="payload_too_large"?413:400);
  let input;try{input=parsePublicSupportRequest(body.value);}catch{return failure(400);}
