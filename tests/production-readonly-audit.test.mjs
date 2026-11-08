@@ -543,7 +543,9 @@ test("runner layout detects alias replacement during a protected artifact read",
     const count = read(fd, ...args);
     if (fd === watched && !changed) {
       changed = true;
-      fs.unlinkSync(link);
+      // Keep the original inode allocated: unlink/recreate can reuse both inode
+      // and coarse filesystem timestamps, so it need not create a new snapshot.
+      fs.renameSync(link, `${link}.replaced`);
       fs.symlinkSync(join(root, "bin.2.337.0"), link);
     }
     return count;
