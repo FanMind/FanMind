@@ -1,3 +1,4 @@
+import { capacityRegistrationPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import Link from "next/link";
 import { requirePlatformAdmin } from "@/lib/admin";
 import { adminCrmAccessLabel, isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
@@ -160,12 +161,13 @@ function matrixChipClass(label: string) {
 }
 
 function PackagesContent() {
-  const activePackages = packagePlanIds.filter((planId) => planId === "starter").length;
+  const activePackages = 0;
   const hiddenFeatures = packagePlanIds.reduce((count, planId) => count + Object.values(PLANS[planId].featureConfig).filter((feature) => feature.status === "hidden" || feature.visibility === "hidden").length, 0);
   const comingSoonFeatures = packagePlanIds.reduce((count, planId) => count + Object.values(PLANS[planId].featureConfig).filter((feature) => feature.status === "coming_soon" || feature.status === "preview").length, 0);
   const packageCards = [
+    ...capacityRegistrationPackages().map(plan => ({ id: plan.id, icon: "F", title: plan.name, price: plan.price, meta: [plan.setup, plan.status], status: "In Vorbereitung", tone: styles.packageStarter })),
     { id: "pilot" as PlanId, icon: "D", title: "Interne Demo / Legacy", price: "Nicht öffentlich buchbar", meta: ["kostenloser Demo-/Legacy-Zugang", "keine normale Kundenbuchung"], status: "Intern", tone: styles.packagePilot },
-    { id: "starter" as PlanId, icon: "S", title: "Starter", price: "312 €/Monat", meta: ["Starter Flex: 990 € Setup + 312 €/Monat", "Starter 12 Monate: 0 € Setup + 312 €/Monat"], status: "Aktiv", tone: styles.packageStarter },
+    { id: "starter" as PlanId, icon: "S", title: "Starter (Bestandsvertrag)", price: "312 €/Monat", meta: ["Starter Flex: 990 € Setup + 312 €/Monat", "Starter 12 Monate: 0 € Setup + 312 €/Monat"], status: "Legacy", tone: styles.packageStarter },
     { id: "growth" as PlanId, icon: "G", title: "Growth", price: "Coming Soon", meta: ["Vorschau / Roadmap", "noch nicht produktiv buchbar"], status: "Coming Soon", tone: styles.packageGrowth },
     { id: "agency" as PlanId, icon: "A", title: "Agency", price: "Coming Soon", meta: ["Roadmap / Agenturen", "noch nicht produktiv buchbar"], status: "Coming Soon", tone: styles.packageAgency },
   ];
@@ -174,7 +176,7 @@ function PackagesContent() {
 
   return <>
     <section className={styles.crmKpiGrid} aria-label="Paket- und Feature-Kennzahlen">
-      <StatCard icon="◆" label="Aktive Pakete" value={activePackages} hint="Starter öffentlich verfügbar" trend="Aus Plan-Konfiguration" tone={styles.toneGreen} />
+      <StatCard icon="◆" label="Aktive Pakete" value={activePackages} hint="Neue Pakete: Aktivierung in Vorbereitung" trend="Aus Plan-Konfiguration" tone={styles.toneGreen} />
       <StatCard icon="◌" label="Versteckte Features" value={hiddenFeatures} hint="Hidden Status/Sichtbarkeit" trend="Keine UI-Secrets" tone={styles.toneRed} />
       <StatCard icon="↗" label="Coming Soon Features" value={comingSoonFeatures} hint="Preview oder Coming Soon" trend="Roadmap ehrlich markiert" tone={styles.toneAmber} />
       <StatCard icon="⇄" label="Upgrade-Regeln" value="4" hint="Nur Status-Übersicht" trend="Keine Engine geändert" tone={styles.toneCyan} />
@@ -182,13 +184,13 @@ function PackagesContent() {
     </section>
     <section className={styles.packageLayout}>
       <div className={styles.packageMain}>
-        <article className={styles.card}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Pakete</span><h2>Paketübersicht</h2></div><span className={styles.badge}>4 Pakete</span></div><div className={styles.packageGrid}>{packageCards.map((item) => <div className={`${styles.packageCard} ${item.tone}`} key={item.id}><div className={styles.packageTopline}><span className={styles.packageIcon}>{item.icon}</span><span className={item.status === "Aktiv" ? styles.badgeOk : styles.badgeWarn}>{item.status}</span></div><h3>{item.title}</h3><strong>{item.price}</strong><ul>{item.meta.map((line) => <li key={line}>{line}</li>)}</ul></div>)}</div></article>
+        <article className={styles.card}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Pakete</span><h2>Paketübersicht</h2></div><span className={styles.badge}>{packageCards.length} Einträge</span></div><div className={styles.packageGrid}>{packageCards.map((item) => <div className={`${styles.packageCard} ${item.tone}`} key={item.id}><div className={styles.packageTopline}><span className={styles.packageIcon}>{item.icon}</span><span className={item.status === "Aktiv" ? styles.badgeOk : styles.badgeWarn}>{item.status}</span></div><h3>{item.title}</h3><strong>{item.price}</strong><ul>{item.meta.map((line) => <li key={line}>{line}</li>)}</ul></div>)}</div></article>
         <article className={styles.card}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Freigaben</span><h2>Feature-Matrix</h2></div><span className={styles.badge}>Admin-Übersicht</span></div><div className={styles.featureMatrix}><div className={styles.featureMatrixHead}><span>Feature</span>{packagePlanIds.map((planId) => <span key={planId}>{PLANS[planId].name}</span>)}</div>{matrixFeatures.map((feature, index) => <div className={styles.featureMatrixRow} key={`${feature.key}-${index}`}><strong>{feature.label}</strong>{packagePlanIds.map((planId) => { const label = packageStatusLabel(PLANS[planId].featureConfig[feature.key].status, planId, feature.key); return <span className={matrixChipClass(label)} key={planId}>{label}</span>; })}</div>)}</div><div className={styles.legendRow}><span className={styles.matrixActive}>Aktiv</span><span className={styles.matrixLimited}>Limitiert</span><span className={styles.matrixSoon}>Coming Soon</span><span className={styles.matrixHidden}>Hidden</span><span className={styles.matrixRoadmap}>Roadmap Only</span></div></article>
       </div>
       <aside className={styles.packageAside}>
         <article className={styles.card}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Sichtbarkeit</span><h2>Sichtbarkeits-Regeln</h2><p className={styles.cardSubtitle}>Steuere, wo Features und Pakete sichtbar sind.</p></div></div><div className={styles.ruleList}>{visibilityRules.map(([label, status]) => <div className={styles.ruleItem} key={label}><span>{label}</span><strong>{status}</strong></div>)}</div><p className={styles.muted}>Anzeige der aktuellen Sichtbarkeit; keine neue Regel-Engine.</p></article>
         <article className={styles.card}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Upgrades</span><h2>Upgrade-Regeln</h2><p className={styles.cardSubtitle}>Definiere, wie und wann Upgrades möglich sind.</p></div></div><div className={styles.ruleList}>{upgradeRules.map(([label, status]) => <div className={styles.ruleItem} key={label}><span>{label}</span><strong>{status}</strong></div>)}</div><button className={styles.buttonSecondary} disabled>Regeln verwalten · in Vorbereitung</button></article>
-        <article className={`${styles.card} ${styles.noticeCard}`}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Hinweis</span><h2>Hinweis</h2></div></div><p>Änderungen an Paketen und Features gelten für neue Kunden sofort. Für bestehende Kunden gelten Bestandsschutz-Regeln, sofern vertraglich vereinbart.</p><p>Produktive Freigaben erfolgen erst nach Zahlungs- und Admin-Prüfung.</p></article>
+        <article className={`${styles.card} ${styles.noticeCard}`}><div className={styles.cardHeader}><div><span className={styles.eyebrow}>Hinweis</span><h2>Hinweis</h2></div></div><p>Neue Pakete und Features benötigen vor kostenpflichtiger Aktivierung eine gesonderte Abnahme. Für bestehende Kunden gelten Bestandsschutz-Regeln, sofern vertraglich vereinbart.</p><p>Produktive Freigaben erfolgen erst nach Zahlungs- und Admin-Prüfung.</p></article>
       </aside>
     </section>
   </>;

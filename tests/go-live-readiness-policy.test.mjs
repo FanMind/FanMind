@@ -75,10 +75,10 @@ test("go-live and deploy smoke gates share live truth and blocking-only health p
   assert.match(healthPolicy, /email_config/u);
 
   for (const required of [
-    "Starter Flex",
-    "990 € Setup + 312 €/Monat",
-    "Starter 12 Monate",
-    "0 € Setup + 312 €/Monat",
+    "99 €/Monat",
+    "199 €/Monat",
+    "312 €/Monat",
+    "0 € Einrichtung",
     "Kontaktwissen",
   ]) {
     assert.match(truthPolicy, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));

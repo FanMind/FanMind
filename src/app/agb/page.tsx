@@ -1,3 +1,4 @@
+import { capacityRegistrationPackages, capacityDataPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -221,7 +222,8 @@ const sections: TermsSection[] = [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Öffentlich stehen Starter Flex und Starter 12 Monate zur Auswahl. Eine Kontoerstellung startet noch kein Abo. Bedingungen bestehender oder ausdrücklich intern zugelassener Daily-Verträge bleiben davon unberührt.</p>
+        <p>{capacityRegistrationPackages().map(plan => `${plan.name}: ${plan.price}, ${plan.setup}`).join("; ")}. Nettopreise. Registrierung kostenlos; Paket- und Vertragsbestätigung erfolgen gesondert vor kostenpflichtiger Aktivierung. Laufzeit und Kündigungsbedingungen werden nicht aus dem monatlichen Preis abgeleitet.</p><p>{capacityDataPackages().map(plan => `${plan.name}: ${plan.price} einmalig`).join("; ")}. Keine monatlichen Abonnements; Verkauf in Vorbereitung. Bestehende Vertrags- und Zahlungszustimmungen werden nicht umgeschrieben.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für neue Registrierungen werden die FanMind-Monatspakete vorgemerkt; die kostenpflichtige Aktivierung wird vorbereitet. Die nachfolgenden Starter-Konditionen gelten ausschließlich für Bestandsverträge oder ausdrücklich individuell vereinbarte Sonderbedingungen. Eine Kontoerstellung startet noch kein Abo. Bedingungen bestehender oder ausdrücklich intern zugelassener Daily-Verträge bleiben davon unberührt.</p>
       </>
     ),
   },

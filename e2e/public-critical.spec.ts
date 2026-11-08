@@ -562,7 +562,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
       }
       await fulfillCorsJson(route, 200, { id: "synthetic-signup-user", email: "signup@example.com" });
     });
-    await page.goto("/register?option=starter_no_setup_commitment&ref=REF-SYNTHETIC");
+    await page.goto("/register?plan=capacity_199&ref=REF-SYNTHETIC");
     await page.locator('input[name="name"]').fill("Synthetic Signup");
     await page.locator('input[name="email"]').fill("signup@example.com");
     await page.locator('input[name="password"]').fill("Synthetic-Password-2026!");
@@ -573,7 +573,8 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     expect(signupRedirect).toBe(`${E2E_BASE_URL}/register/confirm`);
     expect(signupBody).not.toBeNull();
     const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
-    expect(metadata.registration_option_preference).toBe("starter_no_setup_commitment");
+    expect(metadata.registration_option_preference).toBe("capacity_v2");
+    expect(metadata.registration_plan_preference).toBe("capacity_199");
     expect(metadata.referral_code).toBe("REF-SYNTHETIC");
     for (const field of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) expect(metadata).not.toHaveProperty(field);
     let resendRequests = 0;

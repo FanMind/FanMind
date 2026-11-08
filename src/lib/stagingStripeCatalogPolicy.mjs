@@ -1,3 +1,4 @@
+import { AI_CAPACITY_PUBLIC_PACKAGES } from "../config/aiCapacityPackages.mjs";
 import { STRIPE_AI_TOPUP_OPTIONS } from "./stripeAiTopupPolicy.mjs";
 import { isStripeTestSecretKey } from "./stripeKeyPolicy.mjs";
 
@@ -45,10 +46,10 @@ export const STAGING_STRIPE_PRICE_CONTRACTS = Object.freeze([
 const PRICE_ID_PATTERN = /^price_[A-Za-z0-9_]+$/u;
 // Separate catalog contracts: an equal amount never migrates a legacy subscription.
 export const STAGING_CAPACITY_PRICE_CONTRACTS = Object.freeze(
-  [99, 199, 312].map((amount) => Object.freeze({
-    slot: `capacity_${amount}`,
-    environmentName: `STRIPE_PRICE_CAPACITY_${amount}`,
-    unitAmount: amount * 100,
+  Object.values(AI_CAPACITY_PUBLIC_PACKAGES).map(({ id, monthlyPriceCents }) => Object.freeze({
+    slot: id,
+    environmentName: `STRIPE_PRICE_${id.toUpperCase()}`,
+    unitAmount: monthlyPriceCents,
     type: "recurring",
     interval: "month",
     taxBehavior: "exclusive",

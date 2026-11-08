@@ -1,3 +1,17 @@
+<!-- Capacity-v2 registration update: 2026-11-08 -->
+Neue öffentliche Registrierung: FanMind 99 / 199 / 312 zu 99 / 199 / 312 EUR
+monatlich, jeweils 0 EUR Einrichtung (netto). Zentrale Preisquelle:
+`src/config/aiCapacityPackages.mjs`; Datenpakete übernehmen die vier Einmalpreise
+aus `stripeAiTopupPolicy.mjs`. Auswahl und Auth-Metadaten sind ausschließlich
+Präferenzen. Kein Workspace, Zahlungsmandat oder Abo durch Registrierung.
+Legacy-Neuaufnahme im öffentlichen Provisionierungsweg ist geschlossen;
+Bestandsverträge, individuelle Freigaben und bestehende Checkouts bleiben erhalten.
+Capacity-v2-Aktivierung/Checkout/Upgrade und Datenpaketverkauf bleiben gesperrt,
+bis Entitlement-, Tax-, Vertrags- und Lifecycle-Abnahme abgeschlossen sind.
+Historische Starter-/Plus-/Ultra-Angaben weiter unten betreffen ausschließlich
+Bestandsverträge und historische Implementierungsnachweise, keine Neugeschäfte.
+Nachweise und offene Abnahme: `docs/operations/CAPACITY_REGISTRATION_20261108.md`.
+
 # FanMind Source of Truth
 
 ChatAdmin aktuelles Fanwissen (18.10.2026, vorbereitete Source-Erweiterung): Ein

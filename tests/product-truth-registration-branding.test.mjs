@@ -34,23 +34,23 @@ async function walkFiles(root) {
   return nested.flat();
 }
 
-test("Starter landing entries use valid plan IDs and preserve option, language and referral", () => {
+test("Capacity registration entries preserve package, language and referral", () => {
   assert.equal(
     buildRegistrationHref({
       language: "de",
       planId: "starter",
-      starterOption: "starter_paid_setup",
+      capacityPackage: "capacity_99",
     }),
-    "/register?plan=starter&option=starter_paid_setup",
+    "/register?plan=capacity_99",
   );
   assert.equal(
     buildRegistrationHref({
       language: "en",
       planId: "starter",
-      starterOption: "starter_no_setup_commitment",
+      capacityPackage: "capacity_199",
       referralCode: "FM-ABC123",
     }),
-    "/register?plan=starter&option=starter_no_setup_commitment&lang=en&ref=FM-ABC123",
+    "/register?plan=capacity_199&lang=en&ref=FM-ABC123",
   );
   assert.equal(normalizeStarterOfferOption("starter_no_setup_commitment"), "starter_no_setup_commitment");
   assert.equal(normalizeStarterOfferOption("starter-12"), "starter_paid_setup");
@@ -86,8 +86,8 @@ test("active product surfaces no longer route to retired Pilot registration", as
     source("src/app/admin/billing/page.tsx"),
   ]);
 
-  assert.match(landing, /plan=starter&option=starter_paid_setup/u);
-  assert.match(landing, /plan=starter&option=starter_no_setup_commitment/u);
+  assert.match(landing, /capacityLandingPlans\(language\)/u);
+  assert.doesNotMatch(landing, /plan=starter&option=/u);
   assert.doesNotMatch(landing, /plan=starter-(?:flex|12)/u);
   assert.match(register, /isRetiredPilotRequested \? "starter" : resolvedPlanId/u);
   assert.match(register, /selectedCommercialOption[^=]*= isDailyTestPlanSelected/u);
@@ -265,3 +265,28 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.match(conversationsSchema, /RLS- und Spaltenrechte[\s\S]*Staging/u);
 });
 
+// Exercise the public projection and signup boundary for every accepted package.
+test("Capacity selections retain exact amounts without granting payment authority", async () => {
+  const { capacityRegistrationPackages, capacityDataPackages } = await import("../src/lib/capacityRegistrationPolicy.mjs");
+  const { buildRegistrationAccountMetadata } = await import("../src/lib/webRegistrationPolicy.mjs");
+  const { STAGING_CAPACITY_PRICE_CONTRACTS, STAGING_TOPUP_PRICE_CONTRACTS } = await import("../src/lib/stagingStripeCatalogPolicy.mjs");
+  const { AI_CAPACITY_PACKAGES } = await import("../src/lib/aiCapacityPolicy.mjs");
+  for (const [index, amount] of [99, 199, 312].entries()) {
+    const id = `capacity_${amount}`;
+    const plan = capacityRegistrationPackages()[index];
+    assert.equal(plan.id, id);
+    assert.equal(plan.price, `${amount} €/Monat`);
+    assert.equal(AI_CAPACITY_PACKAGES[id].monthlyPriceCents, amount * 100);
+    const catalog = STAGING_CAPACITY_PRICE_CONTRACTS[index];
+    assert.equal(catalog.slot, id);
+    assert.equal(catalog.unitAmount, amount * 100);
+    assert.equal(catalog.environmentName, `STRIPE_PRICE_CAPACITY_${amount}`);
+    const metadata = buildRegistrationAccountMetadata({ commercialOption: id, planId: id });
+    assert.equal(metadata.registration_plan_preference, id);
+    assert.equal(metadata.registration_option_preference, "capacity_v2");
+    for (const field of ["plan_id", "commercial_option", "billing_status", "payment_terms_accepted", "payment_terms_version"]) assert.equal(Object.hasOwn(metadata, field), false);
+  }
+  assert.deepEqual(STAGING_TOPUP_PRICE_CONTRACTS.map(p => p.unitAmount), [1499, 3749, 7499, 14900]);
+  assert.ok(STAGING_TOPUP_PRICE_CONTRACTS.every(p => p.type === "one_time" && p.interval === null));
+  assert.ok(capacityDataPackages().every(p => p.type === "one_time"));
+});

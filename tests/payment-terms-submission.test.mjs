@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
+import * as capacityPolicy from "../src/lib/capacityRegistrationPolicy.mjs";
 import * as termsPolicy from "../src/lib/paymentTermsActivationPolicy.mjs";
 import * as mutationPolicy from "../src/lib/httpMutationPolicy.mjs";
 import * as dailyReadinessPolicy from "../src/lib/internalDailyTestReadinessPolicy.mjs";
@@ -10,8 +11,6 @@ import * as dailyReadinessPolicy from "../src/lib/internalDailyTestReadinessPoli
 const revision = termsPolicy.CURRENT_PAYMENT_TERMS_VERSION;
 const accepted = { paymentTermsAccepted: true, paymentTermsVersion: revision };
 const selections = [
-  { planId: "starter", commercialOption: "starter_paid_setup" },
-  { planId: "starter", commercialOption: "starter_no_setup_commitment" },
   { planId: "pilot", commercialOption: "internal_daily_test" },
 ];
 
@@ -83,6 +82,8 @@ function harness({
     constructor(location) { super(location); this.location = location; }
   }
   const dependencies = {
+    "@/lib/capacityRegistrationPolicy.mjs": capacityPolicy,
+    "@/components/CapacityPackageSelection": { CapacityPackageSelection: "capacity-selection" },
     "server-only": {},
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "next/navigation": { redirect(location) { throw new Redirect(location); } },
@@ -228,16 +229,36 @@ test("authentication, request origin and activation guards remain effective", as
   for (const h of [disabled, anonymous, foreign]) assert.equal(h.calls.length, 0);
 });
 
-test("all three rendered package forms carry the displayed revision", async () => {
+test("only the separate Daily form carries a consent revision; Capacity remains non-binding", async () => {
   const h = harness();
   const tree = await h.page.default({ searchParams: Promise.resolve({}) });
   const forms = [];
   walk(tree, (node) => { if (node.type === "form" && node.props.action === h.page.provisionWorkspace) forms.push(node); });
-  assert.equal(forms.length, 3);
+  assert.equal(forms.length, 1);
   for (const renderedForm of forms) {
     const fields = {};
     walk(renderedForm, (node) => { if (node.type === "input") fields[node.props.name] = node.props.value; });
     assert.equal(fields.paymentTermsVersion, revision);
+  }
+});
+
+test("new registrations cannot provision legacy Starter or Capacity through either entry point", async () => {
+  for (const selection of [
+    { planId: "starter", commercialOption: "starter_paid_setup" },
+    { planId: "starter", commercialOption: "starter_no_setup_commitment" },
+    ...["capacity_99", "capacity_199", "capacity_312"].map((id) => ({ planId: id, commercialOption: id })),
+  ]) {
+    const h = harness();
+    assert.equal(h.trusted.parseTrustedProvisioningSelection(selection), null);
+    const response = await h.route.POST(request({ ...selection, ...accepted }));
+    assert.equal(response.status, 400);
+    await assert.rejects(h.page.provisionWorkspace(form(selection)),
+      (error) => error.location === "/workspace/setup?error=payment_terms_required");
+    assert.equal(h.calls.length, 0);
+    const tree = await h.page.default({ searchParams: Promise.resolve({}) });
+    const text = textContent(tree);
+    assert.equal(nodesMatching(tree, node => node.type === "capacity-selection").length, 1);
+    assert.doesNotMatch(text, /990|Starter Flex|Starter 12/u);
   }
 });
 
@@ -264,7 +285,7 @@ test("Daily stays visible in DE and EN while each existing activation prerequisi
   }
 });
 
-test("admin-off hides Daily and its saved preference without changing Starter setup", async () => {
+test("admin-off hides Daily and preserves the unactivated Capacity packages", async () => {
   for (const locale of ["de", "en"]) {
     const h = harness({
       locale,
@@ -273,7 +294,7 @@ test("admin-off hides Daily and its saved preference without changing Starter se
     });
     const tree = await h.page.default({ searchParams: Promise.resolve({}) });
     const forms = nodesMatching(tree, (node) => node.type === "form" && node.props.action === h.page.provisionWorkspace);
-    assert.equal(forms.length, 2);
+    assert.equal(forms.length, 0);
     assert.equal(textContent(tree).includes("Daily"), false);
     assert.equal(textContent(tree).includes("vorgemerkte Auswahl"), false);
     assert.equal(textContent(tree).includes("saved selection"), false);
@@ -281,11 +302,11 @@ test("admin-off hides Daily and its saved preference without changing Starter se
   }
 });
 
-test("ready Daily preserves explicit current consent and both Starter choices without starting an action", async () => {
+test("ready Daily preserves explicit current consent without activating Capacity or legacy Starter", async () => {
   for (const locale of ["de", "en"]) {
     const h = harness({ locale });
     const { forms, daily, consent, button } = await renderedSetup(h);
-    assert.equal(forms.length, 3);
+    assert.equal(forms.length, 1);
     assert.equal(consent.props.disabled, false);
     assert.equal(button.props.disabled, false);
     assert.equal(button.props["aria-describedby"], undefined);
