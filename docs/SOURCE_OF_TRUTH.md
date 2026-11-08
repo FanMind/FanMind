@@ -1641,7 +1641,8 @@ Sandbox-Preise: 99/199/312 EUR monatlich, die vier einmaligen Datenpakete
 und den weiterhin beibehaltenen internen 1-EUR/Tag-Test. Preis-/Produkt-
 Metadaten und Providerwerte der Datenpakete werden read-only validiert.
 Dies aktiviert weder Verkauf noch Steuerregistrierung, Checkout oder Guthaben.
-Steuernummer/UID bleiben ausständig; Konfigurationsbindung und echte Zahlungs-/
+Steuernummer ist geliefert und in Stripe gespeichert; UID amtlich abgeglichen.
+Steuerregistrierung, Konfigurationsbindung und echte Zahlungs-/
 Webhook-Abnahme sind offen. Nachweisgrenzen und Sandbox-Zuordnung:
 `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.
 
@@ -1665,7 +1666,8 @@ und zwei unbekannten Migrationseinträgen. Alle Capacity-/Verkaufs-/Readiness-
 Schalter bleiben aus, Emergency Freeze bleibt an. Keine Migration, keine
 Produktsteuercode-Entscheidung, keine Steuerregistrierung, kein Live-/Production-
 Zugriff mit Schreibwirkung und kein echter Zahlungs-/Guthabennachweis durch
-synthetische Tests. Steuernummer/UID bleiben offen.
+synthetische Tests. Steuerliche Freigabe/Registrierung bleiben offen; Steuernummer
+ist gespeichert und UID amtlich abgeglichen.
 
 
 UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreiberin Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet. Das vorbereitete Impressum enthält die UID; Steuernummer und GISA bleiben getrennt. Die Bestätigung aktiviert weder Billing noch Stripe Tax, ersetzt keine Rechts-/Steuerfreigabe und ist kein Production-Deploy. Nachweise: `operations/STRIPE_COMPANY_REVIEW_20261108.md`.

@@ -109,7 +109,9 @@ gebunden sind. Der Workflow liest sie; er schreibt keine Konfiguration.
 
 ### Offene, getrennte technische und steuerliche Abnahme
 
-Steuernummer und UID sind laut Owner noch ausständig. Keine Nummer erfinden,
+Steuernummer ist inzwischen geliefert und in Stripe gespeichert; die UID wurde
+am 08.11.2026 über EU-VIES der Betreiberin zugeordnet. Das belegt keine
+Steuerregistrierung oder steuerliche Freigabe. Keine Nummer erfinden,
 keine Registrierung bestätigen und `FANMIND_STRIPE_TAX_REGISTRATION_CONFIRMED`
 nicht deshalb auf `true` setzen. Ein Katalog-PASS bestätigt weder Produkt-
 steuercodes noch eine aktive Registrierung oder tatsächliche Steuerberechnung.
