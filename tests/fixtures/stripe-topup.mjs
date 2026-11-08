@@ -13,7 +13,7 @@ export function topupFixture(key = "topup_10", tax = 300) {
     metadata: { ...contract.priceMetadata }, product: { object: "product", id: "prod_Synthetic", active: true,
       livemode: false, tax_code: "txcd_Synthetic", metadata: { ...contract.productMetadata } } };
   const session = { id: "cs_test_Synthetic", livemode: false, mode: "payment", subscription: null, status: "complete", payment_status: "paid",
-    currency: "eur", amount_subtotal: contract.unitAmount, amount_total: contract.unitAmount + tax,
+    currency: "eur", automatic_tax: { enabled: true, status: "complete" }, amount_subtotal: contract.unitAmount, amount_total: contract.unitAmount + tax,
     total_details: { amount_tax: tax, amount_discount: 0, amount_shipping: 0 },
     metadata: { ...metadata }, customer: "cus_Synthetic", payment_intent: "pi_Synthetic", client_reference_id: workspaceId };
   const intent = { id: "pi_Synthetic", livemode: false, currency: "eur", amount: session.amount_total,

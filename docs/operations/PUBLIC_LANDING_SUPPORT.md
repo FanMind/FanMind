@@ -94,3 +94,14 @@ already processed provider request. No consent is stored across reloads.
 The composer is bounded and scrollable on short screens; the footer wraps.
 Actual host-control, deployed release and two real Staging replies remain separate
 acceptance evidence; source tests alone do not establish a live repair.
+
+Host readback on d51bc747 confirmed Support=false, Owner/workspace/key/limiter
+configuration present. Activation run42497173076 passed the full preflight but
+reported rollback_failed within0.44seconds. Independent readback42497360607
+confirmed Support=false and the same live release after the failed attempt.
+The Type=simple service controller checked HTTPS immediately after restart,
+before application readiness; it now waits at most45seconds plus a bounded5second
+probe for reachability, including rollback. A wrong release fails immediately;
+configuration/flag/source checks are unchanged. Fixed failure-stage codes contain
+no stderr, credentials, prompt or user identifiers. Existing restart authority is
+checked read-only before any configuration write; no sudo grant is installed.

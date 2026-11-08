@@ -73,6 +73,8 @@ test("mismatched amounts, currency, quantities, price, metadata, workspace, mode
     f => f.session.total_details.amount_shipping = 1, f => f.session.mode = "subscription",
     f => f.session.subscription = "sub_Synthetic", f => f.session.livemode = true,
     f => f.event.livemode = true, f => f.session.payment_status = "no_payment_required",
+    f => f.session.automatic_tax.enabled = false, f => f.session.automatic_tax.status = "failed",
+    f => f.session.automatic_tax = null,
     f => f.lines.has_more = true, f => f.lines.data.push(f.lines.data[0]),
     f => f.lines.data[0].quantity = 2, f => f.price.id = "price_Wrong",
     f => f.price.metadata.fanmind_provider_value_eur = "100", f => f.price.product.tax_code = null,

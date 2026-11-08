@@ -121,7 +121,8 @@ export async function handleStripeTopupEvent(event, deps, env = process.env) {
   const workspaceId = await boundWorkspace(reference(session.customer), session.metadata, deps);
   // Completed may precede bank settlement; neither failure nor unpaid grants capacity.
   if (event.type === "checkout.session.async_payment_failed" || session.payment_status === "unpaid") return true;
-  if (session.status !== "complete" || session.payment_status !== "paid" || session.currency !== "eur") fail();
+  if (session.status !== "complete" || session.payment_status !== "paid" || session.currency !== "eur" ||
+      session.automatic_tax?.enabled !== true || session.automatic_tax?.status !== "complete") fail();
   const totals = session.total_details;
   if (session.amount_subtotal !== contract.unitAmount || !integer(totals?.amount_tax) ||
       totals.amount_discount !== 0 || totals.amount_shipping !== 0 ||
