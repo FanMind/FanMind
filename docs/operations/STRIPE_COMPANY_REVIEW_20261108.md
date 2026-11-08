@@ -14,7 +14,7 @@ Betroffene Grenzen: FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001 und FM-
 
 ## Rechtliche Identität bleibt offen
 
-company.name ist korrigiert. Das Konto bleibt business_type=individual mit Bernd als verifizierter Person und representative=true; owner=false. Dies ist keine vollständige Berichtigung der rechtlichen Kontoinhaberin. Die Einzelpersonenmaske verlangt rechtsgültigen Namen, Geburtsdatum und Privatadresse. Es wurde weder Bernds bestehendes Geburtsdatum Brigitte zugeordnet noch eine Vollmacht erfunden. Brigitte ist wirtschaftlich die Inhaberin des Einzelunternehmens; Bernd darf operativer Ansprechpartner und Administrator bleiben. Eine Vertretungsbefugnis muss gesondert belegt und von Stripe akzeptiert werden. Die administrative Rolle allein ersetzt diese nicht.
+company.name ist korrigiert. Das Konto bleibt business_type=individual mit Bernd als verifizierter Person und representative=true; owner=false. Dies ist keine vollständige Berichtigung der rechtlichen Kontoinhaberin. Die Einzelpersonenmaske verlangt rechtsgültigen Namen, Geburtsdatum und Privatadresse. Es wurde weder Bernds bestehendes Geburtsdatum Brigitte zugeordnet noch eine Vollmacht erfunden. Gewerbe- und Steuerunterlagen lauten auf Brigitte; Bernd führt FanMind tatsächlich. Die wirtschaftliche Eigentums-/Kontrollstellung und zulässige Kontorepräsentation sind nach der ergänzenden Owner-Klarstellung noch zu prüfen; Bernd bleibt operativer Ansprechpartner und Administrator. Eine Vertretungsbefugnis muss gesondert belegt und von Stripe akzeptiert werden. Die administrative Rolle allein ersetzt diese nicht.
 
 Der sichere nächste Eingriff ist die persönliche beziehungsweise von Stripe freigeschaltete Berichtigung des bestehenden Einzelpersonen-Kontos einschließlich Brigittes vollständiger Identitätsdaten und gegebenenfalls Vollmacht für Bernd. Kein neues Konto, kein Team-Transfer und keine Supportnachricht versendet. Offizielle Stripe-Einstiege: https://support.stripe.com/questions/transfer-a-stripe-account-to-a-different-entity-due-to-a-business-sale-or-acquisition und https://support.stripe.com/questions/change-the-owner-of-a-stripe-account . Der zweite Artikel betrifft den administrativen Kontobesitz, nicht allein die wirtschaftliche Identität.
 
@@ -119,3 +119,21 @@ Monatsprodukt-Code txcd_10103001 wurde erneut aus Stripe gelesen:
 Software as a service (SaaS) – business use. Stripe nennt diese Unterscheidung
 zwischen geschäftlicher und privater Nutzung nur für US-Verkäufe relevant.
 Dies ist eine Kandidatenbeschreibung, keine bestätigte Produkteinstufung.
+
+
+### Ergänzende Rollenklärung des Owners
+
+Die tatsächliche technische, organisatorische und inhaltliche Geschäftsleitung
+liegt nach aktueller Klarstellung bei Bernd. Deshalb darf die Gewerbeinhaberschaft
+allein nicht als geprüfte wirtschaftliche Eigentums-/Kontrollzuordnung ausgegeben
+werden. Auch ein zwingender Austausch Bernds als Kontorepräsentant ist noch nicht
+abschließend festgestellt. Der oben vorbereitete ursprüngliche Supporttext ist
+durch einen präzisierten, weiterhin ungesendeten Entwurf ersetzt: Stripe soll
+zunächst rechtlichen Vertragspartner, Gewerbeinhaberin, wirtschaftliche
+Berechtigung/Kontrolle und bevollmächtigte Vertretung anhand der tatsächlichen
+Zusammenarbeit und Nachweise klären. Bernd bleibt administrativer und operativer
+Ansprechpartner; bestehende Personen-, Bank- und Auszahlungsberechtigungen werden
+nicht vorab überschrieben. Persönliche Hintergrunddetails bleiben außerhalb Git.
+Dies ändert keine Unternehmens-/Steuerfelder, keine öffentlichen Rechtstexte und
+keine Freigabe. Ältere Aussagen einer bereits feststehenden wirtschaftlichen
+Zuordnung oder eines zwingenden Personenwechsels sind insoweit überholt.
