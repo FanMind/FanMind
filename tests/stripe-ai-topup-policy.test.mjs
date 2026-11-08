@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { resolveStripeAiTopup, stripeAiTopupGrantKey } from "../src/lib/stripeAiTopupPolicy.mjs";
 
 for (const [topupKey, amountTotalCents, creditEurMicrocents] of [
-  ["topup_10", 1499, 10_000_000],
-  ["topup_25", 3749, 25_000_000],
-  ["topup_50", 7499, 50_000_000],
-  ["topup_100", 14900, 100_000_000],
+  ["topup_10", 1499, 1_000_000_000],
+  ["topup_25", 3749, 2_500_000_000],
+  ["topup_50", 7499, 5_000_000_000],
+  ["topup_100", 14900, 10_000_000_000],
 ]) {
   test(`${topupKey} maps exact EUR sale amount to provider-value credit`, () => {
     assert.deepEqual(resolveStripeAiTopup({ topupKey, currency: "eur", amountTotalCents }), {

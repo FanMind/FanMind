@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { handleStripeTopupEvent } from "../src/lib/stripeAiTopupLifecycle.mjs";
+import { topupFixture } from "./fixtures/stripe-topup.mjs";
 
 // Same isolated Docker/psql transport as the existing required PG17 tests.
 // No network URL, credentials, Supabase project or host database is accepted.
@@ -279,6 +281,27 @@ test("Capacity lifecycle executes against isolated PostgreSQL 17", {skip: !requi
       assert.equal(results.filter(x=>x.code===0).length,1);
       assert.ok(!results.some(x=>/deadlock detected/u.test(x.stderr)));
       assert.ok([940,1000].includes(balance().available_eur_microcents));
+    });
+    await t.test("real topup fulfillment: taxed async success and concurrent replay credit provider value exactly once", async () => {
+      fresh();
+      const f = topupFixture();
+      f.deps.grant = async input => service(grant({workspace:input.workspaceId,key:input.grantKey,purchased:true,amount:input.grantedEurMicrocents}));
+      f.session.payment_status = "unpaid";
+      await handleStripeTopupEvent(f.event,f.deps,f.env);
+      assert.equal(count(),"0");
+      f.session.payment_status = "paid";
+      f.event.type = "checkout.session.async_payment_succeeded";
+      await handleStripeTopupEvent(f.event,f.deps,f.env);
+      f.event.type = "checkout.session.completed";
+      await handleStripeTopupEvent(f.event,f.deps,f.env);
+      assert.equal(count(),"1");
+      assert.equal(balance().available_eur_microcents,1_000_000_000);
+      const replay = grant({workspace:w1,key:"stripe:payment_intent:pi_Synthetic",purchased:true,amount:1_000_000_000});
+      const replies=await Promise.all([asyncSql(serviceSql(replay)),asyncSql(serviceSql(replay))]);
+      assert.ok(replies.every(result=>result.code===0));
+      assert.equal(count(),"1");
+      failure(grant({workspace:w1,key:"stripe:payment_intent:pi_Synthetic",purchased:true,amount:10_000_000}),"ai_capacity_grant_idempotency_conflict");
+      assert.equal(balance().available_eur_microcents,1_000_000_000);
     });
   } finally {
     sql(`drop database ${database} with (force);`,"postgres");
