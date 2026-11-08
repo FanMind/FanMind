@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime} from '../scripts/operations/staging-support-media-runtime.mjs';
+import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime,waitForStagingRelease} from '../scripts/operations/staging-support-media-runtime.mjs';
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),REVIEWED_COMMIT:'a'.repeat(40),CONFIRMATION:'staging-support-media-activate',FANMIND_RUNTIME_ENVIRONMENT:'staging',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://vshyhvgcmrlagvfnvomc.supabase.co',FANMIND_TARGET_SUPABASE_PROJECT_REF:'vshyhvgcmrlagvfnvomc',FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz',FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED:'false',FANMIND_OPERATIONS_EMAIL_ENABLED:'false',FANMIND_SERVER_ERROR_EMAIL_ENABLED:'false',FANMIND_ENABLE_TELEGRAM_SEND:'false',SUPPORT_OWNER_UUID:'5995a803-2ae2-46fa-8e4d-b030bf71da3c',GITHUB_RUN_ID:'12345',SUPPORT_SCHEMA_VERIFIED:'true',SUPPORT_RETENTION_VERIFIED:'true'};
 test('runtime rejects Production, branch source, absent schema proof and external delivery',()=>{
  assert.doesNotThrow(()=>assertStagingRuntimeTarget(env,'activate'));
@@ -51,4 +51,13 @@ test('support-only actions retain target gates and leave every media byte unchan
  const withMedia=before.replace('FANMIND_CHAT_ADMIN_MEDIA_ENABLED=false','FANMIND_CHAT_ADMIN_MEDIA_ENABLED=true');
  assert.equal(renderStagingRuntimeFlags(withMedia,[],true,true),withMedia.replace('FANMIND_SUPPORT_CENTRE_ENABLED=false','FANMIND_SUPPORT_CENTRE_ENABLED=true'));
  assert.throws(()=>renderStagingRuntimeFlags(before,['FANMIND_SUPPORT_CENTRE_ENABLED=false'],true,true));
+});
+
+test('service startup waits for reachability but never accepts wrong source or endless startup',async()=>{
+ let clock=0,calls=0;const timing={now:()=>clock,pause:async ms=>{clock+=ms;},timeoutMs:1500};
+ await waitForStagingRelease(async()=>{if(++calls<3)throw Error('target_read_failed');},timing);
+ assert.equal(calls,3);assert.equal(clock,1500);
+ calls=0;await assert.rejects(waitForStagingRelease(async()=>{calls++;throw Error('live_release_mismatch');},timing),/live_release_mismatch/);assert.equal(calls,1);
+ await assert.rejects(waitForStagingRelease(async()=>{throw Error('target_read_failed');},timing),/service_startup_timeout/);
+ await assert.rejects(waitForStagingRelease(async()=>{throw Error('configuration_changed');},timing),/configuration_changed/);
 });

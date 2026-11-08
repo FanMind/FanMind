@@ -24,3 +24,12 @@ Recovery: existing byte-exact env rollback, restart and effective flag readback.
 No new IAM, key provisioning, migrations or customer fixtures. New consent UI
 invalidates pending generations and aborts on explicit withdrawal; no automatic
 retries or persistent browser consent. Keep #1350 OPEN until actual acceptance.
+
+Continuation: PR1443 merged/deployed as d51bc747; all exact-head checks passed,
+including88browser cases. Host verify42497071320 confirmed disabled Support and
+present Owner/workspace/provider/limiter configuration. Retention42496709137
+succeeded with zero deletions. Activation42497173076 failed rollback verification
+within0.44seconds; independent host readback42497360607 confirms Support=false
+and the same source. Follow-up bounds application startup/rollback readiness,
+adds fixed stage diagnostics and checks existing restart authority before writes.
+Seven runtime cases pass. Actual activation and two real replies still pending.
