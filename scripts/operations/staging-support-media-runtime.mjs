@@ -91,14 +91,26 @@ function failureStage(error){
  const allowed=['target_read_failed','live_release_mismatch','service_startup_timeout','restart_command_failed','service_inactive','service_not_running','effective_flags_mismatch','rollback_effective_flags_mismatch','override_configuration_changed','configuration_changed'];
  return allowed.includes(error?.message)?error.message:'operation_failed';
 }
-function processFlags(){
+// Values remain private; callers receive fixed booleans only, never secret material.
+export function supportRuntimeCapabilities(env){
+ const text=key=>typeof env[key]==='string'?env[key].trim():'';
+ return {
+  widgetSessionConfigured:text('FANMIND_WEBSITE_CHAT_SESSION_SECRET').length>=32,
+  diagnosticsEnabled:env.FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED==='true',
+  repairEnabled:env.FANMIND_INAPP_HELP_REPAIR_ENABLED==='true',
+  emailConfigured:Boolean(text('RESEND_API_KEY')&&text('FANMIND_NOTIFICATION_FROM')),
+ };
+}
+function processSnapshot(){
  const pid=execute('/usr/bin/systemctl',['show','fanmind-staging.service','--property=MainPID','--value']).trim();
  if(!/^[1-9][0-9]{0,9}$/u.test(pid))fail('service_not_running');
  // No new sudo rights are installed. Missing existing authority stops before writes.
  const bytes=readFileSync(`/proc/${pid}/environ`,'utf8');
  if(bytes.length>1048576)fail('process_environment_invalid');
- return Object.fromEntries(bytes.split('\0').map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}).filter(([key])=>[...FLAGS,ANALYSIS].includes(key)));
+ const values=Object.fromEntries(bytes.split('\0').filter(line=>line.indexOf('=')>0).map(line=>{const i=line.indexOf('=');return [line.slice(0,i),line.slice(i+1)];}));
+ return {flags:Object.fromEntries(Object.entries(values).filter(([key])=>[...FLAGS,ANALYSIS].includes(key))),capabilities:supportRuntimeCapabilities(values)};
 }
+function processFlags(){return processSnapshot().flags;}
 export async function changeStagingRuntime({before,after,write,restart,verify,verifyRollback,read,restoreOnFailure=true}){
  try{write(after);restart();await verify();}
  catch(error){
@@ -121,11 +133,15 @@ export async function runStagingRuntime(action,env=process.env){
   if(!Array.isArray(owners)||owners.length!==1||owners[0].user_id!==env.SUPPORT_OWNER_UUID)fail('existing_owner_binding_missing');
  }
  if(action==='verify-support'){
-  const flags=processFlags();
+  const {flags,capabilities}=processSnapshot();
   const owners=await json(api+'support_centre_owners?select=user_id&limit=2',headers);
   const ownerBound=Array.isArray(owners)&&owners.length===1&&owners[0].user_id===env.SUPPORT_OWNER_UUID;
   const workspaces=ownerBound?await json(api+`workspaces?select=id&owner_user_id=eq.${encodeURIComponent(owners[0].user_id)}&limit=2`,headers):[];
   console.log(`STAGING_SUPPORT_ENABLED=${flags.FANMIND_SUPPORT_CENTRE_ENABLED==='true'}`);
+  console.log(`STAGING_WIDGET_SESSION_CONFIGURED=${capabilities.widgetSessionConfigured}`);
+  console.log(`STAGING_SUPPORT_DIAGNOSTICS_ENABLED=${capabilities.diagnosticsEnabled}`);
+  console.log(`STAGING_SUPPORT_REPAIR_ENABLED=${capabilities.repairEnabled}`);
+  console.log(`STAGING_SUPPORT_EMAIL_CONFIGURED=${capabilities.emailConfigured}`);
   console.log(`STAGING_SUPPORT_OWNER_BOUND=${ownerBound}`);
   console.log(`STAGING_SUPPORT_WORKSPACE_UNIQUE=${Array.isArray(workspaces)&&workspaces.length===1}`);
   console.log(`STAGING_SUPPORT_OPENAI_CONFIGURED=${Boolean(env.OPENAI_API_KEY?.trim())}`);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime,waitForStagingRelease} from '../scripts/operations/staging-support-media-runtime.mjs';
+import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime,waitForStagingRelease,supportRuntimeCapabilities} from '../scripts/operations/staging-support-media-runtime.mjs';
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),REVIEWED_COMMIT:'a'.repeat(40),CONFIRMATION:'staging-support-media-activate',FANMIND_RUNTIME_ENVIRONMENT:'staging',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://vshyhvgcmrlagvfnvomc.supabase.co',FANMIND_TARGET_SUPABASE_PROJECT_REF:'vshyhvgcmrlagvfnvomc',FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz',FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED:'false',FANMIND_OPERATIONS_EMAIL_ENABLED:'false',FANMIND_SERVER_ERROR_EMAIL_ENABLED:'false',FANMIND_ENABLE_TELEGRAM_SEND:'false',SUPPORT_OWNER_UUID:'5995a803-2ae2-46fa-8e4d-b030bf71da3c',GITHUB_RUN_ID:'12345',SUPPORT_SCHEMA_VERIFIED:'true',SUPPORT_RETENTION_VERIFIED:'true'};
 test('runtime rejects Production, branch source, absent schema proof and external delivery',()=>{
  assert.doesNotThrow(()=>assertStagingRuntimeTarget(env,'activate'));
@@ -98,4 +98,18 @@ test('retention proof binds every relative executable dependency of the retained
   for(const match of source.matchAll(/\bfrom\s*["'](\.[^"']+)["']/g))inspect(posix.normalize(posix.join(posix.dirname(path),match[1])));
  }
  inspect('scripts/operations/support-centre-staging.mjs');
+});
+
+
+test('runtime capability summary is boolean-only and never promotes presence to execution or delivery',()=>{
+ const absent={widgetSessionConfigured:false,diagnosticsEnabled:false,repairEnabled:false,emailConfigured:false};
+ assert.deepEqual(supportRuntimeCapabilities({}),absent);
+ const privateProbe='synthetic-private-runtime-value-that-must-not-be-returned';
+ const ready={FANMIND_WEBSITE_CHAT_SESSION_SECRET:privateProbe,FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED:'true',FANMIND_INAPP_HELP_REPAIR_ENABLED:'true',RESEND_API_KEY:privateProbe,FANMIND_NOTIFICATION_FROM:'synthetic@example.invalid'};
+ assert.deepEqual(supportRuntimeCapabilities(ready),{widgetSessionConfigured:true,diagnosticsEnabled:true,repairEnabled:true,emailConfigured:true});
+ assert.equal(JSON.stringify(supportRuntimeCapabilities(ready)).includes(privateProbe),false);
+ assert.ok(Object.values(supportRuntimeCapabilities(ready)).every(value=>typeof value==='boolean'));
+ for(const patch of [{FANMIND_WEBSITE_CHAT_SESSION_SECRET:'short'}, {FANMIND_WEBSITE_CHAT_SESSION_SECRET:' '.repeat(40)}])assert.equal(supportRuntimeCapabilities({...ready,...patch}).widgetSessionConfigured,false);
+ for(const value of ['TRUE','1',true,undefined])assert.equal(supportRuntimeCapabilities({...ready,FANMIND_INAPP_HELP_REPAIR_ENABLED:value}).repairEnabled,false);
+ for(const key of ['RESEND_API_KEY','FANMIND_NOTIFICATION_FROM'])assert.equal(supportRuntimeCapabilities({...ready,[key]:'  '}).emailConfigured,false);
 });

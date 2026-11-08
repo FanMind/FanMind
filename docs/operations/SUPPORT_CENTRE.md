@@ -169,3 +169,8 @@ Evidence and authorization/recovery: [Production schema receipt](../../project-m
 ### Staging customer launcher continuation
 
 Run 42508753887 on 60f305f17368bdd3fbd8f5cb1e9c4c389235e2ad passed both customer API sessions, tenant/privacy negatives and independent cleanup, but correctly failed browser UI acceptance because the launcher build flag was absent. The protected Staging build now explicitly enables the existing customer launcher; server-side diagnostic and repair flags are unchanged. `ui_only` retests persistence and reopen with new synthetic conversations, then own erasure and independent read-only cleanup. It does not repeat or relabel the previous full privacy/tenant suite and avoids unnecessary privacy rate-limit consumption. Production build configuration is unchanged.
+
+
+### Read-only runtime prerequisites (08.11.2026 continuation)
+
+The existing `verify-support` action now reports only booleans for the actual running process: widget session-secret readiness, diagnostic/repair flags and email configuration presence. It never returns secret values, switches flags, restarts the service or writes a fixture. The same process snapshot supplies the existing Support flags. Configured does not prove positive widget acceptance, provider repair, mail execution or delivery. Exact main/live release, Staging target, Owner binding and external-delivery-off gates remain unchanged. Existing true/false readiness is not approval to activate diagnostics/repair on real connections or create a missing secret.
