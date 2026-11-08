@@ -1053,3 +1053,6 @@ Schalter bleiben aus, Emergency Freeze bleibt an. Keine Migration, keine
 Produktsteuercode-Entscheidung, keine Steuerregistrierung, kein Live-/Production-
 Zugriff mit Schreibwirkung und kein echter Zahlungs-/Guthabennachweis durch
 synthetische Tests. Steuernummer/UID bleiben offen.
+
+
+UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreiberin Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet. Das vorbereitete Impressum enthält die UID; Steuernummer und GISA bleiben getrennt. Die Bestätigung aktiviert weder Billing noch Stripe Tax, ersetzt keine Rechts-/Steuerfreigabe und ist kein Production-Deploy. Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.

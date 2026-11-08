@@ -28,10 +28,10 @@ test("handoff covers every currently required external evidence control", async 
   const registered = collectRegisteredControlIds(evidence);
 
   assert.equal(handoff.totalControls, 27);
-  assert.equal(handoff.pendingControls, 26);
+  assert.equal(handoff.pendingControls, 25);
   assert.deepEqual(
     new Set(handoff.tasks.map(({ id }) => id)),
-    new Set([...registered].filter(id => id !== "operator.gisaNumber")),
+    new Set([...registered].filter(id => !["operator.gisaNumber", "operator.vatId"].includes(id))),
   );
   assert.equal(
     handoff.tasks.filter(({ group }) => group === "provider").length,
@@ -102,8 +102,8 @@ test("the canonical verifier accepts valid confirmed transitions and rejects unv
   };
 
   const valid = validateExternalEvidence(evidence);
-  assert.equal(valid.completeCount, 2);
-  assert.equal(valid.incomplete.length, 25);
+  assert.equal(valid.completeCount, 3);
+  assert.equal(valid.incomplete.length, 24);
 
   evidence.approvals.legalReview.reviewedVersion = null;
   assert.throws(

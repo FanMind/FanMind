@@ -474,5 +474,6 @@ The read-only catalog workflow defaults to `capacity_v2_full` (eight configured
 prices including four one-time topups and retained internal Daily). Preserve
 `capacity_v2` and `legacy_v1` regression choices. Catalog PASS is not a global
 inventory check, tax approval, runtime binding, Checkout or webhook acceptance.
-Owner tax number/UID are pending; never fabricate them or set registration
-confirmation from catalog success. See `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.
+Owner tax number is supplied and UID ATU66320126 was officially matched on
+2026-11-08; this does not establish tax approval or a Stripe Tax registration.
+Never set registration confirmation from catalog or UID success. See `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.

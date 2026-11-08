@@ -1,6 +1,6 @@
 # FanMind Register für externe Rechts-, Steuer- und Anbieterfreigaben
 
-Stand: 6. November 2026
+Stand: 8. November 2026
 
 Dieses Register macht die externen Route-23-Abschlussnachweise prüfbar. Es
 ersetzt weder eine Rechts- oder Steuerberatung noch die Vertragsannahme in
@@ -78,7 +78,7 @@ Noch mit Steuerberatung beziehungsweise amtlichem Nachweis zu klären:
 
 | Angabe | Aktueller Stand | Erforderlicher Beleg |
 | --- | --- | --- |
-| UID | nicht mitgeteilt | UID-Bescheid/FinanzOnline-Bestätigung oder fachliche Bestätigung „nicht vorhanden/nicht anwendbar“ |
+| UID | ATU66320126; EU-VIES am 08.11.2026 `valid=true`, Name und Anschrift stimmen mit Betreiberin und Gewerbestandort überein | Vollständige amtliche REST-Antwort privat abgelegt, SHA-256 in `operator.vatId`; kein qualifiziertes FinanzOnline-Bestätigungsprotokoll und keine Steuerfreigabe |
 | Firmenbuchnummer | nicht mitgeteilt | aktueller Firmenbuchauszug oder Bestätigung „nicht eingetragen“ |
 | Firmenbuchgericht | nicht mitgeteilt | Firmenbuchauszug oder Bestätigung „nicht anwendbar“ |
 | GISA-Zahl | 40314440 laut amtlichem Auszug vom 02.11.2026 | Original-PDF privat geprüft und gehasht; `operator.gisaNumber` am 06.11.2026 mit Wert und SHA-256-Beleg bestätigt |

@@ -38,6 +38,10 @@ const operatorRows = [
     value: "40314440",
   },
   {
+    label: "Umsatzsteuer-Identifikationsnummer (UID)",
+    value: "ATU66320126",
+  },
+  {
     label: "Gewerbebeginn",
     value: "29.10.2026",
   },
@@ -104,7 +108,7 @@ export default function ImpressumPage() {
             <p>
               FanMind wird von Brigitte Erika Guggenberger als Einzelunternehmerin
               unter der Geschäftsbezeichnung FanMind betrieben. Bernd Guggenberger ist operativer Ansprechpartner; die rechtliche Betreiberin und Vertragspartnerin bleibt Brigitte Erika Guggenberger. Eine
-              Firmenbuchnummer, ein Firmenbuchgericht und eine UID werden erst
+              Firmenbuchnummer und ein Firmenbuchgericht werden erst
               angeführt, sobald sie tatsächlich vorhanden und bestätigt sind.
             </p>
             <p>
