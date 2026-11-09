@@ -1674,3 +1674,6 @@ UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreib
 
 
 Öffentlicher Support, 09.11.2026: Preis-/Paket-/Einrichtungsfragen nutzen dieselbe öffentliche Paket- und Datenpaketquelle wie die Landingpage, mit deutscher/englischer Antwort. Kostenlose Registrierung und noch ausstehende bezahlte Aktivierung bleiben ausdrücklich getrennt. Consent-, Origin-, Ratenlimit- und Owner-/Workspace-Prüfungen gelten auch vor diesen providerfreien Antworten. Keine neue Preisquelle oder Billing-Aktivierung. Details: `docs/operations/PUBLIC_LANDING_SUPPORT.md`.
+
+
+Support-Erklärung zum Antworten (Owner-Feedback 09.11.2026): Der öffentliche KI-Support und die angemeldete Hilfe nennen den direkten Antwort-/Original-Link ausdrücklich zwischen Kopieren und manuellem Senden. Er öffnet das gespeicherte Ziel im Originalkanal (Chat, Beitrag oder Kommentar); ein gültiger hinterlegter Link ist erforderlich. Kein automatisches Einfügen oder Senden und keine erfundene allgemeine Kanal-/Deep-Link-Verfügbarkeit.

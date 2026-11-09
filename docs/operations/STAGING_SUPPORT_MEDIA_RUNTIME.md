@@ -94,3 +94,11 @@ stays disabled. `verify_diagnostics=true` in the existing customer acceptance
 uses both real isolated customer sessions to check safe redacted own connections,
 a true read-only status check, forbidden credential change and hostile Origin.
 No external repair or successful provider connection is inferred.
+
+The first new Browser CI run42641625267 failed because the ordinary outer host
+of a closed Shadow DOM has a zero-size own layout box while its fixed-position
+child widget is rendered. Waiting for that host to be visible is invalid. The
+harness now waits for host attachment only, then still requires unchanged actual
+mouse/keyboard interaction and successful session/message responses. Shadow mode,
+UI/backend assertions and negative consent checks are retained; this correction
+is not positive target evidence and the failed run remains failed.

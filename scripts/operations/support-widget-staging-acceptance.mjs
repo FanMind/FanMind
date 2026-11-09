@@ -53,7 +53,7 @@ export async function runWidgetAcceptance(env=process.env){
    if(await page.locator('[data-fanmind-widget]').count()===0){
     await page.evaluate(({url,id,consent})=>{const s=document.createElement('script');s.src=url;s.dataset.installationId=id;s.dataset.consentVersion=consent;document.body.appendChild(s);},{url:APP+'/website-chat/widget.js',id:fixture.publicId,consent:fixture.consent});
    }
-   await page.locator('[data-fanmind-widget]').waitFor();
+   await page.locator('[data-fanmind-widget]').waitFor({state:'attached'});
    requireFact(sessionCalls===0,'widget_session_before_consent');
    // Closed Shadow DOM remains closed. Real mouse/keyboard interaction uses
    // the widget's fixed button and its deliberate textarea autofocus.

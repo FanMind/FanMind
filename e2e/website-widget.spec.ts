@@ -17,7 +17,7 @@ test('embedded widget keeps its Shadow DOM closed and requires consent before re
  });
  await page.goto('/support');
  await page.evaluate(({id})=>{const script=document.createElement('script');script.src='/website-chat/widget.js';script.dataset.installationId=id;script.dataset.consentVersion='staging-test-v1';document.body.appendChild(script);},{id:installation});
- await page.locator('[data-fanmind-widget]').waitFor();
+ await page.locator('[data-fanmind-widget]').waitFor({state:'attached'});
  expect(await page.locator('[data-fanmind-widget]').evaluate(el=>el.shadowRoot===null)).toBe(true);
  expect(sessions).toBe(0);
  const size=page.viewportSize()!;await page.mouse.click(size.width-65,size.height-40);
