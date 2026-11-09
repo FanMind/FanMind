@@ -1,0 +1,51 @@
+name: FanMind Staging Meta Runtime
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, configure]
+        required: true
+      reviewed_commit:
+        description: Exact main commit already deployed to Staging
+        type: string
+        required: true
+      app_id:
+        description: Public Meta App ID; never put a secret here
+        type: string
+        required: true
+      confirmation:
+        description: staging-meta- followed by the selected action
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  control:
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == format('staging-meta-{0}', inputs.action)
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Configure only the reviewed isolated Staging Meta runtime
+        env:
+          ACTION: ${{ inputs.action }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          META_SETUP_APP_ID: ${{ inputs.app_id }}
+          META_SETUP_APP_SECRET: ${{ secrets.FANMIND_STAGING_META_APP_SECRET }}
+          META_SETUP_WEBHOOK_TOKEN: ${{ secrets.FANMIND_STAGING_META_WEBHOOK_VERIFY_TOKEN }}
+          TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(stat -c '%U:%G:%a' /etc/fanmind-staging/runtime-secrets.env)" = 'root:fanmind-staging:640'
+          cmp -s ops/systemd/fanmind-staging.service /etc/systemd/system/fanmind-staging.service
+          node scripts/operations/staging-meta-runtime.mjs "$ACTION"

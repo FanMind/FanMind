@@ -1102,3 +1102,14 @@ UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreib
 
 
 Support-Erklärung zum Antworten (Owner-Feedback 09.11.2026): Der öffentliche KI-Support und die angemeldete Hilfe nennen den direkten Antwort-/Original-Link ausdrücklich zwischen Kopieren und manuellem Senden. Er öffnet das gespeicherte Ziel im Originalkanal (Chat, Beitrag oder Kommentar); ein gültiger hinterlegter Link ist erforderlich. Kein automatisches Einfügen oder Senden und keine erfundene allgemeine Kanal-/Deep-Link-Verfügbarkeit.
+
+
+Staging-Meta-Konfiguration (09.11.2026): Die bestehende FanMind-App erhält die
+zusätzliche Staging-Rücksprungadresse. Geschützte Zugangsdaten werden ausschließlich
+über das GitHub-Environment staging und einen manuell gestarteten, exakt an Main
+und den bereits bereitgestellten Staging-Commit gebundenen Controller eingerichtet.
+Dieser bewahrt vorhandene Verschlüsselungsschlüssel, blockiert Konfigurationsdrift
+vor einem Neustart und verändert ausschließlich fünf Meta-Konfigurationsfelder.
+Eine neue Verschlüsselung setzt den nachgewiesenen leeren Tokenbestand voraus.
+Quelle: `docs/integrations/META_CUSTOMER_INBOX_20261109.md`. Laufzeitprüfung und
+echte Seiten-/Nachrichtenabnahme bleiben bis zu ihren eigenen Nachweisen offen.

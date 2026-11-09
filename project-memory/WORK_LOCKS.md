@@ -1560,3 +1560,13 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Recovery: source revert before activation; media deletion revokes availability before object removal; existing Character revision serializes media invalidation against generation and confirmation. Independent Guardian required.
 
 - Source handoff: implemented locally, targeted308/308 + embedded SQL cases/build/lint/truth PASS; no publication or target activation. Receipt: receipts/chatadmin-media-1425-20261105.md.
+
+
+## FM-STAGING-META-RUNTIME-20261109
+- Risk/status: R4; source implementation under independent review, target configure not yet executed.
+- Owner authorization: explicit approval in this thread for the existing Meta app Staging callback, protected Staging app credentials and encryption; password reauthentication completed directly at Meta. No password or secret enters Git/chat.
+- Existing app: 2214477125984114; callback https://staging.fanmind.ch/api/integrations/facebook/callback saved alongside the original Production callback. Protected app-secret and webhook-token entries now exist only in the GitHub staging environment.
+- Scope: main/reviewed-live-commit/repository/event-bound isolated Staging controller; pinned checkout and exact root:fanmind-staging:640 override. Modify only FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, FACEBOOK_REDIRECT_URI, FANMIND_TOKEN_ENCRYPTION_KEY and FACEBOOK_WEBHOOK_VERIFY_TOKEN.
+- Preservation: reject disk/runtime encryption or unrelated-field drift before mutation; reject existing other app identity. Preserve valid keys; new key only after bounded read-only empty encrypted-token inventory. No database write, Production deploy, automatic sending or general Meta publication.
+- Recovery: private mode600 fsynced original-config snapshot retained on the Staging host with run ID, no artifact upload; same-process failure restores original configuration, restarts and verifies old effective values. Interrupted-job recovery requires reviewed restoration of the private snapshot; no automatic crash-recovery claim.
+- Validation: 22 focused synthetic tests PASS; full Operations and final-head CI pending. Independent Guardian reproduced prewrite drift risks; added fail-closed regressions. Provider consent, real Page ownership/import/webhooks/two-tenant isolation and App Review/Advanced Access remain separately unproved.

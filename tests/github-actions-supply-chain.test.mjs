@@ -218,6 +218,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     (workflow) => workflow.selfHosted,
   );
   const requiredSelfHostedWorkflows = [
+    "staging-meta-runtime.yml",
     CREATOR_TARGET_RECOVERY_WORKFLOW,
     STAGING_BILLING_CAPTURE_WORKFLOW,
     STAGING_PUSH_RUNTIME_WORKFLOW,
@@ -251,11 +252,13 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,
       STAGING_BILLING_CAPTURE_WORKFLOW,
+      "staging-meta-runtime.yml",
       STAGING_PUSH_RUNTIME_WORKFLOW,
       STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW,
     ],
   );
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
+  assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === "staging-meta-runtime.yml")?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(backupControl?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   const privilegedBackupJob = backupControl.source.split("\n  control:")[1];
   assert.ok(privilegedBackupJob);
