@@ -1,4 +1,17 @@
-export const PUBLIC_SUPPORT_PRICE_GUIDANCE = "Die aktuellen Preise und Vertragsdetails findest du direkt im Abschnitt Preise auf dieser Landingpage (/#preise). Ich kann hier keine abweichenden Preise oder Rabatte zusagen. Bei Fragen zu einem konkreten Angebot erreichst du uns unter fanmind@fanmind.ch.";
+import { capacityRegistrationPackages, capacityDataPackages } from "./capacityRegistrationPolicy.mjs";
+
+export const PUBLIC_SUPPORT_PRICE_GUIDANCE = publicSupportPricingReply("de");
+/** Prices are rendered from the public catalogue, never accepted from model output. */
+export function publicSupportPricingReply(language = "de") {
+ const plans = capacityRegistrationPackages(language).map(p => `${p.name}: ${p.price}`).join("; ");
+ const data = capacityDataPackages(language).map(p => `${p.name}: ${p.price}`).join("; ");
+ return language === "en"
+  ? `Current prices: ${plans}. All three monthly packages have no setup fee. Net prices; applicable taxes are shown before payment. One-time data packages (not subscriptions): ${data}. Registration is free and does not start a subscription. Paid activation and data-package sales are in preparation and require separate confirmation. Existing contracts remain unchanged. See /#preise; individual offers: fanmind@fanmind.ch.`
+  : `Aktuelle Preise: ${plans}. Alle drei Monatspakete ohne Einrichtungsgebühr. Nettopreise; anwendbare Steuern werden vor Zahlung ausgewiesen. Einmalige Datenpakete (kein Abo): ${data}. Registrierung kostenlos, kein Abo durch die Anmeldung. Bezahlte Aktivierung und Datenpaketverkauf sind in Vorbereitung und benötigen gesonderte Bestätigung. Bestehende Verträge bleiben unverändert. Siehe /#preise; individuelle Angebote: fanmind@fanmind.ch.`;
+}
+export function isPublicSupportPricingQuestion(question) {
+ return /preis|paket|kosten|tarif|einricht|setup|price|pricing|cost|package|subscription|\bfee\b|\bplan(?:s)?\b/iu.test(question);
+}
 export function parsePublicSupportRequest(value){
  if(!value||typeof value!=="object"||Array.isArray(value)||Object.keys(value).some(k=>!["question","history","consent","language"].includes(k)))throw Error("invalid_request");
  if(value.consent!==true||!["de","en"].includes(value.language)||typeof value.question!=="string"||!value.question.trim()||value.question.length>1000||!Array.isArray(value.history)||value.history.length>4)throw Error("invalid_request");
@@ -8,7 +21,7 @@ export function parsePublicSupportRequest(value){
 }
 export function guardPublicSupportReply(value,language){
  if(typeof value!=="string"||!value.trim()||value.length>2000)throw Error("invalid_reply");
- if(/[€$£]|\b(?:CHF|EUR|USD|GBP)\b|\d\s*(?:Euro|Prozent|%)/iu.test(value))return language==="en"?"Please see the current prices and terms in the Prices section of this landing page (/#preise). I cannot promise different prices or discounts. Contact fanmind@fanmind.ch for a specific offer.":PUBLIC_SUPPORT_PRICE_GUIDANCE;
+ if(/[€$£]|\b(?:CHF|EUR|USD|GBP)\b|\d\s*(?:Euro|Prozent|%)/iu.test(value))return publicSupportPricingReply(language);
  return value.trim();
 }
 export const PUBLIC_SUPPORT_INSTRUCTIONS = [
