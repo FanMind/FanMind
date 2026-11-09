@@ -121,3 +121,15 @@ freshness and latest-success checks remain. Drift, absent source history/files o
 an unrelated commit rejects reuse. No second daily success is fabricated.
 The workflow invokes node directly. All package manifest fields except unrelated
 npm scripts must match structurally; the complete dependency lock stays byte-exact.
+
+
+## Answer-link explanation — Owner feedback, 9 November 2026
+
+Public explanations of Copy & Open must include the direct reply/original link
+between copying and sending: open the saved chat/post/comment destination, paste
+and send there manually. The instructions name the link explicitly; the bounded
+output guard adds the same approved DE/EN workflow when a model mentions copying
+or the original channel but omits the link. It never promises an exact deep link
+without a stored valid destination, automatic pasting or automatic sending. The
+authenticated Support FAQ reuses that same explanation. Public embedding/customer
+company prompts and parallel Facebook integration code remain unchanged.

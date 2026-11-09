@@ -10,6 +10,18 @@ on:
         description: Retest customer UI using existing API acceptance evidence
         type: boolean
         default: false
+      verify_diagnostics:
+        description: Also accept the separately enabled read-only diagnostic and safe-check routes
+        type: boolean
+        default: false
+      widget_only:
+        description: Test only the existing synthetic embedded widget with guaranteed cleanup
+        type: boolean
+        default: false
+      widget_workspace_id:
+        description: Existing marked synthetic workspace owning a disabled widget installation
+        type: string
+        required: false
       confirmation:
         description: Type run-staging-support-customer-acceptance
         type: string
@@ -34,6 +46,9 @@ jobs:
       FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
       FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
       FANMIND_SUPPORT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_SUPPORT_DIAGNOSTICS_ACCEPTANCE: ${{ inputs.verify_diagnostics }}
+      FANMIND_SUPPORT_WIDGET_ONLY: ${{ inputs.widget_only }}
+      FANMIND_STAGING_WIDGET_WORKSPACE_ID: ${{ inputs.widget_workspace_id }}
       FANMIND_SUPPORT_CUSTOMER_UI_ONLY: ${{ inputs.ui_only }}
       FANMIND_SUPPORT_CUSTOMER_CONFIRM: ${{ inputs.confirmation }}
       FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'true'
@@ -71,6 +86,7 @@ jobs:
           ESCAPED="${ESCAPED//:/\\:}"
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
       - name: Test only synthetic customer sessions and prove cleanup
+        if: inputs.widget_only != true
         env:
           PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
           FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
@@ -78,6 +94,11 @@ jobs:
           FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
           FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
         run: node scripts/operations/support-customer-staging-acceptance.mjs
+      - name: Test actual synthetic widget UI and endpoints and restore its disabled state
+        if: inputs.widget_only == true
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
+        run: node scripts/operations/support-widget-staging-acceptance.mjs
       - name: Remove private connection file
         if: always()
         env:
