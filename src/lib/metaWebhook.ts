@@ -14,6 +14,7 @@ import {
 import { buildMetaWebhookDiagnosticPayload } from "@/lib/webhookSecurityPolicy.mjs";
 import { evaluateMetaDataUse } from "@/lib/metaDataHandlingPolicy.mjs";
 import { isMetaCatchupQueueEnabled } from "@/lib/metaCatchupQueuePolicy.mjs";
+import { facebookCommentTarget } from "@/lib/facebookCommentTarget.mjs";
 
 export type MetaWebhookEvent = {
   eventType: "feed" | "feed_comment" | "messages" | "comments" | "unknown";
@@ -155,6 +156,9 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         stringValue(from?.username) ??
         stringValue(from?.name) ??
         stringValue(value?.username);
+      const replyTarget = isInstagram ? permalink : facebookCommentTarget({
+        permalink, postId, commentId,
+      });
       const isFeedField =
         field === "feed" || field === "comments" || field === "mentions";
       const isCommentItem =
@@ -178,11 +182,13 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         messageKind: "text",
         direction: "inbound",
         externalMessageId: commentId,
-        externalThreadId: postId ?? permalink ?? commentId,
+        externalThreadId: !isInstagram && postId
+          ? `${postId}:${senderId ?? commentId}`
+          : postId ?? permalink ?? commentId,
         externalPostId: postId,
         externalCommentId: commentId,
         sourceUrl: permalink,
-        replyTargetUrl: permalink,
+        replyTargetUrl: replyTarget,
         authorLabel:
           senderName ?? (isInstagram ? "Instagram Nutzer" : "Facebook Nutzer"),
         pageId: entryPageId,

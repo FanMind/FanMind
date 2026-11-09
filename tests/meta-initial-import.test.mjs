@@ -85,6 +85,13 @@ test("actual Facebook flow waits for page selection and successful save before t
   });
   const input = { workspaceId: "workspace-1", connectedBy: "user-1", connectionType: "facebook_messages", userAccessToken: "synthetic" };
   assert.equal((await flow.completeFacebookOAuthConnection(input)).errorCode, "page_selection_required"); assert.equal(calls.length, 0);
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "operator-page" })).errorCode, "page_selection_invalid");
+  assert.equal(calls.length, 0);
+  const originalPages = integration.fetchFacebookPages;
+  integration.fetchFacebookPages = async () => (await originalPages()).slice(0, 1);
+  assert.equal((await flow.completeFacebookOAuthConnection(input)).errorCode, "page_selection_required");
+  assert.equal(calls.length, 0);
+  integration.fetchFacebookPages = originalPages;
   const success = await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" });
   assert.equal(success.ok, true); assert.equal(success.initialImport, "partial");
   assert.deepEqual(calls, [["save", "page-2"], ["import", "page-2", "facebook_messages"]]);

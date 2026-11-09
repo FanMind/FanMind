@@ -8,6 +8,20 @@
 - Blockers: current Staging deploy is main-only; no premerge deployment was attempted. Actual sandbox checkout/runtime Price-ID/tax/webhook/credit evidence and accepted terms/tax prerequisites remain open. No merge or Production deployment.
 - Receipt/recovery: docs/operations/CAPACITY_REGISTRATION_20261108.md; revert source only, no target mutation to reverse.
 
+## FM-META-CUSTOMER-INBOX-20261109 — own Pages, chats and post comments
+
+- Date/Risk: 2026-11-09 / R3, Social-to-CRM source and separately authorized Staging deployment.
+- Direct Owner scope: each provider connects their own Facebook Page, direct chats and post comments remain separate, Reply opens the original comment. Owner explicitly approved upload, PR, merge after passing checks and isolated Staging deployment in this thread. Production/provider activation and DB writes are excluded.
+- PR: #1459. Base dfe0f450 includes the parallel Support fix; implementation commit dcdbce0e. Existing token/session/Workspace and exclusive external-account controls retained; no migration or auto-send.
+- Consumers/gate: FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001; Facebook callback/selection, webhook and manual comment sync, Inbox and fan-workbench source actions.
+- Local verification: build, TypeScript, affected ESLint, 90 targeted Node tests and 162 governance adversarial tests PASS. Local Chromium unavailable because browser archives were truncated; GitHub browser and exact-head CI remain pending. Governance release baseline remains BLOCK; no external evidence or release attestation invented.
+- Independent countercheck: separate Guardian found and reproduced mixed fallback post/comment provenance; fixed by keeping one provenance tuple, added mismatched/missing fallback regressions. 30 independently rerun focused tests PASS; bounded host-allowlist mutation turned its negative test red. Contact-based AI context remains a pre-existing limitation, not per-post drafting acceptance. GitHub browser run 42639647909 passed six journeys on preceding b5c8004; fresh corrected-head CI remains required.
+- CI integration correction: package.json is checksum-bound by the pre-existing read-only Capacity control. Restored its exact Main bytes and placed new regressions in the existing CI-owned inbox-queue-policy suite; no Capacity manifest, SQL or Billing behavior changed.
+- Reconciliation: Project Memory Guard correctly required a task record; watched Source of Truth fingerprint reconciled with this source-only delta. No old runtime/Meta/legal acceptance refreshed.
+- Open: successful exact-head CI/browser checks, reviewed merge, protected Staging deploy/version verification, then real Meta app/callback/permissions and independent two-Page/customer acceptance before general customer activation.
+- Recovery: revert this source change; no existing rows or provider settings rewritten.
+
+
 ## FM-STAGING-CAPACITY-CATALOG-20261106 — approved new-price catalog verification
 - Date: 2026-11-06. Owner request: adapt the new prices in Staging, preserving Production and existing contracts. Risk: R2 repository preparation; no provider, database or runtime mutation.
 - Status: IMPLEMENTED / IN_REVIEW in PR #1439; not merged, deployed or accepted on the Stripe test target.

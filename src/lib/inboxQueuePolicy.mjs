@@ -1,6 +1,7 @@
 /**
  * Combines conversation and follow-up candidates without hiding uncovered work.
- * Conversations are authoritative for a fan; otherwise the strongest open
+ * Each conversation remains visible, including different posts and channels
+ * for the same fan. Otherwise the strongest open
  * follow-up wins. The final order is deterministic.
  *
  * @template T
@@ -9,7 +10,10 @@
  * @returns {T[]}
  */
 export function buildUnifiedInboxQueue(input, describe) {
-  const conversations = dedupeCandidates(input.conversations, describe);
+  const conversations = dedupeCandidates(input.conversations, (item) => ({
+    ...describe(item),
+    dedupeKey: describe(item).stableKey,
+  }));
   const coveredFans = new Set(
     conversations.map((item) => describe(item).dedupeKey),
   );

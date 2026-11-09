@@ -1,3 +1,27 @@
+## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026
+
+Repository-Umsetzung: Jeder Anbieter autorisiert seine eigene Facebook-Seite
+über Facebook und bestätigt die Auswahl ausdrücklich, auch bei nur einer
+verfügbaren Seite. Keine Plattformpasswörter in FanMind und keine automatische
+Übernahme einer Betreiberseite. Die bestehende Nutzer-/Workspace-Bindung,
+verschlüsselte Tokens und exklusive aktive Seitenzuordnung bleiben erhalten.
+
+Der Posteingang trennt Chats/Direktnachrichten und Nachrichten/Beitragskommentare
+über eigene Ansichten. Verschiedene Gespräche oder Beiträge desselben Fans
+bleiben einzeln sichtbar; offene Follow-ups ergänzen weiterhin unbedeckte Fans.
+„Antworten“ öffnet den Originalkanal zur manuellen Antwort. Facebook-Kommentare
+verwenden ihren bereinigten Permalink oder einen aus validierten Beitrags- und
+Kommentar-IDs aufgebauten Link. Fehlende Herkunft erzeugt keinen Betreiberlink.
+Webhook-Kommentare und manueller Kommentar-Sync verwenden denselben
+Beitrags-/Fan-Threadschlüssel für Facebook.
+
+Das ist keine Meta-Aktivierung: reale App-/Callback-Konfiguration, passende
+Berechtigungen und Webhooks, unabhängige Zwei-Anbieter-Staging-Abnahme,
+Meta App Review/Advanced Access und externe Rechtsfreigaben bleiben separat
+nachzuweisen. Keine neue Migration, kein automatischer Versand und keine
+Änderung an Analyse-, Billing- oder Production-Schaltern. Details:
+`docs/integrations/META_CUSTOMER_INBOX_20261109.md`.
+
 <!-- Capacity-v2 registration update: 2026-11-08 -->
 Neue öffentliche Registrierung: FanMind 99 / 199 / 312 zu 99 / 199 / 312 EUR
 monatlich, jeweils 0 EUR Einrichtung (netto). Zentrale Preisquelle:

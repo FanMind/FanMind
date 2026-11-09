@@ -90,7 +90,7 @@ export async function completeFacebookOAuthConnection(input: {
   const pages = await fetchFacebookPages(input.userAccessToken);
   if (!pages.length) return { ok: false, errorCode: "no_page" };
 
-  if (pages.length > 1 && !input.selectedPageId) {
+  if (!input.selectedPageId) {
     return {
       ok: false,
       errorCode: "page_selection_required",
@@ -98,9 +98,7 @@ export async function completeFacebookOAuthConnection(input: {
     };
   }
 
-  const page = input.selectedPageId
-    ? pages.find((candidate) => candidate.id === input.selectedPageId)
-    : pages[0];
+  const page = pages.find((candidate) => candidate.id === input.selectedPageId);
   if (!page) return { ok: false, errorCode: "page_selection_invalid" };
   if (!page.accessToken)
     return { ok: false, errorCode: "no_page_token" };

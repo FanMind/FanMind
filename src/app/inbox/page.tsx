@@ -30,6 +30,8 @@ import {
 import styles from "./inbox.module.css";
 import { InboxSearchForm } from "./InboxSearchForm";
 import { buildUnifiedInboxQueue } from "@/lib/inboxQueuePolicy.mjs";
+import { matchesInboxView, normalizeInboxView } from "@/lib/inboxViewPolicy.mjs";
+import { buildReplyTargetAction, getMessageSourceContext } from "@/lib/sourceContext";
 import { claimConversation, releaseConversation } from "./actions";
 import type { FanMindLanguage } from "@/lib/fanmindCopy";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
@@ -47,6 +49,7 @@ import { getPreActivationRedirect } from "@/lib/preActivation";
 type InboxPageProps = {
   searchParams?: Promise<{
     filter?: string | string[];
+    view?: string | string[];
     q?: string | string[];
     notice?: string | string[];
     lang?: string | string[];
@@ -63,6 +66,7 @@ type InboxWorkspaceProps = {
   conversations: ConversationRow[];
   conversationsError?: string;
   activeFilter: InboxFilter;
+  activeView: "all" | "chats" | "comments";
   searchQuery: string;
   userEmail: string | null | undefined;
   userId: string;
@@ -73,6 +77,15 @@ type InboxWorkspaceProps = {
 type InboxFilter = "all" | "open" | "waiting" | "due" | "high" | "ai" | "done";
 
 const inboxTranslations: Record<string, string> = {
+  "Alle Eingänge": "All incoming items",
+  "Chats · Direktnachrichten": "Chats · Direct messages",
+  "Nachrichten · Kommentare": "Messages · Post comments",
+  "Eingangsart": "Incoming item type",
+  "Antworten": "Reply",
+  "Auf der Plattform öffnen und dort selbst antworten": "Open on the platform and reply there manually",
+  "je Gespräch / Beitrag": "per conversation / post",
+  "Direktnachrichten und Kommentare unter Beiträgen bleiben getrennt. Antworten öffnet den Originalkanal; du sendest dort selbst.":
+    "Direct messages and post comments stay separate. Reply opens the original channel; you send there manually.",
   Nutzer: "User",
   Aktiv: "Active",
   "Priorisierte Arbeitsliste für eingehende Nachrichten, Follow-ups und KI-vorbereitete Antworten.":
@@ -206,6 +219,7 @@ type InboxQueueItem = {
   originalPreview?: string;
   sourceType?: "dm" | "comment" | "post" | "email" | "form" | "manual";
   sourcePlatformLabel?: string;
+  sourceContextKey?: string;
   unread: boolean;
   dueToday: boolean;
 };
@@ -236,6 +250,7 @@ function InboxWorkspace({
   conversations,
   conversationsError,
   activeFilter,
+  activeView,
   searchQuery,
   userEmail,
   userId,
@@ -270,8 +285,9 @@ function InboxWorkspace({
       stableKey: item.key,
     }),
   );
-  const visibleItems = filterQueueItems(queueItems, activeFilter, searchQuery);
-  const kpis = getInboxKpis(queueItems, locale);
+  const viewItems = queueItems.filter((item) => matchesInboxView(item, activeView));
+  const visibleItems = filterQueueItems(viewItems, activeFilter, searchQuery);
+  const kpis = getInboxKpis(viewItems, locale);
   const fanListHref = localizedWorkspaceHref("/fans#fans-list", locale);
 
   return (
@@ -307,6 +323,7 @@ function InboxWorkspace({
           </div>
           <InboxSearchForm
             activeFilter={activeFilter}
+            activeView={activeView}
             initialQuery={searchQuery}
             locale={locale}
           />
@@ -364,6 +381,23 @@ function InboxWorkspace({
               />
             ) : null}
 
+            <nav className={styles.filterBar} aria-label={inboxText(locale, "Eingangsart")}>
+              {([
+                ["all", "Alle Eingänge"],
+                ["chats", "Chats · Direktnachrichten"],
+                ["comments", "Nachrichten · Kommentare"],
+              ] as const).map(([view, label]) => (
+                <Link
+                  key={view}
+                  className={view === activeView ? styles.filterChipActive : styles.filterChip}
+                  aria-current={view === activeView ? "page" : undefined}
+                  href={`/inbox?${locale === "en" ? "lang=en&" : ""}view=${view}&filter=${activeFilter}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""}`}
+                >
+                  {inboxText(locale, label)}
+                </Link>
+              ))}
+            </nav>
+            <p>{inboxText(locale, "Direktnachrichten und Kommentare unter Beiträgen bleiben getrennt. Antworten öffnet den Originalkanal; du sendest dort selbst.")}</p>
             <nav className={styles.filterBar} aria-label={inboxText(locale, "Inbox Filter")}>
               {filterChips.map((chip) => (
                 <Link
@@ -372,7 +406,7 @@ function InboxWorkspace({
                       ? styles.filterChipActive
                       : styles.filterChip
                   }
-                  href={`/inbox?${locale === "en" ? "lang=en&" : ""}filter=${chip.value}${
+                  href={`/inbox?${locale === "en" ? "lang=en&" : ""}view=${activeView}&filter=${chip.value}${
                     searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""
                   }`}
                   key={chip.value}
@@ -460,7 +494,7 @@ function QueueList({
         <div className={styles.queueRowWrap} key={item.key}>
           <Link
             className={styles.queueRowLink}
-            href={localizedWorkspaceHref(`/fans/${item.contactId}`, locale)}
+            href={getFanQueueHref(item, locale)}
           >
             <span className={styles.fanCell}>
               <span className={styles.avatar}>{item.initials}</span>
@@ -511,8 +545,9 @@ function QueueList({
                 href={item.replyTargetUrl}
                 rel="noreferrer"
                 target="_blank"
+                title={inboxText(locale, "Auf der Plattform öffnen und dort selbst antworten")}
               >
-                {inboxText(locale, getOriginalActionLabel(
+                {inboxText(locale, "Antworten")} · {inboxText(locale, getOriginalActionLabel(
                   item.sourceType,
                   item.replyTargetUrl,
                   item.sourcePlatformLabel,
@@ -562,10 +597,10 @@ function QueueList({
               ) : null}
               {readOnly ? null : (
                 <>
-                  <Link href={localizedWorkspaceHref(`/fans/${item.contactId}?focus=reply`, locale)}>
+                  <Link href={getFanQueueHref(item, locale, "reply")}>
                     {inboxText(locale, "Antwort vorbereiten")}
                   </Link>
-                  <Link href={localizedWorkspaceHref(`/fans/${item.contactId}?focus=followup`, locale)}>
+                  <Link href={getFanQueueHref(item, locale, "followup")}>
                     {inboxText(locale, "Follow-up planen")}
                   </Link>
                 </>
@@ -634,10 +669,10 @@ function buildConversationInboxQueue(
           conversation.source_platform ??
           contact.source_platform,
       );
-      const replyTargetUrl =
-        normalizeHttpUrl(conversation.reply_target_url) ??
-        normalizeHttpUrl(conversation.source_url);
       const sourceType = getSourceType(conversation.source_type);
+      const replyTargetUrl = sourceType === "comment"
+        ? buildReplyTargetAction(conversation).href ?? undefined
+        : normalizeHttpUrl(conversation.reply_target_url) ?? normalizeHttpUrl(conversation.source_url);
       const originalSourceType = sourceType;
 
       return {
@@ -674,6 +709,8 @@ function buildConversationInboxQueue(
         originalPreview: conversation.original_text_excerpt ?? undefined,
         sourceType: originalSourceType,
         sourcePlatformLabel: channel,
+        sourceContextKey: sourceType === "comment"
+          ? getMessageSourceContext(conversation).contextKey : undefined,
         unread: Boolean(conversation.last_inbound_at),
         dueToday: false,
       } satisfies InboxQueueItem;
@@ -684,6 +721,17 @@ function buildConversationInboxQueue(
         b.priorityScore - a.priorityScore ||
         b.waitingMinutes - a.waitingMinutes,
     );
+}
+
+function getFanQueueHref(item: InboxQueueItem, locale: FanMindLanguage, focus?: string): string {
+  const params = new URLSearchParams();
+  if (focus) params.set("focus", focus);
+  if (item.sourceContextKey) {
+    params.set("source", item.sourceContextKey);
+    if (item.channelPlatform) params.set("channel", item.channelPlatform);
+  }
+  const query = params.toString();
+  return localizedWorkspaceHref(`/fans/${item.contactId}${query ? `?${query}` : ""}`, locale);
 }
 
 function buildInboxQueue(
@@ -1072,7 +1120,7 @@ function getInboxKpis(items: InboxQueueItem[], locale: FanMindLanguage) {
     {
       label: "Offene Konversationen",
       value: String(items.length),
-      meta: "pro Fan dedupliziert",
+      meta: "je Gespräch / Beitrag",
     },
     {
       label: "Wartet",
@@ -1189,6 +1237,7 @@ export default async function InboxPage({ searchParams }: InboxPageProps) {
           conversations={conversationsResult?.conversations ?? []}
           conversationsError={conversationsResult?.error?.message}
           activeFilter={normalizeFilter(normalizeParam(params?.filter))}
+          activeView={normalizeInboxView(normalizeParam(params?.view))}
           searchQuery={normalizeParam(params?.q)}
           userEmail={user.email}
           userId={user.id}
