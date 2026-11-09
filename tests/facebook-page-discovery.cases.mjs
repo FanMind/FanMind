@@ -20,13 +20,13 @@ function load(path, dependencies, extra = {}) {
   runInNewContext(code, { exports, URL, AbortSignal, Buffer, Date, console: { info(){}, warn(){}, error(){} }, process: { env: { FACEBOOK_APP_ID: app, FACEBOOK_APP_SECRET: '0123456789abcdef0123456789abcdef' } }, require(name) { assert.ok(name in dependencies, name); return dependencies[name]; }, ...extra });
   return exports;
 }
-function harness(respond) {
+function harness(respond, extra = {}) {
   const calls = [];
   const api = load('src/lib/facebookIntegration.ts', {
     '@/lib/facebookScopes': scopes, '@/lib/metaIntegrationPolicy.mjs': { META_GRAPH_API_VERSION: 'v25.0' }, '@/lib/facebookGraphPagingPolicy.mjs': paging,
     '@/lib/metaConversationPaginationPolicy.mjs': conversationPaging, '@/lib/facebookPageSelectionPolicy.mjs': selection, '@/lib/metaProviderErrorPolicy.mjs': providerError,
     '@/lib/metaRuntimeConfigPolicy.mjs': runtime, 'node:crypto': crypto,
-  }, { fetch: async (url, options) => { calls.push(String(url)); const result = await respond(new URL(url), options); return { ok: !result.error, status: result.error ? 403 : 200, json: async () => result }; } });
+  }, { fetch: async (url, options) => { calls.push(String(url)); options?.signal?.throwIfAborted(); const result = await respond(new URL(url), options); return { ok: !result.error, status: result.error ? 403 : 200, json: async () => result }; }, ...extra });
   return { api, calls };
 }
 const row = (id, token = `token-${id}`) => ({ id, name: `Page ${id}`, access_token: token, tasks: ['MESSAGING'] });
@@ -153,4 +153,20 @@ test('host diagnostics emit only fixed discovery labels and numeric/boolean coun
   const log="private token\nFacebook /me/accounts pages diagnostics {\n httpStatus: 200,\n pageCount: 1,\n pagesMissingAccessToken: 0,\n token: 'SECRET',\n pageId: 999\n}\nFacebook direct page fetch diagnostics { hasPage: false, errorCode: 10, message: 'private text' }";
   assert.deepEqual(summarize(log),[{label:'Facebook /me/accounts pages diagnostics',counts:{httpStatus:200,pageCount:1,pagesMissingAccessToken:0}},{label:'Facebook direct page fetch diagnostics',counts:{hasPage:false,errorCode:10}}]);
   assert.doesNotMatch(JSON.stringify(summarize(log)),/SECRET|999|private/u);
+});
+
+test('discovery shares one deadline across sources and probes only absent or tokenless granular targets',async()=>{
+  const signals=[];
+  const base=responder({edge:[row('11')],field:[row('22')],debug:{...diagnostics,granular_scopes:[{scope:'pages_show_list',target_ids:['11','22','33']}]},direct:{'33':row('33')}});
+  const h=harness((url,options)=>{signals.push(options.signal);return base(url);});
+  assert.equal((await h.api.fetchFacebookPages('user')).length,3);
+  assert.equal(new Set(signals).size,1);
+  assert.ok(h.calls.some(url=>new URL(url).pathname.endsWith('/33')));
+  assert.ok(h.calls.every(url=>!['/v25.0/11','/v25.0/22'].includes(new URL(url).pathname)));
+});
+test('expired shared deadline aborts discovery instead of persisting or returning a partial list',async()=>{
+  const controller=new AbortController();
+  const h=harness(()=>{controller.abort();return {data:[row('11')]};},{AbortSignal:{timeout:()=>controller.signal}});
+  await assert.rejects(h.api.fetchFacebookPages('user'));
+  assert.equal(h.calls.length,2);
 });

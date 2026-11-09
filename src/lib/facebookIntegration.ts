@@ -359,22 +359,28 @@ export async function verifyFacebookPageTokenIdentity(pageAccessToken: string, p
 export async function fetchFacebookPages(
   userAccessToken: string,
 ): Promise<FacebookPage[]> {
-  const primary = await fetchFacebookPagesFromAccountsEdge(userAccessToken);
+  const signal = AbortSignal.timeout(45_000);
+  const primary = await fetchFacebookPagesFromAccountsEdge(userAccessToken, signal);
   // An accounts edge can be non-empty and still omit granular-authorized pages.
-  const fallback = await fetchFacebookPagesFromMeAccountsField(userAccessToken);
-  const diagnostics = await fetchFacebookTokenDiagnostics(userAccessToken);
-  const targetIds = getFacebookGranularPageTargetIds(diagnostics);
-  const recovered = await fetchFacebookPagesFromGranularTargets(userAccessToken, targetIds);
+  const fallback = await fetchFacebookPagesFromMeAccountsField(userAccessToken, signal);
   const byId = new Map<string, FacebookPage>();
-  for (const page of [...primary.pages, ...fallback.pages, ...recovered]) {
-    const previous = byId.get(page.id);
-    byId.set(page.id, {
-      ...page,
-      accessToken: page.accessToken || previous?.accessToken || null,
-      scopes: [...new Set([...(previous?.scopes ?? []), ...page.scopes])],
-      tasks: [...new Set([...(previous?.tasks ?? []), ...(page.tasks ?? [])])],
-    });
-  }
+  const merge = (pages: FacebookPage[]) => {
+    for (const page of pages) {
+      const previous = byId.get(page.id);
+      byId.set(page.id, {
+        ...page,
+        accessToken: page.accessToken || previous?.accessToken || null,
+        scopes: [...new Set([...(previous?.scopes ?? []), ...page.scopes])],
+        tasks: [...new Set([...(previous?.tasks ?? []), ...(page.tasks ?? [])])],
+      });
+    }
+  };
+  merge([...primary.pages, ...fallback.pages]);
+  const diagnostics = await fetchFacebookTokenDiagnostics(userAccessToken, signal);
+  const targetIds = getFacebookGranularPageTargetIds(diagnostics);
+  const unresolvedIds = targetIds.filter(id => !byId.get(id)?.accessToken);
+  const recovered = await fetchFacebookPagesFromGranularTargets(userAccessToken, unresolvedIds, signal);
+  merge(recovered);
   console.info("Facebook page discovery diagnostics", {
     accountsCount: primary.pages.length,
     accountsFieldCount: fallback.pages.length,
@@ -1266,6 +1272,7 @@ type FacebookRawPage = {
 
 export async function fetchFacebookTokenDiagnostics(
   userAccessToken: string,
+  signal: AbortSignal = AbortSignal.timeout(15_000),
 ): Promise<FacebookTokenDiagnostics | null> {
   const url = new URL(
     `https://graph.facebook.com/${OAUTH_VERSION}/debug_token`,
@@ -1276,7 +1283,7 @@ export async function fetchFacebookTokenDiagnostics(
     `${requireFacebookAppId()}|${requireFacebookAppSecret()}`,
   );
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   const payload = (await response.json().catch(() => null)) as {
     data?: FacebookTokenDiagnostics;
     error?: { message?: string; code?: number; type?: string };
@@ -1329,11 +1336,13 @@ function getFacebookGranularPageTargetIds(
 async function fetchFacebookPagesFromGranularTargets(
   userAccessToken: string,
   targetIds: string[],
+  signal: AbortSignal,
 ): Promise<FacebookPage[]> {
   const pages: FacebookPage[] = [];
 
   for (const targetId of targetIds) {
-    const page = await fetchFacebookPageById(userAccessToken, targetId);
+    signal.throwIfAborted();
+    const page = await fetchFacebookPageById(userAccessToken, targetId, signal);
     if (!page) continue;
 
     console.info("Facebook page recovered from granular scope target", {
@@ -1348,11 +1357,13 @@ async function fetchFacebookPagesFromGranularTargets(
 async function fetchFacebookPageById(
   userAccessToken: string,
   pageId: string,
+  signal: AbortSignal,
 ): Promise<FacebookPage | null> {
   const withToken = await fetchFacebookPageByIdWithFields(
     userAccessToken,
     pageId,
     "id,name,access_token",
+    signal,
   );
 
   if (withToken.page || !isFacebookFieldError(withToken.error)) {
@@ -1368,6 +1379,7 @@ async function fetchFacebookPageById(
     userAccessToken,
     pageId,
     "id,name",
+    signal,
   );
   return withoutToken.page;
 }
@@ -1381,12 +1393,13 @@ async function fetchFacebookPageByIdWithFields(
   userAccessToken: string,
   pageId: string,
   fields: "id,name,access_token" | "id,name",
+  signal: AbortSignal,
 ): Promise<FacebookDirectPageFetchResult> {
   const url = new URL(`https://graph.facebook.com/${OAUTH_VERSION}/${pageId}`);
   url.searchParams.set("fields", fields);
   url.searchParams.set("access_token", userAccessToken);
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   const payload = (await response.json().catch(() => null)) as
     | (FacebookRawPage & {
         error?: { message?: string; code?: number; type?: string };
@@ -1435,17 +1448,18 @@ type FacebookPagesFetchResult = {
   error?: { message?: string; code?: number; type?: string };
 };
 
-async function fetchFacebookPagesFromAccountsEdge(userAccessToken: string): Promise<FacebookPagesFetchResult> {
-  return fetchFacebookAccountsCollection(userAccessToken, false);
+async function fetchFacebookPagesFromAccountsEdge(userAccessToken: string, signal: AbortSignal): Promise<FacebookPagesFetchResult> {
+  return fetchFacebookAccountsCollection(userAccessToken, false, signal);
 }
 
-async function fetchFacebookPagesFromMeAccountsField(userAccessToken: string): Promise<FacebookPagesFetchResult> {
-  return fetchFacebookAccountsCollection(userAccessToken, true);
+async function fetchFacebookPagesFromMeAccountsField(userAccessToken: string, signal: AbortSignal): Promise<FacebookPagesFetchResult> {
+  return fetchFacebookAccountsCollection(userAccessToken, true, signal);
 }
 
 async function fetchFacebookAccountsCollection(
   userAccessToken: string,
   nested: boolean,
+  signal: AbortSignal,
 ): Promise<FacebookPagesFetchResult> {
   const rawPages: FacebookRawPage[] = [];
   const cursors = new Set<string>();
@@ -1460,7 +1474,7 @@ async function fetchFacebookAccountsCollection(
     url.searchParams.set("access_token", userAccessToken);
     if (!useNested) url.searchParams.set("limit", "100");
     if (after) url.searchParams.set("after", after);
-    const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+    const response = await fetch(url, { cache: "no-store", signal });
     type Collection = { data?: FacebookRawPage[]; paging?: { next?: string } };
     const payload = (await response.json().catch(() => null)) as (Collection & {
       accounts?: Collection;

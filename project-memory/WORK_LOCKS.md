@@ -1,3 +1,10 @@
+## LOCK-FM-FACEBOOK-PAGE-DISCOVERY-20261109
+- Task: FM-FACEBOOK-PAGE-DISCOVERY-20261109
+- Status: ACTIVE
+- Owner: current authorized Codex task / Draft PR1463
+- Scope: Facebook Page discovery/OAuth selection and exact task-branch Staging acceptance. No Main merge, Production, Stripe or database migration.
+- Release: on verified completion or explicit blocked handoff; do not start overlapping provider connection/deployment work while active.
+
 ## LOCK-FM-WEB-PUBLIC-SUPPORT-AI-20261101
 - Task: FM-WEB-001 / issue #1350
 - Risk: R3

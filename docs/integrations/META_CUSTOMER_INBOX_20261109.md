@@ -169,3 +169,10 @@ sharing the Production callback; this is independently exercised with synthetic
 connection/import dependencies. A branch-only read of the Staging service journal
 outputs fixed discovery labels and numeric/boolean counters only. Tokens, Page
 names, Page IDs, provider messages and arbitrary journal text are never emitted.
+
+Guardian correction: merge list results before granular recovery, query only
+missing/tokenless targets, and share one 45-second AbortSignal across both list
+methods, debug_token and direct/fallback Page requests. Focused regressions
+prove shared deadline aborts and that already usable Pages are not refetched.
+Independent staging-source mutation proof detected all six removed guards
+(repository, exact SHA, exact branch, manual event, Billing-preserve, no recovery).
