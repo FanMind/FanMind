@@ -170,3 +170,15 @@ test('expired shared deadline aborts discovery instead of persisting or returnin
   await assert.rejects(h.api.fetchFacebookPages('user'));
   assert.equal(h.calls.length,2);
 });
+
+test('discovery failures expose only endpoint, fixed category and bounded numeric codes',async()=>{
+  const h=harness(url=>url.pathname.endsWith('/me/accounts')?{data:[row('11')]}:{error:{code:100,message:'private token message'}});
+  await assert.rejects(h.api.fetchFacebookPages('secret-user-token'),error=>{
+    assert.equal(error.diagnostic,'page_discovery_accounts_field_http_403_100');
+    assert.doesNotMatch(error.diagnostic,/secret|private|message/u);return true;
+  });
+  const malformed=harness(()=>({id:'user'}));
+  await assert.rejects(malformed.api.fetchFacebookPages('user'),error=>error.diagnostic==='page_discovery_accounts_edge_shape_200_0');
+  const e=new h.api.FacebookPageDiscoveryError('accounts_edge','http',NaN,Infinity);
+  assert.equal(e.diagnostic,'page_discovery_accounts_edge_http_0_0');
+});

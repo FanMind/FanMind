@@ -885,6 +885,8 @@ export function ChannelsGrid({
                                 ? "Die Facebook-Serverkonfiguration ist noch nicht vollständig. Es wurde keine Meta-Verbindung gestartet."
                                 : facebookError === "page_permissions"
                                   ? "Meta hat die benötigten Messenger-Berechtigungen nicht bestätigt. Die Verbindung wurde nicht gespeichert."
+                                  : /^page_discovery_(accounts_edge|accounts_field)_(transport|http|shape)_[0-9]{1,3}_[0-9]{1,4}$/.test(facebookError)
+                                    ? `Die Meta-Seitenliste konnte nicht vollständig geladen werden. Diagnose: ${facebookError}. Es wurde keine Verbindung gespeichert.`
                                   : facebookError === "no_page"
                                     ? "Meta hat keine technisch abrufbare Seite geliefert. Prüfe die ausgewählten Seiten und deine Seitenzugriffsrechte bei Facebook und verbinde erneut."
                                     : facebookError === "no_page_token"

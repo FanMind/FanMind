@@ -176,3 +176,26 @@ methods, debug_token and direct/fallback Page requests. Focused regressions
 prove shared deadline aborts and that already usable Pages are not refetched.
 Independent staging-source mutation proof detected all six removed guards
 (repository, exact SHA, exact branch, manual event, Billing-preserve, no recovery).
+
+## Staging premerge deployment and real reconnect checkpoint
+
+Owner explicitly approved the one additional exact task-branch Staging rule;
+GitHub saved it alongside main. No wildcard, Production environment or secret
+value changed. All nine PR workflows succeeded on b9ff5247, including native
+PostgreSQL and Browser run 42664140056 (six journeys, the chat/comment/foreign-
+Workspace fixture included, plus 43 component tests).
+
+Protected branch deploy 42665852915 succeeded. Independent /api/version read
+confirmed b9ff5247719a67233817c0b40ddaf5ea545fb0f5 on Staging. Main remains
+4488fc0ff548e2ec2fc230a0403d1826849fd233. The journal diagnostic reported
+FACEBOOK_DISCOVERY_JOURNAL=BLOCKED; no raw journal/provider data was available.
+The real existing-permission Meta reconnect now returns facebook_error=callback
+before selection, with no Page saved. Live connection/import acceptance remains
+failed/open. This is not evidence that all remaining failures are external.
+
+A narrow continuation exposes only the affected accounts endpoint, fixed
+transport/http/shape category and bounded numeric HTTP/Graph codes after the
+existing user/Workspace authorization. It never emits provider error messages,
+tokens or message content. It distinguishes the remaining Graph/response-shape
+failure without broadening host journal access. Real cause pending deployment
+and reconnect; no speculative permission or provider setting changes.

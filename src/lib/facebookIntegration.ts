@@ -1456,6 +1456,17 @@ async function fetchFacebookPagesFromMeAccountsField(userAccessToken: string, si
   return fetchFacebookAccountsCollection(userAccessToken, true, signal);
 }
 
+export class FacebookPageDiscoveryError extends Error {
+  readonly diagnostic: string;
+  constructor(endpoint: "accounts_edge" | "accounts_field", kind: "transport" | "http" | "shape", status = 0, graphCode = 0) {
+    super("Facebook-Seitenliste konnte nicht vollständig geladen werden.");
+    this.name = "FacebookPageDiscoveryError";
+    const safeStatus = Number.isInteger(status) && status >= 0 && status <= 599 ? status : 0;
+    const safeCode = Number.isInteger(graphCode) && graphCode >= 0 && graphCode <= 9999 ? graphCode : 0;
+    this.diagnostic = `page_discovery_${endpoint}_${kind}_${safeStatus}_${safeCode}`;
+  }
+}
+
 async function fetchFacebookAccountsCollection(
   userAccessToken: string,
   nested: boolean,
@@ -1474,7 +1485,10 @@ async function fetchFacebookAccountsCollection(
     url.searchParams.set("access_token", userAccessToken);
     if (!useNested) url.searchParams.set("limit", "100");
     if (after) url.searchParams.set("after", after);
-    const response = await fetch(url, { cache: "no-store", signal });
+    const endpoint = useNested ? "accounts_field" : "accounts_edge";
+    const response = await fetch(url, { cache: "no-store", signal }).catch(() => {
+      throw new FacebookPageDiscoveryError(endpoint, "transport");
+    });
     type Collection = { data?: FacebookRawPage[]; paging?: { next?: string } };
     const payload = (await response.json().catch(() => null)) as (Collection & {
       accounts?: Collection;
@@ -1483,7 +1497,10 @@ async function fetchFacebookAccountsCollection(
     const collection = useNested ? payload?.accounts : payload;
     if (!response.ok || payload?.error || !Array.isArray(collection?.data)) {
       logFacebookApiError("Facebook page discovery failed", payload?.error);
-      throw new Error("Facebook-Seitenliste konnte nicht vollständig geladen werden.");
+      throw new FacebookPageDiscoveryError(endpoint,
+        !response.ok || payload?.error ? "http" : "shape",
+        response.status, payload?.error?.code,
+      );
     }
     rawPages.push(...collection.data);
     if (rawPages.length > 500) throw new Error("Facebook-Seitenliste überschreitet das sichere Limit.");
