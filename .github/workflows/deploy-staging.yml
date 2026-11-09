@@ -62,9 +62,13 @@ permissions:
 
 jobs:
   deploy-staging:
-    name: Deploy exact main commit to isolated staging
+    name: Deploy exact reviewed commit to isolated staging
     if: >-
-      github.ref == 'refs/heads/main' &&
+      (github.ref == 'refs/heads/main' ||
+        (github.ref == 'refs/heads/fix/facebook-page-discovery-staging' &&
+         github.event_name == 'workflow_dispatch' &&
+         inputs.reviewed_commit == github.sha &&
+         inputs.billing_write_freeze == 'preserve')) &&
       inputs.confirmation == 'deploy-staging-only'
     environment: staging
     runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
@@ -75,6 +79,12 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+
+      - name: Read redacted Facebook discovery counters on Staging
+        if: github.ref == 'refs/heads/fix/facebook-page-discovery-staging'
+        env:
+          FANMIND_RUNTIME_ENVIRONMENT: staging
+        run: node scripts/operations/staging-facebook-discovery-diagnostics.mjs
 
       - name: Deploy on isolated staging host
         env:
@@ -87,6 +97,11 @@ jobs:
           FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
+
+          node --input-type=module -e '
+            import { isReviewedStagingSourceAllowed } from "./scripts/operations/staging-reviewed-source-policy.mjs";
+            if (!isReviewedStagingSourceAllowed(process.env)) process.exit(1);
+          '
 
           SOURCE_DIR="/var/www/fanmind-staging"
           ENV_FILE="$SOURCE_DIR/.env.production"

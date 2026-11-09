@@ -15,6 +15,15 @@ Kommentar-IDs aufgebauten Link. Fehlende Herkunft erzeugt keinen Betreiberlink.
 Webhook-Kommentare und manueller Kommentar-Sync verwenden denselben
 Beitrags-/Fan-Threadschlüssel für Facebook.
 
+Die Seitenerkennung ergänzt auch nichtleere `/me/accounts`-Ergebnisse durch
+`/me?fields=accounts` und gültige granular autorisierte Seitenziele. Beide
+Listen werden begrenzt paginiert und nach Seiten-ID zusammengeführt. Fehlende
+Tokens bleiben nicht auswählbar; vor dem Speichern werden die konkrete
+Seitentoken-Identität, App-Zugehörigkeit und seitenbezogene Scopes verifiziert.
+Die Meta-Auswahl allein ist kein Nachweis für technischen Seitenzugriff.
+Staging-Abnahme des offenen PR erfolgt vor einer gesonderten Main-Mergefreigabe;
+echte Provider-Abnahme und Webhook-Empfang sind damit noch nicht bestätigt.
+
 Das ist keine Meta-Aktivierung: reale App-/Callback-Konfiguration, passende
 Berechtigungen und Webhooks, unabhängige Zwei-Anbieter-Staging-Abnahme,
 Meta App Review/Advanced Access und externe Rechtsfreigaben bleiben separat

@@ -1,0 +1,156 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+import test from 'node:test';
+import ts from 'typescript';
+
+import * as paging from '../src/lib/facebookGraphPagingPolicy.mjs';
+import * as conversationPaging from '../src/lib/metaConversationPaginationPolicy.mjs';
+import * as selection from '../src/lib/facebookPageSelectionPolicy.mjs';
+import * as providerError from '../src/lib/metaProviderErrorPolicy.mjs';
+import * as runtime from '../src/lib/metaRuntimeConfigPolicy.mjs';
+import * as crypto from 'node:crypto';
+const app = '123456789012345';
+const scopes = load('src/lib/facebookScopes.ts', {});
+const required = [...scopes.FACEBOOK_MESSAGES_OAUTH_SCOPES];
+const diagnostics = { app_id: app, is_valid: true, scopes: required, granular_scopes: required.map(scope => ({ scope, target_ids: ['11', '22'] })) };
+function load(path, dependencies, extra = {}) {
+  const exports = {};
+  const code = ts.transpileModule(readFileSync(path, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+  runInNewContext(code, { exports, URL, AbortSignal, Buffer, Date, console: { info(){}, warn(){}, error(){} }, process: { env: { FACEBOOK_APP_ID: app, FACEBOOK_APP_SECRET: '0123456789abcdef0123456789abcdef' } }, require(name) { assert.ok(name in dependencies, name); return dependencies[name]; }, ...extra });
+  return exports;
+}
+function harness(respond) {
+  const calls = [];
+  const api = load('src/lib/facebookIntegration.ts', {
+    '@/lib/facebookScopes': scopes, '@/lib/metaIntegrationPolicy.mjs': { META_GRAPH_API_VERSION: 'v25.0' }, '@/lib/facebookGraphPagingPolicy.mjs': paging,
+    '@/lib/metaConversationPaginationPolicy.mjs': conversationPaging, '@/lib/facebookPageSelectionPolicy.mjs': selection, '@/lib/metaProviderErrorPolicy.mjs': providerError,
+    '@/lib/metaRuntimeConfigPolicy.mjs': runtime, 'node:crypto': crypto,
+  }, { fetch: async (url, options) => { calls.push(String(url)); const result = await respond(new URL(url), options); return { ok: !result.error, status: result.error ? 403 : 200, json: async () => result }; } });
+  return { api, calls };
+}
+const row = (id, token = `token-${id}`) => ({ id, name: `Page ${id}`, access_token: token, tasks: ['MESSAGING'] });
+const next = after => `https://graph.facebook.com/v25.0/123/accounts?after=${after}&access_token=never-forward`;
+function responder({ edge = [row('11')], field = [], debug = diagnostics, direct = {} } = {}) {
+  return url => {
+    if (url.pathname.endsWith('/debug_token')) return { data: debug };
+    if (url.pathname.endsWith('/me/accounts')) return { data: edge };
+    if (url.pathname.endsWith('/me')) return { accounts: { data: field } };
+    return direct[url.pathname.split('/').at(-1)] ?? { error: { code: 10 } };
+  };
+}
+test('non-empty primary is supplemented, deduplicated, and retains usable tokens; tasks are not OAuth scopes', async () => {
+  const h = harness(responder({ field: [row('11', null), row('22')] }));
+  const pages = await h.api.fetchFacebookPages('user');
+  assert.deepEqual(Array.from(pages, p=>p.id), ['11','22']);
+  assert.equal(pages[0].accessToken, 'token-11');
+  assert.equal(pages[0].scopes.includes('MESSAGING'), false);
+});
+test('both accounts methods exhaust pagination on the trusted edge using the original token', async () => {
+  for (const nested of [false, true]) {
+    const h = harness(url => {
+      if (url.pathname.endsWith('/debug_token')) return { data: { ...diagnostics, granular_scopes: [] } };
+      if (url.searchParams.get('after')) { assert.equal(url.searchParams.get('access_token'),'user'); return { data: [row('22')] }; }
+      if (url.pathname.endsWith('/me')) return { accounts: { data: nested ? [row('11')] : [], ...(nested ? { paging: { next: next('cursor') } } : {}) } };
+      return { data: nested ? [] : [row('11')], ...(!nested ? { paging: { next: next('cursor') } } : {}) };
+    });
+    assert.deepEqual(Array.from(await h.api.fetchFacebookPages('user'),p=>p.id),['11','22']);
+    assert.ok(h.calls.every(url=>!url.includes('never-forward')));
+  }
+});
+test('granular targets are a union, never inferred from names or supplied IDs; invalid app tokens cannot add targets', async () => {
+  const debug = { ...diagnostics, granular_scopes: [{ scope:'pages_show_list',target_ids:['11','22'] }, {scope:'pages_messaging',target_ids:['11']} ] };
+  const h = harness(responder({debug, direct: {'22':row('22')}}));
+  assert.deepEqual(Array.from(await h.api.fetchFacebookPages('user'),p=>p.id), ['11','22']);
+  for (const invalid of [{...debug,is_valid:false},{...debug,app_id:'other'}]) {
+    const bad = harness(responder({debug:invalid, direct:{'22':row('22')}}));
+    assert.equal((await bad.api.fetchFacebookPages('user')).length,1);
+    assert.ok(!bad.calls.some(url=>url.includes('/22?')));
+  }
+});
+test('pagination errors, unsafe paths, loops and request exhaustion cannot silently return partial success', async () => {
+  for (const kind of ['foreign','path','loop','exhaust','failure']) {
+    const h = harness(url => {
+      if (kind==='failure' && url.searchParams.get('after')) return {error:{code:10}};
+      const continuation = kind==='foreign' ? 'https://evil.invalid/steal?after=x' : kind==='path' ? 'https://graph.facebook.com/v25.0/22/feed?after=x' : next(kind==='exhaust' ? `cursor${url.searchParams.get('after')??''}x` : 'same');
+      return {data:[row('11')],paging:{next:continuation}};
+    });
+    await assert.rejects(h.api.fetchFacebookPages('user'));
+    assert.ok(h.calls.length<=10);
+    assert.ok(h.calls.every(url=>new URL(url).hostname==='graph.facebook.com'));
+  }
+});
+test('missing tokens remain visibly unavailable and granular ID mismatches cannot substitute another page', async () => {
+  const h = harness(responder({edge:[row('11',null)],direct:{'22':row('33')}}));
+  const pages=await h.api.fetchFacebookPages('user');
+  assert.equal(pages.length,1); assert.equal(pages[0].accessToken,null);
+});
+test('per-page authorization fails closed for invalid, missing, foreign-app, missing-scope or different-target grants', () => {
+  const {api}=harness(responder());
+  assert.equal(api.hasFacebookPageAuthorization(diagnostics,'22',required),true);
+  for(const debug of [null,{...diagnostics,is_valid:false},{...diagnostics,app_id:'other'},{...diagnostics,scopes:[],granular_scopes:[]},{...diagnostics,granular_scopes:[{scope:'pages_messaging',target_ids:['11']}]}]) {
+    assert.equal(api.hasFacebookPageAuthorization(debug,'22',required),false);
+  }
+  assert.equal(api.hasRequiredFacebookPagePermissions(null),false);
+});
+
+test('Staging source exception accepts only the exact manually reviewed task branch and preserves runtime settings', async () => {
+  const {isReviewedStagingSourceAllowed: allowed}=await import('../scripts/operations/staging-reviewed-source-policy.mjs');
+  const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/fix/facebook-page-discovery-staging',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),REVIEWED_RELEASE_COMMIT:'a'.repeat(40),BILLING_WRITE_FREEZE:'preserve'};
+  assert.equal(allowed(env),true);
+  for (const override of [{GITHUB_REPOSITORY:'attacker/FanMind'},{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{REVIEWED_RELEASE_COMMIT:''},{REVIEWED_RELEASE_COMMIT:'b'.repeat(40)},{BILLING_WRITE_FREEZE:'false'},{FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM:'recover-live-staging-release-state'}]) assert.equal(allowed({...env,...override}),false);
+  assert.equal(allowed({...env,GITHUB_REF:'refs/heads/main',REVIEWED_RELEASE_COMMIT:''}),true);
+});
+
+test('Page token must resolve to the exact selected Page identity before persistence', async () => {
+  for (const [payload, expected] of [[{id:'22'},true],[{id:'11'},false],[{error:{code:190}},false],[{},false]]) {
+    const h=harness(()=>payload);
+    assert.equal(await h.api.verifyFacebookPageTokenIdentity('page-token','22'),expected);
+    assert.equal(new URL(h.calls[0]).searchParams.get('fields'),'id');
+  }
+});
+
+test('real selection route rejects foreign user/Workspace and expired pending state before any provider or persistence call', async () => {
+  for (const pending of [null,{userId:'foreign',workspaceId:'workspace-1'},{userId:'user-1',workspaceId:'foreign'}]) {
+    let calls=0;
+    const response = () => ({cookies:{set(){} }});
+    const route=load('src/app/api/integrations/facebook/select/route.ts',{
+      'next/cache':{revalidatePath(){}},'next/server':{NextResponse:{redirect:response,json:response}},
+      '@/lib/demoMode':{areDemoConnectionsDisabled:()=>false},
+      '@/lib/facebookConnectionFlow':{completeFacebookOAuthConnection:async()=>{calls++;return {ok:true}}},
+      '@/lib/facebookIntegration':{verifyPendingFacebookPageSelection:()=>pending},
+      '@/lib/facebookPageSelectionPolicy.mjs':selection,
+      '@/lib/httpMutationPolicy.mjs':{isTrustedFanMindMutationRequest:()=>true},
+      '@/lib/metaIntegrationPolicy.mjs':{canManageMetaConnections:()=>true},
+      '@/lib/supabase/server':{getSupabaseServerUser:async()=>({data:{user:{id:'user-1'}}})},
+      '@/lib/workspaceAuthorization':{requireActiveAuthorizedWorkspace:async()=>({user:{id:'user-1'},workspace:{id:'workspace-1',role:'owner'}})},
+    });
+    await route.POST({url:'https://staging.fanmind.ch/api/integrations/facebook/select',nextUrl:{protocol:'https:'},cookies:{get:()=>({value:'encrypted'})},formData:async()=>{calls++;throw new Error('must not read form');}});
+    assert.equal(calls,0);
+  }
+});
+
+test('Staging connection imports only its saved Page and leaves shared-app subscriptions unchanged', async()=>{
+  const calls=[];
+  const integration={
+    fetchFacebookGrantedPermissions:async()=>[],fetchFacebookTokenDiagnostics:async()=>diagnostics,getGrantedFacebookPermissionNames:()=>required,
+    getFacebookGrantedScopeNames:()=>required,hasRequiredFacebookPagePermissions:()=>true,hasFacebookPageAuthorization:()=>true,
+    verifyFacebookPageTokenIdentity:async()=>true,fetchFacebookPages:async()=>[{id:'22',name:'Page',accessToken:'token',scopes:[]}],
+    isTokenEncryptionConfigured:()=>true,encryptToken:()=> 'encrypted',tokenLastFour:()=> 'fake',FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS:['messages'],
+    subscribeFacebookPage:async()=>{calls.push('subscribe');},
+  };
+  const flow=load('src/lib/facebookConnectionFlow.ts',{
+    '@/lib/facebookScopes':scopes,'@/lib/facebookIntegration':integration,
+    '@/lib/metaInitialImport':{runMetaInitialImport:async connection=>{calls.push(['import',connection.workspace_id,connection.page_id]);return 'complete';}},
+    '@/lib/supabase/server':{upsertFacebookSocialConnection:async input=>({connection:{id:'saved',workspace_id:input.workspaceId,page_id:input.pageId}}),updateFacebookWebhookSubscribed:async()=>{calls.push('webhook-save');}},
+  },{process:{env:{FANMIND_RUNTIME_ENVIRONMENT:'staging'}}});
+  assert.equal((await flow.completeFacebookOAuthConnection({workspaceId:'workspace-1',connectedBy:'user-1',connectionType:'facebook_messages',userAccessToken:'user',selectedPageId:'22'})).ok,true);
+  assert.deepEqual(calls,[['import','workspace-1','22']]);
+});
+
+test('host diagnostics emit only fixed discovery labels and numeric/boolean counts',async()=>{
+  const {summarizeFacebookDiscoveryLogs:summarize}=await import('../scripts/operations/staging-facebook-discovery-diagnostics.mjs');
+  const log="private token\nFacebook /me/accounts pages diagnostics {\n httpStatus: 200,\n pageCount: 1,\n pagesMissingAccessToken: 0,\n token: 'SECRET',\n pageId: 999\n}\nFacebook direct page fetch diagnostics { hasPage: false, errorCode: 10, message: 'private text' }";
+  assert.deepEqual(summarize(log),[{label:'Facebook /me/accounts pages diagnostics',counts:{httpStatus:200,pageCount:1,pagesMissingAccessToken:0}},{label:'Facebook direct page fetch diagnostics',counts:{hasPage:false,errorCode:10}}]);
+  assert.doesNotMatch(JSON.stringify(summarize(log)),/SECRET|999|private/u);
+});

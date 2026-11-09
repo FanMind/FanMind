@@ -884,3 +884,6 @@ test('Meta configure blocks pending runtime drift before any restart or write', 
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency({ ...config, FACEBOOK_APP_ID: '99999' }, { ...config, FACEBOOK_APP_ID: '99999' }, syntheticMetaInput.appId), /existing_app_conflict/u);
   assert.throws(() => metaRuntime.renderMetaConfiguration(`FACEBOOK_APP_ID=99999\nFANMIND_TOKEN_ENCRYPTION_KEY=${syntheticMetaKey}\n`, [], syntheticMetaInput), /existing_app_conflict/u);
 });
+
+// Executable provider-response and reviewed Staging source regressions.
+import "./facebook-page-discovery.cases.mjs";
