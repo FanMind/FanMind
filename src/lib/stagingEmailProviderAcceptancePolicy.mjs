@@ -23,7 +23,7 @@ const RESEND_KEY_PATTERN = /^re_[A-Za-z0-9_-]{20,256}$/u;
 const RESEND_MX_PATTERN =
   /^feedback-smtp\.(?:us-east-1|eu-west-1|sa-east-1|ap-northeast-1)\.amazonses\.com$/u;
 const RESPONSE_LIMIT = 16 * 1024;
-const GITHUB_REPOSITORY = "Bernds-tech/FanMind";
+const GITHUB_REPOSITORY = "FanMind/FanMind";
 const GITHUB_REPOSITORY_ID = "1259448985";
 const GITHUB_API_ORIGIN = "https://api.github.com";
 const RESEND_API_ORIGIN = "https://api.resend.com";
