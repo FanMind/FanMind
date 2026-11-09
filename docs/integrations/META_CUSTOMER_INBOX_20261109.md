@@ -199,3 +199,26 @@ existing user/Workspace authorization. It never emits provider error messages,
 tokens or message content. It distinguishes the remaining Graph/response-shape
 failure without broadening host journal access. Real cause pending deployment
 and reconnect; no speculative permission or provider setting changes.
+
+## Real callback diagnosis on dc32edb3 and narrow continuation
+
+After Bernd confirmed the operator login, the actual matching Workspace was
+verified in the selected browser. Existing Meta authorization was refreshed;
+FanMind returned `page_discovery_accounts_field_shape_200_0`: successful HTTP,
+no Graph error, but no usable expanded accounts collection. No Page was saved.
+This proves an accounts-field response-shape rejection, not a Page permission
+refusal or a successful connection.
+
+Accept only the precise safe empty-edge variant: successful response, no Graph
+error, numeric string user identity and no own accounts property. That variant
+adds no Page; recovery still uses only valid same-app granular target IDs.
+Explicit null/malformed accounts and missing/invalid identity remain blocked.
+All-empty discovery now preserves bounded direct-recovery HTTP/Graph codes or
+a fixed no-target/invalid-debug classification; it never discloses Page IDs,
+token values or provider text. Unknown response shapes still fail closed.
+
+Focused 46 tests, TypeScript and affected ESLint PASS. Fresh full build/Operations,
+exact-head CI and independent review are required before the necessary Staging
+code deployment. The existing dc32edb3 diagnosis could not complete connection,
+so this is a warranted fix rather than a redundant redeployment. Main merge,
+Production and the existing shared Webhook remain outside authorization.

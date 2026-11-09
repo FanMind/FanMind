@@ -182,3 +182,24 @@ test('discovery failures expose only endpoint, fixed category and bounded numeri
   const e=new h.api.FacebookPageDiscoveryError('accounts_edge','http',NaN,Infinity);
   assert.equal(e.diagnostic,'page_discovery_accounts_edge_http_0_0');
 });
+
+test('a valid user with omitted expanded accounts is empty, then only real granular targets recover Pages',async()=>{
+  const base=responder({edge:[],debug:{...diagnostics,granular_scopes:[{scope:'pages_show_list',target_ids:['22']}]},direct:{'22':row('22')}});
+  const h=harness(url=>url.pathname.endsWith('/me')?{id:'12345'}:base(url));
+  assert.deepEqual(Array.from(await h.api.fetchFacebookPages('user'),p=>p.id),['22']);
+  assert.ok(h.calls.every(url=>!new URL(url).pathname.endsWith('/11')));
+});
+test('null, missing-identity and malformed expanded accounts remain errors, never implicit authorization',async()=>{
+  for(const invalid of [{},{id:'not-a-user'},{id:'12345',accounts:null},{id:'12345',accounts:{}},{id:'12345',accounts:{data:'private malformed'}}]){
+    const h=harness(url=>url.pathname.endsWith('/me/accounts')?{data:[]}:invalid);
+    await assert.rejects(h.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_accounts_field_shape_200_0');
+  }
+});
+test('empty lists distinguish unreadable real granular targets from missing granular authorization without disclosing text or IDs',async()=>{
+  const denied=harness(responder({edge:[],field:[],debug:diagnostics}));
+  await assert.rejects(denied.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_granular_page_http_403_10');
+  const noTargets=harness(responder({edge:[],field:[],debug:{...diagnostics,granular_scopes:[]}}));
+  await assert.rejects(noTargets.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_granular_targets_shape_0_0');
+  const invalidToken=harness(responder({edge:[],field:[],debug:{...diagnostics,is_valid:false}}));
+  await assert.rejects(invalidToken.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_token_debug_shape_0_0');
+});

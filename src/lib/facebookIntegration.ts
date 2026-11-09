@@ -380,12 +380,19 @@ export async function fetchFacebookPages(
   const targetIds = getFacebookGranularPageTargetIds(diagnostics);
   const unresolvedIds = targetIds.filter(id => !byId.get(id)?.accessToken);
   const recovered = await fetchFacebookPagesFromGranularTargets(userAccessToken, unresolvedIds, signal);
-  merge(recovered);
+  merge(recovered.pages);
+  if (!byId.size) {
+    if (recovered.failure) throw recovered.failure;
+    throw new FacebookPageDiscoveryError(
+      diagnostics?.is_valid === true && diagnostics.app_id === requireFacebookAppId()
+        ? "granular_targets" : "token_debug", "shape",
+    );
+  }
   console.info("Facebook page discovery diagnostics", {
     accountsCount: primary.pages.length,
     accountsFieldCount: fallback.pages.length,
     granularTargetCount: targetIds.length,
-    recoveredCount: recovered.length,
+    recoveredCount: recovered.pages.length,
     unresolvedTargetCount: targetIds.filter(id => !byId.has(id)).length,
     pageCount: byId.size,
     pagesMissingAccessToken: [...byId.values()].filter(page => !page.accessToken).length,
@@ -1337,13 +1344,18 @@ async function fetchFacebookPagesFromGranularTargets(
   userAccessToken: string,
   targetIds: string[],
   signal: AbortSignal,
-): Promise<FacebookPage[]> {
+): Promise<{ pages: FacebookPage[]; failure: FacebookPageDiscoveryError | null }> {
   const pages: FacebookPage[] = [];
+  let failure: FacebookPageDiscoveryError | null = null;
 
   for (const targetId of targetIds) {
     signal.throwIfAborted();
-    const page = await fetchFacebookPageById(userAccessToken, targetId, signal);
-    if (!page) continue;
+    const result = await fetchFacebookPageById(userAccessToken, targetId, signal);
+    const page = result.page;
+    if (!page) {
+      failure = new FacebookPageDiscoveryError("granular_page", result.error || result.httpStatus >= 400 ? "http" : "shape", result.httpStatus, result.error?.code);
+      continue;
+    }
 
     console.info("Facebook page recovered from granular scope target", {
       hasAccessToken: Boolean(page.accessToken),
@@ -1351,14 +1363,14 @@ async function fetchFacebookPagesFromGranularTargets(
     pages.push(page);
   }
 
-  return pages;
+  return { pages, failure };
 }
 
 async function fetchFacebookPageById(
   userAccessToken: string,
   pageId: string,
   signal: AbortSignal,
-): Promise<FacebookPage | null> {
+): Promise<FacebookDirectPageFetchResult> {
   const withToken = await fetchFacebookPageByIdWithFields(
     userAccessToken,
     pageId,
@@ -1367,7 +1379,7 @@ async function fetchFacebookPageById(
   );
 
   if (withToken.page || !isFacebookFieldError(withToken.error)) {
-    return withToken.page;
+    return withToken;
   }
 
   console.warn("Facebook direct page fetch without access_token fallback", {
@@ -1381,11 +1393,12 @@ async function fetchFacebookPageById(
     "id,name",
     signal,
   );
-  return withoutToken.page;
+  return withoutToken;
 }
 
 type FacebookDirectPageFetchResult = {
   page: FacebookPage | null;
+  httpStatus: number;
   error?: { message?: string; code?: number; type?: string };
 };
 
@@ -1417,14 +1430,15 @@ async function fetchFacebookPageByIdWithFields(
 
   if (!response.ok) {
     logFacebookApiError("Facebook direct page fetch failed", payload?.error);
-    return { page: null, error: payload?.error };
+    return { page: null, httpStatus: response.status, error: payload?.error };
   }
 
   if (payload?.id !== pageId || !payload.name) {
-    return { page: null, error: payload?.error };
+    return { page: null, httpStatus: response.status, error: payload?.error };
   }
 
   return {
+    httpStatus: response.status,
     page: {
       id: payload.id,
       name: payload.name,
@@ -1458,7 +1472,7 @@ async function fetchFacebookPagesFromMeAccountsField(userAccessToken: string, si
 
 export class FacebookPageDiscoveryError extends Error {
   readonly diagnostic: string;
-  constructor(endpoint: "accounts_edge" | "accounts_field", kind: "transport" | "http" | "shape", status = 0, graphCode = 0) {
+  constructor(endpoint: "accounts_edge" | "accounts_field" | "granular_page" | "granular_targets" | "token_debug", kind: "transport" | "http" | "shape", status = 0, graphCode = 0) {
     super("Facebook-Seitenliste konnte nicht vollständig geladen werden.");
     this.name = "FacebookPageDiscoveryError";
     const safeStatus = Number.isInteger(status) && status >= 0 && status <= 599 ? status : 0;
@@ -1491,9 +1505,17 @@ async function fetchFacebookAccountsCollection(
     });
     type Collection = { data?: FacebookRawPage[]; paging?: { next?: string } };
     const payload = (await response.json().catch(() => null)) as (Collection & {
+      id?: string;
       accounts?: Collection;
       error?: { message?: string; code?: number; type?: string };
     }) | null;
+    // Meta may omit an empty expanded accounts edge from an otherwise valid user.
+    // This adds no Page or authority; granular recovery still requires real grants.
+    if (useNested && response.ok && !payload?.error &&
+        typeof payload?.id === "string" && /^\d{1,32}$/.test(payload.id) &&
+        !Object.hasOwn(payload, "accounts")) {
+      return buildFacebookPagesFetchResult(response.status, rawPages);
+    }
     const collection = useNested ? payload?.accounts : payload;
     if (!response.ok || payload?.error || !Array.isArray(collection?.data)) {
       logFacebookApiError("Facebook page discovery failed", payload?.error);
