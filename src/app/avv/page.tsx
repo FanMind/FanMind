@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -80,6 +81,7 @@ export default function AvvPage() {
 
           <section className={styles.section} aria-labelledby="avv-anfordern">
             <h2 id="avv-anfordern">AVV anfordern</h2>
+            <OperatorContactDetails />
             <p>
               Sende Unternehmen beziehungsweise Organisation, Ansprechperson,
               gewünschten FanMind-Plan und geplanten Starttermin an unser Team.

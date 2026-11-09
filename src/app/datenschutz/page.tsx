@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -20,11 +21,11 @@ const sections: PrivacySection[] = [
   {
     id: "verantwortlicher",
     icon: "⌂",
-    title: "Verantwortlicher",
+    title: "Anbieter und Datenschutzkontakt",
     content: (
       <>
         <p>
-          Verantwortlich für diese Website und die beschriebenen FanMind-Dienste ist:
+          Die Anbieterangaben für die beschriebenen FanMind-Dienste lauten:
         </p>
         <address className={styles.addressBlock}>
           <strong>FanMind</strong>
@@ -42,12 +43,13 @@ const sections: PrivacySection[] = [
           </span>
         </address>
         <p>
-          Inhaberin und rechtliche Betreiberin ist Brigitte Erika Guggenberger. Operativer Ansprechpartner ist Bernd Guggenberger. Die
+          Gewerbeinhaberin und Anbieterin ist Brigitte Erika Guggenberger. Die
           vollständigen Anbieter- und Betreiberangaben ergeben sich ergänzend
           aus dem <Link href="/impressum">Impressum</Link>.
         </p>
+        <OperatorContactDetails />
         <p>
-          Datenschutzanfragen können an <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
+          Datenschutzanfragen werden von Bernd Guggenberger entgegengenommen und können an <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           gerichtet werden.
         </p>
       </>

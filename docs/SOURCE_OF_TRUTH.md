@@ -1131,7 +1131,8 @@ KI Standard, KI Plus und KI Ultra sind keine eigenständigen CRM-Hauptpakete.
 
 - Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind.
 - Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich.
-- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger.
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operative und technische Leitung sowie Ansprechpartner für Inhalte und Datenschutzanfragen: Bernd Guggenberger, Turnerstrasse 18, 2345 Brunn am Gebirge, Österreich. Kontaktanschrift und Gewerbestandort sind getrennt.
+- Ergänzung vom 08.11.2026: Die tatsächliche Aufgabenverteilung erfordert eine erneute fachliche Rollenklärung zu Unternehmens-/Vertretungsverhältnissen, Medieninhaberschaft und Art. 4 Z 7 DSGVO. Kontaktangaben sind keine neue Bestätigung dieser Rollen; externe Rechtsfreigabe und Veröffentlichung der überarbeiteten Fassung bleiben offen.
 - zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling.
 - Kontakt: fanmind@fanmind.ch, +43 676 5367236.
 - Angebot ausschließlich für B2B-Unternehmer.

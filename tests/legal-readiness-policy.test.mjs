@@ -3,6 +3,10 @@ import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { createRequire } from "node:module";
+import ts from "typescript";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createElement } from "react";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -11,7 +15,9 @@ test("operator correction preserves GISA identity and never grants Bernd signing
   for (const path of paths) {
     const text = await source(path);
     assert.match(text, /Brigitte Erika Guggenberger/u);
-    assert.doesNotMatch(text, /Turnerstraße|2345 Brunn|Bernd Guggenberger unterschreibt|Inhaber und vertretungsberechtigt ist Bernd/u);
+    assert.match(text, /Bahnstraße 11/u);
+    assert.match(text, /2351 Wiener Neudorf/u);
+    assert.doesNotMatch(text, /Bernd Guggenberger unterschreibt|Inhaber und vertretungsberechtigt ist Bernd|Vertragspartner(?:in)? ist Bernd|Auftragsverarbeiter(?:in)?:[^\n]*Bernd/u);
   }
   const imprint = await source(paths[0]);
   assert.match(imprint, /40314440/u);
@@ -293,3 +299,26 @@ test("both production release checks include every public legal route", async ()
   }
 });
 
+
+
+test("operational contact renders a separate readable address without changing legal evidence", async () => {
+  const input = await source("src/components/OperatorContactDetails.tsx");
+  const compiled = ts.transpileModule(input, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  const exports = {};
+  new Function("require", "exports", compiled)(createRequire(import.meta.url), exports);
+  const html = renderToStaticMarkup(createElement(exports.OperatorContactDetails));
+  assert.match(html, /Operative und technische Leitung/u);
+  assert.match(html, /Ansprechpartner für Inhalte und Datenschutzanfragen/u);
+  assert.match(html, /Bernd Guggenberger<\/span><br\/>/u);
+  assert.match(html, /Turnerstrasse 18<\/span><br\/>/u);
+  assert.match(html, /2345 Brunn am Gebirge/u);
+  assert.match(html, /href="mailto:fanmind@fanmind.ch"/u);
+  assert.match(html, /href="tel:\+436765367236"/u);
+  assert.doesNotMatch(html, /Vertragspartner|Medieninhaber|Auftragsverarbeiter|Datenschutzbeauftragter|vertretungsberechtigt/u);
+  for (const route of ["impressum", "agb", "datenschutz", "zahlungsbedingungen", "referral-bedingungen", "avv", "support"]) {
+    assert.match(await source(`src/app/${route}/page.tsx`), /<OperatorContactDetails \/>/u, route);
+  }
+  const evidence = JSON.parse(await source("docs/legal/external-approval-evidence.json"));
+  assert.equal(evidence.approvals.legalReview.status, "pending");
+  assert.match(await source("docs/LEGAL_COMPLETION_STATUS.md"), /Medieninhaberschaft und tatsächliche Unternehmens/u);
+});

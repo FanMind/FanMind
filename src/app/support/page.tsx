@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import type { Metadata } from "next";
 import { FanMindLogo } from "@/components/FanMindLogo";
 import styles from "../account-deletion/account-deletion.module.css";
@@ -27,6 +28,7 @@ export default function SupportPage() {
 
         <section className={styles.card} aria-labelledby="support-contact-title">
           <h2 id="support-contact-title">Support kontaktieren</h2>
+          <OperatorContactDetails />
           <p>
             Beschreibe kurz, auf welchem Gerät und bei welchem Schritt das Problem
             auftritt. Sende niemals dein Passwort, einen Recovery-Link, API-Schlüssel

@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import { capacityRegistrationPackages, capacityDataPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -21,8 +22,9 @@ const sections: TermsSection[] = [
     content: (
       <>
         <p>
-          Vertragspartnerin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich (GISA 40314440). Bernd Guggenberger ist operativer Ansprechpartner.
+          Vertragspartnerin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich (GISA 40314440).
         </p>
+        <OperatorContactDetails />
         <p>
           FanMind ist ein KI-gestützter Antwort- und Memory-Assistent für Fan-, Kunden- und
           Community-Beziehungen. FanMind stellt Werkzeuge zur Kontaktverwaltung,

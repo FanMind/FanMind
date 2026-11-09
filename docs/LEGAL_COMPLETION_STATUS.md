@@ -8,7 +8,8 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 
 - Marke/Produkt: FanMind
 - Betreiberin und Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
-- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operative und technische Leitung sowie Ansprechpartner für Inhalte und Datenschutzanfragen: Bernd Guggenberger
+- Operative Kontaktanschrift: Turnerstrasse 18, 2345 Brunn am Gebirge, Österreich; getrennt vom Gewerbestandort
 - Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
 - GISA-Zahl: 40314440 (amtlicher Auszug vom 02.11.2026; Original privat geprüft und mit SHA-256-Beleg im externen Register bestätigt)
 - Gewerbebeginn: 29.10.2026
@@ -18,6 +19,10 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 - Produktgrenze: keine automatische Nachrichtenversendung; der Mensch prüft und sendet final selbst
 - Integrationen werden nur als aktiv bezeichnet, wenn sie technisch und rechtlich freigegeben sind
 - Checkout, Zahlungen und Rechnungen werden getrennt vom Kommunikationsworkflow über den ausgewiesenen Zahlungsanbieter abgewickelt
+
+## Rollenklärung nach Ergänzung vom 08.11.2026
+
+Die oben genannten bisherigen Anbieter-/Vertragspartnerangaben sind der bisherige Veröffentlichungsstand, keine neue rechtliche Bestätigung. Bernd erklärt die tatsächliche operative, technische und inhaltliche Leitung; Brigitte hält die Gewerbeberechtigung. Datenschutz-Verantwortlichkeit, Medieninhaberschaft und tatsächliche Unternehmens-/Vertretungsverhältnisse sind vor Veröffentlichung der überarbeiteten Fassung fachlich zu klären. Die geänderten Kontaktangaben bestimmen keine neue DSGVO-Rolle, Vollmacht oder Haftungsübernahme. `legalReview` bleibt pending. Historische abgeschlossene technische/amtliche Belege bleiben unverändert.
 
 ## Noch verbindlich zu entscheiden oder zu prüfen
 
@@ -80,7 +85,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 
 ## Definition of Done
 
-- [x] Betreiber, Vertragspartner und Vertretungsregelung sind in der kanonischen Produktwahrheit festgelegt.
+- [ ] Betreiber-, Datenschutz-, Medieninhaber- und Vertretungsrollen nach der tatsächlichen Aufgabenverteilung vom 08.11.2026 fachlich bestätigen.
 - [ ] Steuerberatung bestätigt UID-/Register-/Rechnungsangaben.
 - [ ] Rechtsprüfung bestätigt Impressum, AGB, Zahlungsbedingungen, Referral-Bedingungen, Datenschutz und AVV.
 - [x] Die bereits freigegebenen Betreiber-, Kontakt-, Preis-, Produkt- und

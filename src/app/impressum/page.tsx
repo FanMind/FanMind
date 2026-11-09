@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 const operatorRows = [
   {
-    label: "Betreiberin / Vertragspartnerin / Medieninhaberin",
+    label: "Betreiberin / Vertragspartnerin",
     value: "Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind",
   },
   {
@@ -54,8 +55,8 @@ const operatorRows = [
     value: <a href="https://www.ris.bka.gv.at/eli/bgbl/1994/194">Gewerbeordnung 1994 (GewO 1994)</a>,
   },
   {
-    label: "Operativer Ansprechpartner",
-    value: "Bernd Guggenberger",
+    label: "Operative Leitung und Kontakt",
+    value: <OperatorContactDetails />,
   },
   {
     label: "Kammerzugehörigkeit",
@@ -107,7 +108,7 @@ export default function ImpressumPage() {
             </h2>
             <p>
               FanMind wird von Brigitte Erika Guggenberger als Einzelunternehmerin
-              unter der Geschäftsbezeichnung FanMind betrieben. Bernd Guggenberger ist operativer Ansprechpartner; die rechtliche Betreiberin und Vertragspartnerin bleibt Brigitte Erika Guggenberger. Eine
+              unter der Geschäftsbezeichnung FanMind betrieben. Bernd Guggenberger übernimmt die operative und technische Leitung sowie die Betreuung der Website-Inhalte und Datenschutzanfragen; die rechtliche Betreiberin und Vertragspartnerin bleibt Brigitte Erika Guggenberger. Eine
               Firmenbuchnummer und ein Firmenbuchgericht werden erst
               angeführt, sobald sie tatsächlich vorhanden und bestätigt sind.
             </p>

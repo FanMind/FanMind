@@ -1,3 +1,4 @@
+import { OperatorContactDetails } from "@/components/OperatorContactDetails";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -167,10 +168,7 @@ const sections: ReferralSection[] = [
   {
     title: "Kontakt",
     content: (
-      <p>
-        Fragen zum Referral-Programm bitte an{" "}
-        <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a> richten.
-      </p>
+      <><p>Fragen zum Referral-Programm nimmt Bernd Guggenberger entgegen.</p><OperatorContactDetails /></>
     ),
   },
 ];

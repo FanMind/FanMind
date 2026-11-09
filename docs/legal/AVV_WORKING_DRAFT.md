@@ -29,6 +29,12 @@ Verantwortlichen verlangt.
   Rechtmäßigkeit der in FanMind eingegebenen oder importierten Daten
   verantwortlich.
 
+Operative und technische Leitung sowie Ansprechpartner für Inhalte und Datenschutzanfragen:
+Bernd Guggenberger, Turnerstrasse 18, 2345 Brunn am Gebirge, Österreich;
+E-Mail fanmind@fanmind.ch, Telefon +43 676 5367236. Diese Kontaktangabe ist
+keine Bestätigung einer rechtsgeschäftlichen Vollmacht oder einer
+abschließend geprüften datenschutzrechtlichen Rolle.
+
 ## 2. Gegenstand, Zweck und Dauer
 
 Gegenstand ist die technische Bereitstellung eines mandantengetrennten CRM und
