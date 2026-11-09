@@ -58,6 +58,18 @@ export async function runCustomerAcceptance(env=process.env){
    requireFact(uuid.test(actor.id??'')&&typeof actor.token==='string'&&actor.anon,'identity_failed');
    requireFact(query(`SELECT count(*) FROM public.workspaces WHERE id='${f.workspace}' AND owner_user_id='${actor.id}' AND test_access_flags->>'staging_synthetic_fixture'='true'`)==='1','fixture_owner_changed');
    await page.waitForURL(/\/dashboard(?:\?|$)/);
+   if(env.FANMIND_SUPPORT_DIAGNOSTICS_ACCEPTANCE==='true'){
+    const diagnostic=await request(actor,'/api/support/diagnostics');
+    requireFact(diagnostic.status===200&&diagnostic.data?.ok===true&&Array.isArray(diagnostic.data.connections),'diagnostic_read');
+    requireFact(diagnostic.data.connections.every(c=>Object.keys(c).sort().join(',')==='issue,platform,status'&&['facebook','instagram','whatsapp'].includes(c.platform)&&['connected','attention_required'].includes(c.status)),'diagnostic_redaction');
+    const count=query(`SELECT count(*) FROM public.social_connections WHERE workspace_id='${actor.workspace}' AND platform IN ('facebook','instagram','whatsapp')`);
+    requireFact(diagnostic.data.connections.length===Number(count),'diagnostic_workspace_binding');
+    const checked=await request(actor,'/api/support/automatic-check',{action:'refresh_readonly_status',platform:'facebook'});
+    requireFact(checked.status===200&&checked.data?.changed===false&&checked.data?.performed==='read_only_check','safe_check');
+    requireFact((await request(actor,'/api/support/automatic-check',{action:'replace_credentials',platform:'facebook'})).status===403,'mutating_check_denied');
+    requireFact((await request(actor,'/api/support/automatic-check',{action:'refresh_readonly_status',platform:'facebook'},'https://foreign.invalid')).status===403,'safe_check_origin');
+    console.log(`SUPPORT_DIAGNOSTICS_${i?'MOBILE':'DESKTOP'}=PASS`);
+   }
    let r=await request(actor,'/api/support/conversation');requireFact(r.status===200&&r.data?.turns?.length===0,'initial_conversation');actor.scope=r.data.scope;
    requireFact(actor.scope===createHash('sha256').update(`${actor.id}:${actor.workspace}`).digest('hex'),'workspace_scope');
    for(const table of ['support_chat_threads','support_chat_turns','support_centre_cases','support_centre_events','support_centre_notifications','support_repair_audit']){
