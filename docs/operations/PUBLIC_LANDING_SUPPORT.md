@@ -46,9 +46,14 @@ handoff is shown. Account actions remain protected; this chat supplies informati
   store:false, maximum800 output tokens,20second deadline and request cancellation.
 - Canonical bounded reply-context helper is reused; explicit public-only system
   instructions never derive product truth from visitor history. No tools.
-- No quoted price/discount/contract/limit promises; current public pricing is
-  referenced at /#preise. Currency-bearing model output is replaced by the public
-  pricing guidance. This is bounded protection, not a semantic model guarantee.
+- Price/setup/package questions return a deterministic DE/EN answer from the same
+  public package and one-time data-package configuration as the landing page.
+  Consent, Origin, feature, shared rate limits and operational Owner/workspace
+  checks still run first. No provider call or artificial AI usage event is made
+  for catalogue answers. Currency-bearing model output is replaced by that same
+  canonical answer; visitor prices, discounts and contract claims are never accepted.
+  Free registration, pending paid activation, net pricing and unchanged existing
+  contracts are stated explicitly. Other unknown facts still fail transparently.
 - Existing ai_usage_events logs technical usage/cost without message text under
   the exactly-one bound Support Owner's exactly-one owned workspace. The server
   resolves only user_id and workspace id; clients cannot select either. Existing

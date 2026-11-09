@@ -1,6 +1,6 @@
 import {NextRequest,NextResponse} from "next/server";
 import {isTrustedFanMindMutationRequest,readBoundedJsonRequest} from "@/lib/httpMutationPolicy.mjs";
-import {parsePublicSupportRequest,guardPublicSupportReply,PUBLIC_SUPPORT_INSTRUCTIONS} from "@/lib/publicSupportPolicy.mjs";
+import {parsePublicSupportRequest,guardPublicSupportReply,PUBLIC_SUPPORT_INSTRUCTIONS,isPublicSupportPricingQuestion,publicSupportPricingReply} from "@/lib/publicSupportPolicy.mjs";
 import {buildBoundedReplySuggestionContext} from "@/lib/aiExecutionPolicy.mjs";
 import {getClientIp} from "@/lib/rateLimit";
 import {consumeSharedRateLimit} from "@/lib/sharedRateLimit";
@@ -36,6 +36,9 @@ export async function POST(request:NextRequest){
   for(const limit of limits)if(!(await consumeSharedRateLimit(limit)).allowed)return failure(429);
   workspaceId=await usageWorkspace();
  }catch{return failure(503);}
+ // Keep consent, feature, origin, rate and operational binding ahead of catalogue replies.
+ // A catalogue reply makes no provider request and must not fabricate AI usage.
+ if(isPublicSupportPricingQuestion(input.question))return NextResponse.json({reply:publicSupportPricingReply(input.language)},{headers});
  const bounded=buildBoundedReplySuggestionContext({contactId:"public-support",displayName:"Besucher",incomingMessage:input.question,conversationContext:JSON.stringify(input.history),messageLimit:50});
  const system=PUBLIC_SUPPORT_INSTRUCTIONS;
  const content=JSON.stringify({language:input.language,recentConversation:bounded.context.conversationContext,question:bounded.context.incomingMessage});

@@ -1072,3 +1072,6 @@ ist gespeichert und UID amtlich abgeglichen.
 
 
 UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreiberin Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet. Das vorbereitete Impressum enthält die UID; Steuernummer und GISA bleiben getrennt. Die Bestätigung aktiviert weder Billing noch Stripe Tax, ersetzt keine Rechts-/Steuerfreigabe und ist kein Production-Deploy. Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+
+Öffentlicher Support, 09.11.2026: Preis-/Paket-/Einrichtungsfragen nutzen dieselbe öffentliche Paket- und Datenpaketquelle wie die Landingpage, mit deutscher/englischer Antwort. Kostenlose Registrierung und noch ausstehende bezahlte Aktivierung bleiben ausdrücklich getrennt. Consent-, Origin-, Ratenlimit- und Owner-/Workspace-Prüfungen gelten auch vor diesen providerfreien Antworten. Keine neue Preisquelle oder Billing-Aktivierung. Details: `docs/operations/PUBLIC_LANDING_SUPPORT.md`.
