@@ -95,3 +95,7 @@ GitHub browser run 42639647909 on the preceding b5c8004 source passed all six
 local-provider journeys including the new Inbox regression, public desktop/mobile
 flows and ChatAdmin component checks. The corrected head must pass fresh CI
 before merge; no old run is substituted for that requirement.
+
+The package manifest remains byte-identical to Main because the existing read-only
+Capacity package checksum binds it. New Node regressions reside in the already
+CI-owned `tests/inbox-queue-policy.test.mjs`; no protected checksum is changed.
