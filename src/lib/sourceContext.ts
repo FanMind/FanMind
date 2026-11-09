@@ -353,10 +353,14 @@ export function buildReplyTargetAction(
   }
 
   if (platform === "facebook" && sourceType.includes("comment")) {
+    // A filtered comment and a contact's default Conversation can refer to
+    // different posts. Keep URL and IDs from one provenance tuple together.
+    const commentSource = primary ?? fallback;
     const href = facebookCommentTarget({
-      permalink: replyTargetUrl ?? sourceUrl,
-      postId: primary?.external_post_id ?? fallback?.external_post_id,
-      commentId: primary?.external_comment_id ?? fallback?.external_comment_id,
+      permalink: normalizeHttpUrl(commentSource?.reply_target_url) ??
+        normalizeHttpUrl(commentSource?.source_url),
+      postId: commentSource?.external_post_id,
+      commentId: commentSource?.external_comment_id,
     });
     return {
       href,

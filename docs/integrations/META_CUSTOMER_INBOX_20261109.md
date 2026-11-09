@@ -24,7 +24,9 @@ human to send manually.
   comment sync, existing stored comments in Inbox and the fan workbench. Facebook
   webhook post/fan thread keys now match the existing comment-sync keys.
 - Opening a comment from the Inbox selects its platform and post context in the
-  fan workbench. Different comments within the same fan/post Conversation remain
+  fan workbench timeline and original-channel action. AI drafting remains contact-
+  based; selecting a post does not establish a separate post-specific AI context.
+  Different comments within the same fan/post Conversation remain
   in the existing chronological timeline; this change is not a full-history
   import or one-row-per-comment feed.
 
@@ -77,3 +79,19 @@ no historical row rewrite or thread migration is performed.
 
 No supplied website registration, successful build or module test is evidence
 that these external steps have completed. No general-live claim is made.
+
+## Independent source countercheck
+
+A separate Guardian reviewed authorization, Workspace binding, queue identity,
+view filtering and comment routing. It reproduced and blocked one mixed-fallback
+provenance defect: an old URL-less comment could borrow another post's URL from
+the contact's default Conversation. The resolver now takes permalink, post ID
+and comment ID from one tuple only; mismatched fallback and absent provenance
+regressions pass. The Guardian independently reran 30 focused tests and confirmed
+that removing the Facebook host allowlist makes the negative assertion fail.
+Scoped source review PASS; provider activation and deployed RLS remain unproved.
+
+GitHub browser run 42639647909 on the preceding b5c8004 source passed all six
+local-provider journeys including the new Inbox regression, public desktop/mobile
+flows and ChatAdmin component checks. The corrected head must pass fresh CI
+before merge; no old run is substituted for that requirement.

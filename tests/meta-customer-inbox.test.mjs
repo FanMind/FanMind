@@ -100,4 +100,12 @@ test("legacy stored comments get the same safe target in the real source-action 
   const action = buildReplyTargetAction({ source_platform: "facebook", source_type: "facebook_comments", external_post_id: "101_202", external_comment_id: "303" });
   assert.equal(action.href, "https://www.facebook.com/101/posts/202?comment_id=303");
   assert.equal(buildReplyTargetAction({ source_platform: "facebook", source_type: "facebook_comments", reply_target_url: "https://evil.invalid" }).href, null);
+  const differentPost = { source_platform: "facebook", source_type: "facebook_comments",
+    source_url: "https://www.facebook.com/101/posts/999", external_post_id: "101_999", external_comment_id: "888" };
+  assert.equal(buildReplyTargetAction({ source_platform: "facebook", source_type: "facebook_comments",
+    external_post_id: "101_202", external_comment_id: "303" }, differentPost).href,
+  "https://www.facebook.com/101/posts/202?comment_id=303");
+  assert.equal(buildReplyTargetAction({ source_platform: "facebook", source_type: "facebook_comments" }, differentPost).href, null);
+  assert.equal(buildReplyTargetAction(null, differentPost).href,
+    "https://www.facebook.com/101/posts/999?comment_id=888");
 });
