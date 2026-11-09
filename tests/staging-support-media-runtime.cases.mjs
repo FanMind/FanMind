@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime,waitForStagingRelease,supportRuntimeCapabilities} from '../scripts/operations/staging-support-media-runtime.mjs';
+import {assertStagingRuntimeTarget,renderStagingRuntimeFlags,changeStagingRuntime,waitForStagingRelease,supportRuntimeCapabilities,renderStagingWidgetSecret,renderStagingDiagnostics} from '../scripts/operations/staging-support-media-runtime.mjs';
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),REVIEWED_COMMIT:'a'.repeat(40),CONFIRMATION:'staging-support-media-activate',FANMIND_RUNTIME_ENVIRONMENT:'staging',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://vshyhvgcmrlagvfnvomc.supabase.co',FANMIND_TARGET_SUPABASE_PROJECT_REF:'vshyhvgcmrlagvfnvomc',FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz',FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED:'false',FANMIND_OPERATIONS_EMAIL_ENABLED:'false',FANMIND_SERVER_ERROR_EMAIL_ENABLED:'false',FANMIND_ENABLE_TELEGRAM_SEND:'false',SUPPORT_OWNER_UUID:'5995a803-2ae2-46fa-8e4d-b030bf71da3c',GITHUB_RUN_ID:'12345',SUPPORT_SCHEMA_VERIFIED:'true',SUPPORT_RETENTION_VERIFIED:'true'};
 test('runtime rejects Production, branch source, absent schema proof and external delivery',()=>{
  assert.doesNotThrow(()=>assertStagingRuntimeTarget(env,'activate'));
@@ -102,14 +102,52 @@ test('retention proof binds every relative executable dependency of the retained
 
 
 test('runtime capability summary is boolean-only and never promotes presence to execution or delivery',()=>{
- const absent={widgetSessionConfigured:false,diagnosticsEnabled:false,repairEnabled:false,emailConfigured:false};
+ const absent={widgetSessionConfigured:false,diagnosticsEnabled:false,automaticChecksEnabled:false,repairEnabled:false,emailConfigured:false};
  assert.deepEqual(supportRuntimeCapabilities({}),absent);
  const privateProbe='synthetic-private-runtime-value-that-must-not-be-returned';
  const ready={FANMIND_WEBSITE_CHAT_SESSION_SECRET:privateProbe,FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED:'true',FANMIND_INAPP_HELP_REPAIR_ENABLED:'true',RESEND_API_KEY:privateProbe,FANMIND_NOTIFICATION_FROM:'synthetic@example.invalid'};
- assert.deepEqual(supportRuntimeCapabilities(ready),{widgetSessionConfigured:true,diagnosticsEnabled:true,repairEnabled:true,emailConfigured:true});
+ assert.deepEqual(supportRuntimeCapabilities(ready),{widgetSessionConfigured:true,diagnosticsEnabled:true,automaticChecksEnabled:false,repairEnabled:true,emailConfigured:true});
  assert.equal(JSON.stringify(supportRuntimeCapabilities(ready)).includes(privateProbe),false);
  assert.ok(Object.values(supportRuntimeCapabilities(ready)).every(value=>typeof value==='boolean'));
  for(const patch of [{FANMIND_WEBSITE_CHAT_SESSION_SECRET:'short'}, {FANMIND_WEBSITE_CHAT_SESSION_SECRET:' '.repeat(40)}])assert.equal(supportRuntimeCapabilities({...ready,...patch}).widgetSessionConfigured,false);
  for(const value of ['TRUE','1',true,undefined])assert.equal(supportRuntimeCapabilities({...ready,FANMIND_INAPP_HELP_REPAIR_ENABLED:value}).repairEnabled,false);
  for(const key of ['RESEND_API_KEY','FANMIND_NOTIFICATION_FROM'])assert.equal(supportRuntimeCapabilities({...ready,[key]:'  '}).emailConfigured,false);
+});
+
+
+test('widget preparation binds staging and adds one private key without changing flags or existing values',()=>{
+ const action='prepare-widget',scoped={...env,CONFIRMATION:'staging-support-media-prepare-widget'};
+ assert.doesNotThrow(()=>assertStagingRuntimeTarget(scoped,action));
+ for(const patch of [{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{SUPPORT_SCHEMA_VERIFIED:'false'},{SUPPORT_RETENTION_VERIFIED:'false'}])assert.throws(()=>assertStagingRuntimeTarget({...scoped,...patch},action));
+ const before='FANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_INAPP_HELP_REPAIR_ENABLED=false\nOTHER=unchanged\n';
+ const key='c'.repeat(64),after=renderStagingWidgetSecret(before,[],key);
+ assert.equal(after,before+'FANMIND_WEBSITE_CHAT_SESSION_SECRET='+key+'\n');
+ assert.equal(renderStagingWidgetSecret(before+'FANMIND_WEBSITE_CHAT_SESSION_SECRET=""\n',[],key),after);
+ assert.throws(()=>renderStagingWidgetSecret(after,[],key));
+ assert.throws(()=>renderStagingWidgetSecret(before,['OTHER=x\n','export FANMIND_WEBSITE_CHAT_SESSION_SECRET=private\n'],key));
+ assert.throws(()=>renderStagingWidgetSecret(before,[],'short'));
+ assert.throws(()=>renderStagingWidgetSecret(before+'FANMIND_WEBSITE_CHAT_SESSION_SECRET=\nFANMIND_WEBSITE_CHAT_SESSION_SECRET=\n',[],key));
+});
+
+
+test('positive widget acceptance rejects wrong target, absent write acknowledgement and mixed modes',async()=>{
+ const {widgetAcceptanceBoundary}=await import('../scripts/operations/support-widget-staging-acceptance.mjs');
+ const control={...env,FANMIND_SUPPORT_REVIEWED_COMMIT:env.GITHUB_SHA,FANMIND_SUPPORT_WIDGET_ONLY:'true',FANMIND_SUPPORT_CUSTOMER_CONFIRM:'run-staging-support-customer-acceptance',FANMIND_STAGING_WIDGET_WORKSPACE_ID:'ed7b908d-1dd9-4dc7-b217-648c4166aee5',FANMIND_ENABLE_NON_PRODUCTION_WRITES:'true',FANMIND_NON_PRODUCTION_WRITE_ACK:'I_UNDERSTAND_NON_PRODUCTION_ONLY',FANMIND_TARGET_API_ORIGIN:'https://staging.fanmind.ch',FANMIND_PRODUCTION_API_ORIGIN:'https://fanmind.ch',PGHOST:'aws-0-eu-west-3.pooler.supabase.com',FANMIND_TARGET_DB_HOST:'aws-0-eu-west-3.pooler.supabase.com',FANMIND_PRODUCTION_DB_HOST:'db.drqkpdvtbbrrdwmtrodz.supabase.co',PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres.vshyhvgcmrlagvfnvomc',PGSSLMODE:'verify-full'};
+ assert.doesNotThrow(()=>widgetAcceptanceBoundary(control,env.GITHUB_SHA));
+ for(const patch of [{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{FANMIND_ENABLE_NON_PRODUCTION_WRITES:'false'},{FANMIND_SUPPORT_CUSTOMER_UI_ONLY:'true'},{FANMIND_STAGING_WIDGET_WORKSPACE_ID:'invalid'},{FANMIND_SUPPORT_WIDGET_ONLY:'false'},{PGUSER:'postgres.drqkpdvtbbrrdwmtrodz'}])assert.throws(()=>widgetAcceptanceBoundary({...control,...patch},env.GITHUB_SHA));
+});
+
+
+test('diagnostic activation changes only safe read flags and retains independent rollback/target gates',()=>{
+ const before='FANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_INAPP_HELP_REPAIR_ENABLED=false\n';
+ const after=renderStagingDiagnostics(before,[],true);
+ assert.equal(after,before+'FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED=true\nFANMIND_INAPP_HELP_AUTOMATIC_CHECKS_ENABLED=true\n');
+ assert.ok(renderStagingDiagnostics(after,[],false).includes('FANMIND_INAPP_HELP_REPAIR_ENABLED=false'));
+ for(const key of ['FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED','FANMIND_INAPP_HELP_AUTOMATIC_CHECKS_ENABLED'])assert.throws(()=>renderStagingDiagnostics(before,[key+'=false'],true));
+ assert.throws(()=>renderStagingDiagnostics(before+'FANMIND_INAPP_HELP_DIAGNOSTICS_ENABLED=invalid\n',[],true));
+ for(const action of ['activate-diagnostics','deactivate-diagnostics']){
+  const scoped={...env,CONFIRMATION:'staging-support-media-'+action};assert.doesNotThrow(()=>assertStagingRuntimeTarget(scoped,action));
+  assert.throws(()=>assertStagingRuntimeTarget({...scoped,NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},action));
+ }
+ assert.throws(()=>assertStagingRuntimeTarget({...env,CONFIRMATION:'staging-support-media-activate-diagnostics',SUPPORT_RETENTION_VERIFIED:'false'},'activate-diagnostics'));
 });

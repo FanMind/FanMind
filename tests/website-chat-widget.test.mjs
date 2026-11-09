@@ -159,6 +159,11 @@ test("public information chat rejects missing consent, client identities and ove
  assert.match(guardPublicSupportReply("Das kostet 9 €","de"),/Aktuelle Preise/);
  assert.match(guardPublicSupportReply("USD 5","en"),/Current prices/);
  assert.equal(guardPublicSupportReply("Du prüfst und sendest selbst.","de"),"Du prüfst und sendest selbst.");
+ const corrected=guardPublicSupportReply("Du kopierst den Vorschlag und sendest ihn selbst im Originalkanal.","de");
+ assert.match(corrected,/Antwort-\/Original-Link/);assert.match(corrected,/hinterlegten Chat, Beitrag oder Kommentar/);assert.match(corrected,/sendest sie selbst/);
+ assert.match(guardPublicSupportReply("You copy the suggestion and send it yourself in the original channel.","en"),/reply\/original link/);
+ assert.equal(guardPublicSupportReply("Du kopierst den Text und öffnest den Original-Link.","de"),"Du kopierst den Text und öffnest den Original-Link.");
+ assert.ok(guardPublicSupportReply("Du kopierst im Originalkanal. "+"x".repeat(1950),"de").length<=2000);
 });
 test("actual public route answers without login and fails closed before provider on consent/origin/rate/owner errors",async()=>{
  const {runInNewContext}=await import("node:vm"),{default:ts}=await import("typescript");

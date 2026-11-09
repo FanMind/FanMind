@@ -6,3 +6,5 @@ export function guardPublicSupportReply(value:unknown,language:"de"|"en"):string
 
 export function publicSupportPricingReply(language?: "de"|"en"):string;
 export function isPublicSupportPricingQuestion(question:string):boolean;
+
+export function publicSupportReplyWorkflow(language?: "de"|"en"):string;

@@ -4,7 +4,7 @@ on:
     inputs:
       action:
         type: choice
-        options: [activate, deactivate, verify-support, activate-support, deactivate-support]
+        options: [activate, deactivate, verify-support, activate-support, deactivate-support, prepare-widget, activate-diagnostics, deactivate-diagnostics]
         required: true
       reviewed_commit:
         description: Exact reviewed main commit already deployed to Staging
@@ -55,7 +55,7 @@ jobs:
         with:
           node-version: '24'
       - name: Prepare dedicated private read-only connection
-        if: inputs.action == 'activate' || inputs.action == 'activate-support'
+        if: inputs.action == 'activate' || inputs.action == 'activate-support' || inputs.action == 'prepare-widget' || inputs.action == 'activate-diagnostics'
         env:
           PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
           PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
@@ -67,7 +67,7 @@ jobs:
           ESCAPED="${ESCAPED//:/\\:}"
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
       - name: Verify pinned schema, existing Owner and retention without writes
-        if: inputs.action == 'activate' || inputs.action == 'activate-support'
+        if: inputs.action == 'activate' || inputs.action == 'activate-support' || inputs.action == 'prepare-widget' || inputs.action == 'activate-diagnostics'
         env:
           PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
         run: node scripts/operations/staging-support-media-preflight.mjs
