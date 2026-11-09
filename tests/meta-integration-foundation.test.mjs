@@ -824,3 +824,63 @@ test("Meta reader docs distinguish base migration state from observed continuati
     /`facebook_messages`: live/u,
   );
 });
+
+// Protected Staging runtime setup: no provider secret or database mutation in these tests.
+const metaRuntime = await import('../scripts/operations/staging-meta-runtime.mjs');
+const syntheticMetaInput = { appId: '123456789012345', appSecret: 'a'.repeat(32), webhookToken: 'b'.repeat(64) };
+const syntheticMetaKey = 'c'.repeat(64);
+test('Meta runtime preserves existing encryption and changes only its explicit configuration fields', () => {
+  const before = `UNCHANGED_SECRET="synthetic-preserved"\nFANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_TOKEN_ENCRYPTION_KEY="${syntheticMetaKey}"\n`;
+  const after = metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput, {
+    tokensPresent: true, generateKey() { throw Error('must not rotate'); },
+  });
+  assert.ok(after.includes('UNCHANGED_SECRET="synthetic-preserved"'));
+  assert.ok(after.includes('FANMIND_SUPPORT_CENTRE_ENABLED=true'));
+  assert.ok(after.includes(`FANMIND_TOKEN_ENCRYPTION_KEY="${syntheticMetaKey}"`));
+  assert.deepEqual(metaRuntime.metaReadiness(Object.fromEntries(after.trim().split('\n').map(line => {
+    const split = line.indexOf('='); const raw = line.slice(split + 1);
+    return [line.slice(0, split), raw.startsWith('"') ? JSON.parse(raw) : raw];
+  }))), { appId: true, appSecret: true, callback: true, encryption: true, webhook: true });
+});
+test('Meta key creation requires proven absence of encrypted tokens; missing evidence fails closed', () => {
+  for (const tokensPresent of [true, undefined]) {
+    assert.throws(() => metaRuntime.renderMetaConfiguration('SAFE=true\n', [], syntheticMetaInput, { tokensPresent }), /existing_tokens_require_key_recovery/u);
+  }
+  const after = metaRuntime.renderMetaConfiguration('SAFE=true\n', [], syntheticMetaInput, { tokensPresent: false, generateKey: () => syntheticMetaKey });
+  assert.ok(after.includes(syntheticMetaKey));
+  assert.throws(() => metaRuntime.renderMetaConfiguration('SAFE=true\n', [], syntheticMetaInput, { tokensPresent: false, generateKey: () => 'bad' }), /generated_key_invalid/u);
+});
+test('Meta runtime rejects foreign target, stale source and mismatched confirmation', () => {
+  const sha = 'e'.repeat(40);
+  const values = { FANMIND_RUNTIME_ENVIRONMENT: 'staging', NEXT_PUBLIC_APP_URL: 'https://staging.fanmind.ch',
+    NEXT_PUBLIC_SUPABASE_URL: 'https://vshyhvgcmrlagvfnvomc.supabase.co', FANMIND_TARGET_SUPABASE_PROJECT_REF: 'vshyhvgcmrlagvfnvomc',
+    FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: 'drqkpdvtbbrrdwmtrodz', FANMIND_RELEASE_COMMIT: sha };
+  const control = { GITHUB_REPOSITORY: 'FanMind/FanMind', GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_REF: 'refs/heads/main', GITHUB_SHA: sha, REVIEWED_COMMIT: sha, CONFIRMATION: 'staging-meta-configure',
+    GITHUB_RUN_ID: '123', TARGET_PROJECT: 'vshyhvgcmrlagvfnvomc', PRODUCTION_PROJECT: 'drqkpdvtbbrrdwmtrodz' };
+  metaRuntime.assertMetaTarget(values, control, 'configure');
+  for (const change of [{ FANMIND_RUNTIME_ENVIRONMENT: 'production' }, { NEXT_PUBLIC_APP_URL: 'https://fanmind.ch' },
+    { NEXT_PUBLIC_SUPABASE_URL: 'https://drqkpdvtbbrrdwmtrodz.supabase.co' }, { FANMIND_RELEASE_COMMIT: 'f'.repeat(40) }])
+    assert.throws(() => metaRuntime.assertMetaTarget({ ...values, ...change }, control, 'configure'), /target_binding/u);
+  for (const change of [{ GITHUB_REPOSITORY: 'other/repo' }, { GITHUB_EVENT_NAME: 'push' }, { REVIEWED_COMMIT: 'f'.repeat(40) }, { GITHUB_REF: 'refs/heads/feature' }, { CONFIRMATION: '' }])
+    assert.throws(() => metaRuntime.assertMetaTarget(values, { ...control, ...change }, 'configure'), /control_binding/u);
+});
+test('Meta setup denies ambiguous files, secret injection and overriding later protected files', () => {
+  const existing = `FANMIND_TOKEN_ENCRYPTION_KEY="${syntheticMetaKey}"\n`;
+  assert.throws(() => metaRuntime.renderMetaConfiguration(existing + `FACEBOOK_APP_ID=${syntheticMetaInput.appId}\nFACEBOOK_APP_ID=${syntheticMetaInput.appId}\n`, [], syntheticMetaInput), /ambiguous_configuration/u);
+  assert.throws(() => metaRuntime.renderMetaConfiguration(existing, ['FACEBOOK_APP_ID=99999\n'], syntheticMetaInput), /existing_app_conflict/u);
+  for (const appSecret of ['', 'replace_with_app_secret', 'a'.repeat(32) + '\nUNRELATED=true'])
+    assert.throws(() => metaRuntime.renderMetaConfiguration(existing, [], { ...syntheticMetaInput, appSecret }), /input_invalid/u);
+});
+test('Meta configure blocks pending runtime drift before any restart or write', () => {
+  const config = { FANMIND_TOKEN_ENCRYPTION_KEY: syntheticMetaKey, FANMIND_SUPPORT_CENTRE_ENABLED: 'true', FACEBOOK_APP_ID: syntheticMetaInput.appId };
+  metaRuntime.assertMetaRuntimeConsistency(config, { ...config }, syntheticMetaInput.appId);
+  for (const FANMIND_TOKEN_ENCRYPTION_KEY of ['d'.repeat(64), undefined]) {
+    assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(config, { ...config, FANMIND_TOKEN_ENCRYPTION_KEY }, syntheticMetaInput.appId), /encryption_key_drift/u);
+  }
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(config, { ...config, FANMIND_SUPPORT_CENTRE_ENABLED: 'false' }, syntheticMetaInput.appId), /unrelated_runtime_drift/u);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(config, { ...config, FACEBOOK_APP_ID: '99999' }, syntheticMetaInput.appId), /managed_configuration_drift/u);
+  for (const name of ['FACEBOOK_APP_SECRET', 'FACEBOOK_REDIRECT_URI', 'FACEBOOK_WEBHOOK_VERIFY_TOKEN'])
+    assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(config, { ...config, [name]: 'synthetic-pending-value' }, syntheticMetaInput.appId), /managed_configuration_drift/u);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency({ ...config, FACEBOOK_APP_ID: '99999' }, { ...config, FACEBOOK_APP_ID: '99999' }, syntheticMetaInput.appId), /existing_app_conflict/u);
+  assert.throws(() => metaRuntime.renderMetaConfiguration(`FACEBOOK_APP_ID=99999\nFANMIND_TOKEN_ENCRYPTION_KEY=${syntheticMetaKey}\n`, [], syntheticMetaInput), /existing_app_conflict/u);
+});
