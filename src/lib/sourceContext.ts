@@ -1,4 +1,5 @@
 import { onlyFansManualTarget } from "@/lib/socialHandoffPolicy.mjs";
+import { facebookCommentTarget } from "@/lib/facebookCommentTarget.mjs";
 
 export type SourceContextType =
   | "general_chat"
@@ -348,6 +349,27 @@ export function buildReplyTargetAction(
       selectedItemSource,
       fallbackContactLabel: options?.fallbackContactLabel ?? null,
       fallbackContactId: options?.fallbackContactId ?? null,
+    };
+  }
+
+  if (platform === "facebook" && sourceType.includes("comment")) {
+    // A filtered comment and a contact's default Conversation can refer to
+    // different posts. Keep URL and IDs from one provenance tuple together.
+    const commentSource = primary ?? fallback;
+    const href = facebookCommentTarget({
+      permalink: normalizeHttpUrl(commentSource?.reply_target_url) ??
+        normalizeHttpUrl(commentSource?.source_url),
+      postId: commentSource?.external_post_id,
+      commentId: commentSource?.external_comment_id,
+    });
+    return {
+      href,
+      label: href ? "Zum Facebook-Kommentar wechseln" : "Originalkanal-Link noch nicht verfügbar",
+      quality: href ? "attempted_thread_link" : "unavailable",
+      reason: "Zugehörigen Kommentar auf Facebook öffnen und dort selbst antworten.",
+      disabledHint: "Originalkanal-Link noch nicht verfügbar.",
+      platform,
+      selectedItemSource: "not_detected",
     };
   }
 
