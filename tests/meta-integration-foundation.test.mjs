@@ -433,7 +433,7 @@ test("OAuth flow requires an explicit server-validated Facebook page selection",
   assert.match(callback, /areDemoConnectionsDisabled/u);
   assert.match(
     flow,
-    /pages\.length > 1 && !input\.selectedPageId[\s\S]*page_selection_required/u,
+    /if \(!input\.selectedPageId\)[\s\S]*page_selection_required/u,
   );
   assert.match(
     flow,

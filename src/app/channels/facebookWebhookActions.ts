@@ -1,4 +1,5 @@
 import "server-only";
+import { facebookCommentTarget } from "@/lib/facebookCommentTarget.mjs";
 
 import { revalidatePath } from "next/cache";
 import {
@@ -389,10 +390,11 @@ async function fetchFacebookCommentsForConnection(
           comment.permalink_url ??
           comment.postPermalinkUrl ??
           `https://www.facebook.com/${comment.postId}`,
-        replyTargetUrl:
-          comment.permalink_url ??
-          comment.postPermalinkUrl ??
-          `https://www.facebook.com/${comment.postId}`,
+        replyTargetUrl: facebookCommentTarget({
+          permalink: comment.permalink_url ?? comment.postPermalinkUrl,
+          postId: comment.postId,
+          commentId: comment.id,
+        }),
         externalMessageId: comment.id,
         externalThreadId,
         sourceConversationId: externalThreadId,

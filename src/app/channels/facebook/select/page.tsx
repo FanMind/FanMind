@@ -63,7 +63,7 @@ export default async function FacebookPageSelectionPage({
         <p className={styles.eyebrow}>Facebook · sichere Kontowahl</p>
         <h1 id="page-title">Welche Seite gehört zu diesem Workspace?</h1>
         <p className={styles.intro}>
-          Meta hat mehrere von dir verwaltete Facebook-Seiten geliefert. Wähle
+          Meta hat die für dich verfügbaren Facebook-Seiten geliefert. Wähle
           ausdrücklich die Seite, die mit <strong>{workspace.name}</strong>
           verbunden werden soll. FanMind übernimmt keine andere Seite
           automatisch.

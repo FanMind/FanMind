@@ -26,7 +26,7 @@ test("keeps conversations and uncovered open follow-ups in one queue", () => {
   assert.deepEqual(result.map((item) => item.id), ["followup-b", "conversation-a"]);
 });
 
-test("deduplicates each fan deterministically and uses a stable final order", () => {
+test("preserves separate conversations for one fan and uses a stable final order", () => {
   const input = {
     conversations: [
       { id: "conversation-z", fan: "fan-a", priority: 75, waiting: 20 },
@@ -51,6 +51,7 @@ test("deduplicates each fan deterministically and uses a stable final order", ()
   assert.deepEqual(first.map((item) => item.id), [
     "conversation-a",
     "conversation-b",
+    "conversation-z",
     "followup-c",
     "followup-d",
   ]);
