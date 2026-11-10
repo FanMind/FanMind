@@ -1,3 +1,13 @@
+## Internal Staging Operator continuation — source preparation
+
+Issue #1464 / Draft #1465 prepares a default-off, exact-Staging/user/workspace-
+bound continuation of an existing protected browser session. No new identity,
+privilege or automatic send. The real Owner Messenger test has been imported
+and independently verified on the existing Staging release; the new session
+renewal route is not deployed/enabled, and full unattended login/expiry/revocation
+acceptance remains blocked. Protected rollout and account-scope decision:
+`docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+
 ## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026
 
 Repository-Umsetzung: Jeder Anbieter autorisiert seine eigene Facebook-Seite

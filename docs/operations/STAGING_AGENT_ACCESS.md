@@ -1,6 +1,22 @@
 # Staging agent access — Issue #1464
 
-## Actual status, 2026-11-10
+## Follow-up: real access and renewal source, 2026-11-10
+
+Secure browser bootstrap succeeded. The Owner's real Facebook test message is
+now imported and visible in the correct Operator Inbox/chat. Read-only Staging
+verification confirms one message and one conversation; repeated sync created
+no duplicate. A fresh browser tab reused the session, Support answered and a
+foreign synthetic-workspace contact returned 404. Comments remain empty and
+full real-comment retrieval is unproved.
+
+The new default-off continuation page/endpoint reuses the existing HttpOnly
+refresh cookie without password-file storage. It is source-only, not deployed
+or enabled. Its protected exact-SHA rollout, account-scope decision and real
+expiry/revocation acceptance remain BLOCKED; both PRs remain Draft/unmerged.
+The historical status below is superseded by
+`docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+
+## Initial source status, 2026-11-10 08:08 UTC (historical)
 
 **BLOCKED for autonomous authenticated use and Facebook acceptance.**
 The first implementation is a bounded executable authentication smoke runner,

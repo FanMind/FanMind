@@ -2,12 +2,8 @@ import { constants } from 'node:fs';
 import { open, realpath, stat } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 
-export const STAGING_ORIGIN = 'https://staging.fanmind.ch';
-export const OPERATOR_WORKSPACE = '6949a853-f11a-4b29-a1b2-9f9b928b9efd';
-export const OPERATOR_NAME = 'FanMind Staging Operator';
-export const OPERATOR_USER = '5995a803-2ae2-46fa-8e4d-b030bf71da3c';
-export const STAGING_AUTH_ORIGIN = 'https://vshyhvgcmrlagvfnvomc.supabase.co';
-export const PRODUCTION_AUTH_ORIGIN = 'https://drqkpdvtbbrrdwmtrodz.supabase.co';
+import { STAGING_ORIGIN, OPERATOR_WORKSPACE, OPERATOR_NAME, OPERATOR_USER, STAGING_AUTH_ORIGIN, PRODUCTION_AUTH_ORIGIN } from '../../src/lib/stagingOperatorIdentity.mjs';
+export { STAGING_ORIGIN, OPERATOR_WORKSPACE, OPERATOR_NAME, OPERATOR_USER, STAGING_AUTH_ORIGIN, PRODUCTION_AUTH_ORIGIN };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 export function requireCondition(value, code) {
   if (!value) throw new Error(`STAGING_AGENT_${code}`);
