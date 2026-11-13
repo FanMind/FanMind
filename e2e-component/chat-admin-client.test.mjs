@@ -51,7 +51,7 @@ const bundle = `(() => {
     if (!cache[name]) { cache[name] = {exports: {}}; modules[name](cache[name], cache[name].exports, require); }
     return cache[name].exports;
   }
-  window.mountCharacters = (characters, structuredOffersEnabled=true,mediaLibraryEnabled=false) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled,mediaLibraryEnabled}));
+  window.mountCharacters = (characters, structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled,mediaLibraryEnabled,fanRuntimeEnabled}));
 })();`;
 
 const characterA = {
@@ -82,7 +82,7 @@ const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three
 let browser;
 before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
 after(async()=>{await browser?.close();});
-async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false){
+async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true){
  const context=await browser.newContext({permissions:["clipboard-read","clipboard-write"]});t.after(()=>context.close());const page=await context.newPage();
  await page.route("**/*",route=>route.fulfill({contentType:"text/html",body:'<html><body><div id="root"></div></body></html>'}));await page.goto("http://localhost/chatadmin-client-test");
  await page.evaluate(({fansByCharacter,conversationFor,historyFor})=>{
@@ -94,7 +94,7 @@ async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false){
    return new Promise((resolve,reject)=>window.testRequests.push({url,method,body:options.body?JSON.parse(options.body):null,resolve,reject}));
   };
  },{fansByCharacter,conversationFor,historyFor});
- await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled});await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();return page;
+ await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled,fanEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled,fanEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled,fanEnabled:fanRuntimeEnabled});if(fanRuntimeEnabled)await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();else await expect(page.getByRole("heading",{name:"Nachricht manuell einfügen",exact:true})).toBeVisible();return page;
 }
 const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("heading",{name,exact:true})});
 const copies=page=>page.getByRole("button",{name:"Kopieren und verwenden",exact:true});
@@ -398,4 +398,13 @@ test("changed Character price revision blocks stale clipboard use before confirm
  await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
  await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");
  assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),0);
+});
+
+
+test("legacy composer also blocks stale media prices before clipboard use",async t=>{
+ const page=await mount(t,true,true,false);await page.getByLabel("Von OnlyFans kopierte Fan-Nachricht").fill("Bild im Wald");await page.getByRole("button",{name:"Antwortvorschläge erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);await complete(page);
+ await page.evaluate(()=>{window.copyCalls=[];Object.defineProperty(navigator,"clipboard",{value:{writeText:async text=>window.copyCalls.push(text)},configurable:true});});
+ await page.getByRole("button",{name:"Antwort kopieren",exact:true}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
+ await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);
 });
