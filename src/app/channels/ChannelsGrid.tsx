@@ -7,10 +7,10 @@ import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import { SocialProviderConnection } from "./SocialProviderConnection";
 import { ChannelConnectionSteps } from "./ChannelConnectionSteps";
+import { FacebookCommentSyncForm } from "./FacebookCommentSyncForm";
 import styles from "./channels.module.css";
 import { type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import {
-  syncFacebookCommentsFromChannelPage,
   syncFacebookMessengerHistoryFromChannelPage,
   syncInstagramMessengerHistoryFromChannelPage,
 } from "./metaSyncActions";
@@ -951,15 +951,10 @@ export function ChannelsGrid({
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "comments")}>
                                 Kommentare freigeben
                               </button>
-                            <form action={syncFacebookCommentsFromChannelPage}>
-                              <button
-                                type="submit"
-                                disabled={demoConnectionsDisabled || !facebookCommentsAuthorized}
-                                title={facebookCommentsAuthorized ? undefined : "Zuerst die Kommentar-Berechtigung bei Meta freigeben"}
-                              >
-                                Facebook-Kommentare jetzt synchronisieren
-                              </button>
-                            </form>
+                            <FacebookCommentSyncForm
+                              disabled={demoConnectionsDisabled}
+                              authorized={facebookCommentsAuthorized}
+                            />
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "insights")}>
                                 Insights freigeben
                               </button>

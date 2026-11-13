@@ -100,6 +100,10 @@ test('Staging source exception accepts only the exact manually reviewed task bra
   assert.equal(allowed(env),true);
   for (const override of [{GITHUB_REPOSITORY:'attacker/FanMind'},{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{REVIEWED_RELEASE_COMMIT:''},{REVIEWED_RELEASE_COMMIT:'b'.repeat(40)},{BILLING_WRITE_FREEZE:'false'},{FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM:'recover-live-staging-release-state'}]) assert.equal(allowed({...env,...override}),false);
   assert.equal(allowed({...env,GITHUB_REF:'refs/heads/main',REVIEWED_RELEASE_COMMIT:''}),true);
+  const operator = {...env,GITHUB_REF:'refs/heads/feat/1464-staging-agent-access',STAGING_OPERATOR_SESSION_ENABLED:'true'};
+  assert.equal(allowed(operator),true);
+  for (const override of [{GITHUB_REPOSITORY:'attacker/FanMind'},{GITHUB_REF:'refs/heads/main'}, {GITHUB_REF:'refs/heads/feat/1464-staging-agent-access-extra'},{GITHUB_EVENT_NAME:'push'},{REVIEWED_RELEASE_COMMIT:''},{REVIEWED_RELEASE_COMMIT:'b'.repeat(40)},{BILLING_WRITE_FREEZE:'false'},{FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM:'recover-live-staging-release-state'},{FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT:'b'.repeat(40)}]) assert.equal(allowed({...operator,...override}),false);
+  assert.equal(allowed({...env,STAGING_OPERATOR_SESSION_ENABLED:'true'}),false);
 });
 
 test('Page token must resolve to the exact selected Page identity before persistence', async () => {
@@ -202,4 +206,67 @@ test('empty lists distinguish unreadable real granular targets from missing gran
   await assert.rejects(noTargets.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_granular_targets_shape_0_0');
   const invalidToken=harness(responder({edge:[],field:[],debug:{...diagnostics,is_valid:false}}));
   await assert.rejects(invalidToken.api.fetchFacebookPages('user'),e=>e.diagnostic==='page_discovery_token_debug_shape_0_0');
+});
+
+test('comment collection distinguishes a valid empty feed from malformed HTTP 200 and provider errors', async () => {
+  const empty = harness(() => ({ data: [] }));
+  assert.equal((await empty.api.fetchFacebookPagePostsWithComments('11', 'page-token')).comments.length, 0);
+  for (const body of [null, {}, { data: null }, { data: {} }, { data: [null] }, { data: [{ id: 22 }] }, { data: [], error: { code: 190, message: 'private-provider-text' } }, { data: [{ id: '11_22', comments: {} }] }]) {
+    const h = harness(() => body, { fetch: async () => ({ ok: true, json: async () => body }) });
+    await assert.rejects(h.api.fetchFacebookPagePostsWithComments('11', 'page-token'), error => {
+      assert.equal(error.name, 'FacebookCommentFetchError');
+      assert.equal(error.message.includes('private-provider-text'), false);
+      return true;
+    });
+  }
+});
+
+test('comment feed and nested pagination share a deadline and preserve the original post mapping', async () => {
+  const signals = [];
+  const h = harness((url, options) => {
+    signals.push(options.signal);
+    assert.equal(options.redirect, 'error');
+    if (url.pathname.endsWith('/feed')) return { data: [{ id: '11_22', comments: { data: [{ id: '22_1', message: 'synthetic one' }], paging: { next: 'https://graph.facebook.com/v25.0/11_22/comments?after=next' } } }] };
+    return { data: [{ id: '22_2', message: 'synthetic two' }] };
+  });
+  const result = await h.api.fetchFacebookPagePostsWithComments('11', 'page-token');
+  assert.deepEqual(Array.from(result.comments, c => [c.id, c.postId]), [['22_1','11_22'], ['22_2','11_22']]);
+  assert.equal(signals.length, 2);
+  assert.equal(signals[0], signals[1]);
+});
+
+test('comment pagination rejects foreign targets, wrong edges, loops and unbounded empty pages', async () => {
+  for (const nextUrl of ['https://attacker.invalid/v25.0/11/feed', 'https://graph.facebook.com/v25.0/other/feed']) {
+    const h = harness(() => ({ data: [], paging: { next: nextUrl } }));
+    await assert.rejects(h.api.fetchFacebookPagePostsWithComments('11', 'page-token'));
+    assert.equal(h.calls.length, 1);
+  }
+  for (const loop of [true, false]) {
+    let count = 0;
+    const h = harness(() => ({ data: [], paging: { next: `https://graph.facebook.com/v25.0/11/feed?after=${loop ? 'same' : ++count}` } }));
+    await assert.rejects(h.api.fetchFacebookPagePostsWithComments('11', 'page-token'));
+    assert.ok(h.calls.length <= 100);
+  }
+  const h = harness(() => ({ data: [{ id: '11_22', comments: { data: [], paging: { next: 'https://graph.facebook.com/v25.0/foreign/comments' } } }] }));
+  await assert.rejects(h.api.fetchFacebookPagePostsWithComments('11', 'page-token'));
+  assert.equal(h.calls.length, 1);
+});
+
+test('comment UI action authorizes afresh and serializes only server-derived outcome fields', async () => {
+  let authorized = false;
+  let calls = 0;
+  const result = { ok: true, fetchedAt: '2026-11-13T08:00:00.000Z', postsChecked: 2, commentsChecked: 3, importedCount: 1, continuationPending: true, error: 'private provider text', tokenScopes: ['private'], access_token: 'synthetic-token', workspaceId: 'other' };
+  const actions = load('src/app/channels/metaSyncActions.ts', {
+    './facebookWebhookActions': { fetchFacebookCommentsNow: async () => { assert.equal(authorized, true); calls++; return result; } },
+    './instagramWebhookActions': {},
+    '@/lib/workspaceAuthorization': { requireActiveAuthorizedWorkspace: async () => { if (!authorized) throw new Error('denied'); } },
+  });
+  await assert.rejects(actions.syncFacebookCommentsFromChannelPage(result), /denied/u);
+  assert.equal(calls, 0);
+  authorized = true;
+  const actual = await actions.syncFacebookCommentsFromChannelPage({ ok: false, workspaceId: 'client-controlled', postsChecked: 999 });
+  assert.deepEqual(Object.keys(actual).sort(), ['ok', 'fetchedAt', 'postsChecked', 'commentsChecked', 'importedCount', 'continuationPending'].sort());
+  assert.equal(actual.postsChecked, 2);
+  assert.equal(JSON.stringify(actual).includes('private'), false);
+  assert.equal(calls, 1);
 });

@@ -1,3 +1,13 @@
+## Facebook continuation — 13 November 2026, source pending protected rollout
+
+Draft #1465 now preserves the manual comment-sync outcome in the UI: checked
+posts, found comments, new imports, partial completion or failure. Malformed
+Graph collections, unsafe/repeated paging and deadline exhaustion fail closed.
+Only the existing exact-reviewed Operator branch may opt into session renewal
+through the protected Staging workflow; default remains off. No rollout or
+activation has occurred. Real comment and direct-thread-link acceptance remain
+open; see `docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+
 ## Internal Staging Operator continuation — source preparation
 
 Issue #1464 / Draft #1465 prepares a default-off, exact-Staging/user/workspace-

@@ -1965,6 +1965,7 @@ export async function fetchFacebookPagePostsWithComments(
   comments: FacebookPageComment[];
   diagnostics: FacebookCommentFetchDiagnostics;
 }> {
+  const signal = AbortSignal.timeout(45_000);
   const feedUrl = new URL(
     `https://graph.facebook.com/${OAUTH_VERSION}/${pageId}/feed`,
   );
@@ -1982,6 +1983,7 @@ export async function fetchFacebookPagePostsWithComments(
         "Facebook Page-Feed mit Kommentaren konnte nicht geladen werden.",
         25,
         true,
+        signal,
       );
     const posts = feedPosts.map((post) => ({
       id: post.id,
@@ -1991,6 +1993,9 @@ export async function fetchFacebookPagePostsWithComments(
     }));
     const comments: FacebookPageComment[] = [];
     for (const post of feedPosts) {
+      if (post.comments != null && !Array.isArray(post.comments.data)) {
+        throw new GraphApiError("Ungültige Facebook-Kommentarstruktur.");
+      }
       const inlineComments = (post.comments?.data ?? [])
         .filter((comment) => Boolean(comment.id))
         .map((comment) => ({
@@ -2000,9 +2005,12 @@ export async function fetchFacebookPagePostsWithComments(
         }));
       comments.push(...inlineComments);
 
-      const nestedNext = validateFacebookGraphPagingUrl(
-        post.comments?.paging?.next ?? null,
-      );
+      const rawNestedNext = post.comments?.paging?.next;
+      const nestedNext = validateFacebookGraphPagingUrl(rawNestedNext ?? null);
+      if (rawNestedNext != null && (!nestedNext ||
+          new URL(nestedNext).pathname !== `/${OAUTH_VERSION}/${post.id}/comments`)) {
+        throw new GraphApiError("Ungültige Facebook-Kommentar-Paginierung.");
+      }
       if (nestedNext) {
         const remaining = Math.max(
           0,
@@ -2019,6 +2027,8 @@ export async function fetchFacebookPagePostsWithComments(
           new URL(nestedNext),
           "Facebook-Kommentare konnten nicht vollständig paginiert werden.",
           remaining,
+          false,
+          signal,
         );
         comments.push(
           ...additionalComments.map((comment) => ({
@@ -2054,6 +2064,7 @@ export async function fetchFacebookPagePostsWithComments(
     "Facebook Page-Feed konnte nicht geladen werden.",
     25,
     true,
+    signal,
   ).catch((error) => {
     throw withCommentFetchEndpoint(error, "post-comments-fallback");
   });
@@ -2076,6 +2087,8 @@ export async function fetchFacebookPagePostsWithComments(
       commentsUrl,
       "Facebook-Kommentare konnten nicht geladen werden.",
       FACEBOOK_COMMENT_MAX_PER_POST,
+      false,
+      signal,
     ).catch((error) => {
       throw withCommentFetchEndpoint(error, "post-comments-fallback");
     });
@@ -2141,19 +2154,26 @@ async function fetchGraphCollection<T extends { id?: string }>(
   errorFallback: string,
   maxItems = 500,
   stopAtLimit = false,
+  signal: AbortSignal = AbortSignal.timeout(45_000),
 ): Promise<T[]> {
   const items: T[] = [];
   let nextUrl: string | null = url.toString();
+  const seenUrls = new Set<string>();
 
   while (nextUrl) {
-    const response = await fetch(nextUrl, { cache: "no-store" });
+    signal.throwIfAborted();
+    if (seenUrls.has(nextUrl) || seenUrls.size >= 100) {
+      throw new GraphApiError("Facebook-Paginierung überschreitet das sichere Limit.");
+    }
+    seenUrls.add(nextUrl);
+    const response = await fetch(nextUrl, { cache: "no-store", redirect: "error", signal });
     const payload = (await response.json().catch(() => null)) as {
       data?: T[];
       paging?: { next?: string };
       error?: { message?: string; code?: number; type?: string };
     } | null;
 
-    if (!response.ok) {
+    if (!response.ok || payload?.error) {
       logFacebookApiError(errorFallback, payload?.error);
       throw new GraphApiError(
         errorFallback,
@@ -2161,7 +2181,11 @@ async function fetchGraphCollection<T extends { id?: string }>(
       );
     }
 
-    const pageItems = (payload?.data ?? []).filter((item) => Boolean(item.id));
+    if (!Array.isArray(payload?.data) || payload.data.some((item) =>
+      !item || typeof item.id !== "string" || !item.id.trim())) {
+      throw new GraphApiError("Ungültige Facebook-Antwortstruktur.");
+    }
+    const pageItems = payload.data;
     if (items.length + pageItems.length > maxItems) {
       if (!stopAtLimit) {
         throw new GraphApiError(
@@ -2176,6 +2200,10 @@ async function fetchGraphCollection<T extends { id?: string }>(
     const validatedNext = validateFacebookGraphPagingUrl(
       payload?.paging?.next ?? null,
     );
+    if (payload?.paging?.next != null && (!validatedNext ||
+        new URL(validatedNext).pathname !== url.pathname)) {
+      throw new GraphApiError("Ungültige Facebook-Paginierung.");
+    }
     if (validatedNext && items.length >= maxItems) {
       if (stopAtLimit) return items;
       throw new GraphApiError(
