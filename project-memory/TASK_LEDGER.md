@@ -1027,3 +1027,8 @@ Personal Meta password confirmation for the new app-secret reveal is pending.
 Prepared separate protected ingress secret selection and exact-new-app-only
 messages/feed App subscription with bounded reads and active callback readback.
 Real Page authorization, deployment and automatic receipt remain open.
+
+Facebook credential follow-up: the new App ID always selects its dedicated
+protected ingress secret, including later configure actions; missing new secret
+fails closed instead of restoring the original app credential. Executable
+regressions cover both rebind and repeat configure selection.

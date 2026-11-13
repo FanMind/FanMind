@@ -836,6 +836,8 @@ test('Meta rebind requires its dedicated protected secret without falling back t
   assert.equal(metaRuntime.metaSetupInput('configure', control).appSecret, control.META_SETUP_APP_SECRET);
   assert.equal(metaRuntime.metaSetupInput('rebind', control).appSecret, control.META_REBIND_APP_SECRET);
   assert.equal(metaRuntime.metaSetupInput('rebind', { META_SETUP_APP_SECRET: control.META_SETUP_APP_SECRET }).appSecret, undefined);
+  assert.equal(metaRuntime.metaSetupInput('configure', { ...control, META_SETUP_APP_ID: '1547928503809961' }).appSecret, control.META_REBIND_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('configure', { META_SETUP_APP_ID: '1547928503809961', META_SETUP_APP_SECRET: control.META_SETUP_APP_SECRET }).appSecret, undefined);
 });
 test('isolated app subscription verifies a fixed Staging callback and exactly messages/feed without exporting credentials', async () => {
   const values = { FACEBOOK_APP_ID: '1547928503809961', FACEBOOK_APP_SECRET: 'a'.repeat(32), FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'b'.repeat(64) };

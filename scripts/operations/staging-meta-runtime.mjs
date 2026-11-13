@@ -140,7 +140,8 @@ async function boundedJson(url, headers, options = {}, request = fetch) {
 }
 export function metaSetupInput(action, control) {
   return { appId: control.META_SETUP_APP_ID,
-    appSecret: action === "rebind" ? control.META_REBIND_APP_SECRET : control.META_SETUP_APP_SECRET,
+    appSecret: action === "rebind" || control.META_SETUP_APP_ID === "1547928503809961"
+      ? control.META_REBIND_APP_SECRET : control.META_SETUP_APP_SECRET,
     webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
 }
 // The token stays on the protected Staging host. Never export it to a job log

@@ -46,7 +46,9 @@ must remain unchanged. Saved/running drift, any active META signing/App aliases,
 including runtime-only or placeholder aliases, and conflicting protected override
 files fail closed. Operator/Billing/unrelated fields and existing CRM data remain
 unchanged. No DB mutation is added. Rebind consumes only its dedicated new
-protected secret with no fallback to the original-app secret.
+protected secret with no fallback to the original-app secret. A later configure
+for this new App ID also selects only that new secret, preventing an accidental
+restore of the old app signing credential after rebind.
 
 The distinct subscribe-webhook action uses only the already running new app
 1547928503809961 and the fixed Staging callback, with messages/feed only.
