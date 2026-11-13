@@ -43,23 +43,28 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (Number.isFinite(contentLength) && contentLength > MAX_WEBHOOK_BODY_BYTES) {
+  const body = await readWebhookBody(request);
+  if (!body.ok) return Response.json(
+    { received: false, error: "invalid_payload" }, { status: body.status },
+  );
+  const rawBody = body.text;
+
+  let payload: unknown;
+  try {
+    payload = rawBody ? JSON.parse(rawBody) : null;
+  } catch {
     return Response.json(
-      { received: false, error: "invalid_payload" },
-      { status: 413 },
+      { received: false, error: "invalid_json" },
+      { status: 400 },
     );
   }
 
-  const rawBody = await request.text();
-  if (Buffer.byteLength(rawBody, "utf8") > MAX_WEBHOOK_BODY_BYTES) {
-    return Response.json(
-      { received: false, error: "invalid_payload" },
-      { status: 413 },
-    );
+  if (!payload || typeof payload !== "object" ||
+      !("object" in payload) || !["page", "instagram"].includes(String(payload.object))) {
+    return Response.json({ received: false, error: "invalid_payload" }, { status: 400 });
   }
 
-  const webhookSecrets = getWebhookAppSecrets();
+  const webhookSecrets = getWebhookAppSecrets(String(payload.object));
   if (!webhookSecrets.length) {
     const errorCode = normalizeWebhookErrorCode("secret_not_configured");
     if (errorCode === "secret_not_configured") {
@@ -90,17 +95,12 @@ export async function POST(request: Request) {
     );
   }
 
-  let payload: unknown;
-  try {
-    payload = rawBody ? JSON.parse(rawBody) : null;
-  } catch {
-    return Response.json(
-      { received: false, error: "invalid_json" },
-      { status: 400 },
-    );
+  let result;
+  try { result = await processMetaWebhookPayload(payload); }
+  catch {
+    console.error("Meta webhook processing failed", { errorCode: "processing_failed" });
+    return Response.json({ received: false, error: "processing_failed" }, { status: 500 });
   }
-
-  const result = await processMetaWebhookPayload(payload);
   const errorCode = result.errorCode
     ? normalizeWebhookErrorCode(result.errorCode)
     : null;
@@ -131,6 +131,40 @@ export async function POST(request: Request) {
   );
 }
 
+// Bound chunked requests before allocation/HMAC; a stalled sender cannot hold
+// this endpoint indefinitely. Never log rejected bodies or provider exceptions.
+async function readWebhookBody(request: Request): Promise<
+  { ok: true; text: string } | { ok: false; status: number }
+> {
+  const declared = request.headers.get("content-length");
+  if (declared !== null && (!/^\d+$/u.test(declared) || !Number.isSafeInteger(Number(declared)))) {
+    return { ok: false, status: 400 };
+  }
+  if (declared && Number(declared) > MAX_WEBHOOK_BODY_BYTES) return { ok: false, status: 413 };
+  if (!request.body) return { ok: true, text: "" };
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("body_timeout")), 5000);
+  });
+  try {
+    while (true) {
+      const part = await Promise.race([reader.read(), timeout]);
+      if (part.done) break;
+      bytes += part.value.byteLength;
+      if (bytes > MAX_WEBHOOK_BODY_BYTES) return { ok: false, status: 413 };
+      chunks.push(part.value);
+    }
+    return { ok: true, text: new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)) };
+  } catch { return { ok: false, status: 400 }; }
+  finally {
+    clearTimeout(timer);
+    void reader.cancel().catch(() => {});
+  }
+}
+
 function getWebhookVerifyToken(): string | undefined {
   return (
     process.env.FACEBOOK_WEBHOOK_VERIFY_TOKEN ??
@@ -138,10 +172,11 @@ function getWebhookVerifyToken(): string | undefined {
   );
 }
 
-function getWebhookAppSecrets(): string[] {
+function getWebhookAppSecrets(object: string): string[] {
+  // Provider-specific App secrets cannot authenticate the other envelope.
+  // META aliases deliberately represent an explicitly shared Meta App only.
   return [
-    process.env.FACEBOOK_APP_SECRET,
-    process.env.INSTAGRAM_APP_SECRET,
+    object === "page" ? process.env.FACEBOOK_APP_SECRET : process.env.INSTAGRAM_APP_SECRET,
     process.env.META_WEBHOOK_APP_SECRET,
     process.env.META_APP_SECRET,
   ]

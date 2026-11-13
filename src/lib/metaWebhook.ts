@@ -46,6 +46,7 @@ export type MetaWebhookEvent = {
   pageId: string | null;
   senderId: string | null;
   recipientId: string | null;
+  receivedAt?: string | null;
   rawEvent: unknown;
 };
 
@@ -58,7 +59,9 @@ export type MetaWebhookProcessResult = {
 };
 
 export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
-  if (!isRecord(payload)) return [unknownEvent(null, null, payload)];
+  if (!isRecord(payload) || !["page", "instagram"].includes(String(payload.object))) {
+    return [unknownEvent(null, null, null)];
+  }
   const entries = Array.isArray(payload.entry) ? payload.entry : [];
   const events: MetaWebhookEvent[] = [];
 
@@ -86,7 +89,11 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         : (rawRecipientId ?? entryPageId);
       const senderId = isEcho ? rawRecipientId : rawSenderId;
 
-      const isInstagram = isInstagramMessagingItem(item, payload);
+      const isInstagram = payload.object === "instagram";
+      // The signed envelope and message endpoint must identify the same Page.
+      // Delivery/read receipts and malformed events are not chat messages.
+      if (!message || !mid || !entryPageId || !pageId || pageId !== entryPageId ||
+          !senderId || senderId === pageId || !rawRecipientId || !rawSenderId) continue;
       events.push({
         eventType: "messages",
         messageType: "dm",
@@ -116,6 +123,7 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         pageId,
         senderId,
         recipientId: isEcho ? rawSenderId : pageId,
+        receivedAt: providerTimestamp(item.timestamp, false),
         rawEvent: item,
       });
     }
@@ -127,7 +135,7 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
       const value = isRecord(change.value) ? change.value : undefined;
       const field = stringValue(change.field);
       const item = stringValue(value?.item) ?? field;
-      const isInstagram = isInstagramChange(change, payload);
+      const isInstagram = payload.object === "instagram";
       const content =
         stringValue(value?.message) ??
         stringValue(value?.comment_message) ??
@@ -156,6 +164,13 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         stringValue(from?.username) ??
         stringValue(from?.name) ??
         stringValue(value?.username);
+      // Facebook feed also contains posts, edits and removals. Only new fan
+      // comments with complete own-Page provenance belong in this inbox.
+      if (!isInstagram && (field !== "feed" || item !== "comment" ||
+          value?.verb !== "add" || !entryPageId || !senderId || senderId === entryPageId ||
+          !commentId || !/^\d+(?:_\d+)?$/u.test(commentId) ||
+          !postId || !/^\d+_\d+$/u.test(postId) ||
+          postId.split("_")[0] !== entryPageId)) continue;
       const replyTarget = isInstagram ? permalink : facebookCommentTarget({
         permalink, postId, commentId,
       });
@@ -194,6 +209,7 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         pageId: entryPageId,
         senderId,
         recipientId: entryPageId,
+        receivedAt: providerTimestamp(value?.created_time, true),
         rawEvent: change,
       });
     }
@@ -211,6 +227,7 @@ export async function processMetaWebhookPayload(
   let firstErrorCode: string | undefined;
 
   for (const event of events) {
+    if (event.eventType === "unknown") { skipped += 1; continue; }
     const receivedAt = new Date().toISOString();
     const connection = event.pageId
       ? await findMetaSocialConnectionByPageId(
@@ -320,6 +337,7 @@ export async function processMetaWebhookPayload(
           direction: event.direction,
           attachments: event.attachments,
           messageKind: event.messageKind,
+          receivedAt: event.receivedAt,
         });
         if (result.error) {
           status = "error";
@@ -330,7 +348,8 @@ export async function processMetaWebhookPayload(
             event.eventType === "feed" || event.eventType === "feed_comment"
               ? "feed_comment_stored"
               : "stored";
-          saved += 1;
+          if (result.conversation) saved += 1;
+          else { status = "duplicate"; skipped += 1; }
 
           if (
             event.eventType === "messages" &&
@@ -392,6 +411,14 @@ export async function processMetaWebhookPayload(
   };
 }
 
+function providerTimestamp(value: unknown, seconds: boolean): string | null {
+  const numeric = typeof value === "number" ? value :
+    typeof value === "string" && /^\d+$/u.test(value) ? Number(value) : NaN;
+  const millis = seconds ? numeric * 1000 : numeric;
+  return Number.isSafeInteger(millis) && millis >= 946684800000 &&
+    millis <= Date.now() + 300000 ? new Date(millis).toISOString() : null;
+}
+
 function unknownEvent(
   pageId: string | null,
   senderId: string | null,
@@ -418,34 +445,6 @@ function unknownEvent(
     rawEvent,
     direction: "inbound",
   };
-}
-
-function isInstagramMessagingItem(
-  item: Record<string, unknown>,
-  payload: Record<string, unknown>,
-): boolean {
-  return (
-    stringValue(payload.object) === "instagram" ||
-    stringValue(item.object) === "instagram" ||
-    Boolean(
-      isRecord(item.message) &&
-      (item.message.attachments || item.message.is_echo === false) &&
-      (item.sender as Record<string, unknown> | undefined)?.username,
-    )
-  );
-}
-
-function isInstagramChange(
-  change: Record<string, unknown>,
-  payload: Record<string, unknown>,
-): boolean {
-  const value = isRecord(change.value) ? change.value : undefined;
-  return (
-    stringValue(payload.object) === "instagram" ||
-    stringValue(value?.object) === "instagram" ||
-    Boolean(value?.media_id) ||
-    Boolean(isRecord(value?.media))
-  );
 }
 
 function validUrl(value: string | null): string | null {

@@ -1,3 +1,14 @@
+## LOCK-FM-FACEBOOK-AUTOMATIC-INGRESS-20261113
+- Task: FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 / existing Issue1464
+- Status: RELEASED_SOURCE_REVIEWED_PENDING_CI
+- Risk: R3
+- Holder: Facebook Work session; independent Guardian facebook_ingress_guardian.
+- Baseline: main3912461e1f88eb5cf2e621f23e4d6079409c20cc.
+- Scope: existing Meta webhook route/parser, Facebook connection/thread mapping, executable synthetic boundary tests and exact provider/deployment proposal.
+- Parallel boundaries: preserve Support/Adminchat/Stripe/Billing; PR1470 exclusively owns Main session-preservation admission. No protected merge/deploy, provider subscription/callback/publication, DB/schema/permission action or outbound send.
+- Verification: local113focused/123governance, build/lint/truth/drift PASS; independent Guardian89/89 plus mutation-negative PASS. Exact hosted CI remains required.
+- Recovery: reviewed source revert; runtime and common Production callback remain unchanged. Real automatic arrival stays unaccepted until separately authorized isolated routing and genuine new inputs pass.
+
 ## LOCK-FM-FACEBOOK-PAGE-DISCOVERY-20261109
 - Task: FM-FACEBOOK-PAGE-DISCOVERY-20261109
 - Status: RELEASED

@@ -2259,23 +2259,26 @@ export async function findMetaSocialConnectionByPageId(
     );
   }
 
-  const result = await postgrestSelect<SocialConnectionRow>(
+  const result = await postgrestSelect<SocialConnectionRow[]>(
     "social_connections",
     serviceAccessToken,
-    SOCIAL_CONNECTION_SECRET_COLUMNS,
+    SOCIAL_CONNECTION_PUBLIC_COLUMNS,
     [
       ["platform", platform],
       ["status", "connected"],
       ["page_id", pageId],
     ],
-    1,
-    true,
+    2,
   );
   if (result.error) return socialConnectionError(result.error.message);
-  if (!result.data) return { connection: null, error: null };
+  const matches = result.data ?? [];
+  if (matches.length === 0) return { connection: null, error: null };
+  if (matches.length !== 1) return socialConnectionError("connection_ambiguous");
+  const matchedConnection = matches[0];
+  if (!matchedConnection.webhook_subscribed) return { connection: null, error: null };
 
   const entitlement = await getWorkspaceProcessingEntitlement(
-    result.data.workspace_id,
+    matchedConnection.workspace_id,
   );
   if (entitlement.error) {
     return socialConnectionError(
@@ -2286,7 +2289,7 @@ export async function findMetaSocialConnectionByPageId(
     return { connection: null, error: null, processingBlocked: true };
   }
 
-  return { connection: result.data, error: null };
+  return { connection: matchedConnection, error: null };
 }
 
 export async function findWhatsAppCloudConnectionByPhoneNumberId(
@@ -5160,7 +5163,7 @@ export async function createMetaWebhookConversationMessage(input: {
     pageId,
     senderId,
   });
-  const preferredThreadId = threadIdentifiers[0] ?? null;
+  let preferredThreadId: string | null = threadIdentifiers[0] ?? null;
   let contact: ContactRow | null = null;
 
   if (threadIdentifiers.length) {
@@ -5274,6 +5277,15 @@ export async function createMetaWebhookConversationMessage(input: {
         created.error?.message ?? "Kontakt konnte nicht angelegt werden.",
       );
     contact = created.data;
+  }
+
+  if (input.sourcePlatform === "facebook" && normalizedSourceType === "facebook_messages" && pageId && senderId) {
+    const thread = await resolveFacebookMessageThread({
+      workspaceId: input.workspaceId, contactId: contact.id, pageId, senderId,
+      threadIdentifiers,
+    });
+    if (thread.error) return conversationMessageCreateError(thread.error.message);
+    preferredThreadId = thread.threadId;
   }
 
   const normalizedReplyTargetUrl = normalizeUrl(input.replyTargetUrl);
@@ -5435,7 +5447,8 @@ export async function createMetaTestConversationMessage(input: {
     );
   }
   if (existing.message) {
-    return { message: existing.message, conversation: null, error: null };
+    const repair = await repairMetaConversationSummary(existing.message);
+    return { message: existing.message, conversation: null, error: repair.error };
   }
 
   const receivedAt =
@@ -5517,64 +5530,58 @@ export async function createMetaTestConversationMessage(input: {
       externalCommentId,
     });
     if (!concurrentDuplicate.error && concurrentDuplicate.message) {
-      return {
-        message: concurrentDuplicate.message,
-        conversation: null,
-        error: null,
-      };
+      const repair = await repairMetaConversationSummary(concurrentDuplicate.message);
+      return { message: concurrentDuplicate.message, conversation: null, error: repair.error };
     }
     return conversationMessageCreateError(
       `Nachricht konnte nicht gespeichert werden: ${withOptionalSchemaHint(messageResult.error.message, "conversation_messages")}`,
     );
   }
 
-  const updatedConversation = await postgrestUpdate<ConversationRow>(
-    "conversations",
-    {
-      last_message_preview: content.slice(0, 240),
-      ...((input.direction ?? "inbound") === "inbound"
-        ? { last_inbound_at: receivedAt }
-        : { last_outbound_at: receivedAt }),
-      source_platform: input.sourcePlatform ?? "facebook",
-      source_type: normalizeMessageType(input.sourceType ?? input.messageType),
-      source_url: sourceUrl ?? conversationResult.conversation.source_url,
-      reply_target_url:
-        replyTargetUrl ?? conversationResult.conversation.reply_target_url,
-      external_thread_id:
-        normalizeOptionalText(input.externalThreadId) ??
-        conversationResult.conversation.external_thread_id,
-      external_message_id:
-        normalizeOptionalText(input.externalMessageId) ??
-        conversationResult.conversation.external_message_id,
-      external_post_id:
-        normalizeOptionalText(input.externalPostId) ??
-        conversationResult.conversation.external_post_id,
-      external_comment_id:
-        normalizeOptionalText(input.externalCommentId) ??
-        conversationResult.conversation.external_comment_id,
-      original_author_label:
-        normalizeOptionalText(input.authorLabel) ??
-        conversationResult.conversation.original_author_label,
-      original_text_excerpt:
-        normalizeExcerpt(input.originalTextExcerpt ?? content) ??
-        conversationResult.conversation.original_text_excerpt,
-      status: "open",
-      ai_status: "partial",
-      next_step: "Antwort vorbereiten",
-    },
-    getServiceAccessToken(),
-    [
-      ["workspace_id", input.workspaceId],
-      ["id", conversationResult.conversation.id],
-    ],
-    { select: CONVERSATION_COLUMNS, single: true },
-  );
-
+  const summary = messageResult.data
+    ? await repairMetaConversationSummary(messageResult.data, true)
+    : { error: new Error("message_persist_failed") };
   return {
     message: messageResult.data,
-    conversation: updatedConversation.data ?? conversationResult.conversation,
-    error: updatedConversation.error,
+    conversation: conversationResult.conversation,
+    error: summary.error,
   };
+}
+
+// A message insert can succeed before its summary update fails. Replayed
+// external IDs repair from persisted latest rows rather than acknowledging a
+// permanently stale inbox, or regressing it to an older delivery timestamp.
+async function repairMetaConversationSummary(message: ConversationMessageRow, markNewInput = false): Promise<{ error: Error | null }> {
+  const filter: Array<[string, string]> = [
+    ["workspace_id", message.workspace_id], ["contact_id", message.contact_id],
+    ["conversation_id", message.conversation_id],
+  ];
+  const latest = await postgrestSelect<ConversationMessageRow>(
+    "conversation_messages", getServiceAccessToken(), CONVERSATION_MESSAGE_COLUMNS,
+    filter, 1, true, "created_at.desc,id.desc",
+  );
+  if (latest.error || !latest.data) return { error: new Error("conversation_summary_lookup_failed") };
+  const patch: Record<string, unknown> = {
+    last_message_preview: latest.data.content.slice(0, 240),
+    ...(markNewInput ? { status: "open", ai_status: "partial", next_step: "Antwort vorbereiten" } : {}),
+  };
+  for (const key of ["source_url", "reply_target_url", "external_thread_id", "external_message_id",
+    "external_post_id", "external_comment_id", "original_author_label", "original_text_excerpt"] as const) {
+    if (latest.data[key]) patch[key] = latest.data[key];
+  }
+  for (const direction of ["inbound", "outbound"] as const) {
+    const row = await postgrestSelect<ConversationMessageRow>(
+      "conversation_messages", getServiceAccessToken(), CONVERSATION_MESSAGE_COLUMNS,
+      [...filter, ["direction", direction]], 1, true, "created_at.desc,id.desc",
+    );
+    if (row.error) return { error: new Error("conversation_summary_lookup_failed") };
+    if (row.data) patch[direction === "inbound" ? "last_inbound_at" : "last_outbound_at"] = row.data.created_at;
+  }
+  const repaired = await postgrestUpdate(
+    "conversations", patch, getServiceAccessToken(),
+    [["workspace_id", message.workspace_id], ["contact_id", message.contact_id], ["id", message.conversation_id]],
+  );
+  return { error: repaired.error };
 }
 
 async function findExistingMetaConversationMessage(input: {
@@ -5629,6 +5636,7 @@ async function ensureMetaTestConversation(input: {
         ["workspace_id", input.workspaceId],
         ["contact_id", input.contactId],
         ["source_platform", input.sourcePlatform],
+        ["source_type", normalizeMessageType(input.sourceType)],
         ["external_thread_id", externalThreadId],
       ],
       1,
@@ -5668,6 +5676,8 @@ async function ensureMetaTestConversation(input: {
   const urlConversation = (existing.data ?? []).find(
     (conversation) =>
       ["open", "waiting"].includes(conversation.status) &&
+      conversation.source_type === normalizeMessageType(input.sourceType) &&
+      (!externalThreadId || conversation.external_thread_id === externalThreadId) &&
       Boolean(sourceUrl || replyTargetUrl) &&
       (conversation.source_url === sourceUrl ||
         conversation.reply_target_url === replyTargetUrl ||
@@ -5680,8 +5690,8 @@ async function ensureMetaTestConversation(input: {
   const openConversation = (existing.data ?? []).find(
     (conversation) =>
       ["open", "waiting"].includes(conversation.status) &&
-      !conversation.external_thread_id &&
-      conversation.source_type === normalizeMessageType(input.sourceType),
+      conversation.source_type === normalizeMessageType(input.sourceType) &&
+      !externalThreadId && !conversation.external_thread_id,
   );
 
   if (openConversation) return { conversation: openConversation, error: null };
@@ -5716,6 +5726,48 @@ async function ensureMetaTestConversation(input: {
   }
 
   return { conversation: created.data, error: null };
+}
+
+// Reuse the existing Graph thread only with exact Page evidence. New threads
+// use page:sender in both webhook and manual recovery, without a Graph call.
+async function resolveFacebookMessageThread(input: {
+  workspaceId: string; contactId: string; pageId: string; senderId: string;
+  threadIdentifiers: string[];
+}): Promise<{ threadId: string | null; error: Error | null }> {
+  const canonical = `${input.pageId}:${input.senderId}`;
+  const result = await postgrestSelect<ConversationRow[]>(
+    "conversations", getServiceAccessToken(), CONVERSATION_COLUMNS,
+    [["workspace_id", input.workspaceId], ["contact_id", input.contactId],
+      ["source_platform", "facebook"], ["source_type", "facebook_messages"]],
+    25, false, "updated_at.desc",
+  );
+  if (result.error) return { threadId: null, error: new Error("facebook_thread_lookup_failed") };
+  const rows = result.data ?? [];
+  if (rows.length >= 25) return { threadId: null, error: new Error("facebook_thread_mapping_ambiguous") };
+  const verifiedPage = (value: string | null) => {
+    if (!value) return null;
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password && !url.port &&
+        ["business.facebook.com", "www.facebook.com", "facebook.com"].includes(url.hostname)
+        ? extractFacebookPageId(value) : null;
+    } catch { return null; }
+  };
+  const matches = rows.filter(row => row.external_thread_id && (
+    input.threadIdentifiers.includes(row.external_thread_id) ||
+    row.external_thread_id === canonical ||
+    [row.reply_target_url, row.source_url].some(url => verifiedPage(url) === input.pageId)
+  ));
+  if (matches.length > 1) return { threadId: null, error: new Error("facebook_thread_mapping_ambiguous") };
+  if (matches.length === 1) return { threadId: matches[0].external_thread_id, error: null };
+  // An unbound historical row must be reconciled through a verified manual
+  // original/Graph mapping, never guessed from the contact's name or PSID.
+  if (rows.some(row => !row.external_thread_id ||
+      (!row.external_thread_id.includes(":") &&
+       !verifiedPage(row.reply_target_url) && !verifiedPage(row.source_url)))) {
+    return { threadId: null, error: new Error("facebook_thread_mapping_required") };
+  }
+  return { threadId: canonical, error: null };
 }
 
 function buildMetaThreadIdentifiers(input: {

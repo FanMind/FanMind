@@ -1,3 +1,17 @@
+## Facebook automatic ingress preparation — 13 November 2026
+
+The successor to merged PR1465 hardens the existing signed Meta webhook and
+Facebook CRM mapping: exact envelope/Page identity, new fan-comments only,
+unique enabled connection, bounded body, retry-safe duplicate summary recovery,
+and convergence of webhook/manual DM threads with verified Page provenance.
+This is source preparation, not real automatic-arrival acceptance. Actual Meta
+inspection found the shared Page callback on Production, App in Development,
+App Review not submitted and Business unverified. Staging subscription remains
+false; no callback, provider permission, database or live runtime was changed.
+PR1470 owns Main rollout preservation of the existing Operator session.
+Runbook and concrete approval boundary:
+`docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md`.
+
 ## Facebook Staging acceptance — 13 November 2026
 
 The Owner-approved exact runtime commit `d34834979cef30c9c6af567d61b3df448901bfda`
