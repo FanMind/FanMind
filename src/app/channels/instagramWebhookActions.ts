@@ -410,14 +410,14 @@ export async function inspectUnifiedInstagramIngress(activate = false) {
     const {connection,error} = await getCurrentInstagramConnection();
     if (error || !connection?.page_id || !connection.page_access_token_encrypted || !instagramUnifiedEnabled(process.env) || connection.external_account_name !== "fanmind.crm" || connection.oauth_login_type !== "instagram_unified_login") throw Error("target");
     const token = unwrapInstagramCredential(decryptToken(connection.page_access_token_encrypted)!,connection.page_id);
-    await verifyUnifiedInstagramCredential(token,connection.page_id);
+    const diagnostics = await verifyUnifiedInstagramCredential(token,connection.page_id);
     if (activate) await subscribeInstagramAccount(connection.page_id,token,"instagram_messages");
     const fields = await fetchInstagramSubscribedFields(connection.page_id,token);
     const messages = fields.includes("messages"), comments = fields.includes("comments");
     const saved = await updateInstagramWebhookSubscribed(connection.id,messages && comments);
     revalidatePath("/channels");
-    return {ok:messages && comments && !saved.error,messages,comments};
-  } catch { return {ok:false,messages:false,comments:false}; }
+    return {ok:messages && comments && !saved.error,messages,comments,diagnostics};
+  } catch { return {ok:false,messages:false,comments:false,diagnostics:null}; }
 }
 export async function syncUnifiedInstagramComments() {
   try {

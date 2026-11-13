@@ -20,6 +20,13 @@ export function validateUnifiedDiagnostics(value, now = Date.now()) {
       value.scopes.some(s=>!UNIFIED_SCOPES.includes(s) && s !== 'public_profile') ||
       (value.expires_at && value.expires_at * 1000 <= now) ||
       (value.data_access_expires_at && value.data_access_expires_at * 1000 <= now)) throw Error('instagram_unified_token');
+  const expiry = name => {
+    if (value[name] == null) return null;
+    if (!Number.isSafeInteger(value[name]) || value[name] < 0) throw Error('instagram_unified_expiry');
+    return value[name];
+  };
+  return {appId: UNIFIED_APP, tokenType: 'SYSTEM_USER', scopes: [...value.scopes],
+    expiresAt: expiry('expires_at'), dataAccessExpiresAt: expiry('data_access_expires_at')};
 }
 export function selectUnifiedAccount(accounts) {
   if (!Array.isArray(accounts) || accounts.length !== 1 || accounts[0]?.username !== 'fanmind.crm' ||

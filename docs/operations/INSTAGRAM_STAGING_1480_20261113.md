@@ -8,6 +8,14 @@ for each of the two supported providers, with adversarial subdomain/path/port
 tests. No alert dismissal or security-check bypass. A successor head needs its
 own hosted checks before merge. No rollout or token authorization yet.
 
+The existing Operator ingress check now returns only verified account/app/type,
+minimal scope names and the two numeric debug_token expiry fields. Zero means
+provider-reported no timed expiry; missing remains explicitly unknown. No raw
+provider payload or token crosses the server boundary. This permits resolving
+the60days/Never discrepancy from actual credentials after authorization.
+Negative expiry-type and token-exclusion tests pass;75focused tests, lint and
+the full Next webpack build pass. Live Staging freshly reports88898c6f.
+
 Owner approved the concrete Unified Login route after the inspection below.
 Existing App1547928503809961 now has configuration2150411132228815,
 Instagram-account required asset only, exact instagram_basic,

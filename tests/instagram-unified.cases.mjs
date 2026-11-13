@@ -13,6 +13,9 @@ test('Unified configuration refuses Production, wrong app/project/secret and for
 test('System User diagnostics reject user/Page tokens, wrong app, missing/extra scopes and expired credentials',()=>{
  const d={is_valid:true,app_id:env.INSTAGRAM_APP_ID,type:'SYSTEM_USER',scopes:[...UNIFIED_SCOPES],expires_at:2000000000};
  assert.doesNotThrow(()=>validateUnifiedDiagnostics(d));
+ assert.deepEqual(validateUnifiedDiagnostics({...d,expires_at:0,data_access_expires_at:0,access_token:'must-not-escape'}),{appId:env.INSTAGRAM_APP_ID,tokenType:'SYSTEM_USER',scopes:[...UNIFIED_SCOPES],expiresAt:0,dataAccessExpiresAt:0});
+ assert.equal(validateUnifiedDiagnostics({...d,expires_at:undefined}).expiresAt,null);
+ assert.throws(()=>validateUnifiedDiagnostics({...d,expires_at:'Never'}));
  for(const patch of [{is_valid:false},{type:'USER'},{type:'PAGE'},{app_id:'foreign'},{scopes:['instagram_basic']},{scopes:[...UNIFIED_SCOPES,'ads_read']},{expires_at:1}])assert.throws(()=>validateUnifiedDiagnostics({...d,...patch}));
 });
 test('Assigned-account selection rejects mixed grants, wrong username and ambiguous identities',()=>{

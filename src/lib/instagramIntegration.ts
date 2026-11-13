@@ -679,12 +679,13 @@ export function unwrapInstagramCredential(text: string, accountId: string): stri
   return readUnifiedCredential(text,process.env,accountId).accessToken;
 }
 
-export async function verifyUnifiedInstagramCredential(accessToken: string, accountId: string): Promise<void> {
+export async function verifyUnifiedInstagramCredential(accessToken: string, accountId: string) {
   if (!instagramUnifiedEnabled(process.env)) throw new Error("instagram_unified_disabled");
   const result = await unifiedJson("debug_token",`${UNIFIED_APP}|${requireInstagramAppSecret()}`,{input_token:accessToken});
-  validateUnifiedDiagnostics(result.data);
+  const diagnostics = validateUnifiedDiagnostics(result.data);
   const accounts = await unifiedJson("me/assigned_instagram_accounts",accessToken,{fields:"id,username",limit:"2"});
   if (accounts.paging?.next || selectUnifiedAccount(accounts.data).id !== accountId) throw new Error("instagram_unified_account_changed");
+  return { ...diagnostics, accountId };
 }
 export async function fetchInstagramOwnComments(accountId: string, accessToken: string) {
   const media = await unifiedJson(encodeURIComponent(accountId)+"/media",accessToken,{fields:"id,permalink",limit:"25"});
