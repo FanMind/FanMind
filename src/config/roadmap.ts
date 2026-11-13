@@ -64,7 +64,7 @@ export const roadmapPhases: RoadmapPhase[] = [
     tone: "blue",
     availability: "upcoming",
     items: [
-      { label: "Facebook", state: "progress", status: "Anbindung und Abnahme in Arbeit" },
+      { label: "Facebook-Seiten", state: "partial", status: "Eine Seite auf Staging abgenommen · allgemeine Freigabe offen" },
       { label: "Instagram", state: "progress", status: "Anbindung und Abnahme in Arbeit" },
       { label: "WhatsApp", state: "planned", status: "Roadmap" },
       { label: "Technische & rechtliche Prüfung", state: "progress", status: "Provider-Freigaben weiterhin erforderlich" },

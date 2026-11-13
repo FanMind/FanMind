@@ -100,6 +100,12 @@ export const fanmindCopy = {
 } as const;
 
 const englishCopy: Record<string, string> = {
+  "Facebook-Seiten": "Facebook Pages",
+  "Eine Seite auf Staging abgenommen · allgemeine Freigabe offen": "One Page accepted on Staging · general release pending",
+  "Für Facebook-Seiten: Messenger und Beitragskommentare für eine FanMind-Seite auf Staging geprüft. Persönliche Profile und private Messenger-Postfächer werden nicht unterstützt; allgemeine Freigabe noch offen.": "For Facebook Pages: Messenger and post comments passed Staging acceptance for one FanMind Page. Personal profiles and private Messenger inboxes are not supported; general availability remains pending.",
+  "Facebook-Seiten: Empfang für eine FanMind-Seite auf Staging geprüft. Persönliche Profile nicht unterstützt. Instagram bleibt in Vorbereitung; keine allgemeine produktive Vollintegration.": "Facebook Pages: reception passed Staging acceptance for one FanMind Page. Personal profiles are not supported. Instagram remains in preparation; no general full Production integration.",
+  "Kann ich mein privates Facebook-Profil mit FanMind verbinden?": "Can I connect my personal Facebook profile to FanMind?",
+  "Die Anbindung ist für Facebook-Seiten vorgesehen, nicht für persönliche Profile oder deren private Messenger-Postfächer. Auch der Professional Mode ändert diese Grenze der verwendeten offiziellen Meta-Schnittstelle nicht. Fans können von ihrem privaten Profil an eine verbundene Seite schreiben. Der automatische Empfang von Nachrichten und Beitragskommentaren wurde für eine FanMind-Seite auf Staging geprüft; allgemeiner Kundenzugriff und Mehrseitenbetrieb sind noch nicht freigegeben. Andere Verbindungsfehler müssen einzeln geprüft werden.": "The integration is intended for Facebook Pages, not personal profiles or their private Messenger inboxes. Professional Mode does not change this limitation of the official Meta interface used here. Fans can message a connected Page from their personal profile. Automatic message and post-comment receipt passed Staging acceptance for one FanMind Page; general customer access and multiple-Page operation have not been released. Other connection failures must be checked individually.",
   "Produkt": "Product",
   "Funktionen": "Features",
   "CSV-Import & Kontaktwissen": "CSV import & contact knowledge",
