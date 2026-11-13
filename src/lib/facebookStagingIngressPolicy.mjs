@@ -19,7 +19,13 @@ const escapeHtml = value => value.replace(/[&<>"']/gu, character => ({'&':'&amp;
 export function stagingFacebookOAuthContinuation(request, env, state) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code'), signedState = url.searchParams.get('state');
-  if (!stagingFacebookIngressEnabled(env) || url.origin !== STAGING_ORIGIN ||
+  // The installed Next adapter reconstructs nginx's HTTPS upstream as localhost:3001.
+  // A header never authorizes an arbitrary origin: accept only the exact loopback
+  // transport with the pinned nginx Host/TLS metadata and the existing runtime/state gates.
+  const trustedTransport = url.origin === STAGING_ORIGIN ||
+    (['http://127.0.0.1:3001','https://127.0.0.1:3001','http://localhost:3001','https://localhost:3001'].includes(url.origin) &&
+     request.headers.get('host') === 'staging.fanmind.ch' && request.headers.get('x-forwarded-proto') === 'https');
+  if (!stagingFacebookIngressEnabled(env) || !trustedTransport || url.username || url.password ||
       url.pathname !== '/api/integrations/facebook/callback' || request.method !== 'GET' ||
       state?.userId !== OPERATOR_USER || state?.workspaceId !== OPERATOR_WORKSPACE ||
       url.searchParams.has('same_site_continue') || !code || code.length > 4096 ||

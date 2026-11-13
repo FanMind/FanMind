@@ -1,3 +1,5 @@
+import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -62,4 +64,17 @@ test('independent in-memory mutation proves the foreign-Page negative detects a 
  async function assertForeignDenied(h){assert.equal((await h.api.controlStagingFacebookIngress(true)).ok,false);assert.equal(h.calls.length,0);}
  await assertForeignDenied(actionHarness({connection:{...target,page_id:'440506919151695'}}));
  await assert.rejects(assertForeignDenied(actionHarness({connection:{...target,page_id:'440506919151695'},mutate:true})),{name:'AssertionError'});
+});
+
+test('installed Next proxy adaptation keeps the Strict-cookie bridge on the exact Staging host only',async()=>{
+ const require=createRequire(import.meta.url);
+ const NextNodeServer=require('next/dist/server/next-server').default;
+ const {NodeNextRequest}=require('next/dist/server/base-http/node');
+ const {NextRequestAdapter}=require('next/dist/server/web/spec-extension/adapters/next-request');
+ const incoming=Readable.from([]);incoming.method='GET';incoming.url='/api/integrations/facebook/callback?code=synthetic&state=signed';incoming.headers={host:'staging.fanmind.ch','x-forwarded-proto':'https','sec-fetch-site':'cross-site'};
+ const nodeRequest=new NodeNextRequest(incoming);NextNodeServer.prototype.attachRequestMeta.call({fetchHostname:'localhost',port:3001,nextConfig:{experimental:{}}},nodeRequest,{query:{}},false);
+ const adapted=NextRequestAdapter.fromNodeNextRequest(nodeRequest,new AbortController().signal);
+ assert.equal(new URL(adapted.url).origin,'https://localhost:3001');assert.equal(policy.stagingFacebookOAuthContinuation(adapted,env,state).status,200);
+ for(const host of ['attacker.invalid','fanmind.ch','staging.fanmind.ch.attacker.invalid'])assert.equal(policy.stagingFacebookOAuthContinuation(new Request(adapted.url,{headers:{host,'x-forwarded-proto':'https'}}),env,state),null);
+ for(const origin of ['https://attacker.invalid:3001','http://localhost:3000','https://fanmind.ch'])assert.equal(policy.stagingFacebookOAuthContinuation(new Request(origin+'/api/integrations/facebook/callback?code=x&state=y',{headers:incoming.headers}),env,state),null);
 });
