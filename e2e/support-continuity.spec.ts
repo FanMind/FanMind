@@ -31,6 +31,39 @@ test("Owner inbox revalidates access and removes a customer transcript on author
  await mount(page,"owner");await page.getByRole("button",{name:"Freigegebenen Verlauf anzeigen"}).click();await expect(page.getByText("Freigegebener Kundentext",{exact:true})).toBeVisible();
  authorized=false;await page.evaluate(()=>window.dispatchEvent(new Event("focus")));await expect(page.getByText("Freigegebener Kundentext",{exact:true})).toHaveCount(0);await expect(page.getByText("Meldungen oder Wiederaufnahme derzeit nicht bestätigt.",{exact:false})).toBeVisible();
 });
+
+test("Owner acknowledgment stays absent after a fresh inbox mount",async({page})=>{
+ let acknowledged=false,ackPosts=0;
+ const notification={id:"10000000-0000-4000-8000-000000000002",workspace_id:null,reference_id:"10000000-0000-4000-8000-000000000003",code:"security_boundary",created_at:"2026-11-13T00:00:00Z",acknowledged_at:null,occurrences:1};
+ await page.route("**/api/admin/support/overview",async route=>{
+  if(route.request().method()==="POST"){
+   const body=route.request().postDataJSON();
+   if(body.action==="ack"){expect(body).toEqual({action:"ack",id:notification.id});acknowledged=true;ackPosts++;await route.fulfill({json:{ok:true}});return;}
+   expect(body).toEqual({action:"recover"});await route.fulfill({json:{repaired:0}});return;
+  }
+  await route.fulfill({json:{items:acknowledged?[]:[notification],retention:{healthy:true}}});
+ });
+ await mount(page,"owner");await expect(page.getByText("Sicherheitswarnung",{exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Zur Kenntnis genommen",exact:true}).click();await expect(page.getByText("Sicherheitswarnung",{exact:true})).toHaveCount(0);
+ await mount(page,"owner");await expect(page.getByRole("heading",{name:"Owner-Meldungen aus allen Workspaces"})).toBeVisible();
+ await expect(page.getByText("Sicherheitswarnung",{exact:true})).toHaveCount(0);expect(ackPosts).toBe(1);
+ await expect(page.getByText("Meldungen oder Wiederaufnahme derzeit nicht bestätigt.",{exact:false})).toHaveCount(0);
+});
+
+for(const status of [409,503])test(`failed Owner acknowledgment (${status}) remains visible after reload without automatic retry`,async({page})=>{
+ let ackPosts=0;
+ const notification={id:"10000000-0000-4000-8000-000000000002",workspace_id:null,reference_id:"10000000-0000-4000-8000-000000000003",code:"security_boundary",created_at:"2026-11-13T00:00:00Z",acknowledged_at:null,occurrences:1};
+ await page.route("**/api/admin/support/overview",async route=>{
+  if(route.request().method()==="POST"){
+   if(route.request().postDataJSON().action==="ack"){ackPosts++;await route.fulfill({status,json:{error:"support_unavailable"}});return;}
+   await route.fulfill({json:{repaired:0}});return;
+  }
+  await route.fulfill({json:{items:[notification],retention:{healthy:true}}});
+ });
+ await mount(page,"owner");await page.getByRole("button",{name:"Zur Kenntnis genommen",exact:true}).click();
+ await expect(page.getByText("Meldungen oder Wiederaufnahme derzeit nicht bestätigt.",{exact:false})).toBeVisible();
+ await mount(page,"owner");await expect(page.getByText("Sicherheitswarnung",{exact:true})).toBeVisible();expect(ackPosts).toBe(1);
+});
 test("support export suppresses a late download after account revalidation",async({page})=>{
  let scope="scope-a",release:()=>void=()=>{};const gate=new Promise<void>(resolve=>{release=resolve;});let started=false,downloads=0;
  page.on('download',()=>downloads++);

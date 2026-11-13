@@ -76,7 +76,14 @@ test("support centre native PG17: ACL, tenant, expiry, atomic concurrent claim, 
     const inbox=JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`));
     assert.ok(inbox.some(n=>n.workspace_id===id(11)&&n.code==='security_boundary'));
     const notification=inbox.find(n=>n.code==='security_boundary').id;
-    sql(`set role service_role; select public.support_centre_ack('${id(1)}','${notification}');`);
+    assert.throws(()=>sql(`set role service_role; select public.support_centre_ack('${id(2)}','${notification}');`));
+    assert.equal(sql(`set role service_role; select public.support_centre_ack('${id(1)}','${id(999)}');`),'f');
+    assert.equal(sql(`set role service_role; select public.support_centre_ack('${id(1)}','${notification}');`),'t');
+    const firstAcknowledgment=sql(`select acknowledged_at::text from public.support_centre_notifications where id='${notification}';`);
+    assert.notEqual(firstAcknowledgment,'');
+    assert.equal(sql(`select acknowledged_by='${id(1)}' from public.support_centre_notifications where id='${notification}';`),'t');
+    assert.equal(sql(`set role service_role; select public.support_centre_ack('${id(1)}','${notification}');`),'t');
+    assert.equal(sql(`select acknowledged_at::text from public.support_centre_notifications where id='${notification}';`),firstAcknowledgment);
     assert.ok(!JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`)).some(n=>n.id===notification));
     sql(`set role service_role; select public.support_centre_notify('${id(11)}','security_boundary','${id(21)}');`);
     assert.ok(JSON.parse(sql(`set role service_role; select public.support_centre_inbox('${id(1)}');`)).some(n=>n.id===notification));
