@@ -50,6 +50,7 @@ export async function runStagingProbe(args){
  if(manifest.source!==input.source||realpathSync(fileURLToPath(import.meta.url))!==join(directory,'control.mjs')||
   createHash('sha256').update(rootFile(join(directory,'host.mjs'))).digest('hex')!==manifest.hostSha256||
   createHash('sha256').update(rootFile(join(directory,'control.mjs'))).digest('hex')!==manifest.controlSha256)fail('probe_source_binding');
+ console.log('STAGING_MEDIA_PROBE_PHASE=source');
  const pid=run('/usr/bin/systemctl',['show',UNIT,'--property=MainPID','--value']);
  if(!/^[1-9][0-9]{0,9}$/u.test(pid)||run('/usr/bin/systemctl',['show',UNIT,'--property=ControlGroup','--value'])!==CGROUP)fail('probe_service_binding');
  const uid=run('/usr/bin/id',['-u','fanmind-staging']),gid=run('/usr/bin/id',['-g','fanmind-staging']);
@@ -58,11 +59,14 @@ export async function runStagingProbe(args){
  if(!ids('Uid')?.every(x=>x===uid)||!ids('Gid')?.every(x=>x===gid)||readFileSync(`/proc/${pid}/cgroup`,'utf8').trim()!==`0::${CGROUP}`)fail('probe_service_binding');
  const groups=status.match(/^Groups:\s*(.*)$/m)?.[1].trim().split(/\s+/u);
  if(!groups?.length||groups.some(x=>!/^\d+$/u.test(x)))fail('probe_service_binding');
+ console.log('STAGING_MEDIA_PROBE_PHASE=identity');
  const limits=probeLimitArguments(run('/usr/bin/prlimit',['--pid',pid,'--noheadings','--output','RESOURCE,SOFT,HARD']));
+ console.log('STAGING_MEDIA_PROBE_PHASE=limits');
  const cgroup=`/sys/fs/cgroup${CGROUP}`;
  if(realpathSync(cgroup)!==cgroup||statSync(cgroup).uid!==0)fail('probe_cgroup_binding');
  // Only this fixed helper's own PID is attached; no service or config is moved.
  writeFileSync(cgroup+'/cgroup.procs',String(process.pid));
+ console.log('STAGING_MEDIA_PROBE_PHASE=cgroup');
  process.umask(0o077);
  const env={...SAFE,GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:input.source,REVIEWED_COMMIT:input.source,EXPECTED_LIVE_COMMIT:input.live,GITHUB_RUN_ID:input.run,GITHUB_RUN_ATTEMPT:input.attempt,CONFIRMATION:'probe-staging-media-host',FANMIND_RUNTIME_ENVIRONMENT:'staging',FANMIND_TARGET_SUPABASE_PROJECT_REF:'vshyhvgcmrlagvfnvomc',FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz'};
  const execute=action=>{

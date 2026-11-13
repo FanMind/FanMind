@@ -23,33 +23,42 @@ async function live(expected){const r=await fetch('https://staging.fanmind.ch/ap
 export async function prepareStagingMediaHost(action,env=process.env){
  assertStagingMediaPrepare(env,action);if(process.getuid()!==0)fail('prepare_root');
  process.umask(0o022); // installed public diagnostic source must remain application-readable
+ console.log('STAGING_MEDIA_PREPARE_PHASE=target');
  if(run('/usr/bin/git',['-c',`safe.directory=${process.cwd()}`,'rev-parse','HEAD']).trim()!==env.GITHUB_SHA)fail('prepare_source');
+ console.log('STAGING_MEDIA_PREPARE_PHASE=source');
  if(readFileSync('/etc/systemd/system/fanmind-staging.service','utf8')!==readFileSync('ops/systemd/fanmind-staging.service','utf8')||run('/usr/bin/systemctl',['show','fanmind-staging.service','--property=User','--value']).trim()!=='fanmind-staging'||run('/usr/bin/systemctl',['show','fanmind-staging.service','--property=WorkingDirectory','--value']).trim()!=='/var/www/fanmind-staging')fail('prepare_unit');
+ console.log('STAGING_MEDIA_PREPARE_PHASE=unit');
  await live(env.EXPECTED_LIVE_COMMIT);
  console.log('STAGING_MEDIA_BOOTSTRAP_AUTHORITY=existing_root_runner');
  if(action==='inspect'){console.log(`STAGING_MEDIA_FFMPEG_PRESENT=${existsSync('/usr/bin/ffmpeg')&&existsSync('/usr/bin/ffprobe')}`);console.log('STAGING_MEDIA_PREPARE=INSPECTED');return;}
  const privatePaths=['/var/www/fanmind-staging/.env.production','/var/www/fanmind-staging/.release.env','/etc/fanmind-staging/runtime-secrets.env'];
  const fingerprint=()=>privatePaths.map(p=>createHash('sha256').update(readFileSync(p)).digest('hex')).join(':');
  const before=fingerprint();
+ console.log('STAGING_MEDIA_PREPARE_PHASE=private_config');
  if(!existsSync('/usr/bin/ffmpeg')||!existsSync('/usr/bin/ffprobe')){
   run('/usr/bin/apt-get',['update'],180000);
   assertNoPackageUpgrade(run('/usr/bin/apt-get',['--simulate','--no-upgrade','--no-install-recommends','install','ffmpeg']));
   run('/usr/bin/apt-get',['--assume-yes','--no-upgrade','--no-install-recommends','install','ffmpeg'],240000);
  }
+ console.log('STAGING_MEDIA_PREPARE_PHASE=packages');
  for(const binary of ['/usr/bin/ffmpeg','/usr/bin/ffprobe']){const s=lstatSync(binary);if(!s.isFile()||s.uid!==0||(s.mode&0o022))fail('prepare_binary');}
  for(const path of ['/usr/local','/usr/local/lib','/usr/local/sbin','/var/lib','/etc/sudoers.d',BASE,BASE+'/releases',BASE+'/releases/'+env.GITHUB_SHA,'/var/lib/fanmind-staging-media','/etc/systemd/system/fanmind-staging.service.d'])directory(path);
+ console.log('STAGING_MEDIA_PREPARE_PHASE=paths');
  const target=BASE+'/releases/'+env.GITHUB_SHA,host=readFileSync('scripts/operations/chat-admin-media-host-readiness.mjs'),control=readFileSync('scripts/operations/staging-media-probe-control.mjs');
  install(target+'/host.mjs',host);install(target+'/control.mjs',control);
  install(target+'/manifest.json',JSON.stringify({version:1,source:env.GITHUB_SHA,hostSha256:createHash('sha256').update(host).digest('hex'),controlSha256:createHash('sha256').update(control).digest('hex')})+'\n');
  const next=BASE+'/current.'+process.pid;symlinkSync(target,next);renameSync(next,BASE+'/current');
  if(!existsSync('/var/lib/fanmind-staging-media/probe.lock'))install('/var/lib/fanmind-staging-media/probe.lock','',0o600);
  install('/usr/local/sbin/fanmind-staging-media-probe','#!/bin/sh\numask 077\nexec /usr/bin/flock --nonblock /var/lib/fanmind-staging-media/probe.lock /usr/bin/node /usr/local/lib/fanmind-staging-media/current/control.mjs "$@"\n',0o755);
+ console.log('STAGING_MEDIA_PREPARE_PHASE=installed');
  const sudoers='fanmind-staging ALL=(root) NOPASSWD: /usr/local/sbin/fanmind-staging-media-probe\n';
  const check='/etc/sudoers.d/fanmind-staging-media-probe.check';
  try{install(check,sudoers,0o440);run('/usr/sbin/visudo',['--check','--file',check]);renameSync(check,'/etc/sudoers.d/fanmind-staging-media-probe');}finally{try{unlinkSync(check);}catch{}}
+ console.log('STAGING_MEDIA_PREPARE_PHASE=sudoers');
  const limits='/etc/systemd/system/fanmind-staging.service.d/20-chat-admin-media.conf';
  if(existsSync(limits)&&readFileSync(limits,'utf8')!==MEDIA_LIMITS)fail('prepare_limits_drift');
  install(limits,MEDIA_LIMITS);run('/usr/bin/systemctl',['daemon-reload']);
+ console.log('STAGING_MEDIA_PREPARE_PHASE=limits');
  if(fingerprint()!==before)fail('prepare_config_changed');
  await live(env.EXPECTED_LIVE_COMMIT);
  console.log('STAGING_MEDIA_PRIVATE_CONFIG=UNCHANGED');console.log('STAGING_MEDIA_DEPLOYMENT=NOT_PERFORMED');console.log('STAGING_MEDIA_PREPARE=PASS');

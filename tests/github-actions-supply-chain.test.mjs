@@ -315,6 +315,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   ]);
   assert.deepEqual(stagingDeployWorkflow?.checkoutShas, [
     HOSTED_CHECKOUT_V7_0_1_SHA,
+    HOSTED_CHECKOUT_V7_0_1_SHA, // Receipt-bound Support recovery uses the same protected checkout.
   ]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_PUSH_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW)?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);

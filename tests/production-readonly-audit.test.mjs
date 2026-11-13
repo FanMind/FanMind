@@ -1493,7 +1493,10 @@ test("permanent Production audit runs installed root-owned code only", async () 
 
   const deployment = yaml.load(deploy);
   assert.deepEqual(Object.keys(deployment.on), ["workflow_dispatch"]);
-  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit","support_must_remain_disabled"]);
+  assert.deepEqual(Object.keys(deployment.on.workflow_dispatch.inputs).sort(), ["confirmation","expected_current_release","reviewed_main_commit","support_help_ui","support_must_remain_disabled"]);
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_help_ui.type, "boolean");
+  assert.equal(deployment.on.workflow_dispatch.inputs.support_help_ui.default, false);
+  assert.equal(deployment.jobs.deploy.steps[0].env.FANMIND_SUPPORT_HELP_BUILD_ENABLE, "${{ inputs.support_help_ui && 'true' || 'false' }}");
   assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.type, "boolean");
   assert.equal(deployment.on.workflow_dispatch.inputs.support_must_remain_disabled.default, false);
   assert.equal(deployment.jobs.deploy.steps[0].env.FANMIND_REQUIRE_SUPPORT_DISABLED, "${{ inputs.support_must_remain_disabled }}");

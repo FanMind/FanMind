@@ -401,6 +401,7 @@ if [[ "\${1:-}" == "run" ]] && [[ "\${2:-}" == "build" ]]; then
   [[ ! -e .git ]]
   mkdir -p .next
   printf '{"config":{"deploymentId":"%s"}}\\n' "$NEXT_DEPLOYMENT_ID" > .next/required-server-files.json
+  printf '%s' "\${NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED:-}" > .next/help-build.txt
 fi
 `,
   );
@@ -439,6 +440,7 @@ fi
     ...process.env,
     // Each synthetic scenario owns this setting; never inherit the real deploy guard.
     FANMIND_REQUIRE_SUPPORT_DISABLED: "false",
+    FANMIND_SUPPORT_HELP_BUILD_ENABLE: "false",
     PATH: `${fakeBin}:${process.env.PATH}`,
     FANMIND_SOURCE_DIR: source,
     FANMIND_RELEASE_ROOT: releaseRoot,
@@ -467,6 +469,13 @@ fi
   assert.doesNotMatch(await readFile(pm2Actions, "utf8"), /^(delete|start|reload)$/m);
   await writeFile(pm2Actions, "");
   await writeFile(join(source, ".env.production"), "FANMIND_TEST_ONLY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=false\n");
+  const helpWhileDisabled = spawnSync("bash", [deployScript, firstCommit], {
+    env: { ...baseEnv, FANMIND_SUPPORT_HELP_BUILD_ENABLE: "true" }, encoding: "utf8",
+  });
+  assert.notEqual(helpWhileDisabled.status, 0);
+  assert.match(helpWhileDisabled.stderr, /Support help UI requires already enabled Support/);
+  assert.equal(await readlink(currentLink), oldRelease);
+  assert.doesNotMatch(await readFile(pm2Actions, "utf8"), /^(delete|start|reload)$/m);
   const disabledSupport = runChecked("bash", [deployScript, firstCommit], {
     env: { ...baseEnv, FANMIND_REQUIRE_SUPPORT_DISABLED: "true" },
   });
@@ -492,10 +501,12 @@ fi
     env: {
       ...baseEnv,
       FAKE_LIVE_COMMIT: firstCommit,
+      FANMIND_SUPPORT_HELP_BUILD_ENABLE: "true",
     },
   });
   assert.match(secondDeploy.stdout, /switching release with PM2 rolling reload/u);
   assert.equal(await readlink(currentLink), join(releaseRoot, secondCommit));
+  assert.equal(await readFile(join(releaseRoot, secondCommit, ".next/help-build.txt"), "utf8"), "true");
 
   const secondActions = (await readFile(pm2Actions, "utf8")).slice(actionBoundary);
   assert.match(secondActions, /reload\n/u);

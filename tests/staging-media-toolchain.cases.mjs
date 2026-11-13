@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {readFileSync,mkdtempSync,statSync,rmSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync,openSync,fstatSync,closeSync,constants} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -67,6 +67,6 @@ test('controlled catalogue apply binds exact source, initial/complete state and 
 
 test('private probe umask cannot make the non-secret root receipt unreadable by the application',()=>{
  const directory=mkdtempSync(join(tmpdir(),'fm1425-receipt-')),prior=process.umask(0o077);
- try{const path=join(directory,'receipt.json'),receipt={version:1,source:sha,live:sha,result:'PASS'};writeMediaProbeReceipt(path,receipt);assert.equal(statSync(path).mode&0o777,0o644);assert.deepEqual(JSON.parse(readFileSync(path,'utf8')),receipt);}
+ try{const path=join(directory,'receipt.json'),receipt={version:1,source:sha,live:sha,result:'PASS'};writeMediaProbeReceipt(path,receipt);const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);try{assert.equal(fstatSync(fd).mode&0o777,0o644);assert.deepEqual(JSON.parse(readFileSync(fd,'utf8')),receipt);}finally{closeSync(fd);}}
  finally{process.umask(prior);rmSync(directory,{recursive:true,force:true});}
 });
