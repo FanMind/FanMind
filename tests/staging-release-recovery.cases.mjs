@@ -17,12 +17,11 @@ function harness({realCopy=false}={}){
  fs.writeFileSync(secretPath,'PRIVATE_SECRET=never-output');fs.writeFileSync(unitPath,'reviewed unit');fs.writeFileSync(reviewedUnit,'reviewed unit');
  const commands=[],probes=[];let live=previous;
  const copy=(from,to)=>{
-  if(realCopy){const r=spawnSync('rsync',['--archive','--checksum','--delete','--exclude','.env.production','--exclude','.creator-runtime-recovery.env','--exclude','.git','--exclude','.next/cache',from+'/',to+'/'],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return;}
   const exclude=name=>['.env.production','.creator-runtime-recovery.env','.git'].includes(name);
   for(const n of fs.readdirSync(to))if(!exclude(n))fs.rmSync(join(to,n),{recursive:true,force:true});
   for(const n of fs.readdirSync(from))if(!exclude(n))fs.cpSync(join(from,n),join(to,n),{recursive:true});
  };
- const options={source:runtime,home,secretPath,unitPath,reviewedUnit,copy,execute:(c,a)=>{commands.push([c,a]);if(c==='sudo')live=fs.readFileSync(join(runtime,'.release.env'),'utf8').includes(previous)?previous:source;},probe:async sha=>{probes.push(sha);assert.equal(live,sha);}};
+ const options={source:runtime,home,secretPath,unitPath,reviewedUnit,...(realCopy?{}:{copy}),execute:(c,a)=>{commands.push([c,a]);if(c==='sudo')live=fs.readFileSync(join(runtime,'.release.env'),'utf8').includes(previous)?previous:source;},probe:async sha=>{probes.push(sha);assert.equal(live,sha);}};
  const sameTime=new Date('2026-01-01T00:00:00Z');for(const file of ['.release.env','.next/BUILD_ID','src/page.js'])fs.utimesSync(join(runtime,file),sameTime,sameTime);
  return {root,runtime,home,options,commands,probes,prepare:()=>recoverRelease('prepare',env,options),run:(action,e=env)=>recoverRelease(action,e,options),deploy:()=>{live=source;fs.writeFileSync(join(runtime,'.release.env'),metadata(source));fs.writeFileSync(join(runtime,'.next','BUILD_ID'),'new-build');fs.writeFileSync(join(runtime,'src','page.js'),'new-runtime');for(const file of ['.release.env','.next/BUILD_ID','src/page.js'])fs.utimesSync(join(runtime,file),sameTime,sameTime);fs.writeFileSync(join(runtime,'src','new-only.js'),'new-file');},cleanup:()=>fs.rmSync(root,{recursive:true,force:true})};
 }
