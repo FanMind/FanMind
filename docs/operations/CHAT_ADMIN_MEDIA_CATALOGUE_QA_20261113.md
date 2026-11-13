@@ -1,5 +1,14 @@
 # #1425 catalogue evidence — 13 November 2026
 
+Latest continuation: #1471 regularly merged as Main
+`8f9e286d778207941c41ca6c33d23df188ac96f0`. Real protected host inspection
+[43448723976](https://github.com/FanMind/FanMind/actions/runs/43448723976) failed
+closed: missing video binaries, unbounded CPU/memory and runner outside application
+namespace/cgroup/security context. Required bounded Staging repair is source work;
+no Staging media activation/acceptance is claimed. Owner full completion approval
+now includes the documented required follow-ups; Production/provider analysis
+remain excluded. Historical results below retain their original commit scope.
+
 ## Current Main integration after the regular #1470 merge
 
 Fresh Main is33e6569602e8fe910058e268b4f33c1879799869. GitHub independently

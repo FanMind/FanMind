@@ -3,6 +3,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync,readlinkSync,statSync,lstatSync,statfsSync,mkdirSync,writeFileSync,rmSync,existsSync} from 'node:fs';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {createHash} from 'node:crypto';
 
 const ORIGIN='https://staging.fanmind.ch',UNIT='fanmind-staging.service';
 const SAFE_ENV={PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C'};
@@ -10,6 +11,19 @@ const SHA=/^[a-f0-9]{40}$/u;
 const PROPERTIES=['ActiveState','SubState','MainPID','User','Group','PrivateTmp','UMask','NoNewPrivileges','ProtectSystem','ControlGroup','MemoryMax','MemoryHigh','CPUQuotaPerSecUSec','TasksMax'];
 const run=(command,args)=>execFileSync(command,args,{env:SAFE_ENV,encoding:'utf8',timeout:30000,killSignal:'SIGKILL',maxBuffer:1024*1024,stdio:['ignore','pipe','pipe']});
 const fail=code=>{throw Error(code);};
+
+export function assertInstalledMediaManifest(source,manifest,bytes,stat){
+ if(!SHA.test(source??'')||manifest?.version!==1||manifest.source!==source||manifest.hostSha256!==createHash('sha256').update(bytes).digest('hex')||stat.uid!==0||stat.nlink!==1||(stat.mode&0o022))fail('installed_source_binding');
+}
+function assertDiagnosticSource(env){
+ const base='/usr/local/lib/fanmind-staging-media',directory=`${base}/releases/${env.GITHUB_SHA}`;
+ if(import.meta.url===pathToFileURL(directory+'/host.mjs').href){
+  for(const path of ['/usr/local/lib',base,base+'/releases',directory]){const s=lstatSync(path);if(!s.isDirectory()||s.isSymbolicLink()||s.uid!==0||(s.mode&0o022))fail('installed_source_binding');}
+  const path=directory+'/manifest.json',s=lstatSync(path),host=lstatSync(directory+'/host.mjs');
+  if(!s.isFile()||s.isSymbolicLink()||s.uid!==0||s.nlink!==1||(s.mode&0o022)||!host.isFile()||host.isSymbolicLink())fail('installed_source_binding');
+  assertInstalledMediaManifest(env.GITHUB_SHA,JSON.parse(readFileSync(path,'utf8')),readFileSync(directory+'/host.mjs'),host);
+ }else if(run('/usr/bin/git',['rev-parse','HEAD']).trim()!==env.GITHUB_SHA)fail('checkout_binding');
+}
 
 export function assertMediaHostDispatch(env,action){
  if(!['inspect','probe','cleanup'].includes(action)||env.GITHUB_REPOSITORY!=='FanMind/FanMind'||env.GITHUB_REF!=='refs/heads/main'||env.GITHUB_EVENT_NAME!=='workflow_dispatch'||
@@ -128,7 +142,7 @@ async function version(expected,origin=ORIGIN){
 }
 export async function runMediaHostReadiness(action,env=process.env){
  assertMediaHostDispatch(env,action);
- if(run('/usr/bin/git',['rev-parse','HEAD']).trim()!==env.GITHUB_SHA)fail('checkout_binding');
+ assertDiagnosticSource(env);
  await version(env.EXPECTED_LIVE_COMMIT);
  await version(env.EXPECTED_LIVE_COMMIT,'http://127.0.0.1:3001');
  let snapshot;

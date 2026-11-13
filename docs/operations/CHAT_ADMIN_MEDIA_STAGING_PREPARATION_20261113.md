@@ -1,6 +1,37 @@
 # ChatAdmin #1425 actual Staging preparation — 13 November 2026
 
-Status: SOURCE IMPLEMENTED / TARGET EXECUTION PENDING, no deployment/activation performed. This is a bounded proposed
+Status at latest continuation: PR #1471 MERGED; real host inspection BLOCKED;
+required fixed Staging host repair is DEVELOPED, pending new-head CI/regular merge.
+Owner explicitly authorized full Staging completion, controlled schema/bucket
+extension, separate catalogue/video switches, synthetic acceptance/cleanup and
+necessary reviewed follow-up commits. Production and provider analysis excluded.
+The historical approval-pending sections below are superseded by this entry.
+
+Actual #1471 Main merge: `8f9e286d778207941c41ca6c33d23df188ac96f0`, independently
+confirmed after 14/14 exact-head checks and all twelve protected required contexts.
+Real diagnostic [43448723976](https://github.com/FanMind/FanMind/actions/runs/43448723976)
+ran on the existing Staging runner. UID/GID, private temporary access and process
+limits matched, but mount namespace/cgroup/security context did not; ffmpeg/probe
+were absent and memory/CPU unbounded. This is actual target failure evidence.
+
+The necessary follow-up installs only ffmpeg without package upgrades, a root-owned
+versioned fixed diagnostic and a single validated sudo entry on the existing shared
+host. Its existing bootstrap runner is protected by environment `staging`, exact
+manual Main and Owner actor. It never touches Production application paths or
+restarts Production. Staging CPU=100%, memory=1GiB, tasks=256 are a dedicated drop-in;
+no restart occurs in preparation. Private environment bytes and live release must
+remain unchanged. The next authorized normal Staging deploy applies the drop-in.
+The fixed helper joins only its own PID to the Staging application cgroup, enters
+its mount namespace, copies all sixteen rlimits and drops to its exact UID/GID,
+groups, no-new-privileges and zero capability bounds. It runs bounded synthetic
+probe plus cleanup, and emits an immutable-source-bound root-owned receipt only
+on success. No arbitrary command, path, environment or general administrator right.
+
+No target preparation, deployment, schema/bucket write, catalogue/video activation
+or practical media acceptance has occurred at this entry. Existing SQL checksum
+and references remain unchanged. The remaining historical manifest follows.
+
+Historical status before Owner approval: SOURCE IMPLEMENTED / TARGET EXECUTION PENDING, no deployment/activation performed. This is a bounded proposed
 action manifest and actual read-only evidence, not approval or live acceptance.
 The prior Merge approval does not authorize this schema/bucket/runtime change.
 No matching explicit approval for the extension was found in Issue #1425 or the
