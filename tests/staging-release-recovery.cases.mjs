@@ -74,6 +74,8 @@ test('workflow takes snapshot before copying, accepts only after smoke and keeps
  const w=fs.readFileSync('.github/workflows/deploy-staging.yml','utf8');
  assert.ok(w.indexOf('staging-release-recovery.mjs" prepare')<w.indexOf('rsync --archive --delete'));
  assert.ok(w.indexOf('staging-release-recovery.mjs" accept')>w.indexOf('npm run smoke:public'));
+ assert.match(w,/BILLING_WRITE_FREEZE=preserve node[^\n]*staging-release-recovery.mjs" prepare/u);
+ assert.match(w,/BILLING_WRITE_FREEZE=preserve node[^\n]*staging-release-recovery.mjs" accept/u);
  assert.match(w,/group:.*fanmind-staging-deploy/u);assert.match(w,/restore-support-release:[\s\S]*environment: staging/u);assert.match(w,/restore-staging-support-release/u);assert.match(w,/failure\(\) \|\| cancelled\(\)/u);
  const script=fs.readFileSync('scripts/operations/staging-release-recovery.mjs','utf8');assert.doesNotMatch(script,/service_role|supabase\.co|eval\(|console\.log\(.*receipt/u);
 });

@@ -224,7 +224,7 @@ jobs:
             exit 1
           fi
           if [ "$GITHUB_REF" = refs/heads/main ] && [ "$STAGING_OPERATOR_SESSION_ENABLED" = true ]; then
-            node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" prepare
+            BILLING_WRITE_FREEZE=preserve node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" prepare
           fi
           rsync --archive --delete \
             --exclude '.git/' \
@@ -354,7 +354,7 @@ jobs:
           fi
           echo "STAGING_BILLING_WRITE_FREEZE=$BILLING_WRITE_FREEZE"
           if [ "$GITHUB_REF" = refs/heads/main ] && [ "$STAGING_OPERATOR_SESSION_ENABLED" = true ]; then
-            node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" accept
+            BILLING_WRITE_FREEZE=preserve node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" accept
           fi
 
       - name: Restore the private pre-release snapshot after a failed Support rollout
