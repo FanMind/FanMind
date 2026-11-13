@@ -119,3 +119,10 @@ FM-IGATE-SOCIAL-CRM-001 (see authoritative registries for current identity).
 Local controller/negative/recovery policy tests and ordinary green CI are source
 checks only. Genuine Creator OAuth, automatic arrival, fan mapping, replay and
 logout/re-login acceptance remain pending until actually observed on Production.
+
+Meta's Page webhook UI additionally states that unpublished apps receive no real
+production data, even from app admins/developers/testers. Therefore the bounded
+Owner reception test also requires publication; permission test readiness does
+not bypass that requirement. Controller configuration first authenticates the
+secret against the pinned app and rejects inherited runtime target conflicts.
+Provider subscription changes also save a private durable prechange inventory.

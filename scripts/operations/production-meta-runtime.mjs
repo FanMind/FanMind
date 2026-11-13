@@ -59,7 +59,22 @@ async function json(url,headers={},options={},request=fetch) {
   finally {await reader.cancel().catch(()=>{});}
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
-export async function productionAppSubscription(values,write=false,request=fetch) {
+export function assertProductionRuntimeConsistency(values, running, liveCommit) {
+  if(running.FANMIND_RUNTIME_ENVIRONMENT!=='production' || running.FANMIND_RELEASE_COMMIT!==liveCommit)fail('target_binding');
+  for(const name of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET','META_REDIRECT_URI','META_WEBHOOK_VERIFY_TOKEN']) {
+    if(running[name] && running[name]!==values[name])fail('inherited_configuration_conflict');
+  }
+  for(const [name,value] of Object.entries(values)) {
+    if(name==='FANMIND_RELEASE_COMMIT')continue; // PM2 owns the exact live release marker.
+    if(running[name]!==undefined && running[name]!==value)fail('inherited_configuration_conflict');
+  }
+}
+export async function verifyProductionAppSecret(secret,request=fetch) {
+  if(!/^[a-f0-9]{32}$/iu.test(secret??''))fail('input_invalid');
+  const app=await json(`https://graph.facebook.com/${META_GRAPH_API_VERSION}/${APP}?fields=id`,{Authorization:`Bearer ${APP}|${secret}`},{},request);
+  if(app?.id!==APP)fail('app_secret_identity_invalid');
+}
+export async function productionAppSubscription(values,write=false,request=fetch,{saveSnapshot}={}) {
   if(!Object.values(productionMetaReadiness(values)).every(Boolean)) fail('configuration_incomplete');
   const url=`https://graph.facebook.com/${META_GRAPH_API_VERSION}/${APP}/subscriptions`;
   const headers={Authorization:`Bearer ${APP}|${values.FACEBOOK_APP_SECRET}`};
@@ -71,12 +86,24 @@ export async function productionAppSubscription(values,write=false,request=fetch
     if(p && (p.callback_url!==ORIGIN+'/api/webhooks/meta'||!Array.isArray(p.fields)||p.fields.some(f=>!['messages','feed'].includes(f.name))))fail('subscription_conflict');
     return p?.active===true && new Set(p.fields.map(f=>f.name)).size===2;
   };
-  if(validate(await json(url,headers,{},request)))return true;
+  const original=await json(url,headers,{},request);
+  if(validate(original))return true;
   if(!write)return false;
+  if(typeof saveSnapshot!=='function')fail('subscription_snapshot_required');
+  await saveSnapshot(original);
   const body=new URLSearchParams({object:'page',callback_url:ORIGIN+'/api/webhooks/meta',verify_token:values.FACEBOOK_WEBHOOK_VERIFY_TOKEN,fields:'messages,feed'});
   if((await json(url,{...headers,'Content-Type':'application/x-www-form-urlencoded'},{method:'POST',body},request))?.success!==true)fail('subscription_unconfirmed');
   if(!validate(await json(url,headers,{},request)))fail('subscription_readback_failed');
   return true;
+}
+export async function productionMetaTransaction({before,after,saveSnapshot,...operations}) {
+  await saveSnapshot(before);
+  await changeStagingRuntime({before,after,...operations});
+}
+function durableSnapshot(path,content) {
+  const fd=openSync(path,constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY|constants.O_NOFOLLOW,0o600);
+  try{writeFileSync(fd,content);fsyncSync(fd);}finally{closeSync(fd);}
+  const d=openSync(ROOT,constants.O_DIRECTORY);try{fsyncSync(d);}finally{closeSync(d);}
 }
 export async function runProductionMeta(action,control=process.env) {
   const owner=Number(execute('/usr/bin/id',['-u','ubuntu']));
@@ -93,16 +120,17 @@ export async function runProductionMeta(action,control=process.env) {
   };
   const processEnv=p=>Object.fromEntries(readFileSync(`/proc/${p.pid}/environ`,'utf8').split('\0').filter(s=>s.indexOf('=')>0).map(s=>{const i=s.indexOf('=');return[s.slice(0,i),s.slice(i+1)];}));
   const initial=processes(), baseline=processEnv(initial);
-  if(initial.pm2_env.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('target_binding');
+  assertProductionRuntimeConsistency(values,baseline,control.LIVE_COMMIT);
   // Next loads .env after process creation; inherited values must never override it.
   for(const name of FIELDS)if(baseline[name]!==undefined && baseline[name]!==values[name])fail('inherited_configuration_conflict');
   const live=async()=>{let v;try{v=await json(ORIGIN+'/api/version');}catch{fail('target_read_failed');}if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==control.LIVE_COMMIT)fail('live_release_mismatch');};
   await live();
   if(action==='inspect') {console.log(`PRODUCTION_META_READINESS=${JSON.stringify(productionMetaReadiness(values))}`);return;}
-  if(action==='subscribe-webhook'){await productionAppSubscription(values,true);console.log('PRODUCTION_META_APP_SUBSCRIPTION=PASS');return;}
+  if(action==='subscribe-webhook'){await verifyProductionAppSecret(values.FACEBOOK_APP_SECRET);await productionAppSubscription(values,true,fetch,{saveSnapshot:inventory=>durableSnapshot(ENV+'.meta-subscription-before-'+control.GITHUB_RUN_ID,JSON.stringify({appId:APP,inventory}))});console.log('PRODUCTION_META_APP_SUBSCRIPTION=PASS');return;}
   const secret=[values.FACEBOOK_APP_SECRET,values.META_APP_SECRET,control.META_SETUP_APP_SECRET].find(v=>/^[a-f0-9]{32}$/iu.test(v??''));
   // Existing shared aliases must agree with this app; never overwrite them.
   for(const name of ['META_APP_SECRET','META_WEBHOOK_APP_SECRET'])if(values[name] && !/replace_with_|^your_/iu.test(values[name]) && values[name]!==secret)fail('secret_alias_conflict');
+  await verifyProductionAppSecret(secret);
   let tokensPresent=true;
   if(!validMetaKey(values.FANMIND_TOKEN_ENCRYPTION_KEY)){
     const u=new URL(values.NEXT_PUBLIC_SUPABASE_URL+'/rest/v1/social_connections');
@@ -113,9 +141,7 @@ export async function runProductionMeta(action,control=process.env) {
   const after=renderMetaConfiguration(before,[],{appId:APP,appSecret:secret,webhookToken:randomBytes(32).toString('base64url')},{tokensPresent,callback:CALLBACK});
   const desired=parseEnv(after);
   for(const name of FIELDS)if(baseline[name]!==undefined && baseline[name]!==desired[name])fail('inherited_configuration_conflict');
-  const snapshot=ENV+'.meta-before-'+control.GITHUB_RUN_ID;
-  const fd=openSync(snapshot,constants.O_CREAT|constants.O_EXCL|constants.O_WRONLY|constants.O_NOFOLLOW,0o600);
-  try{writeFileSync(fd,before);fsyncSync(fd);}finally{closeSync(fd);}
+  const saveSnapshot=text=>durableSnapshot(ENV+'.meta-before-'+control.GITHUB_RUN_ID,text);
   const write=text=>{
     if(privateFile(ENV,owner).text!==(text===after?before:after))fail('configuration_changed');
     const temp=ENV+'.meta-'+randomBytes(12).toString('hex');let f;
@@ -129,14 +155,14 @@ export async function runProductionMeta(action,control=process.env) {
     if(p.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED!==initial.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED)fail('support_drift');
     const health=await json(ORIGIN+'/api/health');if(health.status!=='ok'&&health.status!=='healthy')fail('health_failed');
   };
-  await changeStagingRuntime({before,after,read:()=>privateFile(ENV,owner).text,write,restart,verify,verifyRollback:verify});
+  await productionMetaTransaction({before,after,saveSnapshot,read:()=>privateFile(ENV,owner).text,write,restart,verify,verifyRollback:verify});
   console.log('PRODUCTION_META_CONFIGURATION=PASS');
   console.log(`PRODUCTION_META_READINESS=${JSON.stringify(productionMetaReadiness(desired))}`);
 }
 function lstatExists(p){try{return Boolean(lstatSync(p));}catch{return false;}}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   try{await runProductionMeta(process.argv[2]);}catch(error){
-    const allowed=['control_binding','target_binding','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed'];
+    const allowed=['control_binding','target_binding','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed','app_secret_identity_invalid'];
     console.error('PRODUCTION_META_CONFIGURATION=FAIL');console.error('PRODUCTION_META_CODE='+ (allowed.includes(error.message)?error.message:'operation_failed'));process.exitCode=1;
   }
 }

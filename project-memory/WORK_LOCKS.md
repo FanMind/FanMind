@@ -1,3 +1,10 @@
+## LOCK-FM-FACEBOOK-PRODUCTION-1464-20261113
+- Risk: R4; Status: ACTIVE_SOURCE_REVIEW. Holder: Facebook Production Work session / independent Guardian facebook_production_guardian.
+- Scope: Issue1464 / PR1482; exact existing Production app2214477125984114 and FanMind Page1208778912321696, protected Production runtime configuration and normal Creator acceptance.
+- Baseline: main88898c6f; Production3af87d50; Staging88898c6f. No competing Production deployment observed. All target actions must consume fanmind-production-deploy; no Staging deployment/provider/Operator mutation.
+- Preserve: Support, Instagram/Adminchat work, PR1479, Billing/Stripe, keys and existing customer data. No sends, new database or token copying.
+- Recovery: private durable env/provider snapshots; existing transactional reload/rollback helper; fail closed on target, key-dependency, app-secret identity or inherited-runtime drift.
+
 ## LOCK-FM-FACEBOOK-AUTOMATIC-INGRESS-20261113
 - Task: FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 / existing Issue1464
 - Status: RELEASED_SOURCE_REVIEWED_PENDING_CI

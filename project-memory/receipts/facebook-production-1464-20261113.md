@@ -41,3 +41,21 @@ fresh automatic DM plus comments on two posts before any manual sync, Fan/inbox
 mapping, context/isolation/duplicates and logout/re-login persistence. Do not
 report Production acceptance until actual evidence exists. Personal Meta password,
 2FA and consent remain user handoff steps if encountered.
+
+## Independent review corrections
+
+Separate Guardian found missing prewrite App-secret identity authentication and
+inherited runtime target conflict rejection. Both corrected before any target
+write. Provider subscription inventory now receives a private durable snapshot
+before POST. Production transaction recovery tests cover snapshot failure before
+write, failed reload verification restoring prior config, and concurrent config
+change blocking rollback overwrite. Focused controller tests7/7. App-secret
+negative rejects provider authentication failure and wrong returned app ID.
+Local webpack production build succeeded; lint succeeded. The normal required
+CI build remains authoritative for its own exact head.
+
+Meta Page webhook UI explicitly states unpublished apps receive no real data,
+including from admins/developers/testers. This blocks real Owner receipt too;
+ready-for-testing permission labels do not bypass publication. No fresh real
+inputs requested. Existing Production Page callback displayed as fanmind.ch;
+verification token remains masked and was not exported. All Staging state kept.
