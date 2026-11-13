@@ -1,6 +1,6 @@
+import "server-only";
 import { stagingFacebookIngressTarget, STAGING_INGRESS_FIELDS } from "@/lib/facebookStagingIngressPolicy.mjs";
 import { FACEBOOK_MESSAGES_OAUTH_SCOPES, FACEBOOK_COMMENT_FEED_SCOPES } from "@/lib/facebookScopes";
-import "server-only";
 import { facebookCommentTarget } from "@/lib/facebookCommentTarget.mjs";
 
 import { revalidatePath } from "next/cache";
