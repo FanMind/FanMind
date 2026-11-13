@@ -1,5 +1,43 @@
 # #1425 catalogue evidence — 13 November 2026
 
+## Resumed exact-source review (supersedes pending source/CI notes below)
+
+Resumed from 27d00fa123170fc158d93a3ba256bba94f4bcd65, no reimplementation.
+All 18 GitHub check records were independently read as successful, including
+both push/PR media PG17/video jobs, general PG17 roundtrips, Chromium, build,
+God Mode and CodeQL. A successful CodeQL check still contained alert72.
+
+Alert72 (`js/file-access-to-http`) was traced in GitHub from the fresh private
+temporary `normalized.mp4` to the authorized upload. The route accepts bounded
+media with rights confirmation and capability/Character checks, normalizes it,
+then rechecks authority/revision. Storage destination is server configuration,
+bucket constant and UUID-only scoped object path; session JWT/RLS and redirect
+denial remain. This is intended media upload, not arbitrary local-file access.
+Triaged false positive with recorded explanation; review thread resolved.
+No query suppression, check disabling or runtime code change was necessary.
+
+Independent focused rerun: 47/47 passed, zero skips, including actual synthetic
+MP4/WebM normalization, invalid/concurrent input cleanup, catalogue price/tree,
+API authority/revision controls and authenticated post-delete absence proof.
+Exact SQL SHA256 remains
+`10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2`.
+
+Main advanced through #1465 to e8178adaae2b21f6d63f6930718c5c5fe7a09442.
+Integrate its eight changed paths in this same PR, preserving accepted Facebook
+source/evidence and combining the internal catalogue Source of Truth addition.
+Only the reviewed combined documentation fingerprint is reconciled. Successor
+CI is required; old-head success does not establish new-head success.
+
+Video runtime prerequisites: fixed `/usr/bin/ffmpeg` and `/usr/bin/ffprobe`,
+libx264/AAC encoders, MOV/Matroska-WebM demuxers, required input decoders, writable
+private temporary space and cleanup, and sufficient resources for the existing
+30-second limits. Actual conversion passes locally and in CI. These environments
+do not prove tooling on the Staging application host. No protected Staging-host
+runtime evidence was available in this continuation; verify there before video
+activation. No deployment, SQL/bucket mutation, feature activation, provider call
+or real customer-media test is part of this review. Independent actual Staging
+upload/display/move/prices/isolation/revocation/delete/cleanup remains pending.
+
 PR: https://github.com/FanMind/FanMind/pull/1469 (Draft, unmerged).
 First implementation223263b47116760e5c6de483f84e684a0205a353;
 complete browser fixture/documentation fixa80396f86212b10804d181e1d5d05f2b79f531de.
