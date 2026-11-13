@@ -56,7 +56,8 @@ export function assertMetaRebind(values, requested, expectedPreviousAppId) {
   if (["META_APP_ID", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET"].some(name => typeof values[name] === "string" && values[name].trim().length > 0))
     fail("rebind_alias_conflict");
 }
-export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64"), expectedPreviousAppId } = {}) {
+export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64"), expectedPreviousAppId, callback = CALLBACK } = {}) {
+  if (![CALLBACK, "https://fanmind.ch/api/integrations/facebook/callback"].includes(callback)) fail("callback_invalid");
   const effective = Object.assign({}, parseEnv(original), ...overrides.map(parseEnv));
   if (expectedPreviousAppId !== undefined) assertMetaRebind(effective, requested, expectedPreviousAppId);
   if (!/^\d{5,32}$/u.test(requested.appId ?? "") || !/^[a-f0-9]{32}$/iu.test(requested.appSecret ?? "") ||
@@ -72,7 +73,7 @@ export function renderMetaConfiguration(original, overrides, requested, { tokens
     if (!validMetaKey(key)) fail("generated_key_invalid");
   }
   const desired = { FACEBOOK_APP_ID: requested.appId, FACEBOOK_APP_SECRET: requested.appSecret,
-    FACEBOOK_REDIRECT_URI: CALLBACK, FANMIND_TOKEN_ENCRYPTION_KEY: key,
+    FACEBOOK_REDIRECT_URI: callback, FANMIND_TOKEN_ENCRYPTION_KEY: key,
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: usable(effective.FACEBOOK_WEBHOOK_VERIFY_TOKEN)
       ? effective.FACEBOOK_WEBHOOK_VERIFY_TOKEN : requested.webhookToken };
   let after = original;

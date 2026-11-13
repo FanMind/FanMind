@@ -1,0 +1,71 @@
+name: FanMind Production Meta Runtime
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, configure, subscribe-webhook]
+        required: true
+      reviewed_commit:
+        description: Exact reviewed current main source
+        type: string
+        required: true
+      live_commit:
+        description: Exact current Production release, ancestor of reviewed source
+        type: string
+        required: true
+      app_id:
+        description: Existing Production app 2214477125984114 only
+        type: string
+        required: true
+      confirmation:
+        description: production-meta- followed by selected action
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+jobs:
+  control:
+    if: github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha && inputs.app_id == '2214477125984114' && inputs.confirmation == format('production-meta-{0}', inputs.action)
+    environment: production
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    timeout-minutes: 8
+    steps:
+      - name: Run reviewed controller against the existing Production release
+        env:
+          ACTION: ${{ inputs.action }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          LIVE_COMMIT: ${{ inputs.live_commit }}
+          META_SETUP_APP_ID: ${{ inputs.app_id }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          META_SETUP_APP_SECRET: ${{ secrets.FANMIND_PRODUCTION_META_APP_SECRET }}
+        run: |
+          set -euo pipefail
+          [[ "$REVIEWED_COMMIT" == "$GITHUB_SHA" && "$LIVE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          case "$ACTION" in inspect|configure|subscribe-webhook) ;; *) exit 1 ;; esac
+          cd /var/www/fanmind
+          case "$(git remote get-url origin)" in
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git) ;;
+            *) exit 1 ;;
+          esac
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
+          git merge-base --is-ancestor "$LIVE_COMMIT" "$REVIEWED_COMMIT"
+          ROOT_SOURCE="$(sudo -n mktemp -d /tmp/fanmind-meta-control.XXXXXXXX)"
+          trap 'sudo -n rm -rf -- "$ROOT_SOURCE"' EXIT
+          git archive "$REVIEWED_COMMIT" \
+            scripts/operations/production-meta-runtime.mjs \
+            scripts/operations/staging-meta-runtime.mjs \
+            scripts/operations/staging-support-media-runtime.mjs \
+            src/lib/supabase/apiKeyPolicy.mjs src/lib/metaIntegrationPolicy.mjs \
+            | sudo -n tar -xf - -C "$ROOT_SOURCE"
+          sudo -n --preserve-env=META_SETUP_APP_SECRET /usr/bin/env \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_SHA="$GITHUB_SHA" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" \
+            GITHUB_ACTOR_ID="$GITHUB_ACTOR_ID" GITHUB_RUN_ID="$GITHUB_RUN_ID" \
+            REVIEWED_COMMIT="$REVIEWED_COMMIT" LIVE_COMMIT="$LIVE_COMMIT" \
+            META_SETUP_APP_ID="$META_SETUP_APP_ID" CONFIRMATION="$CONFIRMATION" \
+            /usr/bin/node "$ROOT_SOURCE/scripts/operations/production-meta-runtime.mjs" "$ACTION"

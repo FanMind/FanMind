@@ -78,3 +78,44 @@ A successful provider login alone is not enough. Acceptance requires:
 
 If any provider/runtime setting is missing or still a placeholder, FanMind must
 stop before external provider navigation and show configuration as incomplete.
+
+## Owner Creator reception rollout — 13 November 2026, Issue1464
+
+Existing Production App: `2214477125984114` (FanMind). Never reuse the standalone
+Staging reception app1547928503809961 or child test app1637976007865045.
+Observed baseline: Production3af87d509e8ffdfc33b14b47f2983645c4ecd5b3,
+Staging88898c6f2a8bcede12bdad73a608b9c1b2f29b22. Creator Channels confirms
+invalid/missing App-ID, callback and encryption; zero contacts remain.
+Meta already lists the exact Production OAuth callback. App publication is
+currently disabled and the business portfolio is marked unverified. This is
+not evidence of general customer eligibility or an approved App Review.
+
+The manual `production-meta-runtime.yml` path is Owner actor-, exact reviewed
+main-, protected Production-, exact live ancestor-, runner-, origin-, app- and
+Supabase-target-bound. It uses the shared `fanmind-production-deploy` lock and
+reuses the existing renderer and transactional rollback helper. Staging control
+checks remain unchanged. No schema/CRM/connection writes or token copying occur.
+Actions: `inspect`, `configure`, `subscribe-webhook`, with
+`production-meta-<action>` confirmation and public app ID2214477125984114.
+
+`inspect` emits booleans only. `configure` preserves an existing valid key and
+verification token, rejects conflicting aliases/inherited overrides and refuses
+to generate a key when dependent encrypted social-connection data exist. The
+existing App secret is preferred; only if absent may the protected Production
+secret `FANMIND_PRODUCTION_META_APP_SECRET` supply the matching secret. Neither
+secret is a workflow input or command-line argument. A mode0600 durable host
+snapshot is saved before the atomic env update. PM2 reload retains the existing
+release and Support setting; health/version failure invokes rollback.
+
+`subscribe-webhook` separately checks the exact Production Page app subscription
+and may request only messages/feed. Conflicting callbacks/extra Page fields fail
+closed. It does not subscribe a Page or enable a local connection. The normal
+Creator OAuth flow performs its own explicit Page selection and Page subscription;
+verify that separately after user authorization. Never use a Staging Operator
+route as Creator acceptance. Request fresh DM/comments only after both are ready.
+
+Affected boundary: FM-CONTRACT-SOCIAL-CRM-001 and
+FM-IGATE-SOCIAL-CRM-001 (see authoritative registries for current identity).
+Local controller/negative/recovery policy tests and ordinary green CI are source
+checks only. Genuine Creator OAuth, automatic arrival, fan mapping, replay and
+logout/re-login acceptance remain pending until actually observed on Production.
