@@ -3,6 +3,7 @@ import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {mediaCatalogueEqualitySql} from "../scripts/operations/staging-support-media-preflight.mjs";
 import {runMediaSchemaNativeCases} from './chat-admin-media-schema.cases.mjs';
+import {installRetentionIndependenceFixture,proveMediaRetentionIndependence} from './media-retention-independence.cases.mjs';
 import { execFileSync, spawn } from "node:child_process";
 import test from "node:test";
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID??"";
@@ -37,8 +38,11 @@ async function concurrentMediaLifecycle(){
  }
 }
 test("native PG17 media RLS, object lifecycle, revision invalidation and deletion freeze",{skip:!enabled},async()=>{
+ let supportCatalogue;
  sql(`create database ${database};`,"postgres");
  try{await runChatAdminMediaSqlCases(async query=>sql(query),async()=>{
+   supportCatalogue=await installRetentionIndependenceFixture(async query=>sql(query));
+   await proveMediaRetentionIndependence(async query=>sql(query),supportCatalogue);
    const reference=JSON.parse(readFileSync("docs/operations/chat-admin-media-runtime-reference.json","utf8"));
    assert.equal(reference.sourceSha256,createHash("sha256").update(readFileSync(reference.source)).digest("hex"));
    const catalogue=readFileSync("scripts/operations/chat-admin-media-runtime-catalogue.sql","utf8");
@@ -48,6 +52,9 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
    for(const drift of ["create policy allow_all on public.chat_character_media for select to authenticated using(true);","create policy allow_all_storage on storage.objects for select to authenticated using(true);","alter policy chat_media_read on public.chat_character_media using(true);","grant select on public.chat_character_media to anon;","alter table public.chat_character_media disable trigger chat_media_revision;"]){
     assert.throws(()=>sql(`begin;${drift}${verify}rollback;`),"native activation preflight must refuse broad policy, grant and trigger drift");
    }
-  });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query),()=>runMediaSchemaNativeCases(async query=>sql(query),'extended'));}
+  });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query),async()=>{
+   await runMediaSchemaNativeCases(async query=>sql(query),'extended');
+   await proveMediaRetentionIndependence(async query=>sql(query),supportCatalogue);
+  });}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}
 });

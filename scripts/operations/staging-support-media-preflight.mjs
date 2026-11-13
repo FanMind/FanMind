@@ -5,14 +5,22 @@ import {createHash} from 'node:crypto';
 import {runSupportStaging} from './support-centre-staging.mjs';
 import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.mjs';
 import {canonical} from './support-centre-schema.mjs';
-import {loadMediaSchemaProfile,mediaSchemaProfileSql} from './chat-admin-media-schema-profile.mjs';
+import {loadMediaSchemaProfile,mediaSchemaProfileSql,CATALOGUE_MEDIA_SHA256} from './chat-admin-media-schema-profile.mjs';
 export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBoundaryPolicy.mjs','src/lib/websiteChatStagingControlPolicy.mjs','src/lib/websiteChatRetentionStagingPolicy.mjs','scripts/operations/support-centre-staging.mjs','scripts/operations/support-centre-schema.mjs','scripts/operations/website-chat-retention-staging-runner.mjs','scripts/operations/website-chat-retention-migration-check.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','config/certificates/supabase-root-2021-ca.crt','package-lock.json'];
 export function assertRetentionSourceEquivalent(source,commit,cwd=process.cwd()){
  if(!/^[a-f0-9]{40}$/.test(source??'')||! /^[a-f0-9]{40}$/.test(commit??''))throw Error('retention_source_invalid');
  const git=args=>{const r=spawnSync('git',args,{cwd,encoding:'utf8',timeout:10000,maxBuffer:65536});if(r.error||r.status!==0)throw Error('retention_source_not_equivalent');return r.stdout;};
  git(['merge-base','--is-ancestor',source,commit]);
  for(const path of [...RETENTION_PROOF_PATHS,'package.json']){git(['cat-file','-e',`${source}:${path}`]);git(['cat-file','-e',`${commit}:${path}`]);}
- git(['diff','--quiet',source,commit,'--',...RETENTION_PROOF_PATHS]);
+ const paths=[...RETENTION_PROOF_PATHS],media='supabase/controlled/chat_admin_media_catalogue.sql';
+ // The independently reviewed media extension touches no Support/retention
+ // object. Admit only its exact additive source, never a modified/deleted SQL
+ // file or a general exclusion of the controlled migration directory.
+ if(git(['diff','--no-renames','--name-status',source,commit,'--',media]).trim()===`A\t${media}`){
+  if(createHash('sha256').update(git(['show',`${commit}:${media}`])).digest('hex')!==CATALOGUE_MEDIA_SHA256)throw Error('retention_source_not_equivalent');
+  paths.push(`:(exclude)${media}`);
+ }
+ git(['diff','--quiet',source,commit,'--',...paths]);
  // The pinned Support workflow invokes node directly, never an npm script.
  const manifestAt=ref=>{try{const value=JSON.parse(git(['show',`${ref}:package.json`]));if(!value||Array.isArray(value)||typeof value!=='object')throw Error();delete value.scripts;return canonical(value);}catch{throw Error('retention_source_not_equivalent');}};
  if(manifestAt(source)!==manifestAt(commit))throw Error('retention_source_not_equivalent');

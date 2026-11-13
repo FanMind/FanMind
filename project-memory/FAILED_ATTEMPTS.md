@@ -1,3 +1,17 @@
+## FM1425 additive-media retention prerequisite — 13 November 2026
+Actual activation43484135999 stopped before control although the target schema
+was exactly extended. Recursive SQL comparison rejected the independent media
+addition against the fresh daily30a2da24 receipt. Retention43484424494 returned
+already_completed; no receipt was rewritten. Small Owner-approved correction
+admits only the addition with existing pinned SHA256, preserving every other
+dependency and target/schema/status/freshness gate. Actual source equivalence,
+positive addition and all dependency/body/deletion/rename negatives pass.
+Disposable PG17 executes real retention before/after media apply with identical
+Support catalogue, expired-row deletion and recent-row preservation; native CI
+runs the same case. Common Mainebae223a includes Instagram1481. No schema
+reapply, host installation, direct flag bypass, provider analysis or Production
+change. Protected activation and practical acceptance remain pending.
+
 ## FM1425 proc identity parser regression — 13 November 2026
 The installed probe identity matcher was independently reproduced as overescaped: valid proc Uid/Gid rows could not match. Replace only that matcher with literal exact four-ID patterns, validate real proc rows and malformed negatives. No identity check removed; target proof remains mandatory.
 
