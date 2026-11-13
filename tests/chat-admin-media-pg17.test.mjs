@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {mediaCatalogueEqualitySql} from "../scripts/operations/staging-support-media-preflight.mjs";
+import {runMediaSchemaNativeCases} from './chat-admin-media-schema.cases.mjs';
 import { execFileSync, spawn } from "node:child_process";
 import test from "node:test";
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID??"";
@@ -42,10 +43,11 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
    assert.equal(reference.sourceSha256,createHash("sha256").update(readFileSync(reference.source)).digest("hex"));
    const catalogue=readFileSync("scripts/operations/chat-admin-media-runtime-catalogue.sql","utf8");
    assert.deepEqual(JSON.parse(sql(catalogue)),reference.catalogue,"native source recreation must match every media policy, predicate, ACL, trigger, column and bucket");
+   await runMediaSchemaNativeCases(async query=>sql(query),'initial');
    const verify=mediaCatalogueEqualitySql(reference,catalogue).replace('BEGIN READ ONLY;','').replace(/ROLLBACK;$/, '');
    for(const drift of ["create policy allow_all on public.chat_character_media for select to authenticated using(true);","create policy allow_all_storage on storage.objects for select to authenticated using(true);","alter policy chat_media_read on public.chat_character_media using(true);","grant select on public.chat_character_media to anon;","alter table public.chat_character_media disable trigger chat_media_revision;"]){
     assert.throws(()=>sql(`begin;${drift}${verify}rollback;`),"native activation preflight must refuse broad policy, grant and trigger drift");
    }
-  });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query));}
+  });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query),()=>runMediaSchemaNativeCases(async query=>sql(query),'extended'));}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}
 });

@@ -1,10 +1,133 @@
 # ChatAdmin #1425 actual Staging preparation — 13 November 2026
 
-Status: BLOCKED, no deployment/activation performed. This is a bounded proposed
+Status: SOURCE IMPLEMENTED / TARGET EXECUTION PENDING, no deployment/activation performed. This is a bounded proposed
 action manifest and actual read-only evidence, not approval or live acceptance.
 The prior Merge approval does not authorize this schema/bucket/runtime change.
 No matching explicit approval for the extension was found in Issue #1425 or the
 current instruction. Historical Production initial-media approval is unrelated.
+
+## Executable continuation in existing PR #1471
+
+The Owner requested continuation of this PR with executable operational checks.
+It is no longer documentation-only. #1470 is freshly confirmed at
+`7c9b932ae5ec92990ac2ea36154e8623f2043497`, Draft/open/mergeable; its other session
+owns checks and source approval. The old dirty status below is historical.
+No #1470 source, deployment correction or mobile dependency was copied here.
+Main remains `3912461e1f88eb5cf2e621f23e4d6079409c20cc`; fresh HTTPS Staging
+13:07:38 UTC / 14:07:38 Vienna remains `d34834979cef30c9c6af567d61b3df448901bfda`.
+
+Implemented:
+
+- `chat-admin-media-schema-profile.mjs` plus the source-owned extended reference
+  and expanded catalogue collector. Profiles are only `initial` or `extended`;
+  the database state is `initial`, `extended` or `block`. No auto/loose profile.
+  The initial reference and original collector remain byte-for-byte unchanged.
+- Extended exact comparison covers all media tables/columns/defaults/column ACLs,
+  constraints/indexes, RLS/force-RLS, policy predicates/roles, complete function
+  definitions/owners/ACLs, user triggers and private bucket. Additional media
+  relations and disabled internal RI triggers also fail closed. SQL SHA256 is
+  pinned independently; references are regenerated only from controlled source
+  in an isolated source database, never learned from live Staging.
+- Existing activation preflight explicitly receives `media_schema_profile`;
+  default is `initial`. Extended verification requires its exact25MiB WebP/MP4
+  contract and the seven exact function bodies. Support Owner/retention/source,
+  target/TLS and private connection checks remain. This is schema verification,
+  not permission to apply SQL or enable catalogue/video flags. The legacy runtime
+  controller still changes only its existing flags; no new activation is hidden.
+- `.github/workflows/chat-admin-media-host-readiness.yml` is manual, Main- and
+  exact-source-bound, protected by existing `staging`, same canonical Staging
+  concurrency lease, and ONLY existing self-hosted Staging labels. No hosted
+  fallback, dependency installation, deploy/restart/config write, sudo, DB or
+  provider action, private environment-file read or secret input. Subprocess
+  environments are constructed from a small non-secret allowlist.
+
+Actual runner evidence: successful deploy43417498761/job131859019101 used
+`fanmind-staging-01-exoscale`, groupDefault, all five required labels. Existing
+provisioning source grants that account only nginx-test and the three named
+Staging systemctl operations; it contains no namespace/cgroup-entry grant.
+Historical runner success is not a fresh running-host permission attestation.
+No existing workflow offers this bounded diagnostic without mutation, so the
+new workflow is prepared but not dispatched or installed.
+
+The diagnostic binds public HTTPS AND local127.0.0.1:3001 version to the requested
+live SHA, checks fixed unit/PID/cwd, effective service user and UID/GID, actual
+mount and cgroup membership (not merely cgroup namespace), kernel security
+metadata/process limits, private temp access/free space, cgroup memory/CPU/tasks,
+root-owned executable identity against the app root, tool versions and codecs.
+Inspect can report metadata/tooling without claiming successful app conversion.
+`probe` refuses all temporary writes unless the actual app context and bounded
+resources are proven. It creates only a fresh0700 run/attempt directory, produces
+neutral MP4/WebM with synthetic tone, normalizes both to H264/AAC, checks invalid
+input rejection and proves deletion. Finally, signal and workflow-always cleanup
+are implemented; an existing directory is refused. A changed process/release,
+missing permission/tooling or cleanup failure is never relabeled PASS.
+
+**Minimal remaining access if inspection confirms the source expectation:**
+permission for one fixed reviewed diagnostic to EXECUTE as the existing service
+UID/GID inside its actual mount/sandbox, cgroup and process limits. General SSH,
+a password, a private key or unrestricted sudo is unnecessary. The prepared
+workflow never grants that authority or changes systemd resource limits. A
+root-owned bounded helper or supervised host-admin execution would need its own
+specific source/installation/execution approval; none is assumed here. Merely
+entering a cgroup namespace does not move a process into its resource cgroup.
+Run `inspect` first to establish which exact effective boundary is missing.
+
+## Executed verification for this continuation
+
+- Actual Staging read-only `initial` profile equality returned1 on13:22:59 UTC;
+  no SQL/bucket/data mutation. This verifies the NEW initial profile on the real
+  target; the real target still has no extension.
+- Source recreation with local PGlite0.3.14/PostgreSQL17.5 WASM matched the retained
+  initial reference, generated the extended reference and passed both profiles,
+  original media/catalogue lifecycle and33 adverse drift groups (161 SQL calls).
+  This is local PG17 WASM evidence, not native-host or Staging extension proof.
+- Local58/58 focused API/schema/dispatch/context/video/runtime/Actions checks,
+  zero skips, including real MP4/WebM audio conversion and failure cleanup PASS.
+- Targeted ESLint, action pins, diff checks and structural governance PASS.
+- Native PG17.11 source recreation/drift and actual local video helper tests are
+  wired into the existing media CI jobs. Exact new-head hosted results are
+  recorded on PR #1471 after completion; earlier results are not reused.
+- No live host diagnostic, new actual media upload, revocation, provider call,
+  deployment or activation has occurred in this continuation.
+
+## Concrete next approvals and later Staging bundle
+
+1. After exact-head CI/source review, approve the regular source merge of #1471
+   at its actual recorded PR head, explicitly covering the manual read-only
+   self-hosted diagnostic and the explicit schema-profile admission. No target
+   deploy, SQL, flags, server installation or additional sudo authority.
+2. After that merge, bind `reviewed_commit` to the ACTUAL merged Main SHA and
+   `expected_live_commit` to a fresh Staging version. Approve/run ONLY
+   `chat-admin-media-host-readiness.yml`, action `inspect`, confirmation
+   `inspect-staging-media-host`, protected existing Staging runner. This is not
+   `deploy-staging.yml`. The diagnostic may deliberately return BLOCK with the
+   precise context/resource permission it could not establish. Probe requires
+   separate `probe-staging-media-host` and proven context; never work around it.
+3. Support #1470 regular merge/source approval stays with its session. Once BOTH
+   source changes are on Main, re-read Main/target/locks, compare every accumulated
+   delta and use that actual common Main commit for the deployment bundle below.
+
+The final deployment approval is deliberately NOT executable yet: neither the
+support successor nor this operational successor is merged, and no actual
+application-host result exists. A PR head or GitHub speculative merge commit is
+not a usable approved Main deployment. Fill the ACTUAL common Main SHA only after
+those source merges; revalidate any later successor. Do not approve a placeholder.
+
+| Bundled Staging field | Exact prepared scope / execution gate |
+| --- | --- |
+| Deployment commit | Pending actual approved common Main after #1470 AND #1471; current3912461e is NOT deployable with preserved Operator=true |
+| Fresh baseline | Current observed d34834979cef30c9c6af567d61b3df448901bfda; re-read at execution |
+| SQL target/hash | Existing vshyhvgcmrlagvfnvomc only; controlled/chat_admin_media_catalogue.sql;10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2 |
+| SQL checks | Exact `initial` preflight; atomic approved SQL; exact `extended` postflight; partial/drift => STOP |
+| Private bucket | public=false retained;5242880 to26214400 bytes;image/webp toimage/webp+video/mp4 |
+| Flags | Retain existing media flag; separate catalogue=true; video=true ONLY after actual host proof; analysis=false |
+| Deployment preservation | #1470 exact preservation inputs, existing Operator alreadytrue; Billing preserve; no recovery/permission change; preserve Support/Meta and sessions |
+| Synthetic acceptance | Only recorded FM1425 fixtures and scoped test capability; details below; separate text-provider/cost approval if needed |
+| Recovery | Atomic SQL failure rollback; committed schema/data retained, owned catalogue/video flags off; exact synthetic cleanup; no destructive bucket shrink or blanket config restore |
+| Excluded | Production, image/video provider analysis, real media, automatic external send, new DB/project/public bucket |
+
+The following sections retain the original inspected baseline/action details as
+historical observations and the still-valid bounded test/recovery plan.
 
 ## Source and target bound observations
 
@@ -16,7 +139,7 @@ current instruction. Historical Production initial-media approval is unrelated.
 | Active workflow runs | in_progress query empty at observation; queued results contained historical Production and CI jobs, no Staging deployment |
 | Existing target only | `vshyhvgcmrlagvfnvomc`, existing private `chat-character-media` |
 | Proposed deployment | No executable candidate yet. Main above contains the feature but cannot preserve the current Operator flag through the existing deploy controller. A successor is not implicitly approved. |
-| Shared prerequisite | Draft #1470, head `900ce9454621696a761d94cef74070a075391fca`, base `6c1e376b788e9ef4d3d929a44214f8484e8610ba`, currently conflicted |
+| Shared prerequisite | Draft #1470, head `900ce9454621696a761d94cef74070a075391fca`, base `6c1e376b788e9ef4d3d929a44214f8484e8610ba`, previously conflicted; current7c9b932a is mergeable |
 
 Staging d348 is an ancestor of the observed Main. The inspected deploy workflow,
 reviewed-source policy and Operator session source have no diff in that comparison.
@@ -76,7 +199,7 @@ prepare and review the extension-specific source-derived exact postflight and
 checksum control, including folder grants/policies/triggers, and reconcile the
 activation controller against that exact contract. Never adopt desired expected
 state from the live target or weaken the initial reference to accept both states.
-This operational source work is not yet implemented in the observed Main.
+This operational source work is implemented in PR #1471 above; it is not yet merged on Main.
 
 ## Runtime prerequisites and intended flags
 
@@ -167,5 +290,5 @@ The requested bundled deployment approval is NOT READY: its exact deployable
 successor, extension-aware pre/postflight/controller and effective-host evidence
 are outstanding. No blanket permission question or guessed successor SHA is
 substituted. Next coordinate #1470's reconciled reviewed source, obtain the
-authorized host diagnostic access, finish those controls, then present the exact
-commit-bound Staging-only bundle. Production remains outside this task.
+authorized host diagnostic access, finish those controls, then finalize the prepared exact
+commit-bound Staging-only bundle above. Production remains outside this task.

@@ -1,5 +1,30 @@
 # #1425 catalogue evidence — 13 November 2026
 
+## Executable operational continuation in PR #1471
+
+Owner-requested source scope now includes the exact initial/extended schema
+profile and protected existing-runner host diagnostic. Support #1470 is freshly
+Draft/open/mergeable at7c9b932ae5ec92990ac2ea36154e8623f2043497, no copy/merge here.
+Original media SQL/reference/query unchanged; exact extended schema regenerated
+from controlled SQL on local PostgreSQL17.5 WASM. Both profile states and33 drift
+groups plus existing lifecycle passed161 local SQL calls. Actual Staging NEW
+initial-profile read-only equality returned1 at13:22:59 UTC. No target mutation.
+
+58/58 focused local checks passed without skips, including actual synthetic
+MP4/WebM audio conversions, invalid input and error cleanup. Targeted ESLint and
+Actions/governance checks passed. Native PG17.11 is separately wired into existing
+media CI and must pass on the new source head. Local WASM is not native-host proof.
+
+The manual host workflow uses only the existing protected Staging runner/lease,
+exact Main and expected live SHA; no deploy/install/config/private-env/secret/DB
+access. Passive inspection and app-context-gated synthetic probes are separate.
+Actual UID/GID/mount/cgroup/security/process limits and bounded resources are
+required; same host or runner is insufficient. Current documented sudo rights do
+not include entry to that context. No live diagnostic or extra authority granted.
+Source merge then protected `inspect` approval is the concrete next boundary;
+no SSH password/key requested. Detailed prepared bundle and retained open tests:
+`CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+
 ## Post-merge actual Staging preparation (supersedes historical source status)
 
 Fresh Main ref: `3912461e1f88eb5cf2e621f23e4d6079409c20cc`, regular PR #1469

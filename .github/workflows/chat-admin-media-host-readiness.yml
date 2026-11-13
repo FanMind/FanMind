@@ -1,0 +1,78 @@
+name: ChatAdmin Staging Media Host Readiness
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, probe]
+        default: inspect
+        required: true
+      reviewed_commit:
+        description: Exact reviewed Main source of this diagnostic
+        type: string
+        required: true
+      expected_live_commit:
+        description: Exact freshly observed Staging release; no deployment is performed
+        type: string
+        required: true
+      confirmation:
+        description: inspect-staging-media-host or probe-staging-media-host
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  inspect-staging-application-context:
+    if: >-
+      github.repository == 'FanMind/FanMind' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == format('{0}-staging-media-host', inputs.action)
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Inspect only fixed Staging service metadata and bounded synthetic media
+        env:
+          ACTION: ${{ inputs.action }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_LIVE_COMMIT: ${{ inputs.expected_live_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          umask 077
+          env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            REVIEWED_COMMIT="$REVIEWED_COMMIT" EXPECTED_LIVE_COMMIT="$EXPECTED_LIVE_COMMIT" \
+            CONFIRMATION="$CONFIRMATION" FANMIND_RUNTIME_ENVIRONMENT=staging \
+            FANMIND_TARGET_SUPABASE_PROJECT_REF="$TARGET_PROJECT" \
+            FANMIND_PRODUCTION_SUPABASE_PROJECT_REF="$PRODUCTION_PROJECT" \
+            /usr/bin/node scripts/operations/chat-admin-media-host-readiness.mjs "$ACTION"
+      - name: Prove bounded synthetic residue absent after a probe
+        if: always() && inputs.action == 'probe'
+        env:
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_LIVE_COMMIT: ${{ inputs.expected_live_commit }}
+          TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            REVIEWED_COMMIT="$REVIEWED_COMMIT" EXPECTED_LIVE_COMMIT="$EXPECTED_LIVE_COMMIT" \
+            CONFIRMATION=probe-staging-media-host FANMIND_RUNTIME_ENVIRONMENT=staging \
+            FANMIND_TARGET_SUPABASE_PROJECT_REF="$TARGET_PROJECT" \
+            FANMIND_PRODUCTION_SUPABASE_PROJECT_REF="$PRODUCTION_PROJECT" \
+            /usr/bin/node scripts/operations/chat-admin-media-host-readiness.mjs cleanup
