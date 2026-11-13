@@ -38,6 +38,7 @@ type SafeFacebookConnection = Pick<
 > & { has_page_access_token: boolean };
 
 type SafeInstagramConnection = {
+  unified?: boolean;
   account_name: string | null;
   account_id: string | null;
   has_access_token: boolean;
@@ -284,6 +285,7 @@ export default async function ChannelsPage({
           } : null}
           facebookError={singleSearchParam(params.facebook_error)}
           instagramConnection={instagramConnection ? {
+            unified: instagramConnection.oauth_login_type === "instagram_unified_login",
             account_name: instagramConnection.external_account_name ?? instagramConnection.page_name,
             account_id: instagramConnection.external_account_id ?? instagramConnection.page_id,
             has_access_token: Boolean(instagramConnection.token_last_four),

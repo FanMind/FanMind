@@ -1,3 +1,4 @@
+import { assertUnifiedOperator } from "@/lib/instagramUnifiedPolicy.mjs";
 import { redirect } from "next/navigation";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import {
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
     redirect("/channels?instagram_error=demo_disabled");
 
   try {
+    if (process.env.INSTAGRAM_LOGIN_MODE === "unified") assertUnifiedOperator(process.env,data.user.id,workspace.id);
     const state = createInstagramOAuthState({
       workspaceId: workspace.id,
       userId: data.user.id,
