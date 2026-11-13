@@ -177,3 +177,62 @@ analysis off. The Staging-only Operator must never become a Production agent.
 The shared Production callback may remain the same URL for Production only;
 its deployment changes implementation and therefore still needs approval and
 before/after verification. A Staging test is not authority to repoint it.
+
+
+## Owner-authorized test-app setup — 13 November 2026 continuation
+
+The Owner explicitly approved an isolated Staging test/development app limited
+to FanMind Page `1208778912321696`, planned webhook callback
+`https://staging.fanmind.ch/api/webhooks/meta` and `messages` / `feed`.
+The approval excludes publication, general permission expansion, the shared
+Production webhook, Production deployment and outbound messages/comments.
+It also explicitly requires stopping before an alternative if isolation is
+unavailable. Source merge and deployment remain separate exact-source decisions.
+
+### Actually completed
+
+The existing parent app's native **Create test app** action was used. Meta
+required password reauthentication; the Owner completed it directly. A fresh
+dashboard inspection independently confirms **FanMind Staging**, App ID
+`1637976007865045`, with Meta's explicit test-version relationship to parent
+FanMind `2214477125984114`. No duplicate standalone business app was created.
+Creation succeeds; credentials were not read, exported or committed.
+
+### Provider limitation observed — stop before alternative
+
+The test app's Page Webhooks screen explicitly states that an unpublished app
+receives only dashboard test webhooks, and no production data, including from
+app admins, developers or testers, unless published. This is the actual Meta
+screen's statement, not a performed real-delivery experiment or a general
+claim about every Messenger/product configuration. No real arrival is passed.
+
+The new test app's Page callback and verification token are empty; `messages`
+and `feed` subscriptions are disabled (UI default version v27.0). No callback
+save, challenge, Page subscription, token generation, consent or real-data
+processing was performed. The earlier proposed isolated-app route is therefore
+not yet a demonstrated path for real FanMind events. Do not infer that the
+existing manual Graph acceptance proves webhook eligibility.
+
+Setup stopped at the Owner's explicit publication/alternative boundary.
+Keep the test app for possible isolated synthetic checks; do not publish,
+repoint the parent callback or route Production events to Staging.
+An alternative must first establish product-specific real-event eligibility
+and an isolated destination without violating those exclusions, then receive
+the necessary concrete Owner decision.
+
+### Independent runtime prerequisite
+
+The existing `staging-meta-runtime.mjs` rejects changing an already configured
+App ID through `existing_app_conflict`. Its workflow also requires exact Main
+to equal the live Staging release. A new App identity therefore cannot be
+silently installed using the initial-setup controller. A later approved
+rebind needs its own reviewed preservation/rollback of the existing binding,
+encrypted tokens and Operator state, protected secret provisioning, and fresh
+live/lock checks. No guard was removed and no configuration job was started.
+PR1470 is now confirmed merged; this observation is not deployment authority.
+
+Repository checkpoint: source PR1473 remained Draft/open at a191b54f before
+this documentation-only receipt. The old scratch worktree's Git metadata now
+references an absent original checkout; no reset, cleanup or reconstruction
+of another session's work was attempted. This receipt is saved using the
+existing branch's current file SHA through GitHub, preserving all runtime code.
