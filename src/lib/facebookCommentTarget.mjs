@@ -18,7 +18,7 @@ export function facebookCommentTarget({ permalink, postId, commentId }) {
           if (value && /^[A-Za-z0-9_-]{1,255}$/u.test(value)) safe.searchParams.set(key, value);
         }
         if (comment && !safe.searchParams.has("reply_comment_id")) safe.searchParams.set("comment_id", comment);
-        return safe.href;
+        if (safe.searchParams.has("comment_id") || safe.searchParams.has("reply_comment_id")) return safe.href;
       }
     } catch { /* Try validated object IDs below. */ }
   }

@@ -181,7 +181,9 @@ test("Meta channel UI fails closed on incomplete config and exposes real Faceboo
     channels,
     /facebookError === "config"[\s\S]*Facebook-Serverkonfiguration ist noch nicht vollständig/u,
   );
-  assert.match(channels, /Facebook-Kommentare jetzt synchronisieren/u);
+  assert.match(channels, /<FacebookCommentSyncForm/u);
+  const commentForm = await source("src/app/channels/FacebookCommentSyncForm.tsx");
+  assert.match(commentForm, /Facebook-Kommentare jetzt synchronisieren/u);
   assert.match(channels, /facebookCommentsAuthorized/u);
   assert.match(syncActions, /fetchFacebookCommentsNow/u);
   assert.match(
@@ -884,3 +886,6 @@ test('Meta configure blocks pending runtime drift before any restart or write', 
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency({ ...config, FACEBOOK_APP_ID: '99999' }, { ...config, FACEBOOK_APP_ID: '99999' }, syntheticMetaInput.appId), /existing_app_conflict/u);
   assert.throws(() => metaRuntime.renderMetaConfiguration(`FACEBOOK_APP_ID=99999\nFANMIND_TOKEN_ENCRYPTION_KEY=${syntheticMetaKey}\n`, [], syntheticMetaInput), /existing_app_conflict/u);
 });
+
+// Executable provider-response and reviewed Staging source regressions.
+import "./facebook-page-discovery.cases.mjs";

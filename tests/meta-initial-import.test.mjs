@@ -71,7 +71,7 @@ test("actual Facebook flow waits for page selection and successful save before t
   const calls = [];
   const integration = {
     fetchFacebookGrantedPermissions: async () => [], fetchFacebookTokenDiagnostics: async () => ({}), getGrantedFacebookPermissionNames: () => [],
-    getFacebookGrantedScopeNames: () => [], hasRequiredFacebookPagePermissions: () => true, hasFacebookCommentFeedScopes: () => true, hasFacebookInsightsScopes: () => true,
+    getFacebookGrantedScopeNames: () => [], hasRequiredFacebookPagePermissions: () => true, hasFacebookPageAuthorization: () => true, verifyFacebookPageTokenIdentity: async () => true, hasFacebookCommentFeedScopes: () => true, hasFacebookInsightsScopes: () => true,
     fetchFacebookPages: async () => [{ id: "page-1", name: "One", accessToken: "synthetic-1" }, { id: "page-2", name: "Two", accessToken: "synthetic-2" }],
     isTokenEncryptionConfigured: () => true, encryptToken: () => "synthetic-encrypted", tokenLastFour: () => "fake",
     FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS: ["messages"], FACEBOOK_PAGE_COMMENT_WEBHOOK_FIELDS: ["feed"],
@@ -80,6 +80,7 @@ test("actual Facebook flow waits for page selection and successful save before t
   let saveError = false;
   const flow = load("src/lib/facebookConnectionFlow.ts", {
     "@/lib/facebookIntegration": integration,
+    "@/lib/facebookScopes": { FACEBOOK_MESSAGES_OAUTH_SCOPES: [], FACEBOOK_COMMENT_FEED_SCOPES: [], FACEBOOK_INSIGHTS_OAUTH_SCOPES: [] },
     "@/lib/metaInitialImport": { runMetaInitialImport: async (row, type) => { calls.push(["import", row.page_id, type]); return "partial"; } },
     "@/lib/supabase/server": { upsertFacebookSocialConnection: async input => { calls.push(["save", input.pageId]); return { connection, error: saveError }; }, updateFacebookWebhookSubscribed: async () => ({}) },
   });
@@ -92,6 +93,14 @@ test("actual Facebook flow waits for page selection and successful save before t
   assert.equal((await flow.completeFacebookOAuthConnection(input)).errorCode, "page_selection_required");
   assert.equal(calls.length, 0);
   integration.fetchFacebookPages = originalPages;
+  integration.hasFacebookPageAuthorization = () => false;
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" })).errorCode, "page_permissions");
+  assert.equal(calls.length, 0);
+  integration.hasFacebookPageAuthorization = () => true;
+  integration.verifyFacebookPageTokenIdentity = async () => false;
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" })).errorCode, "page_permissions");
+  assert.equal(calls.length, 0);
+  integration.verifyFacebookPageTokenIdentity = async () => true;
   const success = await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" });
   assert.equal(success.ok, true); assert.equal(success.initialImport, "partial");
   assert.deepEqual(calls, [["save", "page-2"], ["import", "page-2", "facebook_messages"]]);

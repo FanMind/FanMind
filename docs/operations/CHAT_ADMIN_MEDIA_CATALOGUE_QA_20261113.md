@@ -68,3 +68,9 @@ media API test. The general package manifest and general CI workflow are preserv
 byte-for-byte, including unrelated Capacity source pins. A separate media-only
 workflow installs ffmpeg for actual video processing and runs isolated PG17.
 This does not relax any prior checksum or required general test.
+
+Common Main reconciliation: Main advanced to6c1e376b788e9ef4d3d929a44214f8484e8610ba
+through Owner-approved#1468. Its Support/Facebook code, package and Capacity pin
+are preserved; only README/Source of Truth additions and their reviewed fingerprint
+are combined. No deployed branch is overwritten. The feature-branch merge and
+new exact-head CI remain separate from a protected Main merge or deployment.

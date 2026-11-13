@@ -53,6 +53,7 @@ const SAFETY_NOTE =
 
 type ReplySuggestionRequest = {
   contactId?: unknown;
+  conversationId?: unknown;
   incomingMessage?: unknown;
   responseMode?: unknown;
   responseInstruction?: unknown;
@@ -326,6 +327,13 @@ export async function POST(request: NextRequest) {
   const contextMessageLimit =
     getAiTierConfig(resolvedTier.entitlement.effectiveTierId)
       .contextMessageLimit ?? 50;
+  // The browser supplies only an identifier. Authorized workspace/contact and
+  // RLS remain mandatory, and a missing/foreign thread never falls back to all.
+  const conversationId = normalizeString(payload.conversationId);
+  if (payload.conversationId !== undefined &&
+      (!conversationId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(conversationId))) {
+    return jsonError("Ungültiger Gesprächsbezug.", 400);
+  }
   const [messagesResult, analysisResult, fanProfileResult, voiceProfileResult] =
     await Promise.all([
       getRecentContactConversationMessages(
@@ -333,6 +341,7 @@ export async function POST(request: NextRequest) {
         contact.id,
         contextMessageLimit,
         accessToken,
+        conversationId || undefined,
       ),
       getFanAnalysisReport(workspace.id, contact.id, accessToken),
       getContactAiProfile(workspace.id, contact.id, accessToken),
@@ -346,6 +355,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (conversationId && messagesResult.messages.length === 0) {
+    return jsonError("Im ausgewählten Gespräch sind keine zugänglichen Nachrichten vorhanden.", 400);
+  }
   const incomingMessage =
     manuallyEnteredIncomingMessage ||
     getLatestStoredInboundMessage(messagesResult.messages);

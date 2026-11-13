@@ -709,7 +709,7 @@ function buildConversationInboxQueue(
         originalPreview: conversation.original_text_excerpt ?? undefined,
         sourceType: originalSourceType,
         sourcePlatformLabel: channel,
-        sourceContextKey: sourceType === "comment"
+        sourceContextKey: sourceType === "comment" || sourceType === "dm"
           ? getMessageSourceContext(conversation).contextKey : undefined,
         unread: Boolean(conversation.last_inbound_at),
         dueToday: false,

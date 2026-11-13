@@ -78,3 +78,11 @@ führen; `/admin/billing` bleibt für die freigegebene Admin-Adresse erreichbar.
 
 Bleibt die alte Weiterleitung im Browser erhalten, einmal abmelden und die
 Seite neu laden. Ein erneuter Provisionierungslauf ist dafür nicht nötig.
+
+## Eigenständiger Agentenzugriff
+
+Issue #1464 bereitet einen begrenzten Browser-Authentifizierungstest vor:
+`docs/operations/STAGING_AGENT_ACCESS.md`. Workspace-Provisionierung und eine
+frühere Browser-Anmeldung sind kein dauerhafter Agentenzugang. Geschützte
+Credential-Bindung, Kontoeignung und echte Messenger-Abnahme bleiben separat
+nachzuweisen; der neue Testpfad ist noch nicht aktiviert oder abgenommen.

@@ -53,6 +53,7 @@ type Props = {
     tags: string[] | null;
     summary: string | null;
     latestInboundMessage?: string;
+    conversationId?: string;
   };
   modes: ReplyMode[];
   locale?: FanMindLanguage;
@@ -153,6 +154,7 @@ export function AiReplySuggestions({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contactId: contact.contactId,
+          conversationId: contact.conversationId,
           responseMode: `${mode.label}: ${mode.prompt}`,
           responseInstruction: replyInstruction.trim(),
           promptProfileId: selectedPromptProfileId || undefined,
