@@ -889,3 +889,32 @@ test('Meta configure blocks pending runtime drift before any restart or write', 
 
 // Executable provider-response and reviewed Staging source regressions.
 import "./facebook-page-discovery.cases.mjs";
+
+
+test('explicit Staging Meta rebind preserves encryption, webhook verification and unrelated state', () => {
+  const before = `FACEBOOK_APP_ID=2214477125984114\nFACEBOOK_APP_SECRET=${'d'.repeat(32)}\nFACEBOOK_WEBHOOK_VERIFY_TOKEN=${'e'.repeat(64)}\nFANMIND_TOKEN_ENCRYPTION_KEY=${syntheticMetaKey}\nFANMIND_STAGING_OPERATOR_SESSION_ENABLED=true\nFANMIND_ENABLE_BILLING_WRITES=false\n`;
+  const options = { expectedPreviousAppId: '2214477125984114', generateKey() { throw Error('must never rotate'); } };
+  const after = metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput, options);
+  assert.match(after, /FACEBOOK_APP_ID="123456789012345"/);
+  assert.match(after, new RegExp('FANMIND_TOKEN_ENCRYPTION_KEY="'+syntheticMetaKey+'"'));
+  assert.match(after, new RegExp('FACEBOOK_WEBHOOK_VERIFY_TOKEN="'+'e'.repeat(64)+'"'));
+  assert.ok(after.includes('FANMIND_STAGING_OPERATOR_SESSION_ENABLED=true'));
+  assert.ok(after.includes('FANMIND_ENABLE_BILLING_WRITES=false'));
+  assert.throws(() => metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput), /existing_app_conflict/);
+  assert.throws(() => metaRuntime.renderMetaConfiguration(before, [`FACEBOOK_APP_ID=2214477125984114\n`], syntheticMetaInput, options), /override_conflict/);
+});
+test('Meta rebind rejects unapproved identities, child test app, stale old ID, aliases and missing preservation', () => {
+  const values = { FACEBOOK_APP_ID: '2214477125984114', FACEBOOK_APP_SECRET: 'd'.repeat(32), FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'e'.repeat(64), FANMIND_TOKEN_ENCRYPTION_KEY: syntheticMetaKey };
+  metaRuntime.assertMetaRebind(values, syntheticMetaInput, '2214477125984114');
+  for (const old of ['', undefined, '99999']) assert.throws(() => metaRuntime.assertMetaRebind(values, syntheticMetaInput, old), /rebind_identity_invalid/);
+  for (const appId of ['1637976007865045','2214477125984114','invalid']) assert.throws(() => metaRuntime.assertMetaRebind(values, {...syntheticMetaInput, appId}, '2214477125984114'), /rebind_identity_invalid/);
+  assert.throws(() => metaRuntime.assertMetaRebind(values, {...syntheticMetaInput, appSecret:values.FACEBOOK_APP_SECRET}, '2214477125984114'), /rebind_identity_invalid/);
+  assert.throws(() => metaRuntime.assertMetaRebind({...values,FACEBOOK_APP_ID:'99999'}, syntheticMetaInput, '2214477125984114'), /rebind_identity_invalid/);
+  for (const key of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET']) assert.throws(() => metaRuntime.assertMetaRebind({...values,[key]:'active-alias'}, syntheticMetaInput,'2214477125984114'), /rebind_alias_conflict/);
+  assert.throws(() => metaRuntime.assertMetaRebind({...values,META_APP_SECRET:'replace_with_secret'}, syntheticMetaInput,'2214477125984114'), /rebind_alias_conflict/);
+  for (const key of ['FANMIND_TOKEN_ENCRYPTION_KEY','FACEBOOK_WEBHOOK_VERIFY_TOKEN']) assert.throws(() => metaRuntime.assertMetaRebind({...values,[key]:undefined}, syntheticMetaInput,'2214477125984114'), /rebind_preservation_missing/);
+  const rebind = {expectedPreviousAppId:'2214477125984114', appSecret:syntheticMetaInput.appSecret};
+  metaRuntime.assertMetaRuntimeConsistency(values, {...values}, syntheticMetaInput.appId, rebind);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,META_APP_SECRET:'unexpected-runtime-alias'}, syntheticMetaInput.appId,rebind), /rebind_alias_conflict/);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,FANMIND_TOKEN_ENCRYPTION_KEY:'f'.repeat(64)}, syntheticMetaInput.appId,rebind), /encryption_key_drift/);
+});

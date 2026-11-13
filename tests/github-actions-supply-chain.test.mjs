@@ -26,6 +26,7 @@ const CHAT_ADMIN_STRUCTURED_OFFERS_STAGING_WORKFLOW =
 const ORCHESTRATOR_DISPATCH_WORKFLOW = "fanmind-manager-event-dispatch.yml";
 const STAGING_PUSH_RUNTIME_WORKFLOW = "staging-push-runtime.yml";
 const STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW = "staging-support-media-runtime.yml";
+const CHAT_ADMIN_MEDIA_HOST_WORKFLOW = "chat-admin-media-host-readiness.yml";
 const CREATOR_TARGET_RUNTIME_WORKFLOW = "creator-target-transition-runtime.yml";
 const CREATOR_TARGET_RECOVERY_WORKFLOW = "creator-target-admission-recovery.yml";
 const DAILY_PRODUCTION_CONTROL_WORKFLOW =
@@ -243,6 +244,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     [
       "backup-worker-production-control.yml",
       "backup-worker-root-bootstrap.yml",
+      CHAT_ADMIN_MEDIA_HOST_WORKFLOW,
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
@@ -258,6 +260,14 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     ],
   );
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
+  const mediaHost = selfHostedWorkflows.find(workflow => workflow.file === CHAT_ADMIN_MEDIA_HOST_WORKFLOW);
+  assert.deepEqual(mediaHost?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaHost.source, /runs-on: \[self-hosted, fanmind-staging, exoscale, linux, x64\]/u);
+  assert.match(mediaHost.source, /environment: staging/u);
+  assert.match(mediaHost.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(mediaHost.source, /group: fanmind-staging-deploy/u);
+  assert.match(mediaHost.source, /env -i PATH=\/usr\/bin:\/bin/u);
+  assert.doesNotMatch(mediaHost.source, /secrets\.|--env-file|\.env\.production|sudo|npm (?:ci|install)|systemctl (?:restart|enable)|workflow_call|pull_request:/u);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === "staging-meta-runtime.yml")?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(backupControl?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   const privilegedBackupJob = backupControl.source.split("\n  control:")[1];

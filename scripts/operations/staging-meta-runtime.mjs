@@ -31,7 +31,7 @@ export function metaReadiness(values) {
     webhook: usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? values.META_WEBHOOK_VERIFY_TOKEN) };
 }
 export function assertMetaTarget(values, control, action) {
-  if (!["inspect", "configure"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
+  if (!["inspect", "configure", "rebind"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
       control.GITHUB_EVENT_NAME !== "workflow_dispatch" || control.GITHUB_REF !== "refs/heads/main" ||
       !/^[a-f0-9]{40}$/u.test(control.GITHUB_SHA ?? "") || control.REVIEWED_COMMIT !== control.GITHUB_SHA ||
       control.CONFIRMATION !== `staging-meta-${action}` || !/^\d{1,20}$/u.test(control.GITHUB_RUN_ID ?? "")) fail("control_binding");
@@ -41,12 +41,28 @@ export function assertMetaTarget(values, control, action) {
       control.TARGET_PROJECT !== STAGING || control.PRODUCTION_PROJECT !== PRODUCTION ||
       values.FANMIND_RELEASE_COMMIT !== control.GITHUB_SHA) fail("target_binding");
 }
-export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64") } = {}) {
+// The separately authorized Staging identity transition is deliberately distinct
+// from initial setup. Unknown aliases/overrides remain blocked, never rewritten.
+export function assertMetaRebind(values, requested, expectedPreviousAppId) {
+  if (expectedPreviousAppId !== "2214477125984114" ||
+      values.FACEBOOK_APP_ID !== expectedPreviousAppId ||
+      !/^\d{5,32}$/u.test(requested.appId ?? "") ||
+      [expectedPreviousAppId, "1637976007865045"].includes(requested.appId) ||
+      requested.appSecret === values.FACEBOOK_APP_SECRET ||
+      !/^[a-f0-9]{32}$/iu.test(requested.appSecret ?? "")) fail("rebind_identity_invalid");
+  if (!validMetaKey(values.FANMIND_TOKEN_ENCRYPTION_KEY) ||
+      !usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN)) fail("rebind_preservation_missing");
+  if (["META_APP_ID", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET"].some(name => typeof values[name] === "string" && values[name].trim().length > 0))
+    fail("rebind_alias_conflict");
+}
+export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64"), expectedPreviousAppId } = {}) {
   const effective = Object.assign({}, parseEnv(original), ...overrides.map(parseEnv));
+  if (expectedPreviousAppId !== undefined) assertMetaRebind(effective, requested, expectedPreviousAppId);
   if (!/^\d{5,32}$/u.test(requested.appId ?? "") || !/^[a-f0-9]{32}$/iu.test(requested.appSecret ?? "") ||
       !/^[A-Za-z0-9_-]{32,128}$/u.test(requested.webhookToken ?? "")) fail("input_invalid");
   for (const name of ["FACEBOOK_APP_ID", "META_APP_ID"]) {
-    if (/^\d{5,32}$/u.test(effective[name] ?? "") && effective[name] !== requested.appId) fail("existing_app_conflict");
+    if (/^\d{5,32}$/u.test(effective[name] ?? "") && effective[name] !== requested.appId &&
+        !(name === "FACEBOOK_APP_ID" && expectedPreviousAppId && effective[name] === expectedPreviousAppId)) fail("existing_app_conflict");
   }
   let key = effective.FANMIND_TOKEN_ENCRYPTION_KEY;
   if (!validMetaKey(key)) {
@@ -72,14 +88,20 @@ export function renderMetaConfiguration(original, overrides, requested, { tokens
   }
   return after;
 }
-export function assertMetaRuntimeConsistency(effective, running, requestedAppId) {
+export function assertMetaRuntimeConsistency(effective, running, requestedAppId, rebind) {
+  if (rebind) {
+    const requested = { appId: requestedAppId, appSecret: rebind.appSecret };
+    assertMetaRebind(effective, requested, rebind.expectedPreviousAppId);
+    assertMetaRebind(running, requested, rebind.expectedPreviousAppId);
+  }
   if (effective.FANMIND_TOKEN_ENCRYPTION_KEY !== running.FANMIND_TOKEN_ENCRYPTION_KEY) fail("encryption_key_drift");
   if (FIELDS.some(name => effective[name] !== running[name])) fail("managed_configuration_drift");
   for (const name of Object.keys(effective)) {
     if (!FIELDS.includes(name) && effective[name] !== running[name]) fail("unrelated_runtime_drift");
   }
   for (const name of ["FACEBOOK_APP_ID", "META_APP_ID"]) {
-    if (/^\d{5,32}$/u.test(running[name] ?? "") && running[name] !== requestedAppId) fail("existing_app_conflict");
+    if (/^\d{5,32}$/u.test(running[name] ?? "") && running[name] !== requestedAppId &&
+        !(name === "FACEBOOK_APP_ID" && rebind && running[name] === rebind.expectedPreviousAppId)) fail("existing_app_conflict");
   }
 }
 function privateFile(path, rootSecret = false) {
@@ -142,7 +164,9 @@ export async function runMetaRuntime(action, control = process.env) {
     return;
   }
   const requested = { appId: control.META_SETUP_APP_ID, appSecret: control.META_SETUP_APP_SECRET, webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
-  assertMetaRuntimeConsistency(effective, runningBefore, requested.appId);
+  const rebind = action === "rebind" ? { expectedPreviousAppId: control.META_SETUP_PREVIOUS_APP_ID, appSecret: requested.appSecret } : undefined;
+  if (action === "rebind") assertMetaRebind(effective, requested, control.META_SETUP_PREVIOUS_APP_ID);
+  assertMetaRuntimeConsistency(effective, runningBefore, requested.appId, rebind);
   let tokensPresent = true;
   if (!validMetaKey(effective.FANMIND_TOKEN_ENCRYPTION_KEY)) {
     const url = new URL(effective.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/social_connections");
@@ -151,7 +175,7 @@ export async function runMetaRuntime(action, control = process.env) {
     if (!Array.isArray(rows) || rows.length > 1) fail("token_inventory_invalid");
     tokensPresent = rows.length > 0;
   }
-  const after = renderMetaConfiguration(before, overrides, requested, { tokensPresent });
+  const after = renderMetaConfiguration(before, overrides, requested, { tokensPresent, ...(rebind ? { expectedPreviousAppId: rebind.expectedPreviousAppId } : {}) });
   const desired = Object.assign({}, parseEnv(after), ...overrides.map(parseEnv));
   const unchangedNames = [...new Set([...Object.keys(effective), ...Object.keys(desired)])].filter(name => !FIELDS.includes(name));
   if (unchangedNames.some(name => effective[name] !== desired[name])) fail("unrelated_configuration_changed");

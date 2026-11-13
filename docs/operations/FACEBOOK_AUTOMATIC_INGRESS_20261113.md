@@ -1,3 +1,51 @@
+# Current authorized execution — 13 November 2026
+
+The Owner now explicitly authorizes the regular PR1473 source merge after checks,
+one standalone publishable Staging app, necessary publication/permissions/review,
+protected credentials/rebind/deployment and real receipt acceptance for only
+Page1208778912321696. Existing Production app/callback/deployment, WellFit,
+outbound sending, extra databases, paid contracts and unrelated access remain
+excluded. Legal declarations/password/2FA/documents require personal Owner action.
+This supersedes the narrower proposed approval sections retained below.
+
+Main advanced via approved Adminchat PR1471 to8f9e286d778207941c41ca6c33d23df188ac96f0.
+Integrate it into the SAME Facebook PR; retain both task-ledger entries in the
+sole content conflict. All other incoming Adminchat files remain byte-identical.
+No second media implementation or parallel deployment is introduced.
+
+## App setup and current personal boundary
+
+One standalone creation flow is prepared as **FanMind Staging Empfang**, contact
+fanmind@fanmind.ch, existing FanMind business portfolio, Messenger and Page use
+cases only. No WellFit or other product selected. The overview reports no current
+use-case requirements but explicitly says continuing accepts Meta platform terms,
+developer policies and other applicable conditions. The final Create app button
+has NOT been clicked by the assistant. Owner must complete that legal acceptance;
+new App ID/publication/permissions are not yet established. Never restart another
+creation flow before checking the result of this exact pending submission.
+
+## Controlled rebind source
+
+The existing staging-meta-runtime controller adds a distinct rebind action,
+not a relaxation of initial configure. It requires manual protected Main/exact
+live-source Staging control, action-specific confirmation, exact old identity
+2214477125984114 and a distinct valid new identity excluding child1637976007865045.
+The new app secret must differ; existing valid encryption and webhook verification
+must remain unchanged. Saved/running drift, any active META signing/App aliases,
+including runtime-only or placeholder aliases, and conflicting protected override
+files fail closed. Operator/Billing/unrelated fields and existing CRM data remain
+unchanged. No DB mutation or provider API call is added to this controller.
+Original private snapshot, atomic write, restart/verification and rollback
+verification are reused; no secret is logged or uploaded. Actual secret provisioning,
+new App/Page authorization and host rebind are NOT executed by a source merge.
+
+Validation must attest the new complete PR head, not old8cb218d1. Positive/negative
+executable tests cover preservation, no implicit configure rebind, wrong/stale old
+ID, child/same/invalid new ID, reused secret, aliases/override conflicts and drift.
+Only new/affected checks are run locally; normal required hosted CI remains intact.
+
+---
+
 # Current decision after test-app creation — 13 November 2026
 
 This section supersedes the earlier proposed isolated-app path and stale
@@ -21,12 +69,10 @@ current activation or current-head CI evidence.
 - The test app's business verification screen freshly reports unverified.
   No verification, review, publication, subscription or runtime action started.
 
-Observed **Page Webhooks** banner, retained verbatim as configuration evidence:
-
-> Apps können nur Test-Webhooks vom Dashboard erhalten, solange die App nicht
-> veröffentlicht ist. Es werden keine Produktionsdaten (einschließlich von
-> App-Admins, Entwicklern oder Testern) geliefert, es sei denn, die App wurde
-> veröffentlicht.
+Observed **Page Webhooks** banner: **„Apps können nur Test-Webhooks vom Dashboard erhalten“**.
+The rest of the warning states that the unpublished app would not receive
+production data, including data from app admins, developers or testers, until
+publication. This is recorded as observed UI evidence, not a universal rule.
 
 That banner is not, by itself, a universal rule for all products, all
 Development-mode apps or all historical Messenger versions.

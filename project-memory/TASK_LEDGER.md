@@ -1,3 +1,9 @@
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — full Owner Staging authorization
+- Owner authorizes source merge, one standalone app, necessary publication/review/permissions, protected credential/rebind/deployment and real inbound acceptance. Production/WellFit/outbound/newDB/paid/unrelated access excluded; personal legal/password/2FA/document steps remain Owner-only.
+- Main8f9e286d (#1471) integrated into same PR; sole ledger conflict retains both streams, all incoming runtime/diagnostic/media paths preserved. Existing Meta controller gains explicit exact-old/new identity rebind preserving encryption/webhook/Operator/Billing with alias/drift/override negatives and existing private rollback. No target write.
+- Standalone creation flow FanMind Staging Empfang / fanmind@fanmind.ch / FanMind business / Messenger+Pages prepared, final Create app requires personal legal acceptance and remains unsubmitted. No newAppID/publication/provider permission yet. Resume the same browser flow.
+- New exact-head CI required before regular merge; old8cb118tests/19green remain historical. No competing deployment or target action started.
+
 ## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — current Main and Meta child-app boundary
 - Same Issue1464 / Draft1473; merge Main33e65696 into existing source; no conflict, Expo/session policy inherited unchanged.
 - Child1637976007865045 confirmed, Owner admin/0testers, no Page/callback/subscription. Current official Messenger guide (2026-10-28) requires publication; child apps always Development. General role-only webhook rule does not prove feed receipt or override product prerequisites. Existing banner preserved and scoped in runbook.
@@ -10,6 +16,17 @@
 - Correct existing ingress validation/routing/summary recovery; executable signed-route/TS/storage synthetic regressions distinct from actual provider acceptance. Manual recovery preserved. No newDB/schema/privilege/secret/outbound/Production action.
 - PR1470 open7c9b932a owns Main session-preserving deployment admission; no duplication or foreignPRmerge. Main/target/active deployment reread before any later shared rollout. Newmerge/deploy and isolated Meta configuration need concrete approval after exactsourcechecks; cannot reuse historical d348 grant.
 - Current safe boundary: prepare successor PR and exact-source evidence; dedicated Staging Meta App/configuration preferred to moving common Production callback. App Review/Business/legal/Production controller plus concurrent firstcontact/projection QA remain separate Production gates. Details and rollback: docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md.
+
+## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — Main33e65696 integration
+- Risk:R3, same existing Draft1471. Freshly confirm #1470 regularly merged at33e6569602e8fe910058e268b4f33c1879799869. Old977f2fc4 is behind strict Main, not a content conflict. Genuine two-parent merge into this PR; preserve all11incoming paths byte-for-byte and retain existing media/schema/diagnostic/Facebook source.
+- User authorizes Main integration/tests only, no merge/target permission. Recheck new exact head in CI; previous14/14 remains historical. Refresh obsolete current status and retain earlier checkpoint receipts as history. No new implementation/PR, no copied deployment fix or protected-action bypass.
+- Current developed source remains distinct from actual Stagingd3483497, not activated and not practically accepted there. Next Owner boundary: exact new-head regular source merge covering existing diagnostic/schema checks, then actual Main SHA-bound protected inspect proposal. No deployment/DB/bucket/feature/provider/identity/Production action here.
+
+## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — operational source continuation
+- Risk:R3; same Issue1425/Draft1471. Owner explicitly requested initial/extended exact schema verification and narrowly bounded existing-runner host diagnosis. SQL/reference baseline retained; new exact extension reference and fail-closed profile, no target apply/activation.
+- Existing Staging runner confirmed from successful43417498761 metadata. New Main/manual/exact-source/live-SHA diagnostic preserves protected staging and canonical lease; no installs/config/secret/privateenv/DB reads. Actual app UID/mount/cgroup/security/limits are required before synthetic probes; no new authority granted.
+- Local PG17.5 WASM source recreation/lifecycle/33driftgroups (161SQLcalls),58focused tests including real syntheticvideo/errorcleanup, lint/actionpins/governancePASS. Actual live Staging initial-profile read-only equalityPASS. NativePG17.11 CI/newhead/review and actualhost evidence pending separately.
+- #1470 current7c9b932a is Draft/open/mergeable; other session owns closure. No deploymentfix duplication/foreignmerge; no Staging/Production schema,bucket,flags,Auth,Support,Meta,Billing/provider change. Exact future commonMain deployment approval remains unfilled until real merges/hostproof; source merge + protected inspect are the next concrete decisions.
 
 ## FM-FACEBOOK-MAIN-1465-20261113 — Owner conditional merge request
 - Owner requested existing PR1465 merge when all checks are green. Current Main6c1e376b already contains a49decfd Facebook foundation; remaining branch delta is the reviewed HTTPS-loopback/12-character refresh fixes, tests and bounded runtime receipt.

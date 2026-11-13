@@ -1,5 +1,86 @@
 # #1425 catalogue evidence — 13 November 2026
 
+## Current Main integration after the regular #1470 merge
+
+Fresh Main is33e6569602e8fe910058e268b4f33c1879799869. GitHub independently
+confirms #1470 merged at14:32:49 UTC. #1471 prior head977f2fc4 was `behind` under
+strict protection; the actual local merge has NO content conflicts. Integrate
+that exact Main into this existing PR through real two-parent history, preserving
+all eleven incoming Support/session/deployment/Mobile paths byte-for-byte.
+Existing #1471 operational executables, original media SQL/reference/collector,
+Facebook source and Main Adminchat source remain unchanged. Only current
+operational evidence is updated in addition to the incoming Main source.
+
+The earlier14 successful checks are historical for977f2fc4, not this successor.
+Run new exact-head CI, including the combined Support/session/admission/media
+regressions, build, native PG17, browser, security and governance. Record actual
+head/tree/results in the existing PR before requesting regular source merge.
+No source merge or target action is authorized by this continuation request.
+
+Actual Staging at14:36:05 UTC /15:36:05 Vienna remainsd34834979cef30c9c6af567d61b3df448901bfda.
+The protected host inspection, catalogue/video activation and actual Staging
+acceptance are still unexecuted. After explicit merge approval, independently
+confirm the ACTUAL Main merge SHA before proposing exact protected `inspect`.
+
+## Prior executable operational implementation in PR #1471 (historical)
+
+Owner-requested source scope now includes the exact initial/extended schema
+profile and protected existing-runner host diagnostic. Support #1470 is freshly
+Draft/open/mergeable at7c9b932ae5ec92990ac2ea36154e8623f2043497, no copy/merge here.
+Original media SQL/reference/query unchanged; exact extended schema regenerated
+from controlled SQL on local PostgreSQL17.5 WASM. Both profile states and33 drift
+groups plus existing lifecycle passed161 local SQL calls. Actual Staging NEW
+initial-profile read-only equality returned1 at13:22:59 UTC. No target mutation.
+
+58/58 focused local checks passed without skips, including actual synthetic
+MP4/WebM audio conversions, invalid input and error cleanup. Targeted ESLint and
+Actions/governance checks passed. Native PG17.11 is separately wired into existing
+media CI and must pass on the new source head. Local WASM is not native-host proof.
+
+The manual host workflow uses only the existing protected Staging runner/lease,
+exact Main and expected live SHA; no deploy/install/config/private-env/secret/DB
+access. Passive inspection and app-context-gated synthetic probes are separate.
+Actual UID/GID/mount/cgroup/security/process limits and bounded resources are
+required; same host or runner is insufficient. Current documented sudo rights do
+not include entry to that context. No live diagnostic or extra authority granted.
+Source merge then protected `inspect` approval is the concrete next boundary;
+no SSH password/key requested. Detailed prepared bundle and retained open tests:
+`CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+
+## Earlier Staging preparation before #1470 merge (historical)
+
+Fresh Main ref: `3912461e1f88eb5cf2e621f23e4d6079409c20cc`, regular PR #1469
+merge. HTTPS Staging `/api/version` at 12:57:32 UTC confirms
+`d34834979cef30c9c6af567d61b3df448901bfda` and `runtimeEnvironment=staging`.
+That deployed commit is an ancestor of Main; session/deploy source paths are
+unchanged in the inspected comparison. Main CI observed: God Mode, Supply Chain,
+Browser and CodeQL workflows succeeded. This does not imply a new full build or
+Mobile validation on the merge commit; PR-head checks remain separate evidence.
+
+Actual existing Staging project `vshyhvgcmrlagvfnvomc`, read-only transactions:
+the complete initial media catalogue equals the source-owned JSON reference,
+including table/column grants, RLS/policy expressions, function bodies/owners,
+indexes, constraints, triggers and private bucket. Extension absent: no folder
+table, zero of five added columns and zero of four new functions. Existing
+assets=0, bucket objects=0; one multi-Character capability is enabled. No JWT
+negative, capability revocation or synthetic write was performed in this pass.
+
+PR #1470 remains Draft at `900ce9454621696a761d94cef74070a075391fca`, with
+`mergeable=false`, `mergeable_state=dirty`. Its Owner-gated Main admission
+extension is absent from Main. Current Main rejects Operator=true; default false
+would overwrite its release flag. Do not deploy either choice. Reuse the
+other session's reconciled successor; do not duplicate or merge their changes.
+
+Actual application-host tooling, effective flags, namespace/private temporary
+storage, resource limits and conversion/cleanup remain UNVERIFIED. This session
+has no SSH identity or GitHub CLI login; GitHub connector exposes no workflow
+dispatch action. Browser connection attempt timed out. Existing workflow has no
+read-only video-host diagnostic. No target-host PASS can be inferred from the
+checked-in service unit or local/CI ffmpeg. No deployment, schema/bucket/flag,
+provider, Auth or capability mutation occurred. Detailed bounded action manifest,
+test fixtures, recovery and remaining prerequisites:
+`CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+
 ## Resumed exact-source review (supersedes pending source/CI notes below)
 
 Resumed from 27d00fa123170fc158d93a3ba256bba94f4bcd65, no reimplementation.
