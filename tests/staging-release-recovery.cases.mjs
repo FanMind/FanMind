@@ -4,11 +4,20 @@ import * as fs from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {spawnSync} from 'node:child_process';
-import {recoverRelease,assertRecoveryBoundary,treeFingerprint} from '../scripts/operations/staging-release-recovery.mjs';
+import {recoverRelease,assertRecoveryBoundary,treeFingerprint,openRecoveryFile} from '../scripts/operations/staging-release-recovery.mjs';
 
 const previous='a'.repeat(40),source='b'.repeat(40);
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:source,REVIEWED_RELEASE_COMMIT:source,EXPECTED_CURRENT_RELEASE:previous,GITHUB_RUN_ID:'12345',BILLING_WRITE_FREEZE:'preserve',STAGING_OPERATOR_SESSION_ENABLED:'true',OPERATOR_SESSION_PRESERVATION_CONFIRMATION:'preserve-approved-operator-session'};
 const metadata=sha=>`FANMIND_RELEASE_COMMIT=${sha}\nFANMIND_RUNTIME_ENVIRONMENT=staging\nNODE_ENV=production\nFANMIND_STAGING_OPERATOR_SESSION_ENABLED=true\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=false\n`;
+test('file descriptors reject replaced identities, symlinks and special files before reading bytes',()=>{
+ const root=fs.mkdtempSync(join(tmpdir(),'fanmind-recovery-open-'));try{
+  const path=join(root,'file');fs.writeFileSync(path,'original');const original=fs.lstatSync(path);
+  fs.renameSync(path,join(root,'old'));fs.writeFileSync(path,'replaced');assert.throws(()=>openRecoveryFile(path,original),/snapshot_file_changed/);
+  fs.unlinkSync(path);fs.symlinkSync(join(root,'old'),path);assert.throws(()=>openRecoveryFile(path),error=>error.code==='ELOOP');
+  assert.throws(()=>openRecoveryFile(root),/snapshot_file_changed/);
+  const opened=openRecoveryFile(join(root,'old'));try{assert.equal(fs.readFileSync(opened.fd,'utf8'),'original');}finally{fs.closeSync(opened.fd);}
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});
 function harness({realCopy=false}={}){
  const root=fs.mkdtempSync(join(tmpdir(),'fanmind-release-recovery-')),runtime=join(root,'runtime'),home=join(root,'home');
  fs.mkdirSync(runtime);fs.mkdirSync(home);fs.mkdirSync(join(runtime,'.next'));fs.mkdirSync(join(runtime,'src'));

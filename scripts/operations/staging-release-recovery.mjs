@@ -14,6 +14,17 @@ const EXCLUDES=['.env.production','.creator-runtime-recovery.env','.git','.next/
 const fail=code=>{throw Error(code);};
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 function regular(path){const s=fs.lstatSync(path);if(!s.isFile()||s.isSymbolicLink())fail('unsafe_file');return s;}
+const sameFile=(a,b)=>a.dev===b.dev&&a.ino===b.ino&&a.size===b.size&&a.mtimeMs===b.mtimeMs&&a.ctimeMs===b.ctimeMs;
+export function openRecoveryFile(path,expected){
+ const fd=fs.openSync(path,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW|fs.constants.O_NONBLOCK);
+ try{const stat=fs.fstatSync(fd);if(!stat.isFile()||(expected&&!sameFile(expected,stat)))fail('snapshot_file_changed');return {fd,stat};}
+ catch(error){fs.closeSync(fd);throw error;}
+}
+function readRecoveryFile(path){
+ const {fd,stat}=openRecoveryFile(path);
+ try{if(stat.size>1024*1024)fail('protected_file_too_large');const bytes=fs.readFileSync(fd);if(!sameFile(stat,fs.fstatSync(fd)))fail('snapshot_file_changed');return bytes;}
+ finally{fs.closeSync(fd);}
+}
 function directory(path,privateMode=false){const s=fs.lstatSync(path);if(!s.isDirectory()||s.isSymbolicLink()||s.uid!==process.getuid()&&privateMode||(privateMode&&(s.mode&0o777)!==0o700))fail('unsafe_directory');}
 function privateDirectory(path){if(!fs.existsSync(path))fs.mkdirSync(path,{mode:0o700});directory(path,true);}
 function envMap(text){
@@ -30,7 +41,7 @@ export function treeFingerprint(root){
    const target=fs.readlinkSync(path),dest=resolve(dirname(path),target);if(dest!==root&&!dest.startsWith(root+'/'))fail('external_symlink');hash.update(target);
   }else if(s.isDirectory())walk(path);
   else if(s.isFile()){
-   bytes+=s.size;if(bytes>8*1024**3)fail('snapshot_too_large');const fd=fs.openSync(path,'r');const buffer=Buffer.alloc(1024*1024);try{let n;while((n=fs.readSync(fd,buffer,0,buffer.length,null))>0)hash.update(buffer.subarray(0,n));const after=fs.fstatSync(fd);if(after.ino!==s.ino||after.size!==s.size||after.mtimeMs!==s.mtimeMs||after.ctimeMs!==s.ctimeMs)fail('snapshot_file_changed');}finally{fs.closeSync(fd);}
+   bytes+=s.size;if(bytes>8*1024**3)fail('snapshot_too_large');const {fd,stat}=openRecoveryFile(path,s);const buffer=Buffer.alloc(1024*1024);try{let n;while((n=fs.readSync(fd,buffer,0,buffer.length,null))>0)hash.update(buffer.subarray(0,n));if(!sameFile(stat,fs.fstatSync(fd)))fail('snapshot_file_changed');}finally{fs.closeSync(fd);}
   }else fail('unsupported_file');
  }}walk(root);return {hash:hash.digest('hex'),bytes,entries};
 }
@@ -59,8 +70,8 @@ export async function recoverRelease(action,env,options={}){
  const secretPath=options.secretPath??'/etc/fanmind-staging/runtime-secrets.env';
  const unitPath=options.unitPath??'/etc/systemd/system/fanmind-staging.service';
  const reviewedUnit=options.reviewedUnit??resolve('ops/systemd/fanmind-staging.service');
- function config(){regular(join(source,'.env.production'));regular(secretPath);regular(unitPath);if(fs.readFileSync(unitPath).compare(fs.readFileSync(reviewedUnit)))fail('service_unit_changed');return {environment:digest(fs.readFileSync(join(source,'.env.production'))),secrets:digest(fs.readFileSync(secretPath)),unit:digest(fs.readFileSync(unitPath))};}
- function release(){regular(join(source,'.release.env'));return fs.readFileSync(join(source,'.release.env'),'utf8');}
+ function config(){if(readRecoveryFile(unitPath).compare(readRecoveryFile(reviewedUnit)))fail('service_unit_changed');return {environment:digest(readRecoveryFile(join(source,'.env.production'))),secrets:digest(readRecoveryFile(secretPath)),unit:digest(readRecoveryFile(unitPath))};}
+ function release(){return readRecoveryFile(join(source,'.release.env')).toString('utf8');}
  function save(r){const temp=receiptPath+'.'+randomBytes(8).toString('hex');try{fs.writeFileSync(temp,JSON.stringify(r),{mode:0o600,flag:'wx'});const fd=fs.openSync(temp,'r');try{fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(temp,receiptPath);const dir=fs.openSync(backup,'r');try{fs.fsyncSync(dir);}finally{fs.closeSync(dir);}}finally{if(fs.existsSync(temp))fs.unlinkSync(temp);}}
  if(action==='prepare'){
   directory(source);const sourceMode=fs.statSync(source).mode&0o777;const before=release(),map=envMap(before);
@@ -81,7 +92,7 @@ export async function recoverRelease(action,env,options={}){
   fail('snapshot_missing');
  }
  directory(store,true);directory(backup,true);directory(runtime,true);const stat=regular(receiptPath);if((stat.mode&0o777)!==0o600||stat.uid!==process.getuid())fail('receipt_unsafe');
- const receipt=JSON.parse(fs.readFileSync(receiptPath,'utf8'));
+ const receipt=JSON.parse(readRecoveryFile(receiptPath).toString('utf8'));
  if(receipt.version!==1||receipt.run!==run||receipt.source!==env.GITHUB_SHA||receipt.previous!==env.EXPECTED_CURRENT_RELEASE||!['ready','accepted','restored'].includes(receipt.status)||!Number.isInteger(receipt.sourceMode)||receipt.sourceMode<0||receipt.sourceMode>0o777)fail('receipt_binding');
  if(JSON.stringify(config())!==JSON.stringify(receipt.flags))fail('configuration_changed');
  if(treeFingerprint(runtime).hash!==receipt.fingerprint)fail('snapshot_corrupted');
@@ -97,7 +108,7 @@ export async function recoverRelease(action,env,options={}){
  invoke('sudo',['-n','systemctl','restart','fanmind-staging.service']);
  invoke('systemctl',['is-active','--quiet','fanmind-staging.service']);
  await waitProbe(check,receipt.previous);
- if(JSON.stringify(config())!==JSON.stringify(receipt.flags)||release()!==fs.readFileSync(join(runtime,'.release.env'),'utf8'))fail('restored_state_changed');
+ if(JSON.stringify(config())!==JSON.stringify(receipt.flags)||release()!==readRecoveryFile(join(runtime,'.release.env')).toString('utf8'))fail('restored_state_changed');
  save({...receipt,status:'restored'});return 'PREVIOUS_RELEASE_RESTORED';
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){

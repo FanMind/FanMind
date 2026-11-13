@@ -22,6 +22,11 @@ is uploaded. Modes700/600 and ownership, symlink boundaries, bounded tree size,
 before/after file identities and source/copy fingerprints are checked. The
 receipt is committed only after both old-target observations agree.
 
+File reads use no-follow, nonblocking file descriptors, require a regular file,
+and compare device/inode/size/change times before consuming and after hashing
+bytes. The regression rejects replaced identities, symlinks and special files.
+This addresses the actual CodeQL file-check/open race; no alert is suppressed.
+
 The whole deployment remains under `fanmind-staging-deploy`. After successful
 build/switch/smoke, the new exact version, health and unchanged configuration/
 release flags are checked before the private receipt is marked accepted. The
