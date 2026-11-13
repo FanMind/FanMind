@@ -84,4 +84,4 @@ export async function runStagingProbe(args){
  writeMediaProbeReceipt(receiptPath,receipt);
  console.log('STAGING_MEDIA_PROBE_RECEIPT=PASS');
 }
-if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){try{await runStagingProbe(process.argv.slice(2));}catch{console.error('STAGING_MEDIA_PROBE=BLOCK');process.exitCode=1;}}
+if(process.argv[1]&&pathToFileURL(realpathSync(resolve(process.argv[1]))).href===import.meta.url){try{await runStagingProbe(process.argv.slice(2));}catch{console.error('STAGING_MEDIA_PROBE=BLOCK');process.exitCode=1;}}

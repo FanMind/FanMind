@@ -1,6 +1,8 @@
+import {spawnSync} from 'node:child_process';
+import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {readFileSync,mkdtempSync,rmSync,openSync,fstatSync,closeSync,constants} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync,openSync,fstatSync,closeSync,constants,symlinkSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -69,4 +71,11 @@ test('private probe umask cannot make the non-secret root receipt unreadable by 
  const directory=mkdtempSync(join(tmpdir(),'fm1425-receipt-')),prior=process.umask(0o077);
  try{const path=join(directory,'receipt.json'),receipt={version:1,source:sha,live:sha,result:'PASS'};writeMediaProbeReceipt(path,receipt);const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);try{assert.equal(fstatSync(fd).mode&0o777,0o644);assert.deepEqual(JSON.parse(readFileSync(fd,'utf8')),receipt);}finally{closeSync(fd);}}
  finally{process.umask(prior);rmSync(directory,{recursive:true,force:true});}
+});
+
+test('installed current-symlink entry executes the same guarded CLI instead of silently returning success',()=>{
+ const directory=mkdtempSync(join(tmpdir(),'fm1425-entry-'));
+ try{const target=resolve('scripts/operations/staging-media-probe-control.mjs'),link=join(directory,'control.mjs');symlinkSync(target,link);
+ for(const path of [target,link]){const r=spawnSync(process.execPath,[path,'invalid'],{encoding:'utf8',timeout:10000,env:{PATH:'/usr/bin:/bin'}});assert.equal(r.status,1);assert.match(r.stderr,/STAGING_MEDIA_PROBE=BLOCK/u);assert.equal(r.stdout,'');}}
+ finally{rmSync(directory,{recursive:true,force:true});}
 });
