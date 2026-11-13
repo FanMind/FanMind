@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOperatorSessionRenewer } from '@/lib/stagingOperatorSession.mjs';
+import { createOperatorSessionRenewer, operatorSessionEnabled, operatorSessionRequestAllowed, operatorSessionBodyPresent } from '@/lib/stagingOperatorSession.mjs';
 import { SUPABASE_ACCESS_TOKEN_COOKIE, SUPABASE_REFRESH_TOKEN_COOKIE } from '@/lib/supabase/config';
 
 export const runtime = 'nodejs';
@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic';
 const renew = createOperatorSessionRenewer();
 
 export async function POST(request: NextRequest) {
-  const result = await renew({ url: request.url, method: request.method, headers: request.headers, bodyPresent: request.body !== null, refreshToken: request.cookies.get(SUPABASE_REFRESH_TOKEN_COOKIE)?.value }, process.env);
+  const bodyPresent = operatorSessionEnabled(process.env) && operatorSessionRequestAllowed(request)
+    ? await operatorSessionBodyPresent(request)
+    : true;
+  const result = await renew({ url: request.url, method: request.method, headers: request.headers, bodyPresent, refreshToken: request.cookies.get(SUPABASE_REFRESH_TOKEN_COOKIE)?.value }, process.env);
   const response = NextResponse.json({ ok: result.status === 200, code: result.code }, { status: result.status, headers: { 'Cache-Control': 'no-store, private', Pragma: 'no-cache' } });
   if ('session' in result && result.session) {
     const options = { httpOnly: true, secure: true, sameSite: 'strict' as const, path: '/' };

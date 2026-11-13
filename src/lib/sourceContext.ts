@@ -365,7 +365,7 @@ export function buildReplyTargetAction(
     return {
       href,
       label: href ? "Zum Facebook-Kommentar wechseln" : "Originalkanal-Link noch nicht verfügbar",
-      quality: href ? "attempted_thread_link" : "unavailable",
+      quality: href ? "exact_thread" : "unavailable",
       reason: "Zugehörigen Kommentar auf Facebook öffnen und dort selbst antworten.",
       disabledHint: "Originalkanal-Link noch nicht verfügbar.",
       platform,

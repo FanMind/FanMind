@@ -347,9 +347,13 @@ function FanDetailContent({
     : "all";
   const channelMessages = filterMessagesByChannel(messages, effectiveChannel);
   const availableSources = getAvailableSourceFilterKeys(channelMessages);
-  const effectiveSource = availableSources.includes(activeSource)
+  const effectiveSource = activeSource && activeSource !== "all"
     ? activeSource
-    : "all";
+    : availableSources.includes("general_chat")
+      ? "general_chat"
+      : channelMessages.length
+        ? getMessageSourceContext(channelMessages[channelMessages.length - 1]).contextKey
+        : "all";
   const channelTabs = buildConversationChannelTabs(
     messages,
     contact.id,
@@ -373,6 +377,12 @@ function FanDetailContent({
     contact,
     facebookReplyTarget,
   );
+  // A stale or unavailable explicit posting must never open another source.
+  if (effectiveSource !== "all" && filteredMessages.length === 0) {
+    originalChannelAction.href = null;
+    originalChannelAction.quality = "unavailable";
+    originalChannelAction.label = "Originalkanal-Link noch nicht verfügbar";
+  }
   const timeline = filteredMessages.length
     ? buildMessageTimeline(
         filteredMessages,
@@ -473,7 +483,11 @@ function FanDetailContent({
                 <p className={dashboardStyles.eyebrow}>
                   {wt(locale, "Nachrichtenverlauf")}
                 </p>
-                <h3>{wt(locale, "Kanalübergreifender Nachrichtenverlauf")}</h3>
+                <h3>{effectiveSource === "general_chat"
+                  ? (locale === "en" ? "Private chat" : "Privater Chat")
+                  : effectiveSource !== "all"
+                    ? (locale === "en" ? "Conversation for this source" : "Verlauf zu diesem Beitrag")
+                    : wt(locale, "Kanalübergreifender Nachrichtenverlauf")}</h3>
               </div>
             </div>
             <nav
@@ -664,12 +678,14 @@ function FanDetailContent({
           </article>
           {readOnly ? null : (
             <AiReplySuggestions
+            key={`${contact.id}:${effectiveChannel}:${effectiveSource}`}
             contact={{
               contactId: contact.id,
               displayName: contact.display_name,
               handle: contact.handle,
               sourcePlatform: contact.source_platform,
-              latestInboundMessage: getLatestInboundMessage(messages),
+              latestInboundMessage: getLatestInboundMessage(filteredMessages),
+              conversationId: [...filteredMessages].reverse().find(message => message.direction === "inbound")?.conversation_id ?? undefined,
               language: contact.language,
               status: contact.status,
               tags: contact.tags,
@@ -680,7 +696,7 @@ function FanDetailContent({
               href: originalChannelAction.href,
               label: getOriginalChannelButtonLabel(
                 originalChannelAction,
-                messages,
+                filteredMessages,
                 contact,
               ),
             }}
@@ -829,7 +845,7 @@ function buildConversationChannelTabs(
       const targetSourceKeys = getAvailableSourceFilterKeys(channelMessages);
       const params = new URLSearchParams();
       if (tab.key !== "all") params.set("channel", tab.key);
-      if (activeSource !== "all" && targetSourceKeys.includes(activeSource)) {
+      if (targetSourceKeys.includes(activeSource)) {
         params.set("source", activeSource);
       }
       const query = params.toString();
@@ -851,18 +867,12 @@ function buildSourceFilters(
   const paramsFor = (source: string) => {
     const params = new URLSearchParams();
     if (activeChannel !== "all") params.set("channel", activeChannel);
-    if (source !== "all") params.set("source", source);
+    params.set("source", source);
     const query = params.toString();
     return `/fans/${contactId}${query ? `?${query}` : ""}`;
   };
 
   return [
-    {
-      key: "all",
-      label: "Alle Ursprünge",
-      active: activeSource === "all",
-      href: paramsFor("all"),
-    },
     ...contexts.map((context) => ({
       key: context.contextKey,
       label: context.contextLabel,
@@ -1378,7 +1388,9 @@ function FanNotFound() {
 }
 
 function hasFacebookMessages(messages: ConversationMessageRow[]): boolean {
-  return messages.some((message) => isMessageInChannel(message, "facebook"));
+  return messages.some((message) => isMessageInChannel(message, "facebook") &&
+    getMessageSourceContext(message).contextType === "general_chat" &&
+    !normalizeSourceValue(message.source_type ?? message.message_type).includes("comment"));
 }
 
 function getManualFacebookReplyTargetUrl(
@@ -1770,7 +1782,7 @@ export default async function FanDetailPage({
   const activeChannel = normalizeConversationChannel(
     normalizeParam(pageSearchParams?.channel),
   );
-  const activeSource = normalizeParam(pageSearchParams?.source) || "all";
+  const activeSource = normalizeParam(pageSearchParams?.source) || "";
   let authorized;
   try {
     authorized = await requireAuthorizedWorkspaceMember();

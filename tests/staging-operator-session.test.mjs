@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createOperatorSessionRenewer, operatorSessionEnabled } from '../src/lib/stagingOperatorSession.mjs';
+import { createOperatorSessionRenewer, operatorSessionEnabled, operatorSessionRequestAllowed, operatorSessionBodyPresent } from '../src/lib/stagingOperatorSession.mjs';
 import { STAGING_ORIGIN, STAGING_AUTH_ORIGIN, OPERATOR_USER, OPERATOR_WORKSPACE, OPERATOR_NAME } from '../src/lib/stagingOperatorIdentity.mjs';
 
 const secret = 'synthetic-refresh-token-'.repeat(2);
@@ -98,4 +98,43 @@ test('route serializes only fixed outcome fields and uses secure HttpOnly cookie
   assert.match(source, /httpOnly: true, secure: true, sameSite: 'strict'/u);
   assert.doesNotMatch(source, /json\(result\)|json\(result\.session\)/u);
   assert.match(source, /no-store, private/u);
+});
+
+test('the exact local nginx transport can renew only with the pinned HTTPS browser Origin', async () => {
+  for (const url of ['http://127.0.0.1:3001/api/staging-operator/session', 'http://localhost:3001/api/staging-operator/session']) {
+    const p = provider();
+    assert.equal((await createOperatorSessionRenewer(p)(request({ url }), env)).status, 200);
+    assert.equal(p.calls.length, 3);
+  }
+  for (const url of ['http://localhost:3000/api/staging-operator/session', 'http://attacker.invalid:3001/api/staging-operator/session', 'http://localhost:3001/other', 'https://fanmind.ch/api/staging-operator/session', 'http://user:pass@localhost:3001/api/staging-operator/session']) {
+    assert.equal(operatorSessionRequestAllowed(request({ url })), false);
+  }
+  const p = provider();
+  const bad = request({ url: 'http://localhost:3001/api/staging-operator/session', headers: new Headers({ origin: 'https://attacker.invalid', 'x-forwarded-host': 'staging.fanmind.ch', 'x-forwarded-proto': 'https' }) });
+  assert.equal((await createOperatorSessionRenewer(p)(bad, env)).status, 403);
+  assert.equal(p.calls.length, 0);
+});
+
+test('an empty POST stream is not a caller body; even one byte is rejected regardless of length headers', async () => {
+  const empty = new Request(`${STAGING_ORIGIN}/api/staging-operator/session`, {
+    method: 'POST', body: new ReadableStream({ start(controller) { controller.close(); } }), duplex: 'half',
+  });
+  assert.notEqual(empty.body, null);
+  assert.equal(await operatorSessionBodyPresent(empty), false);
+  assert.equal(await operatorSessionBodyPresent({ body: null }), false);
+  let cancelled = false;
+  const body = new ReadableStream({ start(controller) { controller.enqueue(new Uint8Array([123])); }, cancel() { cancelled = true; } });
+  const hasBody = await operatorSessionBodyPresent({ body, headers: new Headers({ 'content-length': '0' }) });
+  assert.equal(hasBody, true);
+  assert.equal(cancelled, true);
+  const p = provider();
+  assert.equal((await createOperatorSessionRenewer(p)(request({ bodyPresent: hasBody }), env)).code, 'body_forbidden');
+  assert.equal(p.calls.length, 0);
+});
+
+test('stalled body streams fail closed within a bounded wait', async () => {
+  let cancelled = false;
+  const body = new ReadableStream({ cancel() { cancelled = true; } });
+  assert.equal(await operatorSessionBodyPresent({ body }), true);
+  assert.equal(cancelled, true);
 });

@@ -13,7 +13,12 @@ export default function OperatorSession() {
     try {
       const response = await fetch('/api/staging-operator/session', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
       if (response.ok) { router.replace('/dashboard'); router.refresh(); }
-      else setStatus(response.status === 401 ? 'Bitte einmal sicher anmelden. Die Sitzung ist abgelaufen oder wurde widerrufen.' : 'Die Sitzung konnte nicht fortgesetzt werden. Bitte den Staging-Zugang prüfen.');
+      else {
+        const outcome = await response.json().catch(() => null);
+        const safeCodes = ['unavailable', 'origin_forbidden', 'body_forbidden', 'sign_in_required', 'configuration_unavailable', 'retry_later', 'operator_required', 'workspace_required', 'provider_unavailable'];
+        const code = safeCodes.includes(outcome?.code) ? outcome.code : 'request_failed';
+        setStatus(response.status === 401 ? 'Bitte einmal sicher anmelden. Die Sitzung ist abgelaufen oder wurde widerrufen.' : `Die Sitzung konnte nicht fortgesetzt werden. Bitte den Staging-Zugang prüfen. (${response.status}: ${code})`);
+      }
     } catch { setStatus('Staging ist gerade nicht erreichbar. Bitte später erneut versuchen.'); }
     finally { setBusy(false); }
   }

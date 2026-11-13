@@ -4475,6 +4475,7 @@ export async function getRecentContactConversationMessages(
   contactId: string,
   limit: number,
   explicitAccessToken?: string,
+  conversationId?: string,
 ): Promise<ConversationMessagesResult> {
   const accessToken = await getAccessToken(explicitAccessToken);
 
@@ -4492,6 +4493,7 @@ export async function getRecentContactConversationMessages(
     [
       ["workspace_id", workspaceId],
       ["contact_id", contactId],
+      ...(conversationId ? [["conversation_id", conversationId] as [string, string]] : []),
     ],
     boundedLimit,
     false,

@@ -1,21 +1,22 @@
-## Facebook continuation — 13 November 2026, source pending protected rollout
+## Facebook Staging acceptance — 13 November 2026
 
-Draft #1465 now preserves the manual comment-sync outcome in the UI: checked
-posts, found comments, new imports, partial completion or failure. Malformed
-Graph collections, unsafe/repeated paging and deadline exhaustion fail closed.
-Only the existing exact-reviewed Operator branch may opt into session renewal
-through the protected Staging workflow; default remains off. No rollout or
-activation has occurred. Real comment and direct-thread-link acceptance remain
-open; see `docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+The Owner-approved exact commit `aae0003c6836ef73235c0d771d6387ee0e29f81b`
+was deployed only to Staging in protected run 43399615749. Independent runtime
+readback confirmed the SHA. Temporary branch admission was removed afterward.
+One new real Messenger input and both Owner-confirmed real comments were imported
+and independently matched in the database; repeat imports produced no duplicates.
+Both comment originals and the manually verified Messenger target were opened.
+Database/RLS negative checks denied the Operator's real records to a different
+existing Staging workspace. This is bounded manual-sync acceptance, not automatic
+Webhook, App Review, Production or general Meta activation evidence.
 
-## Internal Staging Operator continuation — source preparation
-
-Issue #1464 / Draft #1465 prepares a default-off, exact-Staging/user/workspace-
-bound continuation of an existing protected browser session. No new identity,
-privilege or automatic send. The real Owner Messenger test has been imported
-and independently verified on the existing Staging release; the new session
-renewal route is not deployed/enabled, and full unattended login/expiry/revocation
-acceptance remains blocked. Protected rollout and account-scope decision:
+Actual session continuation failed without refresh rotation; expiry, logout and
+revocation acceptance remain open. The successor source fixes bounded request
+transport/body handling and fixed diagnostics. It also scopes the fan workbench
+to private chat or one posting, preserving each comment's own original target.
+These successor fixes require a new exact-source protected Staging approval and
+have not yet been deployed. See
+`docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md` and
 `docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
 
 ## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026

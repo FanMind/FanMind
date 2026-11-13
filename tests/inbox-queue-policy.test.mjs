@@ -118,6 +118,9 @@ test("comment links retain the exact comment and strip credentials and unrelated
   for (const permalink of ["javascript:alert(1)", "https://facebook.com.evil.invalid/post/1", "https://user:secret@facebook.com/1", "https://facebook.com/l.php?u=https://evil.invalid", "https://facebook.com/login.php", "https://facebook.com/", "https://facebook.com//evil.invalid/path"]) {
     assert.equal(facebookCommentTarget({ permalink }), null);
   }
+  assert.equal(facebookCommentTarget({ permalink: "https://www.facebook.com/101/posts/202" }), null);
+  assert.equal(facebookCommentTarget({ permalink: "https://www.facebook.com/101/posts/202", postId: "101_202", commentId: "303" }),
+    "https://www.facebook.com/101/posts/202?comment_id=303");
   assert.equal(facebookCommentTarget({ postId: "../../operator", commentId: "303" }), null);
   assert.equal(facebookCommentTarget({ postId: "101_202", commentId: "javascript:303" }), null);
 });
