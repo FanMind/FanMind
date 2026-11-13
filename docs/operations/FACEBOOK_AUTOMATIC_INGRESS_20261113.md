@@ -26,7 +26,9 @@ Saved domains/legal configuration: staging.fanmind.ch;
 https://staging.fanmind.ch/datenschutz; https://staging.fanmind.ch/agb;
 https://staging.fanmind.ch/datenschutz#rechte. The live pages were checked
 against the existing correct operator details. No optional DPO declaration was
-invented. Publication is not Page authorization, subscription or real receipt.
+invented. The exact OAuth redirect https://staging.fanmind.ch/api/integrations/facebook/callback
+was saved and read back in Facebook Login for Business; HTTPS and strict redirect
+matching remain enabled. Publication is not Page authorization, subscription or real receipt.
 
 The new app-secret reveal requires the Owner's personal Meta password
 confirmation. The existing protected original-app secret must stay unchanged;
