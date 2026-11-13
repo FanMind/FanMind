@@ -1,3 +1,47 @@
+# Real automatic Facebook Staging reception — 13 November 2026, 18:33 Europe/Vienna
+
+This receipt supersedes the older manual-Graph-only acceptance below for the
+single FanMind Page. **Facebook-Staging-Empfang abgeschlossen** for the bounded
+current single-Page reception scope. Production and multi-Page expansion remain
+outside this acceptance.
+
+Deployed runtime: `193eb1a96c7e3a50a11eecd7ae0d437daceb6bcb`, independently
+read from /api/version again at 17:32:15 UTC. Protected Staging deployment
+43470097965 SUCCESS; no duplicate rollout or new source repair in this test.
+
+| Check | Actual evidence / result |
+|---|---|
+| App subscription | Dedicated published app1547928503809961; protected app rebind43463354662 and callback messages/feed registration43463518222 SUCCESS; fixed Staging callback retained. |
+| Page subscription | Exact FanMind1208778912321696 subscribed_apps provider readback messages/feed active; subsequent independent UI check confirmed. Local webhook_subscribed=true only after readback. |
+| Automatic receipt before sync | PASS: baseline6 ->9 messages, still3 conversations. First DB observation preceded any manual sync in this run; old manual markers still11:35:29.931Z DM /10:03:33Z comments. New last_event17:29:09.306Z. |
+| New Messenger | PASS: real Owner text beginning “NAchrichtenzustellung Empfangstest…” at17:29:05.981Z; existing private thread t_1860316518311829; no post identity. |
+| New comment1 | PASS: “Empfangstest Beitrag1 neu” (actual text includes spaces) at17:28:38Z; post1208778912321696_122105472693397254, comment122105472693397254_1471161521785964. |
+| New comment2 | PASS: “Empfangstest Beitrag2 neu” (actual text includes spaces) at17:28:35Z; post1208778912321696_122134389027397254, comment122134389027397254_2582663822160401. |
+| Page/contact/workspace | PASS: only active FanMind mapping; Operator workspace6949a853-f11a-4b29-a1b2-9f9b928b9efd; contact080464a3-05db-4b6d-83dc-68aedc75240e;0 message/conversation workspace/contact/source mismatches;0 foreign active mappings. |
+| Histories and selected reply context | PASS in actual browser: private history3 messages; post1 history4; post2 history2. Each selected history excludes the others. Composer's original-channel link follows the selected latest DM/comment target; no reply generated/sent. |
+| Original references | PASS: new comments point at exact post/comment IDs1471161521785964 and2582663822160401. Private history uses its existing exact business-inbox/thread context. |
+| Manual recovery after automatic receipt | PASS: Messenger0 inbound/0 outbound/3 existing; comments2 posts/6 comments/0 imported. Both repeated a second time with no added rows. |
+| Persisted duplicate protection | PASS:9 messages with9 distinct provider IDs,3 original conversations,0 duplicate external IDs; six historical message rows preserved. |
+| Replay/isolation regression | PASS:36/36 focused cases in facebook-webhook-ingress.cases.mjs and meta-webhook-tenant-idempotency.test.mjs, including repeated delivery, partial-failure replay, per-post IDs, parallel identical inserts and cross-tenant IDs. These are synthetic adapter/source tests, not a forced second live Meta HTTP delivery. |
+| Live RLS | PASS under authenticated Operator subject:3 own conversations/9 own messages;0 foreign conversations/messages. Transaction rolled back; no persistent permission/data changes. |
+| Operator continuation | PASS: existing session reused across DM/post1/post2/channels navigation and repeated server actions without new login or credential entry. |
+
+Limits retained honestly: the exact original signed Meta request was not captured
+or forcibly replayed in production-like HTTP; repeated real Graph recovery and
+synthetic actual-parser/storage replay are the separate evidence above. Concurrent
+first-contact atomicity and general customer/Production readiness are not passed
+by this single existing-contact acceptance. The earlier Page-selection POST
+saved correctly but visually remained on the selection page; return through the
+existing Channels link worked. That navigation issue remains separately recorded
+and is not silently claimed fixed.
+
+No message/comment was sent as the Page. No Production/app/callback/deployment,
+extra database, schema, billing, Support/Adminchat activation or multi-Page work.
+No secrets/signatures/request bodies were exported. Existing untracked local
+Python caches and other sessions' source were preserved.
+
+---
+
 # Final bounded Staging receipt — 13 November 2026
 
 This latest receipt supersedes earlier failed/pending checkpoints retained below.
