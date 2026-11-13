@@ -1,3 +1,24 @@
+## Facebook Staging acceptance — 13 November 2026
+
+The Owner-approved exact commit `aae0003c6836ef73235c0d771d6387ee0e29f81b`
+was deployed only to Staging in protected run 43399615749. Independent runtime
+readback confirmed the SHA. Temporary branch admission was removed afterward.
+One new real Messenger input and both Owner-confirmed real comments were imported
+and independently matched in the database; repeat imports produced no duplicates.
+Both comment originals and the manually verified Messenger target were opened.
+Database/RLS negative checks denied the Operator's real records to a different
+existing Staging workspace. This is bounded manual-sync acceptance, not automatic
+Webhook, App Review, Production or general Meta activation evidence.
+
+Actual session continuation failed without refresh rotation; expiry, logout and
+revocation acceptance remain open. The successor source fixes bounded request
+transport/body handling and fixed diagnostics. It also scopes the fan workbench
+to private chat or one posting, preserving each comment's own original target.
+These successor fixes require a new exact-source protected Staging approval and
+have not yet been deployed. See
+`docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md` and
+`docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+
 ## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026
 
 Repository-Umsetzung: Jeder Anbieter autorisiert seine eigene Facebook-Seite
@@ -14,6 +35,15 @@ verwenden ihren bereinigten Permalink oder einen aus validierten Beitrags- und
 Kommentar-IDs aufgebauten Link. Fehlende Herkunft erzeugt keinen Betreiberlink.
 Webhook-Kommentare und manueller Kommentar-Sync verwenden denselben
 Beitrags-/Fan-Threadschlüssel für Facebook.
+
+Die Seitenerkennung ergänzt auch nichtleere `/me/accounts`-Ergebnisse durch
+`/me?fields=accounts` und gültige granular autorisierte Seitenziele. Beide
+Listen werden begrenzt paginiert und nach Seiten-ID zusammengeführt. Fehlende
+Tokens bleiben nicht auswählbar; vor dem Speichern werden die konkrete
+Seitentoken-Identität, App-Zugehörigkeit und seitenbezogene Scopes verifiziert.
+Die Meta-Auswahl allein ist kein Nachweis für technischen Seitenzugriff.
+Staging-Abnahme des offenen PR erfolgt vor einer gesonderten Main-Mergefreigabe;
+echte Provider-Abnahme und Webhook-Empfang sind damit noch nicht bestätigt.
 
 Das ist keine Meta-Aktivierung: reale App-/Callback-Konfiguration, passende
 Berechtigungen und Webhooks, unabhängige Zwei-Anbieter-Staging-Abnahme,

@@ -63,7 +63,9 @@ export default async function FacebookPageSelectionPage({
         <p className={styles.eyebrow}>Facebook · sichere Kontowahl</p>
         <h1 id="page-title">Welche Seite gehört zu diesem Workspace?</h1>
         <p className={styles.intro}>
-          Meta hat die für dich verfügbaren Facebook-Seiten geliefert. Wähle
+          Diese Seiten konnten über deinen Meta-Zugriff abgerufen werden. Fehlt eine
+          bei Meta ausgewählte Seite, prüfe dort die Seitenrechte und starte die
+          Verbindung erneut. Die Meta-Auswahl allein garantiert keinen API-Zugriff. Wähle
           ausdrücklich die Seite, die mit <strong>{workspace.name}</strong>
           verbunden werden soll. FanMind übernimmt keine andere Seite
           automatisch.
@@ -91,10 +93,12 @@ export default async function FacebookPageSelectionPage({
                     name="page_id"
                     value={page.id}
                     required
+                    disabled={!page.accessToken}
                   />
                   <span>
                     <strong>{page.name}</strong>
                     <small>Meta-Seiten-ID: {page.id}</small>
+                    {!page.accessToken ? <small>Kein Seitentoken verfügbar. Bitte Seitenrechte bei Meta prüfen.</small> : null}
                   </span>
                 </label>
               ))}

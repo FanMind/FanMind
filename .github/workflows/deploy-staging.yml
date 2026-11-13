@@ -20,6 +20,10 @@ on:
       reviewed_commit:
         required: true
         type: string
+      staging_operator_session_enabled:
+        required: false
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       confirmation:
@@ -50,6 +54,11 @@ on:
         required: false
         default: ''
         type: string
+      staging_operator_session_enabled:
+        description: 'Enable the existing Operator continuation on the exact reviewed 1464 branch only; separate Owner approval required'
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   # A protected chained caller holds the canonical lease for the complete operation.
@@ -62,9 +71,14 @@ permissions:
 
 jobs:
   deploy-staging:
-    name: Deploy exact main commit to isolated staging
+    name: Deploy exact reviewed commit to isolated staging
     if: >-
-      github.ref == 'refs/heads/main' &&
+      (github.ref == 'refs/heads/main' ||
+        ((github.ref == 'refs/heads/fix/facebook-page-discovery-staging' ||
+          github.ref == 'refs/heads/feat/1464-staging-agent-access') &&
+         github.event_name == 'workflow_dispatch' &&
+         inputs.reviewed_commit == github.sha &&
+         inputs.billing_write_freeze == 'preserve')) &&
       inputs.confirmation == 'deploy-staging-only'
     environment: staging
     runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
@@ -76,17 +90,34 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
+      - name: Read redacted Facebook discovery counters on Staging
+        if: github.ref == 'refs/heads/fix/facebook-page-discovery-staging'
+        env:
+          FANMIND_RUNTIME_ENVIRONMENT: staging
+        run: node scripts/operations/staging-facebook-discovery-diagnostics.mjs
+
       - name: Deploy on isolated staging host
         env:
           EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
           REVIEWED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
           BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
+          STAGING_OPERATOR_SESSION_ENABLED: ${{ inputs.staging_operator_session_enabled && 'true' || 'false' }}
           FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
           FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
           FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
           FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
+
+          case "$STAGING_OPERATOR_SESSION_ENABLED" in
+            true|false) ;;
+            *) exit 1 ;;
+          esac
+
+          node --input-type=module -e '
+            import { isReviewedStagingSourceAllowed } from "./scripts/operations/staging-reviewed-source-policy.mjs";
+            if (!isReviewedStagingSourceAllowed(process.env)) process.exit(1);
+          '
 
           SOURCE_DIR="/var/www/fanmind-staging"
           ENV_FILE="$SOURCE_DIR/.env.production"
@@ -207,6 +238,8 @@ jobs:
           printf 'FANMIND_RELEASE_COMMIT=%s\nFANMIND_RUNTIME_ENVIRONMENT=staging\nNODE_ENV=production\nFANMIND_STRIPE_BILLING_WRITE_FREEZE=%s\n' \
             "$EXPECTED_RELEASE_COMMIT" "$BILLING_WRITE_FREEZE" > "$RELEASE_ENV_TMP"
           printf '%s\n' "$BILLING_CAPTURE_STATE" >> "$RELEASE_ENV_TMP"
+          printf 'FANMIND_STAGING_OPERATOR_SESSION_ENABLED=%s\n' \
+            "$STAGING_OPERATOR_SESSION_ENABLED" >> "$RELEASE_ENV_TMP"
           mv "$RELEASE_ENV_TMP" "$SOURCE_DIR/.release.env"
           trap - EXIT
 
