@@ -30,3 +30,11 @@ history, retaining all host-readiness/schema-profile source and tests byte-for-b
 Only the seven intended recovery paths differ from that Main. No new media
 activation or host media-probe task is undertaken. New combined-head CI is required;
 preceding58cc1e82 results cannot establish the merged candidate's checks.
+
+After secure Owner login, actual Production dashboard has no Hilfe button.
+Extend only its existing isolated-release controller with default-off explicit
+support_help_ui input. True requires already enabled shared Support and no
+must-stay-disabled guard; it builds the existing launcher, never activates server
+Support or parallel features. The executed existing rolling/rollback harness
+proves disabled denial, enabled build flag and default preservation. The final
+scope is eleven operational/test/doc paths; underlying product source is unchanged.

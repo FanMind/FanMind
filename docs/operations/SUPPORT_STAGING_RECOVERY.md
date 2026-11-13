@@ -60,3 +60,15 @@ acknowledgment, fresh read/reload/reopen, stable replay timestamp, auth/tenant
 negatives and exact synthetic-tuple cleanup. Do not activate media catalogue,
 video, analysis or automatic Facebook ingress. Production uses its separate
 existing isolated-release controller and remains a distinct target acceptance.
+
+## Existing Production Help UI build
+
+Authenticated baseline inspection found no Hilfe button on Production. Its
+isolated build previously relied on an absent public build flag. The existing
+Production workflow now offers explicit `support_help_ui=true` (default false).
+It builds the already implemented launcher only when the existing shared Support
+setting parses exactly true, and rejects the Support-must-stay-disabled guard.
+It changes no server setting, permission or unrelated feature. Default false
+retains the previous build behavior. The existing executed rolling-release
+harness proves refusal before switch when Support is disabled, the true public
+build flag when enabled, and unchanged isolated-release/rollback behavior.

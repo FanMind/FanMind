@@ -360,6 +360,16 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   ln -s "$SOURCE_DIR/.env.production" "$TEMP_RELEASE/.env.production"
 
   cd "$TEMP_RELEASE"
+  SUPPORT_HELP_BUILD_REQUEST="${FANMIND_SUPPORT_HELP_BUILD_ENABLE:-false}"
+  case "$SUPPORT_HELP_BUILD_REQUEST" in true|false) ;; *) fail "Invalid Support help build request" ;; esac
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" != true ]] \
+      || fail "Support help UI conflicts with required disabled Support"
+    node -e '
+      const { readSupportSetting } = require("./ops/pm2/support-runtime-setting.cjs");
+      process.exit(readSupportSetting(process.cwd()) === "true" ? 0 : 1);
+    ' || fail "Support help UI requires already enabled Support"
+  fi
   npm ci --no-audit --no-fund
   npm run verify:truth
   npm run lint
@@ -378,7 +388,11 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   rm -rf -- "$OPERATIONS_CHECKOUT"
   OPERATIONS_CHECKOUT=""
   npm run test:release-integrations
-  NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  else
+    NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  fi
   [[ -f ".next/required-server-files.json" ]] || fail "required Next.js build metadata missing"
   [[ -f "$PM2_CONFIG_RELATIVE_PATH" ]] || fail "PM2 production configuration missing"
 
