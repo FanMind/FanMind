@@ -32,6 +32,24 @@ export async function runMediaCatalogueSqlCases(sql){
  await sql(`insert into public.account_deletion_requests values('${owner}','processing');`);
  await assert.rejects(()=>as(add('10000000-0000-4000-8000-000000000006','image')));
  await sql('delete from public.account_deletion_requests;');
+ // Native tree depth, rollback and revoked capability proofs (not regex checks).
+ let parent=null;
+ for(let level=1;level<=8;level++){const node=`30000000-0000-4000-8000-${String(level).padStart(12,'0')}`;await as(add(node,'image',parent));parent=node;}
+ await assert.rejects(()=>as(add('30000000-0000-4000-8000-000000000009','image',parent)),/media_folder_depth/u);
+ await assert.rejects(()=>as(`update public.chat_character_media_folders set parent_id='${parent}' where id='${a}';`),/media_folder_depth/u);
+ const snapshot=()=>sql(`select json_build_object('revision',revision,'playbook',sales_playbook)::text from public.chat_characters where id='${c}';`);
+ const before=await snapshot(),current=JSON.parse(before).revision;
+ const invalidPayload=JSON.stringify({id:'60000000-0000-4000-8000-000000000001',parent_id:a,kind:'video',name:'Rollback',revision:0,offer_id:'',price_rules:{negotiation_allowed:false,special_discounts_allowed:false}});
+ await assert.rejects(()=>as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${current},'save_folder','${invalidPayload}'::jsonb,'{"qa_rollback":true}'::jsonb);`),/media_folder_binding_invalid/u);
+ assert.equal(await snapshot(),before,'failed catalogue+price RPC must preserve revision and playbook');
+ assert.equal((await sql(`select count(*) from public.chat_character_media_folders where id='60000000-0000-4000-8000-000000000001';`)).trim(),'0');
+ await sql(`update public.workspace_chat_admin_capabilities set chat_admin_multi_character=false where workspace_id='${w}';`);
+ assert.equal((await as('select count(*) from public.chat_character_media_folders;')).trim().split('\n').at(-1),'0');
+ await assert.rejects(()=>as(add('60000000-0000-4000-8000-000000000002','image')));
+ await assert.rejects(()=>as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${current},'save_folder','${invalidPayload}'::jsonb,'{}'::jsonb);`),/owner_required/u);
+ await sql(`update public.workspace_chat_admin_capabilities set chat_admin_multi_character=true where workspace_id='${w}';`);
+ await as(add('60000000-0000-4000-8000-000000000003','image'));
+ await as("delete from public.chat_character_media_folders where id='60000000-0000-4000-8000-000000000003';");
  await sql(`delete from public.chat_characters where id='${c}';`);
  assert.equal((await sql(`select count(*) from public.chat_character_media_folders where character_id='${c}';`)).trim(),'0');
  assert.equal((await sql(`select has_function_privilege('anon','public.chat_admin_media_catalogue_write(uuid,uuid,integer,text,jsonb,jsonb)','EXECUTE');`)).trim(),'f');

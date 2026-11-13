@@ -56,3 +56,9 @@ extends private allowance from5MiB WebP to25MiB WebP/MP4. No public access, new
 DB or provider activation. Catalogue/video flags are separate and default off.
 Main-bound protected rollout and existing activation preflight must be reconciled
 before target apply; this manifest does not bypass those checks.
+
+A dedicated isolated PostgreSQL17 CI job executes the media contract without
+waiting for the unrelated backup/restore prelude. Existing required roundtrip
+checks remain intact. Native cases explicitly cover depth8/9, subtree moves,
+failed-RPC atomicity, capability withdrawal/recovery and Character folder cascade.
+No application database or remote project is created by that CI job.
