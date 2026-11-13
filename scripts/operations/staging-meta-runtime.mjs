@@ -6,6 +6,7 @@ import { parseEnv } from "node:util";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildSupabaseApiKeyHeaders } from "../../src/lib/supabase/apiKeyPolicy.mjs";
+import { META_GRAPH_API_VERSION } from "../../src/lib/metaIntegrationPolicy.mjs";
 import { changeStagingRuntime, waitForStagingRelease } from "./staging-support-media-runtime.mjs";
 
 const ROOT = "/var/www/fanmind-staging";
@@ -31,7 +32,7 @@ export function metaReadiness(values) {
     webhook: usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? values.META_WEBHOOK_VERIFY_TOKEN) };
 }
 export function assertMetaTarget(values, control, action) {
-  if (!["inspect", "configure"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
+  if (!["inspect", "configure", "rebind", "subscribe-webhook"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
       control.GITHUB_EVENT_NAME !== "workflow_dispatch" || control.GITHUB_REF !== "refs/heads/main" ||
       !/^[a-f0-9]{40}$/u.test(control.GITHUB_SHA ?? "") || control.REVIEWED_COMMIT !== control.GITHUB_SHA ||
       control.CONFIRMATION !== `staging-meta-${action}` || !/^\d{1,20}$/u.test(control.GITHUB_RUN_ID ?? "")) fail("control_binding");
@@ -41,12 +42,28 @@ export function assertMetaTarget(values, control, action) {
       control.TARGET_PROJECT !== STAGING || control.PRODUCTION_PROJECT !== PRODUCTION ||
       values.FANMIND_RELEASE_COMMIT !== control.GITHUB_SHA) fail("target_binding");
 }
-export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64") } = {}) {
+// The separately authorized Staging identity transition is deliberately distinct
+// from initial setup. Unknown aliases/overrides remain blocked, never rewritten.
+export function assertMetaRebind(values, requested, expectedPreviousAppId) {
+  if (expectedPreviousAppId !== "2214477125984114" ||
+      values.FACEBOOK_APP_ID !== expectedPreviousAppId ||
+      !/^\d{5,32}$/u.test(requested.appId ?? "") ||
+      [expectedPreviousAppId, "1637976007865045"].includes(requested.appId) ||
+      requested.appSecret === values.FACEBOOK_APP_SECRET ||
+      !/^[a-f0-9]{32}$/iu.test(requested.appSecret ?? "")) fail("rebind_identity_invalid");
+  if (!validMetaKey(values.FANMIND_TOKEN_ENCRYPTION_KEY) ||
+      !usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN)) fail("rebind_preservation_missing");
+  if (["META_APP_ID", "META_APP_SECRET", "META_WEBHOOK_APP_SECRET"].some(name => typeof values[name] === "string" && values[name].trim().length > 0))
+    fail("rebind_alias_conflict");
+}
+export function renderMetaConfiguration(original, overrides, requested, { tokensPresent = true, generateKey = () => randomBytes(32).toString("base64"), expectedPreviousAppId } = {}) {
   const effective = Object.assign({}, parseEnv(original), ...overrides.map(parseEnv));
+  if (expectedPreviousAppId !== undefined) assertMetaRebind(effective, requested, expectedPreviousAppId);
   if (!/^\d{5,32}$/u.test(requested.appId ?? "") || !/^[a-f0-9]{32}$/iu.test(requested.appSecret ?? "") ||
       !/^[A-Za-z0-9_-]{32,128}$/u.test(requested.webhookToken ?? "")) fail("input_invalid");
   for (const name of ["FACEBOOK_APP_ID", "META_APP_ID"]) {
-    if (/^\d{5,32}$/u.test(effective[name] ?? "") && effective[name] !== requested.appId) fail("existing_app_conflict");
+    if (/^\d{5,32}$/u.test(effective[name] ?? "") && effective[name] !== requested.appId &&
+        !(name === "FACEBOOK_APP_ID" && expectedPreviousAppId && effective[name] === expectedPreviousAppId)) fail("existing_app_conflict");
   }
   let key = effective.FANMIND_TOKEN_ENCRYPTION_KEY;
   if (!validMetaKey(key)) {
@@ -72,14 +89,20 @@ export function renderMetaConfiguration(original, overrides, requested, { tokens
   }
   return after;
 }
-export function assertMetaRuntimeConsistency(effective, running, requestedAppId) {
+export function assertMetaRuntimeConsistency(effective, running, requestedAppId, rebind) {
+  if (rebind) {
+    const requested = { appId: requestedAppId, appSecret: rebind.appSecret };
+    assertMetaRebind(effective, requested, rebind.expectedPreviousAppId);
+    assertMetaRebind(running, requested, rebind.expectedPreviousAppId);
+  }
   if (effective.FANMIND_TOKEN_ENCRYPTION_KEY !== running.FANMIND_TOKEN_ENCRYPTION_KEY) fail("encryption_key_drift");
   if (FIELDS.some(name => effective[name] !== running[name])) fail("managed_configuration_drift");
   for (const name of Object.keys(effective)) {
     if (!FIELDS.includes(name) && effective[name] !== running[name]) fail("unrelated_runtime_drift");
   }
   for (const name of ["FACEBOOK_APP_ID", "META_APP_ID"]) {
-    if (/^\d{5,32}$/u.test(running[name] ?? "") && running[name] !== requestedAppId) fail("existing_app_conflict");
+    if (/^\d{5,32}$/u.test(running[name] ?? "") && running[name] !== requestedAppId &&
+        !(name === "FACEBOOK_APP_ID" && rebind && running[name] === rebind.expectedPreviousAppId)) fail("existing_app_conflict");
   }
 }
 function privateFile(path, rootSecret = false) {
@@ -107,13 +130,44 @@ function runningValues() {
     const i = line.indexOf("="); return [line.slice(0, i), line.slice(i + 1)];
   }));
 }
-async function boundedJson(url, headers) {
-  const response = await fetch(url, { headers, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(10000) });
+async function boundedJson(url, headers, options = {}, request = fetch) {
+  const response = await request(url, { ...options, headers, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(10000) });
   if (!response.ok) fail("target_read_failed");
   let size = 0; const chunks = [], reader = response.body.getReader();
   try { for (;;) { const item = await reader.read(); if (item.done) break; size += item.value.length; if (size > 65536) fail("target_read_failed"); chunks.push(item.value); } }
   finally { await reader.cancel().catch(() => {}); }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+export function metaSetupInput(action, control) {
+  return { appId: control.META_SETUP_APP_ID,
+    appSecret: action === "rebind" || control.META_SETUP_APP_ID === "1547928503809961"
+      ? control.META_REBIND_APP_SECRET : control.META_SETUP_APP_SECRET,
+    webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
+}
+// The token stays on the protected Staging host. Never export it to a job log
+// or mutate any existing Production app subscription.
+export async function subscribeStagingMetaWebhook(values, requestedAppId, request = fetch) {
+  const appId = "1547928503809961", callback = ORIGIN + "/api/webhooks/meta";
+  if (requestedAppId !== appId || values.FACEBOOK_APP_ID !== appId ||
+      !/^[a-f0-9]{32}$/iu.test(values.FACEBOOK_APP_SECRET ?? "") ||
+      !/^[A-Za-z0-9_-]{32,128}$/u.test(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? "")) fail("subscription_identity_invalid");
+  const url = `https://graph.facebook.com/${META_GRAPH_API_VERSION}/${appId}/subscriptions`;
+  const headers = { Authorization: `Bearer ${appId}|${values.FACEBOOK_APP_SECRET}` };
+  const read = () => boundedJson(url, headers, {}, request);
+  const validate = data => {
+    if (!Array.isArray(data?.data) || data.data.length > 1 || data.paging?.next) fail("subscription_inventory_invalid");
+    const page = data.data[0];
+    if (page && (page.object !== "page" || page.callback_url !== callback || !Array.isArray(page.fields) ||
+        page.fields.some(field => !["messages", "feed"].includes(field.name)))) fail("subscription_conflict");
+    return page;
+  };
+  const complete = page => page?.active === true && new Set(page.fields.map(field => field.name)).size === 2;
+  if (complete(validate(await read()))) return;
+  const body = new URLSearchParams({ object: "page", callback_url: callback,
+    verify_token: values.FACEBOOK_WEBHOOK_VERIFY_TOKEN, fields: "messages,feed" });
+  const result = await boundedJson(url, { ...headers, "Content-Type": "application/x-www-form-urlencoded" }, { method: "POST", body }, request);
+  if (result?.success !== true) fail("subscription_write_unconfirmed");
+  if (!complete(validate(await read()))) fail("subscription_readback_failed");
 }
 async function verifyRelease(control) {
   const version = await boundedJson(ORIGIN + "/api/version");
@@ -141,8 +195,16 @@ export async function runMetaRuntime(action, control = process.env) {
     console.log(`STAGING_META_READINESS=${JSON.stringify(metaReadiness(runningBefore))}`);
     return;
   }
-  const requested = { appId: control.META_SETUP_APP_ID, appSecret: control.META_SETUP_APP_SECRET, webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
-  assertMetaRuntimeConsistency(effective, runningBefore, requested.appId);
+  if (action === "subscribe-webhook") {
+    assertMetaRuntimeConsistency(effective, runningBefore, control.META_SETUP_APP_ID);
+    await subscribeStagingMetaWebhook(runningBefore, control.META_SETUP_APP_ID);
+    console.log("STAGING_META_APP_SUBSCRIPTION=PASS");
+    return;
+  }
+  const requested = metaSetupInput(action, control);
+  const rebind = action === "rebind" ? { expectedPreviousAppId: control.META_SETUP_PREVIOUS_APP_ID, appSecret: requested.appSecret } : undefined;
+  if (action === "rebind") assertMetaRebind(effective, requested, control.META_SETUP_PREVIOUS_APP_ID);
+  assertMetaRuntimeConsistency(effective, runningBefore, requested.appId, rebind);
   let tokensPresent = true;
   if (!validMetaKey(effective.FANMIND_TOKEN_ENCRYPTION_KEY)) {
     const url = new URL(effective.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/social_connections");
@@ -151,7 +213,7 @@ export async function runMetaRuntime(action, control = process.env) {
     if (!Array.isArray(rows) || rows.length > 1) fail("token_inventory_invalid");
     tokensPresent = rows.length > 0;
   }
-  const after = renderMetaConfiguration(before, overrides, requested, { tokensPresent });
+  const after = renderMetaConfiguration(before, overrides, requested, { tokensPresent, ...(rebind ? { expectedPreviousAppId: rebind.expectedPreviousAppId } : {}) });
   const desired = Object.assign({}, parseEnv(after), ...overrides.map(parseEnv));
   const unchangedNames = [...new Set([...Object.keys(effective), ...Object.keys(desired)])].filter(name => !FIELDS.includes(name));
   if (unchangedNames.some(name => effective[name] !== desired[name])) fail("unrelated_configuration_changed");

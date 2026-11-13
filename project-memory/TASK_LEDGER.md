@@ -1,3 +1,22 @@
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — full Owner Staging authorization
+- Owner authorizes source merge, one standalone app, necessary publication/review/permissions, protected credential/rebind/deployment and real inbound acceptance. Production/WellFit/outbound/newDB/paid/unrelated access excluded; personal legal/password/2FA/document steps remain Owner-only.
+- Main8f9e286d (#1471) integrated into same PR; sole ledger conflict retains both streams, all incoming runtime/diagnostic/media paths preserved. Existing Meta controller gains explicit exact-old/new identity rebind preserving encryption/webhook/Operator/Billing with alias/drift/override negatives and existing private rollback. No target write.
+- Standalone creation flow FanMind Staging Empfang / fanmind@fanmind.ch / FanMind business / Messenger+Pages prepared, final Create app requires personal legal acceptance and remains unsubmitted. No newAppID/publication/provider permission yet. Resume the same browser flow.
+- New exact-head CI required before regular merge; old8cb118tests/19green remain historical. No competing deployment or target action started.
+
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — current Main and Meta child-app boundary
+- Same Issue1464 / Draft1473; merge Main33e65696 into existing source; no conflict, Expo/session policy inherited unchanged.
+- Child1637976007865045 confirmed, Owner admin/0testers, no Page/callback/subscription. Current official Messenger guide (2026-10-28) requires publication; child apps always Development. General role-only webhook rule does not prove feed receipt or override product prerequisites. Existing banner preserved and scoped in runbook.
+- New standalone publishable Staging app proposed for a later explicit Owner decision; not created. No publication, permission/role/provider/runtime/DB/deployment/outbound action.
+- New-tree118focused PASS; exact resulting-head full hosted CI required. Historic green reports do not attest the integrated head.
+
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — source preparation / protected boundary
+- Existing Issue1464; merged1465 preserved, isolated successor from current Main3912461e (includes merged1469 Adminchat); no competing implementation. Affected FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001; R3 targeted independent Guardian, negative and recovery proofs required. Historical manual/live acceptance remains bounded to d348, not transferred to this source.
+- Actual readbacks13:50 Europe/Vienna: Staging d3483497, Production a798d793. Meta App2214477125984114 Development/unpublished; Page callback https://fanmind.ch/api/webhooks/meta; feed/messages v25 subscribed, message_echoes off; Review not submitted, Business unverified. Operator continuation reached protected Dashboard again. Read-only Staging DB: one FanMind connected/subscribedfalse,3conversations,2DM+4comments,6uniqueIDs; unique externalmessage/comment indexes installed. No newcontent import or provideractivation claimed.
+- Correct existing ingress validation/routing/summary recovery; executable signed-route/TS/storage synthetic regressions distinct from actual provider acceptance. Manual recovery preserved. No newDB/schema/privilege/secret/outbound/Production action.
+- PR1470 open7c9b932a owns Main session-preserving deployment admission; no duplication or foreignPRmerge. Main/target/active deployment reread before any later shared rollout. Newmerge/deploy and isolated Meta configuration need concrete approval after exactsourcechecks; cannot reuse historical d348 grant.
+- Current safe boundary: prepare successor PR and exact-source evidence; dedicated Staging Meta App/configuration preferred to moving common Production callback. App Review/Business/legal/Production controller plus concurrent firstcontact/projection QA remain separate Production gates. Details and rollback: docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md.
+
 ## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — Main33e65696 integration
 - Risk:R3, same existing Draft1471. Freshly confirm #1470 regularly merged at33e6569602e8fe910058e268b4f33c1879799869. Old977f2fc4 is behind strict Main, not a content conflict. Genuine two-parent merge into this PR; preserve all11incoming paths byte-for-byte and retain existing media/schema/diagnostic/Facebook source.
 - User authorizes Main integration/tests only, no merge/target permission. Recheck new exact head in CI; previous14/14 remains historical. Refresh obsolete current status and retain earlier checkpoint receipts as history. No new implementation/PR, no copied deployment fix or protected-action bypass.
@@ -1008,3 +1027,21 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Local: 195 integration/negative/conversion and 162 governance tests passed on first source tree. Current expanded head requires renewed tests/CI. PG17.5 isolated source recreation validates original/full catalogue lifecycle, repeat skip and unexpected drift rejection (168 SQL invocations). Native PG17 remains mandatory in CI.
 - Still pending: actual host repair/deploy/schema/bucket/flags and full synthetic Staging desktop/mobile acceptance. No live acceptance inferred from local tests.
 - #1475 acceptance input continuation: add source-owned neutral PNG/one-second H.264+AAC video, fixed invalid text and6MiB zeros for real browser file-selection/rejection. No private media or provider content. The changed full head receives fresh mandatory CI; prior-head results are not reused.
+
+### Facebook isolated published Staging app checkpoint — 2026-11-13
+
+Issue1464 / existing PR1473: standalone FanMind Staging Empfang1547928503809961
+created after personal Owner confirmation and published under the full Staging
+authorization. Production app/callback unchanged; no WellFit/send/DB action.
+Personal Meta password confirmation for the new app-secret reveal is pending.
+Prepared separate protected ingress secret selection and exact-new-app-only
+messages/feed App subscription with bounded reads and active callback readback.
+Real Page authorization, deployment and automatic receipt remain open.
+
+Facebook credential follow-up: the new App ID always selects its dedicated
+protected ingress secret, including later configure actions; missing new secret
+fails closed instead of restoring the original app credential. Executable
+regressions cover both rebind and repeat configure selection.
+
+- #1475 Main integration: retain all Facebook #1473 source and shared Supabase data-access changes from actual Main `deea847578b9db28b13b04ac0f71409638b0cfff`; only concurrent TASK_LEDGER append conflict combined without loss. Previous16/16 checks at98f0a510 do not cover this successor. Renew combined regressions and full exact-head CI.
+- Combined local evidence after Main integration:295/295 focused Adminchat/Support/Operator/Facebook/Meta/supply-chain/mobile regressions passed, zero skips; God Mode preflight and project-memory-quality passed. All incoming Facebook paths except the combined append-only task ledger equal actual Main byte-for-byte. No previously passed CI is attributed to this new merge commit.
