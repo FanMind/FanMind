@@ -28,11 +28,31 @@ on:
         required: false
         default: ''
         type: string
+      expected_current_release:
+        required: false
+        default: ''
+        type: string
   workflow_dispatch:
     inputs:
       confirmation:
         description: 'Type deploy-staging-only to confirm the isolated staging deployment'
         required: true
+        type: string
+      support_release_action:
+        description: 'Deploy normally, or restore the private snapshot from a failed/current Support rollout'
+        required: true
+        default: deploy
+        type: choice
+        options: [deploy, restore]
+      expected_current_release:
+        description: 'Exact old Staging SHA; required for Main Operator-preserving recovery'
+        required: false
+        default: ''
+        type: string
+      recovery_run_id:
+        description: 'Restore only: original deployment run owning the private snapshot; same reviewed Main required'
+        required: false
+        default: ''
         type: string
       billing_write_freeze:
         description: 'Freeze new Checkout and legacy Billing projection during controlled ledger cutover'
@@ -81,7 +101,9 @@ permissions:
 jobs:
   deploy-staging:
     name: Deploy exact reviewed commit to isolated staging
+    timeout-minutes: 45
     if: >-
+      inputs.support_release_action != 'restore' &&
       (github.ref == 'refs/heads/main' ||
         ((github.ref == 'refs/heads/fix/facebook-page-discovery-staging' ||
           github.ref == 'refs/heads/feat/1464-staging-agent-access') &&
@@ -112,6 +134,7 @@ jobs:
           BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
           STAGING_OPERATOR_SESSION_ENABLED: ${{ inputs.staging_operator_session_enabled && 'true' || 'false' }}
           OPERATOR_SESSION_PRESERVATION_CONFIRMATION: ${{ inputs.operator_session_preservation_confirmation }}
+          EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
           FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
           FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
           FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
@@ -199,6 +222,9 @@ jobs:
           if ! command -v rsync >/dev/null 2>&1; then
             echo "rsync is required for an isolated credential-free release copy." >&2
             exit 1
+          fi
+          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$STAGING_OPERATOR_SESSION_ENABLED" = true ]; then
+            node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" prepare
           fi
           rsync --archive --delete \
             --exclude '.git/' \
@@ -327,3 +353,45 @@ jobs:
               --verify "$STAGING_BASE_URL" "$EXPECTED_RELEASE_COMMIT"
           fi
           echo "STAGING_BILLING_WRITE_FREEZE=$BILLING_WRITE_FREEZE"
+          if [ "$GITHUB_REF" = refs/heads/main ] && [ "$STAGING_OPERATOR_SESSION_ENABLED" = true ]; then
+            node "$GITHUB_WORKSPACE/scripts/operations/staging-release-recovery.mjs" accept
+          fi
+
+      - name: Restore the private pre-release snapshot after a failed Support rollout
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main' && inputs.staging_operator_session_enabled
+        env:
+          REVIEWED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
+          BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
+          STAGING_OPERATOR_SESSION_ENABLED: 'true'
+          OPERATOR_SESSION_PRESERVATION_CONFIRMATION: ${{ inputs.operator_session_preservation_confirmation }}
+          FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
+          FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
+          AUTOMATIC_FAILURE_RECOVERY: 'true'
+        run: node scripts/operations/staging-release-recovery.mjs restore
+
+  restore-support-release:
+    name: Restore only the receipt-bound prior Staging release
+    if: >-
+      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+      inputs.support_release_action == 'restore' && inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == 'restore-staging-support-release'
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate private receipt and unchanged configuration before restoring
+        env:
+          REVIEWED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
+          RECOVERY_RUN_ID: ${{ inputs.recovery_run_id }}
+          BILLING_WRITE_FREEZE: preserve
+          STAGING_OPERATOR_SESSION_ENABLED: 'true'
+          OPERATOR_SESSION_PRESERVATION_CONFIRMATION: preserve-approved-operator-session
+        run: |
+          test -n "$RECOVERY_RUN_ID"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          node scripts/operations/staging-release-recovery.mjs restore

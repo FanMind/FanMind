@@ -4,6 +4,7 @@ import test from "node:test";
 import { readFile, mkdtemp, mkdir, writeFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import './staging-release-recovery.cases.mjs';
 
 const workflowPath = ".github/workflows/deploy-staging.yml";
 const provisioningWorkflowPath = ".github/workflows/provision-staging-host.yml";
