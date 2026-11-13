@@ -75,6 +75,8 @@ Latest Main ref observed during work:0def924beb080dde9b7bd9fb4d514f5cca2ac291
 (includes Support#1467); source started on798fa177. Those disjoint Support files
 must be preserved in the eventual PR tree.
 
+Detailed execution receipt: `docs/operations/CHAT_ADMIN_MEDIA_CATALOGUE_QA_20261113.md`.
+
 ## Validation and remaining acceptance
 
 Local policy/API/video tests cover tree bounds, isolation, price precedence,

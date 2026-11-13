@@ -32,5 +32,7 @@ export async function runMediaCatalogueSqlCases(sql){
  await sql(`insert into public.account_deletion_requests values('${owner}','processing');`);
  await assert.rejects(()=>as(add('10000000-0000-4000-8000-000000000006','image')));
  await sql('delete from public.account_deletion_requests;');
+ await sql(`delete from public.chat_characters where id='${c}';`);
+ assert.equal((await sql(`select count(*) from public.chat_character_media_folders where character_id='${c}';`)).trim(),'0');
  assert.equal((await sql(`select has_function_privilege('anon','public.chat_admin_media_catalogue_write(uuid,uuid,integer,text,jsonb,jsonb)','EXECUTE');`)).trim(),'f');
 }

@@ -388,3 +388,14 @@ test("catalogue folder editor submits individual category prices and private vid
  const sent=await page.evaluate(()=>({url:window.testRequests[0].url,body:window.testRequests[0].body}));
  assert.equal(sent.body.action,"save_folder");assert.equal(sent.body.price.start_minor,2350);assert.equal(sent.body.price.minimum_minor,1700);assert.equal(sent.body.price.negotiation_allowed,true);assert.equal(sent.body.character_id,characterA.id);
 });
+
+test("changed Character price revision blocks stale clipboard use before confirmation",async t=>{
+ const page=await mount(t,true,true);await openFan(page,"Fan A1");
+ await generate(page);await complete(page);
+ await page.evaluate(()=>{window.copyCalls=[];Object.defineProperty(navigator,"clipboard",{value:{writeText:async text=>window.copyCalls.push(text)},configurable:true});});
+ await copies(page).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ assert.equal(await page.evaluate(()=>window.testRequests[1].url),"/api/chatadmin/characters");
+ await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
+ await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");
+ assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),0);
+});

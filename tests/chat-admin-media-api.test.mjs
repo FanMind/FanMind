@@ -77,3 +77,18 @@ test("account deletion requires exact owned metadata, physical absence and fails
   else{await assert.rejects(deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]}),/media_deletion_absence_failed/u);assert.ok(!calls.some(call=>call.method==="DELETE"&&call.url.includes("/rest/")));}
  }
 });
+
+import "./chat-admin-media-storage.cases.mjs";
+
+test("video preview is private, range-aware and budgeted; video analysis never invokes the image provider",async()=>{
+ const h=harness({asset:{media_type:"video"}}),request=h.get(`&id=${id}`);request.headers.set("range","bytes=0-3");
+ const response=await h.route.GET(request);assert.equal(response.status,206);assert.equal(response.headers.get("content-type"),"video/mp4");assert.equal((await response.arrayBuffer()).byteLength,4);
+ const invalid=harness({asset:{media_type:"video"}}),bad=invalid.get(`&id=${id}`);bad.headers.set("range","bytes=1-2,4-5");assert.equal((await invalid.route.GET(bad)).status,416);assert.equal(invalid.calls.objects.length,0);
+ const denied=harness({rateDenied:true,asset:{media_type:"video"}});assert.equal((await denied.route.GET(denied.get(`&id=${id}`))).status,429);assert.equal(denied.calls.objects.length,0);
+ const video=harness({asset:{media_type:"video"}});assert.equal((await video.analyze.POST(video.request({analysis_consent:true},"POST"))).status,400);assert.equal(video.calls.providers,0);
+});
+test("account erasure deletes video MP4 paths with authenticated absence before metadata",async()=>{
+ const calls=[],path=`${w}/${c}/${id}.mp4`,config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"};
+ const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:404});return new Response(null,{status:204});};
+ await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.some(call=>call.url.endsWith(`/${path}`)));assert.ok(calls.some(call=>call.body===JSON.stringify({prefixes:[path]})));assert.ok(calls.at(-1).url.includes("deleted=eq.true"));
+});
