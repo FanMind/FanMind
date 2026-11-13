@@ -1,3 +1,9 @@
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — current Main and Meta child-app boundary
+- Same Issue1464 / Draft1473; merge Main33e65696 into existing source; no conflict, Expo/session policy inherited unchanged.
+- Child1637976007865045 confirmed, Owner admin/0testers, no Page/callback/subscription. Current official Messenger guide (2026-10-28) requires publication; child apps always Development. General role-only webhook rule does not prove feed receipt or override product prerequisites. Existing banner preserved and scoped in runbook.
+- New standalone publishable Staging app proposed for a later explicit Owner decision; not created. No publication, permission/role/provider/runtime/DB/deployment/outbound action.
+- New-tree118focused PASS; exact resulting-head full hosted CI required. Historic green reports do not attest the integrated head.
+
 ## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — source preparation / protected boundary
 - Existing Issue1464; merged1465 preserved, isolated successor from current Main3912461e (includes merged1469 Adminchat); no competing implementation. Affected FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001; R3 targeted independent Guardian, negative and recovery proofs required. Historical manual/live acceptance remains bounded to d348, not transferred to this source.
 - Actual readbacks13:50 Europe/Vienna: Staging d3483497, Production a798d793. Meta App2214477125984114 Development/unpublished; Page callback https://fanmind.ch/api/webhooks/meta; feed/messages v25 subscribed, message_echoes off; Review not submitted, Business unverified. Operator continuation reached protected Dashboard again. Read-only Staging DB: one FanMind connected/subscribedfalse,3conversations,2DM+4comments,6uniqueIDs; unique externalmessage/comment indexes installed. No newcontent import or provideractivation claimed.

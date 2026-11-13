@@ -1,3 +1,106 @@
+# PR #1470 current Main reconciliation — 13 November 2026
+
+The Owner authorized continuation, conflict resolution and new-head checks only.
+PR1470 remains Draft, with no merge or deployment approval. Current Main
+`3912461e1f88eb5cf2e621f23e4d6079409c20cc` includes the regular #1465 and #1469
+merges. It is integrated into the existing PR through a genuine merge. The sole
+content conflict is STAGING_OPERATOR_SESSION_ROLLOUT.md: retain both the bounded
+Main-preservation proposal and Facebook final acceptance, marking prior failed
+checkpoints historical. All Main runtime, SQL, tests and documentation are
+retained byte-for-byte except that combined runbook. No new media, Facebook or
+session implementation is introduced. Nine Expo patch updates and the exact
+reviewed Main preservation source policy remain unchanged from old PR head
+`900ce9454621696a761d94cef74070a075391fca`.
+
+Fresh HTTPS target reads at 14:01 Vienna: Staging remains
+`d34834979cef30c9c6af567d61b3df448901bfda`; Production remains
+`a798d7938bb4e7e168f615f0c32d1a603dd47d4a`. No active workflow was in progress at
+the initial API read; two older queued workflows are not deployment approval.
+Repeat live versions, current Main and deployment/host locks before any later
+joint Staging rollout; do not overwrite a successor. Metadata alone does not
+prove the absence of a host lock.
+
+The old head's eleven successful workflows, including native builds, are
+complete historical evidence only. New-head CI must run in full, including
+Mobile and native Android/iOS compilation, plus inherited media acceptance.
+The final exact head/tree, local results and fresh GitHub receipts are recorded
+in PR1470 after completion, avoiding a self-referential commit hash.
+
+One bundled Owner decision after successful checks: approve regular source merge
+of the exact final PR head including the narrowly bounded Main admission change
+for preservation of an already enabled Operator continuation. This is a source
+policy change; it neither changes active protected branch/environment rules nor
+first-activates continuation. Manual exact reviewed Main SHA, Billing preserve,
+no recovery, both explicit preservation inputs, and a fresh single valid true
+flag parsed from private regular non-symlink .release.env remain mandatory.
+Off/missing/unknown/duplicate/malformed state must never become an activation;
+false/default input must not silently disable existing true state. Keep existing
+protection, no bypass. No deployment, schema, bucket, provider, Billing, runtime
+or feature activation is requested by this source decision. A merged Main SHA
+and any later rollout remain separate concrete approvals.
+
+The following sections are historical checkpoints, superseded where noted above.
+
+> Final target reconciliation, 13 November12:38Vienna: browser /api/version
+> confirms Stagingd34834979cef30c9c6af567d61b3df448901bfda at11:38:28UTC;
+> Production remainsa798d793 at11:38:37UTC. Protected deployment43417498761
+> completed successfully on exactlyd348. The candidate preserves this actually
+> deployed refresh-format correction and its tests byte-for-byte through a real
+> merge. No further undeployed draft is selected and no refresh implementation
+> is independently rewritten here. Only runbook text conflicted; both sections
+> retained. Runtime source observations supersede the older checkpoints below;
+> they do not prove actual provider-backed renewal acceptance. All11 workflows
+> passed on preceding2843; final-head CI is rerun after reconciliation. Mobile
+> source/dependency tree is unchanged by this merge; no native check is bypassed.
+
+> Fresh target reconciliation, 13 November12:10Vienna: Browser /api/version
+> confirms Staginge4465268f781dfd57704070b9ae60ec6d831ca5d at11:10:12UTC;
+> Production remainsa798d793 at11:10:20UTC. The existing release-fix PR is extended
+> by a genuine merge of exactly that deployed source, preserving its session
+> policy/tests byte-for-byte. Only the rollout runbook conflicted; both sections
+> are retained. This adds no manual Facebook/runtime implementation change.
+> Newer Draft1465d3483497 is not deployed and is excluded. Actual renewal on
+> e446 still fails401/sign_in_required per the owning Work-tab; preserving its
+> opt-in is not evidence of successful renewal. Main source integration and the
+> named admission extension require explicit approval; no deployment is granted.
+
+# Deployment-blocker repair proposal — 13 November 2026
+
+PR1468 was Owner-approved at1ddf705e and regularly merged as
+6c1e376b788e9ef4d3d929a44214f8484e8610ba after fresh12/12 required checks,
+unchanged head and strict/no-bypass rules verification. Main ref, merged PR and
+commit parents/tree independently agree. No deployment performed.
+
+A follow-up source proposal repairs exactly two blockers:
+
+1. Upgrade the nine Expo dependencies to the patch versions requested by the
+   failed doctor check, regenerate the mobile lockfile and advance the existing
+   exact-version assertions accordingly. No Mobile feature, native identity,
+   permission, signed build, store action or check exclusion is introduced.
+2. Prepare an explicitly approved Main-only preservation path for an already
+   enabled Staging Operator session. Normal defaults may not turn it off.
+   Exact source/manual/Billing-preserve checks and a fresh private flag read are
+   mandatory. This source admission extension needs separate Owner approval;
+   active branch/environment rules are untouched. See STAGING_OPERATOR_SESSION_ROLLOUT.md.
+
+The new PR's exact head/tree and full independent CI receipts are recorded in
+that PR. Until merged and separately deployed, neither target blocker is claimed
+resolved live. No Facebook/Stripe/media runtime source or target data changes.
+The final deployable Main SHA does not yet exist; after source approval/merge,
+record its actual SHA and repeat target version checks before requesting Staging.
+
+For Staging, propose that exact merged SHA with billing_write_freeze=preserve,
+staging_operator_session_enabled=true and the fixed preservation confirmation.
+No temporary environment branch expansion is needed for already allowed Main.
+No database, flag activation, provider or permission change is part of this
+proposal; preserving true must first be proved from existing release metadata.
+Live Support acknowledgment requires an explicitly authorized existing test
+alarm or bounded fixture with readback/reload/reopen and audit/actor evidence.
+Production remains a separate later deployment and acceptance approval.
+
+The preceding source-reconciliation proposal follows for context; its then-open
+source merge is now complete, while actual target acceptance is still pending.
+
 # Support common release — 13 November 2026
 
 Source preparation only. No merge or deployment is authorized by this document.

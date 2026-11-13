@@ -1,3 +1,139 @@
+# Current decision after test-app creation — 13 November 2026
+
+This section supersedes the earlier proposed isolated-app path and stale
+PR1470/Main status below. Historical receipts are retained as history, not
+current activation or current-head CI evidence.
+
+## Exact app and observed configuration
+
+- Existing Issue #1464 / Draft PR #1473, branch
+  `feat/1464-facebook-automatic-ingress`. Main freshly confirmed as
+  `33e6569602e8fe910058e268b4f33c1879799869` (merged PR1470).
+- **FanMind Staging `1637976007865045` is a child Meta test app**, created
+  with the parent app's native Create test app action. It is not a standalone
+  app that merely happens to be in Development mode. Meta explicitly shows
+  its parent relationship to `2214477125984114`.
+- Test app roles: existing Owner is Administrator; zero testers. No role added.
+- Actual Messenger API setup: no Facebook Pages linked; callback and verify
+  token empty. Page Webhooks: `messages` and `feed` disabled, UI default v27.0.
+  No app-scoped Page token/permission grant or Page subscribed_apps readback
+  was obtained for this child. Parent-app tokens are not evidence for it.
+- The test app's business verification screen freshly reports unverified.
+  No verification, review, publication, subscription or runtime action started.
+
+Observed **Page Webhooks** banner, retained verbatim as configuration evidence:
+
+> Apps können nur Test-Webhooks vom Dashboard erhalten, solange die App nicht
+> veröffentlicht ist. Es werden keine Produktionsdaten (einschließlich von
+> App-Admins, Entwicklern oder Testern) geliefert, es sei denn, die App wurde
+> veröffentlicht.
+
+That banner is not, by itself, a universal rule for all products, all
+Development-mode apps or all historical Messenger versions.
+
+## Official documentation: product-specific reconciliation
+
+Read 13 November 2026. Direct search-service reads of several older Meta URLs
+returned HTTP429 or inaccessible responses; the signed-in browser successfully
+read the actual official pages and canonical redirects. No login wall was
+bypassed. Canonical sources, not third-party tutorials, decide this assessment:
+
+1. [Meta Test Apps](https://developers.facebook.com/documentation/development/build-and-test/test-apps)
+   (page updated 13 June 2024): child apps inherit settings/admins, always stay
+   in Development mode, and have separate app credentials. Role-based testing
+   is described; this does not override product-specific webhook prerequisites.
+2. [Messenger Webhooks](https://developers.facebook.com/documentation/business-messaging/messenger-platform/webhooks?locale=en_US)
+   (updated **28 October 2026**, English original checked): prerequisites
+   explicitly include **Publish your Meta app**. Standard Access covers
+   notifications from app-role people; Advanced Access covers people without
+   app roles and requires App Review. A Page token plus pages_messaging and
+   pages_manage_metadata, authorized Page tasks, callback and subscribed_apps
+   are separate requirements. Standard Access is not publication.
+3. [General Meta Webhooks](https://developers.facebook.com/docs/graph-api/webhooks/):
+   Development-mode dashboard or role-initiated notifications are described;
+   it explicitly refers Messenger behavior to its separate document. The
+   Webhooks product itself has no independent App Review; underlying data
+   permissions and resource authorization remain necessary. This general text
+   is in tension with the concrete banner and newer Messenger prerequisite;
+   do not silently replace the latter with an older generic exception.
+4. [Webhooks for Pages](https://developers.facebook.com/docs/graph-api/webhooks/getting-started/webhooks-for-pages/):
+   feed includes posts/comments/reactions. Page installation/subscribed_apps
+   and a Page token from an appropriately authorized person are mandatory;
+   feed lists pages_manage_metadata and pages_show_list, messages additionally
+   pages_messaging. Reading comment/user content through Graph has its own
+   pages_read_engagement/pages_read_user_content requirements. A feed
+   subscription alone does not establish those grants.
+5. [Access Levels](https://developers.facebook.com/documentation/development/graph-api/overview/access-levels)
+   (legacy app-type scope stated on page): Standard is limited to app-role
+   users; Advanced is for non-role users and requires verified business and
+   permission/feature-specific approval. Current use-case UI saying ready for
+   testing is not a readback of approved Advanced Access.
+
+| Question | Messenger messages | Page post comments (feed) |
+|---|---|---|
+| Is actual delivery available now? | No: callback, Page link, app-scoped token/subscription and server binding absent. Current product guide also requires publication. | No: callback, authorized Page token, app/Page subscriptions and server binding absent. |
+| Does the banner alone prove every real event impossible? | No. General/older role-based rules exist, but the current specific guide requires publication, which this child cannot satisfy. | No. General official documentation mentions role-initiated events; the observed banner conflicts with that possibility. No actual role-bound event test or provider clarification settles it. |
+| Is App Review/Advanced Access automatically required for an Owner-only check? | Standard Access describes role-only recipients; do not confuse this with public customer access or claim publication can be skipped. | General role-bound development testing is described; exact feed delivery under this child remains unproved. Review/grants depend on data/access scope. |
+| What is needed for non-role customer inputs? | Published eligible app, Advanced Access/review, business verification where required, Page authorization and subscriptions, protected runtime binding. | Eligible published app/approved underlying permissions for the scope, required business verification/review, authorized Page and feed subscription; exact actor/data visibility still tested. |
+
+**Conclusion:** a supported end-to-end real Messenger-plus-comment acceptance
+cannot currently be promised on this always-Development child. That is narrower
+than claiming all unpublished Meta apps categorically reject all real events.
+The comment role-only exception remains an explicit unresolved provider boundary,
+not a PASS and not proof of a universal publication requirement for feed.
+
+## Smallest proposed next route — no action taken
+
+For a documented path supporting both sources, propose **one standalone,
+publishable Staging app** with a different exact App ID, Staging-only HTTPS
+callback and only FanMind Page1208778912321696. This is a proposal requiring a
+new Owner decision, not permission to create apps speculatively. Preserve the
+existing child as inactive test configuration; no deletion or conversion assumed.
+Do not publish the child or the parent, move the parent's callback, forward
+Production events, or silently use a parent credential for the new app.
+
+First prepare the exact standalone app settings and Meta's actual publication
+requirements. Target Owner/app-role-only Standard Access for the first bounded
+real test; if Meta requires Advanced Access even for that precise configuration,
+stop and present the actual required permission/business/review scope. General
+customer access is a later decision. Prepare a single reviewable publication
+candidate with exact App ID, privacy/data-deletion URLs, required permissions,
+secure secret destination, exclusive Page/workspace binding, rollback and exact
+Staging source. Do not publish before the separate explicit publication decision.
+
+Existing staging-meta-runtime initial-setup guards still reject a different
+existing App ID and require exact Main/live parity. A controlled rebind needs
+its own source review, expected old/new identity, unchanged encryption key and
+Operator/Billing state, preservation of existing conversations and protected
+rollback. Do not remove existing_app_conflict or reuse initial setup as a bypass.
+Provider preparation does not approve the resulting runtime/deployment action.
+
+### Bundled Owner decision proposed
+
+Authorize preparing **one standalone publishable FanMind Staging app**, limited
+to Page1208778912321696 and callback https://staging.fanmind.ch/api/webhooks/meta;
+prepare its exact publication/access and protected rebind candidate. No
+publication, general Advanced Access/App Review submission, extra role grant,
+Production change, deployment or outbound send is included. If a publication or
+permission requirement expands this bounded plan, stop for that exact decision.
+The existing child1637976007865045 and parent2214477125984114 remain intact.
+
+## Source reconciliation and validation boundary
+
+Current Main33e65696 was merged into the existing PR branch without content
+conflicts. Expo fixes and Main Operator-preservation logic come from Main;
+no duplicate Mobile correction or guard weakening. The only shared test file
+merges both its Main session-preservation regressions and the Facebook inbound
+readiness regressions. All other inherited Main files are byte-identical to Main.
+New local merged-tree focused checks:118/118. Full resulting-HEAD hosted CI,
+including Mobile and PostgreSQL/Browser checks, must be read independently;
+results on a191b54f or20749725 are historical only. No real arrival, provider
+mutation or deployment is inferred from source validation.
+
+---
+
+# Historical preparation and receipts
+
 # Facebook automatic ingress — preparation, 13 November 2026
 
 Existing Issue #1464; successor to merged #1465. Owner requests preparation and

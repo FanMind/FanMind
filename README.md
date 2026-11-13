@@ -8,7 +8,15 @@ This is source preparation, not real automatic-arrival acceptance. Actual Meta
 inspection found the shared Page callback on Production, App in Development,
 App Review not submitted and Business unverified. Staging subscription remains
 false; no callback, provider permission, database or live runtime was changed.
-PR1470 owns Main rollout preservation of the existing Operator session.
+PR1470 is now merged into Main; this successor integrates its Expo corrections
+and existing Operator-session preservation without activating either runtime.
+The created child test app1637976007865045 always stays in Development mode;
+current Messenger documentation lists publication separately from role-bound
+Standard Access. Callback/Page authorization/subscriptions remain absent.
+The Page-feed role-only exception is unresolved against the actual UI banner;
+no universal unpublished-app prohibition or real automatic arrival is claimed.
+A standalone publishable Staging app is a proposal only, requiring a new Owner
+decision; no further app, publication or Production callback change is made.
 Runbook and concrete approval boundary:
 `docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md`.
 
