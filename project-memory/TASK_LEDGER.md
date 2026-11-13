@@ -1,3 +1,8 @@
+## FM-FACEBOOK-RECEPTION-1464-20261113 — authorized receipt continuation
+- R3; existing Issue1464, deployed common Maina8a74f67. Protected inspect/rebind/App-subscription43463154880/43463354662/43463518222 PASS. Personal password/new protected secret already complete. Page subscribed_apps and real receipt OPEN.
+- Actual Meta OAuth identified Strict-cookie callback loss; same-origin Operator continuation succeeds. Narrow signed-state/Operator/exact-app same-origin callback bridge preserves Strict cookies and every existing authorization check. Existing Page helpers reused behind exact app/Page/Workspace and verified token/scopes, explicit check/activate controls. No import/send/newDB/schema/Production/WellFit change.
+- FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001 and existing Operator session consumer; negative route/action tests plus required exact-head CI. Preserve shared Support/Adminchat/Billing; refresh Main/deploy lease before normal protected rollout. No acceptance inferred from source.
+
 ## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — full Owner Staging authorization
 - Owner authorizes source merge, one standalone app, necessary publication/review/permissions, protected credential/rebind/deployment and real inbound acceptance. Production/WellFit/outbound/newDB/paid/unrelated access excluded; personal legal/password/2FA/document steps remain Owner-only.
 - Main8f9e286d (#1471) integrated into same PR; sole ledger conflict retains both streams, all incoming runtime/diagnostic/media paths preserved. Existing Meta controller gains explicit exact-old/new identity rebind preserving encryption/webhook/Operator/Billing with alias/drift/override negatives and existing private rollback. No target write.

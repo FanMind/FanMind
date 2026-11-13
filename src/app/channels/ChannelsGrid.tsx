@@ -1,5 +1,7 @@
 "use client";
 
+import { StagingFacebookIngressControls } from "./StagingFacebookIngressControls";
+
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -83,6 +85,7 @@ type FacebookLiveSetupStatus = {
   metaBusinessIdConfigured: boolean;
   tokenEncryptionConfigured: boolean;
   oauthCallbackUrl: string | null;
+  stagingIngressEnabled?: boolean;
 };
 
 type TelegramMessage = {
@@ -939,6 +942,7 @@ export function ChannelsGrid({
                               </li>
                             ) : null}
                           </ul>
+                          {facebookLiveSetupStatus.stagingIngressEnabled && facebookConnection.page_id === "1208778912321696" ? <StagingFacebookIngressControls /> : null}
                           <div className={styles.connectionCardActions}>
                             <form action={syncFacebookMessengerHistoryFromChannelPage}>
                               <button type="submit" disabled={demoConnectionsDisabled}>
