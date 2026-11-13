@@ -59,3 +59,13 @@ including from admins/developers/testers. This blocks real Owner receipt too;
 ready-for-testing permission labels do not bypass publication. No fresh real
 inputs requested. Existing Production Page callback displayed as fanmind.ch;
 verification token remains masked and was not exported. All Staging state kept.
+
+## Required CI checksum correction
+
+First full CI build compiled successfully but Operations tests failed because
+adding a test command to package.json changed the byte-pinned Capacity source
+manifest. No Capacity control/hash/source is changed to bypass that check.
+Restore package.json byte-for-byte to baseline and import the new Production
+cases from the already-mandatory Meta foundation suite instead. This preserves
+Capacity and keeps all new tests in required CI. Independent Guardian source
+review is PASS with mutation-negatives; no remaining controller blocker found.

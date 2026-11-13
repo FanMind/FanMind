@@ -969,3 +969,6 @@ test('Meta rebind rejects unapproved identities, child test app, stale old ID, a
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,META_APP_SECRET:'unexpected-runtime-alias'}, syntheticMetaInput.appId,rebind), /rebind_alias_conflict/);
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,FANMIND_TOKEN_ENCRYPTION_KEY:'f'.repeat(64)}, syntheticMetaInput.appId,rebind), /encryption_key_drift/);
 });
+
+// Production controller cases reuse the mandatory existing Meta suite.
+await import("./production-meta-runtime.cases.mjs");
