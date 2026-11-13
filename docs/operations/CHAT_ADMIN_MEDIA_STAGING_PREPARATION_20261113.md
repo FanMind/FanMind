@@ -392,3 +392,39 @@ The same diagnostic followup also repairs an independently reproduced overescape
 proc-identity expression. Literal Uid/Gid patterns now parse all four IDs from
 actual `/proc/self/status`; missing/malformed rows still fail closed. This is
 not a target-host proof. Current Main193eb1a9 (Facebook #1477) is integrated.
+
+## Retention prerequisite correction after actual extension apply
+
+Owner confirmed the controlled extension on13November. Independent target
+catalogue equality is extended: existing private bucket26214400bytes, WebP/MP4,
+exact RLS/functions/ACLs. Server proof43479092079 and rollback-only actual Staging
+role/folder/isolation/revocation/metadata proofs passed. No schema reapply or
+installation is required.
+
+Activation43484135999 stopped before control: the fresh successful daily receipt
+belongs to30a2da24, while recursive controlled-SQL comparison also included the
+later independent media addition. Retention43484424494 correctly returned
+already_completed without rewriting the receipt. Repeating it is not a repair.
+
+The narrow correction permits only addition of
+supabase/controlled/chat_admin_media_catalogue.sql with existing pinned SHA256
+10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2.
+Every other controlled SQL, runner, imported module, reference, workflow,
+certificate, lockfile and runtime package manifest stays bound. A modified,
+deleted, renamed or different media body fails closed. Ancestor, target, exact
+live Support/media schema, Owner, receipt status and30-hour freshness are retained.
+
+Actual receipt-source/common-Mainebae223a comparison passes with only this
+bounded exception; Retention sources and dependencies are unchanged. Disposable
+PG17 executes real retention before and after the actual media extension: full
+Support catalogue remains identical; two expired turns and one expired thread
+are removed, recent rows preserved, and probes rolled back. The same semantic
+case is wired into existing native PG17 CI. Dependency mutations reject every
+bound runner/reference/runtime path, retention SQL, arbitrary additional SQL,
+modified media body, deletion and rename.
+
+Successor includes merged Instagram1481 and leaves1479 separate. Existing
+FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001 and shared
+Support retention control are affected. Production and provider analysis remain
+excluded. Source/DB proofs do not establish activation or desktop/mobile PASS;
+those remain pending until the protected workflow and practical acceptance finish.
