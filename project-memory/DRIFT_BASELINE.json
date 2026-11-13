@@ -4,7 +4,7 @@
   "captured": "2026-11-06",
   "last_source_of_truth_review": "2026-11-06 PR #1438 reviewed legal-operator change: Source of Truth identifies Brigitte Erika Guggenberger as the legal contracting sole proprietor and Bernd Guggenberger as operational contact only, consistent with owner-confirmed GISA 40314440. No implied delegated signing authority; UID, trade-register applicability, external legal/tax signoff, Stripe account-holder verification and commercial activation remain pending. Source-only; no Production/Staging/provider/DB mutation and no acceptance inferred.",
   "watched_files": {
-    "docs/SOURCE_OF_TRUTH.md": "0d32846f128b0ed5ab68b22e6e1b66eeafc31886",
+    "docs/SOURCE_OF_TRUTH.md": "835b43ec709fc59cd8c17e6893ff8e4586ebf20f",
     "src/config/roadmap.ts": "7179da112c26e357fb2d8f17e20aabf1b530c675",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
@@ -13,6 +13,7 @@
   },
   "rule": "A watched-file fingerprint change is not automatically a defect, but it creates DRIFT_REVIEW_REQUIRED before relying on prior acceptance evidence. Update this baseline only in the same reviewed change that reconciles the affected gate.",
   "last_contact_review": "2026-11-05 Owner explicitly confirms fanmind@fanmind.ch for general contact, support and privacy intake. Reviewed SOURCE_OF_TRUTH delta changes only this contact address; operator identity, commercial terms, prior acceptance evidence and runtime activation gates remain unchanged. Web/mailto/default/example configuration and Mobile store metadata/checks reconciled in PR1423.",
+  "last_support_contact_output_review": "2026-11-13 PR1466: the sole new SOURCE_OF_TRUTH paragraph documents normalization of model-generated email addresses to the already approved fanmind@fanmind.ch contact and explicitly distinguishes source tests from Production deployment. Exact typo, foreign/case/mailto, length expansion and real-route synthetic regressions PASS. This fingerprint reconciliation is proposed within the same reviewed PR; no deployment, activation, commercial, legal/operator, schema, authority or prior target acceptance is refreshed.",
   "last_media_review": "2026-11-05 reviewed source-only Character media library, conservative verified-tag grounding and configurable paid custom work; controlled storage/schema and provider image-analysis switches remain off; existing Staging acceptance unresolved.",
   "last_stripe_catalog_review": "2026-11-08 source-only full sandbox catalog verifier: eight configured prices, retained internal Daily, canonical one-time topup amounts and metadata. No catalog PASS implies global inventory, tax registration, runtime configuration, Checkout, webhook or credit acceptance. Tax number supplied and UID officially matched; actual Tax registration remains pending. Prior external/runtime acceptance is not refreshed by this source change.",
   "last_stripe_topup_review": "2026-11-08 Sandbox-only lifecycle source: explicit Checkout/PI mapping, canonical readback, net/tax validation, provider microcent correction, async fulfillment, isolated base/referral projection. No DB install or activation; observed Capacity baseline drift remains BLOCK.",
