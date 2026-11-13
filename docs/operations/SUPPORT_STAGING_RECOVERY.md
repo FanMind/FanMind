@@ -15,7 +15,9 @@ the exact live old SHA/health, current regular metadata, true continuation,
 existing unit/configuration and build, and free local disk space. It copies the
 current runtime (including dependencies, build and release metadata) into the
 runner's private `~/.fanmind-staging-recovery/<run-id>/runtime`. Git, private
-environment/recovery configuration and mutable Next cache are excluded. No file
+environment/recovery configuration and mutable Next cache are excluded. Both
+copy directions use rsync content checksums: equal size/mtime is not sufficient.
+The real-copy test deliberately changes same-size files at identical mtimes. No file
 is uploaded. Modes700/600 and ownership, symlink boundaries, bounded tree size,
 before/after file identities and source/copy fingerprints are checked. The
 receipt is committed only after both old-target observations agree.

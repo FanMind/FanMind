@@ -42,7 +42,7 @@ export function assertRecoveryBoundary(env,action){
 function execute(command,args){const r=spawnSync(command,args,{encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:300000,maxBuffer:1024*1024});if(r.status!==0||r.error)fail('host_command_failed');return r.stdout;}
 async function publicJson(path){const r=await fetch(ORIGIN+path,{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)fail('public_probe_failed');const text=await r.text();if(text.length>65536)fail('public_probe_failed');return JSON.parse(text);}
 async function probe(commit){const v=await publicJson('/api/version');if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==commit)fail('live_release_changed');const h=await publicJson('/api/health');if(!evaluatePublicHealth(h).ok)fail('health_failed');}
-function copy(source,dest){execute('rsync',['--archive','--delete',...EXCLUDES.flatMap(x=>['--exclude',x]),source+'/',dest+'/']);}
+function copy(source,dest){execute('rsync',['--archive','--checksum','--delete',...EXCLUDES.flatMap(x=>['--exclude',x]),source+'/',dest+'/']);}
 async function waitProbe(fn,commit){const deadline=Date.now()+45000;for(;;){try{return await fn(commit);}catch(error){if(Date.now()>=deadline)throw error;await new Promise(r=>setTimeout(r,1000));}}}
 
 // Dependencies are explicit solely to exercise real private-directory/metadata
