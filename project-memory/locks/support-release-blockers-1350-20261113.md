@@ -22,3 +22,9 @@ edits. Both runbook sections retained; source and session tests byte-identical
 to deployed parent. Newer undeployed d3483497 excluded. The responsible tab
 reports renewal401 still open; no live renewal success claimed. Separate exact
 common-source approval remains necessary before merge/deployment.
+
+Final read11:38UTC: actual Stagingd3483497, protected deployment43417498761
+SUCCESS. Preserve exactly that deployed refresh-format source/tests via a real
+merge, not a duplicate repair; both runbook sections retained. No further
+undeployed draft selected. Mobile tree identical to fully passed2843 parent;
+all final-head checks rerun without bypass. Production remainsa798d793.

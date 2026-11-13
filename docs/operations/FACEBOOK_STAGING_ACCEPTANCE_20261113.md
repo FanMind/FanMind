@@ -242,3 +242,56 @@ request-adaptation chain. Its independent old/new probe rejects the exact adapte
 request on deployed a49decfd and accepts it on the successor, while wrong browser
 Origin, missing Origin, cross-site, host/port/path/Production cases remain denied.
 These are framework/source tests without live Auth calls, not real renewal PASS.
+
+## Approved e4465268 rollout — Origin fixed, refresh-format rejection remains
+
+The Owner explicitly approved `e4465268f781dfd57704070b9ae60ec6d831ca5d`.
+Protected deployment [43412732522](https://github.com/FanMind/FanMind/actions/runs/43412732522)
+succeeded. Independent Staging `/api/version` at 11:56:19 Europe/Vienna confirmed
+that exact SHA/runtime. Temporary feature-branch admission was removed again;
+independent readback showed exactly the two original rules.
+
+Actual continuation now passes the Origin/body boundary but returns the fixed
+sign-in-required UI (401), without rotation. Before/after Auth metadata remains
+2 refresh records / 0 revoked / latest update 11:42:14 Europe/Vienna. The existing
+normal private contact view remains authenticated. Do not report renewal PASS.
+
+A protocol-validation defect is independently evidenced: the shared validator
+required 24 characters for both access JWTs and refresh credentials. Official
+[Supabase Auth refresh validation](https://github.com/supabase/auth/blob/master/internal/api/token_refresh.go)
+accepts the legacy 12-character refresh format (and newer opaque formats).
+A protected, aggregate-only Staging query returned min/max credential length 12
+for both existing Operator refresh records. No token value was selected,
+exported or stored in this report. Earlier synthetic test credentials were too
+long to expose this provider-format incompatibility.
+
+The bounded successor separates refresh-credential length validation (12–4000,
+no whitespace) from access-token validation. Both incoming and rotated refresh
+credentials use that predicate. Actual validity is still established only by
+Supabase Auth, verified user identity and exact Workspace/RLS binding; no token
+length grants authorization. Runtime/project/Origin/body/route/rate/cookie bounds
+are unchanged. Provider-shaped synthetic 12-character round trips and malformed
+input/response negatives are required; their PASS is not real renewal evidence.
+
+Independent exact-next-boundary preflight under authenticated Operator claims
+materialized the same workspace columns/filter/limit as renewal and returned
+one correct id/name/owner/marker, without exporting the complete flags. This
+checks current column privileges and RLS before another proposed rollout.
+
+Independent post-e446 Facebook/RLS QA still passes: 3 source conversations,
+2 real DM + 4 real comments on 2 posts, 6 unique external IDs, no parent mismatch,
+4 correct distinct comment targets; Operator foreign0, foreign fixture owner
+Operator0 with own Workspace visible. Existing marker and ownership unchanged.
+
+The successor has NOT been deployed and requires a new exact-source protected
+approval after source/Guardian/CI checks. Current deployed source remains e4465268;
+no full Staging-auth or background-auto-refresh claim. No Main/Production/Webhook,
+new permission/database, WellFit binding or outbound Facebook action.
+
+Refresh-format successor verification: 52 focused checks passed with zero failures
+or skips; full Next build/TypeScript, affected ESLint, Project Memory and drift
+checks passed. Independent Guardian session suite 17/17 passed with realistic
+12-character incoming and rotated synthetic credentials, boundary/malformed
+response/provider-rejection negatives and exact request-body verification.
+No real token value was placed in tests. Post-e446 comment repeat again checked
+2 posts/found 4/imported 0; live token rotation remains unproved.

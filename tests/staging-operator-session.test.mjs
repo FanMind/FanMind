@@ -6,11 +6,13 @@ import { Readable } from 'node:stream';
 import { createOperatorSessionRenewer, operatorSessionEnabled, operatorSessionRequestAllowed, operatorSessionBodyPresent } from '../src/lib/stagingOperatorSession.mjs';
 import { STAGING_ORIGIN, STAGING_AUTH_ORIGIN, OPERATOR_USER, OPERATOR_WORKSPACE, OPERATOR_NAME } from '../src/lib/stagingOperatorIdentity.mjs';
 
-const secret = 'synthetic-refresh-token-'.repeat(2);
+// Synthetic examples of the provider's 12-character legacy opaque format.
+const secret = 'abc123def456';
+const rotatedSecret = 'def456ghi789';
 const access = 'synthetic-access-token-'.repeat(2);
 const env = { FANMIND_STAGING_OPERATOR_SESSION_ENABLED: 'true', FANMIND_RUNTIME_ENVIRONMENT: 'staging', NEXT_PUBLIC_APP_URL: STAGING_ORIGIN, NEXT_PUBLIC_SUPABASE_URL: STAGING_AUTH_ORIGIN, NEXT_PUBLIC_SUPABASE_ANON_KEY: 'sb_publishable_synthetic' };
 const request = (patch = {}) => ({ url: `${STAGING_ORIGIN}/api/staging-operator/session`, method: 'POST', headers: new Headers({ origin: STAGING_ORIGIN, 'sec-fetch-site': 'same-origin' }), bodyPresent: false, refreshToken: secret, ...patch });
-const session = () => ({ access_token: access, refresh_token: `${secret}-rotated`, expires_in: 3600, user: { id: OPERATOR_USER } });
+const session = () => ({ access_token: access, refresh_token: rotatedSecret, expires_in: 3600, user: { id: OPERATOR_USER } });
 const row = () => ({ id: OPERATOR_WORKSPACE, owner_user_id: OPERATOR_USER, name: OPERATOR_NAME, test_access_flags: { staging_operator_workspace: true } });
 const response = (data, status = 200) => new Response(JSON.stringify(data), { status });
 function provider(overrides = {}) {
@@ -46,7 +48,7 @@ test('foreign origin, cross-site and client-controlled body never reach Auth', a
 test('password-free renewal checks provider user and exact workspace with a user JWT', async () => {
   const p = provider(); const result = await createOperatorSessionRenewer(p)(request(), env);
   assert.equal(result.status, 200);
-  assert.equal(result.session.refresh_token, `${secret}-rotated`);
+  assert.equal(result.session.refresh_token, rotatedSecret);
   assert.equal(p.calls.length, 3);
   assert.deepEqual(JSON.parse(p.calls[0].options.body), { refresh_token: secret });
   assert.equal(p.calls[2].options.headers.Authorization, `Bearer ${access}`);
@@ -181,4 +183,65 @@ test('the installed Next adapter preserves the pinned browser Origin while const
     assert.equal(operatorSessionRequestAllowed(adapted), false, JSON.stringify(patch));
     await adapted.text();
   }
+});
+
+
+test('legacy 12-character refresh credentials rotate only after provider identity and workspace checks', async () => {
+  assert.equal(secret.length, 12);
+  assert.equal(rotatedSecret.length, 12);
+  const p = provider();
+  const result = await createOperatorSessionRenewer(p)(request(), env);
+  assert.equal(result.status, 200);
+  assert.equal(result.session.refresh_token, rotatedSecret);
+  assert.deepEqual(JSON.parse(p.calls[0].options.body), { refresh_token: secret });
+  assert.equal(p.calls.length, 3);
+  assert.equal(p.calls[1].url, `${STAGING_AUTH_ORIGIN}/auth/v1/user`);
+  assert.match(p.calls[2].url, /owner_user_id=eq\./u);
+});
+
+test('refresh credential bounds reject short, whitespace and excessive input before Auth', async () => {
+  const p = provider();
+  const renew = createOperatorSessionRenewer(p);
+  for (const refreshToken of [undefined, null, '', 'a'.repeat(11), 'abc123 def456', 'abc123def456\n', 'a'.repeat(4001)]) {
+    const result = await renew(request({ refreshToken }), env);
+    assert.equal(result.status, 401);
+    assert.equal('session' in result, false);
+  }
+  assert.equal(p.calls.length, 0);
+  // Upper-bound input is syntactically valid but still requires real provider
+  // validation; a provider rejection must never create a browser session.
+  const maximum = 'a'.repeat(4000);
+  const rejecting = provider({ token: () => response({ error: 'synthetic-invalid-refresh' }, 400) });
+  const result = await createOperatorSessionRenewer(rejecting)(request({ refreshToken: maximum }), env);
+  assert.equal(result.status, 401);
+  assert.equal(rejecting.calls.length, 1);
+  assert.equal(JSON.parse(rejecting.calls[0].options.body).refresh_token, maximum);
+  assert.equal('session' in result, false);
+});
+
+test('invalid rotated refresh credentials and short access credentials are never issued', async () => {
+  for (const patch of [
+    { refresh_token: 'a'.repeat(11) },
+    { refresh_token: 'abc123 def456' },
+    { refresh_token: 'a'.repeat(4001) },
+    { access_token: 'abc123def456' },
+  ]) {
+    const p = provider({ token: () => response({ ...session(), ...patch }) });
+    const result = await createOperatorSessionRenewer(p)(request(), env);
+    assert.equal(result.status, 403);
+    assert.equal('session' in result, false);
+    assert.equal(JSON.stringify(result).includes(secret), false);
+    assert.equal(JSON.stringify(result).includes(rotatedSecret), false);
+  }
+});
+
+test('a syntactically valid legacy refresh credential cannot bypass an Auth rejection', async () => {
+  const p = provider({ token: () => response({ error: `synthetic-private-diagnostic-${secret}` }, 401) });
+  const result = await createOperatorSessionRenewer(p)(request(), env);
+  assert.deepEqual(result, { status: 401, code: 'sign_in_required' });
+  assert.equal(p.calls.length, 1);
+  assert.equal(JSON.stringify(result).includes(secret), false);
+  const route = await readFile(new URL('../src/app/api/staging-operator/session/route.ts', import.meta.url), 'utf8');
+  assert.match(route, /console\.info\('staging_operator_session', \{ outcome: result\.code \}\)/u);
+  assert.doesNotMatch(route, /console\.[^(]+\([^;]*(?:refreshToken|access_token|refresh_token|cookies\.)/u);
 });

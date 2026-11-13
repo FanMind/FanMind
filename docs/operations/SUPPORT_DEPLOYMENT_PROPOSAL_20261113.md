@@ -1,3 +1,15 @@
+> Final target reconciliation, 13 November12:38Vienna: browser /api/version
+> confirms Stagingd34834979cef30c9c6af567d61b3df448901bfda at11:38:28UTC;
+> Production remainsa798d793 at11:38:37UTC. Protected deployment43417498761
+> completed successfully on exactlyd348. The candidate preserves this actually
+> deployed refresh-format correction and its tests byte-for-byte through a real
+> merge. No further undeployed draft is selected and no refresh implementation
+> is independently rewritten here. Only runbook text conflicted; both sections
+> retained. Runtime source observations supersede the older checkpoints below;
+> they do not prove actual provider-backed renewal acceptance. All11 workflows
+> passed on preceding2843; final-head CI is rerun after reconciliation. Mobile
+> source/dependency tree is unchanged by this merge; no native check is bypassed.
+
 > Fresh target reconciliation, 13 November12:10Vienna: Browser /api/version
 > confirms Staginge4465268f781dfd57704070b9ae60ec6d831ca5d at11:10:12UTC;
 > Production remainsa798d793 at11:10:20UTC. The existing release-fix PR is extended
