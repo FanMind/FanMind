@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Root-owned, fixed Staging diagnostic only. No user paths, commands or env.
 import {execFileSync,spawnSync} from 'node:child_process';
-import {readFileSync,writeFileSync,statSync,lstatSync,realpathSync,renameSync,existsSync,unlinkSync,constants,openSync,fstatSync,closeSync} from 'node:fs';
+import {readFileSync,writeFileSync,statSync,lstatSync,realpathSync,renameSync,existsSync,unlinkSync,constants,openSync,fstatSync,closeSync,fchmodSync,fsyncSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -33,6 +33,12 @@ function rootFile(path){
  if(st.ino!==after.ino||st.size!==after.size||st.mtimeMs!==after.mtimeMs||st.ctimeMs!==after.ctimeMs)fail('probe_source_changed');
  return bytes;
  }finally{closeSync(fd);}
+}
+export function writeMediaProbeReceipt(path,receipt){
+ const temporary=path+`.${process.pid}`;
+ const fd=openSync(temporary,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
+ try{writeFileSync(fd,JSON.stringify(receipt)+'\n');fchmodSync(fd,0o644);fsyncSync(fd);}finally{closeSync(fd);}
+ renameSync(temporary,path);
 }
 export async function runStagingProbe(args){
  const input=validateProbeArguments(args);if(process.getuid()!==0)fail('probe_root_required');
@@ -71,8 +77,7 @@ export async function runStagingProbe(args){
  if(result.error||result.status!==0||cleanup.error||cleanup.status!==0||!output.includes('MEDIA_HOST_READINESS=PASS')||!output.includes('MEDIA_HOST_SYNTHETIC_CLEANUP=PASS'))fail('probe_context_failed');
  if(run('/usr/bin/systemctl',['show',UNIT,'--property=MainPID','--value'])!==pid)fail('probe_process_changed');
  const receipt={version:1,source:input.source,live:input.live,pid:Number(pid),completedAt:new Date().toISOString(),result:'PASS',run:input.run};
- const temporary=receiptPath+`.${process.pid}`;
- writeFileSync(temporary,JSON.stringify(receipt)+'\n',{mode:0o644,flag:'wx'});renameSync(temporary,receiptPath);
+ writeMediaProbeReceipt(receiptPath,receipt);
  console.log('STAGING_MEDIA_PROBE_RECEIPT=PASS');
 }
 if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){try{await runStagingProbe(process.argv.slice(2));}catch{console.error('STAGING_MEDIA_PROBE=BLOCK');process.exitCode=1;}}

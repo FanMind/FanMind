@@ -22,6 +22,7 @@ function install(path,bytes,mode=0o644){
 async function live(expected){const r=await fetch('https://staging.fanmind.ch/api/version',{redirect:'error',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('prepare_live');const v=await r.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==expected)fail('prepare_live');}
 export async function prepareStagingMediaHost(action,env=process.env){
  assertStagingMediaPrepare(env,action);if(process.getuid()!==0)fail('prepare_root');
+ process.umask(0o022); // installed public diagnostic source must remain application-readable
  if(run('/usr/bin/git',['-c',`safe.directory=${process.cwd()}`,'rev-parse','HEAD']).trim()!==env.GITHUB_SHA)fail('prepare_source');
  if(readFileSync('/etc/systemd/system/fanmind-staging.service','utf8')!==readFileSync('ops/systemd/fanmind-staging.service','utf8')||run('/usr/bin/systemctl',['show','fanmind-staging.service','--property=User','--value']).trim()!=='fanmind-staging'||run('/usr/bin/systemctl',['show','fanmind-staging.service','--property=WorkingDirectory','--value']).trim()!=='/var/www/fanmind-staging')fail('prepare_unit');
  await live(env.EXPECTED_LIVE_COMMIT);

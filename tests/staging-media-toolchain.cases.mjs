@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {readFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,statSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {assertStagingMediaPrepare,assertNoPackageUpgrade,MEDIA_LIMITS} from '../scripts/operations/prepare-staging-media-host.mjs';
-import {validateProbeArguments,probeLimitArguments} from '../scripts/operations/staging-media-probe-control.mjs';
+import {validateProbeArguments,probeLimitArguments,writeMediaProbeReceipt} from '../scripts/operations/staging-media-probe-control.mjs';
 import {assertInstalledMediaManifest} from '../scripts/operations/chat-admin-media-host-readiness.mjs';
 const sha='a'.repeat(40),live='b'.repeat(40);
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REPOSITORY_ID:'1259448985',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR_ID:'270165082',RUNNER_NAME:'fanmind-prod-01-exoscale',GITHUB_SHA:sha,REVIEWED_COMMIT:sha,EXPECTED_LIVE_COMMIT:live,CONFIRMATION:'prepare-staging-media-toolchain'};
@@ -61,4 +63,10 @@ test('controlled catalogue apply binds exact source, initial/complete state and 
  const sql=mediaCatalogueTransaction();
  for(const text of ['pg_advisory_xact_lock',"current_state='initial'","current_state<>'extended'",'catalogue_extended_postflight_required',"lock_timeout='5s'",'COMMIT;'])assert.ok(sql.includes(text),text);
  assert.throws(()=>mediaCatalogueTransaction(loadMediaSchemaProfile('initial')));
+});
+
+test('private probe umask cannot make the non-secret root receipt unreadable by the application',()=>{
+ const directory=mkdtempSync(join(tmpdir(),'fm1425-receipt-')),prior=process.umask(0o077);
+ try{const path=join(directory,'receipt.json'),receipt={version:1,source:sha,live:sha,result:'PASS'};writeMediaProbeReceipt(path,receipt);assert.equal(statSync(path).mode&0o777,0o644);assert.deepEqual(JSON.parse(readFileSync(path,'utf8')),receipt);}
+ finally{process.umask(prior);rmSync(directory,{recursive:true,force:true});}
 });
