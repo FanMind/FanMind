@@ -96,7 +96,7 @@ export async function runProductionMeta(action,control=process.env) {
   if(initial.pm2_env.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('target_binding');
   // Next loads .env after process creation; inherited values must never override it.
   for(const name of FIELDS)if(baseline[name]!==undefined && baseline[name]!==values[name])fail('inherited_configuration_conflict');
-  const live=async()=>{const v=await json(ORIGIN+'/api/version');if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==control.LIVE_COMMIT)fail('live_release_mismatch');};
+  const live=async()=>{let v;try{v=await json(ORIGIN+'/api/version');}catch{fail('target_read_failed');}if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==control.LIVE_COMMIT)fail('live_release_mismatch');};
   await live();
   if(action==='inspect') {console.log(`PRODUCTION_META_READINESS=${JSON.stringify(productionMetaReadiness(values))}`);return;}
   if(action==='subscribe-webhook'){await productionAppSubscription(values,true);console.log('PRODUCTION_META_APP_SUBSCRIPTION=PASS');return;}
