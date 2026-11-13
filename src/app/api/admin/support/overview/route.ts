@@ -26,7 +26,13 @@ export async function POST(request:NextRequest){
   const input=await readSupportRequest(request,512);
   const limit=await consumeSharedRateLimit({scope:"support.owner.maintenance",subject:actor.user.id,maxRequests:5,windowMs:60000});if(!limit.allowed)return fail(429);
   if(input.action==="recover"&&Object.keys(input).length===1){const repaired=await supportCentreDatabase("rpc/support_centre_recover",{p_actor:actor.user.id});return NextResponse.json({repaired},{headers});}
-  if(input.action==="ack"&&isSupportUuid(input.id)&&Object.keys(input).length===2){await supportCentreDatabase("rpc/support_centre_ack",{p_actor:actor.user.id,p_notification:input.id});return NextResponse.json({ok:true},{headers});}
+  if(input.action==="ack"&&isSupportUuid(input.id)&&Object.keys(input).length===2){
+   const acknowledged=await supportCentreDatabase("rpc/support_centre_ack",{p_actor:actor.user.id,p_notification:input.id});
+   if(acknowledged!==true)return fail(409);
+   // A concurrent recurrence is a new open alarm, not a successful dismissal.
+   if((await listOwnerSupportNotifications()).some(item=>item.id===input.id))return fail(409);
+   return NextResponse.json({ok:true},{headers});
+  }
   return fail(400);
  }catch{return fail(503);}
 }

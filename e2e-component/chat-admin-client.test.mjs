@@ -196,6 +196,24 @@ test("Fan creation uses the selected Character and opens its persisted Conversat
 test("switching from edit to add resets uncontrolled Fan fields",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await page.getByRole("button",{name:"Fan A1 verwalten",exact:true}).click();await page.getByRole("button",{name:"Bearbeiten",exact:true}).click();await expect(page.getByLabel("Name",{exact:true})).toHaveValue("Fan A1");await page.getByRole("button",{name:"Fan hinzufügen"}).click();await expect(page.getByLabel("Name",{exact:true})).toHaveValue("");await expect(page.getByLabel("Plattform / Quelle")).toHaveValue("OnlyFans");});
 test("copy-and-use confirmation is serialized against double clicks",async t=>{const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);await page.evaluate(()=>{const buttons=[...document.querySelectorAll("button")].filter(button=>button.textContent==="Kopieren und verwenden");buttons[0].click();buttons[1].click();});await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),1);const confirmation=await page.evaluate(()=>window.testRequests.find(r=>r.url==="/api/chatadmin/conversations").body);assert.match(confirmation.confirmation_id,/^[0-9a-f-]{36}$/u);});
 
+test("fresh persisted suggestions appear once under their incoming message",async t=>{
+ const page=await mount(t);await openFan(page,"Fan A1");await generate(page);
+ await page.evaluate(({fanId,drafts})=>{
+  window.fixture.historyFor[fanId].push(
+   {id:"fresh-inbound",direction:"fan_inbound",content:"Synthetic fan message",created_at:"2026-11-13T00:00:00Z"},
+   ...drafts.map((content,i)=>({id:`fresh-suggestion-${i}`,direction:"suggested_reply",content,created_at:`2026-11-13T00:00:0${i+1}Z`}))
+  );
+ },{fanId:fanA1.id,drafts});
+ await complete(page);
+ for(const reply of drafts)await expect(page.getByText(reply,{exact:true})).toHaveCount(1);
+ const group=page.locator(".suggestionGroup").filter({hasText:"Synthetic fan message"});
+ await expect(copies(group)).toHaveCount(3);
+ await group.getByRole("button",{name:"3 KI-Vorschläge einklappen",exact:true}).click();
+ for(const reply of drafts)await expect(page.getByText(reply,{exact:true})).toHaveCount(0);
+ await group.getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true}).click();
+ for(const reply of drafts)await expect(page.getByText(reply,{exact:true})).toHaveCount(1);
+});
+
 test("editing a generated suggestion copies and persists only the user's final wording",async t=>{
  const page=await mount(t);await openFan(page,"Fan A1");await generate(page);await complete(page);
  await page.getByRole("button",{name:"Vorschlag 2 bearbeiten",exact:true}).click();

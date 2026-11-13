@@ -159,6 +159,10 @@ test("public information chat rejects missing consent, client identities and ove
  assert.match(guardPublicSupportReply("Das kostet 9 €","de"),/Aktuelle Preise/);
  assert.match(guardPublicSupportReply("USD 5","en"),/Current prices/);
  assert.equal(guardPublicSupportReply("Du prüfst und sendest selbst.","de"),"Du prüfst und sendest selbst.");
+ assert.equal(guardPublicSupportReply("Bei individuellen Fragen hilft fanmind@fandomind.ch.","de"),"Bei individuellen Fragen hilft fanmind@fanmind.ch.");
+ assert.equal(guardPublicSupportReply("Contact help@foreign.example or FANMIND@FANMIND.CH.","en"),"Contact fanmind@fanmind.ch or fanmind@fanmind.ch.");
+ assert.equal(guardPublicSupportReply("Kontakt: mailto:help@foreign.example","de"),"Kontakt: mailto:fanmind@fanmind.ch");
+ assert.throws(()=>guardPublicSupportReply("a@b.co ".repeat(200),"de"),/invalid_reply/);
  const corrected=guardPublicSupportReply("Du kopierst den Vorschlag und sendest ihn selbst im Originalkanal.","de");
  assert.match(corrected,/Antwort-\/Original-Link/);assert.match(corrected,/hinterlegten Chat, Beitrag oder Kommentar/);assert.match(corrected,/sendest sie selbst/);
  assert.match(guardPublicSupportReply("You copy the suggestion and send it yourself in the original channel.","en"),/reply\/original link/);
@@ -170,6 +174,7 @@ test("actual public route answers without login and fails closed before provider
  const policy=await import("../src/lib/publicSupportPolicy.mjs");
  const http=await import("../src/lib/httpMutationPolicy.mjs");
  let allowed=true,owner=true,calls=0,usage=0,providerFails=false,seen;
+ let providerText="FanMind unterstützt manuelle Antworten.";
  const dependencies={
   "next/server":{NextResponse:{json:(body,opts={})=>({body,status:opts.status??200})}},
   "@/lib/httpMutationPolicy.mjs":{...http,isTrustedFanMindMutationRequest:(r)=>http.isTrustedMutationRequest(r)},
@@ -181,7 +186,7 @@ test("actual public route answers without login and fails closed before provider
   "@/lib/supportCentreServer":{supportCentreDatabase:async path=>path.startsWith("support_centre_owners")?(owner?[{user_id:"10000000-0000-4000-8000-000000000001"}]:[]):[{id:"20000000-0000-4000-8000-000000000001"}]},
  };
  const exports={};runInNewContext(ts.transpileModule(await readFile("src/app/api/public-support/route.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
- exports,require:n=>{assert.ok(dependencies[n],n);return dependencies[n];},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:"true",OPENAI_API_KEY:"ci-only-placeholder"}},Date,AbortSignal,fetch:async(url,init)=>{calls++;assert.equal(url,"https://api.openai.com/v1/responses");seen=JSON.parse(init.body);if(providerFails)throw Error("private provider error");return {ok:true,json:async()=>({output:[{content:[{type:"output_text",text:"FanMind unterstützt manuelle Antworten."}]}],usage:{}})};}
+ exports,require:n=>{assert.ok(dependencies[n],n);return dependencies[n];},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:"true",OPENAI_API_KEY:"ci-only-placeholder"}},Date,AbortSignal,fetch:async(url,init)=>{calls++;assert.equal(url,"https://api.openai.com/v1/responses");seen=JSON.parse(init.body);if(providerFails)throw Error("private provider error");return {ok:true,json:async()=>({output:[{content:[{type:"output_text",text:providerText}]}],usage:{}})};}
  });
  const body={question:"Was kann FanMind?",history:[],consent:true,language:"de"};
  const req=(b=body,origin="https://fanmind.ch")=>new Request("https://fanmind.ch/api/public-support",{method:"POST",headers:{"content-type":"application/json",origin},body:JSON.stringify(b)});
@@ -195,5 +200,7 @@ test("actual public route answers without login and fails closed before provider
  owner=false;assert.equal((await exports.POST(req({...body,question:"Prices?"}))).status,503);owner=true;
  const english=await exports.POST(req({...body,question:"What are the setup fees?",language:"en"}));assert.match(english.body.reply,/no setup fee/);assert.match(english.body.reply,/in preparation/);assert.equal(calls,0);
  const result=await exports.POST(req());assert.equal(result.status,200);assert.match(result.body.reply,/FanMind/);assert.equal(calls,1);assert.equal(usage,1);assert.equal(seen.store,false);assert.equal(seen.max_output_tokens,800);assert.doesNotMatch(JSON.stringify(seen),/owner_user_id|ci-only-placeholder|workspace_id/);
- providerFails=true;const failed=await exports.POST(req());assert.equal(failed.status,503);assert.doesNotMatch(JSON.stringify(failed),/private provider error/);assert.equal(usage,2);
+ providerText="Fragen zu FanMind: fanmind@fandomind.ch.";
+ const contact=await exports.POST(req());assert.equal(contact.status,200);assert.equal(contact.body.reply,"Fragen zu FanMind: fanmind@fanmind.ch.");assert.equal(calls,2);assert.equal(usage,2);
+ providerFails=true;const failed=await exports.POST(req());assert.equal(failed.status,503);assert.doesNotMatch(JSON.stringify(failed),/private provider error/);assert.equal(usage,3);
 });

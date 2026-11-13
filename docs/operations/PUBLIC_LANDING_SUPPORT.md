@@ -60,6 +60,11 @@ handoff is shown. Account actions remain protected; this chat supplies informati
   usage metadata retention and monitoring apply, not Support conversation storage.
 - Client receives only reply or a fixed error, no credentials/model/Owner identifiers.
   Plain text React rendering; no generated HTML or automatic external send.
+- The server replaces email addresses in model output with the approved public
+  contact `fanmind@fanmind.ch`, including `mailto:` addresses. This prevents a
+  misspelled or history-injected contact from redirecting visitors. The actual
+  Production typo reproduced on 13 November remains a deployment finding until
+  this guard has passed review and an explicitly approved rollout.
 
 ## Validation and release
 
