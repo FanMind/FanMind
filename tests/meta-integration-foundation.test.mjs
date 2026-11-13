@@ -521,7 +521,8 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
     /messages\.limit\(\$\{pageLimit\}\)\{id,created_time,from,to,message\}/u,
   );
   assert.match(integration, /Authorization: `Bearer \$\{accessToken\}`/u);
-  assert.match(pagingPolicy, /url\.host !== host/u);
+  assert.match(pagingPolicy, /url\.host !== "graph\.instagram\.com"/u);
+  assert.match(pagingPolicy, /url\.host !== "graph\.facebook\.com"/u);
   assert.match(start, /requireActiveAuthorizedWorkspace\(\)/u);
   assert.match(start, /workspaceId: workspace\.id/u);
   assert.match(start, /userId: data\.user\.id/u);

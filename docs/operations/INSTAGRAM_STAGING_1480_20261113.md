@@ -1,5 +1,13 @@
 # Unified Login implementation checkpoint — approved Staging scope
 
+PR1481 continuation: browser control recovered after runtime renewal; the Meta
+setup reload succeeds without repeating personal login. Head14771e9 passed
+Truth/lint/tests/build, while native PostgreSQL remains running. CodeQL reported
+alert80 on paging-host membership. Exact parsed-host equality is now explicit
+for each of the two supported providers, with adversarial subdomain/path/port
+tests. No alert dismissal or security-check bypass. A successor head needs its
+own hosted checks before merge. No rollout or token authorization yet.
+
 Owner approved the concrete Unified Login route after the inspection below.
 Existing App1547928503809961 now has configuration2150411132228815,
 Instagram-account required asset only, exact instagram_basic,

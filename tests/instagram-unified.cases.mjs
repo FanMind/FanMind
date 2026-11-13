@@ -29,6 +29,12 @@ test('Paging is pinned to the selected provider host and never crosses protocols
  const ig='https://graph.instagram.com/v25.0/123?after=abc', fb='https://graph.facebook.com/v25.0/123?after=abc';
  assert.equal(validateInstagramGraphPagingUrl(ig),ig);assert.equal(validateInstagramGraphPagingUrl(fb),null);assert.equal(validateInstagramGraphPagingUrl(ig,'graph.facebook.com'),null);
  assert.equal(resolveInstagramGraphPagingCursor(fb,'graph.facebook.com'),'abc');
+ for(const host of ['graph.facebook.com','graph.instagram.com']) {
+  for(const authority of [`${host}.attacker.invalid`,`attacker.invalid/${host}`,`${host}:444`,`user@attacker.invalid/${host}`]) {
+   assert.equal(validateInstagramGraphPagingUrl(`https://${authority}/v25.0/123?after=abc`,host),null);
+  }
+ }
+ assert.equal(validateInstagramGraphPagingUrl(ig,'attacker.invalid'),null);
  for(const u of ['http://graph.facebook.com/v25.0/123','https://attacker.invalid/v25.0/123','https://user@graph.facebook.com/v25.0/123','https://graph.facebook.com/v1.0/123'])assert.equal(validateInstagramGraphPagingUrl(u,'graph.facebook.com'),null);
 });
 test('Strict continuation is single-step, escaped, no-store and exact Operator/origin bound',async()=>{

@@ -12,7 +12,9 @@ export function validateInstagramGraphPagingUrl(value, host = 'graph.instagram.c
     const url = new URL(value);
     if (
       url.protocol !== "https:" ||
-      !['graph.instagram.com','graph.facebook.com'].includes(host) || url.host !== host ||
+      (host !== "graph.instagram.com" && host !== "graph.facebook.com") ||
+      (host === "graph.instagram.com" && url.host !== "graph.instagram.com") ||
+      (host === "graph.facebook.com" && url.host !== "graph.facebook.com") ||
       url.username ||
       url.password ||
       ![META_GRAPH_API_VERSION, "v27.0"].includes(version) || !url.pathname.startsWith(`/${version}/`)
