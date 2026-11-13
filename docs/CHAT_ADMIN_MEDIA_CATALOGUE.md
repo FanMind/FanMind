@@ -1,7 +1,10 @@
 # Character media catalogue continuation — #1425
 
-Source work only, 13 November 2026. Extends the existing #1427 library; it does
-not establish deployed acceptance. #1440 remains unmerged; its authenticated
+Merged source, 13 November 2026: PR #1469 is on Main at
+`3912461e1f88eb5cf2e621f23e4d6079409c20cc`. This does not establish deployed
+acceptance. Fresh read-only Staging preparation is recorded in
+`docs/operations/CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+Extends the existing #1427 library. #1440 remains unmerged; its authenticated
 post-delete absence check is retained in this continuation without merging that PR.
 
 ## Existing implementation versus extension

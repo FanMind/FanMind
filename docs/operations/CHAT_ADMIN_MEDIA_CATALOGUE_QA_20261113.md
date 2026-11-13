@@ -1,5 +1,39 @@
 # #1425 catalogue evidence — 13 November 2026
 
+## Post-merge actual Staging preparation (supersedes historical source status)
+
+Fresh Main ref: `3912461e1f88eb5cf2e621f23e4d6079409c20cc`, regular PR #1469
+merge. HTTPS Staging `/api/version` at 12:57:32 UTC confirms
+`d34834979cef30c9c6af567d61b3df448901bfda` and `runtimeEnvironment=staging`.
+That deployed commit is an ancestor of Main; session/deploy source paths are
+unchanged in the inspected comparison. Main CI observed: God Mode, Supply Chain,
+Browser and CodeQL workflows succeeded. This does not imply a new full build or
+Mobile validation on the merge commit; PR-head checks remain separate evidence.
+
+Actual existing Staging project `vshyhvgcmrlagvfnvomc`, read-only transactions:
+the complete initial media catalogue equals the source-owned JSON reference,
+including table/column grants, RLS/policy expressions, function bodies/owners,
+indexes, constraints, triggers and private bucket. Extension absent: no folder
+table, zero of five added columns and zero of four new functions. Existing
+assets=0, bucket objects=0; one multi-Character capability is enabled. No JWT
+negative, capability revocation or synthetic write was performed in this pass.
+
+PR #1470 remains Draft at `900ce9454621696a761d94cef74070a075391fca`, with
+`mergeable=false`, `mergeable_state=dirty`. Its Owner-gated Main admission
+extension is absent from Main. Current Main rejects Operator=true; default false
+would overwrite its release flag. Do not deploy either choice. Reuse the
+other session's reconciled successor; do not duplicate or merge their changes.
+
+Actual application-host tooling, effective flags, namespace/private temporary
+storage, resource limits and conversion/cleanup remain UNVERIFIED. This session
+has no SSH identity or GitHub CLI login; GitHub connector exposes no workflow
+dispatch action. Browser connection attempt timed out. Existing workflow has no
+read-only video-host diagnostic. No target-host PASS can be inferred from the
+checked-in service unit or local/CI ffmpeg. No deployment, schema/bucket/flag,
+provider, Auth or capability mutation occurred. Detailed bounded action manifest,
+test fixtures, recovery and remaining prerequisites:
+`CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+
 ## Resumed exact-source review (supersedes pending source/CI notes below)
 
 Resumed from 27d00fa123170fc158d93a3ba256bba94f4bcd65, no reimplementation.
