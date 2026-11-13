@@ -19,7 +19,26 @@ export async function GET(request:NextRequest){try{
  const characterId=mediaId(request.nextUrl.searchParams.get("character_id"));
  const character=await assertMediaCharacter(workspace.id,characterId,undefined,!request.nextUrl.searchParams.get("id"));
  const assetId=request.nextUrl.searchParams.get("id");
- if(assetId){const asset=await getMediaAsset(workspace.id,characterId,assetId);if(asset.deleted)throw new ChatAdminMediaError("media_deleted");const bytes=await mediaObject(workspace.id,characterId,asset.id,"GET");await assertMediaCharacter(workspace.id,characterId,character.revision);return new NextResponse(new Uint8Array(bytes),{headers:{...privateHeaders,"Content-Type":"image/webp","Content-Security-Policy":"default-src 'none'; sandbox"}});}
+ if(assetId){
+  const asset=await getMediaAsset(workspace.id,characterId,assetId);if(asset.deleted)throw new ChatAdminMediaError("media_deleted");
+  const kind=asset.media_type??"image",requestedRange=request.headers.get("range");
+  if(kind==="video"){
+   if(requestedRange&&!/^bytes=\d+-\d*$/u.test(requestedRange))return new NextResponse(null,{status:416,headers:privateHeaders});
+   const budget=await consumeSharedRateLimit({scope:"chat_admin_media_video_preview",subject:workspace.id,maxRequests:12,windowMs:60_000});
+   if(!budget.allowed)return NextResponse.json({error:"rate_limited"},{status:429,headers:privateHeaders});
+  }
+  const bytes=await mediaObject(workspace.id,characterId,asset.id,"GET",undefined,kind);
+  await assertMediaCharacter(workspace.id,characterId,character.revision);
+  const range=request.headers.get("range");
+  const type=kind==="video"?"video/mp4":"image/webp";
+  if(kind==="video"&&range){
+   const match=/^bytes=(\d+)-(\d*)$/u.exec(range),start=Number(match?.[1]),end=match?.[2]?Number(match[2]):bytes.length-1;
+   if(!match||!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||start>end||start>=bytes.length)return new NextResponse(null,{status:416,headers:{...privateHeaders,"Content-Range":`bytes */${bytes.length}`}});
+   const last=Math.min(end,bytes.length-1),slice=bytes.subarray(start,last+1);
+   return new NextResponse(new Uint8Array(slice),{status:206,headers:{...privateHeaders,"Content-Type":type,"Accept-Ranges":"bytes","Content-Range":`bytes ${start}-${last}/${bytes.length}`,"Content-Length":String(slice.length),"Content-Security-Policy":"default-src 'none'; sandbox"}});
+  }
+  return new NextResponse(new Uint8Array(bytes),{headers:{...privateHeaders,"Content-Type":type,"Content-Length":String(bytes.length),...(kind==="video"?{"Accept-Ranges":"bytes"}:{}),"Content-Security-Policy":"default-src 'none'; sandbox"}});
+ }
  return NextResponse.json({...await loadCharacterMedia(workspace.id,characterId),character,analysis_enabled:process.env.FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED==="true"},{headers:privateHeaders});
 }catch(error){return failure(error);}}
 
@@ -54,7 +73,7 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    if(body.revision!==asset.revision)throw new ChatAdminMediaError("stale_media_context");
    if(method==="DELETE"){
     if(!asset.deleted)await updateMediaAsset(workspace.id,characterId,asset,{deleted:true,available:false,reviewed:false});
-    await mediaObject(workspace.id,characterId,asset.id,"DELETE");
+    await mediaObject(workspace.id,characterId,asset.id,"DELETE",undefined,asset.media_type??"image");
     await mediaRest(`chat_character_media?${mediaScope(workspace.id,characterId)}&id=eq.${asset.id}&deleted=eq.true`,{method:"DELETE"});
    }else{if(asset.deleted)throw new ChatAdminMediaError("media_deleted");const edit=normalizeMediaEdit(body);if(edit.offer_id&&!(character.sales_playbook?.offers??[]).some(offer=>offer.id===edit.offer_id&&offer.active))throw new ChatAdminMediaError("invalid_media_offer");await updateMediaAsset(workspace.id,characterId,asset,edit);}
   }

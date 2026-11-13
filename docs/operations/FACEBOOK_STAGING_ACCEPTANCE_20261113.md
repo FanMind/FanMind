@@ -1,3 +1,58 @@
+# Final bounded Staging receipt — 13 November 2026
+
+This latest receipt supersedes earlier failed/pending checkpoints retained below.
+Acceptance is bound to **runtime d34834979cef30c9c6af567d61b3df448901bfda**,
+not to a later documentation-only closeout commit. No further runtime deployment
+is part of this receipt.
+
+| Area | Actual result |
+|---|---|
+| Deployment | PASS: protected run 43417498761; independent /api/version at 12:31:59 Europe/Vienna exactly d3483497/runtimeStaging. Temporary feature rule removed; original two rules restored. |
+| Page connection | PASS for existing FanMind 1208778912321696 / Operator binding. No WellFit connection, permission expansion or shared Webhook change. |
+| Messenger | PASS: two real messages in one private thread, exact original thread reopened, normal contact navigation shows private history only. |
+| Comments | PASS: four real comments in two separate posting histories (3+1), same correct sender/contact, each original comment target retained; both latest originals reopened correctly. |
+| Repeat sync/persistence | PASS after real renewal: two posts checked/four comments found/zero new; incremental DM imported zero. Independent DB: 3 conversations / 6 inbound messages / 6 unique external IDs, no parent/workspace/contact/thread/post anomaly. |
+| Reply context | PASS for selected recent dialogue and per-source draft reset; two actual posting-specific AI generations already exercised. Contact knowledge/preferences remain contact-level. No draft copied or sent. |
+| Workspace/security | Independent Guardian PASS: Operator: 3 own conversations / 6 own messages / foreign 0; foreign fixture owner: Operator 0, own Workspace visible; RLS enabled, correct Operator owner/marker; 4 distinct correct comment targets. |
+| Actual renewal | PASS: real button-triggered continuation at 12:32:48 and 12:33:34 Europe/Vienna, both return authenticated Dashboard without new login. Provider refresh rows 3 → 4 → 5, revoked 0 → 1 → 2; sessions remain 3, last sign-in unchanged at 11:59:16. |
+| Logout/revocation | PASS: actual Logout, protected/dashboard redirects/login, subsequent continuation returns sign-in-required. Independent snapshot 12:39:07 Europe/Vienna confirms 0 provider sessions / 0 refresh records. No raw token replay or universal immediate JWT revocation claim. |
+| Re-login restore | PASS: secure Owner-assisted login at 12:40:27 Europe/Vienna independently confirmed by provider metadata and correct Operator/Inbox; one private and two posting original actions remain visible. |
+| Production | Independent /api/version at 12:37:47 Europe/Vienna still a798d7938bb4e7e168f615f0c32d1a603dd47d4a/runtimeProduction. No Main merge, Production action or new database. |
+
+## Exact source and evidence
+
+- Runtime source d3483497; checked tree 375a27265a1f28f1ffe80ccc87bc90056d3645db.
+- [Protected deployment 43417498761](https://github.com/FanMind/FanMind/actions/runs/43417498761) PASS.
+- Exact source [CI 43413914169](https://github.com/FanMind/FanMind/actions/runs/43413914169), [Project Memory 43413922415](https://github.com/FanMind/FanMind/actions/runs/43413922415) and [God Mode 43413922436](https://github.com/FanMind/FanMind/actions/runs/43413922436) PASS.
+- Focused source checks 52/52, Guardian session 17/17 and independent actual-route
+  synthetic-provider tests passed before deployment. Those synthetic results are
+  separate from the real provider rotations and real Facebook data reported here.
+- Earlier Browser E2E 43405664594 passed 94 desktop/mobile public cases, 6 synthetic core
+  journeys including two-post details and 43 component cases. Actual post-deployment
+  browser checks here used the Owner's real supplied inputs.
+
+## Scope and remaining integration boundaries
+
+The approved manual-sync/Operator-continuation Staging acceptance is complete.
+Natural access expiry was observed earlier on 13 November; the final runtime's
+successful provider-backed renewals used retained valid refresh cookies. They
+are user/agent-triggered, not background automatic refresh. Live multipage Graph
+traversal beyond this dataset, automatic Webhook arrival, generic automatic
+Messenger-link discovery, Meta publication/App Review/legal and Production
+activation remain outside this bounded PASS. The Messenger target is verified
+manual mapping for this conversation. All credentials remained in protected
+browser/provider storage; independent Auth evidence used counts/timestamps only.
+
+The existing PR remains open/unmerged. Reconcile/review the stacked Main
+integration and its required checks separately, preserving other active work;
+no Main merge or new deployment is authorized by this closeout. A logout requires
+secure interactive bootstrap again; no password vault or future browser-profile
+recovery is supplied by continuation.
+
+---
+
+## Historical preparation and earlier failures
+
 # Facebook Staging acceptance — 13 November 2026
 
 ## Target and authorization

@@ -31,7 +31,18 @@ approved. A later parallel deployment requires reconciliation first.
 
 Earlier checkpoint evidence below is historical, not superseded live acceptance.
 
-> Latest checkpoint: Owner-approved e4465268 deployed in run43412732522;
+> Final bounded acceptance,13November: exact approved d3483497 deployed in
+> 43417498761; independent version confirmed and temporary branch rule removed.
+> Two real Supabase refresh rotations without login passed; independent metadata
+> confirms predecessor revocation, stable sessions/sign-in. Real renewed-session
+> Facebook sync and Workspace/RLS passed. Actual Logout removed provider sessions
+> and refresh records; protected access and continuation were denied afterward.
+> This is user/agent-triggered continuation, not background automatic refresh.
+> See the final runtime-bound receipt in FACEBOOK_STAGING_ACCEPTANCE_20261113.md.
+> Earlier failed/pending sections below remain historical. Main/Production and
+> any later deployment require their separate approvals.
+
+> Historical checkpoint: Owner-approved e4465268 deployed in run43412732522;
 > exact SHA independently confirmed and temporary branch rule removed. Origin
 > rejection is fixed. Actual renewal now returns sign-in-required without rotation;
 > provider-format validation still rejects legitimate 12-character refresh
@@ -39,7 +50,7 @@ Earlier checkpoint evidence below is historical, not superseded live acceptance.
 > are source preparation only; successor rollout requires its own exact approval.
 > Do not label this UI-triggered continuation as background automatic refresh.
 
-> Latest runtime checkpoint, 13 November: Owner-approved a49decfd deployed in
+> Historical runtime checkpoint, 13 November: Owner-approved a49decfd deployed in
 > 43408555294 and independently version-checked. Original two deployment branch
 > rules restored. Real private/post-separated details, selected-thread AI drafts,
 > duplicate checks and independent RLS passed. Natural access expiry was observed;

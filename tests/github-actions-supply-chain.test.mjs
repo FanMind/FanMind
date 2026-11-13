@@ -108,7 +108,7 @@ test("authorization roundtrip uses two independent digest-pinned PG17 services",
     readFile("package.json", "utf8"),
   ]);
   const job = workflow.match(
-    /\n  pg17_authorization_roundtrip:\n[\s\S]*$/u,
+    /\n  pg17_authorization_roundtrip:\n[\s\S]*?(?=\n  [a-z][a-z0-9_]*:\n|$)/u,
   )?.[0] ?? "";
   const images = [...job.matchAll(/^\s+image:\s+(\S+)$/gmu)]
     .map((match) => match[1]);
@@ -341,13 +341,13 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(supportCustomer.source, /environment: staging/u);
   assert.match(supportCustomer.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(supportCustomer.source, /SERVICE_ROLE|permissions:\s*write-all/u);
-  assert.equal(hostedWorkflows.length, 76);
+  assert.equal(hostedWorkflows.length, 77);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    85, // Includes the separately protected customer Support acceptance job.
+    87, // Includes independent media SQL and actual video processing jobs.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

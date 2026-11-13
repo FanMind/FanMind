@@ -1,3 +1,16 @@
+## FM-FACEBOOK-MAIN-1465-20261113 — Owner conditional merge request
+- Owner requested existing PR1465 merge when all checks are green. Current Main6c1e376b already contains a49decfd Facebook foundation; remaining branch delta is the reviewed HTTPS-loopback/12-character refresh fixes, tests and bounded runtime receipt.
+- Retargeted existing PR from historical Facebook feature target to Main; isolated integration preserves current Support/common-release implementation. Only drift-baseline metadata required conflict reconciliation: preserve all Main review fields, add accepted Facebook evidence and recompute combined Source-of-Truth hash.
+- Protected Main rules remain12requiredchecks/strictup-to-date/no-bypass. Merge must use unchanged expected PRhead after full Main CI and independent review. No Staging/Production deployment, Webhook/permission/DB write or runtimeflag change is authorized or performed here; accepted Staging remains d3483497.
+
+## FM-STAGING-OPERATOR-20261113 — bounded Staging acceptance complete on d3483497
+- Owner-approved d34834979cef30c9c6af567d61b3df448901bfda deployed in protected43417498761; independent version12:31:59 Europe/Vienna. Temporary branchrule removed, original2restored. No Main/Production/Webhook/permission/newDB/outbound action.
+- Actual Supabase continuation twice without login at12:32:48/12:33:34; root+independent metadata rows3->4->5, revoked0->1->2, sessions3stable,lastsigninunchanged11:59:16. Protected Dashboard/contact/source histories work. No tokenvalues exported. User/agent-triggered continuation, not backgroundauto-refresh.
+- Real afterrenewal sync2posts/4comments/0new; DM0new. 3 conversations: 1 private Messenger thread + 2 posting threads; 6 inbound messages / 6 unique IDs, posts3+1comments, ownoriginals reopened. Independent parent/provenance/RLS allPASS:Operatorforeign0,foreignownerOperator0withownWorkspacevisible. Contact knowledge remains contact-level; no synthetic test presented as realdata.
+- Actual Logout+providerrevocation PASS:protected/dashboard->login;continuation401; independent12:39:07 snapshot0sessions/0refreshrecords. Natural expiry observed earlier sameacceptance; universal instantJWTrevocation/replay notclaimed. Secure relogin restore is interactivebootstrap.
+- Secure Owner-assisted re-login restored at12:40:27 Europe/Vienna; correctOperator andInbox independently confirmed.
+- Final receipt docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md. This closeout changes documentation only and leaves runtime bound to d3483497. Same existing #1464/Draft#1465/#1463, open/unmerged; later stacked Mainintegration/requiredchecks and protecteddeploys separatelyOwner-gated. General Meta/production readiness remains outsideboundedPASS.
+
 ## FM-STAGING-OPERATOR-20261113 — e446 runtime and provider-refresh format correction
 - Same #1464/Draft#1465. Owner-approved e4465268f781dfd57704070b9ae60ec6d831ca5d Staging rollout43412732522 PASS; independent version11:56:19 Europe/Vienna. Temporary feature rule removed; original2rules restored. No Main/Production/Webhook/newDB/permission/outbound changes.
 - Actual renewal passes Origin but now401sign_in_required, no Authrotation (2refreshrecords/0revoked/last11:42:14). Existing contactview remainsauthenticated. No renewalPASS or backgroundautomaticrefresh claim.

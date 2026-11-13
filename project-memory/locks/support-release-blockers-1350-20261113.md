@@ -28,3 +28,15 @@ SUCCESS. Preserve exactly that deployed refresh-format source/tests via a real
 merge, not a duplicate repair; both runbook sections retained. No further
 undeployed draft selected. Mobile tree identical to fully passed2843 parent;
 all final-head checks rerun without bypass. Production remainsa798d793.
+
+
+13 November continuation: Owner explicitly authorizes existing PR1470 Main
+integration/conflict resolution/new-head testing, no merge/deploy/activation.
+Integrate current Main3912461e (#1465/#1469); sole runbook conflict combines
+Main final Facebook acceptance with the existing bounded preservation proposal.
+Main runtime/tests/controlled SQL retained without manual feature changes.
+Old head900ce945 eleven workflows completed successfully, never counted as
+new-head evidence. Keep source admission proposal/Expo patches unchanged and
+all active protections/runtime settings untouched. Exact new head and fresh CI
+receipts belong in existing PR1470; request one concrete source-only Owner
+approval after tests. Recheck any newer Main/Staging/deploy locks before rollout.

@@ -1,3 +1,46 @@
+# PR #1470 current Main reconciliation — 13 November 2026
+
+The Owner authorized continuation, conflict resolution and new-head checks only.
+PR1470 remains Draft, with no merge or deployment approval. Current Main
+`3912461e1f88eb5cf2e621f23e4d6079409c20cc` includes the regular #1465 and #1469
+merges. It is integrated into the existing PR through a genuine merge. The sole
+content conflict is STAGING_OPERATOR_SESSION_ROLLOUT.md: retain both the bounded
+Main-preservation proposal and Facebook final acceptance, marking prior failed
+checkpoints historical. All Main runtime, SQL, tests and documentation are
+retained byte-for-byte except that combined runbook. No new media, Facebook or
+session implementation is introduced. Nine Expo patch updates and the exact
+reviewed Main preservation source policy remain unchanged from old PR head
+`900ce9454621696a761d94cef74070a075391fca`.
+
+Fresh HTTPS target reads at 14:01 Vienna: Staging remains
+`d34834979cef30c9c6af567d61b3df448901bfda`; Production remains
+`a798d7938bb4e7e168f615f0c32d1a603dd47d4a`. No active workflow was in progress at
+the initial API read; two older queued workflows are not deployment approval.
+Repeat live versions, current Main and deployment/host locks before any later
+joint Staging rollout; do not overwrite a successor. Metadata alone does not
+prove the absence of a host lock.
+
+The old head's eleven successful workflows, including native builds, are
+complete historical evidence only. New-head CI must run in full, including
+Mobile and native Android/iOS compilation, plus inherited media acceptance.
+The final exact head/tree, local results and fresh GitHub receipts are recorded
+in PR1470 after completion, avoiding a self-referential commit hash.
+
+One bundled Owner decision after successful checks: approve regular source merge
+of the exact final PR head including the narrowly bounded Main admission change
+for preservation of an already enabled Operator continuation. This is a source
+policy change; it neither changes active protected branch/environment rules nor
+first-activates continuation. Manual exact reviewed Main SHA, Billing preserve,
+no recovery, both explicit preservation inputs, and a fresh single valid true
+flag parsed from private regular non-symlink .release.env remain mandatory.
+Off/missing/unknown/duplicate/malformed state must never become an activation;
+false/default input must not silently disable existing true state. Keep existing
+protection, no bypass. No deployment, schema, bucket, provider, Billing, runtime
+or feature activation is requested by this source decision. A merged Main SHA
+and any later rollout remain separate concrete approvals.
+
+The following sections are historical checkpoints, superseded where noted above.
+
 > Final target reconciliation, 13 November12:38Vienna: browser /api/version
 > confirms Stagingd34834979cef30c9c6af567d61b3df448901bfda at11:38:28UTC;
 > Production remainsa798d793 at11:38:37UTC. Protected deployment43417498761
