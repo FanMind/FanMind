@@ -12,7 +12,7 @@ const metadata=sha=>`FANMIND_RELEASE_COMMIT=${sha}\nFANMIND_RUNTIME_ENVIRONMENT=
 test('file descriptors reject replaced identities, symlinks and special files before reading bytes',()=>{
  const root=fs.mkdtempSync(join(tmpdir(),'fanmind-recovery-open-'));try{
   const path=join(root,'file');fs.writeFileSync(path,'original');const original=fs.lstatSync(path);
-  fs.renameSync(path,join(root,'old'));fs.writeFileSync(path,'replaced');assert.throws(()=>openRecoveryFile(path,original),/snapshot_file_changed/);
+  fs.renameSync(path,join(root,'old'));fs.writeFileSync(path,'replaced',{flag:'wx',mode:0o600});assert.throws(()=>openRecoveryFile(path,original),/snapshot_file_changed/);
   fs.unlinkSync(path);fs.symlinkSync(join(root,'old'),path);assert.throws(()=>openRecoveryFile(path),error=>error.code==='ELOOP');
   assert.throws(()=>openRecoveryFile(root),/snapshot_file_changed/);
   const opened=openRecoveryFile(join(root,'old'));try{assert.equal(fs.readFileSync(opened.fd,'utf8'),'original');}finally{fs.closeSync(opened.fd);}
