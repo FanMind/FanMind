@@ -1,3 +1,14 @@
+> Fresh target reconciliation, 13 November12:10Vienna: Browser /api/version
+> confirms Staginge4465268f781dfd57704070b9ae60ec6d831ca5d at11:10:12UTC;
+> Production remainsa798d793 at11:10:20UTC. The existing release-fix PR is extended
+> by a genuine merge of exactly that deployed source, preserving its session
+> policy/tests byte-for-byte. Only the rollout runbook conflicted; both sections
+> are retained. This adds no manual Facebook/runtime implementation change.
+> Newer Draft1465d3483497 is not deployed and is excluded. Actual renewal on
+> e446 still fails401/sign_in_required per the owning Work-tab; preserving its
+> opt-in is not evidence of successful renewal. Main source integration and the
+> named admission extension require explicit approval; no deployment is granted.
+
 # Deployment-blocker repair proposal — 13 November 2026
 
 PR1468 was Owner-approved at1ddf705e and regularly merged as

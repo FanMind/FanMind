@@ -15,3 +15,10 @@ extension is a separate concrete Owner approval item before merge/use.
 Keep follow-up PR Draft pending full exact-head CI and explicit source approval.
 No target deployment, flag change, real session renewal or live Support data write.
 Do not inherit parallel Work-tab approvals or silently include undeployed source.
+
+Fresh runtime read11:10UTC confirms Staginge4465268. Preserve exactly that
+already deployed session request correction by a real merge, no manual runtime
+edits. Both runbook sections retained; source and session tests byte-identical
+to deployed parent. Newer undeployed d3483497 excluded. The responsible tab
+reports renewal401 still open; no live renewal success claimed. Separate exact
+common-source approval remains necessary before merge/deployment.

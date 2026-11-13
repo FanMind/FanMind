@@ -24,11 +24,13 @@ export function operatorSessionRequestAllowed(request) {
   let url;
   try { url = new URL(request.url); } catch { return false; }
   if (url.username || url.password) return false;
-  // Next.js can see the local nginx upstream URL. Only the configured Staging
-  // public origin or this exact local transport are accepted; forwarded headers
-  // never establish trust. Browser Origin and the runtime/project gates remain.
+  // Next.js reconstructs its local URL using nginx's forwarded TLS protocol:
+  // an HTTP upstream can therefore become https://localhost:3001 here. Accept
+  // only these exact loopback forms; no header establishes an allowed origin.
+  // Public browser Origin and runtime/project/Operator/workspace gates remain.
   const trustedTransport = url.origin === STAGING_ORIGIN ||
-    ['http://127.0.0.1:3001', 'http://localhost:3001'].includes(url.origin);
+    ['http://127.0.0.1:3001', 'http://localhost:3001',
+      'https://127.0.0.1:3001', 'https://localhost:3001'].includes(url.origin);
   return trustedTransport && url.pathname === '/api/staging-operator/session' &&
     request.method === 'POST' && request.headers.get('origin') === STAGING_ORIGIN &&
     ['same-origin', 'none'].includes(request.headers.get('sec-fetch-site') || 'same-origin');

@@ -31,6 +31,15 @@ approved. A later parallel deployment requires reconciliation first.
 
 Earlier checkpoint evidence below is historical, not superseded live acceptance.
 
+> Latest runtime checkpoint, 13 November: Owner-approved a49decfd deployed in
+> 43408555294 and independently version-checked. Original two deployment branch
+> rules restored. Real private/post-separated details, selected-thread AI drafts,
+> duplicate checks and independent RLS passed. Natural access expiry was observed;
+> renewal still failed 403 origin_forbidden. Installed Next request adaptation
+> reproduces HTTPS loopback URL construction. Exact HTTPS-loopback source fix is
+> pending review/new exact-commit approval; real renewal/logout/revocation are OPEN.
+> Detailed later checkpoint: FACEBOOK_STAGING_ACCEPTANCE_20261113.md.
+
 > 13 November actual rollout: exact approved aae0003c was deployed in run
 > 43399615749, independently version-checked, and temporary branch admission
 > removed. Manual real DM/comment imports passed; actual continuation failed.
