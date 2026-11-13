@@ -243,6 +243,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     [
       "backup-worker-production-control.yml",
       "backup-worker-root-bootstrap.yml",
+      "chat-admin-media-host-inspection.yml",
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
@@ -258,6 +259,14 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
     ],
   );
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
+  const mediaInspection = selfHostedWorkflows.find(workflow => workflow.file === "chat-admin-media-host-inspection.yml");
+  assert.deepEqual(mediaInspection?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaInspection.source, /github\.ref == 'refs\/heads\/main' && inputs\.reviewed_commit == github\.sha/u);
+  assert.match(mediaInspection.source, /environment: staging/u);
+  assert.match(mediaInspection.source, /group: fanmind-staging-deploy/u);
+  assert.match(mediaInspection.source, /cancel-in-progress: false/u);
+  assert.match(mediaInspection.source, /runs-on: \[self-hosted, fanmind-staging, exoscale, linux, x64\]/u);
+  assert.doesNotMatch(mediaInspection.source, /secrets\.|sudo|apt-get|workflow_call|pull_request|persist-credentials: true/u);
   assert.deepEqual(selfHostedWorkflows.find(workflow => workflow.file === "staging-meta-runtime.yml")?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.deepEqual(backupControl?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
   const privilegedBackupJob = backupControl.source.split("\n  control:")[1];

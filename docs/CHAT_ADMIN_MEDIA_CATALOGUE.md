@@ -1,5 +1,12 @@
 # Character media catalogue continuation — #1425
 
+> Post-merge Staging checkpoint: PR1469 was regularly merged as3912461e.
+> Actual Staging remainsd3483497; the complete existing media catalogue matches
+> its pinned5MiB/WebP reference. Extension is still unapplied. Main deployment
+> must preserve Operator continuation through the separately owned PR1470;
+> media-only protected controls and real application-host video preflight remain
+> required. See `project-memory/receipts/chatadmin-media-staging-preflight-20261113.md`.
+
 Source work only, 13 November 2026. Extends the existing #1427 library; it does
 not establish deployed acceptance. #1440 remains unmerged; its authenticated
 post-delete absence check is retained in this continuation without merging that PR.

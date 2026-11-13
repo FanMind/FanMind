@@ -1,5 +1,15 @@
 # #1425 catalogue evidence — 13 November 2026
 
+## Post-merge Staging preparation
+
+Fresh actual Staging baseline, exact old-schema catalogue equality, unchanged SQL,
+PR1470 dependency, unavailable host proof, bounded future synthetic acceptance and
+safe recovery are recorded in
+`project-memory/receipts/chatadmin-media-staging-preflight-20261113.md`.
+No deployable exact common source or activation grant exists yet. Historical
+source/CI pending statements below do not undo successful PR1469 source checks;
+they do not establish actual Staging acceptance either.
+
 ## Resumed exact-source review (supersedes pending source/CI notes below)
 
 Resumed from 27d00fa123170fc158d93a3ba256bba94f4bcd65, no reimplementation.
