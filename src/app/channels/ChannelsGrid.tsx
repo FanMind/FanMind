@@ -7,10 +7,10 @@ import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { PlatformLogo } from "@/components/PlatformLogo";
 import { SocialProviderConnection } from "./SocialProviderConnection";
 import { ChannelConnectionSteps } from "./ChannelConnectionSteps";
+import { FacebookCommentSyncForm } from "./FacebookCommentSyncForm";
 import styles from "./channels.module.css";
 import { type TelegramWebhookStatus } from "@/lib/telegramStatus";
 import {
-  syncFacebookCommentsFromChannelPage,
   syncFacebookMessengerHistoryFromChannelPage,
   syncInstagramMessengerHistoryFromChannelPage,
 } from "./metaSyncActions";
@@ -885,6 +885,14 @@ export function ChannelsGrid({
                                 ? "Die Facebook-Serverkonfiguration ist noch nicht vollständig. Es wurde keine Meta-Verbindung gestartet."
                                 : facebookError === "page_permissions"
                                   ? "Meta hat die benötigten Messenger-Berechtigungen nicht bestätigt. Die Verbindung wurde nicht gespeichert."
+                                  : /^page_discovery_(accounts_edge|accounts_field|granular_page|granular_targets|token_debug)_(transport|http|shape)_[0-9]{1,3}_[0-9]{1,4}$/.test(facebookError)
+                                    ? `Die Meta-Seitenliste konnte nicht vollständig geladen werden. Diagnose: ${facebookError}. Es wurde keine Verbindung gespeichert.`
+                                  : facebookError === "no_page"
+                                    ? "Meta hat keine technisch abrufbare Seite geliefert. Prüfe die ausgewählten Seiten und deine Seitenzugriffsrechte bei Facebook und verbinde erneut."
+                                    : facebookError === "no_page_token"
+                                      ? "Für diese Seite fehlt ein gültiger Seitentoken. Prüfe deine Seitenrechte bei Meta."
+                                      : facebookError === "page_selection_fetch"
+                                        ? "Die Seitenliste konnte nicht vollständig geladen werden. Bitte starte die Facebook-Verbindung erneut."
                                   : facebookError === "comment_review"
                                     ? "Meta hat die benötigten Kommentar-Berechtigungen noch nicht freigegeben."
                                     : "Die Facebook-Verbindung wurde nicht abgeschlossen. Es wurden keine fremden Kontodaten übernommen."}
@@ -943,15 +951,10 @@ export function ChannelsGrid({
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "comments")}>
                                 Kommentare freigeben
                               </button>
-                            <form action={syncFacebookCommentsFromChannelPage}>
-                              <button
-                                type="submit"
-                                disabled={demoConnectionsDisabled || !facebookCommentsAuthorized}
-                                title={facebookCommentsAuthorized ? undefined : "Zuerst die Kommentar-Berechtigung bei Meta freigeben"}
-                              >
-                                Facebook-Kommentare jetzt synchronisieren
-                              </button>
-                            </form>
+                            <FacebookCommentSyncForm
+                              disabled={demoConnectionsDisabled}
+                              authorized={facebookCommentsAuthorized}
+                            />
                             <button type="button" disabled={demoConnectionsDisabled} onClick={() => beginMetaAuthorization("facebook", "insights")}>
                                 Insights freigeben
                               </button>

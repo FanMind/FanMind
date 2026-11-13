@@ -1,3 +1,8 @@
+## FM-FACEBOOK-PAGE-DISCOVERY-20261109 — authorized continuation
+- Risk: R4; Status: SOURCE_VERIFIED on Draft PR1463; repository worker complete and lock released, protected operator acceptance remains open.
+- Scope/authorization/recovery: see same task in TASK_LEDGER.md. Independent Guardian PASS; final CI and exact Staging branch deployment pending. Main merge held for later Owner approval.
+- No other roadmap task or protected data migration selected.
+
 ## FM-WEB-001 — public support launcher and default-off Website AI — 2026-11-01
 - Task/Issue: bounded first implementation slice of #1350.
 - Risk: R3

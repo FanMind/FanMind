@@ -5,19 +5,38 @@ approvals remain limited to their own tasks. No deployment, live database write,
 permission/secret/flag change, Stripe or Facebook mutation was performed by this
 continuation. No new database or infrastructure is proposed.
 
-## Confirmed merge and current versions
+## Prepared common source and confirmed versions
 
 | Surface | Exact commit | Evidence |
 | --- | --- | --- |
-| PR1466 approved head | `7072b39d5f995a4ac72a37c3a24572645c26b8d7` | Fresh PR read,12 required/14 total checks PASS, no bypass |
-| PR1466 actual merge/Main | `798fa177f052075e107faaddd37dc74df260d68b` | Merge response, independent Main ref, merged PR metadata, Git parents/tree |
-| Previous Main | `4488fc0ff548e2ec2fc230a0403d1826849fd233` | First merge parent; second parent is the exact approved head |
-| Actual Staging | `aae0003c6836ef73235c0d771d6387ee0e29f81b` | Browser `/api/version`,2026-11-13T09:19:33.274Z |
-| Actual Production | `a798d7938bb4e7e168f615f0c32d1a603dd47d4a` | Browser `/api/version`,2026-11-13T09:19:41.232Z |
+| Current Main / actual PR1467 merge | `0def924beb080dde9b7bd9fb4d514f5cca2ac291` | Fresh Main ref, merged PR metadata and local Git parents/tree |
+| Approved PR1467 head | `43a9b301341d9bfa61ba1e708b47d9c683ae6393` |12 required/14 total exact-head checks passed immediately before regular protected merge |
+| Prior approved PR1466 merge | `798fa177f052075e107faaddd37dc74df260d68b` | First parent of PR1467 merge; public contact and single-suggestion fixes retained |
+| Actual Staging | `aae0003c6836ef73235c0d771d6387ee0e29f81b` | Browser `/api/version`,2026-11-13T09:57:27.937Z |
+| Actual Production | `a798d7938bb4e7e168f615f0c32d1a603dd47d4a` | Browser `/api/version`,2026-11-13T09:57:40.946Z |
 
-The merge tree equals the approved PR tree; no Facebook/Admin parallel branch
-was overwritten. This task did not deploy the new Staging version: it is the
-separate Work-tab rollout and supersedes the earlier6be52484 observation.
+An isolated common-source candidate is prepared on
+`chore/support-common-release-20261113`. Its parents are exactly Main0def924b
+and deployed Stagingaae0003c. No Main/parallel branch or runtime was moved.
+The only merge conflict was the Source of Truth blob fingerprint; the document
+itself merged cleanly. Both histories are retained and the fingerprint is
+reconciled to the actual combined blob, not copied from either parent.
+
+Byte comparisons verified all13 Main-side and33 Staging-side changed files
+outside the combined truth/fingerprint and updated release-proposal documents against their exact
+parent versions. No Facebook/Stripe/session/media implementation was edited.
+The common candidate preserves the deployed session/connection source plus both
+Support corrections.192 focused cross-stream tests and the full Next/TypeScript
+webpack build passed locally; final candidate CI remains a separate gate.
+The initial checkout was shallow; its history was deepened to prove the genuine
+4488fc0f merge base. No unrelated-history or force merge was used.
+
+Newer Facebook Draft1465 head17ade824 and separate media Draft1440 are **not**
+included. They remain owned by their other Work-tabs and must not be silently
+substituted or marked accepted. This snapshot is a concrete pre-release source,
+not the final Production release or an approval to merge the Facebook PRs.
+Historical source-preparation wording imported from the deployed Staging parent
+is not evidence of current runtime activation; only the observations above are.
 
 ## Support acknowledgment correction
 
@@ -47,20 +66,23 @@ because the current Owner instruction excludes live database changes.
 | Workstream | Observed source | Required coordination |
 | --- | --- | --- |
 | Public Support/Admin display fixes | PR1466 merged on Main | Preserve the merged contact and single-suggestion rendering fixes |
-| New Support acknowledgment fix | This isolated source branch, based on798fa177 | Complete exact-head CI/independent QA, then a separate reviewed merge decision |
+| Support acknowledgment fix | PR1467 merged as0def924b, independent9/9 CI/100 browser tests/native PG17 PASS | Retain merged source; target acknowledgment still needs authorized rollout and live acceptance |
 | Facebook discovery | Existing PR1463 /6be52484 lineage | Its responsible Work-tab owns review/merge; do not overwrite its deployed behavior |
-| Staging Operator/Facebook continuation | PR1465 Draft, headaae0003c | Preserve deployed session renewal/comment-sync work; no merge or rollout authority borrowed here |
+| Staging Operator/Facebook continuation | Deployedaae0003c; newer Draft head17ade824fd48dc38a9caf308d6e7554e332d211d | Candidate retains deployed source only; newer chat/post separation and renewal changes require their own acceptance/merge decisions |
 | ChatAdmin media deletion | PR1440 Draft, head2374ca26fb0e4c3ff1b86dc56ba86bb3725b4d63 | Separate Owner merge decision and final media acceptance; do not copy its changes |
 
 ## Proposed execution order after approvals
 
-1. Review and merge the narrowly scoped acknowledgment follow-up after all exact
-   head checks pass. No runtime action is coupled to that merge.
+1. The acknowledgment follow-up is already merged as0def924b after explicit
+   exact-head Owner approval and fresh required-check verification. No runtime
+   action was coupled to that merge.
 2. The responsible Facebook/Admin Work-tabs reconcile their accepted source into
    a common reviewed Main candidate. Preserve all independently authorized work;
    no force ref updates, branch substitution or implicit PR1440 merge. Record
-   the resulting exact candidate SHA and a final target diff. That common SHA
-   does not yet exist and must not be invented in an approval command.
+   the resulting final candidate SHA and target diff. The isolated snapshot above
+   is available for review/CI but does not settle the newer unfinished drafts;
+   its immutable commit is recorded in the release PR rather than invented in
+   a deployment command.
 3. Before Staging deployment, re-read actual Staging/Main/Production versions and
    active workflow leases. Review the complete diff against the actual Staging
    sourceaae0003c (or its freshly observed successor), including session renewal,
@@ -91,7 +113,8 @@ because the current Owner instruction excludes live database changes.
 
 ## Completion evidence still required
 
-- Exact final source and merge proofs for the acknowledgment follow-up.
+- Final common-source CI/approval and reconciliation with any later accepted
+  parallel source. The acknowledgment source merge itself is complete.
 - Real Staging and then authorized Production durable acknowledgment/fresh-read
   proof, without suppressing a new occurrence or claiming email delivery.
 - Private media upload, preview, availability/revision, tenant/Character denial

@@ -59,6 +59,7 @@ export type FacebookPage = {
   name: string;
   accessToken: string | null;
   scopes: string[];
+  tasks?: string[];
 };
 
 export type FacebookTokenDiagnostics = {
@@ -322,7 +323,7 @@ export function hasFacebookInsightsScopes(
 export function hasRequiredFacebookPagePermissions(
   permissions: FacebookPermissionStatus[] | null,
 ): boolean {
-  if (!permissions) return true;
+  if (!permissions) return false;
 
   return REQUIRED_FACEBOOK_PAGE_PERMISSIONS.every((requiredPermission) =>
     permissions.some(
@@ -332,58 +333,71 @@ export function hasRequiredFacebookPagePermissions(
   );
 }
 
+export function hasFacebookPageAuthorization(
+  diagnostics: FacebookTokenDiagnostics | null,
+  pageId: string,
+  requiredScopes: readonly string[],
+): boolean {
+  if (diagnostics?.is_valid !== true || diagnostics.app_id !== requireFacebookAppId()) return false;
+  const scopes = getFacebookGrantedScopeNames(diagnostics);
+  return requiredScopes.every(scope => {
+    if (!scopes.includes(scope)) return false;
+    const grants = (diagnostics.granular_scopes ?? []).filter(entry => entry.scope === scope && Array.isArray(entry.target_ids));
+    return !grants.length || grants.some(entry => entry.target_ids!.includes(pageId));
+  });
+}
+
+export async function verifyFacebookPageTokenIdentity(pageAccessToken: string, pageId: string): Promise<boolean> {
+  const url = new URL(`https://graph.facebook.com/${OAUTH_VERSION}/me`);
+  url.searchParams.set("fields", "id");
+  url.searchParams.set("access_token", pageAccessToken);
+  const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(15_000) });
+  const payload = (await response.json().catch(() => null)) as { id?: string; error?: unknown } | null;
+  return response.ok && !payload?.error && payload?.id === pageId;
+}
+
 export async function fetchFacebookPages(
   userAccessToken: string,
 ): Promise<FacebookPage[]> {
-  const primary = await fetchFacebookPagesFromAccountsEdge(userAccessToken);
-  if (primary.pages.length > 0) return primary.pages;
-
-  console.warn("Facebook /me/accounts returned no usable pages", {
-    httpStatus: primary.httpStatus,
-    pageCount: primary.pages.length,
-    pagesMissingAccessToken: primary.pagesMissingAccessToken,
-    hasMetaError: Boolean(primary.error),
-    errorCode: primary.error?.code,
-    errorType: primary.error?.type,
-  });
-
-  const fallback = await fetchFacebookPagesFromMeAccountsField(userAccessToken);
-  if (fallback.pages.length > 0) {
-    console.info("Facebook pages recovered through /me accounts field", {
-      pageCount: fallback.pages.length,
-      pagesMissingAccessToken: fallback.pagesMissingAccessToken,
-    });
-    return fallback.pages;
-  }
-
-  console.warn("Facebook pages fetch returned 0 pages after fallback", {
-    primaryHttpStatus: primary.httpStatus,
-    fallbackHttpStatus: fallback.httpStatus,
-    primaryMetaError: primary.error
-      ? {
-          code: primary.error.code,
-          type: primary.error.type,
-        }
-      : null,
-    fallbackMetaError: fallback.error
-      ? {
-          code: fallback.error.code,
-          type: fallback.error.type,
-        }
-      : null,
-  });
-
-  const diagnostics = await fetchFacebookTokenDiagnostics(userAccessToken);
+  const signal = AbortSignal.timeout(45_000);
+  const primary = await fetchFacebookPagesFromAccountsEdge(userAccessToken, signal);
+  // An accounts edge can be non-empty and still omit granular-authorized pages.
+  const fallback = await fetchFacebookPagesFromMeAccountsField(userAccessToken, signal);
+  const byId = new Map<string, FacebookPage>();
+  const merge = (pages: FacebookPage[]) => {
+    for (const page of pages) {
+      const previous = byId.get(page.id);
+      byId.set(page.id, {
+        ...page,
+        accessToken: page.accessToken || previous?.accessToken || null,
+        scopes: [...new Set([...(previous?.scopes ?? []), ...page.scopes])],
+        tasks: [...new Set([...(previous?.tasks ?? []), ...(page.tasks ?? [])])],
+      });
+    }
+  };
+  merge([...primary.pages, ...fallback.pages]);
+  const diagnostics = await fetchFacebookTokenDiagnostics(userAccessToken, signal);
   const targetIds = getFacebookGranularPageTargetIds(diagnostics);
-  if (targetIds.length === 0) return [];
-
-  const recoveredPages = await fetchFacebookPagesFromGranularTargets(
-    userAccessToken,
-    targetIds,
-  );
-  if (recoveredPages.length > 0) return recoveredPages;
-
-  return [];
+  const unresolvedIds = targetIds.filter(id => !byId.get(id)?.accessToken);
+  const recovered = await fetchFacebookPagesFromGranularTargets(userAccessToken, unresolvedIds, signal);
+  merge(recovered.pages);
+  if (!byId.size) {
+    if (recovered.failure) throw recovered.failure;
+    throw new FacebookPageDiscoveryError(
+      diagnostics?.is_valid === true && diagnostics.app_id === requireFacebookAppId()
+        ? "granular_targets" : "token_debug", "shape",
+    );
+  }
+  console.info("Facebook page discovery diagnostics", {
+    accountsCount: primary.pages.length,
+    accountsFieldCount: fallback.pages.length,
+    granularTargetCount: targetIds.length,
+    recoveredCount: recovered.pages.length,
+    unresolvedTargetCount: targetIds.filter(id => !byId.has(id)).length,
+    pageCount: byId.size,
+    pagesMissingAccessToken: [...byId.values()].filter(page => !page.accessToken).length,
+  });
+  return [...byId.values()];
 }
 
 export type FacebookMessengerConversation = {
@@ -1265,6 +1279,7 @@ type FacebookRawPage = {
 
 export async function fetchFacebookTokenDiagnostics(
   userAccessToken: string,
+  signal: AbortSignal = AbortSignal.timeout(15_000),
 ): Promise<FacebookTokenDiagnostics | null> {
   const url = new URL(
     `https://graph.facebook.com/${OAUTH_VERSION}/debug_token`,
@@ -1275,7 +1290,7 @@ export async function fetchFacebookTokenDiagnostics(
     `${requireFacebookAppId()}|${requireFacebookAppSecret()}`,
   );
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   const payload = (await response.json().catch(() => null)) as {
     data?: FacebookTokenDiagnostics;
     error?: { message?: string; code?: number; type?: string };
@@ -1308,42 +1323,39 @@ export async function fetchFacebookTokenDiagnostics(
 function getFacebookGranularPageTargetIds(
   diagnostics: FacebookTokenDiagnostics | null,
 ): string[] {
-  const relevantScopes = new Set<string>(REQUIRED_FACEBOOK_PAGE_PERMISSIONS);
-  const targetCounts = new Map<string, number>();
-
-  for (const granularScope of diagnostics?.granular_scopes ?? []) {
-    if (!granularScope.scope || !relevantScopes.has(granularScope.scope)) {
-      continue;
-    }
-
-    for (const targetId of granularScope.target_ids ?? []) {
-      if (!targetId) continue;
-      targetCounts.set(targetId, (targetCounts.get(targetId) ?? 0) + 1);
+  if (diagnostics?.is_valid !== true || diagnostics.app_id !== requireFacebookAppId()) return [];
+  const relevantScopes = new Set<string>([
+    ...FACEBOOK_MESSAGES_OAUTH_SCOPES,
+    ...FACEBOOK_COMMENT_FEED_SCOPES,
+    ...FACEBOOK_INSIGHTS_OAUTH_SCOPES,
+  ]);
+  const targetIds = new Set<string>();
+  for (const entry of diagnostics.granular_scopes ?? []) {
+    if (!entry.scope || !relevantScopes.has(entry.scope)) continue;
+    for (const id of entry.target_ids ?? []) {
+      if (/^\d{1,32}$/.test(id)) targetIds.add(id);
     }
   }
-
-  const preferredTargets = [...targetCounts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([targetId]) => targetId);
-  const targetIds =
-    preferredTargets.length > 0 ? preferredTargets : [...targetCounts.keys()];
-
-  console.info("Facebook granular page targets detected", {
-    targetCount: targetIds.length,
-  });
-
-  return targetIds;
+  if (targetIds.size > 500) throw new Error("Zu viele autorisierte Facebook-Seiten.");
+  return [...targetIds];
 }
 
 async function fetchFacebookPagesFromGranularTargets(
   userAccessToken: string,
   targetIds: string[],
-): Promise<FacebookPage[]> {
+  signal: AbortSignal,
+): Promise<{ pages: FacebookPage[]; failure: FacebookPageDiscoveryError | null }> {
   const pages: FacebookPage[] = [];
+  let failure: FacebookPageDiscoveryError | null = null;
 
   for (const targetId of targetIds) {
-    const page = await fetchFacebookPageById(userAccessToken, targetId);
-    if (!page) continue;
+    signal.throwIfAborted();
+    const result = await fetchFacebookPageById(userAccessToken, targetId, signal);
+    const page = result.page;
+    if (!page) {
+      failure = new FacebookPageDiscoveryError("granular_page", result.error || result.httpStatus >= 400 ? "http" : "shape", result.httpStatus, result.error?.code);
+      continue;
+    }
 
     console.info("Facebook page recovered from granular scope target", {
       hasAccessToken: Boolean(page.accessToken),
@@ -1351,21 +1363,23 @@ async function fetchFacebookPagesFromGranularTargets(
     pages.push(page);
   }
 
-  return pages;
+  return { pages, failure };
 }
 
 async function fetchFacebookPageById(
   userAccessToken: string,
   pageId: string,
-): Promise<FacebookPage | null> {
+  signal: AbortSignal,
+): Promise<FacebookDirectPageFetchResult> {
   const withToken = await fetchFacebookPageByIdWithFields(
     userAccessToken,
     pageId,
     "id,name,access_token",
+    signal,
   );
 
   if (withToken.page || !isFacebookFieldError(withToken.error)) {
-    return withToken.page;
+    return withToken;
   }
 
   console.warn("Facebook direct page fetch without access_token fallback", {
@@ -1377,12 +1391,14 @@ async function fetchFacebookPageById(
     userAccessToken,
     pageId,
     "id,name",
+    signal,
   );
-  return withoutToken.page;
+  return withoutToken;
 }
 
 type FacebookDirectPageFetchResult = {
   page: FacebookPage | null;
+  httpStatus: number;
   error?: { message?: string; code?: number; type?: string };
 };
 
@@ -1390,12 +1406,13 @@ async function fetchFacebookPageByIdWithFields(
   userAccessToken: string,
   pageId: string,
   fields: "id,name,access_token" | "id,name",
+  signal: AbortSignal,
 ): Promise<FacebookDirectPageFetchResult> {
   const url = new URL(`https://graph.facebook.com/${OAUTH_VERSION}/${pageId}`);
   url.searchParams.set("fields", fields);
   url.searchParams.set("access_token", userAccessToken);
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", signal });
   const payload = (await response.json().catch(() => null)) as
     | (FacebookRawPage & {
         error?: { message?: string; code?: number; type?: string };
@@ -1413,14 +1430,15 @@ async function fetchFacebookPageByIdWithFields(
 
   if (!response.ok) {
     logFacebookApiError("Facebook direct page fetch failed", payload?.error);
-    return { page: null, error: payload?.error };
+    return { page: null, httpStatus: response.status, error: payload?.error };
   }
 
-  if (!payload?.id || !payload.name) {
-    return { page: null, error: payload?.error };
+  if (payload?.id !== pageId || !payload.name) {
+    return { page: null, httpStatus: response.status, error: payload?.error };
   }
 
   return {
+    httpStatus: response.status,
     page: {
       id: payload.id,
       name: payload.name,
@@ -1444,77 +1462,81 @@ type FacebookPagesFetchResult = {
   error?: { message?: string; code?: number; type?: string };
 };
 
-async function fetchFacebookPagesFromAccountsEdge(
-  userAccessToken: string,
-): Promise<FacebookPagesFetchResult> {
-  const url = new URL(
-    `https://graph.facebook.com/${OAUTH_VERSION}/me/accounts`,
-  );
-  url.searchParams.set("fields", "id,name,access_token,perms,tasks");
-  url.searchParams.set("access_token", userAccessToken);
-
-  const response = await fetch(url, { cache: "no-store" });
-  const payload = (await response.json().catch(() => null)) as {
-    data?: FacebookRawPage[];
-    error?: { message?: string; code?: number; type?: string };
-  } | null;
-
-  const result = buildFacebookPagesFetchResult(
-    response.status,
-    payload?.data ?? [],
-    payload?.error,
-  );
-
-  console.info("Facebook /me/accounts pages diagnostics", {
-    httpStatus: result.httpStatus,
-    pageCount: result.pages.length,
-    pagesMissingAccessToken: result.pagesMissingAccessToken,
-    errorCode: result.error?.code,
-    errorType: result.error?.type,
-  });
-
-  if (!response.ok) {
-    throw new Error("Facebook Pages konnten nicht geladen werden.");
-  }
-
-  return result;
+async function fetchFacebookPagesFromAccountsEdge(userAccessToken: string, signal: AbortSignal): Promise<FacebookPagesFetchResult> {
+  return fetchFacebookAccountsCollection(userAccessToken, false, signal);
 }
 
-async function fetchFacebookPagesFromMeAccountsField(
-  userAccessToken: string,
-): Promise<FacebookPagesFetchResult> {
-  const url = new URL(`https://graph.facebook.com/${OAUTH_VERSION}/me`);
-  url.searchParams.set("fields", "accounts{id,name,access_token,perms,tasks}");
-  url.searchParams.set("access_token", userAccessToken);
+async function fetchFacebookPagesFromMeAccountsField(userAccessToken: string, signal: AbortSignal): Promise<FacebookPagesFetchResult> {
+  return fetchFacebookAccountsCollection(userAccessToken, true, signal);
+}
 
-  const response = await fetch(url, { cache: "no-store" });
-  const payload = (await response.json().catch(() => null)) as {
-    accounts?: { data?: FacebookRawPage[] };
-    error?: { message?: string; code?: number; type?: string };
-  } | null;
-
-  const result = buildFacebookPagesFetchResult(
-    response.status,
-    payload?.accounts?.data ?? [],
-    payload?.error,
-  );
-
-  console.info("Facebook /me accounts field pages diagnostics", {
-    httpStatus: result.httpStatus,
-    pageCount: result.pages.length,
-    pagesMissingAccessToken: result.pagesMissingAccessToken,
-    errorCode: result.error?.code,
-    errorType: result.error?.type,
-  });
-
-  if (!response.ok) {
-    logFacebookApiError(
-      "Facebook /me accounts field fetch failed",
-      payload?.error,
-    );
+export class FacebookPageDiscoveryError extends Error {
+  readonly diagnostic: string;
+  constructor(endpoint: "accounts_edge" | "accounts_field" | "granular_page" | "granular_targets" | "token_debug", kind: "transport" | "http" | "shape", status = 0, graphCode = 0) {
+    super("Facebook-Seitenliste konnte nicht vollständig geladen werden.");
+    this.name = "FacebookPageDiscoveryError";
+    const safeStatus = Number.isInteger(status) && status >= 0 && status <= 599 ? status : 0;
+    const safeCode = Number.isInteger(graphCode) && graphCode >= 0 && graphCode <= 9999 ? graphCode : 0;
+    this.diagnostic = `page_discovery_${endpoint}_${kind}_${safeStatus}_${safeCode}`;
   }
+}
 
-  return result;
+async function fetchFacebookAccountsCollection(
+  userAccessToken: string,
+  nested: boolean,
+  signal: AbortSignal,
+): Promise<FacebookPagesFetchResult> {
+  const rawPages: FacebookRawPage[] = [];
+  const cursors = new Set<string>();
+  let after: string | null = null;
+  for (let requestIndex = 0; requestIndex < 10; requestIndex += 1) {
+    // Rebuild continuations on the known accounts edge. Never forward provider URLs/tokens.
+    const useNested = nested && requestIndex === 0;
+    const url = new URL(`https://graph.facebook.com/${OAUTH_VERSION}/me${useNested ? "" : "/accounts"}`);
+    url.searchParams.set("fields", useNested
+      ? "accounts.limit(100){id,name,access_token,perms,tasks}"
+      : "id,name,access_token,perms,tasks");
+    url.searchParams.set("access_token", userAccessToken);
+    if (!useNested) url.searchParams.set("limit", "100");
+    if (after) url.searchParams.set("after", after);
+    const endpoint = useNested ? "accounts_field" : "accounts_edge";
+    const response = await fetch(url, { cache: "no-store", signal }).catch(() => {
+      throw new FacebookPageDiscoveryError(endpoint, "transport");
+    });
+    type Collection = { data?: FacebookRawPage[]; paging?: { next?: string } };
+    const payload = (await response.json().catch(() => null)) as (Collection & {
+      id?: string;
+      accounts?: Collection;
+      error?: { message?: string; code?: number; type?: string };
+    }) | null;
+    // Meta may omit an empty expanded accounts edge from an otherwise valid user.
+    // This adds no Page or authority; granular recovery still requires real grants.
+    if (useNested && response.ok && !payload?.error &&
+        typeof payload?.id === "string" && /^\d{1,32}$/.test(payload.id) &&
+        !Object.hasOwn(payload, "accounts")) {
+      return buildFacebookPagesFetchResult(response.status, rawPages);
+    }
+    const collection = useNested ? payload?.accounts : payload;
+    if (!response.ok || payload?.error || !Array.isArray(collection?.data)) {
+      logFacebookApiError("Facebook page discovery failed", payload?.error);
+      throw new FacebookPageDiscoveryError(endpoint,
+        !response.ok || payload?.error ? "http" : "shape",
+        response.status, payload?.error?.code,
+      );
+    }
+    rawPages.push(...collection.data);
+    if (rawPages.length > 500) throw new Error("Facebook-Seitenliste überschreitet das sichere Limit.");
+    if (!collection.paging?.next) return buildFacebookPagesFetchResult(response.status, rawPages);
+    const next = validateFacebookGraphPagingUrl(collection.paging.next);
+    const nextUrl = next ? new URL(next) : null;
+    if (!nextUrl || !new RegExp(`^/${OAUTH_VERSION}/(?:me|[0-9]+)/accounts$`).test(nextUrl.pathname)) {
+      throw new Error("Ungültige Facebook-Seiten-Paginierung blockiert.");
+    }
+    after = resolveFacebookGraphPagingCursor(next);
+    if (!after || cursors.has(after)) throw new Error("Facebook-Seiten-Paginierung wiederholt sich.");
+    cursors.add(after);
+  }
+  throw new Error("Facebook-Seitenliste ist am sicheren Paginierungslimit unvollständig.");
 }
 
 function buildFacebookPagesFetchResult(
@@ -1528,7 +1550,8 @@ function buildFacebookPagesFetchResult(
       id: page.id!,
       name: page.name!,
       accessToken: page.access_token ?? null,
-      scopes: page.tasks ?? page.perms ?? [],
+      scopes: page.perms ?? [],
+      tasks: page.tasks ?? [],
     }));
 
   return {
@@ -1942,6 +1965,7 @@ export async function fetchFacebookPagePostsWithComments(
   comments: FacebookPageComment[];
   diagnostics: FacebookCommentFetchDiagnostics;
 }> {
+  const signal = AbortSignal.timeout(45_000);
   const feedUrl = new URL(
     `https://graph.facebook.com/${OAUTH_VERSION}/${pageId}/feed`,
   );
@@ -1959,6 +1983,7 @@ export async function fetchFacebookPagePostsWithComments(
         "Facebook Page-Feed mit Kommentaren konnte nicht geladen werden.",
         25,
         true,
+        signal,
       );
     const posts = feedPosts.map((post) => ({
       id: post.id,
@@ -1968,6 +1993,9 @@ export async function fetchFacebookPagePostsWithComments(
     }));
     const comments: FacebookPageComment[] = [];
     for (const post of feedPosts) {
+      if (post.comments != null && !Array.isArray(post.comments.data)) {
+        throw new GraphApiError("Ungültige Facebook-Kommentarstruktur.");
+      }
       const inlineComments = (post.comments?.data ?? [])
         .filter((comment) => Boolean(comment.id))
         .map((comment) => ({
@@ -1977,9 +2005,12 @@ export async function fetchFacebookPagePostsWithComments(
         }));
       comments.push(...inlineComments);
 
-      const nestedNext = validateFacebookGraphPagingUrl(
-        post.comments?.paging?.next ?? null,
-      );
+      const rawNestedNext = post.comments?.paging?.next;
+      const nestedNext = validateFacebookGraphPagingUrl(rawNestedNext ?? null);
+      if (rawNestedNext != null && (!nestedNext ||
+          new URL(nestedNext).pathname !== `/${OAUTH_VERSION}/${post.id}/comments`)) {
+        throw new GraphApiError("Ungültige Facebook-Kommentar-Paginierung.");
+      }
       if (nestedNext) {
         const remaining = Math.max(
           0,
@@ -1996,6 +2027,8 @@ export async function fetchFacebookPagePostsWithComments(
           new URL(nestedNext),
           "Facebook-Kommentare konnten nicht vollständig paginiert werden.",
           remaining,
+          false,
+          signal,
         );
         comments.push(
           ...additionalComments.map((comment) => ({
@@ -2031,6 +2064,7 @@ export async function fetchFacebookPagePostsWithComments(
     "Facebook Page-Feed konnte nicht geladen werden.",
     25,
     true,
+    signal,
   ).catch((error) => {
     throw withCommentFetchEndpoint(error, "post-comments-fallback");
   });
@@ -2053,6 +2087,8 @@ export async function fetchFacebookPagePostsWithComments(
       commentsUrl,
       "Facebook-Kommentare konnten nicht geladen werden.",
       FACEBOOK_COMMENT_MAX_PER_POST,
+      false,
+      signal,
     ).catch((error) => {
       throw withCommentFetchEndpoint(error, "post-comments-fallback");
     });
@@ -2118,19 +2154,26 @@ async function fetchGraphCollection<T extends { id?: string }>(
   errorFallback: string,
   maxItems = 500,
   stopAtLimit = false,
+  signal: AbortSignal = AbortSignal.timeout(45_000),
 ): Promise<T[]> {
   const items: T[] = [];
   let nextUrl: string | null = url.toString();
+  const seenUrls = new Set<string>();
 
   while (nextUrl) {
-    const response = await fetch(nextUrl, { cache: "no-store" });
+    signal.throwIfAborted();
+    if (seenUrls.has(nextUrl) || seenUrls.size >= 100) {
+      throw new GraphApiError("Facebook-Paginierung überschreitet das sichere Limit.");
+    }
+    seenUrls.add(nextUrl);
+    const response = await fetch(nextUrl, { cache: "no-store", redirect: "error", signal });
     const payload = (await response.json().catch(() => null)) as {
       data?: T[];
       paging?: { next?: string };
       error?: { message?: string; code?: number; type?: string };
     } | null;
 
-    if (!response.ok) {
+    if (!response.ok || payload?.error) {
       logFacebookApiError(errorFallback, payload?.error);
       throw new GraphApiError(
         errorFallback,
@@ -2138,7 +2181,11 @@ async function fetchGraphCollection<T extends { id?: string }>(
       );
     }
 
-    const pageItems = (payload?.data ?? []).filter((item) => Boolean(item.id));
+    if (!Array.isArray(payload?.data) || payload.data.some((item) =>
+      !item || typeof item.id !== "string" || !item.id.trim())) {
+      throw new GraphApiError("Ungültige Facebook-Antwortstruktur.");
+    }
+    const pageItems = payload.data;
     if (items.length + pageItems.length > maxItems) {
       if (!stopAtLimit) {
         throw new GraphApiError(
@@ -2153,6 +2200,10 @@ async function fetchGraphCollection<T extends { id?: string }>(
     const validatedNext = validateFacebookGraphPagingUrl(
       payload?.paging?.next ?? null,
     );
+    if (payload?.paging?.next != null && (!validatedNext ||
+        new URL(validatedNext).pathname !== url.pathname)) {
+      throw new GraphApiError("Ungültige Facebook-Paginierung.");
+    }
     if (validatedNext && items.length >= maxItems) {
       if (stopAtLimit) return items;
       throw new GraphApiError(

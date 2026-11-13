@@ -109,3 +109,116 @@ CI-owned `tests/inbox-queue-policy.test.mjs`; no protected checksum is changed.
 - Preservation: reject disk/runtime encryption or unrelated-field drift before mutation; reject existing other app identity. Preserve valid keys; new key only after bounded read-only empty encrypted-token inventory. No database write, Production deploy, automatic sending or general Meta publication.
 - Recovery: private mode600 fsynced original-config snapshot retained on the Staging host with run ID, no artifact upload; same-process failure restores original configuration, restarts and verifies old effective values. Interrupted-job recovery requires reviewed restoration of the private snapshot; no automatic crash-recovery claim.
 - Validation: 22 focused synthetic tests PASS; full Operations and final-head CI pending. Independent Guardian reproduced prewrite drift risks; added fail-closed regressions. Provider consent, real Page ownership/import/webhooks/two-tenant isolation and App Review/Advanced Access remain separately unproved.
+
+
+## Facebook Page discovery repair — open PR / Staging first
+
+Owner update 2026-11-09 supersedes the original merge authorization: keep the
+PR open, deploy the reviewed task branch to Staging first, and await explicit
+Owner merge approval after real acceptance. No Production deployment.
+
+Observed baseline: Main and Staging `4488fc0ff548e2ec2fc230a0403d1826849fd233`;
+Production `/api/version` reports `a798d7938bb4e7e168f615f0c32d1a603dd47d4a`.
+The real Staging login currently returns `no_page` even with only FanMind
+selected in the Meta dialog. FanMind is `1208778912321696`; WellFit-now
+`440506919151695` must never be connected by this operator run. These are
+operator acceptance targets, never hardcoded authorization in product code.
+
+Confirmed source defects: a nonempty accounts result bypassed all alternative
+lookups; both account-list methods ignored pagination; granular target selection
+could discard a page authorized for fewer scopes when another page occurred in
+multiple scopes. These are reproduced with synthetic Graph responses. Their
+contribution to the real provider failure remains unconfirmed until runtime
+acceptance; no raw Graph response or protected runtime log has been read yet.
+
+Fix: exhaust both supported lists (10 requests / 500 entries per list), rebuild
+trusted accounts continuations using the original token, reject wrong-origin,
+wrong-path, repeating, malformed, failed or exhausted pagination, merge IDs and
+preserve usable tokens. Granular direct lookup is restricted to valid same-app
+diagnostics and the union of Page-relevant target IDs; exact returned ID must
+match. Page tasks remain distinct from OAuth scopes. Before persistence, valid
+same-app user and Page diagnostics must cover each required scope for the exact
+selected page; the Page token's `/me?fields=id` must match that page. Missing
+permission lookup now fails closed. Existing active Workspace authorization,
+CSRF checks, encrypted short-lived cookie and exclusive account binding remain.
+
+Affected contract: `FM-CONTRACT-SOCIAL-CRM-001`, gate
+`FM-IGATE-SOCIAL-CRM-001`; consumers: callback, explicit selection, initial
+import and existing CRM/Webhook ingress. Tests distinguish mocked provider
+responses and synthetic Workspace boundaries from real provider/RLS evidence.
+No schema migration or new secret is required. Package manifest is unchanged
+because the existing controlled capacity source checksum binds it.
+
+The existing Staging deployment controller has a narrowly scoped exception for
+`fix/facebook-page-discovery-staging`: manual dispatch only, exact reviewed SHA,
+protected Staging environment, preserved Billing state, no release-state
+recovery. Main behavior remains supported. The exception does not authorize a
+Main merge or Production publication and should be removed after acceptance.
+
+Meta dashboard observed in this session: the Page callback still points at
+`https://fanmind.ch/api/webhooks/meta`; it explicitly states that unpublished
+apps receive dashboard test webhooks only and no real production events,
+including app admins/developers/testers. Do not overwrite that callback or send
+Staging tests into Production. Staging uses authorized read-only Graph import
+and explicit manual sync for provider tests. Real inbound Webhook acceptance
+is BLOCKED until an independently approved supported Staging route/app and
+publication/permissions are available. No publication was attempted.
+
+Staging connections deliberately skip app-global Page subscription writes while
+sharing the Production callback; this is independently exercised with synthetic
+connection/import dependencies. A branch-only read of the Staging service journal
+outputs fixed discovery labels and numeric/boolean counters only. Tokens, Page
+names, Page IDs, provider messages and arbitrary journal text are never emitted.
+
+Guardian correction: merge list results before granular recovery, query only
+missing/tokenless targets, and share one 45-second AbortSignal across both list
+methods, debug_token and direct/fallback Page requests. Focused regressions
+prove shared deadline aborts and that already usable Pages are not refetched.
+Independent staging-source mutation proof detected all six removed guards
+(repository, exact SHA, exact branch, manual event, Billing-preserve, no recovery).
+
+## Staging premerge deployment and real reconnect checkpoint
+
+Owner explicitly approved the one additional exact task-branch Staging rule;
+GitHub saved it alongside main. No wildcard, Production environment or secret
+value changed. All nine PR workflows succeeded on b9ff5247, including native
+PostgreSQL and Browser run 42664140056 (six journeys, the chat/comment/foreign-
+Workspace fixture included, plus 43 component tests).
+
+Protected branch deploy 42665852915 succeeded. Independent /api/version read
+confirmed b9ff5247719a67233817c0b40ddaf5ea545fb0f5 on Staging. Main remains
+4488fc0ff548e2ec2fc230a0403d1826849fd233. The journal diagnostic reported
+FACEBOOK_DISCOVERY_JOURNAL=BLOCKED; no raw journal/provider data was available.
+The real existing-permission Meta reconnect now returns facebook_error=callback
+before selection, with no Page saved. Live connection/import acceptance remains
+failed/open. This is not evidence that all remaining failures are external.
+
+A narrow continuation exposes only the affected accounts endpoint, fixed
+transport/http/shape category and bounded numeric HTTP/Graph codes after the
+existing user/Workspace authorization. It never emits provider error messages,
+tokens or message content. It distinguishes the remaining Graph/response-shape
+failure without broadening host journal access. Real cause pending deployment
+and reconnect; no speculative permission or provider setting changes.
+
+## Real callback diagnosis on dc32edb3 and narrow continuation
+
+After Bernd confirmed the operator login, the actual matching Workspace was
+verified in the selected browser. Existing Meta authorization was refreshed;
+FanMind returned `page_discovery_accounts_field_shape_200_0`: successful HTTP,
+no Graph error, but no usable expanded accounts collection. No Page was saved.
+This proves an accounts-field response-shape rejection, not a Page permission
+refusal or a successful connection.
+
+Accept only the precise safe empty-edge variant: successful response, no Graph
+error, numeric string user identity and no own accounts property. That variant
+adds no Page; recovery still uses only valid same-app granular target IDs.
+Explicit null/malformed accounts and missing/invalid identity remain blocked.
+All-empty discovery now preserves bounded direct-recovery HTTP/Graph codes or
+a fixed no-target/invalid-debug classification; it never discloses Page IDs,
+token values or provider text. Unknown response shapes still fail closed.
+
+Focused 46 tests, TypeScript and affected ESLint PASS. Fresh full build/Operations,
+exact-head CI and independent review are required before the necessary Staging
+code deployment. The existing dc32edb3 diagnosis could not complete connection,
+so this is a warranted fix rather than a redundant redeployment. Main merge,
+Production and the existing shared Webhook remain outside authorization.
