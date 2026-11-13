@@ -6,6 +6,12 @@ on:
         type: choice
         options: [activate, deactivate, verify-support, activate-support, deactivate-support, prepare-widget, activate-diagnostics, deactivate-diagnostics]
         required: true
+      media_schema_profile:
+        description: Exact expected private media schema, never auto-detect or apply
+        type: choice
+        options: [initial, extended]
+        default: initial
+        required: true
       reviewed_commit:
         description: Exact reviewed main commit already deployed to Staging
         type: string
@@ -26,6 +32,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     env:
+      FANMIND_CHAT_ADMIN_MEDIA_SCHEMA_PROFILE: ${{ inputs.media_schema_profile }}
       FANMIND_RUNTIME_ENVIRONMENT: staging
       NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}

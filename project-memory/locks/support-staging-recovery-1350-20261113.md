@@ -23,3 +23,10 @@ Full final-head CI and regular protected merge must precede use. Recheck
 current Main, target versions and exclusive deployment group before rollout.
 Actual host snapshot/restore and live Support acceptance require their own
 execution receipts; no source result is a target acceptance result.
+
+Concurrent Main advanced through the other session's regular #1471 merge
+8f9e286d778207941c41ca6c33d23df188ac96f0. Integrate it through genuine merge
+history, retaining all host-readiness/schema-profile source and tests byte-for-byte.
+Only the seven intended recovery paths differ from that Main. No new media
+activation or host media-probe task is undertaken. New combined-head CI is required;
+preceding58cc1e82 results cannot establish the merged candidate's checks.
