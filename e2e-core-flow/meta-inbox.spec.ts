@@ -34,7 +34,7 @@ test("one fan's chats and post comments stay separate with exact manual reply ta
     await queue.getByRole("link").filter({ hasText: `Synthetic post comment ${post}` }).first().click();
     await expect(page).toHaveURL(new RegExp(`source=facebook%3Apost%3A101_${post}`));
     await expect(page.getByRole("heading", { name: "Verlauf zu diesem Beitrag", exact: true })).toBeVisible();
-    const timeline = page.getByRole("article", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true });
+    const timeline = page.getByRole("main", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true });
     await expect(timeline.getByText(`Synthetic post comment ${post}`, { exact: true })).toBeVisible();
     await expect(timeline.getByText(`Synthetic post comment ${otherPost}`, { exact: true })).toHaveCount(0);
     await expect(timeline.getByText("Hallo Gerhard, kannst du mir am Montag die neuen Termine schicken?", { exact: true })).toHaveCount(0);
@@ -56,11 +56,11 @@ test("one fan's chats and post comments stay separate with exact manual reply ta
   const detailPath = new URL(page.url()).pathname;
   await page.goto(`${detailPath}?source=all`);
   await expect(page.getByRole("heading", { name: "Privater Chat", exact: true })).toBeVisible();
-  const privateTimeline = page.getByRole("article", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true });
+  const privateTimeline = page.getByRole("main", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true });
   await expect(privateTimeline.getByText("Synthetic post comment 202", { exact: true })).toHaveCount(0);
   await expect(privateTimeline.getByText("Synthetic post comment 203", { exact: true })).toHaveCount(0);
   await page.goto(`${detailPath}?channel=facebook&source=facebook%3Apost%3A101_missing`);
-  await expect(page.getByRole("article", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true }).getByText("Synthetic post comment 202", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("main", { name: "Kanalübergreifender Nachrichtenverlauf", exact: true }).getByText("Synthetic post comment 202", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Zum Facebook-Kommentar wechseln", exact: true })).toHaveCount(0);
   await page.goto("/inbox?view=comments");
 

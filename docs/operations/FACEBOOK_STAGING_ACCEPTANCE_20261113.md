@@ -156,7 +156,10 @@ original action instead of silently opening another posting or private chat.
 - Local Chromium acceptance could not start: browser binary absent; the official
   download then failed with a truncated ZIP. This is a tooling failure, not a
   passing browser test. The extended synthetic two-post browser test still needs
-  the normal GitHub Browser E2E runner before protected rollout.
+  the normal GitHub Browser E2E runner before protected rollout. Its first run
+  43404951493 exposed a test locator mismatch (`article` instead of the actual
+  labelled `main` timeline); corrected without weakening visibility/link checks.
+  That first run is not a browser PASS; the corrected run remains required.
 - God Mode preflight, Project Memory quality and truth-drift checks passed;
   global release decision remains its existing conservative BLOCK. Source checks
   do not override exact-commit Owner/environment authorization.

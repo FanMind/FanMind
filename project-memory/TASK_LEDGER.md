@@ -5,6 +5,7 @@
 - Real-record RLS negatives: Operator foreign rows 0; existing synthetic foreign workspace subject sees Operator conversations/messages 0. Webhook stays unsubscribed; real multipage/multi-post provider acceptance unexercised.
 - Actual renewal FAILED without metadata rotation. Reproducible source defects: local proxy request origin handling and empty POST stream classification. Successor keeps exact public Origin/runtime/project/user/workspace, bounds body inspection, and exposes fixed outcome codes only. Real expiry/logout/revocation remains open.
 - Owner correction: contact detail mixed DM and comments despite separated Inbox views. Successor scopes DM to private chat, comments to their posting; removes aggregate timeline selection including legacy all bookmarks; keeps each comment's original target. Existing synthetic two-post fixture extended for regression. Source/CI is not real multi-post evidence.
+- Synthetic Browser E2E first run 43404951493 failed the new timeline locator (article vs actual labelled main); corrected the semantic locator, preserving all scope/link assertions. No product/browser PASS inferred from that failure.
 - Acceptance receipt: docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md. Successor is REVIEW_PENDING; new exact-SHA protected approval required before deployment, with existing no-Production/no-Main/no-webhook/no-WellFit/no-send constraints.
 
 ## FM-FACEBOOK-PAGE-DISCOVERY-20261109 — Staging first; explicit merge hold
