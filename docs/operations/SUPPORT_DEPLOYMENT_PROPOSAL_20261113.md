@@ -1,3 +1,40 @@
+# Deployment-blocker repair proposal — 13 November 2026
+
+PR1468 was Owner-approved at1ddf705e and regularly merged as
+6c1e376b788e9ef4d3d929a44214f8484e8610ba after fresh12/12 required checks,
+unchanged head and strict/no-bypass rules verification. Main ref, merged PR and
+commit parents/tree independently agree. No deployment performed.
+
+A follow-up source proposal repairs exactly two blockers:
+
+1. Upgrade the nine Expo dependencies to the patch versions requested by the
+   failed doctor check, regenerate the mobile lockfile and advance the existing
+   exact-version assertions accordingly. No Mobile feature, native identity,
+   permission, signed build, store action or check exclusion is introduced.
+2. Prepare an explicitly approved Main-only preservation path for an already
+   enabled Staging Operator session. Normal defaults may not turn it off.
+   Exact source/manual/Billing-preserve checks and a fresh private flag read are
+   mandatory. This source admission extension needs separate Owner approval;
+   active branch/environment rules are untouched. See STAGING_OPERATOR_SESSION_ROLLOUT.md.
+
+The new PR's exact head/tree and full independent CI receipts are recorded in
+that PR. Until merged and separately deployed, neither target blocker is claimed
+resolved live. No Facebook/Stripe/media runtime source or target data changes.
+The final deployable Main SHA does not yet exist; after source approval/merge,
+record its actual SHA and repeat target version checks before requesting Staging.
+
+For Staging, propose that exact merged SHA with billing_write_freeze=preserve,
+staging_operator_session_enabled=true and the fixed preservation confirmation.
+No temporary environment branch expansion is needed for already allowed Main.
+No database, flag activation, provider or permission change is part of this
+proposal; preserving true must first be proved from existing release metadata.
+Live Support acknowledgment requires an explicitly authorized existing test
+alarm or bounded fixture with readback/reload/reopen and audit/actor evidence.
+Production remains a separate later deployment and acceptance approval.
+
+The preceding source-reconciliation proposal follows for context; its then-open
+source merge is now complete, while actual target acceptance is still pending.
+
 # Support common release — 13 November 2026
 
 Source preparation only. No merge or deployment is authorized by this document.

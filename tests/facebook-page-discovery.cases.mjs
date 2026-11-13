@@ -106,6 +106,37 @@ test('Staging source exception accepts only the exact manually reviewed task bra
   assert.equal(allowed({...env,STAGING_OPERATOR_SESSION_ENABLED:'true'}),false);
 });
 
+test('Main can preserve only an already enabled Operator session with explicit exact-source approval', async () => {
+  const { isReviewedStagingSourceAllowed: allowed } = await import('../scripts/operations/staging-reviewed-source-policy.mjs');
+  const approved = { GITHUB_REPOSITORY: 'FanMind/FanMind', GITHUB_REF: 'refs/heads/main', GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_SHA: 'a'.repeat(40), REVIEWED_RELEASE_COMMIT: 'a'.repeat(40), BILLING_WRITE_FREEZE: 'preserve', STAGING_OPERATOR_SESSION_ENABLED: 'true', CURRENT_STAGING_OPERATOR_SESSION_ENABLED: 'true', OPERATOR_SESSION_PRESERVATION_CONFIRMATION: 'preserve-approved-operator-session' };
+  assert.equal(allowed(approved), true);
+  for (const patch of [
+    { GITHUB_REPOSITORY: 'other/repo' }, { GITHUB_REF: 'refs/heads/unreviewed' },
+    { GITHUB_EVENT_NAME: 'push' }, { GITHUB_EVENT_NAME: 'workflow_call' },
+    { GITHUB_SHA: 'invalid' }, { REVIEWED_RELEASE_COMMIT: '' }, { REVIEWED_RELEASE_COMMIT: 'b'.repeat(40) },
+    { CURRENT_STAGING_OPERATOR_SESSION_ENABLED: 'false' }, { CURRENT_STAGING_OPERATOR_SESSION_ENABLED: '' },
+    { CURRENT_STAGING_OPERATOR_SESSION_ENABLED: undefined }, { OPERATOR_SESSION_PRESERVATION_CONFIRMATION: '' },
+    { OPERATOR_SESSION_PRESERVATION_CONFIRMATION: 'activate-operator-session' },
+    { BILLING_WRITE_FREEZE: 'false' }, { BILLING_WRITE_FREEZE: 'true' },
+    { FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: 'recover-live-staging-release-state' },
+    { FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: 'b'.repeat(40) },
+    { STAGING_OPERATOR_SESSION_ENABLED: 'false' }, { STAGING_OPERATOR_SESSION_ENABLED: undefined },
+  ]) assert.equal(allowed({ ...approved, ...patch }), false, JSON.stringify(patch));
+});
+
+test('release metadata parser rejects duplicate, exported and malformed Operator state without executing content', async () => {
+  const { readOperatorSessionState: state } = await import('../scripts/operations/staging-reviewed-source-policy.mjs');
+  assert.equal(state('UNRELATED_SECRET=do-not-output\nFANMIND_STAGING_OPERATOR_SESSION_ENABLED=true\n'), 'true');
+  assert.equal(state('FANMIND_STAGING_OPERATOR_SESSION_ENABLED=false\r\n'), 'false');
+  assert.equal(state('UNRELATED_SECRET=do-not-output\n'), '');
+  for (const input of ['"true"', 'true; arbitrary-command', '$(arbitrary-command)', 'TRUE']) {
+    assert.throws(() => state('FANMIND_STAGING_OPERATOR_SESSION_ENABLED=' + input), /operator_session_state_invalid/);
+  }
+  for (const input of ['FANMIND_STAGING_OPERATOR_SESSION_ENABLED=true\nFANMIND_STAGING_OPERATOR_SESSION_ENABLED=false', 'export FANMIND_STAGING_OPERATOR_SESSION_ENABLED=true', ' FANMIND_STAGING_OPERATOR_SESSION_ENABLED=true']) {
+    assert.throws(() => state(input), /operator_session_state_invalid/);
+  }
+});
+
 test('Page token must resolve to the exact selected Page identity before persistence', async () => {
   for (const [payload, expected] of [[{id:'22'},true],[{id:'11'},false],[{error:{code:190}},false],[{},false]]) {
     const h=harness(()=>payload);

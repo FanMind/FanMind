@@ -1,3 +1,35 @@
+# Reviewed-Main preservation proposal — 13 November 2026
+
+This source change requires separate explicit Owner approval before merge/use.
+No protected environment rule or active branch admission has been changed.
+The Owner approved repairing deployment blockers, not a Staging deployment.
+
+The previous workflow would disable the approved Operator continuation on a
+normal Main rollout, while rejecting true on Main. The prepared correction keeps
+the named feature-branch opt-in and all environment protections. Main gains only
+preservation of an already enabled state, not first activation or account rights:
+
+- Exact FanMind repository, Main ref, manual workflow_dispatch and reviewed SHA.
+- Billing freeze preserve; no recovery confirmation or previous-recovery SHA.
+- staging_operator_session_enabled=true plus the separate fixed confirmation
+  operator_session_preservation_confirmation=preserve-approved-operator-session.
+- Read the existing private .release.env through a non-symlink regular file;
+  parse only the single exact boolean flag, without executing/logging contents.
+- Existing state must already be true. False/absent/duplicate/malformed state,
+  missing confirmation, another branch, changed SHA or non-manual call is denied.
+- A Main rollout with false/default input is denied when existing state is true;
+  it cannot silently turn continuation off. Read failures stop before writes.
+
+This modifies source admission for preserving true on Main and must be named in
+the Owner's exact-head merge approval. No wildcard branch, new environment
+exception, privilege, identity, provider credential, renewal implementation or
+Production behavior is added. The actual protected Staging environment stays
+unchanged. The later Staging request must include both explicit inputs, exact
+merged Main SHA and expected live target; do not dispatch until separately
+approved. A later parallel deployment requires reconciliation first.
+
+Earlier checkpoint evidence below is historical, not superseded live acceptance.
+
 > 13 November actual rollout: exact approved aae0003c was deployed in run
 > 43399615749, independently version-checked, and temporary branch admission
 > removed. Manual real DM/comment imports passed; actual continuation failed.
