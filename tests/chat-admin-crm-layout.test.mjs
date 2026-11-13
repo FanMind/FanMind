@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import * as mediaCatalogue from "../src/lib/chatAdminMediaCatalogue.mjs";
 import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import ts from "typescript";
 
@@ -24,6 +25,8 @@ function loadClient() {
       const mediaModule={exports:{}};const mediaCode=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
       new Function("module","exports","require",mediaCode)(mediaModule,mediaModule.exports,localRequire);return mediaModule.exports;
     }
+    if(name === "@/lib/chatAdminMediaCatalogue.mjs") return mediaCatalogue;
+    if(name === "./CharacterMediaCatalogueControls"){const controls={exports:{}};const code=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",code)(controls,controls.exports,localRequire);return controls.exports;}
     if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;
     if (name === "./chatadmin.module.css") return new Proxy({}, { get: (_, key) => String(key) });
     return require(name);

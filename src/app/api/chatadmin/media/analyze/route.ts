@@ -20,6 +20,7 @@ export async function POST(request:NextRequest){
   if(body.analysis_consent!==true||!Number.isSafeInteger(body.character_revision))throw new ChatAdminMediaError("media_analysis_consent_required");
   const character=await assertMediaCharacter(workspace.id,characterId,body.character_revision as number);
   const asset=await getMediaAsset(workspace.id,characterId,mediaId(body.id));
+  if((asset.media_type??"image")!=="image")throw new ChatAdminMediaError("media_video_analysis_not_enabled");
   if(asset.deleted||body.revision!==asset.revision)throw new ChatAdminMediaError("stale_media_context");
   // One normalized image per explicit request; both short and daily limits fail closed.
   for(const [scope,maxRequests,windowMs] of [["chat_admin_media_analysis",5,600_000],["chat_admin_media_analysis_daily",30,86_400_000]] as const){const limit=await consumeSharedRateLimit({scope,subject:workspace.id,maxRequests,windowMs});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});}

@@ -56,7 +56,7 @@ const expectedTables=[
   'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','social_connections','meta_webhook_events',
   'content_sources','content_metric_snapshots','communication_analysis_reports','workspace_analysis_settings',
   'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events','creator_confirmed_chat_learning',
-  'workspace_chat_admin_capabilities','chat_characters','chat_character_media','chat_character_media_policies','chat_character_fans','chat_character_current_facts','chat_character_conversations','chat_character_messages',
+  'workspace_chat_admin_capabilities','chat_characters','chat_character_media','chat_character_media_policies','chat_character_media_folders','chat_character_fans','chat_character_current_facts','chat_character_conversations','chat_character_messages',
 ];
 
 function collectorFixture(override=()=>undefined,token='synthetic-user-jwt',runtime='production') {
@@ -133,6 +133,7 @@ test('foreign identity/workspace rows and failed active reads abort the complete
     ['memories',()=>jsonResponse([{id:'memory-1',workspace_id:'foreign-workspace'}])],
     ['chat_character_media',()=>jsonResponse([{id:'media-1',workspace_id:'foreign-workspace'}])],
     ['chat_character_media_policies',()=>jsonResponse([{character_id:'character-1',workspace_id:'foreign-workspace'}])],
+    ['chat_character_media_folders',()=>jsonResponse([{id:'folder-1',character_id:'character-1',workspace_id:'foreign-workspace'}])],
   ];
   for(const [target,response] of foreignCases) await assert.rejects(collectorFixture(({table})=>table===target?response():undefined).run(),DisclosureFailure);
   for(const response of [()=>jsonResponse({code:'PGRST205'},404),()=>jsonResponse({code:'42501'},403),()=>new Response('invalid-json',{status:200}),()=>jsonResponse({}),()=>{throw Error('PRIVATE_NETWORK_DETAIL')}]) {
@@ -268,7 +269,7 @@ for(const locale of ['de','en']) {
 
 
 test('private Character media disclosure handles absent preinstall tables and rejects denied reads',async()=>{
- for(const table of ['chat_character_media','chat_character_media_policies']){
+ for(const table of ['chat_character_media','chat_character_media_policies','chat_character_media_folders']){
   const missing=collectorFixture(({table:current})=>current===table?jsonResponse({code:'PGRST205'},404):undefined);
   const data=await missing.run();const rows=data.find(item=>item.key===table).rows;assert.ok(Array.isArray(rows));assert.equal(rows.length,0);
   const denied=collectorFixture(({table:current})=>current===table?jsonResponse({code:'42501'},403):undefined);

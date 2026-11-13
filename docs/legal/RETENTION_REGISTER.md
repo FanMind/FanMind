@@ -116,3 +116,13 @@ or legal acceptance certificate. See `docs/operations/SUPPORT_CENTRE.md`.
 ### Private ChatAdmin-Medien — vorbereitet, nicht aktiviert
 
 Private Bilddateien, manuell geprüfte Beschreibungen/Schlagwörter, Verfügbarkeit und Anfertigungsregeln bleiben Workspace-/Character-gebunden. Die KI-Beschreibung wird nur ausdrücklich ausgelöst und bleibt bis zur manuellen Prüfung unfreigegeben. Einzelbildlöschung entzieht zuerst Freigabe/Verfügbarkeit, bestätigt dann die physische Datei-Löschung und entfernt erst danach Metadaten. Der bestehende geschützte Account-Löschprozessor bereinigt Bilder vor Auth-Löschung; Disclosure enthält Metadaten/Regeln. Keine neue allgemeine Aufbewahrungsfrist, automatische Bildübertragung oder Produktivaktivierung wird behauptet. Siehe `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`; Provider-/Datenschutz- und Zielabnahme bleiben offen.
+
+## ChatAdmin catalogue extension (#1425, source only, 13 November 2026)
+
+Private image/video objects keep the existing explicit-delete/account-erasure
+lifecycle. Folder metadata cascades with its Character and is included in export
+and the optional-schema erasure absence check. Object deletion requires exact
+scoped metadata, tombstoning, physical deletion and independent authenticated404
+before metadata removal. No automatic legal retention duration is invented.
+New catalogue SQL is unapplied; native SQL and actual target cleanup remain
+acceptance requirements. See `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`.

@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const w='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',c='cccccccc-cccc-4ccc-8ccc-cccccccccccc',otherC='dddddddd-dddd-4ddd-8ddd-dddddddddddd',owner='11111111-1111-4111-8111-111111111111',foreign='22222222-2222-4222-8222-222222222222';
+export async function runMediaCatalogueSqlCases(sql){
+ const as=(query,user=owner)=>sql(`set role authenticated;set request.jwt.claim.sub='${user}';${query}`);
+ await sql(`delete from storage.objects;delete from public.chat_character_media;alter table public.chat_characters add column sales_playbook jsonb not null default '{}'::jsonb;grant update(sales_playbook,updated_at) on public.chat_characters to authenticated;`);
+ await sql(readFileSync('supabase/controlled/chat_admin_media_catalogue.sql','utf8'));
+ const a='10000000-0000-4000-8000-000000000001',b='10000000-0000-4000-8000-000000000002',v='10000000-0000-4000-8000-000000000003',asset='20000000-0000-4000-8000-000000000001';
+ const add=(id,kind,parent=null)=>`insert into public.chat_character_media_folders(id,workspace_id,character_id,kind,name,parent_id) values('${id}','${w}','${c}','${kind}','${id}',${parent?`'${parent}'`:'null'});`;
+ await as(add(a,'image')+add(b,'image',a)+add(v,'video'));
+ assert.equal((await as('select count(*) from public.chat_character_media_folders;',foreign)).trim().split('\n').at(-1),'0');
+ await assert.rejects(()=>sql('set role anon;select * from public.chat_character_media_folders;'));
+ await assert.rejects(()=>as(add('10000000-0000-4000-8000-000000000004','video',a)),/media_folder_binding_invalid/u);
+ await assert.rejects(()=>as(`update public.chat_character_media_folders set parent_id='${b}' where id='${a}';`),/media_folder_cycle/u);
+ await assert.rejects(()=>as(`update public.chat_character_media_folders set character_id='${otherC}' where id='${a}';`));
+ await assert.rejects(()=>as(add('10000000-0000-4000-8000-000000000005','image',a),foreign));
+ const revision=Number((await sql(`select revision from public.chat_characters where id='${c}';`)).trim());
+ const payload=JSON.stringify({id:b,parent_id:a,kind:'image',name:'Edited',revision:1,offer_id:'',price_rules:{negotiation_allowed:false,special_discounts_allowed:false}});
+ assert.equal((await as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${revision},'save_folder','${payload}'::jsonb,'{}'::jsonb);`)).trim().split('\n').at(-1),'t');
+ await assert.rejects(()=>as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${revision},'save_folder','${payload}'::jsonb,'{}'::jsonb);`),/stale_media_context/u);
+ await as(`insert into public.chat_character_media(id,workspace_id,character_id,media_type,folder_id,byte_size,duration_ms) values('${asset}','${w}','${c}','video','${v}',1234,1000);`);
+ await assert.rejects(()=>as(`update public.chat_character_media set folder_id='${a}' where id='${asset}';`),/media_folder_binding_invalid/u);
+ await assert.rejects(()=>as(`update public.chat_character_media set media_type='image' where id='${asset}';`));
+ const path=`${w}/${c}/${asset}.mp4`;
+ await assert.rejects(()=>as(`insert into storage.objects(bucket_id,name) values('chat-character-media','${w}/${c}/${asset}.webp');`));
+ await as(`insert into storage.objects(bucket_id,name) values('chat-character-media','${path}');`);
+ assert.equal((await as('select count(*) from storage.objects;',foreign)).trim().split('\n').at(-1),'0');
+ await as(`update public.chat_character_media set deleted=true,available=false,reviewed=false where id='${asset}';delete from public.chat_character_media where id='${asset}';`);
+ assert.equal((await sql(`select count(*) from public.chat_character_media where id='${asset}';`)).trim(),'1');
+ await as(`delete from storage.objects where name='${path}';delete from public.chat_character_media where id='${asset}';`);
+ assert.equal((await sql(`select count(*) from public.chat_character_media where id='${asset}';`)).trim(),'0');
+ await sql(`insert into public.account_deletion_requests values('${owner}','processing');`);
+ await assert.rejects(()=>as(add('10000000-0000-4000-8000-000000000006','image')));
+ await sql('delete from public.account_deletion_requests;');
+ // Native tree depth, rollback and revoked capability proofs (not regex checks).
+ let parent=null;
+ for(let level=1;level<=8;level++){const node=`30000000-0000-4000-8000-${String(level).padStart(12,'0')}`;await as(add(node,'image',parent));parent=node;}
+ await assert.rejects(()=>as(add('30000000-0000-4000-8000-000000000009','image',parent)),/media_folder_depth/u);
+ await assert.rejects(()=>as(`update public.chat_character_media_folders set parent_id='30000000-0000-4000-8000-000000000007' where id='${a}';`),/media_folder_depth/u);
+ const snapshot=()=>sql(`select json_build_object('revision',revision,'playbook',sales_playbook)::text from public.chat_characters where id='${c}';`);
+ const before=await snapshot(),current=JSON.parse(before).revision;
+ const invalidPayload=JSON.stringify({id:'60000000-0000-4000-8000-000000000001',parent_id:a,kind:'video',name:'Rollback',revision:0,offer_id:'',price_rules:{negotiation_allowed:false,special_discounts_allowed:false}});
+ await assert.rejects(()=>as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${current},'save_folder','${invalidPayload}'::jsonb,'{"qa_rollback":true}'::jsonb);`),/media_folder_binding_invalid/u);
+ assert.equal(await snapshot(),before,'failed catalogue+price RPC must preserve revision and playbook');
+ assert.equal((await sql(`select count(*) from public.chat_character_media_folders where id='60000000-0000-4000-8000-000000000001';`)).trim(),'0');
+ await sql(`delete from public.workspace_chat_admin_capabilities where workspace_id='${w}';`);
+ assert.equal((await as('select count(*) from public.chat_character_media_folders;')).trim().split('\n').at(-1),'0');
+ await assert.rejects(()=>as(add('60000000-0000-4000-8000-000000000002','image')));
+ await assert.rejects(()=>as(`select public.chat_admin_media_catalogue_write('${w}','${c}',${current},'save_folder','${invalidPayload}'::jsonb,'{}'::jsonb);`),/owner_required/u);
+ await sql(`insert into public.workspace_chat_admin_capabilities(workspace_id,chat_admin_multi_character,granted_to_user_id) values('${w}',true,'${owner}');`);
+ await as(add('60000000-0000-4000-8000-000000000003','image'));
+ await as("delete from public.chat_character_media_folders where id='60000000-0000-4000-8000-000000000003';");
+ await sql(`delete from public.chat_characters where id='${c}';`);
+ assert.equal((await sql(`select count(*) from public.chat_character_media_folders where character_id='${c}';`)).trim(),'0');
+ assert.equal((await sql(`select has_function_privilege('anon','public.chat_admin_media_catalogue_write(uuid,uuid,integer,text,jsonb,jsonb)','EXECUTE');`)).trim(),'f');
+}

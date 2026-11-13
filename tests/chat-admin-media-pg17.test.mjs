@@ -17,6 +17,7 @@ function transaction(query,onOutput=()=>{}){
   child.on("error",reject);child.on("close",status=>{clearTimeout(timer);resolve({status,out,error});});child.stdin.end(query);
  });
 }
+import {runMediaCatalogueSqlCases} from "./chat-admin-media-catalogue-sql.cases.mjs";
 async function concurrentMediaLifecycle(){
  const w="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",c="cccccccc-cccc-4ccc-8ccc-cccccccccccc",owner="11111111-1111-4111-8111-111111111111";
  const ids=sql("select id from public.chat_character_media order by id limit 2;").trim().split("\n");
@@ -45,6 +46,6 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
    for(const drift of ["create policy allow_all on public.chat_character_media for select to authenticated using(true);","create policy allow_all_storage on storage.objects for select to authenticated using(true);","alter policy chat_media_read on public.chat_character_media using(true);","grant select on public.chat_character_media to anon;","alter table public.chat_character_media disable trigger chat_media_revision;"]){
     assert.throws(()=>sql(`begin;${drift}${verify}rollback;`),"native activation preflight must refuse broad policy, grant and trigger drift");
    }
-  });await concurrentMediaLifecycle();}
+  });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query));}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}
 });

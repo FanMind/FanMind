@@ -27,6 +27,10 @@ const knowledgeClient = ts.transpileModule(readFileSync("src/lib/chatAdminKnowle
 const creatorPolicyClient = ts.transpileModule(readFileSync("src/lib/creatorIntelligencePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const replyPricePolicyClient = ts.transpileModule(readFileSync("src/lib/replyPricePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const mediaClient = ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+const controlsClient=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+const mediaPolicyClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaPolicy.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const catalogueClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaCatalogue.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const salesClient=ts.transpileModule(readFileSync("src/lib/chatAdminSalesPlaybook.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const bundle = `(() => {
   const modules = {${moduleSources.join(",")},
     "./chatadmin.module.css": function(module) { module.exports = {__esModule: true, default: new Proxy({}, {get: (_, key) => String(key)})}; },
@@ -34,6 +38,11 @@ const bundle = `(() => {
     "./creatorIntelligencePolicy.mjs": function(module,exports,require) {${creatorPolicyClient}},
     "./replyPricePolicy.mjs": function(module,exports,require) {${replyPricePolicyClient}},
     "./CharacterMediaLibrary": function(module,exports,require) {${mediaClient}},
+    "./CharacterMediaCatalogueControls": function(module,exports,require) {${controlsClient}},
+    "@/lib/chatAdminMediaCatalogue.mjs": function(module,exports,require) {${catalogueClient}},
+    "./chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
+    "./chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
+    "./chatAdminSalesPlaybook.mjs": function(module,exports,require) {${salesClient}},
     client: function(module, exports, require) {${client}}
   };
   const cache = {};
@@ -42,7 +51,7 @@ const bundle = `(() => {
     if (!cache[name]) { cache[name] = {exports: {}}; modules[name](cache[name], cache[name].exports, require); }
     return cache[name].exports;
   }
-  window.mountCharacters = (characters, structuredOffersEnabled=true,mediaLibraryEnabled=false) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled,mediaLibraryEnabled}));
+  window.mountCharacters = (characters, structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true) => require("react-dom/client").createRoot(document.getElementById("root")).render(require("react").createElement(require("client").ChatAdminClient, {initialCharacters: characters, structuredOffersEnabled,mediaLibraryEnabled,fanRuntimeEnabled}));
 })();`;
 
 const characterA = {
@@ -73,7 +82,7 @@ const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three
 let browser;
 before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
 after(async()=>{await browser?.close();});
-async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false){
+async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true){
  const context=await browser.newContext({permissions:["clipboard-read","clipboard-write"]});t.after(()=>context.close());const page=await context.newPage();
  await page.route("**/*",route=>route.fulfill({contentType:"text/html",body:'<html><body><div id="root"></div></body></html>'}));await page.goto("http://localhost/chatadmin-client-test");
  await page.evaluate(({fansByCharacter,conversationFor,historyFor})=>{
@@ -85,7 +94,7 @@ async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false){
    return new Promise((resolve,reject)=>window.testRequests.push({url,method,body:options.body?JSON.parse(options.body):null,resolve,reject}));
   };
  },{fansByCharacter,conversationFor,historyFor});
- await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled});await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();return page;
+ await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled,fanEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled,fanEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled,fanEnabled:fanRuntimeEnabled});if(fanRuntimeEnabled)await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();else await expect(page.getByRole("heading",{name:"Nachricht manuell einfügen",exact:true})).toBeVisible();return page;
 }
 const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("heading",{name,exact:true})});
 const copies=page=>page.getByRole("button",{name:"Kopieren und verwenden",exact:true});
@@ -357,4 +366,45 @@ test("private Character library edits reviewed metadata, scrolls and isolates Ch
  await region.getByLabel("Beschreibung und Motive geprüft; für die KI freigeben").check();await region.getByRole("button",{name:"Bildangaben speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const sent=await page.evaluate(()=>window.testRequests[0].body);assert.equal(sent.character_id,characterA.id);assert.equal(sent.id,asset.id);assert.equal(sent.reviewed,true);assert.equal(sent.offer_id,"private_photo");
  await page.evaluate(({asset,character})=>window.testRequests[0].resolve(Response.json({...window.fixture.media[character.id],assets:[{...asset,reviewed:true,revision:2}],character:{...character,revision:2}})),{asset,character:characterA});await expect(region.getByRole("status")).toContainText("Gespeichert");
  await selectCharacter(page,"Synthetic Bea");await page.getByRole("button",{name:"Bilder",exact:true}).click();await expect(page.getByRole("region",{name:"Bilder von Synthetic Bea",exact:true})).toContainText("Noch keine Bilder vorhanden");await expect(page.getByLabel("Beschreibung",{exact:true})).toHaveCount(0);
+});
+
+test("catalogue folder editor submits individual category prices and private video stays scoped",async t=>{
+ const page=await mount(t,true,true);
+ const folder={id:"50000000-0000-4000-8000-000000000010",workspace_id:characterA.workspace_id,character_id:characterA.id,parent_id:null,kind:"video",name:"Landschaft",offer_id:"",price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1};
+ const asset={id:"50000000-0000-4000-8000-000000000011",workspace_id:characterA.workspace_id,character_id:characterA.id,folder_id:folder.id,media_type:"video",duration_ms:1000,revision:1,description:"Blaue Fläche",tags:["blau"],folder:"",offer_id:"",reviewed:true,available:true,deleted:false};
+ await page.evaluate(({characterA,folder,asset})=>{window.fixture.media[characterA.id]={assets:[asset],folders:[folder],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character:characterA,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},{characterA,folder,asset});
+ await page.getByRole("button",{name:"Bilder",exact:true}).click();
+ const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});
+ await expect(region.locator("video")).toHaveAttribute("src",`/api/chatadmin/media?character_id=${characterA.id}&id=${asset.id}&revision=${asset.revision}`);
+ await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
+ await region.getByRole("button",{name:"Ordner anlegen",exact:true}).click();
+ await region.getByLabel("Ordnername",{exact:true}).fill("Wald");
+ await region.getByLabel("Eigener Kategoriepreis",{exact:true}).check();
+ await expect(region.getByLabel("Startpreis",{exact:true}).first()).toHaveValue("");
+ await region.getByLabel("Startpreis",{exact:true}).first().fill("23,50");await region.getByLabel("Mindestpreis",{exact:true}).first().fill("17");
+ await region.getByLabel("Verhandlungen erlauben",{exact:true}).first().check();
+ await region.getByRole("button",{name:"Ordner speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const sent=await page.evaluate(()=>({url:window.testRequests[0].url,body:window.testRequests[0].body}));
+ assert.equal(sent.body.action,"save_folder");assert.equal(sent.body.price.start_minor,2350);assert.equal(sent.body.price.minimum_minor,1700);assert.equal(sent.body.price.negotiation_allowed,true);assert.equal(sent.body.character_id,characterA.id);
+});
+
+test("changed Character price revision blocks stale clipboard use before confirmation",async t=>{
+ const page=await mount(t,true,true);await openFan(page,"Fan A1");
+ await generate(page);await complete(page);
+ await page.evaluate(()=>{window.copyCalls=[];Object.defineProperty(navigator,"clipboard",{value:{writeText:async text=>window.copyCalls.push(text)},configurable:true});});
+ await copies(page).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ assert.equal(await page.evaluate(()=>window.testRequests[1].url),"/api/chatadmin/characters");
+ await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
+ await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");
+ assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);assert.equal(await page.evaluate(()=>window.testRequests.filter(r=>r.url==="/api/chatadmin/conversations").length),0);
+});
+
+
+test("legacy composer also blocks stale media prices before clipboard use",async t=>{
+ const page=await mount(t,true,true,false);await page.getByLabel("Von OnlyFans kopierte Fan-Nachricht").fill("Bild im Wald");await page.getByRole("button",{name:"Antwortvorschläge erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);await complete(page);
+ await page.evaluate(()=>{window.copyCalls=[];Object.defineProperty(navigator,"clipboard",{value:{writeText:async text=>window.copyCalls.push(text)},configurable:true});});
+ await page.getByRole("button",{name:"Antwort kopieren",exact:true}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
+ await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);
 });
