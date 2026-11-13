@@ -1,124 +1,83 @@
-# Support completion: coordinated deployment proposal — 13 November 2026
+# Support common release — 13 November 2026
 
-This is a reviewable proposal, not a deployment authorization. Other Work-tab
-approvals remain limited to their own tasks. No deployment, live database write,
-permission/secret/flag change, Stripe or Facebook mutation was performed by this
-continuation. No new database or infrastructure is proposed.
+Source preparation only. No merge or deployment is authorized by this document.
+The Owner requested a fresh common candidate and full checks before exact-head
+merge approval. No new Support feature, database, provider, permission, secret,
+flag or runtime changes are included. No additional database is proposed.
 
-## Prepared common source and confirmed versions
+## Independently confirmed versions
 
-| Surface | Exact commit | Evidence |
+| Surface | Exact source | Evidence |
 | --- | --- | --- |
-| Current Main / actual PR1467 merge | `0def924beb080dde9b7bd9fb4d514f5cca2ac291` | Fresh Main ref, merged PR metadata and local Git parents/tree |
-| Approved PR1467 head | `43a9b301341d9bfa61ba1e708b47d9c683ae6393` |12 required/14 total exact-head checks passed immediately before regular protected merge |
-| Prior approved PR1466 merge | `798fa177f052075e107faaddd37dc74df260d68b` | First parent of PR1467 merge; public contact and single-suggestion fixes retained |
-| Actual Staging | `aae0003c6836ef73235c0d771d6387ee0e29f81b` | Browser `/api/version`,2026-11-13T09:57:27.937Z |
-| Actual Production | `a798d7938bb4e7e168f615f0c32d1a603dd47d4a` | Browser `/api/version`,2026-11-13T09:57:40.946Z |
+| Main | `0def924beb080dde9b7bd9fb4d514f5cca2ac291` | Fresh GitHub ref; approved PR1466/1467 merges retained |
+| Staging | `a49decfdb81ea8a16ff78c134cd28b141af4a218` | Browser `/api/version` 2026-11-13T10:25:58.042Z (11:25:58 Vienna); successful protected deployment43408555294 |
+| Production | `a798d7938bb4e7e168f615f0c32d1a603dd47d4a` | Browser `/api/version` 2026-11-13T10:26:20.231Z (11:26:20 Vienna) |
 
-An isolated common-source candidate is prepared on
-`chore/support-common-release-20261113`. Its parents are exactly Main0def924b
-and deployed Stagingaae0003c. No Main/parallel branch or runtime was moved.
-The only merge conflict was the Source of Truth blob fingerprint; the document
-itself merged cleanly. Both histories are retained and the fingerprint is
-reconciled to the actual combined blob, not copied from either parent.
+Staging advanced fromaae0003c to the Owner-approved a49decfd in the other
+Work-tab. The old PR1468 candidate405a2cf6 would remove that deployed successor
+and must not be released unchanged. Existing PR1468 is refreshed by a genuine
+merge of its original source with exactly the observed Staginga49decfd.
+No newer undeployed commit or media Draft1440 is selected. Those branches remain
+unchanged and unmerged. Preserving deployed source is not a declaration that its
+remaining live renewal/expiry/logout/revocation acceptance has passed, nor does
+it inherit the other Work-tab's Main merge approval. Explicit exact-head common
+source approval must cover this inherited source before Main may move.
 
-Byte comparisons verified all13 Main-side and33 Staging-side changed files
-outside the combined truth/fingerprint and updated release-proposal documents against their exact
-parent versions. No Facebook/Stripe/session/media implementation was edited.
-The common candidate preserves the deployed session/connection source plus both
-Support corrections.192 focused cross-stream tests and the full Next/TypeScript
-webpack build passed locally; final candidate CI remains a separate gate.
-The initial checkout was shallow; its history was deepened to prove the genuine
-4488fc0f merge base. No unrelated-history or force merge was used.
+## Preservation and verification
 
-Newer Facebook Draft1465 head17ade824 and separate media Draft1440 are **not**
-included. They remain owned by their other Work-tabs and must not be silently
-substituted or marked accepted. This snapshot is a concrete pre-release source,
-not the final Production release or an approval to merge the Facebook PRs.
-Historical source-preparation wording imported from the deployed Staging parent
-is not evidence of current runtime activation; only the observations above are.
+Runtime files from deployeda49decfd and the approved Main Support fixes are
+preserved byte-for-byte. The only conflict is DRIFT_BASELINE metadata: retain
+the combined Source of Truth and pin its actual Git blob; no other watched hash
+or activation gate changes. The precise candidate SHA/tree and final CI receipts
+are recorded in PR1468 after checks, avoiding a self-referential commit digest.
+Historical deployment wording inherited from its parents is checkpoint evidence;
+the fresh target readings above supersede it without fabricating live acceptance.
 
-## Support acknowledgment correction
+Required checks: full exact-head GitHub CI including lint/tests/production build,
+Chromium desktop/mobile public and synthetic core journeys, native PostgreSQL17
+authorization and Support roundtrips, CodeQL, supply-chain, Memory and God Mode.
+Independent source QA must confirm both parent ancestries, exact preservation of
+runtime files, no migration delta and unchanged no-auto-send/tenant boundaries.
+Recheck target/source refs immediately before proposing or acting on approval.
+A later Staging successor invalidates this frozen deployment proposal until
+reconciled; never roll it back just to gain branch parity.
 
-Production still contains the old comparison between the browser HTTPS Origin
-and proxy-internal `nextUrl.origin`. The Main correction already exists; it must
-be included in the eventual release rather than independently reimplemented.
-Executed route tests reproduce old403/no RPC and current success behind the
-internal proxy, then read the acknowledged state again through the actual GET.
+## Support correction included
 
-A second defect was reproduced before correction: the actual acknowledgment
-route returned200/ok even when `support_centre_ack` returned false. The follow-up
-source requires the exact boolean true and an authorized inbox read confirming
-the notification is absent. A newly reopened incident or unexpected RPC result
-returns409; an unavailable readback returns503 without a success claim. A retry
-uses the existing idempotent SQL function. No migration is needed.
+PR1467 requires exact boolean true from support_centre_ack and a fresh authorized
+inbox read confirming absence before returning success. False/malformed results
+or a reopened alert return409; failed readback returns503. The existing canonical
+HTTPS origin guard is retained behind the internal proxy. Idempotent retries
+retain the database acknowledgment timestamp. Tests cover actual route/parser,
+React inbox reload/reopen and native PostgreSQL owner/tenant/idempotency checks.
+No migration is needed. Synthetic PASS is not live Production acceptance.
 
-Regression layers: actual transpiled route with canonical mutation policy and
-request parser; real React OwnerInbox in desktop/mobile Chromium with persisted
-fixture readback after a new mount; existing isolated PostgreSQL17 function
-contract extended for missing IDs, Owner denial, successful readback and stable
-timestamp on replay. Synthetic tests do not establish current live acknowledgment.
-The existing Production test notification is not acknowledged again by this task,
-because the current Owner instruction excludes live database changes.
+## Separate protected requests after the merge
 
-## Parallel work that must be preserved
+1. Record actual common Main merge SHA and re-read both target versions and
+   workflow locks. Use the existing protected deployment path; no bypass,
+   force update, database migration, secret/permission/flag or provider change.
+2. Request Staging-only deployment for that exact common Main SHA, preserving
+   current settings, Billing freeze and deployed integrations. Its target
+   baseline is a49decfd unless a fresh read establishes a successor. Existing
+   in-app Help build flag NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED must be verified;
+   a server Support flag alone does not establish launcher availability.
+3. After the approved Staging rollout, confirm HTTPS release/health and Support
+   paths. With a specifically authorized existing test alarm or separately
+   approved bounded fixture, prove acknowledgment actor/timestamp, absence on
+   fresh read/reload/reopen, stable retry and correct new-occurrence behavior.
+   Do not generate Admin-Chat content, edit media or send external messages.
+4. Request Production deployment separately: exact merged SHA, current target
+   a798d793 or fresh successor, complete accumulated source delta, passed gates,
+   Staging evidence and the supported rollback. Source includes already-existing
+   registration/Stripe/Meta differences; this is not approval to activate them.
+5. Only after that approval, deploy and independently read the live version,
+   then execute the same explicitly authorized durable acknowledgment proof on
+   Production. Record outcomes in existing Issue1350. No false success, no
+   automatic retry after indeterminate write and no email-delivery claim from
+   database/UI evidence alone. Any needed data write/fixture cleanup must be
+   included in the concrete acceptance approval.
 
-| Workstream | Observed source | Required coordination |
-| --- | --- | --- |
-| Public Support/Admin display fixes | PR1466 merged on Main | Preserve the merged contact and single-suggestion rendering fixes |
-| Support acknowledgment fix | PR1467 merged as0def924b, independent9/9 CI/100 browser tests/native PG17 PASS | Retain merged source; target acknowledgment still needs authorized rollout and live acceptance |
-| Facebook discovery | Existing PR1463 /6be52484 lineage | Its responsible Work-tab owns review/merge; do not overwrite its deployed behavior |
-| Staging Operator/Facebook continuation | Deployedaae0003c; newer Draft head17ade824fd48dc38a9caf308d6e7554e332d211d | Candidate retains deployed source only; newer chat/post separation and renewal changes require their own acceptance/merge decisions |
-| ChatAdmin media deletion | PR1440 Draft, head2374ca26fb0e4c3ff1b86dc56ba86bb3725b4d63 | Separate Owner merge decision and final media acceptance; do not copy its changes |
-
-## Proposed execution order after approvals
-
-1. The acknowledgment follow-up is already merged as0def924b after explicit
-   exact-head Owner approval and fresh required-check verification. No runtime
-   action was coupled to that merge.
-2. The responsible Facebook/Admin Work-tabs reconcile their accepted source into
-   a common reviewed Main candidate. Preserve all independently authorized work;
-   no force ref updates, branch substitution or implicit PR1440 merge. Record
-   the resulting final candidate SHA and target diff. The isolated snapshot above
-   is available for review/CI but does not settle the newer unfinished drafts;
-   its immutable commit is recorded in the release PR rather than invented in
-   a deployment command.
-3. Before Staging deployment, re-read actual Staging/Main/Production versions and
-   active workflow leases. Review the complete diff against the actual Staging
-   sourceaae0003c (or its freshly observed successor), including session renewal,
-   media cleanup and Support consumers. If the target changed, rebase the proposal
-   on that actual version; do not roll it back to798fa177 just to gain parity.
-4. Obtain concrete Staging deployment approval for that exact common candidate
-   using the existing protected deploy workflow and canonical deployment lock.
-   Preserve the existing billing freeze and unrelated feature flags. No schema,
-   secrets, permissions or provider image analysis are part of the web deploy.
-5. On the deployed candidate, independently check HTTPS version/health and the
-   real Support/ChatAdmin flows. For durable Owner acknowledgment use an existing
-   explicitly approved test notification, or separately authorize one bounded
-   synthetic fixture and cleanup if none exists. Live acknowledgment is a data
-   write and is not authorized by the PR1466 merge permission.
-6. Media activation remains a distinct protected action after its exact schema,
-   Owner, retention and reviewed-Main/live-source gates pass. The existing runtime
-   controller's `activate` changes Support/media flags while keeping image
-   analysis disabled; it is not authority for AI analysis, custom-order promises
-   or a real image. Its separately scoped Work-tab owns the approved synthetic
-   upload/read/preview/isolation/delete/cleanup acceptance.
-7. Only after accepted Staging evidence prepare the Production release request:
-   exact common Main SHA, actual current Production SHA, complete scope including
-   pre-existing Stripe/Meta differences, passing mandatory checks and existing
-   release rollback. The Production controller is reviewed-Main-bound. An app
-   release does not approve migrations or activate independent integrations.
-   If the Owner still excludes those source differences, do not dispatch a
-   wholesale Main release; reconcile the permitted release scope first.
-
-## Completion evidence still required
-
-- Final common-source CI/approval and reconciliation with any later accepted
-  parallel source. The acknowledgment source merge itself is complete.
-- Real Staging and then authorized Production durable acknowledgment/fresh-read
-  proof, without suppressing a new occurrence or claiming email delivery.
-- Private media upload, preview, availability/revision, tenant/Character denial
-  and actual deletion/cleanup on the approved common Staging release.
-- Explicit separate approval and HTTPS readback for each target deployment.
-
-Keep #1350 and #1425 open until their actual target evidence is complete.
+Media development and Facebook feature completion are owned by their Work-tabs;
+they are not Support completion prerequisites. Preserve their deployed behavior.
+Support remains pending live target acceptance, even after all source checks pass.

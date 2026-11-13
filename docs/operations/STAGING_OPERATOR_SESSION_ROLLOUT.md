@@ -1,3 +1,10 @@
+> 13 November actual rollout: exact approved aae0003c was deployed in run
+> 43399615749, independently version-checked, and temporary branch admission
+> removed. Manual real DM/comment imports passed; actual continuation failed.
+> See [bounded acceptance](FACEBOOK_STAGING_ACCEPTANCE_20261113.md). Successor
+> request-handling and per-post detail-routing fixes are source preparation only;
+> they are not covered by the old exact-commit deployment approval.
+
 # Staging Operator session continuation — #1464 / Draft #1465
 
 ## 13 November continuation — prepared source, separate rollout approval

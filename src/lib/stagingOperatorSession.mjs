@@ -20,15 +20,49 @@ function token(value) {
 }
 const fail = (status, code) => ({ status, code });
 
+export function operatorSessionRequestAllowed(request) {
+  let url;
+  try { url = new URL(request.url); } catch { return false; }
+  if (url.username || url.password) return false;
+  // Next.js can see the local nginx upstream URL. Only the configured Staging
+  // public origin or this exact local transport are accepted; forwarded headers
+  // never establish trust. Browser Origin and the runtime/project gates remain.
+  const trustedTransport = url.origin === STAGING_ORIGIN ||
+    ['http://127.0.0.1:3001', 'http://localhost:3001'].includes(url.origin);
+  return trustedTransport && url.pathname === '/api/staging-operator/session' &&
+    request.method === 'POST' && request.headers.get('origin') === STAGING_ORIGIN &&
+    ['same-origin', 'none'].includes(request.headers.get('sec-fetch-site') || 'same-origin');
+}
+
+export async function operatorSessionBodyPresent(request) {
+  if (request.body === null) return false;
+  const reader = request.body?.getReader?.();
+  if (!reader) return true;
+  let timer;
+  const deadline = new Promise(resolve => { timer = setTimeout(() => resolve({ timedOut: true }), 1000); });
+  try {
+    for (let chunks = 0; chunks < 16; chunks++) {
+      const part = await Promise.race([reader.read(), deadline]);
+      if (part.timedOut) return true;
+      if (part.done) return false;
+      if (!(part.value instanceof Uint8Array) || part.value.byteLength > 0) return true;
+    }
+    return true;
+  } catch { return true; }
+  finally {
+    clearTimeout(timer);
+    // Bound cancellation too: a broken caller stream cannot hold Auth open.
+    void reader.cancel().catch(() => {});
+  }
+}
+
 // Per-process coalescing/rate bound complements provider-side Auth controls.
 // It is not a distributed limiter or an immediate JWT-revocation guarantee.
 export function createOperatorSessionRenewer({ fetchImpl = fetch, now = Date.now } = {}) {
   const attempts = new Map();
   return async function renew(request, environment) {
     if (!operatorSessionEnabled(environment)) return fail(404, 'unavailable');
-    let url;
-    try { url = new URL(request.url); } catch { return fail(403, 'origin_forbidden'); }
-    if (url.origin !== STAGING_ORIGIN || url.pathname !== '/api/staging-operator/session' || request.method !== 'POST' || request.headers.get('origin') !== STAGING_ORIGIN || !['same-origin', 'none'].includes(request.headers.get('sec-fetch-site') || 'same-origin')) return fail(403, 'origin_forbidden');
+    if (!operatorSessionRequestAllowed(request)) return fail(403, 'origin_forbidden');
     // No client-supplied user, workspace, key, refresh token or redirect in a body.
     if (request.bodyPresent) return fail(400, 'body_forbidden');
     const refreshToken = request.refreshToken;
