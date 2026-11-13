@@ -27,7 +27,10 @@ export function parsePublicSupportRequest(value){
 export function guardPublicSupportReply(value,language){
  if(typeof value!=="string"||!value.trim()||value.length>2000)throw Error("invalid_reply");
  if(/[€$£]|\b(?:CHF|EUR|USD|GBP)\b|\d\s*(?:Euro|Prozent|%)/iu.test(value))return publicSupportPricingReply(language);
- const text=value.trim();
+ // The public assistant has exactly one approved contact address. Never let
+ // a model typo or an address injected through history redirect visitors.
+ const text=value.trim().replace(/[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?)+/giu,"fanmind@fanmind.ch");
+ if(text.length>2000)throw Error("invalid_reply");
  if(/kopier|copy|Originalkanal|original channel/iu.test(text)&&!/(?:\blinks?\b|Original öffnen|Chat öffnen|Kommentar öffnen|Beitrag öffnen)/iu.test(text)){
   const workflow=publicSupportReplyWorkflow(language),combined=text+"\n\n"+workflow;
   return combined.length<=2000?combined:workflow;

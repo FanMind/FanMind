@@ -1702,6 +1702,11 @@ UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreib
 
 Support-Erklärung zum Antworten (Owner-Feedback 09.11.2026): Der öffentliche KI-Support und die angemeldete Hilfe nennen den direkten Antwort-/Original-Link ausdrücklich zwischen Kopieren und manuellem Senden. Er öffnet das gespeicherte Ziel im Originalkanal (Chat, Beitrag oder Kommentar); ein gültiger hinterlegter Link ist erforderlich. Kein automatisches Einfügen oder Senden und keine erfundene allgemeine Kanal-/Deep-Link-Verfügbarkeit.
 
+Öffentlicher Support, 13.11.2026: Der serverseitige Ausgabeschutz bindet alle
+E-Mail-Adressen aus Modellantworten an `fanmind@fanmind.ch`. Eine tatsächlich
+beobachtete falsche Kontaktadresse darf Besucher nicht umleiten. Quellkorrektur
+und Tests sind kein Nachweis eines bereits erfolgten Production-Deployments.
+
 
 Staging-Meta-Konfiguration (09.11.2026): Die bestehende FanMind-App erhält die
 zusätzliche Staging-Rücksprungadresse. Geschützte Zugangsdaten werden ausschließlich
