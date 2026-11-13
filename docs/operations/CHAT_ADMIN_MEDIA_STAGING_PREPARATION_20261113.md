@@ -387,3 +387,8 @@ actual application-context probe. Schema/bucket/new flags remain unchanged.
 Secure Staging login in the fallback browser was declined/not completed. The
 original Operator session is untouched; do not retry the login request without
 new user instruction. Continue independently possible server/database work.
+
+The same diagnostic followup also repairs an independently reproduced overescaped
+proc-identity expression. Literal Uid/Gid patterns now parse all four IDs from
+actual `/proc/self/status`; missing/malformed rows still fail closed. This is
+not a target-host proof. Current Main193eb1a9 (Facebook #1477) is integrated.

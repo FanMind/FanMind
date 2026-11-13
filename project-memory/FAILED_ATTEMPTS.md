@@ -1,3 +1,6 @@
+## FM1425 proc identity parser regression — 13 November 2026
+The installed probe identity matcher was independently reproduced as overescaped: valid proc Uid/Gid rows could not match. Replace only that matcher with literal exact four-ID patterns, validate real proc rows and malformed negatives. No identity check removed; target proof remains mandatory.
+
 ## FM-FAIL-CHATADMIN-FAN-POSTFLIGHT-20260927
 - Date: 2026-09-27
 - Status: OPEN_RECONCILIATION
