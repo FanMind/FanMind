@@ -270,3 +270,21 @@ test('comment UI action authorizes afresh and serializes only server-derived out
   assert.equal(JSON.stringify(actual).includes('private'), false);
   assert.equal(calls, 1);
 });
+
+
+test('inbound Messenger readiness does not require optional outbound echoes; feed alone is insufficient', async () => {
+  for (const [fields, ready] of [[['messages','feed'],true],[['messages'],true],[['feed'],false], [[],false]]) {
+    const h=harness(()=>({data:[{id:app,subscribed_fields:fields}]}));
+    const status=await h.api.fetchFacebookPageWebhookStatus('11','synthetic-token');
+    assert.equal(status.ok,ready);assert.equal(status.fields.message_echoes,'missing');
+  }
+});
+test('explicit Messenger subscription requests only inbound messages and preserves existing feed', async () => {
+  let posted;
+  const h=harness((url,options)=>{
+    if(options?.method==='POST'){posted=url.searchParams.get('subscribed_fields');return {success:true};}
+    return {data:[{id:app,subscribed_fields:posted?.split(',')??['feed']}]};
+  });
+  const status=await h.api.subscribeFacebookPage('11','synthetic-token');
+  assert.equal(status.ok,true);assert.deepEqual(posted.split(',').sort(),['feed','messages']);
+});

@@ -20,6 +20,7 @@ Browser observations at approximately 13:50–14:00 Europe/Vienna:
 | Business verification | FanMind: not verified |
 | Messenger permissions UI | pages_manage_metadata, pages_messaging, pages_read_engagement, pages_show_list: ready for testing, not proof of general Advanced Access |
 | FanMind Staging binding | One connected Page1208778912321696; persisted webhook_subscribed=false; encrypted credentials not selected |
+| Legacy DM mapping | Aggregate-only DB check:1 private history,1 thread ID,1 matching Page provenance; candidate can reuse the accepted Graph thread without exporting its original link |
 | Existing persisted data | 3 conversations / 6 distinct external message IDs: 2 private DM,4 comments across2 posts |
 | Operator | Actual continuation button reached authenticated Dashboard without credential export; full historical rotation/logout acceptance reused, not repeated |
 
@@ -53,6 +54,9 @@ The existing route and processor now:
 - import Facebook feed only for new `item=comment,verb=add`, a fan sender,
   complete comment identity and an own-Page post prefix; ignore posts, removals,
   edits and own-Page comments rather than inventing messages;
+- treat inbound `messages` subscription as ready without optional outbound
+  `message_echoes`; preserve an existing feed/echo subscription during explicit
+  subscription, and do not request echoes by default;
 - require exactly one active Page mapping before processing; duplicates fail
   closed even if only one has its subscription flag enabled. Disabled mapping
   is ignored; secret columns are unnecessary for lookup;
@@ -82,7 +86,7 @@ comment links; chunked/oversized/stalled requests and generic retry responses.
 An independent in-memory mutation of the add-comment guard makes its negative
 case fail; no repository/live protection was disabled.
 
-Local focused113/113, full Next build/TypeScript and affected ESLint passed. Independent Guardian89/89 and an independent guard-mutation negative passed. Governance/adversarial123/123, God Mode preflight, Project Memory quality, truth/drift and diff whitespace checks passed. Full current-head hosted CI remains required. The local
+Local focused115/115, full Next build/TypeScript and affected ESLint passed. Independent Guardian126/126 (successor recheck; earlier89/89) and an independent guard-mutation negative passed. Governance/adversarial123/123, God Mode preflight, Project Memory quality, truth/drift and diff whitespace checks passed. Full current-head hosted CI remains required. The initial published head42eb2351 completed the inherited Mobile job with a genuine Expo Doctor failure:9 package patch mismatches. The existing PR1470 already owns exactly that repair; this Facebook PR does not duplicate it or disable the check. A green required Web gate does not erase that red shared dependency. The local
 broad Operations run encountered unrelated root-mode host-policy expectations
 and missing rsync, so it is not a complete Operations PASS. Its affected older
 comment fixtures were corrected to contain the real required `verb=add` field;

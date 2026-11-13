@@ -6,7 +6,7 @@
 - Baseline: main3912461e1f88eb5cf2e621f23e4d6079409c20cc.
 - Scope: existing Meta webhook route/parser, Facebook connection/thread mapping, executable synthetic boundary tests and exact provider/deployment proposal.
 - Parallel boundaries: preserve Support/Adminchat/Stripe/Billing; PR1470 exclusively owns Main session-preservation admission. No protected merge/deploy, provider subscription/callback/publication, DB/schema/permission action or outbound send.
-- Verification: local113focused/123governance, build/lint/truth/drift PASS; independent Guardian89/89 plus mutation-negative PASS. Exact hosted CI remains required.
+- Verification: local115focused/123governance, build/lint/truth/drift PASS; independent Guardian126/126 plus mutation-negative PASS. Exact hosted CI remains required.
 - Recovery: reviewed source revert; runtime and common Production callback remain unchanged. Real automatic arrival stays unaccepted until separately authorized isolated routing and genuine new inputs pass.
 
 ## LOCK-FM-FACEBOOK-PAGE-DISCOVERY-20261109
