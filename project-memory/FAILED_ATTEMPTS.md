@@ -1,3 +1,6 @@
+## FM1425 proc identity parser regression — 13 November 2026
+The installed probe identity matcher was independently reproduced as overescaped: valid proc Uid/Gid rows could not match. Replace only that matcher with literal exact four-ID patterns, validate real proc rows and malformed negatives. No identity check removed; target proof remains mandatory.
+
 ## FM-FAIL-CHATADMIN-FAN-POSTFLIGHT-20260927
 - Date: 2026-09-27
 - Status: OPEN_RECONCILIATION
@@ -550,3 +553,8 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Real Staging run43448723976 failed closed with missing video binaries, unbounded CPU/memory and runner outside actual application context. Same-UID runner never counted as proof. Required fixed service-context helper and resource drop-in developed under explicit Owner completion approval; target proof remains pending.
 - First follow-up #1475 head1f180567 CI correctly rejected missing project-memory update and CodeQL filesystem-check/read race in the new root diagnostic reader. Corrected with NOFOLLOW descriptor-open, fstat and descriptor-read plus change check; no security dismissal or rule exception. New full-head CI required.
 - Follow-up permission regression initially used stat(path) then read(path); CodeQL correctly rejected this test pattern at61ac4ef3. Both checks now use the same NOFOLLOW-open descriptor. Production protections and all required contexts remain enabled.
+
+## FM-FAIL-CHATADMIN-MEDIA-PROBE-SYMLINK-20261113
+- Real run43466444949 returned job success with NO readiness/cleanup/root-receipt markers and therefore is NOT a host/conversion acceptance. Installed current/control.mjs is a symlink; Node resolves import.meta.url to the release file but argv[1] retains the symlink. The CLI comparison skipped execution and exited0.
+- Local direct-vs-symlink reproduction confirms direct invalid arguments BLOCK/1 versus symlink empty/0. Correct CLI comparison uses realpath. The protected workflow now independently requires readiness, cleanup and root-receipt PASS markers, as well as exit0. Dedicated actual subprocess regression covers both entry forms. No rule bypass or success inference from job colour.
+- Current Staging d00ebd6e is deployed, host tools/drop-in prepared, but actual service-context conversion proof, SQL/bucket/flags and full practical acceptance remain pending. No media flag/schema mutation from this failed proof.

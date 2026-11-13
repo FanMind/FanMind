@@ -16,6 +16,7 @@ const ORIGIN = "https://staging.fanmind.ch";
 const CALLBACK = ORIGIN + "/api/integrations/facebook/callback";
 const STAGING = "vshyhvgcmrlagvfnvomc";
 const PRODUCTION = "drqkpdvtbbrrdwmtrodz";
+const INSTAGRAM_FIELDS = ["INSTAGRAM_LOGIN_MODE", "INSTAGRAM_APP_ID", "INSTAGRAM_APP_SECRET", "INSTAGRAM_REDIRECT_URI", "INSTAGRAM_UNIFIED_CONFIG_ID"];
 const FIELDS = ["FACEBOOK_APP_ID", "FACEBOOK_APP_SECRET", "FACEBOOK_REDIRECT_URI", "FANMIND_TOKEN_ENCRYPTION_KEY", "FACEBOOK_WEBHOOK_VERIFY_TOKEN"];
 const fail = code => { throw new Error(code); };
 const usable = value => typeof value === "string" && value.length > 0 && !/replace_with_|^your_/iu.test(value);
@@ -32,7 +33,7 @@ export function metaReadiness(values) {
     webhook: usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? values.META_WEBHOOK_VERIFY_TOKEN) };
 }
 export function assertMetaTarget(values, control, action) {
-  if (!["inspect", "configure", "rebind", "subscribe-webhook"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
+  if (!["inspect", "configure", "rebind", "subscribe-webhook", "configure-instagram", "subscribe-instagram-webhook"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
       control.GITHUB_EVENT_NAME !== "workflow_dispatch" || control.GITHUB_REF !== "refs/heads/main" ||
       !/^[a-f0-9]{40}$/u.test(control.GITHUB_SHA ?? "") || control.REVIEWED_COMMIT !== control.GITHUB_SHA ||
       control.CONFIRMATION !== `staging-meta-${action}` || !/^\d{1,20}$/u.test(control.GITHUB_RUN_ID ?? "")) fail("control_binding");
@@ -146,29 +147,47 @@ export function metaSetupInput(action, control) {
 }
 // The token stays on the protected Staging host. Never export it to a job log
 // or mutate any existing Production app subscription.
-export async function subscribeStagingMetaWebhook(values, requestedAppId, request = fetch) {
+export async function subscribeStagingMetaWebhook(values, requestedAppId, request = fetch, object = "page") {
   const appId = "1547928503809961", callback = ORIGIN + "/api/webhooks/meta";
-  if (requestedAppId !== appId || values.FACEBOOK_APP_ID !== appId ||
+  if (!["page","instagram"].includes(object) || requestedAppId !== appId || values.FACEBOOK_APP_ID !== appId ||
       !/^[a-f0-9]{32}$/iu.test(values.FACEBOOK_APP_SECRET ?? "") ||
       !/^[A-Za-z0-9_-]{32,128}$/u.test(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? "")) fail("subscription_identity_invalid");
+  if (object === "instagram" && (values.INSTAGRAM_LOGIN_MODE !== "unified" || values.INSTAGRAM_APP_ID !== appId || values.INSTAGRAM_APP_SECRET !== values.FACEBOOK_APP_SECRET)) fail("instagram_identity_invalid");
   const url = `https://graph.facebook.com/${META_GRAPH_API_VERSION}/${appId}/subscriptions`;
   const headers = { Authorization: `Bearer ${appId}|${values.FACEBOOK_APP_SECRET}` };
   const read = () => boundedJson(url, headers, {}, request);
+  const allowed = {page:["messages","feed"],instagram:["messages","comments"]};
   const validate = data => {
-    if (!Array.isArray(data?.data) || data.data.length > 1 || data.paging?.next) fail("subscription_inventory_invalid");
-    const page = data.data[0];
-    if (page && (page.object !== "page" || page.callback_url !== callback || !Array.isArray(page.fields) ||
-        page.fields.some(field => !["messages", "feed"].includes(field.name)))) fail("subscription_conflict");
-    return page;
+    if (!Array.isArray(data?.data) || data.data.length > 2 || data.paging?.next || new Set(data.data.map(x=>x.object)).size !== data.data.length) fail("subscription_inventory_invalid");
+    for (const item of data.data) if (!allowed[item.object] || item.callback_url !== callback || !Array.isArray(item.fields) || item.fields.some(f=>!allowed[item.object].includes(f.name))) fail("subscription_conflict");
+    return data.data;
   };
-  const complete = page => page?.active === true && new Set(page.fields.map(field => field.name)).size === 2;
-  if (complete(validate(await read()))) return;
-  const body = new URLSearchParams({ object: "page", callback_url: callback,
-    verify_token: values.FACEBOOK_WEBHOOK_VERIFY_TOKEN, fields: "messages,feed" });
-  const result = await boundedJson(url, { ...headers, "Content-Type": "application/x-www-form-urlencoded" }, { method: "POST", body }, request);
+  const complete = item => item?.active === true && allowed[object].every(name=>item.fields.some(f=>f.name===name));
+  const before = validate(await read()), previousOther = JSON.stringify(before.filter(x=>x.object!==object));
+  if (complete(before.find(x=>x.object===object))) return;
+  const body = new URLSearchParams({object,callback_url:callback,verify_token:values.FACEBOOK_WEBHOOK_VERIFY_TOKEN,fields:allowed[object].join(",")});
+  const result = await boundedJson(url,{...headers,"Content-Type":"application/x-www-form-urlencoded"},{method:"POST",body},request);
   if (result?.success !== true) fail("subscription_write_unconfirmed");
-  if (!complete(validate(await read()))) fail("subscription_readback_failed");
+  const after = validate(await read());
+  if (!complete(after.find(x=>x.object===object)) || JSON.stringify(after.filter(x=>x.object!==object))!==previousOther) fail("subscription_readback_failed");
 }
+export function renderInstagramUnifiedConfiguration(original, overrides, configId) {
+  const values = Object.assign({},parseEnv(original),...overrides.map(parseEnv));
+  if (values.FACEBOOK_APP_ID !== "1547928503809961" || !/^[a-f0-9]{32}$/iu.test(values.FACEBOOK_APP_SECRET ?? "") ||
+      configId !== "2150411132228815" || ["META_APP_ID","META_APP_SECRET","META_WEBHOOK_APP_SECRET"].some(n=>values[n])) fail("instagram_configuration_identity");
+  const desired = {INSTAGRAM_LOGIN_MODE:"unified",INSTAGRAM_APP_ID:values.FACEBOOK_APP_ID,INSTAGRAM_APP_SECRET:values.FACEBOOK_APP_SECRET,INSTAGRAM_REDIRECT_URI:ORIGIN+"/api/integrations/instagram/callback",INSTAGRAM_UNIFIED_CONFIG_ID:configId};
+  let after=original;
+  for (const name of INSTAGRAM_FIELDS) {
+    if (values[name] && values[name] !== desired[name]) fail("instagram_existing_configuration_conflict");
+    for (const override of overrides) if (parseEnv(override)[name] !== undefined && parseEnv(override)[name] !== desired[name]) fail("instagram_override_conflict");
+    const pattern=new RegExp(`^[ \\t]*(?:export[ \\t]+)?${name}[ \\t]*=.*$`,"gm");
+    if ([...after.matchAll(pattern)].length>1) fail("instagram_ambiguous_configuration");
+    const line=`${name}=${JSON.stringify(desired[name])}`;
+    after=pattern.test(after)?after.replace(new RegExp(pattern.source,"gm"),line):after+(after.endsWith("\n")?"":"\n")+line+"\n";
+  }
+  return after;
+}
+
 async function verifyRelease(control) {
   const version = await boundedJson(ORIGIN + "/api/version");
   if (version.application !== "fanmind" || version.runtimeEnvironment !== "staging" || version.releaseCommit !== control.GITHUB_SHA) fail("live_release_mismatch");
@@ -195,9 +214,9 @@ export async function runMetaRuntime(action, control = process.env) {
     console.log(`STAGING_META_READINESS=${JSON.stringify(metaReadiness(runningBefore))}`);
     return;
   }
-  if (action === "subscribe-webhook") {
+  if (action === "subscribe-webhook" || action === "subscribe-instagram-webhook") {
     assertMetaRuntimeConsistency(effective, runningBefore, control.META_SETUP_APP_ID);
-    await subscribeStagingMetaWebhook(runningBefore, control.META_SETUP_APP_ID);
+    await subscribeStagingMetaWebhook(runningBefore, control.META_SETUP_APP_ID, fetch, action === "subscribe-instagram-webhook" ? "instagram" : "page");
     console.log("STAGING_META_APP_SUBSCRIPTION=PASS");
     return;
   }
@@ -213,9 +232,10 @@ export async function runMetaRuntime(action, control = process.env) {
     if (!Array.isArray(rows) || rows.length > 1) fail("token_inventory_invalid");
     tokensPresent = rows.length > 0;
   }
-  const after = renderMetaConfiguration(before, overrides, requested, { tokensPresent, ...(rebind ? { expectedPreviousAppId: rebind.expectedPreviousAppId } : {}) });
+  const managedNames = action === "configure-instagram" ? INSTAGRAM_FIELDS : FIELDS;
+  const after = action === "configure-instagram" ? renderInstagramUnifiedConfiguration(before,overrides,control.META_INSTAGRAM_CONFIG_ID) : renderMetaConfiguration(before, overrides, requested, { tokensPresent, ...(rebind ? { expectedPreviousAppId: rebind.expectedPreviousAppId } : {}) });
   const desired = Object.assign({}, parseEnv(after), ...overrides.map(parseEnv));
-  const unchangedNames = [...new Set([...Object.keys(effective), ...Object.keys(desired)])].filter(name => !FIELDS.includes(name));
+  const unchangedNames = [...new Set([...Object.keys(effective), ...Object.keys(desired)])].filter(name => !managedNames.includes(name));
   if (unchangedNames.some(name => effective[name] !== desired[name])) fail("unrelated_configuration_changed");
   command("/usr/bin/sudo", ["-n", "-l", "/usr/bin/systemctl", "restart", "fanmind-staging.service"]);
   // Private durable snapshot survives job interruption; never upload it as an artifact.
@@ -230,10 +250,10 @@ export async function runMetaRuntime(action, control = process.env) {
     verify: async () => {
       await waitForStagingRelease(() => verifyRelease(control)); verifyOverrides();
       const running = runningValues();
-      if (FIELDS.some(name => running[name] !== desired[name]) || unchangedNames.some(name => running[name] !== runningBefore[name])) fail("effective_flags_mismatch");
+      if (managedNames.some(name => running[name] !== desired[name]) || unchangedNames.some(name => running[name] !== runningBefore[name])) fail("effective_flags_mismatch");
     }, verifyRollback: async () => {
       await waitForStagingRelease(() => verifyRelease(control)); verifyOverrides(); const running = runningValues();
-      if ([...new Set([...FIELDS, ...unchangedNames])].some(name => running[name] !== runningBefore[name])) fail("rollback_effective_flags_mismatch");
+      if ([...new Set([...managedNames, ...unchangedNames])].some(name => running[name] !== runningBefore[name])) fail("rollback_effective_flags_mismatch");
     } });
   console.log("STAGING_META_CONFIGURATION=PASS");
   console.log(`STAGING_META_READINESS=${JSON.stringify(metaReadiness(runningValues()))}`);

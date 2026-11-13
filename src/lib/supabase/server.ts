@@ -1942,7 +1942,7 @@ async function upsertMetaSocialConnection(
     ),
     token_last_four: normalizeOptionalText(input.tokenLastFour),
     scopes:
-      platform === "facebook"
+      platform === "facebook" || input.oauthLoginType === "instagram_unified_login"
         ? [...new Set(input.scopes ?? [])].sort()
         : [
             ...new Set([
@@ -1951,7 +1951,7 @@ async function upsertMetaSocialConnection(
             ]),
           ].sort(),
     webhook_subscribed: Boolean(
-      existingResult.data?.webhook_subscribed || input.webhookSubscribed,
+      input.oauthLoginType === "instagram_unified_login" ? input.webhookSubscribed : (existingResult.data?.webhook_subscribed || input.webhookSubscribed),
     ),
     oauth_login_type: normalizeOptionalText(input.oauthLoginType),
     external_account_type: normalizeOptionalText(input.externalAccountType),

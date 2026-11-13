@@ -1,3 +1,4 @@
+import { instagramUnifiedEnabled, UNIFIED_APP, UNIFIED_SCOPES, UNIFIED_FIELDS, validateUnifiedDiagnostics, selectUnifiedAccount, readUnifiedCredential } from "@/lib/instagramUnifiedPolicy.mjs";
 import {
   createHmac,
   randomBytes,
@@ -44,6 +45,9 @@ export type InstagramToken = {
   accessToken: string;
   userId: string;
   expiresIn: number | null;
+  businessId?: string;
+  configId?: string;
+  scopes?: string[];
 };
 
 export type InstagramProfile = {
@@ -75,6 +79,10 @@ export type InstagramConversationMessage = {
 export function getInstagramOAuthScopes(
   connectionType: InstagramConnectionType,
 ): readonly string[] {
+  if (instagramUnifiedEnabled(process.env)) {
+    if (connectionType === "instagram_insights") throw new Error("instagram_insights_not_authorized");
+    return UNIFIED_SCOPES;
+  }
   if (connectionType === "instagram_comments")
     return INSTAGRAM_COMMENTS_OAUTH_SCOPES;
   if (connectionType === "instagram_insights")
@@ -86,6 +94,17 @@ export function getInstagramOAuthUrl(
   state: string,
   scopes: readonly string[],
 ): string {
+  if (instagramUnifiedEnabled(process.env)) {
+    const url = new URL("https://www.facebook.com/dialog/oauth");
+    url.searchParams.set("client_id", UNIFIED_APP);
+    url.searchParams.set("config_id", process.env.INSTAGRAM_UNIFIED_CONFIG_ID!);
+    url.searchParams.set("override_default_response_type", "true");
+    url.searchParams.set("redirect_uri", requireInstagramRedirectUri());
+    url.searchParams.set("response_type", "code");
+    url.searchParams.set("prompt", "login");
+    url.searchParams.set("state", state);
+    return url.toString();
+  }
   const url = new URL("https://www.instagram.com/oauth/authorize");
   url.searchParams.set("client_id", requireInstagramAppId());
   url.searchParams.set("redirect_uri", requireInstagramRedirectUri());
@@ -146,6 +165,7 @@ export function verifyInstagramOAuthState(
 export async function exchangeInstagramCode(
   code: string,
 ): Promise<InstagramToken> {
+  if (instagramUnifiedEnabled(process.env)) return exchangeUnifiedInstagramCode(code);
   const body = new URLSearchParams();
   body.set("client_id", requireInstagramAppId());
   body.set("client_secret", requireInstagramAppSecret());
@@ -183,12 +203,16 @@ export async function exchangeInstagramCode(
 export async function exchangeInstagramLongLivedToken(
   shortLivedToken: InstagramToken,
 ): Promise<InstagramToken> {
+  if (instagramUnifiedEnabled(process.env)) {
+    if (!shortLivedToken.businessId || shortLivedToken.configId !== process.env.INSTAGRAM_UNIFIED_CONFIG_ID) throw new Error("instagram_unified_token_binding");
+    return shortLivedToken;
+  }
   const url = new URL("https://graph.instagram.com/access_token");
   url.searchParams.set("grant_type", "ig_exchange_token");
   url.searchParams.set("client_secret", requireInstagramAppSecret());
   url.searchParams.set("access_token", shortLivedToken.accessToken);
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   const payload = (await response.json().catch(() => null)) as {
     access_token?: string;
     token_type?: string;
@@ -211,13 +235,12 @@ export async function exchangeInstagramLongLivedToken(
 export async function fetchInstagramProfile(
   token: InstagramToken,
 ): Promise<InstagramProfile> {
-  const url = new URL(
-    `https://graph.instagram.com/${META_GRAPH_API_VERSION}/me`,
-  );
-  url.searchParams.set("fields", "user_id,username,name,profile_picture_url");
+  const unified = instagramUnifiedEnabled(process.env);
+  const url = new URL(`https://${unified ? "graph.facebook.com" : "graph.instagram.com"}/${instagramGraphVersion()}/${unified ? encodeURIComponent(token.userId) : "me"}`);
+  url.searchParams.set("fields", unified ? "id,username,name,profile_picture_url" : "user_id,username,name,profile_picture_url");
   url.searchParams.set("access_token", token.accessToken);
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   const payload = (await response.json().catch(() => null)) as {
     id?: string | number;
     user_id?: string | number;
@@ -228,7 +251,7 @@ export async function fetchInstagramProfile(
   } | null;
   const userId = stringValue(payload?.user_id) ?? stringValue(payload?.id);
   const username = stringValue(payload?.username);
-  if (!response.ok || !userId || !username || userId !== token.userId) {
+  if (!response.ok || !userId || !username || userId !== token.userId || (unified && username !== "fanmind.crm")) {
     logInstagramApiError("Instagram profile fetch failed", payload);
     throw new Error("Instagram-Professional-Konto konnte nicht bestätigt werden.");
   }
@@ -268,7 +291,7 @@ export async function fetchInstagramConversationPage(
   }
 
   const url = new URL(
-    `https://graph.instagram.com/${META_GRAPH_API_VERSION}/${encodeURIComponent(profileId)}/conversations`,
+    `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/conversations`,
   );
   url.searchParams.set("platform", "instagram");
   url.searchParams.set("fields", "id,updated_time");
@@ -292,7 +315,7 @@ export async function fetchInstagramConversationPage(
   return {
     conversations,
     nextAfter: resolveInstagramGraphPagingCursor(
-      stringValue(paging?.next),
+      stringValue(paging?.next), instagramGraphHost(), instagramGraphVersion(),
     ),
   };
 }
@@ -309,7 +332,7 @@ export async function fetchInstagramConversationMessages(
   const fields =
     `messages.limit(${pageLimit}){id,created_time,from,to,message}`;
   const firstUrl = new URL(
-    `https://graph.instagram.com/${META_GRAPH_API_VERSION}/${encodeURIComponent(conversationId)}`,
+    `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(conversationId)}`,
   );
   firstUrl.searchParams.set("fields", fields);
 
@@ -372,13 +395,13 @@ export async function subscribeInstagramAccount(
     profileId,
     accessToken,
   );
-  const subscribedFields = [...new Set([...currentFields, requestedField])];
+  const subscribedFields = instagramUnifiedEnabled(process.env) ? [...UNIFIED_FIELDS] : [...new Set([...currentFields, requestedField])];
   const url = new URL(
-    `https://graph.instagram.com/${META_GRAPH_API_VERSION}/${encodeURIComponent(profileId)}/subscribed_apps`,
+    `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/subscribed_apps`,
   );
   url.searchParams.set("subscribed_fields", subscribedFields.join(","));
   url.searchParams.set("access_token", accessToken);
-  const response = await fetch(url, { method: "POST", cache: "no-store" });
+  const response = await fetch(url, { method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   const payload = (await response.json().catch(() => null)) as {
     success?: boolean;
     error?: { message?: string; code?: number; type?: string };
@@ -387,24 +410,27 @@ export async function subscribeInstagramAccount(
     logInstagramApiError("Instagram webhook subscription failed", payload);
     return false;
   }
-  return true;
+  const readback = await fetchInstagramSubscribedFields(profileId, accessToken);
+  return subscribedFields.every(field => readback.includes(field));
 }
 
-async function fetchInstagramSubscribedFields(
+export async function fetchInstagramSubscribedFields(
   profileId: string,
   accessToken: string,
 ): Promise<string[]> {
   const url = new URL(
-    `https://graph.instagram.com/${META_GRAPH_API_VERSION}/${encodeURIComponent(profileId)}/subscribed_apps`,
+    `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/subscribed_apps`,
   );
   url.searchParams.set("fields", "subscribed_fields");
   url.searchParams.set("access_token", accessToken);
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   if (!response.ok) return [];
   const payload = (await response.json().catch(() => null)) as {
-    data?: Array<{ subscribed_fields?: unknown }>;
+    data?: Array<{ id?: string; subscribed_fields?: unknown }>;
   } | null;
-  const values = payload?.data?.flatMap((entry) =>
+  const entries = instagramUnifiedEnabled(process.env) ? payload?.data?.filter(entry => entry.id === UNIFIED_APP) : payload?.data;
+  if (instagramUnifiedEnabled(process.env) && entries?.length !== 1) return [];
+  const values = entries?.flatMap((entry) =>
     Array.isArray(entry.subscribed_fields)
       ? entry.subscribed_fields
       : [],
@@ -420,6 +446,7 @@ async function fetchInstagramSubscribedFields(
 }
 
 export function isInstagramOAuthConfigured(): boolean {
+  if (process.env.INSTAGRAM_LOGIN_MODE === "unified") return instagramUnifiedEnabled(process.env);
   return Boolean(
     isUsableMetaAppId(optionalEnv("INSTAGRAM_APP_ID", "META_APP_ID")) &&
       isUsableMetaAppSecret(optionalEnv("INSTAGRAM_APP_SECRET", "META_APP_SECRET")) &&
@@ -561,6 +588,7 @@ async function fetchInstagramGraph(
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    redirect: "error",
     cache: "no-store",
     signal: error.deadlineMs == null
       ? undefined
@@ -583,7 +611,7 @@ async function fetchInstagramGraph(
 }
 
 function validInstagramGraphUrl(value: string | null): URL | null {
-  const validated = validateInstagramGraphPagingUrl(value);
+  const validated = validateInstagramGraphPagingUrl(value, instagramGraphHost(), instagramGraphVersion());
   return validated ? new URL(validated) : null;
 }
 
@@ -611,3 +639,69 @@ function logInstagramApiError(
     type: diagnostic.type,
   });
 }
+
+export function instagramGraphHost(): string {
+  if (process.env.INSTAGRAM_LOGIN_MODE === "unified") {
+    if (!instagramUnifiedEnabled(process.env)) throw new Error("instagram_unified_configuration");
+    return "graph.facebook.com";
+  }
+  return "graph.instagram.com";
+}
+async function unifiedJson(path: string, token?: string, params: Record<string,string> = {}) {
+  const url = new URL(`https://graph.facebook.com/${instagramGraphVersion()}/${path}`);
+  for (const [name,value] of Object.entries(params)) url.searchParams.set(name,value);
+  const r = await fetch(url,{headers: token ? {Authorization:`Bearer ${token}`} : {},cache:"no-store",redirect:"error",signal:AbortSignal.timeout(15000)});
+  const p = await r.json().catch(()=>null);
+  if (!r.ok || !p || p.error) throw new Error("instagram_unified_provider");
+  return p;
+}
+async function exchangeUnifiedInstagramCode(code: string): Promise<InstagramToken> {
+  const result = await unifiedJson("oauth/access_token",undefined,{client_id:UNIFIED_APP,client_secret:requireInstagramAppSecret(),code,redirect_uri:requireInstagramRedirectUri()});
+  if (typeof result.access_token !== "string" || !result.access_token) throw new Error("instagram_unified_token_missing");
+  const diagnostics = await unifiedJson("debug_token",`${UNIFIED_APP}|${requireInstagramAppSecret()}`,{input_token:result.access_token});
+  validateUnifiedDiagnostics(diagnostics.data);
+  const business = await unifiedJson("me",result.access_token,{fields:"client_business_id"});
+  if (!/^\d{5,32}$/u.test(business.client_business_id ?? "")) throw new Error("instagram_unified_business");
+  const accounts = await unifiedJson("me/assigned_instagram_accounts",result.access_token,{fields:"id,username",limit:"2"});
+  if (accounts.paging?.next) throw new Error("instagram_unified_multiple_accounts");
+  const account = selectUnifiedAccount(accounts.data);
+  return {accessToken:result.access_token,userId:account.id,businessId:business.client_business_id,configId:process.env.INSTAGRAM_UNIFIED_CONFIG_ID,scopes:diagnostics.data.scopes,expiresIn:diagnostics.data.expires_at ? Math.max(0,diagnostics.data.expires_at-Math.floor(Date.now()/1000)) : null};
+}
+export function instagramStoredToken(token: InstagramToken): string {
+  if (!instagramUnifiedEnabled(process.env)) return token.accessToken;
+  return JSON.stringify({version:1,mode:"unified",appId:UNIFIED_APP,configId:token.configId,businessId:token.businessId,accountId:token.userId,accessToken:token.accessToken});
+}
+export function unwrapInstagramCredential(text: string, accountId: string): string {
+  if (!instagramUnifiedEnabled(process.env)) {
+    if (text.trim().startsWith("{")) throw new Error("instagram_wrong_token_mode");
+    return text;
+  }
+  return readUnifiedCredential(text,process.env,accountId).accessToken;
+}
+
+export async function verifyUnifiedInstagramCredential(accessToken: string, accountId: string): Promise<void> {
+  if (!instagramUnifiedEnabled(process.env)) throw new Error("instagram_unified_disabled");
+  const result = await unifiedJson("debug_token",`${UNIFIED_APP}|${requireInstagramAppSecret()}`,{input_token:accessToken});
+  validateUnifiedDiagnostics(result.data);
+  const accounts = await unifiedJson("me/assigned_instagram_accounts",accessToken,{fields:"id,username",limit:"2"});
+  if (accounts.paging?.next || selectUnifiedAccount(accounts.data).id !== accountId) throw new Error("instagram_unified_account_changed");
+}
+export async function fetchInstagramOwnComments(accountId: string, accessToken: string) {
+  const media = await unifiedJson(encodeURIComponent(accountId)+"/media",accessToken,{fields:"id,permalink",limit:"25"});
+  if (!Array.isArray(media.data) || media.paging?.next) throw new Error("instagram_media_limit");
+  const rows: Array<{postId:string;id:string;text:string;senderId:string;username:string;timestamp:string|null;url:string|null}> = [];
+  for (const post of media.data) {
+    if (!/^\d+$/u.test(post.id ?? "")) throw new Error("instagram_media_identity");
+    const comments = await unifiedJson(encodeURIComponent(post.id)+"/comments",accessToken,{fields:"id,text,from,timestamp",limit:"100"});
+    if (!Array.isArray(comments.data) || comments.paging?.next) throw new Error("instagram_comment_limit");
+    let permalink: string|null = null;
+    try { const u = new URL(post.permalink); if (u.protocol === "https:" && ["www.instagram.com","instagram.com"].includes(u.host) && /^\/(?:p|reel)\/[A-Za-z0-9_-]+\//u.test(u.pathname)) permalink = u.origin+u.pathname; } catch {}
+    for (const c of comments.data) {
+      if (!/^\d+$/u.test(c.id ?? "") || !/^\d+$/u.test(c.from?.id ?? "") || c.from.id === accountId || typeof c.text !== "string" || !c.text.trim()) continue;
+      rows.push({postId:post.id,id:c.id,text:c.text,senderId:c.from.id,username:c.from.username ?? "Instagram Nutzer",timestamp:typeof c.timestamp === "string"?c.timestamp:null,url:permalink ? permalink+"?comment_id="+encodeURIComponent(c.id):null});
+    }
+  }
+  return {posts:media.data.length,comments:rows};
+}
+
+function instagramGraphVersion(): string { return instagramUnifiedEnabled(process.env) ? "v27.0" : META_GRAPH_API_VERSION; }

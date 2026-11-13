@@ -1,3 +1,61 @@
+# Unified Login implementation checkpoint — approved Staging scope
+
+Owner approved the concrete Unified Login route after the inspection below.
+Existing App1547928503809961 now has configuration2150411132228815,
+Instagram-account required asset only, exact instagram_basic,
+instagram_manage_messages and instagram_manage_comments. No Ads/Publish/Page
+permissions in this configuration. Actual dashboard labels it compatible.
+The wizard displayed a60-day default, but the saved preview reports Never;
+do not claim a verified60-day lifetime. Actual exchanged diagnostics/expiry
+remain to be read; revocation is supported, and no renewal/extra management
+permission is silently enabled.
+
+Both Staging callback registrations were independently read after reload:
+Facebook callback retained and /api/integrations/instagram/callback added.
+The configuration's displayed login URL now selects the Instagram callback.
+
+Source reuses existing Instagram/CRM paths. Unified mode is restricted to
+Staging/App/Operator; Meta SYSTEM_USER diagnostics, exact minimal scopes,
+single assigned fanmind.crm account and client_business_id are verified before
+save. Existing AES-GCM store holds a versioned token+business/config/account
+binding, with no schema migration. Unified API host/version is graph.facebook.com
+v27; legacy Instagram Login retains graph.instagram.com/v25. No Page-token
+fallback. Strict same-origin continuation retains existing user/workspace checks.
+
+Account subscription is read back for exact current App and both fields before
+local activation. The protected controller adds only reviewed Instagram keys,
+reuses the same Meta App signing secret explicitly as required by Unified Login,
+and preserves unrelated values/Operator/Billing/encryption and private rollback.
+App-object registration now allows the existing page object plus instagram;
+registering either preserves the other and rejects foreign callbacks/fields.
+
+Existing DM manual sync uses the same account:sender thread key as webhooks;
+Instagram comments require complete own-envelope account/sender/media/comment
+provenance, reject own/unknown events, and use media:sender threads. A bounded
+manual own-media/comment reconciliation reuses existing deduplicating storage.
+It fails visibly if the25-media/100-comments bound requires pagination; it does
+not silently certify a complete unlimited history. A webhook lacking a permalink
+keeps no fabricated original link; available manual media permalinks do not
+establish that every older stored row has been backfilled. No provider send.
+
+Validation:102focused/regression/supply-chain casesPASS; affected ESLintPASS;
+162God-Mode adversarial casesPASS; registry preflight, Project Memory quality,
+truth/drift checksPASS. Full build and final hosted required checks must be
+confirmed before regular merge. Baseline release evaluator remainsBLOCK for
+missing protected target evidence, not changed into an inventedALLOW.
+
+Current Main88898c6f (#1478 Adminchat) integrated in this source branch; #1479
+Facebook disclosure remains separate and is neither removed nor rewritten.
+No Staging rollout/token exchange/real Instagram delivery yet at this checkpoint.
+Konto-ID, actual Business/Account binding, App/Account fields and fresh automatic
+DM+two-post comment acceptance remain OPEN. Production unchanged.
+
+Affected contract/gate: FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001;
+shared Operator continuation, webhook signature, encrypted provider storage,
+post/DM source-context, comment/DM reconciliation and protected Staging controller.
+
+---
+
 # Instagram fanmind.crm — Staging inspection and concrete route decision
 
 Issue: #1480. Date: 13 November 2026.

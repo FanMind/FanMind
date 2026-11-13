@@ -271,6 +271,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(mediaHost.source, /env -i PATH=\/usr\/bin:\/bin/u);
   assert.doesNotMatch(mediaHost.source, /secrets\.|--env-file|\.env\.production|npm (?:ci|install)|systemctl (?:restart|enable)|workflow_call|pull_request:/u);
   assert.deepEqual([...mediaHost.source.matchAll(/sudo[^\n]+/gu)].map(m=>m[0]), ['sudo -n /usr/local/sbin/fanmind-staging-media-probe \\']);
+  for(const marker of ['MEDIA_HOST_READINESS=PASS','MEDIA_HOST_SYNTHETIC_CLEANUP=PASS','STAGING_MEDIA_PROBE_RECEIPT=PASS'])assert.ok(mediaHost.source.includes("grep -Fxq '"+marker+"'"));
   const catalogueRuntime=selfHostedWorkflows.find(workflow=>workflow.file==='staging-media-catalogue-runtime.yml');
   assert.deepEqual(catalogueRuntime?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA,HOSTED_CHECKOUT_V7_0_1_SHA]);
   for(const required of ["environment: staging","inputs.reviewed_commit == github.sha","group: fanmind-staging-deploy","options: [extended]","staging-support-media-preflight.mjs","staging-media-catalogue-runtime.mjs"])assert.ok(catalogueRuntime.source.includes(required));
