@@ -1,3 +1,13 @@
+## FM1425 real media-tab layout failure — 13 November 2026
+Actual authenticated Staging media UI on610566fa showed Gespräch/Bilder as
+full-height side columns: workspaceMain remained the default horizontal flex
+container after the media tab/library siblings were added. Set only its flex
+direction to column; tabs stay above the remaining scrollable media panel.
+Existing narrow-screen display:block remains unchanged. No second library,
+provider, schema, resource, access or flag change. Core Retention correction1483
+and active base/catalogue/video gates are preserved; upload acceptance is still
+blocked by Chrome extension file-URL access. Desktop/mobile PASS remains pending.
+
 ## FM1425 additive-media retention prerequisite — 13 November 2026
 Actual activation43484135999 stopped before control although the target schema
 was exactly extended. Recursive SQL comparison rejected the independent media
