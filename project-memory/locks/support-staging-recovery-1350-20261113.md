@@ -27,7 +27,7 @@ execution receipts; no source result is a target acceptance result.
 Concurrent Main advanced through the other session's regular #1471 merge
 8f9e286d778207941c41ca6c33d23df188ac96f0. Integrate it through genuine merge
 history, retaining all host-readiness/schema-profile source and tests byte-for-byte.
-Only the seven intended recovery paths differ from that Main. No new media
+The final eleven operational/test/doc paths differ from that Main. No new media
 activation or host media-probe task is undertaken. New combined-head CI is required;
 preceding58cc1e82 results cannot establish the merged candidate's checks.
 
@@ -38,3 +38,9 @@ must-stay-disabled guard; it builds the existing launcher, never activates serve
 Support or parallel features. The executed existing rolling/rollback harness
 proves disabled denial, enabled build flag and default preservation. The final
 scope is eleven operational/test/doc paths; underlying product source is unchanged.
+
+Concurrent Main advanced again through the other session’s regular #1473 merge
+deea847578b9db28b13b04ac0f71409638b0cfff. Merge this existing Main without
+changing its Facebook ingress/configuration source. No Meta workflow or
+activation is executed by this Support source integration. Fresh combined-head
+checks are required; earlier heads are not deployment proof.
