@@ -95,3 +95,4 @@ test("account erasure deletes video MP4 paths with authenticated absence before 
 
 import "./chat-admin-media-catalogue.cases.mjs";
 import "./chat-admin-media-catalogue-api.cases.mjs";
+import "./chat-admin-media-host-inspection.cases.mjs";

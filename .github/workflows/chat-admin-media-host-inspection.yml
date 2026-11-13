@@ -1,0 +1,44 @@
+name: ChatAdmin media Staging host inspection
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_commit:
+        description: Exact reviewed Main source for this observation
+        type: string
+        required: true
+      expected_live_commit:
+        description: Exact currently running Staging source, freshly read before dispatch
+        type: string
+        required: true
+      confirmation:
+        description: Type inspect-staging-media-host; no activation or target mutation
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == 'inspect-staging-media-host'
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Observe only existing Staging service media prerequisites
+        env:
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_LIVE_COMMIT: ${{ inputs.expected_live_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code --quiet
+          node scripts/operations/chat-admin-media-host-inspection.mjs
