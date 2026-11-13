@@ -18,6 +18,11 @@ function publicKey(value) {
 function token(value) {
   return typeof value === 'string' && value.length >= 24 && value.length <= 16000 && !/[\s\r\n]/u.test(value);
 }
+// Supabase Auth supports 12-character legacy refresh credentials as well as
+// newer opaque formats. They are not access JWTs; the provider validates them.
+function refreshCredential(value) {
+  return typeof value === 'string' && value.length >= 12 && value.length <= 4000 && !/[\s\r\n]/u.test(value);
+}
 const fail = (status, code) => ({ status, code });
 
 export function operatorSessionRequestAllowed(request) {
@@ -68,7 +73,7 @@ export function createOperatorSessionRenewer({ fetchImpl = fetch, now = Date.now
     // No client-supplied user, workspace, key, refresh token or redirect in a body.
     if (request.bodyPresent) return fail(400, 'body_forbidden');
     const refreshToken = request.refreshToken;
-    if (!token(refreshToken) || refreshToken.length > 4000) return fail(401, 'sign_in_required');
+    if (!refreshCredential(refreshToken)) return fail(401, 'sign_in_required');
     const key = environment.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!publicKey(key)) return fail(503, 'configuration_unavailable');
     for (const [id, entry] of attempts) if (entry.expires <= now() && !entry.promise) attempts.delete(id);
@@ -92,7 +97,7 @@ export function createOperatorSessionRenewer({ fetchImpl = fetch, now = Date.now
         const refreshed = await call('/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers, body: JSON.stringify({ refresh_token: refreshToken }) });
         if (!refreshed.ok) return fail([400, 401, 403].includes(refreshed.status) ? 401 : 503, [400, 401, 403].includes(refreshed.status) ? 'sign_in_required' : 'provider_unavailable');
         session = await refreshed.json();
-        if (!token(session?.access_token) || !token(session?.refresh_token) || session.refresh_token.length > 4000 || !Number.isInteger(session.expires_in) || session.expires_in < 1 || session.expires_in > 3600 || session.user?.id !== OPERATOR_USER) {
+        if (!token(session?.access_token) || !refreshCredential(session?.refresh_token) || !Number.isInteger(session.expires_in) || session.expires_in < 1 || session.expires_in > 3600 || session.user?.id !== OPERATOR_USER) {
           await revoke(); return fail(403, 'operator_required');
         }
         const authorizedHeaders = buildSupabaseApiKeyHeaders(key, session.access_token);

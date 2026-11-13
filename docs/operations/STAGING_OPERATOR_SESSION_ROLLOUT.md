@@ -1,3 +1,11 @@
+> Latest checkpoint: Owner-approved e4465268 deployed in run43412732522;
+> exact SHA independently confirmed and temporary branch rule removed. Origin
+> rejection is fixed. Actual renewal now returns sign-in-required without rotation;
+> provider-format validation still rejects legitimate 12-character refresh
+> credentials. Separate bounded refresh predicate and realistic boundary tests
+> are source preparation only; successor rollout requires its own exact approval.
+> Do not label this UI-triggered continuation as background automatic refresh.
+
 > Latest runtime checkpoint, 13 November: Owner-approved a49decfd deployed in
 > 43408555294 and independently version-checked. Original two deployment branch
 > rules restored. Real private/post-separated details, selected-thread AI drafts,
