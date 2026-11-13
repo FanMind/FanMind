@@ -1,3 +1,8 @@
+## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — Main33e65696 integration
+- Risk:R3, same existing Draft1471. Freshly confirm #1470 regularly merged at33e6569602e8fe910058e268b4f33c1879799869. Old977f2fc4 is behind strict Main, not a content conflict. Genuine two-parent merge into this PR; preserve all11incoming paths byte-for-byte and retain existing media/schema/diagnostic/Facebook source.
+- User authorizes Main integration/tests only, no merge/target permission. Recheck new exact head in CI; previous14/14 remains historical. Refresh obsolete current status and retain earlier checkpoint receipts as history. No new implementation/PR, no copied deployment fix or protected-action bypass.
+- Current developed source remains distinct from actual Stagingd3483497, not activated and not practically accepted there. Next Owner boundary: exact new-head regular source merge covering existing diagnostic/schema checks, then actual Main SHA-bound protected inspect proposal. No deployment/DB/bucket/feature/provider/identity/Production action here.
+
 ## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — operational source continuation
 - Risk:R3; same Issue1425/Draft1471. Owner explicitly requested initial/extended exact schema verification and narrowly bounded existing-runner host diagnosis. SQL/reference baseline retained; new exact extension reference and fail-closed profile, no target apply/activation.
 - Existing Staging runner confirmed from successful43417498761 metadata. New Main/manual/exact-source/live-SHA diagnostic preserves protected staging and canonical lease; no installs/config/secret/privateenv/DB reads. Actual app UID/mount/cgroup/security/limits are required before synthetic probes; no new authority granted.

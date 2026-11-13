@@ -8,13 +8,25 @@ current instruction. Historical Production initial-media approval is unrelated.
 
 ## Executable continuation in existing PR #1471
 
-The Owner requested continuation of this PR with executable operational checks.
-It is no longer documentation-only. #1470 is freshly confirmed at
-`7c9b932ae5ec92990ac2ea36154e8623f2043497`, Draft/open/mergeable; its other session
-owns checks and source approval. The old dirty status below is historical.
-No #1470 source, deployment correction or mobile dependency was copied here.
-Main remains `3912461e1f88eb5cf2e621f23e4d6079409c20cc`; fresh HTTPS Staging
-13:07:38 UTC / 14:07:38 Vienna remains `d34834979cef30c9c6af567d61b3df448901bfda`.
+The current continuation integrates the regularly merged Support PR #1470.
+Fresh GitHub Main: `33e6569602e8fe910058e268b4f33c1879799869`; #1470 is CLOSED
+and MERGED, not an outstanding merge dependency. Its approved head was
+`7c9b932ae5ec92990ac2ea36154e8623f2043497`.
+
+Existing PR #1471 started at `977f2fc4e0fdadeecfe510a696bce4a6432b20e0` on old
+Main3912461e. Fresh GitHub reports `mergeable=true`, `mergeable_state=behind`:
+strict up-to-date protection, not an actual content conflict. A genuine two-parent
+merge of actual Main33e65696 into the SAME PR completed without content conflicts.
+All eleven #1470 paths (including deployment/session admission, Expo patches and
+Support runbooks) match Main byte-for-byte. Existing #1471 executable operational
+checks and all earlier Facebook/Adminchat source are retained. Only operational
+status/approval evidence is refreshed in addition to that incoming merge.
+
+The earlier14/14 checks apply only to977f2fc4. The combined source requires new
+exact-head CI; current head/tree and completed results are recorded in PR #1471.
+No previous source/merge/deployment permission is transferred to the successor.
+Actual HTTPS Staging at14:36:05 UTC /15:36:05 Vienna remains
+`d34834979cef30c9c6af567d61b3df448901bfda`. No target mutation or host diagnostic.
 
 Implemented:
 
@@ -72,7 +84,7 @@ specific source/installation/execution approval; none is assumed here. Merely
 entering a cgroup namespace does not move a process into its resource cgroup.
 Run `inspect` first to establish which exact effective boundary is missing.
 
-## Executed verification for this continuation
+## Earlier implementation verification (before the Main integration)
 
 - Actual Staging read-only `initial` profile equality returned1 on13:22:59 UTC;
   no SQL/bucket/data mutation. This verifies the NEW initial profile on the real
@@ -103,19 +115,19 @@ Run `inspect` first to establish which exact effective boundary is missing.
    `deploy-staging.yml`. The diagnostic may deliberately return BLOCK with the
    precise context/resource permission it could not establish. Probe requires
    separate `probe-staging-media-host` and proven context; never work around it.
-3. Support #1470 regular merge/source approval stays with its session. Once BOTH
-   source changes are on Main, re-read Main/target/locks, compare every accumulated
-   delta and use that actual common Main commit for the deployment bundle below.
+3. #1470 is regularly merged at33e65696 and retained in this candidate. After
+   #1471 source approval and its regular merge, independently read the ACTUAL
+   resulting Main merge SHA and fresh live target/locks. That is the next common
+   source candidate; compare every accumulated delta before the deployment bundle.
 
-The final deployment approval is deliberately NOT executable yet: neither the
-support successor nor this operational successor is merged, and no actual
-application-host result exists. A PR head or GitHub speculative merge commit is
+The final deployment approval is deliberately NOT executable yet: #1470 IS
+merged, but #1471 is not, and no actual application-host result exists. A PR head or GitHub speculative merge commit is
 not a usable approved Main deployment. Fill the ACTUAL common Main SHA only after
-those source merges; revalidate any later successor. Do not approve a placeholder.
+the #1471 source merge; revalidate any later successor. Do not approve a placeholder.
 
 | Bundled Staging field | Exact prepared scope / execution gate |
 | --- | --- |
-| Deployment commit | Pending actual approved common Main after #1470 AND #1471; current3912461e is NOT deployable with preserved Operator=true |
+| Deployment commit | Pending actual approved Main after #1471; foundation33e65696 already includes #1470 preservation but not these operational checks |
 | Fresh baseline | Current observed d34834979cef30c9c6af567d61b3df448901bfda; re-read at execution |
 | SQL target/hash | Existing vshyhvgcmrlagvfnvomc only; controlled/chat_admin_media_catalogue.sql;10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2 |
 | SQL checks | Exact `initial` preflight; atomic approved SQL; exact `extended` postflight; partial/drift => STOP |
@@ -129,7 +141,7 @@ those source merges; revalidate any later successor. Do not approve a placeholde
 The following sections retain the original inspected baseline/action details as
 historical observations and the still-valid bounded test/recovery plan.
 
-## Source and target bound observations
+## Historical source and target observations before the #1470 merge
 
 | Item | Actual observation |
 | --- | --- |
@@ -286,9 +298,9 @@ Code rollback must use the supported exact reviewed release and retain current
 Operator/Support/Facebook/Billing state; do not assume the present deploy script
 is an already verified rollback controller.
 
-The requested bundled deployment approval is NOT READY: its exact deployable
-successor, extension-aware pre/postflight/controller and effective-host evidence
-are outstanding. No blanket permission question or guessed successor SHA is
-substituted. Next coordinate #1470's reconciled reviewed source, obtain the
-authorized host diagnostic access, finish those controls, then finalize the prepared exact
+At this historical checkpoint the bundled deployment approval was NOT READY.
+The extension-aware profile is now implemented in this PR; #1470 is merged.
+The actual #1471 Main merge SHA and effective-host evidence remain outstanding. No blanket permission question or guessed successor SHA is
+substituted. Next approve and regularly merge the fully checked #1471 successor, propose the
+exact merged-source host inspection and resolve its actual findings, then finalize the prepared exact
 commit-bound Staging-only bundle above. Production remains outside this task.

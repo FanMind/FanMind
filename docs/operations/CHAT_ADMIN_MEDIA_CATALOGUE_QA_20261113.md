@@ -1,6 +1,28 @@
 # #1425 catalogue evidence — 13 November 2026
 
-## Executable operational continuation in PR #1471
+## Current Main integration after the regular #1470 merge
+
+Fresh Main is33e6569602e8fe910058e268b4f33c1879799869. GitHub independently
+confirms #1470 merged at14:32:49 UTC. #1471 prior head977f2fc4 was `behind` under
+strict protection; the actual local merge has NO content conflicts. Integrate
+that exact Main into this existing PR through real two-parent history, preserving
+all eleven incoming Support/session/deployment/Mobile paths byte-for-byte.
+Existing #1471 operational executables, original media SQL/reference/collector,
+Facebook source and Main Adminchat source remain unchanged. Only current
+operational evidence is updated in addition to the incoming Main source.
+
+The earlier14 successful checks are historical for977f2fc4, not this successor.
+Run new exact-head CI, including the combined Support/session/admission/media
+regressions, build, native PG17, browser, security and governance. Record actual
+head/tree/results in the existing PR before requesting regular source merge.
+No source merge or target action is authorized by this continuation request.
+
+Actual Staging at14:36:05 UTC /15:36:05 Vienna remainsd34834979cef30c9c6af567d61b3df448901bfda.
+The protected host inspection, catalogue/video activation and actual Staging
+acceptance are still unexecuted. After explicit merge approval, independently
+confirm the ACTUAL Main merge SHA before proposing exact protected `inspect`.
+
+## Prior executable operational implementation in PR #1471 (historical)
 
 Owner-requested source scope now includes the exact initial/extended schema
 profile and protected existing-runner host diagnostic. Support #1470 is freshly
@@ -25,7 +47,7 @@ Source merge then protected `inspect` approval is the concrete next boundary;
 no SSH password/key requested. Detailed prepared bundle and retained open tests:
 `CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
 
-## Post-merge actual Staging preparation (supersedes historical source status)
+## Earlier Staging preparation before #1470 merge (historical)
 
 Fresh Main ref: `3912461e1f88eb5cf2e621f23e4d6079409c20cc`, regular PR #1469
 merge. HTTPS Staging `/api/version` at 12:57:32 UTC confirms

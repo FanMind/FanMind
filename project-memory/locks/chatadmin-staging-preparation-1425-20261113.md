@@ -38,3 +38,17 @@ Unsafe/existing directory or changed source/live process fails closed. Schema,
 bucket, flags, Operator sessions, Support, Facebook, Billing and Production are
 untouched. Future runtime recovery retains committed schema/data and disables
 only owned catalogue/video flags; never blanket rollback concurrent settings.
+
+## Main integration continuation after #1470 source merge
+
+Owner authorizes same-PR Main integration/testing only. Fresh Main33e65696 is the
+regular #1470 merge; historical statements above that it is open are superseded.
+Old #1471 head977f2fc4 is behind strict Main, with no actual content conflict.
+The real two-parent merge preserves all eleven incoming paths and all existing
+operational source. No feature, access or second implementation is added. Current
+combined head requires fresh CI/review; old14/14 is not successor evidence.
+After current-head checks, request exact regular source merge approval covering
+the diagnostic workflow and explicit schema profile. Independently confirm the
+actual resulting Main SHA only AFTER that approved merge, then propose protected
+inspect. No source merge, host execution, deployment, SQL/bucket/flag/provider,
+Auth/session, Support/Facebook/Billing or Production mutation authorized here.

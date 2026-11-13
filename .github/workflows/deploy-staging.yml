@@ -24,6 +24,10 @@ on:
         required: false
         default: false
         type: boolean
+      operator_session_preservation_confirmation:
+        required: false
+        default: ''
+        type: string
   workflow_dispatch:
     inputs:
       confirmation:
@@ -55,10 +59,15 @@ on:
         default: ''
         type: string
       staging_operator_session_enabled:
-        description: 'Enable the existing Operator continuation on the exact reviewed 1464 branch only; separate Owner approval required'
+        description: 'Existing 1464 opt-in; Main may only preserve an already enabled session with separate explicit approval'
         required: false
         default: false
         type: boolean
+      operator_session_preservation_confirmation:
+        description: 'Main preservation only: preserve-approved-operator-session; separate exact-source Owner approval required'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   # A protected chained caller holds the canonical lease for the complete operation.
@@ -102,6 +111,7 @@ jobs:
           REVIEWED_RELEASE_COMMIT: ${{ inputs.reviewed_commit }}
           BILLING_WRITE_FREEZE: ${{ inputs.billing_write_freeze }}
           STAGING_OPERATOR_SESSION_ENABLED: ${{ inputs.staging_operator_session_enabled && 'true' || 'false' }}
+          OPERATOR_SESSION_PRESERVATION_CONFIRMATION: ${{ inputs.operator_session_preservation_confirmation }}
           FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM: ${{ inputs.release_state_recovery_confirmation }}
           FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT: ${{ inputs.previous_release_commit }}
           FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
@@ -114,14 +124,26 @@ jobs:
             *) exit 1 ;;
           esac
 
+          SOURCE_DIR="/var/www/fanmind-staging"
+          ENV_FILE="$SOURCE_DIR/.env.production"
+          RUNTIME_SECRET_FILE="/etc/fanmind-staging/runtime-secrets.env"
+
+          # Read only the fixed flag from existing release metadata. Never source
+          # the private file or expose other environment values to workflow logs.
+          CURRENT_STAGING_OPERATOR_SESSION_ENABLED="$(node --input-type=module -e '
+            import { readFileSync, lstatSync } from "node:fs";
+            import { readOperatorSessionState } from "./scripts/operations/staging-reviewed-source-policy.mjs";
+            try {
+              const path = "/var/www/fanmind-staging/.release.env";
+              if (!lstatSync(path).isFile()) process.exit(1);
+              process.stdout.write(readOperatorSessionState(readFileSync(path, "utf8")));
+            } catch (error) { if (error?.code !== "ENOENT") process.exit(1); }
+          ')"
+          export CURRENT_STAGING_OPERATOR_SESSION_ENABLED
           node --input-type=module -e '
             import { isReviewedStagingSourceAllowed } from "./scripts/operations/staging-reviewed-source-policy.mjs";
             if (!isReviewedStagingSourceAllowed(process.env)) process.exit(1);
           '
-
-          SOURCE_DIR="/var/www/fanmind-staging"
-          ENV_FILE="$SOURCE_DIR/.env.production"
-          RUNTIME_SECRET_FILE="/etc/fanmind-staging/runtime-secrets.env"
 
           if [ -n "$REVIEWED_RELEASE_COMMIT" ] && [ "$REVIEWED_RELEASE_COMMIT" != "$EXPECTED_RELEASE_COMMIT" ]; then
             echo "Reviewed Staging release commit does not match the dispatched workflow commit." >&2

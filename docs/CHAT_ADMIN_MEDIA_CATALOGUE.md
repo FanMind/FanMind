@@ -3,7 +3,9 @@
 Merged source, 13 November 2026: PR #1469 is on Main at
 `3912461e1f88eb5cf2e621f23e4d6079409c20cc`. This does not establish deployed
 acceptance. The exact initial/extended schema profile and protected host diagnostic are
-prepared in PR #1471, not yet merged/executed. Fresh Staging preparation is recorded in
+prepared in PR #1471, not yet merged/executed. Its current continuation integrates
+Main33e6569602e8fe910058e268b4f33c1879799869 after the regular #1470 merge.
+Fresh Staging preparation is recorded in
 `docs/operations/CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
 Extends the existing #1427 library. #1440 remains unmerged; its authenticated
 post-delete absence check is retained in this continuation without merging that PR.
