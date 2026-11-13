@@ -14,6 +14,8 @@ export function isReviewedStagingSourceAllowed(env) {
   if (!exactSha || env.GITHUB_REPOSITORY !== 'FanMind/FanMind') return false;
   const enabled = env.STAGING_OPERATOR_SESSION_ENABLED === 'true';
   if (env.GITHUB_REF === 'refs/heads/main') {
+    // Missing release metadata is not proof that continuation is disabled.
+    if (!['true', 'false'].includes(env.CURRENT_STAGING_OPERATOR_SESSION_ENABLED)) return false;
     // Never turn off the approved continuation as a side effect of a Web deploy.
     if (!enabled && env.CURRENT_STAGING_OPERATOR_SESSION_ENABLED === 'true') return false;
     if (enabled) {

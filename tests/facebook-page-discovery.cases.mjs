@@ -99,7 +99,8 @@ test('Staging source exception accepts only the exact manually reviewed task bra
   const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/fix/facebook-page-discovery-staging',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),REVIEWED_RELEASE_COMMIT:'a'.repeat(40),BILLING_WRITE_FREEZE:'preserve'};
   assert.equal(allowed(env),true);
   for (const override of [{GITHUB_REPOSITORY:'attacker/FanMind'},{GITHUB_REF:'refs/heads/other'},{GITHUB_EVENT_NAME:'push'},{REVIEWED_RELEASE_COMMIT:''},{REVIEWED_RELEASE_COMMIT:'b'.repeat(40)},{BILLING_WRITE_FREEZE:'false'},{FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM:'recover-live-staging-release-state'}]) assert.equal(allowed({...env,...override}),false);
-  assert.equal(allowed({...env,GITHUB_REF:'refs/heads/main',REVIEWED_RELEASE_COMMIT:''}),true);
+  assert.equal(allowed({...env,GITHUB_REF:'refs/heads/main',REVIEWED_RELEASE_COMMIT:'',CURRENT_STAGING_OPERATOR_SESSION_ENABLED:'false'}),true);
+  assert.equal(allowed({...env,GITHUB_REF:'refs/heads/main',REVIEWED_RELEASE_COMMIT:''}),false);
   const operator = {...env,GITHUB_REF:'refs/heads/feat/1464-staging-agent-access',STAGING_OPERATOR_SESSION_ENABLED:'true'};
   assert.equal(allowed(operator),true);
   for (const override of [{GITHUB_REPOSITORY:'attacker/FanMind'},{GITHUB_REF:'refs/heads/main'}, {GITHUB_REF:'refs/heads/feat/1464-staging-agent-access-extra'},{GITHUB_EVENT_NAME:'push'},{REVIEWED_RELEASE_COMMIT:''},{REVIEWED_RELEASE_COMMIT:'b'.repeat(40)},{BILLING_WRITE_FREEZE:'false'},{FANMIND_STAGING_RELEASE_RECOVERY_CONFIRM:'recover-live-staging-release-state'},{FANMIND_STAGING_RELEASE_RECOVERY_PREVIOUS_COMMIT:'b'.repeat(40)}]) assert.equal(allowed({...operator,...override}),false);

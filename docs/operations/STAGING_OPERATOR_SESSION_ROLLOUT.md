@@ -17,6 +17,7 @@ preservation of an already enabled state, not first activation or account rights
   parse only the single exact boolean flag, without executing/logging contents.
 - Existing state must already be true. False/absent/duplicate/malformed state,
   missing confirmation, another branch, changed SHA or non-manual call is denied.
+- Missing release state blocks Main, including false/default input; use the separately reviewed metadata-recovery path before retrying.
 - A Main rollout with false/default input is denied when existing state is true;
   it cannot silently turn continuation off. Read failures stop before writes.
 
