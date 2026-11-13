@@ -545,3 +545,7 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 
 ## FM-FAIL-CAPACITY-V2-STAGING-MARKER-CARDINALITY-20261026
 2026-10-26 — Blocker: Read-only Capacity run 40358308608 proves the three historical budget defaults and exact repository-pinned Supabase provider ACLs account for their aggregate profile mismatches, but the exact-single unknown name-only marker-with-statements predicate remains false while all four protected marker counters differ. The marker population cardinality or uniformity is therefore still unknown and must be split by bounded booleans before any correction plan; provider ACL provenance does not authorize accepting broader target grants as the baseline. No database, marker, baseline, workflow, Staging or Production mutation occurred.
+
+## FM-FAIL-CHATADMIN-MEDIA-HOST-1425-20261113
+- Real Staging run43448723976 failed closed with missing video binaries, unbounded CPU/memory and runner outside actual application context. Same-UID runner never counted as proof. Required fixed service-context helper and resource drop-in developed under explicit Owner completion approval; target proof remains pending.
+- First follow-up #1475 head1f180567 CI correctly rejected missing project-memory update and CodeQL filesystem-check/read race in the new root diagnostic reader. Corrected with NOFOLLOW descriptor-open, fstat and descriptor-read plus change check; no security dismissal or rule exception. New full-head CI required.

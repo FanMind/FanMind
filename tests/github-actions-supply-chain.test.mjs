@@ -254,6 +254,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,
       STAGING_BILLING_CAPTURE_WORKFLOW,
+      "staging-media-catalogue-runtime.yml",
       "staging-media-toolchain.yml",
       "staging-meta-runtime.yml",
       STAGING_PUSH_RUNTIME_WORKFLOW,
@@ -270,6 +271,10 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(mediaHost.source, /env -i PATH=\/usr\/bin:\/bin/u);
   assert.doesNotMatch(mediaHost.source, /secrets\.|--env-file|\.env\.production|npm (?:ci|install)|systemctl (?:restart|enable)|workflow_call|pull_request:/u);
   assert.deepEqual([...mediaHost.source.matchAll(/sudo[^\n]+/gu)].map(m=>m[0]), ['sudo -n /usr/local/sbin/fanmind-staging-media-probe \\']);
+  const catalogueRuntime=selfHostedWorkflows.find(workflow=>workflow.file==='staging-media-catalogue-runtime.yml');
+  assert.deepEqual(catalogueRuntime?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA,HOSTED_CHECKOUT_V7_0_1_SHA]);
+  for(const required of ["environment: staging","inputs.reviewed_commit == github.sha","group: fanmind-staging-deploy","options: [extended]","staging-support-media-preflight.mjs","staging-media-catalogue-runtime.mjs"])assert.ok(catalogueRuntime.source.includes(required));
+  assert.doesNotMatch(catalogueRuntime.source,/options: \[initial|fanmind-prod|workflow_call|pull_request:/u);
   const mediaPrepare=selfHostedWorkflows.find(workflow=>workflow.file==='staging-media-toolchain.yml');
   assert.deepEqual(mediaPrepare?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA]);
   for(const required of ["environment: staging","github.actor_id == '270165082'","inputs.reviewed_commit == github.sha","group: fanmind-staging-deploy","prepare-staging-media-host.mjs"])assert.ok(mediaPrepare.source.includes(required));

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Root-owned, fixed Staging diagnostic only. No user paths, commands or env.
 import {execFileSync,spawnSync} from 'node:child_process';
-import {readFileSync,writeFileSync,statSync,lstatSync,realpathSync,renameSync,existsSync,unlinkSync} from 'node:fs';
+import {readFileSync,writeFileSync,statSync,lstatSync,realpathSync,renameSync,existsSync,unlinkSync,constants,openSync,fstatSync,closeSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join,resolve} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
@@ -26,9 +26,13 @@ export function probeLimitArguments(text){
  return args;
 }
 function rootFile(path){
- const st=lstatSync(path);
- if(!st.isFile()||st.isSymbolicLink()||st.uid!==0||st.nlink!==1||(st.mode&0o022))fail('probe_source_ownership');
- return readFileSync(path);
+ const fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+ try{const st=fstatSync(fd);
+ if(!st.isFile()||st.uid!==0||st.nlink!==1||(st.mode&0o022)||st.size>1048576)fail('probe_source_ownership');
+ const bytes=readFileSync(fd),after=fstatSync(fd);
+ if(st.ino!==after.ino||st.size!==after.size||st.mtimeMs!==after.mtimeMs||st.ctimeMs!==after.ctimeMs)fail('probe_source_changed');
+ return bytes;
+ }finally{closeSync(fd);}
 }
 export async function runStagingProbe(args){
  const input=validateProbeArguments(args);if(process.getuid()!==0)fail('probe_root_required');

@@ -1,0 +1,102 @@
+name: FanMind Staging Media Catalogue Runtime
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [catalogue-on, video-on, off, verify]
+        required: true
+      media_schema_profile:
+        description: Exact expected private media schema, never auto-detect or apply
+        type: choice
+        options: [extended]
+        default: extended
+        required: true
+      reviewed_commit:
+        description: Exact reviewed main commit already deployed to Staging
+        type: string
+        required: true
+      confirmation:
+        description: staging-media- followed by the selected action
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  preflight:
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == format('staging-media-{0}', inputs.action)
+    environment: staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      FANMIND_CHAT_ADMIN_MEDIA_SCHEMA_PROFILE: ${{ inputs.media_schema_profile }}
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: 'false'
+      FANMIND_NON_PRODUCTION_WRITE_ACK: ''
+      FANMIND_SUPPORT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_SUPPORT_CONFIRM: verify-support-centre-schema
+      SUPPORT_OWNER_UUID: ${{ vars.FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: db.drqkpdvtbbrrdwmtrodz.supabase.co
+      PGPORT: '5432'
+      PGDATABASE: postgres
+      PGUSER: postgres.vshyhvgcmrlagvfnvomc
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Prepare dedicated private read-only connection
+        env:
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$PASSWORD" in ''|*$'\n'*|*$'\r'*) exit 1 ;; esac
+          ESCAPED="${PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+      - name: Verify pinned schema, existing Owner and retention without writes
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
+        run: node scripts/operations/staging-support-media-preflight.mjs
+      - name: Remove private connection file
+        if: always()
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
+        run: rm -f "$PGPASSFILE"
+  control:
+    needs: preflight
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == format('staging-media-{0}', inputs.action)
+    environment: staging
+    runs-on: [self-hosted, fanmind-staging, exoscale, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Control only isolated catalogue and video flags with verified rollback
+        env:
+          ACTION: ${{ inputs.action }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          SCHEMA_VERIFIED: extended
+          TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+          PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+        run: node scripts/operations/staging-media-catalogue-runtime.mjs

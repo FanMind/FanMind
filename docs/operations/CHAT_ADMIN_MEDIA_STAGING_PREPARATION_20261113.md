@@ -335,3 +335,31 @@ The actual #1471 Main merge SHA and effective-host evidence remain outstanding. 
 substituted. Next approve and regularly merge the fully checked #1471 successor, propose the
 exact merged-source host inspection and resolve its actual findings, then finalize the prepared exact
 commit-bound Staging-only bundle above. Production remains outside this task.
+
+## Authorized operational follow-up #1475
+
+The same #1425 continuation adds only necessary fixed host repair and separate
+catalogue/video control after #1471 merged. `staging-media-catalogue-runtime.yml`
+reuses the existing complete extended-profile Support/Owner/retention/TLS verifier
+and the shared Staging concurrency lease. It modifies only catalogue/video flags,
+refuses ambiguity/overrides, checks effective process configuration and preserves
+other configuration with guarded exact rollback. Video activation requires a
+root-owned PASS receipt no older than30 minutes, matching actual source/live/PID.
+Image/provider analysis remains disabled. Disabling both flags uses action `off`;
+this does not downgrade schema or delete any existing media.
+
+Controlled SQL application uses unchanged `supabase/controlled/chat_admin_media_catalogue.sql`
+SHA256 `10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2`
+through `chat-admin-media-catalogue-apply.mjs`: atomic source body, advisory lock,
+exact source-owned initial/complete schema comparison before and extended check
+before commit. Repeat skips only exact complete state, all unknown drift rejects.
+The same atomic source widens only private bucket `chat-character-media` from
+5242880 to26214400 bytes and WebP-only to WebP/MP4. Staging project remains
+`vshyhvgcmrlagvfnvomc`; no other DB/project/bucket. A normal Web deployment never
+calls this builder. Apply only after reviewed-source merge and fresh target check.
+
+Rollback: disable catalogue/video through the separate protected controller, prove
+other settings unchanged, retain compatible additive schema/private bucket while
+investigating. Never undo an evolved shared schema or downgrade a newer live
+release. Synthetic fixture IDs are recorded privately during acceptance and only
+owned synthetic records/objects are removed with authenticated absence proof.

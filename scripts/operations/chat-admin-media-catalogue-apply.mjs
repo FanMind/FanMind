@@ -1,0 +1,11 @@
+import {createHash} from 'node:crypto';
+import {loadMediaSchemaProfile,mediaSchemaStateSql,CATALOGUE_MEDIA_SHA256} from './chat-admin-media-schema-profile.mjs';
+// Invoked only through the separately authorized controlled Staging migration.
+// No web deploy, generic migration push or runtime activation calls this builder.
+export function mediaCatalogueTransaction(bundle=loadMediaSchemaProfile('extended')){
+ if(bundle.profile!=='extended'||bundle.extended.sourceSha256!==CATALOGUE_MEDIA_SHA256||createHash('sha256').update(bundle.extensionSource).digest('hex')!==CATALOGUE_MEDIA_SHA256)throw Error('catalogue_apply_source');
+ const body=bundle.extensionSource.replace(/^(--[^\n]*\n)*begin;\n/u,'').replace(/commit;\s*$/u,'');
+ if(body===bundle.extensionSource||/\$fm1425_source\$/u.test(body))throw Error('catalogue_apply_wrapper');
+ const state=mediaSchemaStateSql(bundle);
+ return `-- Controlled #1425 SQL SHA256 ${CATALOGUE_MEDIA_SHA256}\nBEGIN; SET LOCAL lock_timeout='5s'; SET LOCAL statement_timeout='30s';\nSELECT pg_advisory_xact_lock(hashtextextended('fanmind-staging-chatadmin-media-catalogue-1425',0));\nLOCK TABLE public.chat_character_media, public.chat_character_media_policies IN SHARE ROW EXCLUSIVE MODE;\nDO $fm1425$ DECLARE current_state text; BEGIN\nSELECT media_schema_state INTO current_state FROM (${state}) before_state;\nIF current_state='initial' THEN EXECUTE $fm1425_source$${body}$fm1425_source$;\nELSIF current_state<>'extended' THEN RAISE EXCEPTION 'catalogue_initial_or_extended_required'; END IF;\nSELECT media_schema_state INTO current_state FROM (${state}) after_state;\nIF current_state IS DISTINCT FROM 'extended' THEN RAISE EXCEPTION 'catalogue_extended_postflight_required';END IF;\nEND $fm1425$; COMMIT;`;
+}
