@@ -34,3 +34,18 @@ acceptance, final-head CI/review, and a concrete authorized deployment candidate
 whose scope reconciles excluded changes already on Main. Existing source-only
 configured-Origin/reply-link fixes have not reached the old Production release.
 The Production controller still requires reviewed Main; no branch bypass.
+
+
+Continuation after user login: existing Character Owner access now opens
+ChatAdmin; earlier Operator 404 is superseded for live acceptance. Existing QA
+fixtures were reused. Free draft editing, actual notes/facts/message scrolling,
+fixed composer, separate Character/Fan views and one real three-suggestion
+price/media/delivery/send challenge passed. Saved challenge survived Fan switch.
+Two unsaved long-field drafts were cancelled; no outbound confirmation/send.
+Found and corrected duplicate fresh suggestion rendering, retaining archived
+editing and current copy/use controls. Added persisted-history Chromium
+regression; local launch is environment-blocked before assertions (socket
+permission), so remote Browser CI remains required. Additional 91 focused
+source tests PASS. Media entry absent; exact Main/live Staging binding blocks
+its existing protected activation while #1463's branch is deployed. No bypass,
+image analysis, new schema or independent integration change.

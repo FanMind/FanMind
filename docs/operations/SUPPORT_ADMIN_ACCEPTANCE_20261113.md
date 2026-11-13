@@ -63,23 +63,49 @@ changed. An existing worktree was preserved; source work uses its own branch.
 
 ## ChatAdmin: actual execution and limits
 
-- The signed-in Staging Operator is authenticated and can open the Support
-  Centre, but `/chatadmin` returns 404. The existing capability contract requires
-  the actual Character Workspace Owner; Platform Support Owner authority is
-  separate. No access grant or impersonation was performed.
-- #1425 and its latest comments were checked. Its implementation already exists;
-  the documented Production schema installation and historical rollout are not
-  proof of current media runtime activation. No duplicate media implementation,
-  schema apply or image/provider processing was started.
-- Consequently, live Character notes/facts/messages scrolling, fixed attachment
-  area, editable suggestions, Character-context persistence, real private-media
-  upload/search/preview/delete and price/delivery policy acceptance remain
-  **NOT VERIFIED in this continuation**. Existing source tests are not a
-  substitute for this account-bound live acceptance.
-- A Staging login tab was left for the existing Character Owner login. The
-  working Operator session was not logged out, avoiding disruption of the
-  separate integration work. No independent QA agent/reviewer sign-off exists
-  for this new source correction yet.
+- Initial Staging Operator session returned 404. The user then completed the
+  existing Character Owner login; `/chatadmin` now opens. No permission grant
+  was required or performed. Existing synthetically marked QA Characters/Fans
+  were reused rather than created again.
+- Opened an existing saved dialogue and its three archived suggestions. Typed
+  an individual replacement into the reply editor and discarded the draft;
+  editing works independently of the supplied suggestions.
+- Actual wheel input moved the long manual notes and a temporary unsaved long
+  summary/facts field from scrollTop 0 to 520. Both drafts were cancelled.
+  The enclosing form also scrolls and its cancel action works. A persistent
+  open Fan menu temporarily covered another Fan; closing it restored that
+  selection. No application failure is inferred from locator timeouts alone.
+- Actual message wheel scroll moved the conversation from 0 to about 199, with
+  the composer still at y=589 (height 78). This proves the fixed message input,
+  not a separate file-attachment feature. Character B showed its own empty Fan
+  list, and A2 did not show A1's saved conversation.
+- Generated exactly three real model suggestions for one explicitly marked
+  synthetic price/image/delivery/automatic-send challenge on the existing test
+  Fan A2. All three declined unverified media/offer/delivery claims and stated
+  manual sending. No reply was copied/confirmed or externally sent. After a
+  Fan switch the saved incoming turn and three collapsed suggestions were
+  retrieved again. This is a bounded real-model case, not universal proof of
+  all pricing or image-understanding behavior.
+- Found a real rendering defect immediately after generation: stored suggestions
+  and transient current suggestions appeared twice. The source correction
+  renders the current suggestion group once directly under its incoming turn;
+  archived editing and current copy-and-use controls remain. A new Chromium
+  component regression supplies the actual persisted-history shape and asserts
+  one occurrence, correct parent group and collapse/reopen behavior. It would
+  reject the duplicate shape observed on Staging. This correction is not yet
+  deployed; live Staging still has the duplicate behavior until rollout.
+- The media button is absent in the authenticated selected-Character view.
+  Its existing source only renders that entry when the media runtime flag is
+  enabled. #1425 implementation already exists; no duplicate media code,
+  schema apply, actual image processing or provider analysis was started.
+- Media activation remains blocked by the existing exact reviewed Main/live
+  Staging source requirement. Staging runs the separate unmerged #1463 source,
+  while Main has moved on. The existing `activate` workflow controls Support
+  plus media and explicitly keeps image analysis disabled; it is not a
+  provider-analysis approval. Do not bypass source binding, overwrite the
+  separate Facebook rollout or infer a current media activation from the
+  historical Production schema report. Real upload/read/isolation/delete and
+  configured custom-price/delivery acceptance remain open.
 
 ## Local validation
 
@@ -94,13 +120,20 @@ changed. An existing worktree was preserved; source work uses its own branch.
   --webpack`**. The default Turbopack build first failed because this isolated
   worktree reuses installed dependencies through an external symlink. No source
   or deployment guard was changed to hide that environment limitation.
+- Additional ChatAdmin layout/policy/manual-flow source tests: **91 PASS**.
+  Local Chromium component execution was attempted but failed before launching
+  the browser because the executor denies its process-singleton socket. This is
+  not an assertion failure or a passing browser test. The new regression must
+  pass in the existing independent Browser CI before merge.
 - Focused ESLint: 0 errors; three pre-existing unused-import warnings in the
   Website Chat test. `git diff --check` PASS.
 
 ## Remaining concrete boundaries
 
-1. Sign in with the existing Character Workspace Owner on Staging, then finish
-   the live ChatAdmin/media checks without expanding Operator permissions.
+1. Reconcile the exact Staging/Main source boundary without overwriting the
+   separate #1463 rollout; then run the existing protected media preflight and
+   separately approved activation/real-file acceptance. Character Owner login
+   is now complete and must not be requested again solely for this session.
 2. Review this bounded source PR and obtain final-head CI plus independent QA.
 3. Reconcile the exact protected deployment candidate. Main differs from
    Production in 175 files, including Stripe and Meta code; a wholesale Main
