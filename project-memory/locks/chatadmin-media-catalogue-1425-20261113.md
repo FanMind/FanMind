@@ -6,7 +6,10 @@ media delivery, no provider image/video analysis activation. Phone app excluded.
 
 R3 boundaries: FM-CONTRACT-CHATADMIN-AI-001 and
 FM-CONTRACT-CHATADMIN-STORAGE-001; generation/context/UI/erasure/export consumers.
-Affected integration gates: ChatAdmin AI context and private storage isolation.
+Affected integration gates: FM-IGATE-CHATADMIN-AI-001 and
+FM-IGATE-CHATADMIN-STORAGE-001. Reviewed SOURCE_OF_TRUTH adds only internal
+source/unapplied status; DRIFT_BASELINE updated for that exact documentation
+change, without changing release/evidence authority.
 Source implementation and isolated independent countercheck are separate;
 no release authority inferred from local tests or ordinary CI.
 

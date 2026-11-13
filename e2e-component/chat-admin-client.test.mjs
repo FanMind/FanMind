@@ -372,10 +372,10 @@ test("catalogue folder editor submits individual category prices and private vid
  const page=await mount(t,true,true);
  const folder={id:"50000000-0000-4000-8000-000000000010",workspace_id:characterA.workspace_id,character_id:characterA.id,parent_id:null,kind:"video",name:"Landschaft",offer_id:"",price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1};
  const asset={id:"50000000-0000-4000-8000-000000000011",workspace_id:characterA.workspace_id,character_id:characterA.id,folder_id:folder.id,media_type:"video",duration_ms:1000,revision:1,description:"Blaue Fläche",tags:["blau"],folder:"",offer_id:"",reviewed:true,available:true,deleted:false};
- await page.evaluate(({characterA,folder,asset})=>{window.fixture.media[characterA.id]={assets:[asset],folders:[folder],policy:{enabled:false,revision:0},character:characterA,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},{characterA,folder,asset});
+ await page.evaluate(({characterA,folder,asset})=>{window.fixture.media[characterA.id]={assets:[asset],folders:[folder],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character:characterA,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},{characterA,folder,asset});
  await page.getByRole("button",{name:"Bilder",exact:true}).click();
  const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});
- await expect(region.locator("video")).toHaveAttribute("src",`/api/chatadmin/media?character_id=${characterA.id}&id=${asset.id}`);
+ await expect(region.locator("video")).toHaveAttribute("src",`/api/chatadmin/media?character_id=${characterA.id}&id=${asset.id}&revision=${asset.revision}`);
  await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
  await region.getByRole("button",{name:"Ordner anlegen",exact:true}).click();
  await region.getByLabel("Ordnername",{exact:true}).fill("Wald");
