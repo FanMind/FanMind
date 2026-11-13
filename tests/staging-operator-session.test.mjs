@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
 import { createOperatorSessionRenewer, operatorSessionEnabled, operatorSessionRequestAllowed, operatorSessionBodyPresent } from '../src/lib/stagingOperatorSession.mjs';
 import { STAGING_ORIGIN, STAGING_AUTH_ORIGIN, OPERATOR_USER, OPERATOR_WORKSPACE, OPERATOR_NAME } from '../src/lib/stagingOperatorIdentity.mjs';
 
@@ -101,7 +103,7 @@ test('route serializes only fixed outcome fields and uses secure HttpOnly cookie
 });
 
 test('the exact local nginx transport can renew only with the pinned HTTPS browser Origin', async () => {
-  for (const url of ['http://127.0.0.1:3001/api/staging-operator/session', 'http://localhost:3001/api/staging-operator/session']) {
+  for (const url of ['http://127.0.0.1:3001/api/staging-operator/session', 'http://localhost:3001/api/staging-operator/session', 'https://127.0.0.1:3001/api/staging-operator/session', 'https://localhost:3001/api/staging-operator/session']) {
     const p = provider();
     assert.equal((await createOperatorSessionRenewer(p)(request({ url }), env)).status, 200);
     assert.equal(p.calls.length, 3);
@@ -137,4 +139,46 @@ test('stalled body streams fail closed within a bounded wait', async () => {
   const body = new ReadableStream({ cancel() { cancelled = true; } });
   assert.equal(await operatorSessionBodyPresent({ body }), true);
   assert.equal(cancelled, true);
+});
+
+
+test('the installed Next adapter preserves the pinned browser Origin while constructing an HTTPS loopback URL', async () => {
+  // Exercise the installed framework rather than reproducing its URL formula.
+  // This opens no listener and performs no Auth/provider/network request.
+  const require = createRequire(import.meta.url);
+  const NextNodeServer = require('next/dist/server/next-server').default;
+  const { NodeNextRequest } = require('next/dist/server/base-http/node');
+  const { NextRequestAdapter } = require('next/dist/server/web/spec-extension/adapters/next-request');
+  const adapt = ({ hostname = 'localhost', port = 3001, origin = STAGING_ORIGIN, site = 'same-origin', path = '/api/staging-operator/session' } = {}) => {
+    const incoming = Readable.from([]);
+    incoming.method = 'POST';
+    incoming.url = path;
+    incoming.headers = { host: 'staging.fanmind.ch', 'x-forwarded-proto': 'https', origin, 'sec-fetch-site': site };
+    const nodeRequest = new NodeNextRequest(incoming);
+    NextNodeServer.prototype.attachRequestMeta.call({
+      fetchHostname: hostname, port, nextConfig: { experimental: {} },
+    }, nodeRequest, { query: {} }, false);
+    return NextRequestAdapter.fromNodeNextRequest(nodeRequest, new AbortController().signal);
+  };
+  for (const hostname of ['localhost', '127.0.0.1']) {
+    const adapted = adapt({ hostname });
+    // NextURL canonicalizes loopback IPs to localhost in this framework version.
+    assert.equal(adapted.url, 'https://localhost:3001/api/staging-operator/session');
+    assert.equal(adapted.headers.get('origin'), STAGING_ORIGIN);
+    assert.equal(operatorSessionRequestAllowed(adapted), true);
+    assert.equal(await operatorSessionBodyPresent(adapted), false);
+  }
+  for (const patch of [
+    { origin: 'https://attacker.invalid' },
+    { origin: '' },
+    { site: 'cross-site' },
+    { hostname: 'attacker.invalid' },
+    { hostname: 'fanmind.ch' },
+    { port: 3000 },
+    { path: '/different-route' },
+  ]) {
+    const adapted = adapt(patch);
+    assert.equal(operatorSessionRequestAllowed(adapted), false, JSON.stringify(patch));
+    await adapted.text();
+  }
 });

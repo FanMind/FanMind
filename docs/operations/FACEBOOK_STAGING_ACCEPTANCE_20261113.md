@@ -178,3 +178,67 @@ original action instead of silently opening another posting or private chat.
 4. Recheck the three real inputs and exact links after that rollout. Neither
    source/CI success nor this bounded real dataset authorizes Meta publication,
    an automatic Webhook activation or general Production readiness.
+
+## Approved a49decfd rollout and real runtime QA — 13 November continuation
+
+The Owner then explicitly approved exact `a49decfdb81ea8a16ff78c134cd28b141af4a218`.
+Protected deployment [43408555294](https://github.com/FanMind/FanMind/actions/runs/43408555294)
+succeeded. Independent `/api/version` at 11:23:55 Europe/Vienna confirmed that
+exact Staging source. Temporary feature-branch admission was removed immediately;
+independent UI readback again showed the two original branch rules only.
+
+Actual post-rollout browser/database checks:
+
+- Private Messenger row opens `general_chat`; the base contact URL also defaults
+  to private chat with exactly its two real DM messages, no post comments.
+- The two real posting scopes show respectively 3 and 1 comments, the same correct
+  sender, each with its own original comment URL. Aggregate source tabs and
+  Messenger helpers are absent from comment views.
+- Repeated manual Graph sync: 2 posts checked / 4 comments found / 0 imported;
+  DM incremental run imported 0. Independent persisted counts remain 2 DM and
+  4 comments, 6 distinct external IDs, 3 distinct source conversations.
+- Messenger original reopened the exact test thread. Both newly supplied comment
+  originals reopened the corresponding actual comments on the correct postings.
+- Actual AI drafts were generated for both selected posting conversations. The
+  first referred to the upcoming start, the other to the latest logo-size comment
+  and earlier comments from that same posting. On switching source, old draft-copy
+  controls were cleared. No drafts were copied or sent. Current incoming/recent
+  dialogue is thread-bound; contact-level analysis/preferences/voice/memories are
+  intentionally shared, not advertised as post-isolated.
+- Independent Guardian SQL QA: correct contact/workspace/parent/thread/post,
+  4 distinct comment targets, RLS enabled on both tables; Operator 3 conversations /
+  6 messages, foreign 0; foreign fixture owner sees Operator 0 conversations /
+  0 messages while its own workspace remains visible. No token/content export.
+
+Actual auth result is still NOT passed:
+
+At 11:31 Europe/Vienna the existing session expired naturally: reloading the
+protected contact page redirected to `/login`. Clicking the deployed continuation
+button then returned **403 / origin_forbidden**. Auth metadata stayed at 6 refresh
+records / 0 revoked / last update 10:31:22 Europe/Vienna; no provider rotation.
+This is real expiry plus failed renewal, not a synthetic expiry test. Secure
+interactive re-login was requested immediately; logout/revocation/re-login
+acceptance remains open and must not be called PASS.
+
+The narrower cause is independently reproducible with the installed Next.js
+production request adapter: nginx forwards HTTPS, render-server defaults its
+fetch hostname to localhost, and `attachRequestMeta` creates the virtual request
+URL `https://localhost:3001/...` even though nginx's physical upstream is HTTP.
+The a49decfd guard admitted only HTTP loopback forms. The next source correction
+adds only exact HTTPS localhost/127.0.0.1 on port 3001; it does not trust arbitrary
+forwarded origins, hosts, ports or paths, nor alter public Origin, runtime,
+project, Operator, workspace, cookies, permissions or provider checks.
+
+This next source has not been deployed. The Owner's a49decfd grant does not
+cover a successor protected rollout. Keep #1463/#1465 Draft/open/unmerged and
+obtain a concrete exact-source authorization after source/Guardian/CI checks.
+Production and the shared Webhook were not changed; no new database or outbound
+Facebook action occurred.
+
+Successor source verification: 48 focused checks passed without failures/skips;
+full Next build/TypeScript, affected ESLint, Project Memory and drift checks passed.
+Independent Guardian's 13-case session suite includes the actual installed Next
+request-adaptation chain. Its independent old/new probe rejects the exact adapted
+request on deployed a49decfd and accepts it on the successor, while wrong browser
+Origin, missing Origin, cross-site, host/port/path/Production cases remain denied.
+These are framework/source tests without live Auth calls, not real renewal PASS.
