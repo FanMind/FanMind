@@ -1,3 +1,5 @@
+import { stagingFacebookIngressTarget, STAGING_INGRESS_FIELDS } from "@/lib/facebookStagingIngressPolicy.mjs";
+import { FACEBOOK_MESSAGES_OAUTH_SCOPES, FACEBOOK_COMMENT_FEED_SCOPES } from "@/lib/facebookScopes";
 import "server-only";
 import { facebookCommentTarget } from "@/lib/facebookCommentTarget.mjs";
 
@@ -33,6 +35,8 @@ import {
   hasFacebookPagesMessagingScope,
   hasFacebookPagesReadUserContentScope,
   subscribeFacebookPage,
+  hasFacebookPageAuthorization,
+  verifyFacebookPageTokenIdentity,
   type FacebookPageWebhookStatus,
 } from "@/lib/facebookIntegration";
 import {
@@ -1204,6 +1208,33 @@ export async function checkFacebookPageWebhooks(): Promise<FacebookPageWebhookAc
   await updateFacebookWebhookSubscribed(connection.id, status.ok);
   revalidatePath("/channels");
   return { ...status, ...tokenDiagnostics, updatedConnection: true };
+}
+
+// Separate from the historical general activation: only the authorized isolated target.
+export async function controlStagingFacebookIngress(activate: boolean) {
+  const { connection, error } = await getCurrentFacebookConnection();
+  if (error || !connection || !stagingFacebookIngressTarget(process.env, connection))
+    return { ok: false, code: "target_rejected", messages: false, feed: false };
+  const token = connection.page_access_token_encrypted ? decryptToken(connection.page_access_token_encrypted) : null;
+  if (!token) return { ok: false, code: "token_missing", messages: false, feed: false };
+  try {
+    const diagnostics = await fetchFacebookTokenDiagnostics(token);
+    const scopes = [...new Set([...FACEBOOK_MESSAGES_OAUTH_SCOPES, ...FACEBOOK_COMMENT_FEED_SCOPES])];
+    if (!hasFacebookPageAuthorization(diagnostics, connection.page_id!, scopes) ||
+        !await verifyFacebookPageTokenIdentity(token, connection.page_id!))
+      return { ok: false, code: "page_permissions", messages: false, feed: false };
+    // No import or sending occurs. Both operations read subscribed_apps for the exact running App ID.
+    const status = activate
+      ? await subscribeFacebookPage(connection.page_id!, token, STAGING_INGRESS_FIELDS as ("messages" | "feed")[])
+      : await fetchFacebookPageWebhookStatus(connection.page_id!, token);
+    const messages = status.fields.messages === "active", feed = status.fields.feed === "active";
+    const active = status.subscribedAppsStatus === "active" && messages && feed;
+    const saved = await updateFacebookWebhookSubscribed(connection.id, active);
+    revalidatePath("/channels");
+    return { ok: active && !saved.error, code: saved.error ? "save_failed" : active ? "active" : "subscription_missing", messages, feed };
+  } catch {
+    return { ok: false, code: "provider_unavailable", messages: false, feed: false };
+  }
 }
 
 export async function activateFacebookPageWebhooks(): Promise<FacebookPageWebhookActionResult> {

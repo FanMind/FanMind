@@ -1,3 +1,4 @@
+import { stagingFacebookIngressEnabled } from "@/lib/facebookStagingIngressPolicy.mjs";
 import { redirect } from "next/navigation";
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import {
@@ -60,6 +61,7 @@ type FacebookLiveSetupStatus = {
   metaBusinessIdConfigured: boolean;
   tokenEncryptionConfigured: boolean;
   oauthCallbackUrl: string | null;
+  stagingIngressEnabled: boolean;
 };
 
 type ChannelsWorkspaceProps = {
@@ -364,6 +366,7 @@ function getFacebookLiveSetupStatus(): FacebookLiveSetupStatus {
     metaBusinessIdConfigured: status.metaBusinessIdConfigured,
     tokenEncryptionConfigured: status.tokenEncryptionConfigured,
     oauthCallbackUrl: status.oauthCallbackUrl,
+    stagingIngressEnabled: stagingFacebookIngressEnabled(process.env),
   };
 }
 

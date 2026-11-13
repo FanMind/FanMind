@@ -1,3 +1,4 @@
+import { stagingFacebookOAuthContinuation } from "@/lib/facebookStagingIngressPolicy.mjs";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
@@ -29,7 +30,11 @@ export async function GET(request: Request) {
   const state = verifyFacebookOAuthState(url.searchParams.get("state"));
 
   const { data } = await getSupabaseServerUser();
-  if (!data.user) redirect("/login");
+  if (!data.user) {
+    const continuation = stagingFacebookOAuthContinuation(request, process.env, state);
+    if (continuation) return continuation;
+    redirect("/login");
+  }
   if (!code || !state || state.userId !== data.user.id) {
     return redirectToChannels(appOrigin, "facebook_error=oauth");
   }
