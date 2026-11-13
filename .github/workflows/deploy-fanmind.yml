@@ -18,6 +18,11 @@ on:
         type: boolean
         default: false
         required: true
+      support_help_ui:
+        description: Build the existing in-app Help UI only when Support is already enabled
+        type: boolean
+        default: false
+        required: true
 
 concurrency:
   group: fanmind-production-deploy
@@ -71,6 +76,7 @@ jobs:
           EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_main_commit }}
           EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
           FANMIND_REQUIRE_SUPPORT_DISABLED: ${{ inputs.support_must_remain_disabled }}
+          FANMIND_SUPPORT_HELP_BUILD_ENABLE: ${{ inputs.support_help_ui && 'true' || 'false' }}
         run: |
           set -euo pipefail
 
