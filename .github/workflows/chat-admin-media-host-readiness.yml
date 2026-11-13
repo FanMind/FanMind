@@ -71,5 +71,13 @@ jobs:
           test "$REVIEWED_COMMIT" = "$GITHUB_SHA"
           test "$TARGET_PROJECT" = vshyhvgcmrlagvfnvomc
           test "$PRODUCTION_PROJECT" = drqkpdvtbbrrdwmtrodz
-          sudo -n /usr/local/sbin/fanmind-staging-media-probe \
-            probe "$REVIEWED_COMMIT" "$EXPECTED_LIVE_COMMIT" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          set +e
+          PROBE_OUTPUT="$(sudo -n /usr/local/sbin/fanmind-staging-media-probe \
+            probe "$REVIEWED_COMMIT" "$EXPECTED_LIVE_COMMIT" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT")"
+          PROBE_STATUS=$?
+          set -e
+          printf '%s\n' "$PROBE_OUTPUT"
+          test "$PROBE_STATUS" -eq 0
+          printf '%s\n' "$PROBE_OUTPUT" | grep -Fxq 'MEDIA_HOST_READINESS=PASS'
+          printf '%s\n' "$PROBE_OUTPUT" | grep -Fxq 'MEDIA_HOST_SYNTHETIC_CLEANUP=PASS'
+          printf '%s\n' "$PROBE_OUTPUT" | grep -Fxq 'STAGING_MEDIA_PROBE_RECEIPT=PASS'

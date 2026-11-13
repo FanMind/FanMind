@@ -202,3 +202,21 @@ through Owner-approved#1468. Its Support/Facebook code, package and Capacity pin
 are preserved; only README/Source of Truth additions and their reviewed fingerprint
 are combined. No deployed branch is overwritten. The feature-branch merge and
 new exact-head CI remain separate from a protected Main merge or deployment.
+
+## Actual host/deploy evidence and rejected empty probe
+
+- #1475 regular Main merged00ebd6e32f9f816900befc9f717493ece3728ef; final
+  PR headccdfa48f had16/16 checks and all12 required contexts. Source tree equals
+  the independently confirmed merge tree.
+- Real root authority inspection43464862000 PASS; toolchain preparation43465036716
+  PASS, no upgrades, private config unchanged, no deployment in that action.
+- Protected Staging deploy43465738123 PASS; independent public versiond00ebd6e;
+  prior private runtime snapshot retained. Billing/Operator preservation remains.
+- Probe43466444949 job exit0 is NOT a PASS: no readiness/cleanup/root-receipt
+  marker. Reproduced symlink CLI skip locally; corrected realpath entry and added
+  mandatory three-marker workflow proof. Real direct/symlink subprocess regression
+  passes. Source correction requires fresh complete CI/regular merge and target
+  preparation/deploy/probe before video activation.
+- Existing Staging schema remains exact initial, bucket private5MiB WebP;
+  catalogue/video switches not activated. Actual media UI acceptance remains open;
+  fallback secure Staging login was not completed. No provider analysis.

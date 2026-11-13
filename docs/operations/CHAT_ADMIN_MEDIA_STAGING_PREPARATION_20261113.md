@@ -363,3 +363,32 @@ other settings unchanged, retain compatible additive schema/private bucket while
 investigating. Never undo an evolved shared schema or downgrade a newer live
 release. Synthetic fixture IDs are recorded privately during acceptance and only
 owned synthetic records/objects are removed with authenticated absence proof.
+
+## Actual post-merge target continuation and probe correction
+
+#1475 regular Main merge `d00ebd6e32f9f816900befc9f717493ece3728ef` retained
+Facebook #1473 and Support #1474. Its final PR headccdfa48f had16/16 checks and
+all12 required contexts with expected app identities; the actual merge tree is
+identical. Staging deploy43465738123 succeeded from a8a74f67 and independently
+reportsd00ebd6e. Private prior runtime snapshot is retained/accepted. Root authority
+inspection43464862000 and bounded toolchain preparation43465036716 passed:
+ffmpeg/probe installed without upgrades, fixed helper and1GiB/100% CPU/256-task
+drop-in prepared; private config bytes unchanged, no deploy within preparation.
+
+Probe43466444949 is NOT accepted despite job success: no actual readiness,
+conversion-cleanup or root receipt marker was emitted. The installed current
+symlink caused the CLI entry comparison to skip execution. The required follow-up
+uses the real path and checks all three PASS markers independently in the workflow.
+A real direct/symlink subprocess negative regression reproduces the prior failure.
+Do not enable videos from a green job alone. After reviewed correction and its
+regular merge, prepare the exact new source, deploy the common Main, and rerun the
+actual application-context probe. Schema/bucket/new flags remain unchanged.
+
+Secure Staging login in the fallback browser was declined/not completed. The
+original Operator session is untouched; do not retry the login request without
+new user instruction. Continue independently possible server/database work.
+
+The same diagnostic followup also repairs an independently reproduced overescaped
+proc-identity expression. Literal Uid/Gid patterns now parse all four IDs from
+actual `/proc/self/status`; missing/malformed rows still fail closed. This is
+not a target-host proof. Current Main193eb1a9 (Facebook #1477) is integrated.
