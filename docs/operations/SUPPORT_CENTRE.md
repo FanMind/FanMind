@@ -56,6 +56,16 @@ Owner-only, recorded with actor/time, and a recurring incident reopens the entry
 No message text, raw provider error, IP, credential or free-form log enters the
 notification. Anonymous/bad-Origin requests cannot flood this inbox.
 
+Acknowledgment continuation, 13 November 2026: the overview endpoint confirms
+success only when `support_centre_ack` returns the exact boolean `true` and a
+fresh authorized inbox read no longer contains that notification. A missing or
+unexpected RPC result, or an incident reopened before readback, returns a
+conflict instead of a false success. A readback failure remains unavailable;
+retry uses the existing idempotent RPC. No SQL, grants or notification schema
+change is required. The configured HTTPS-origin correction already on Main is
+also necessary for the old Production proxy path; source and synthetic/browser
+acceptance are separate from an authorized deployment and final live readback.
+
 Full database failure cannot be durably reported into that same database: routes
 fail closed, UI shows unavailable, and incomplete started checks remain available
 for reconciliation when the database returns. No notification-delivery success is
