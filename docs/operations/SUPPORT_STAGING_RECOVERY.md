@@ -72,3 +72,31 @@ It changes no server setting, permission or unrelated feature. Default false
 retains the previous build behavior. The existing executed rolling-release
 harness proves refusal before switch when Support is disabled, the true public
 build flag when enabled, and unchanged isolated-release/rollback behavior.
+
+## Resumed live checkpoint — 13 November 2026
+
+Protected Staging run43461158590 deployed a8a74f67 successfully from oldd3483497.
+The host recorded SNAPSHOT_READY then RELEASE_ACCEPTED_SNAPSHOT_RETAINED;
+Operator=true and Billing=false were preserved. Seven required health components
+passed. Repeated authenticated browser version/Owner inbox/retention reads agree.
+The prior session's synthetic reference70e84ab9-5826-4780-a509-6f06aa73aac5 is
+bound to its saved preparation. Its sole marked Secondary E2E notification was
+already acknowledged at16:23:18.19355UTC by the configured Owner. Fresh read,
+reload and navigation away/reopen prove it remains absent. A rolled-back native
+transaction proves stable replay timestamp, non-Owner denial, missing-row false
+and browser-role privilege denial. Exact tuple cleanup removed1; fresh count0.
+No second alarm or customer-warning mutation occurred.
+
+Production attempt43464044155 stopped in hosted validation; its server job was
+skipped and live Production remained a798d793. All required source checks were
+green. The unrelated manually dispatched Staging media host inspection43463963961
+was incorrectly counted as Production source CI. The narrow correction excludes
+only check `inspect-staging-application-context` from the exact manual
+`.github/workflows/chat-admin-media-host-readiness.yml` run, independently bound
+through GitHub's suite-filtered Actions API to the same repository, Main and SHA.
+Missing/ambiguous metadata, same-named source checks, foreign workflow/event,
+other failed operations and every required Main/PR source/security check still
+block. This does not change the Staging diagnostic or its actual video findings.
+No feature, target permission, schema, bucket, provider or Billing change.
+This correction requires its regular exact-head CI/merge and fresh rollout;
+Production and its existing10-Nov test alert remain pending live acceptance.
