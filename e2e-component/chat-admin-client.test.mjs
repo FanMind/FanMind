@@ -27,6 +27,10 @@ const knowledgeClient = ts.transpileModule(readFileSync("src/lib/chatAdminKnowle
 const creatorPolicyClient = ts.transpileModule(readFileSync("src/lib/creatorIntelligencePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const replyPricePolicyClient = ts.transpileModule(readFileSync("src/lib/replyPricePolicy.mjs", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const mediaClient = ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+const controlsClient=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+const mediaPolicyClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaPolicy.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const catalogueClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaCatalogue.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const salesClient=ts.transpileModule(readFileSync("src/lib/chatAdminSalesPlaybook.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const bundle = `(() => {
   const modules = {${moduleSources.join(",")},
     "./chatadmin.module.css": function(module) { module.exports = {__esModule: true, default: new Proxy({}, {get: (_, key) => String(key)})}; },
@@ -34,6 +38,11 @@ const bundle = `(() => {
     "./creatorIntelligencePolicy.mjs": function(module,exports,require) {${creatorPolicyClient}},
     "./replyPricePolicy.mjs": function(module,exports,require) {${replyPricePolicyClient}},
     "./CharacterMediaLibrary": function(module,exports,require) {${mediaClient}},
+    "./CharacterMediaCatalogueControls": function(module,exports,require) {${controlsClient}},
+    "@/lib/chatAdminMediaCatalogue.mjs": function(module,exports,require) {${catalogueClient}},
+    "./chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
+    "./chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
+    "./chatAdminSalesPlaybook.mjs": function(module,exports,require) {${salesClient}},
     client: function(module, exports, require) {${client}}
   };
   const cache = {};
@@ -357,4 +366,25 @@ test("private Character library edits reviewed metadata, scrolls and isolates Ch
  await region.getByLabel("Beschreibung und Motive geprüft; für die KI freigeben").check();await region.getByRole("button",{name:"Bildangaben speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const sent=await page.evaluate(()=>window.testRequests[0].body);assert.equal(sent.character_id,characterA.id);assert.equal(sent.id,asset.id);assert.equal(sent.reviewed,true);assert.equal(sent.offer_id,"private_photo");
  await page.evaluate(({asset,character})=>window.testRequests[0].resolve(Response.json({...window.fixture.media[character.id],assets:[{...asset,reviewed:true,revision:2}],character:{...character,revision:2}})),{asset,character:characterA});await expect(region.getByRole("status")).toContainText("Gespeichert");
  await selectCharacter(page,"Synthetic Bea");await page.getByRole("button",{name:"Bilder",exact:true}).click();await expect(page.getByRole("region",{name:"Bilder von Synthetic Bea",exact:true})).toContainText("Noch keine Bilder vorhanden");await expect(page.getByLabel("Beschreibung",{exact:true})).toHaveCount(0);
+});
+
+test("catalogue folder editor submits individual category prices and private video stays scoped",async t=>{
+ const page=await mount(t,true,true);
+ const folder={id:"50000000-0000-4000-8000-000000000010",workspace_id:characterA.workspace_id,character_id:characterA.id,parent_id:null,kind:"video",name:"Landschaft",offer_id:"",price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1};
+ const asset={id:"50000000-0000-4000-8000-000000000011",workspace_id:characterA.workspace_id,character_id:characterA.id,folder_id:folder.id,media_type:"video",duration_ms:1000,revision:1,description:"Blaue Fläche",tags:["blau"],folder:"",offer_id:"",reviewed:true,available:true,deleted:false};
+ await page.evaluate(({characterA,folder,asset})=>{window.fixture.media[characterA.id]={assets:[asset],folders:[folder],policy:{enabled:false,revision:0},character:characterA,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},{characterA,folder,asset});
+ await page.getByRole("button",{name:"Bilder",exact:true}).click();
+ const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});
+ await expect(region.locator("video")).toHaveAttribute("src",`/api/chatadmin/media?character_id=${characterA.id}&id=${asset.id}`);
+ await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
+ await region.getByRole("button",{name:"Ordner anlegen",exact:true}).click();
+ await region.getByLabel("Ordnername",{exact:true}).fill("Wald");
+ await region.getByLabel("Eigener Kategoriepreis",{exact:true}).check();
+ await expect(region.getByLabel("Startpreis",{exact:true}).first()).toHaveValue("");
+ await region.getByLabel("Startpreis",{exact:true}).first().fill("23,50");await region.getByLabel("Mindestpreis",{exact:true}).first().fill("17");
+ await region.getByLabel("Verhandlungen erlauben",{exact:true}).first().check();
+ await region.getByRole("button",{name:"Ordner speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const sent=await page.evaluate(()=>({url:window.testRequests[0].url,body:window.testRequests[0].body}));
+ assert.equal(sent.body.action,"save_folder");assert.equal(sent.body.price.start_minor,2350);assert.equal(sent.body.price.minimum_minor,1700);assert.equal(sent.body.price.negotiation_allowed,true);assert.equal(sent.body.character_id,characterA.id);
 });

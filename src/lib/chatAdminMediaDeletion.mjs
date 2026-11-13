@@ -7,12 +7,16 @@ export async function deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds})
  for(const workspaceId of workspaceIds){
   if(!MEDIA_UUID.test(workspaceId))throw new Error("media_deletion_binding_invalid");
   const base=`${config.supabaseUrl}/rest/v1/chat_character_media?workspace_id=eq.${workspaceId}`;
-  const listed=await fetchImpl(`${base}&select=id,workspace_id,character_id&order=id.asc&limit=1001`,{headers,cache:"no-store",signal:AbortSignal.timeout(15000)});
-  const rows=await listed.json();
+  const inventory=async columns=>{const response=await fetchImpl(`${base}&select=${columns}&order=id.asc&limit=1001`,{headers,cache:"no-store",signal:AbortSignal.timeout(15000)});return {response,rows:await response.json()};};
+  let {response:listed,rows}=await inventory("id,workspace_id,character_id,media_type");
+  // Old installations have only images. Do not tie erasure of existing videos
+  // to a runtime flag that could have been disabled during recovery.
+  if(!listed.ok&&["42703","PGRST204"].includes(rows?.code))({response:listed,rows}=await inventory("id,workspace_id,character_id"));
   if(!listed.ok){if(["42P01","PGRST205"].includes(rows?.code))continue;throw new Error("media_deletion_inventory_failed");}
   if(!Array.isArray(rows)||rows.length>1000||rows.some(row=>row.workspace_id!==workspaceId||!MEDIA_UUID.test(row.id)||!MEDIA_UUID.test(row.character_id)))throw new Error("media_deletion_binding_invalid");
   for(const row of rows){
-   const path=`${workspaceId}/${row.character_id}/${row.id}.webp`,object=`${config.supabaseUrl}/storage/v1/object`;
+   if(row.media_type!==undefined&&!["image","video"].includes(row.media_type))throw new Error("media_deletion_binding_invalid");
+   const path=`${workspaceId}/${row.character_id}/${row.id}.${row.media_type==="video"?"mp4":"webp"}`,object=`${config.supabaseUrl}/storage/v1/object`;
    const revoked=await fetchImpl(`${base}&id=eq.${row.id}`,{method:"PATCH",headers,body:JSON.stringify({deleted:true,reviewed:false,available:false}),cache:"no-store",signal:AbortSignal.timeout(15000)});
    if(!revoked.ok)throw new Error("media_deletion_revoke_failed");
    const removed=await fetchImpl(`${object}/${MEDIA_BUCKET}`,{method:"DELETE",headers,body:JSON.stringify({prefixes:[path]}),cache:"no-store",signal:AbortSignal.timeout(15000)});

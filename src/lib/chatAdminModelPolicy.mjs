@@ -1,6 +1,7 @@
 import { resolveFanMindAiQualityProfile } from "../config/openAiPriceCatalog.mjs";
 import { CHAT_ADMIN_REPLY_INSTRUCTIONS, assertChatAdminReplySemantics, buildChatAdminFanContext } from "./chatAdminPolicy.mjs";
 import { MEDIA_REPLY_INSTRUCTIONS } from "./chatAdminMediaPolicy.mjs";
+import { CATALOGUE_REPLY_INSTRUCTIONS } from "./chatAdminMediaCatalogue.mjs";
 
 // Owner-authorized ChatAdmin upgrade only; this is not a paid-tier entitlement.
 export function getChatAdminModelProfile() {
@@ -19,7 +20,7 @@ export function buildChatAdminModelRequest(context) {
     // Provider API calls standard processing "default"; catalog calls it "standard".
     service_tier: "default",
     reasoning: { effort: profile.reasoningEffort },
-    input: [{ role: "system", content: CHAT_ADMIN_REPLY_INSTRUCTIONS + (mediaContext ? `\n${MEDIA_REPLY_INSTRUCTIONS}` : "") }, { role: "user", content: context }],
+    input: [{ role: "system", content: CHAT_ADMIN_REPLY_INSTRUCTIONS + (mediaContext ? `\n${MEDIA_REPLY_INSTRUCTIONS}\n${CATALOGUE_REPLY_INSTRUCTIONS}` : "") }, { role: "user", content: context }],
     text: { format: { type: "json_schema", name: "chat_admin_replies", strict: true, schema: {
       type: "object", additionalProperties: false, required: ["replies"],
       properties: { replies: { type: "array", minItems: 3, maxItems: 3, items: { type: "string", minLength: 1 } } },

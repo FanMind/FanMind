@@ -1,3 +1,4 @@
+import * as cataloguePolicy from "../src/lib/chatAdminMediaCatalogue.mjs";
 import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
 import { randomUUID } from "node:crypto";
 import * as usageWitness from "../src/lib/chatAdminUsageWitness.mjs";
@@ -37,6 +38,7 @@ function authorityHarness(email, role = "owner") {
   const dependencies = {
     "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
+    "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "@/lib/admin": admin,
     "next/headers": { cookies: async () => ({ get: () => ({ value: "synthetic-session" }) }) },
@@ -109,6 +111,7 @@ function harness(change, abortController, options = {}) {
     "@/lib/chatAdminUsageWitness.mjs": usageWitness,
     "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
+    "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/chatAdmin": {
@@ -325,6 +328,7 @@ test("actual Fan route deletes only the revision-bound Fan in the authorized wor
       const dependencies = {
     "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
+    "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
         "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
         "@/lib/chatAdmin": {

@@ -1717,3 +1717,12 @@ vor einem Neustart und verändert ausschließlich fünf Meta-Konfigurationsfelde
 Eine neue Verschlüsselung setzt den nachgewiesenen leeren Tokenbestand voraus.
 Quelle: `docs/integrations/META_CUSTOMER_INBOX_20261109.md`. Laufzeitprüfung und
 echte Seiten-/Nachrichtenabnahme bleiben bis zu ihren eigenen Nachweisen offen.
+
+### ChatAdmin media catalogue continuation — 13 November 2026
+
+Internal source work for#1425 extends the existing private media library with
+nested image/video folders, existing-playbook price references and bounded
+counteroffers. Controlled catalogue SQL/bucket expansion is unapplied; image
+analysis remains separately gated, video analysis unavailable. Source, exact-head
+CI and target acceptance are distinct. See `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`;
+no public FanMind roadmap completion or Production activation follows from this.

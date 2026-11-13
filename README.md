@@ -1113,3 +1113,7 @@ vor einem Neustart und verändert ausschließlich fünf Meta-Konfigurationsfelde
 Eine neue Verschlüsselung setzt den nachgewiesenen leeren Tokenbestand voraus.
 Quelle: `docs/integrations/META_CUSTOMER_INBOX_20261109.md`. Laufzeitprüfung und
 echte Seiten-/Nachrichtenabnahme bleiben bis zu ihren eigenen Nachweisen offen.
+
+Internal ChatAdmin #1425 catalogue continuation (folders, inherited prices and
+private video source; not activated) is documented in
+[CHAT_ADMIN_MEDIA_CATALOGUE](docs/CHAT_ADMIN_MEDIA_CATALOGUE.md).

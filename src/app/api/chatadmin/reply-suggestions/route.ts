@@ -2,6 +2,7 @@ import { groundChatAdminContext } from "@/lib/chatAdminMedia";
 import { randomUUID } from "node:crypto";
 import { CHAT_ADMIN_USAGE_HEADER } from "@/lib/chatAdminUsageWitness.mjs";
 import { assertMediaReplyClaims } from "@/lib/chatAdminMediaPolicy.mjs";
+import { assertCatalogueReplyClaims } from "@/lib/chatAdminMediaCatalogue.mjs";
 import { assessReplyQuality, ReplyQualityError, runReplyQualityGate } from "@/lib/replyQualityPolicy.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { applyChatAdminCurrentInterests, isChatAdminCurrentFactsEnabled, getLatestChatAdminConfirmedReply, getChatAdminGeneration, getChatCharacter, getChatConversation, getChatFan, isChatAdminFanRuntimeEnabled, listRecentChatMessages, persistChatAdminGeneration, requireChatAdminCapability, requireChatAdminFanRuntime, updateChatFan } from "@/lib/chatAdmin";
@@ -34,7 +35,7 @@ export async function POST(request:NextRequest){
   const fan=fanMode?await getChatFan(workspace.id,character.id,body.fan_id as string):null;const conversation=fanMode?await getChatConversation(workspace.id,character.id,fan!.id,body.conversation_id as string):null;const history=fanMode?await listRecentChatMessages(workspace.id,character.id,fan!.id,conversation!.id):[];
   const lastConfirmed=fanMode?await getLatestChatAdminConfirmedReply(workspace.id,character.id,fan!.id,conversation!.id):null;
   const replyPause=deriveChatAdminReplyPause(fan?.notes,lastConfirmed);if(replyPause.paused)return NextResponse.json({error:"conversation_paused",reply_pause:replyPause},{status:409});
-  const rawContext=fanMode?buildChatAdminFanContext(character,fan!,conversation!,history,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(character,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:"");const context=await groundChatAdminContext(rawContext,character,fan,body.incoming_message,started);inputChars=context.length;
+  const rawContext=fanMode?buildChatAdminFanContext(character,fan!,conversation!,history,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(character,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:"");const context=await groundChatAdminContext(rawContext,character,fan,body.incoming_message,started,history);inputChars=context.length;
   const requestedOffer=(JSON.parse(context) as {sales_playbook?:{requested_offer?:Record<string,unknown>|null}}).sales_playbook?.requested_offer??null;
   const knownInterests=fanMode&&isChatAdminCurrentFactsEnabled()?(fan!.current_facts??[]):[];
   if(inputChars>AI_REPLY_INPUT_CHAR_LIMIT)return NextResponse.json({error:"input_too_large"},{status:400});
@@ -45,11 +46,12 @@ export async function POST(request:NextRequest){
    if(previous.length!==4||inbound.length!==1||inbound[0].content!==String(body.incoming_message).trim()||stored.length!==3)return NextResponse.json({error:"generation_id_conflict"},{status:409});
    const storedReplies=assertChatAdminReplySemantics(stored.map(message=>message.content),body.incoming_message,requestedOffer);
    assertMediaReplyClaims(storedReplies,JSON.parse(context).media_inventory);
+   if(JSON.parse(context).media_catalogue)assertCatalogueReplyClaims(storedReplies,JSON.parse(context).media_pricing??null,JSON.parse(context).media_inventory);
    const replayIssues=assessReplyQualityWithCurrentMessage(storedReplies,[],knownInterests,body.incoming_message);
    if(replayIssues.includes("known_interest_question")||replayIssues.includes("contextual_stub_triple"))throw new ReplyQualityError();
    const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());
    const replayCharacter=await getChatCharacter(workspaceId,character.id);
-   if(replayCharacter.revision!==character.revision||replayCharacter.status!=="active"||await groundChatAdminContext(rawContext,replayCharacter,fan,body.incoming_message,started)!==context)return NextResponse.json({error:"stale_generation_revision"},{status:409});
+   if(replayCharacter.revision!==character.revision||replayCharacter.status!=="active"||await groundChatAdminContext(rawContext,replayCharacter,fan,body.incoming_message,started,history)!==context)return NextResponse.json({error:"stale_generation_revision"},{status:409});
    return NextResponse.json({memory_status:memoryStatus,replies:storedReplies,character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
   }
   const limit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
@@ -72,7 +74,7 @@ export async function POST(request:NextRequest){
      const messages=fanMode?await listRecentChatMessages(workspaceId,c.id,f!.id,conv!.id):[];
      const confirmed=fanMode?await getLatestChatAdminConfirmedReply(workspaceId,c.id,f!.id,conv!.id):null;
      if(deriveChatAdminReplyPause(f?.notes,confirmed).paused||confirmed?.id!==lastConfirmed?.id||
-       (await groundChatAdminContext(fanMode?buildChatAdminFanContext(c,f!,conv!,messages,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(c,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:""),c,f,body.incoming_message,started))!==context)throw new ChatAdminPolicyError("reply_context_changed");
+       (await groundChatAdminContext(fanMode?buildChatAdminFanContext(c,f!,conv!,messages,body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started):buildChatAdminCharacterContext(c,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:""),c,f,body.incoming_message,started,messages))!==context)throw new ChatAdminPolicyError("reply_context_changed");
      const retryLimit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});
      if(!retryLimit.allowed)throw new ChatAdminPolicyError("rate_limited");
     }
@@ -89,6 +91,7 @@ export async function POST(request:NextRequest){
     const text=payload.output_text??payload.output?.flatMap(v=>v.content??[]).map(v=>v.text??"").join("")??"";
     result.replies=assertChatAdminReplySemantics(JSON.parse(text).replies,body.incoming_message,requestedOffer);
     assertMediaReplyClaims(result.replies,JSON.parse(context).media_inventory);
+    if(JSON.parse(context).media_catalogue)assertCatalogueReplyClaims(result.replies,JSON.parse(context).media_pricing??null,JSON.parse(context).media_inventory);
     return result.replies;
    },
    onAttempt:async({result,error,feedback})=>{
@@ -120,7 +123,7 @@ export async function POST(request:NextRequest){
   if (
     currentCharacter.revision !== character.revision ||
     currentCharacter.status !== "active" ||
-    (await groundChatAdminContext(fanMode ? buildChatAdminFanContext(currentCharacter, currentFan!, currentConversation!, currentHistory, body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started) : buildChatAdminCharacterContext(currentCharacter,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:""),currentCharacter,currentFan,body.incoming_message,started)) !== context
+    (await groundChatAdminContext(fanMode ? buildChatAdminFanContext(currentCharacter, currentFan!, currentConversation!, currentHistory, body.incoming_message,AI_REPLY_INPUT_CHAR_LIMIT,started) : buildChatAdminCharacterContext(currentCharacter,body.incoming_message,typeof body.fan_label==="string"?body.fan_label:""),currentCharacter,currentFan,body.incoming_message,started,currentHistory)) !== context
   ) {
     return NextResponse.json({error:"stale_character_revision"},{status:409});
   }
