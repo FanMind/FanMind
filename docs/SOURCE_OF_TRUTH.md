@@ -1,23 +1,28 @@
 ## Facebook Staging acceptance — 13 November 2026
 
-The Owner-approved exact commit `aae0003c6836ef73235c0d771d6387ee0e29f81b`
-was deployed only to Staging in protected run 43399615749. Independent runtime
-readback confirmed the SHA. Temporary branch admission was removed afterward.
-One new real Messenger input and both Owner-confirmed real comments were imported
-and independently matched in the database; repeat imports produced no duplicates.
-Both comment originals and the manually verified Messenger target were opened.
-Database/RLS negative checks denied the Operator's real records to a different
-existing Staging workspace. This is bounded manual-sync acceptance, not automatic
-Webhook, App Review, Production or general Meta activation evidence.
+The Owner-approved exact runtime commit `d34834979cef30c9c6af567d61b3df448901bfda`
+was deployed only to Staging in protected run 43417498761 and independently
+version-checked. Temporary feature-branch admission was removed afterward.
+Real manual Graph import/persistence, separate private chat and two posting
+histories, exact original targets, duplicate prevention, selected-conversation
+reply handling and independent Workspace/RLS negatives passed on the bounded
+FanMind Operator test dataset (2 DM messages, 4 comments on 2 posts).
 
-Actual session continuation failed without refresh rotation; expiry, logout and
-revocation acceptance remain open. The successor source fixes bounded request
-transport/body handling and fixed diagnostics. It also scopes the fan workbench
-to private chat or one posting, preserving each comment's own original target.
-These successor fixes require a new exact-source protected Staging approval and
-have not yet been deployed. See
-`docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md` and
-`docs/operations/STAGING_OPERATOR_SESSION_ROLLOUT.md`.
+Actual Supabase continuation succeeded twice without a new login. Independent
+metadata confirms two provider refresh rotations with the preceding credentials
+revoked, unchanged session count and unchanged last sign-in. Actual Logout then
+removed all Operator provider sessions/refresh records; a protected request
+redirected to login and continuation returned sign-in-required. No token value
+was exported. Secure Owner-assisted re-login restored the Operator access. Natural
+access expiry was observed earlier in this same acceptance.
+
+This is Staging acceptance for manual synchronization and user/agent-triggered
+passwordless continuation. Background automatic refresh, automatic Webhook
+arrival, general Meta/App Review/legal activation, Production readiness and
+immediate universal invalidation of previously issued JWTs are not established.
+No Facebook reply was sent. Main integration remains separately Owner-gated.
+The later closeout is documentation only; it does not redeploy or change the
+accepted runtime. Details: `docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md`.
 
 ## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026
 

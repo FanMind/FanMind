@@ -18,17 +18,24 @@ function publicKey(value) {
 function token(value) {
   return typeof value === 'string' && value.length >= 24 && value.length <= 16000 && !/[\s\r\n]/u.test(value);
 }
+// Supabase Auth supports 12-character legacy refresh credentials as well as
+// newer opaque formats. They are not access JWTs; the provider validates them.
+function refreshCredential(value) {
+  return typeof value === 'string' && value.length >= 12 && value.length <= 4000 && !/[\s\r\n]/u.test(value);
+}
 const fail = (status, code) => ({ status, code });
 
 export function operatorSessionRequestAllowed(request) {
   let url;
   try { url = new URL(request.url); } catch { return false; }
   if (url.username || url.password) return false;
-  // Next.js can see the local nginx upstream URL. Only the configured Staging
-  // public origin or this exact local transport are accepted; forwarded headers
-  // never establish trust. Browser Origin and the runtime/project gates remain.
+  // Next.js reconstructs its local URL using nginx's forwarded TLS protocol:
+  // an HTTP upstream can therefore become https://localhost:3001 here. Accept
+  // only these exact loopback forms; no header establishes an allowed origin.
+  // Public browser Origin and runtime/project/Operator/workspace gates remain.
   const trustedTransport = url.origin === STAGING_ORIGIN ||
-    ['http://127.0.0.1:3001', 'http://localhost:3001'].includes(url.origin);
+    ['http://127.0.0.1:3001', 'http://localhost:3001',
+      'https://127.0.0.1:3001', 'https://localhost:3001'].includes(url.origin);
   return trustedTransport && url.pathname === '/api/staging-operator/session' &&
     request.method === 'POST' && request.headers.get('origin') === STAGING_ORIGIN &&
     ['same-origin', 'none'].includes(request.headers.get('sec-fetch-site') || 'same-origin');
@@ -66,7 +73,7 @@ export function createOperatorSessionRenewer({ fetchImpl = fetch, now = Date.now
     // No client-supplied user, workspace, key, refresh token or redirect in a body.
     if (request.bodyPresent) return fail(400, 'body_forbidden');
     const refreshToken = request.refreshToken;
-    if (!token(refreshToken) || refreshToken.length > 4000) return fail(401, 'sign_in_required');
+    if (!refreshCredential(refreshToken)) return fail(401, 'sign_in_required');
     const key = environment.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!publicKey(key)) return fail(503, 'configuration_unavailable');
     for (const [id, entry] of attempts) if (entry.expires <= now() && !entry.promise) attempts.delete(id);
@@ -90,7 +97,7 @@ export function createOperatorSessionRenewer({ fetchImpl = fetch, now = Date.now
         const refreshed = await call('/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers, body: JSON.stringify({ refresh_token: refreshToken }) });
         if (!refreshed.ok) return fail([400, 401, 403].includes(refreshed.status) ? 401 : 503, [400, 401, 403].includes(refreshed.status) ? 'sign_in_required' : 'provider_unavailable');
         session = await refreshed.json();
-        if (!token(session?.access_token) || !token(session?.refresh_token) || session.refresh_token.length > 4000 || !Number.isInteger(session.expires_in) || session.expires_in < 1 || session.expires_in > 3600 || session.user?.id !== OPERATOR_USER) {
+        if (!token(session?.access_token) || !refreshCredential(session?.refresh_token) || !Number.isInteger(session.expires_in) || session.expires_in < 1 || session.expires_in > 3600 || session.user?.id !== OPERATOR_USER) {
           await revoke(); return fail(403, 'operator_required');
         }
         const authorizedHeaders = buildSupabaseApiKeyHeaders(key, session.access_token);
