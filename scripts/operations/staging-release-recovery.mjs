@@ -63,7 +63,7 @@ export async function recoverRelease(action,env,options={}){
  function release(){regular(join(source,'.release.env'));return fs.readFileSync(join(source,'.release.env'),'utf8');}
  function save(r){const temp=receiptPath+'.'+randomBytes(8).toString('hex');try{fs.writeFileSync(temp,JSON.stringify(r),{mode:0o600,flag:'wx'});const fd=fs.openSync(temp,'r');try{fs.fsyncSync(fd);}finally{fs.closeSync(fd);}fs.renameSync(temp,receiptPath);const dir=fs.openSync(backup,'r');try{fs.fsyncSync(dir);}finally{fs.closeSync(dir);}}finally{if(fs.existsSync(temp))fs.unlinkSync(temp);}}
  if(action==='prepare'){
-  directory(source);const before=release(),map=envMap(before);
+  directory(source);const sourceMode=fs.statSync(source).mode&0o777;const before=release(),map=envMap(before);
   if(map.FANMIND_RELEASE_COMMIT!==env.EXPECTED_CURRENT_RELEASE||map.FANMIND_RUNTIME_ENVIRONMENT!=='staging'||readOperatorSessionState(before)!=='true'||!['true','false'].includes(map.FANMIND_STRIPE_BILLING_WRITE_FREEZE))fail('old_release_mismatch');
   regular(join(source,'.next','BUILD_ID'));const flags=config();
   invoke('systemctl',['is-active','--quiet','fanmind-staging.service']);await check(env.EXPECTED_CURRENT_RELEASE);
@@ -73,7 +73,7 @@ export async function recoverRelease(action,env,options={}){
   const copied=treeFingerprint(runtime),after=treeFingerprint(source);
   if(initial.hash!==copied.hash||initial.hash!==after.hash||release()!==before||JSON.stringify(config())!==JSON.stringify(flags))fail('snapshot_changed');
   await check(env.EXPECTED_CURRENT_RELEASE);
-  save({version:1,run,source:env.GITHUB_SHA,previous:env.EXPECTED_CURRENT_RELEASE,status:'ready',fingerprint:copied.hash,flags,stableRelease:stableRelease(before)});
+  save({version:1,run,source:env.GITHUB_SHA,previous:env.EXPECTED_CURRENT_RELEASE,status:'ready',fingerprint:copied.hash,sourceMode,flags,stableRelease:stableRelease(before)});
   return 'SNAPSHOT_READY';
  }
  if(!fs.existsSync(receiptPath)){
@@ -82,7 +82,7 @@ export async function recoverRelease(action,env,options={}){
  }
  directory(store,true);directory(backup,true);directory(runtime,true);const stat=regular(receiptPath);if((stat.mode&0o777)!==0o600||stat.uid!==process.getuid())fail('receipt_unsafe');
  const receipt=JSON.parse(fs.readFileSync(receiptPath,'utf8'));
- if(receipt.version!==1||receipt.run!==run||receipt.source!==env.GITHUB_SHA||receipt.previous!==env.EXPECTED_CURRENT_RELEASE||!['ready','accepted','restored'].includes(receipt.status))fail('receipt_binding');
+ if(receipt.version!==1||receipt.run!==run||receipt.source!==env.GITHUB_SHA||receipt.previous!==env.EXPECTED_CURRENT_RELEASE||!['ready','accepted','restored'].includes(receipt.status)||!Number.isInteger(receipt.sourceMode)||receipt.sourceMode<0||receipt.sourceMode>0o777)fail('receipt_binding');
  if(JSON.stringify(config())!==JSON.stringify(receipt.flags))fail('configuration_changed');
  if(treeFingerprint(runtime).hash!==receipt.fingerprint)fail('snapshot_corrupted');
  const live=release(),metadata=envMap(live);
@@ -93,7 +93,7 @@ export async function recoverRelease(action,env,options={}){
  }
  // The backup excludes private configuration; restoration cannot overwrite it.
  // Shared database/provider/session state is never copied or restored.
- copyFiles(runtime,source);if(treeFingerprint(source).hash!==receipt.fingerprint)fail('restore_mismatch');
+ copyFiles(runtime,source);fs.chmodSync(source,receipt.sourceMode);if(treeFingerprint(source).hash!==receipt.fingerprint)fail('restore_mismatch');
  invoke('sudo',['-n','systemctl','restart','fanmind-staging.service']);
  invoke('systemctl',['is-active','--quiet','fanmind-staging.service']);
  await waitProbe(check,receipt.previous);

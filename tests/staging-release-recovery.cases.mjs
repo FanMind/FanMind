@@ -32,11 +32,11 @@ test('recovery is manual exact-Main, old-target and preservation bound',()=>{
 });
 for(const realCopy of [false,true])test(`private snapshot, accepted successor and explicit old-build rollback (${realCopy?'actual rsync':'filesystem seam'})`,{skip:realCopy&&!process.env.CI&&spawnSync('rsync',['--version']).status!==0?'rsync not installed locally':false},async()=>{
  const h=harness({realCopy});try{
-  const original=treeFingerprint(h.runtime).hash;assert.equal(await h.prepare(),'SNAPSHOT_READY');
+  const original=treeFingerprint(h.runtime).hash,rootMode=fs.statSync(h.runtime).mode&0o777;assert.equal(await h.prepare(),'SNAPSHOT_READY');
   const backup=join(h.home,'.fanmind-staging-recovery','12345');assert.equal(fs.statSync(backup).mode&0o777,0o700);assert.equal(fs.statSync(join(backup,'receipt.json')).mode&0o777,0o600);assert.equal(fs.existsSync(join(backup,'runtime','.env.production')),false);
   await assert.rejects(h.prepare(),/snapshot_already_exists/);h.deploy();assert.equal(await h.run('accept'),'RELEASE_ACCEPTED_SNAPSHOT_RETAINED');
   assert.equal(await h.run('restore',{...env,GITHUB_RUN_ID:'54321',RECOVERY_RUN_ID:'12345'}),'PREVIOUS_RELEASE_RESTORED');
-  assert.equal(treeFingerprint(h.runtime).hash,original);assert.equal(fs.existsSync(join(h.runtime,'src','new-only.js')),false);assert.equal(fs.readFileSync(join(h.runtime,'.env.production'),'utf8'),'PRIVATE_CONFIGURATION=unchanged\n');
+  assert.equal(treeFingerprint(h.runtime).hash,original);assert.equal(fs.statSync(h.runtime).mode&0o777,rootMode);assert.equal(fs.existsSync(join(h.runtime,'src','new-only.js')),false);assert.equal(fs.readFileSync(join(h.runtime,'.env.production'),'utf8'),'PRIVATE_CONFIGURATION=unchanged\n');
   assert.ok(h.commands.some(([c,a])=>c==='sudo'&&a.join(' ')==='-n systemctl restart fanmind-staging.service'));assert.ok(h.probes.includes(source)&&h.probes.includes(previous));
  }finally{h.cleanup();}
 });
