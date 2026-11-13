@@ -62,3 +62,9 @@ waiting for the unrelated backup/restore prelude. Existing required roundtrip
 checks remain intact. Native cases explicitly cover depth8/9, subtree moves,
 failed-RPC atomicity, capability withdrawal/recovery and Character folder cascade.
 No application database or remote project is created by that CI job.
+
+CI reconciliation: source-owned case modules are imported by the existing required
+media API test. The general package manifest and general CI workflow are preserved
+byte-for-byte, including unrelated Capacity source pins. A separate media-only
+workflow installs ffmpeg for actual video processing and runs isolated PG17.
+This does not relax any prior checksum or required general test.

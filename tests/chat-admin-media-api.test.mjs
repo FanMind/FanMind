@@ -92,3 +92,6 @@ test("account erasure deletes video MP4 paths with authenticated absence before 
  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:404});return new Response(null,{status:204});};
  await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.some(call=>call.url.endsWith(`/${path}`)));assert.ok(calls.some(call=>call.body===JSON.stringify({prefixes:[path]})));assert.ok(calls.at(-1).url.includes("deleted=eq.true"));
 });
+
+import "./chat-admin-media-catalogue.cases.mjs";
+import "./chat-admin-media-catalogue-api.cases.mjs";

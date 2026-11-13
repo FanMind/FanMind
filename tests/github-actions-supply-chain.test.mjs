@@ -341,13 +341,13 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(supportCustomer.source, /environment: staging/u);
   assert.match(supportCustomer.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(supportCustomer.source, /SERVICE_ROLE|permissions:\s*write-all/u);
-  assert.equal(hostedWorkflows.length, 76);
+  assert.equal(hostedWorkflows.length, 77);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    86, // Includes the independent, digest-pinned ChatAdmin media SQL job.
+    87, // Includes independent media SQL and actual video processing jobs.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

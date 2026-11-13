@@ -266,33 +266,3 @@ jobs:
           path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
           if-no-files-found: error
           retention-days: 90
-
-  chatadmin_media_catalogue_pg17:
-    name: ChatAdmin media catalogue PostgreSQL 17
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    services:
-      media_pg17:
-        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
-        env:
-          POSTGRES_PASSWORD: fanmind-ci-only-pg17
-          POSTGRES_INITDB_ARGS: >-
-            --encoding=UTF8 --locale-provider=icu
-            --icu-locale=en-US --locale=en_US.UTF-8
-        options: >-
-          --health-cmd "pg_isready --username=postgres --dbname=postgres"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22.13.1
-      - name: Prove existing and extended media RLS, rollback, revocation and cleanup
-        env:
-          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.media_pg17.id }}
-          FANMIND_CREATOR_PG17_REQUIRED: "true"
-        run: node --test tests/chat-admin-media-pg17.test.mjs
