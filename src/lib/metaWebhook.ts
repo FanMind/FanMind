@@ -171,6 +171,7 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
           !commentId || !/^\d+(?:_\d+)?$/u.test(commentId) ||
           !postId || !/^\d+_\d+$/u.test(postId) ||
           postId.split("_")[0] !== entryPageId)) continue;
+      if (isInstagram && (field !== "comments" || !entryPageId || !senderId || senderId === entryPageId || !commentId || !postId || !content)) continue;
       const replyTarget = isInstagram ? permalink : facebookCommentTarget({
         permalink, postId, commentId,
       });
@@ -197,7 +198,7 @@ export function extractMetaWebhookEvents(payload: unknown): MetaWebhookEvent[] {
         messageKind: "text",
         direction: "inbound",
         externalMessageId: commentId,
-        externalThreadId: !isInstagram && postId
+        externalThreadId: postId
           ? `${postId}:${senderId ?? commentId}`
           : postId ?? permalink ?? commentId,
         externalPostId: postId,
