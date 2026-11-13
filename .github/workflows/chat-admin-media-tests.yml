@@ -60,4 +60,6 @@ jobs:
       - name: Install bounded video test tooling
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y ffmpeg
       - name: Prove actual synthetic MP4 and WebM normalization and cleanup
-        run: node --test tests/chat-admin-media-video.cases.mjs
+        env:
+          FANMIND_MEDIA_HOST_PROBE_TEST_REQUIRED: 'true'
+        run: node --test tests/chat-admin-media-video.cases.mjs tests/chat-admin-media-host-readiness.cases.mjs

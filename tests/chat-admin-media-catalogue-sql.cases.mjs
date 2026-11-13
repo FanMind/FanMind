@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const w='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',c='cccccccc-cccc-4ccc-8ccc-cccccccccccc',otherC='dddddddd-dddd-4ddd-8ddd-dddddddddddd',owner='11111111-1111-4111-8111-111111111111',foreign='22222222-2222-4222-8222-222222222222';
-export async function runMediaCatalogueSqlCases(sql){
+export async function runMediaCatalogueSqlCases(sql,onInstalled=async()=>{}){
  const as=(query,user=owner)=>sql(`set role authenticated;set request.jwt.claim.sub='${user}';${query}`);
  await sql(`delete from storage.objects;delete from public.chat_character_media;alter table public.chat_characters add column sales_playbook jsonb not null default '{}'::jsonb;grant update(sales_playbook,updated_at) on public.chat_characters to authenticated;`);
  await sql(readFileSync('supabase/controlled/chat_admin_media_catalogue.sql','utf8'));
+ await onInstalled();
  const a='10000000-0000-4000-8000-000000000001',b='10000000-0000-4000-8000-000000000002',v='10000000-0000-4000-8000-000000000003',asset='20000000-0000-4000-8000-000000000001';
  const add=(id,kind,parent=null)=>`insert into public.chat_character_media_folders(id,workspace_id,character_id,kind,name,parent_id) values('${id}','${w}','${c}','${kind}','${id}',${parent?`'${parent}'`:'null'});`;
  await as(add(a,'image')+add(b,'image',a)+add(v,'video'));
