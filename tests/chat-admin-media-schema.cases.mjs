@@ -53,7 +53,10 @@ export async function runMediaSchemaNativeCases(sql,profile){
   'alter table public.chat_character_media_folders disable trigger chat_media_catalogue_folder_guard;',
  );
  for(const drift of drifts){
-  assert.equal((await sql(`begin;${drift}${mediaSchemaStateSql(bundle)};rollback;`)).trim().split('\n').at(-1),'block',drift);
+  // psql without --quiet also emits BEGIN/DDL/ROLLBACK command tags. Assert
+  // exactly one schema-state row; never confuse a command tag with that row.
+  const states=(await sql(`begin;${drift}${mediaSchemaStateSql(bundle)};rollback;`)).trim().split('\n').filter(row=>/^(?:initial|extended|block)$/u.test(row));
+  assert.deepEqual(states,['block'],drift);
   const exact=mediaSchemaProfileSql(bundle).replace('BEGIN READ ONLY;','').replace(/ROLLBACK;$/,'');
   await assert.rejects(()=>sql(`begin;${drift}${exact}rollback;`),/division by zero/,drift);
  }
