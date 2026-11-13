@@ -1,3 +1,31 @@
+## Facebook Staging reception continuation — 13 November 2026
+
+Shared Main/Staging release a8a74f67d92180f2c7a2fa9bb4f4a98486527dbf was
+independently read after protected deployment43461158590. Protected inspect
+43463154880, dedicated-app rebind43463354662 and exact messages/feed App
+subscription43463518222 passed. The separately protected new secret was already
+provisioned; its personal password step must not be requested again.
+
+A real OAuth return exposed the Strict Operator-cookie boundary: the first
+external callback has no access cookie even though same-origin continuation
+still works. The bounded Staging-only callback interstitial now preserves
+Strict cookies: only a valid signed state for the pinned Operator, exact
+standalone app and fixed callback may render one escaped, no-store, no-referrer,
+script-free same-origin continuation form. A second unauthenticated attempt
+requires login; the authenticated retry reruns the existing user/Workspace,
+role, state and Page selection checks before any token exchange/save.
+
+Existing Page subscription helpers are reused behind explicit Staging-only
+controls, exact dedicated app/Operator Workspace/FanMind Page checks and verified
+new-app Page token/required scopes. Check and activation separately read the
+exact current app in subscribed_apps; activation requests messages/feed only.
+The local flag is true only when both are read active and storage succeeds.
+Production and WellFit are rejected before provider mutation. No history sync,
+outbound sending, extra app/schema/database or analysis activation is added.
+Provider setup and a successful source test still do not prove genuine receipt.
+Fresh real DM plus comments on two posts and duplicate/isolation acceptance
+remain OPEN until performed after the new token and Page subscription are saved.
+
 ## Facebook automatic ingress preparation — 13 November 2026
 
 The successor to merged PR1465 hardens the existing signed Meta webhook and
