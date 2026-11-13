@@ -1,3 +1,20 @@
+## Facebook Page support scope — Owner update, 13 November 2026
+
+Owner explicitly requested updating Support knowledge and public landing copy.
+Facebook supports Page messaging/comment reception, not personal-profile inboxes;
+Professional Mode does not change the account type. Fans can still contact a Page
+from a personal profile. Do not label arbitrary connection failures as Meta faults.
+
+Actual single-Page automatic Staging reception on 193eb1a9 passed before manual
+sync: nine distinct messages in three source conversations, correct targets,
+repeat manual sync without duplicates and Operator/RLS isolation. Evidence:
+https://github.com/FanMind/FanMind/issues/1464#issuecomment-6860293997 .
+This is not general Production/customer/multi-Page acceptance. Live Meta replay
+was not forced; synthetic replay checks remain distinct. Public and authenticated
+Support plus DE/EN landing integration copy/FAQ now explain this boundary.
+This source change performs no deployment, activation, schema, provider or billing
+change. Future Support knowledge updates remain explicit Owner decisions.
+
 ## Facebook Staging reception continuation — 13 November 2026
 
 Shared Main/Staging release a8a74f67d92180f2c7a2fa9bb4f4a98486527dbf was
