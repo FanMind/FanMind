@@ -1017,3 +1017,13 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Source-of-Truth drift reconciled after byte-level comparison with its accepted blob: prior delta was only the Operator preparation paragraph; new bounded source/rollout text added. No accepted runtime/provider evidence or other watched-file hash refreshed.
 - Independent database RLS check under authenticated Operator subject: visible conversations=1/foreign=0, messages=1/foreign=0. Does not prove two real Facebook customer imports.
 - Next: finish exact-source validation, obtain concrete Owner protected Staging deployment/renewal approval, then execute real fresh message/comment/links and renewal/logout/revocation acceptance. No merge, rollout, provider grant, app publication, Production webhook change or additional database.
+
+### Facebook isolated published Staging app checkpoint — 2026-11-13
+
+Issue1464 / existing PR1473: standalone FanMind Staging Empfang1547928503809961
+created after personal Owner confirmation and published under the full Staging
+authorization. Production app/callback unchanged; no WellFit/send/DB action.
+Personal Meta password confirmation for the new app-secret reveal is pending.
+Prepared separate protected ingress secret selection and exact-new-app-only
+messages/feed App subscription with bounded reads and active callback readback.
+Real Page authorization, deployment and automatic receipt remain open.

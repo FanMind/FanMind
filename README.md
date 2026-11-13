@@ -4,19 +4,18 @@ The successor to merged PR1465 hardens the existing signed Meta webhook and
 Facebook CRM mapping: exact envelope/Page identity, new fan-comments only,
 unique enabled connection, bounded body, retry-safe duplicate summary recovery,
 and convergence of webhook/manual DM threads with verified Page provenance.
-This is source preparation, not real automatic-arrival acceptance. Actual Meta
-inspection found the shared Page callback on Production, App in Development,
-App Review not submitted and Business unverified. Staging subscription remains
-false; no callback, provider permission, database or live runtime was changed.
-PR1470 is now merged into Main; this successor integrates its Expo corrections
-and existing Operator-session preservation without activating either runtime.
-The created child test app1637976007865045 always stays in Development mode;
-current Messenger documentation lists publication separately from role-bound
-Standard Access. Callback/Page authorization/subscriptions remain absent.
-The Page-feed role-only exception is unresolved against the actual UI banner;
-no universal unpublished-app prohibition or real automatic arrival is claimed.
-A standalone publishable Staging app is a proposal only, requiring a new Owner
-decision; no further app, publication or Production callback change is made.
+This remains source preparation, not real automatic-arrival acceptance.
+Owner authorization now covers the regular checked merge, isolated Staging
+app publication/configuration/deployment and real reception tests. The created
+standalone **FanMind Staging Empfang1547928503809961** is published; its
+personal app-secret confirmation and protected host/Page setup remain pending.
+The earlier child test app1637976007865045 stays in Development and is not the
+reception target. The existing Production app/callback remains unchanged.
+PR1470 Expo/Operator preservation and Main's merged PR1471 Adminchat work are
+retained. No duplicate Mobile/media implementation or outbound sending is added.
+Protected rebind and exact-app webhook subscription are prepared, including a
+separate new-app secret and server-only verification token. Real automatic
+arrival, Page authorization/subscription and Staging rollout are still unproven.
 Runbook and concrete approval boundary:
 `docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md`.
 

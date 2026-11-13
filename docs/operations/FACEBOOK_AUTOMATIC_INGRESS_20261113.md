@@ -15,14 +15,23 @@ No second media implementation or parallel deployment is introduced.
 
 ## App setup and current personal boundary
 
-One standalone creation flow is prepared as **FanMind Staging Empfang**, contact
-fanmind@fanmind.ch, existing FanMind business portfolio, Messenger and Page use
-cases only. No WellFit or other product selected. The overview reports no current
-use-case requirements but explicitly says continuing accepts Meta platform terms,
-developer policies and other applicable conditions. The final Create app button
-has NOT been clicked by the assistant. Owner must complete that legal acceptance;
-new App ID/publication/permissions are not yet established. Never restart another
-creation flow before checking the result of this exact pending submission.
+The Owner completed the personal creation confirmation. Exactly one standalone
+app **FanMind Staging Empfang**, ID **1547928503809961**, now exists in the
+existing FanMind business portfolio1363510325173493. Only Messenger and Pages
+use cases are selected. The dashboard independently reports **Veröffentlicht**
+and no required actions after the authorized publication. Existing Production
+app2214477125984114 and child test app1637976007865045 remain unchanged.
+
+Saved domains/legal configuration: staging.fanmind.ch;
+https://staging.fanmind.ch/datenschutz; https://staging.fanmind.ch/agb;
+https://staging.fanmind.ch/datenschutz#rechte. The live pages were checked
+against the existing correct operator details. No optional DPO declaration was
+invented. Publication is not Page authorization, subscription or real receipt.
+
+The new app-secret reveal requires the Owner's personal Meta password
+confirmation. The existing protected original-app secret must stay unchanged;
+the new credential belongs in the protected Staging environment under
+FANMIND_STAGING_META_INGRESS_APP_SECRET. Neither secret belongs in Git/logs/chat.
 
 ## Controlled rebind source
 
@@ -34,7 +43,18 @@ The new app secret must differ; existing valid encryption and webhook verificati
 must remain unchanged. Saved/running drift, any active META signing/App aliases,
 including runtime-only or placeholder aliases, and conflicting protected override
 files fail closed. Operator/Billing/unrelated fields and existing CRM data remain
-unchanged. No DB mutation or provider API call is added to this controller.
+unchanged. No DB mutation is added. Rebind consumes only its dedicated new
+protected secret with no fallback to the original-app secret.
+
+The distinct subscribe-webhook action uses only the already running new app
+1547928503809961 and the fixed Staging callback, with messages/feed only.
+It calls the official App subscriptions edge using a server-side Authorization
+header and preserves the existing verification token on the host. It first
+checks for foreign callbacks/objects/fields, never follows redirects/pagination,
+and confirms successful write plus active exact-field readback. A repeated
+complete subscription is read-only. Existing Production/child IDs are rejected
+before any provider request. This is not Page subscribed_apps authorization.
+API reference: https://developers.facebook.com/docs/graph-api/webhooks/subscriptions-edge .
 Original private snapshot, atomic write, restart/verification and rollback
 verification are reused; no secret is logged or uploaded. Actual secret provisioning,
 new App/Page authorization and host rebind are NOT executed by a source merge.

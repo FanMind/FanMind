@@ -6,6 +6,7 @@ import { parseEnv } from "node:util";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildSupabaseApiKeyHeaders } from "../../src/lib/supabase/apiKeyPolicy.mjs";
+import { META_GRAPH_API_VERSION } from "../../src/lib/metaIntegrationPolicy.mjs";
 import { changeStagingRuntime, waitForStagingRelease } from "./staging-support-media-runtime.mjs";
 
 const ROOT = "/var/www/fanmind-staging";
@@ -31,7 +32,7 @@ export function metaReadiness(values) {
     webhook: usable(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? values.META_WEBHOOK_VERIFY_TOKEN) };
 }
 export function assertMetaTarget(values, control, action) {
-  if (!["inspect", "configure", "rebind"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
+  if (!["inspect", "configure", "rebind", "subscribe-webhook"].includes(action) || control.GITHUB_REPOSITORY !== "FanMind/FanMind" ||
       control.GITHUB_EVENT_NAME !== "workflow_dispatch" || control.GITHUB_REF !== "refs/heads/main" ||
       !/^[a-f0-9]{40}$/u.test(control.GITHUB_SHA ?? "") || control.REVIEWED_COMMIT !== control.GITHUB_SHA ||
       control.CONFIRMATION !== `staging-meta-${action}` || !/^\d{1,20}$/u.test(control.GITHUB_RUN_ID ?? "")) fail("control_binding");
@@ -129,13 +130,43 @@ function runningValues() {
     const i = line.indexOf("="); return [line.slice(0, i), line.slice(i + 1)];
   }));
 }
-async function boundedJson(url, headers) {
-  const response = await fetch(url, { headers, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(10000) });
+async function boundedJson(url, headers, options = {}, request = fetch) {
+  const response = await request(url, { ...options, headers, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(10000) });
   if (!response.ok) fail("target_read_failed");
   let size = 0; const chunks = [], reader = response.body.getReader();
   try { for (;;) { const item = await reader.read(); if (item.done) break; size += item.value.length; if (size > 65536) fail("target_read_failed"); chunks.push(item.value); } }
   finally { await reader.cancel().catch(() => {}); }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+}
+export function metaSetupInput(action, control) {
+  return { appId: control.META_SETUP_APP_ID,
+    appSecret: action === "rebind" ? control.META_REBIND_APP_SECRET : control.META_SETUP_APP_SECRET,
+    webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
+}
+// The token stays on the protected Staging host. Never export it to a job log
+// or mutate any existing Production app subscription.
+export async function subscribeStagingMetaWebhook(values, requestedAppId, request = fetch) {
+  const appId = "1547928503809961", callback = ORIGIN + "/api/webhooks/meta";
+  if (requestedAppId !== appId || values.FACEBOOK_APP_ID !== appId ||
+      !/^[a-f0-9]{32}$/iu.test(values.FACEBOOK_APP_SECRET ?? "") ||
+      !/^[A-Za-z0-9_-]{32,128}$/u.test(values.FACEBOOK_WEBHOOK_VERIFY_TOKEN ?? "")) fail("subscription_identity_invalid");
+  const url = `https://graph.facebook.com/${META_GRAPH_API_VERSION}/${appId}/subscriptions`;
+  const headers = { Authorization: `Bearer ${appId}|${values.FACEBOOK_APP_SECRET}` };
+  const read = () => boundedJson(url, headers, {}, request);
+  const validate = data => {
+    if (!Array.isArray(data?.data) || data.data.length > 1 || data.paging?.next) fail("subscription_inventory_invalid");
+    const page = data.data[0];
+    if (page && (page.object !== "page" || page.callback_url !== callback || !Array.isArray(page.fields) ||
+        page.fields.some(field => !["messages", "feed"].includes(field.name)))) fail("subscription_conflict");
+    return page;
+  };
+  const complete = page => page?.active === true && new Set(page.fields.map(field => field.name)).size === 2;
+  if (complete(validate(await read()))) return;
+  const body = new URLSearchParams({ object: "page", callback_url: callback,
+    verify_token: values.FACEBOOK_WEBHOOK_VERIFY_TOKEN, fields: "messages,feed" });
+  const result = await boundedJson(url, { ...headers, "Content-Type": "application/x-www-form-urlencoded" }, { method: "POST", body }, request);
+  if (result?.success !== true) fail("subscription_write_unconfirmed");
+  if (!complete(validate(await read()))) fail("subscription_readback_failed");
 }
 async function verifyRelease(control) {
   const version = await boundedJson(ORIGIN + "/api/version");
@@ -163,7 +194,13 @@ export async function runMetaRuntime(action, control = process.env) {
     console.log(`STAGING_META_READINESS=${JSON.stringify(metaReadiness(runningBefore))}`);
     return;
   }
-  const requested = { appId: control.META_SETUP_APP_ID, appSecret: control.META_SETUP_APP_SECRET, webhookToken: control.META_SETUP_WEBHOOK_TOKEN };
+  if (action === "subscribe-webhook") {
+    assertMetaRuntimeConsistency(effective, runningBefore, control.META_SETUP_APP_ID);
+    await subscribeStagingMetaWebhook(runningBefore, control.META_SETUP_APP_ID);
+    console.log("STAGING_META_APP_SUBSCRIPTION=PASS");
+    return;
+  }
+  const requested = metaSetupInput(action, control);
   const rebind = action === "rebind" ? { expectedPreviousAppId: control.META_SETUP_PREVIOUS_APP_ID, appSecret: requested.appSecret } : undefined;
   if (action === "rebind") assertMetaRebind(effective, requested, control.META_SETUP_PREVIOUS_APP_ID);
   assertMetaRuntimeConsistency(effective, runningBefore, requested.appId, rebind);

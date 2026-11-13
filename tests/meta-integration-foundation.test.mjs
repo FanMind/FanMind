@@ -831,6 +831,54 @@ test("Meta reader docs distinguish base migration state from observed continuati
 const metaRuntime = await import('../scripts/operations/staging-meta-runtime.mjs');
 const syntheticMetaInput = { appId: '123456789012345', appSecret: 'a'.repeat(32), webhookToken: 'b'.repeat(64) };
 const syntheticMetaKey = 'c'.repeat(64);
+test('Meta rebind requires its dedicated protected secret without falling back to the original app', () => {
+  const control = { META_SETUP_APP_SECRET: 'a'.repeat(32), META_REBIND_APP_SECRET: 'd'.repeat(32) };
+  assert.equal(metaRuntime.metaSetupInput('configure', control).appSecret, control.META_SETUP_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('rebind', control).appSecret, control.META_REBIND_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('rebind', { META_SETUP_APP_SECRET: control.META_SETUP_APP_SECRET }).appSecret, undefined);
+});
+test('isolated app subscription verifies a fixed Staging callback and exactly messages/feed without exporting credentials', async () => {
+  const values = { FACEBOOK_APP_ID: '1547928503809961', FACEBOOK_APP_SECRET: 'a'.repeat(32), FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'b'.repeat(64) };
+  const page = { object: 'page', callback_url: 'https://staging.fanmind.ch/api/webhooks/meta', active: true, fields: [{name:'messages'},{name:'feed'}] };
+  const calls = [];
+  const response = value => new Response(JSON.stringify(value), {headers:{'Content-Type':'application/json'}});
+  const request = async (url, options) => {
+    calls.push({url, options});
+    return response(calls.length === 1 ? {data:[]} : options.method === 'POST' ? {success:true} : {data:[page]});
+  };
+  await metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, request);
+  assert.equal(calls.length, 3);
+  for (const call of calls) {
+    assert.equal(call.url, 'https://graph.facebook.com/v25.0/1547928503809961/subscriptions');
+    assert.equal(call.options.redirect, 'error');
+    assert.equal(new URL(call.url).search, '');
+    assert.equal(call.options.headers.Authorization, `Bearer ${values.FACEBOOK_APP_ID}|${values.FACEBOOK_APP_SECRET}`);
+  }
+  assert.deepEqual(Object.fromEntries(calls[1].options.body), {object:'page',callback_url:page.callback_url,verify_token:values.FACEBOOK_WEBHOOK_VERIFY_TOKEN,fields:'messages,feed'});
+  let reads = 0;
+  await metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => { reads++; return response({data:[page]}); });
+  assert.equal(reads, 1);
+  for (const id of ['2214477125984114','1637976007865045','99999']) {
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook({...values,FACEBOOK_APP_ID:id}, id, async () => {throw Error('must not call provider');}), /subscription_identity_invalid/);
+  }
+  for (const row of [{...page,callback_url:'https://fanmind.ch/api/webhooks/meta'}, {...page,object:'instagram'}, {...page,fields:[{name:'feed'},{name:'likes'}]}]) {
+    let attempts = 0;
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => {attempts++; return response({data:[row]});}), /subscription_conflict/);
+    assert.equal(attempts, 1);
+  }
+  for (const data of [{}, {data:[page,page]}, {data:[],paging:{next:'https://example.invalid'}}])
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => response(data)), /subscription_inventory_invalid/);
+  for (const failure of ['denied','unconfirmed','readback','oversize']) {
+    let attempt = 0;
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => {
+      attempt++;
+      if (attempt === 1) return response({data:[]});
+      if (failure === 'denied') return new Response('{}', {status:403});
+      if (failure === 'oversize') return new Response('x'.repeat(65537));
+      return response(attempt === 2 ? {success:failure !== 'unconfirmed'} : {data:[]});
+    }), /target_read_failed|subscription_write_unconfirmed|subscription_readback_failed/);
+  }
+});
 test('Meta runtime preserves existing encryption and changes only its explicit configuration fields', () => {
   const before = `UNCHANGED_SECRET="synthetic-preserved"\nFANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_TOKEN_ENCRYPTION_KEY="${syntheticMetaKey}"\n`;
   const after = metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput, {

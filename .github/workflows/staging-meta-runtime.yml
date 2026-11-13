@@ -4,7 +4,7 @@ on:
     inputs:
       action:
         type: choice
-        options: [inspect, configure, rebind]
+        options: [inspect, configure, rebind, subscribe-webhook]
         required: true
       reviewed_commit:
         description: Exact main commit already deployed to Staging
@@ -45,6 +45,7 @@ jobs:
           META_SETUP_APP_ID: ${{ inputs.app_id }}
           META_SETUP_PREVIOUS_APP_ID: ${{ inputs.expected_previous_app_id }}
           META_SETUP_APP_SECRET: ${{ secrets.FANMIND_STAGING_META_APP_SECRET }}
+          META_REBIND_APP_SECRET: ${{ secrets.FANMIND_STAGING_META_INGRESS_APP_SECRET }}
           META_SETUP_WEBHOOK_TOKEN: ${{ secrets.FANMIND_STAGING_META_WEBHOOK_VERIFY_TOKEN }}
           TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
