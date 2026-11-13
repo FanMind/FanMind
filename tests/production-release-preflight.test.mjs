@@ -31,3 +31,20 @@ test("only the API-bound current workflow suite is excluded, not pending CI",()=
  assert.equal(evaluate({},branch,{total_count:checks.total_count+1,check_runs:[...checks.check_runs,{...active,check_suite:{id:421}}]}),false);
  assert.equal(evaluate({},branch,checks,{...run,head_sha:"b".repeat(40)}),false);
 });
+test("only the exact API-bound manual Staging media inspection is independent of Production",()=>{
+ const diagnostic={id:900,name:"inspect-staging-application-context",check_suite:{id:901},app:{slug:"github-actions"},status:"completed",conclusion:"failure"};
+ const evidence={id:902,check_suite_id:901,head_sha:sha,head_branch:"main",repository:{full_name:"FanMind/FanMind"},event:"workflow_dispatch",path:".github/workflows/chat-admin-media-host-readiness.yml"};
+ const main={total_count:checks.total_count+1,check_runs:[...checks.check_runs,diagnostic]};
+ const verify=(check=diagnostic,proof=evidence,source=prChecks)=>evaluateProductionRelease(env,branch,{...main,check_runs:[...checks.check_runs,check]},run,pr,source,[proof]);
+ assert.equal(evaluateProductionRelease(env,branch,main,run,pr,prChecks),false);
+ assert.equal(verify(),true);
+ for(const patch of [{check_suite_id:99},{head_sha:"b".repeat(40)},{head_branch:"feature"},{repository:{full_name:"other/repo"}},{event:"push"},{event:"pull_request"},{path:".github/workflows/ci-fanmind.yml"}]) assert.equal(verify(diagnostic,{...evidence,...patch}),false,JSON.stringify(patch));
+ for(const patch of [{name:"god-mode"},{app:{slug:"other-app"}},{check_suite:{id:903}}]) assert.equal(verify({...diagnostic,...patch}),false,JSON.stringify(patch));
+ const failed=structuredClone(prChecks);failed.check_runs[0].conclusion="failure";assert.equal(verify(diagnostic,evidence,failed),false);
+ const other={...diagnostic,id:910,name:"another-failed-operation",check_suite:{id:911}};
+ assert.equal(evaluateProductionRelease(env,branch,{total_count:main.total_count+1,check_runs:[...main.check_runs,other]},run,pr,prChecks,[evidence]),false);
+ const missing={total_count:main.total_count-1,check_runs:main.check_runs.filter(c=>c.name!==REQUIRED_MAIN_CHECKS[0])};
+ assert.equal(evaluateProductionRelease(env,branch,missing,run,pr,prChecks,[evidence]),false);
+ const sameNamedSource={...diagnostic,check_suite:{id:912}};
+ assert.equal(evaluateProductionRelease(env,branch,{total_count:main.total_count+1,check_runs:[...main.check_runs,sameNamedSource]},run,pr,prChecks,[evidence]),false);
+});
