@@ -46,6 +46,7 @@ test("Owner acknowledgment stays absent after a fresh inbox mount",async({page})
  await mount(page,"owner");await expect(page.getByText("Sicherheitswarnung",{exact:true})).toBeVisible();
  await page.getByRole("button",{name:"Zur Kenntnis genommen",exact:true}).click();await expect(page.getByText("Sicherheitswarnung",{exact:true})).toHaveCount(0);
  await mount(page,"owner");await expect(page.getByRole("heading",{name:"Owner-Meldungen aus allen Workspaces"})).toBeVisible();
+ await expect(page.getByText("Täglicher Support-Löschlauf nicht bestätigt.",{exact:false})).toHaveCount(0);
  await expect(page.getByText("Sicherheitswarnung",{exact:true})).toHaveCount(0);expect(ackPosts).toBe(1);
  await expect(page.getByText("Meldungen oder Wiederaufnahme derzeit nicht bestätigt.",{exact:false})).toHaveCount(0);
 });
