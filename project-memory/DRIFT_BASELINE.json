@@ -5,7 +5,7 @@
   "last_source_of_truth_review": "2026-11-06 PR #1438 reviewed legal-operator change: Source of Truth identifies Brigitte Erika Guggenberger as the legal contracting sole proprietor and Bernd Guggenberger as operational contact only, consistent with owner-confirmed GISA 40314440. No implied delegated signing authority; UID, trade-register applicability, external legal/tax signoff, Stripe account-holder verification and commercial activation remain pending. Source-only; no Production/Staging/provider/DB mutation and no acceptance inferred.",
   "watched_files": {
     "docs/SOURCE_OF_TRUTH.md": "9d3c0015cc62038ffbc4e606841545ee4a763761",
-    "src/config/roadmap.ts": "5ca7cb75379729a3051654cdfa3aa8535c60e636",
+    "src/config/roadmap.ts": "defdacc92e3a1aafb2885306c5f86b122c2df413",
     "src/config/aiTiers.mjs": "00d61fa256e90538c8f67d20a74722d73c85ec06",
     ".github/workflows/restore-drill-host-readiness.yml": "ad2dff865f517599346176eee5c5aa1717200154",
     ".github/workflows/restore-drill-resource-readiness.yml": "a2f2b07730e86546e9d95a4091dbb204efe53f1c",
