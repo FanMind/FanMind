@@ -32,3 +32,5 @@ test('actual local MP4/WebM with audio normalize and cleanup, without claiming t
  try{syntheticMediaProbe(directory);assert.equal(existsSync(directory),false);}
  finally{rmSync(parent,{recursive:true,force:true});}
 });
+
+import "./staging-media-toolchain.cases.mjs";

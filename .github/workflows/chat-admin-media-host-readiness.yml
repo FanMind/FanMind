@@ -39,6 +39,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Inspect only fixed Staging service metadata and bounded synthetic media
+        if: inputs.action == 'inspect'
         env:
           ACTION: ${{ inputs.action }}
           REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
@@ -58,8 +59,8 @@ jobs:
             FANMIND_TARGET_SUPABASE_PROJECT_REF="$TARGET_PROJECT" \
             FANMIND_PRODUCTION_SUPABASE_PROJECT_REF="$PRODUCTION_PROJECT" \
             /usr/bin/node scripts/operations/chat-admin-media-host-readiness.mjs "$ACTION"
-      - name: Prove bounded synthetic residue absent after a probe
-        if: always() && inputs.action == 'probe'
+      - name: Probe only through the fixed installed Staging service-context helper
+        if: inputs.action == 'probe'
         env:
           REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
           EXPECTED_LIVE_COMMIT: ${{ inputs.expected_live_commit }}
@@ -67,12 +68,8 @@ jobs:
           PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
         run: |
           set -euo pipefail
-          env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
-            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_SHA="$GITHUB_SHA" \
-            GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
-            REVIEWED_COMMIT="$REVIEWED_COMMIT" EXPECTED_LIVE_COMMIT="$EXPECTED_LIVE_COMMIT" \
-            CONFIRMATION=probe-staging-media-host FANMIND_RUNTIME_ENVIRONMENT=staging \
-            FANMIND_TARGET_SUPABASE_PROJECT_REF="$TARGET_PROJECT" \
-            FANMIND_PRODUCTION_SUPABASE_PROJECT_REF="$PRODUCTION_PROJECT" \
-            /usr/bin/node scripts/operations/chat-admin-media-host-readiness.mjs cleanup
+          test "$REVIEWED_COMMIT" = "$GITHUB_SHA"
+          test "$TARGET_PROJECT" = vshyhvgcmrlagvfnvomc
+          test "$PRODUCTION_PROJECT" = drqkpdvtbbrrdwmtrodz
+          sudo -n /usr/local/sbin/fanmind-staging-media-probe \
+            probe "$REVIEWED_COMMIT" "$EXPECTED_LIVE_COMMIT" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
