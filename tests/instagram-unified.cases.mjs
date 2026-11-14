@@ -62,6 +62,7 @@ import ts from 'typescript';
 import * as crypto from 'node:crypto';
 import * as unifiedPolicy from '../src/lib/instagramUnifiedPolicy.mjs';
 import * as paging from '../src/lib/instagramGraphPagingPolicy.mjs';
+import { sanitizeMetaProviderError } from '../src/lib/metaProviderErrorPolicy.mjs';
 import { renderInstagramUnifiedConfiguration, subscribeStagingMetaWebhook } from '../scripts/operations/staging-meta-runtime.mjs';
 test('server connection read preserves persisted Unified identity and expiry without expanding public column grants',async()=>{
  const source=ts.createSourceFile('server.ts',readFileSync('src/lib/supabase/server.ts','utf8'),ts.ScriptTarget.Latest,true);
@@ -87,7 +88,7 @@ test('server connection read preserves persisted Unified identity and expiry wit
 });
 function integration(fetchImpl) {
  const exports={};
- const deps={'node:crypto':crypto,'@/lib/instagramUnifiedPolicy.mjs':unifiedPolicy,'@/lib/instagramGraphPagingPolicy.mjs':paging,'@/lib/metaIntegrationPolicy.mjs':{META_GRAPH_API_VERSION:'v25.0'},'@/lib/metaConversationPaginationPolicy.mjs':{normalizeMetaPagingCursor:x=>x,createMetaConversationSyncAbortSignal:()=>undefined},'@/lib/metaRuntimeConfigPolicy.mjs':{isUsableMetaAppId:x=>/^\d+$/u.test(x??''),isUsableMetaAppSecret:x=>/^[a-f0-9]{32}$/u.test(x??''),normalizeMetaRuntimeValue:x=>x,normalizeMetaCallbackUrl:x=>x},'@/lib/instagramScopes':{},'@/lib/metaProviderErrorPolicy.mjs':{sanitizeMetaProviderError:()=>({})}};
+ const deps={'node:crypto':crypto,'@/lib/instagramUnifiedPolicy.mjs':unifiedPolicy,'@/lib/instagramGraphPagingPolicy.mjs':paging,'@/lib/metaIntegrationPolicy.mjs':{META_GRAPH_API_VERSION:'v25.0'},'@/lib/metaConversationPaginationPolicy.mjs':{normalizeMetaPagingCursor:x=>x,createMetaConversationSyncAbortSignal:()=>undefined},'@/lib/metaRuntimeConfigPolicy.mjs':{isUsableMetaAppId:x=>/^\d+$/u.test(x??''),isUsableMetaAppSecret:x=>/^[a-f0-9]{32}$/u.test(x??''),normalizeMetaRuntimeValue:x=>x,normalizeMetaCallbackUrl:x=>x},'@/lib/instagramScopes':{},'@/lib/metaProviderErrorPolicy.mjs':{sanitizeMetaProviderError}};
  runInNewContext(ts.transpileModule(readFileSync('src/lib/instagramIntegration.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>deps[n],process:{env},fetch:fetchImpl,URL,URLSearchParams,Response,AbortSignal,Buffer,console});return exports;
 }
 test('actual Unified exchange uses Meta server credentials and discovers exact assigned account/business; no Instagram exchange fallback',async()=>{
@@ -106,8 +107,19 @@ test('actual subscription refuses another app readback despite successful POST',
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),false);assert.equal(posts,1);
 });
 test('actual subscription confirms both exact-app fields after POST',async()=>{
- let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}return Response.json({data:posts?[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]:[]});});
+ let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}assert.equal(new URL(url).searchParams.get('fields'),'id,subscribed_fields');return Response.json({data:posts?[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]:[]});});
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),true);assert.equal(posts,1);
+});
+test('Unified subscription failures retain only phase, HTTP status and bounded numeric provider code',async()=>{
+ for(const [phase,status,code,expected] of [['get',400,100,'100'],['post',403,200,'200'],['post',400,'PRIVATE_TOKEN','none'],['get',400,1000000,'none']]) {
+  const api=integration(async(url,options)=>{
+   if(phase==='post'&&options.method!=='POST')return Response.json({data:[]});
+   return Response.json({error:{code,message:'PRIVATE_TOKEN PRIVATE_BODY',type:'PRIVATE_TYPE',access_token:'PRIVATE_TOKEN'}},{status});
+  });
+  await assert.rejects(api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),error=>{
+   assert.equal(error.message,`instagram_subscription_${phase}_http_${status}_code_${expected}`);assert.doesNotMatch(error.message,/PRIVATE/u);return true;
+  });
+ }
 });
 test('protected Instagram configuration preserves all Facebook/Operator/Billing/encryption and rejects conflicts',()=>{
  const before='FACEBOOK_APP_ID=1547928503809961\nFACEBOOK_APP_SECRET='+ 'a'.repeat(32)+'\nFANMIND_TOKEN_ENCRYPTION_KEY=unchanged\nBILLING_STATE=preserve\n';
