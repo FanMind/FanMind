@@ -209,7 +209,7 @@ export function WorkspaceHelpLauncher() {
             <div><span className="fm-help-eyebrow">FanMind Support</span><h2>Wie können wir helfen?</h2></div>
             <button ref={closeButton} type="button" aria-label="Hilfe minimieren" onClick={close}>×</button>
           </header>
-          <div className="fm-help-content">
+          <SupportConversation>
           {diagnosticState === "disabled" || diagnosticState === "unavailable" ? <p className="fm-help-muted" role="status">{diagnosticState === "disabled" ? "Verbindungsprüfung nicht aktiviert." : "Verbindungsprüfung derzeit nicht verfügbar."} Details und Wiederholung unter „Kanäle und Verbindungsstatus“.</p> : null}
           <details className="fm-help-diagnostics">
             <summary>Kanäle und Verbindungsstatus</summary>
@@ -355,7 +355,6 @@ export function WorkspaceHelpLauncher() {
             </section>
           ) : null}
           </details>
-          <SupportConversation />
           <details className="fm-help-diagnostics"><summary>Sichere Fehlerbehebung</summary><p>
             Automatische Reparaturen sind auf bestätigte, sichere Aktionen
             begrenzt. OAuth, Berechtigungen und Zugangsdaten bleiben immer
@@ -374,7 +373,7 @@ export function WorkspaceHelpLauncher() {
           )}
           <a href="/channels">Kanäle öffnen</a>
           </details>
-          </div>
+          </SupportConversation>
         </section>
       ) : null}
       <button

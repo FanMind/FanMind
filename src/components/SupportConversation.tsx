@@ -1,8 +1,8 @@
 "use client";
-import { useCallback,useEffect,useRef,useState } from "react";
+import { useCallback,useEffect,useRef,useState,type ReactNode } from "react";
 type Turn={request_id:string;question:string;answer:string;unanswered:boolean};
 type Pending={requestId:string;question:string;context:string;scope:string};
-export function SupportConversation(){
+export function SupportConversation({children}:{children?:ReactNode}={}){
  const [turns,setTurns]=useState<Turn[]>([]),[scope,setScope]=useState(""),[text,setText]=useState(""),[status,setStatus]=useState("loading"),[handoff,setHandoff]=useState(false);
  const [more,setMore]=useState(false),[privacyError,setPrivacyError]=useState(false);
  const browsingOlder=useRef(false),privacyBusy=useRef(false);
@@ -62,6 +62,8 @@ export function SupportConversation(){
  }
  async function share(){const version=++generation.current;const selectedScope=scope;setHandoff(false);try{const r=await fetch("/api/support/conversation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scope,handoff:true})});if(!r.ok)throw new Error("unavailable");const data=await r.json();if(version===generation.current&&selectedScope===boundScope.current&&data.scope===selectedScope)setHandoff(true);}catch{if(version===generation.current)setStatus("unavailable");}}
  return <section aria-label="Dein Supportgespräch" className="fm-support-conversation">
+  <div className="fm-support-body">
+  {children}
   <h3>Dein Supportgespräch</h3>
   <p className="fm-help-muted">Verlauf für dein Konto und deinen Workspace, bis zu 30 Tage gespeichert. Keine Passwörter oder sensiblen Daten eingeben. Antworten basieren auf freigegebenen Produktinformationen.</p>
   {privacyError&&<p role="alert">Löschung nicht bestätigt. Bitte erneut prüfen und bestätigen.</p>}
@@ -72,10 +74,6 @@ export function SupportConversation(){
     {!turns.length&&status==="ready"&&<p className="fm-help-muted">Stelle uns eine Frage zu FanMind. Deine Antworten bleiben hier gespeichert.</p>}
     {turns.map(t=><article key={t.request_id}><p className="fm-support-question"><strong>Du</strong>{t.question}</p><p className="fm-support-answer"><strong>Support</strong>{t.answer}</p></article>)}
    </div>
-   <form className="fm-support-composer" onSubmit={event=>{event.preventDefault();if(scope&&status!=="sending"&&(status==="retry"||text.trim()))void send();}}>
-    <label>Deine Frage<textarea rows={3} maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
-    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":"Speichern und senden"}</button>
-   </form>
    {status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}
   </>}
   <details className="fm-help-privacy"><summary>Datenschutz und Support-Übergabe</summary>
@@ -83,5 +81,12 @@ export function SupportConversation(){
    <button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button></div>
    {handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}
   </details>
+  </div>
+  {status!=="unavailable"&&<>
+   <form className="fm-support-composer" onSubmit={event=>{event.preventDefault();if(scope&&status!=="sending"&&(status==="retry"||text.trim()))void send();}}>
+    <label>Deine Frage<textarea rows={3} maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
+    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":"Speichern und senden"}</button>
+   </form>
+  </>}
  </section>;
 }

@@ -14,7 +14,7 @@
 .fm-help-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--fanmind-shell-border, #475569); flex-shrink: 0; }
 .fm-help-header h2 { font-size: 19px; line-height: 1.3; margin: 4px 0 0; }
 .fm-help-eyebrow { color: var(--fanmind-shell-accent, #67e8f9); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.fm-help-content { padding: 16px 20px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; scrollbar-gutter: stable; }
+.fm-support-body { padding: 16px 20px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; scrollbar-gutter: stable; }
 .fm-help p { margin: 8px 0; }
 .fm-help h3 { font-size: 16px; margin: 0 0 8px; }
 .fm-help button, .fm-support-conversation button, .fm-help summary, .fm-support-conversation summary {
@@ -37,7 +37,8 @@
 .fm-help-diagnostics li button { display: block; margin-top: 6px; }
 .fm-help-notice { border-left: 3px solid var(--fanmind-shell-accent, #67e8f9); padding-left: 12px; }
 .fm-help a, .fm-support-conversation a { color: var(--fanmind-shell-accent, #67e8f9); text-decoration: underline; text-underline-offset: 3px; }
-.fm-support-conversation { display: flex; flex-direction: column; min-width: 0; gap: 10px; }
+.fm-support-conversation { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+.fm-support-body > * + * { margin-top: 12px; }
 .fm-help-muted { color: var(--fanmind-shell-muted, #cbd5e1); font-size: 13px; line-height: 1.5; }
 .fm-support-turns { max-height: 240px; min-height: 56px; overflow-y: auto; overscroll-behavior: contain; padding: 4px; scrollbar-gutter: stable; }
 .fm-support-turns article + article { margin-top: 16px; }
@@ -45,7 +46,7 @@
 .fm-support-turns strong { display: block; font-size: 12px; color: var(--fanmind-shell-accent, #67e8f9); margin-bottom: 4px; }
 .fm-support-question { background: var(--fanmind-input-bg, #020617); margin-left: 24px !important; }
 .fm-support-answer { border: 1px solid var(--fanmind-shell-border, #475569); margin-right: 16px !important; }
-.fm-support-composer { display: grid; gap: 10px; }
+.fm-support-composer { display: grid; gap: 10px; flex-shrink: 0; padding: 14px 20px; border-top: 1px solid var(--fanmind-shell-border, #475569); background: var(--fanmind-shell-card-strong, #0f172a); }
 .fm-support-composer label { display: grid; gap: 6px; font-weight: 600; }
 .fm-support-composer textarea { display: block; width: 100%; min-height: 80px; max-height: 140px; resize: vertical; padding: 12px; font: 16px/1.5 Arial, Helvetica, sans-serif; color: var(--fanmind-shell-text, #fff); background: var(--fanmind-input-bg, #020617); border: 1px solid var(--fanmind-shell-border, #475569); border-radius: 12px; }
 .fm-help-actions { display: grid; gap: 10px; padding-top: 10px; }
@@ -54,6 +55,6 @@
   .fm-help { right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); width: calc(100vw - 16px); }
   .fm-help-panel { max-height: calc(100dvh - 82px - env(safe-area-inset-bottom)); border-radius: 16px; }
   .fm-help-header { padding: 12px 14px; }
-  .fm-help-content { padding: 12px 14px; }
+  .fm-support-body { padding: 12px 14px; }
   .fm-support-turns { max-height: 24dvh; }
 }

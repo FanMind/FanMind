@@ -33,6 +33,11 @@ test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries dis
  await expect(page.getByText('Die Verbindungsprüfung ist für diese Umgebung noch nicht aktiviert.',{exact:false})).toBeVisible();
  await page.getByRole('button',{name:'Kontoprüfung erneut versuchen'}).click();
  await expect(page.getByText('Keine unterstützten Verbindungen gefunden.')).toBeVisible();expect(diagnostics).toBe(2);
+ const composer=page.locator('.fm-support-composer');
+ const position=await composer.evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,viewport:innerHeight}));
+ expect(position.top).toBeGreaterThanOrEqual(0);expect(position.bottom).toBeLessThan(position.viewport);
+ await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeInViewport();
+ await expect(page.getByRole('button',{name:'Speichern und senden',exact:true})).toBeInViewport();
  await page.screenshot({path:testInfo.outputPath('dashboard-help.png')});
  await page.getByRole('button',{name:'Hilfe minimieren'}).click();await expect(panel).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Hilfe',exact:true})).toBeFocused();

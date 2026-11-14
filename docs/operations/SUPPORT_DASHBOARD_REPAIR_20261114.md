@@ -55,3 +55,13 @@ are regression consumers. Existing privacy scope boundaries remain unchanged.
   this candidate until the protected release and live-version checks finish.
 - Actual authenticated model answer: NOT_TESTED; existing endpoint is knowledge
   based as stated above. Do not close the full requested acceptance on that basis.
+
+## Visual countercheck follow-up
+
+Hosted run43584716588 passed102/102 browser cases (plus6/6 core and47/47
+ChatAdmin component regressions). Its actual desktop/mobile screenshots revealed
+that expanded diagnostics plus long history could still move the composer below
+the body viewport. The composer is now outside the scrolling information body;
+the same component retains all privacy/identity logic. New geometry assertions
+require both input and send control inside the viewport after expansion. These
+changed bytes require fresh final-head CI; the earlier green run is historical.
