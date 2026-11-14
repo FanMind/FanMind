@@ -24,8 +24,10 @@ export function assertProductionMetaTarget(values, control, action) {
       control.REVIEWED_COMMIT !== control.GITHUB_SHA || !SHA.test(control.LIVE_COMMIT ?? '') ||
       control.CONFIRMATION !== `production-meta-${action}` || control.META_SETUP_APP_ID !== APP ||
       !/^\d{1,20}$/u.test(control.GITHUB_RUN_ID ?? '')) fail('control_binding');
-  if (values.NEXT_PUBLIC_APP_URL !== ORIGIN || values.NEXT_PUBLIC_SUPABASE_URL !== `https://${PROJECT}.supabase.co` ||
-      values.FANMIND_RUNTIME_ENVIRONMENT !== 'production') fail('target_binding');
+  // A root slash is the same fixed origin, as in the existing Support controller.
+  if (![ORIGIN, ORIGIN + '/'].includes(values.NEXT_PUBLIC_APP_URL)) fail('app_origin_mismatch');
+  if (values.NEXT_PUBLIC_SUPABASE_URL !== `https://${PROJECT}.supabase.co`) fail('database_target_mismatch');
+  if (values.FANMIND_RUNTIME_ENVIRONMENT !== 'production') fail('environment_target_mismatch');
   for (const name of ['FACEBOOK_APP_ID','META_APP_ID']) {
     if (/^\d{5,32}$/u.test(values[name] ?? '') && values[name] !== APP) fail('app_conflict');
   }
@@ -60,7 +62,8 @@ async function json(url,headers={},options={},request=fetch) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 export function assertProductionRuntimeConsistency(values, running, liveCommit) {
-  if(running.FANMIND_RUNTIME_ENVIRONMENT!=='production' || running.FANMIND_RELEASE_COMMIT!==liveCommit)fail('target_binding');
+  if(running.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('process_environment_mismatch');
+  if(running.FANMIND_RELEASE_COMMIT!==liveCommit)fail('process_release_mismatch');
   for(const name of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET','META_REDIRECT_URI','META_WEBHOOK_VERIFY_TOKEN']) {
     if(running[name] && running[name]!==values[name])fail('inherited_configuration_conflict');
   }
@@ -162,7 +165,7 @@ export async function runProductionMeta(action,control=process.env) {
 function lstatExists(p){try{return Boolean(lstatSync(p));}catch{return false;}}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   try{await runProductionMeta(process.argv[2]);}catch(error){
-    const allowed=['control_binding','target_binding','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed','app_secret_identity_invalid'];
+    const allowed=['control_binding','target_binding','app_origin_mismatch','database_target_mismatch','environment_target_mismatch','process_environment_mismatch','process_release_mismatch','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed','app_secret_identity_invalid'];
     console.error('PRODUCTION_META_CONFIGURATION=FAIL');console.error('PRODUCTION_META_CODE='+ (allowed.includes(error.message)?error.message:'operation_failed'));process.exitCode=1;
   }
 }

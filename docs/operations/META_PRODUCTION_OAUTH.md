@@ -159,3 +159,23 @@ checks, add redacted remote-stage markers, and test accepted/foreign remotes
 against the actual shell case block. No remote URL/credential values are logged.
 The initial PR validation43603787681 registered the workflow successfully and
 exposed Run workflow even before merge; final required CI/merge still pending.
+
+
+## Production target continuation — 14 November 2026
+
+PR1492 merged as d402b11 after11successful current-head PR workflow groups.
+Protected inspect43606345192 now accepts the existing transferred-repository
+remote and reaches the controller, which fails closed with target_binding before
+readiness output or configuration/provider mutation. Align only the literal
+https://fanmind.ch and https://fanmind.ch/ root spellings with the existing
+Support target policy. Keep every other path, query, credential, port, origin,
+Supabase-project and runtime mismatch blocked. Separate allowlisted origin,
+database, file-environment, process-environment and process-release error codes
+identify any remaining mismatch without logging target or secret values. The
+root-slash hypothesis is not target evidence until the next protected inspect.
+
+Meta verification now shows “Wird überprüft”; Owner submitted the personal step.
+Publication remains disabled, required scopes remain Ready for testing only.
+Production Creator login is available; Facebook connection remains disabled for
+missing/invalid app-ID/callback/encryption. Actual HTTPS Productionbb799466;
+Staging95c93bf. No secret value, Staging token or identity document was copied.
