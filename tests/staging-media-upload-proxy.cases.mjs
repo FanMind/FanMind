@@ -42,3 +42,19 @@ test('fixed protected job never invokes provisioning, certbot, application resta
  assert.doesNotMatch(workflow,/certbot|provision-staging-host|secrets\.|sudoers|systemctl restart|apply_migration/);
  const runner=readFileSync('scripts/operations/staging-media-upload-proxy.mjs','utf8');assert.match(runner,/sites-available\/fanmind-staging/);assert.match(runner,/fchmodSync\(fd,0o644\)/);assert.doesNotMatch(runner,/sites-available\/fanmind['"/]|\.env\.production|SUPABASE_SERVICE|STRIPE/);
 });
+
+test('TLS diagnostics expose only fixed counters and preserve all existing validation decisions',()=>{
+ const path='scripts/operations/verify-staging-nginx-whatsapp-boundary.awk';
+ const run=(source,mode)=>spawnSync('awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode='+mode,'-f',path],{input:source,encoding:'utf8'}).stdout.trim();
+ for(const source of [before,before.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),before.replace('access_log off;','access_log /private/sensitive.log;'),before.replace('location = /api/webhooks/whatsapp {','location = /private/unexpected {')]){
+  const normal=run(source,'');
+  const lines=run(source,'media_diagnostic').split('\n');
+  assert.equal(lines.length,2);
+  assert.match(lines[0],/^[a-z_]+=[0-9]+(?:[,;][a-z_]+=[0-9]+)*$/u);
+  assert.equal(lines[1],normal);
+  assert.doesNotMatch(lines[0],/sensitive|private|foreign|staging.fanmind/);
+ }
+ assert.match(run(before,'media_diagnostic'),/valid_tls_servers=1/);
+ assert.match(run(before.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),'media_diagnostic'),/exact_names=0/);
+ assert.match(run(before.replace('access_log off;','access_log /private/sensitive.log;'),'media_diagnostic'),/invalid_whatsapp=1/);
+});
