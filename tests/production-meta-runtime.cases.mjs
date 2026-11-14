@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { assertProductionMetaTarget, assertProductionRuntimeConsistency, verifyProductionAppSecret, productionMetaTransaction, productionMetaReadiness, productionAppSubscription, APP } from '../scripts/operations/production-meta-runtime.mjs';
+import { assertProductionMetaTarget, assertProductionRuntimeConsistency, assertProductionManagedPreserved, verifyProductionAppSecret, productionMetaTransaction, productionMetaReadiness, productionAppSubscription, APP } from '../scripts/operations/production-meta-runtime.mjs';
 import { renderMetaConfiguration } from '../scripts/operations/staging-meta-runtime.mjs';
 const values={FANMIND_RUNTIME_ENVIRONMENT:'production',NEXT_PUBLIC_APP_URL:'https://fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://drqkpdvtbbrrdwmtrodz.supabase.co',FACEBOOK_APP_ID:APP,FACEBOOK_APP_SECRET:'a'.repeat(32),FACEBOOK_REDIRECT_URI:'https://fanmind.ch/api/integrations/facebook/callback',FANMIND_TOKEN_ENCRYPTION_KEY:'b'.repeat(64),FACEBOOK_WEBHOOK_VERIFY_TOKEN:'synthetic'.repeat(8)};
 const control={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR_ID:'270165082',GITHUB_SHA:'c'.repeat(40),REVIEWED_COMMIT:'c'.repeat(40),LIVE_COMMIT:'d'.repeat(40),CONFIRMATION:'production-meta-inspect',META_SETUP_APP_ID:APP,GITHUB_RUN_ID:'123'};
@@ -125,4 +125,17 @@ test('real Linux process proves exec-time proc environment can omit subsequently
  console.log('MANAGED_RUNTIME_BOUNDARY=PASS');`;
  const result=spawnSync(process.execPath,['--input-type=module','-e',source],{env:{PATH:'/usr/bin:/bin',FANMIND_META_STARTUP_MARKER:'present'},encoding:'utf8'});
  assert.equal(result.status,0,result.stderr);assert.equal(result.stdout.trim(),'MANAGED_RUNTIME_BOUNDARY=PASS');
+});
+
+test('reviewed PM2-owned Support/Adminchat flags may differ from the file but must survive reload unchanged',()=>{
+ const file={...values,FANMIND_SUPPORT_CENTRE_ENABLED:'false',FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED:'false'};
+ const managed={FANMIND_RUNTIME_ENVIRONMENT:'production',FANMIND_RELEASE_COMMIT:control.LIVE_COMMIT,FANMIND_SUPPORT_CENTRE_ENABLED:'true',FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED:'true'};
+ assert.doesNotThrow(()=>assertProductionRuntimeConsistency(file,{},control.LIVE_COMMIT,managed));
+ assert.doesNotThrow(()=>assertProductionManagedPreserved(managed,{...managed,FACEBOOK_APP_ID:APP,pm_uptime:123},Object.keys(file)));
+ for(const name of ['FANMIND_SUPPORT_CENTRE_ENABLED','FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED']){
+  assert.throws(()=>assertProductionManagedPreserved(managed,{...managed,[name]:'false'},[]),/unrelated_process_drift/);
+  assert.throws(()=>assertProductionManagedPreserved(managed,{...managed,[name]:undefined},Object.keys(file)),/unrelated_process_drift/);
+ }
+ assert.throws(()=>assertProductionManagedPreserved({},managed,[]),/unrelated_process_drift/);
+ assert.throws(()=>assertProductionManagedPreserved({...managed,STRIPE_SECRET_KEY:'synthetic-before'},{...managed,STRIPE_SECRET_KEY:'synthetic-after'},['STRIPE_SECRET_KEY']),/unrelated_process_drift/);
 });

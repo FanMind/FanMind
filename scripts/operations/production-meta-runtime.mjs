@@ -15,6 +15,7 @@ const ROOT = '/var/www/fanmind', ENV = ROOT + '/.env.production', CURRENT = '/va
 const ORIGIN = 'https://fanmind.ch', CALLBACK = ORIGIN + '/api/integrations/facebook/callback';
 const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 const FIELDS = ['FACEBOOK_APP_ID','FACEBOOK_APP_SECRET','FACEBOOK_REDIRECT_URI','FANMIND_TOKEN_ENCRYPTION_KEY','FACEBOOK_WEBHOOK_VERIFY_TOKEN'];
+const PM2_OWNED_FLAGS = ['FANMIND_SUPPORT_CENTRE_ENABLED','FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED'];
 const SHA = /^[a-f0-9]{40}$/u;
 const fail = code => { throw new Error(code); };
 export function assertProductionMetaTarget(values, control, action) {
@@ -73,9 +74,14 @@ export function assertProductionRuntimeConsistency(values, running, liveCommit, 
       if(source[name] && source[name]!==values[name])fail('inherited_configuration_conflict');
     }
     for(const [name,value] of Object.entries(values)) {
-      if(name==='FANMIND_RELEASE_COMMIT')continue; // PM2 owns the exact live release marker.
+      if(name==='FANMIND_RELEASE_COMMIT'||PM2_OWNED_FLAGS.includes(name))continue; // Preserve PM2-owned state separately.
       if(source[name]!==undefined && source[name]!==value)fail('inherited_configuration_conflict');
     }
+  }
+}
+export function assertProductionManagedPreserved(before, after, fileKeys) {
+  for(const name of new Set([...fileKeys.filter(name=>!FIELDS.includes(name)),...PM2_OWNED_FLAGS])) {
+    if((before[name]!==undefined||PM2_OWNED_FLAGS.includes(name)) && after[name]!==before[name])fail('unrelated_process_drift');
   }
 }
 export async function verifyProductionAppSecret(secret,request=fetch) {
@@ -161,7 +167,8 @@ export async function runProductionMeta(action,control=process.env) {
   const verify=async(expected)=>{
     await waitForStagingRelease(live);const p=processes(),running=processEnv(p);
     assertProductionRuntimeConsistency(expected,running,control.LIVE_COMMIT,p.pm2_env);
-    for(const [beforeSource,afterSource] of [[baseline,running],[initial.pm2_env,p.pm2_env]])for(const name of Object.keys(values))if(!FIELDS.includes(name)&&beforeSource[name]!==undefined&&afterSource[name]!==beforeSource[name])fail('unrelated_process_drift');
+    for(const name of Object.keys(values))if(!FIELDS.includes(name)&&baseline[name]!==undefined&&running[name]!==baseline[name])fail('unrelated_process_drift');
+    assertProductionManagedPreserved(initial.pm2_env,p.pm2_env,Object.keys(values));
     if(p.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED!==initial.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED)fail('support_drift');
     const health=await json(ORIGIN+'/api/health');if(health.status!=='ok'&&health.status!=='healthy')fail('health_failed');
   };

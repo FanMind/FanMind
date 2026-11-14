@@ -199,3 +199,10 @@ Add a real Linux subprocess test for the proc environment premise and negative
 managed/startup/alias/database/key cases. Actual target success remains unproven
 until the next protected inspect. No configuration, provider or database writes.
 Reference: https://man7.org/linux/man-pages/man5/proc_pid_environ.5.html
+
+The reviewed PM2 config deliberately owns Support and Character/Fan flags, so
+those two known values need not equal legacy environment-file text. Preserve
+their actual managed values explicitly before/after reload and rollback, even
+when absent from the file. A dedicated executed helper rejects changed/missing
+flags and unrelated Stripe drift. Do not treat those intended overrides as
+Meta-file conflicts or use file text to reset the running feature switches.
