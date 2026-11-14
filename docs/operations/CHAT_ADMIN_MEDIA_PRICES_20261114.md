@@ -144,9 +144,9 @@ before normalization or Storage. The correction uses bounded alphabet/padding
 validation without recursive regexp repetition. Limits, decoding, actual image
 and video normalization, owner revalidation and private Storage remain intact.
 
-Folder deletion now uses an explicit in-page confirmation/cancellation over the
-same atomic empty-only RPC, without a native confirm dialog. Occupied folders
-remain rejected; no media deletion or cascade is added. Direct content and child
+The Owner subsequently confirmed manual folder creation/deletion. Its existing
+confirmation and atomic empty-only RPC are retained. Occupied folders remain
+rejected; no media deletion or cascade is added. Direct content and child
 navigation replace the misleading recursive file view. Mutation errors retain
 the primary HTTP status even when a refresh fails, proxy HTML is never shown,
 and retry selection is cleared when its destination changes. The failed batch
@@ -157,3 +157,41 @@ Affected contracts: FM-CONTRACT-CHATADMIN-AI-001 and
 FM-CONTRACT-CHATADMIN-STORAGE-001; gates unchanged. No SQL, grants, packages,
 runtime switches, Support, Meta, Billing or Production changes. Source/CI PASS
 must not be described as deployed or as complete real Storage acceptance.
+
+### Separate, proven Staging HTTP ingress failure
+
+An unauthenticated bounded transport probe reaches the existing auth denial at
+1,100,013 request bytes (HTTP401 JSON), but a 7,000,013-byte request is rejected
+before the application (HTTP413 HTML). The existing Staging nginx template has
+client_max_body_size 2m. A permitted 5-MiB image needs about 6.99 MB in the existing
+Base64 JSON transport; 25-MiB video needs about 34.95 MB. This is a separate real
+failure from the regexp bug and browser file-transfer limitations. The precise
+historical HTTP response/file size of the user's attempt is still unavailable.
+
+The existing enable-staging-tls.yml now has a separate media-upload-proxy job;
+it never runs certificate provisioning, app restart, provisioning, DB or secrets.
+It uses the existing bootstrap runner, Main/Owner/protected Staging and the
+shared Staging-deploy concurrency group plus a root-owned nginx-directory lock.
+The exact reviewed commit must already be live on Staging. Only the existing
+root-owned active Staging vhost is eligible. The reused TLS/WhatsApp parser must
+identify its single exact TLS server; the generic proxy must match the existing
+fixed upstream/header contract. Unknown/partial/foreign configurations block.
+
+Verify: confirmation=staging-media-upload-proxy-verify, reviewed_commit and
+expected_staging_commit both equal the independently observed live Main SHA.
+An absent block reports ABSENT without a mutation. Apply is separately explicit:
+confirmation=staging-media-upload-proxy-apply with the same exact bindings.
+It inserts only exact /api/chatadmin/media (7,100,000 request bytes) and
+/api/chatadmin/media/catalogue (35,100,000 bytes) locations. Application binary
+limits, normalization, Owner/Workspace/Character checks and private Storage stay
+unchanged. No zero/unlimited body limit or generic-route increase is permitted.
+
+Before reload, nginx syntax and the complete effective config, with only the
+owned new block removed, must match the baseline byte-for-byte. The Staging TLS
+certificate and WhatsApp route remain validated; no Production vhost is edited.
+After reload, exact live release plus maximum bounded unauthenticated probes
+must reach HTTP401 JSON for both media routes, proving transport and auth denial
+together. On failure, restore the exact prior Staging bytes and reload only when
+no concurrent target/global config drift is present. Drift blocks reconciliation
+rather than overwriting another operation. Verification is repeatable; normal
+Web deployment does not execute this apply. Actual live execution remains pending.

@@ -587,20 +587,17 @@ test("folder navigation shows direct contents and children; confirmed deletion i
  await page.getByRole("button",{name:"Eine Ebene zurück",exact:true}).click();
  await expect(page.getByRole("heading",{name:"Ordnerinhalt: Parent",exact:true})).toBeVisible();
  await page.getByLabel("Disposable verwalten",{exact:true}).click();
+ page.once("dialog",dialog=>dialog.dismiss());
  await page.getByRole("button",{name:"Disposable löschen",exact:true}).click();
- await expect(page.getByRole("group",{name:"Ordnerlöschung bestätigen",exact:true})).toBeVisible();
  assert.equal(await page.evaluate(()=>window.testRequests.length),0);
- await page.getByRole("button",{name:"Löschung abbrechen",exact:true}).click();
- assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+ page.once("dialog",dialog=>dialog.accept());
  await page.getByRole("button",{name:"Disposable löschen",exact:true}).click();
- await page.getByRole("button",{name:"Ordner löschen bestätigen",exact:true}).click();
  await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  const request=await page.evaluate(()=>window.testRequests[0].body);
  assert.equal(request.action,"delete_folder");assert.equal(request.id,empty.id);assert.equal(request.revision,1);assert.equal(request.character_id,characterA.id);
  const after={...fresh,folders:[parent,child],character:{...characterA,revision:2}};
  await page.evaluate(({id,after})=>{window.fixture.media[id]=after;window.testRequests[0].resolve(Response.json(after));},{id:characterA.id,after});
  await expect(page.getByRole("button",{name:"Disposable öffnen",exact:true})).toHaveCount(0);
- await expect(page.getByRole("group",{name:"Ordnerlöschung bestätigen",exact:true})).toHaveCount(0);
  await expect(page.getByText("parent-blue.png",{exact:true})).toBeVisible();
 });
 
