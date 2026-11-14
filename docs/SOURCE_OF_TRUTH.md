@@ -1,3 +1,19 @@
+## Creator Support 2.0 bounded Staging pilot — 14 November 2026
+
+The existing authenticated Support composer/history now has an exact-Operator,
+Staging-only tool layer. It can inspect selected Character/Fan context locally,
+show current rules/media/diagnostic facts, and apply two explicitly authorized
+reversible style presets using existing JWT/RLS and revision CAS. Signed own
+Support write-ahead/completion evidence, independent readback, revision-bound
+undo and opt-in synthetic before/after model examples reuse existing storage,
+provider and usage controls. No Fan text is sent to an external model. This is
+not universal semantic CRM analysis or arbitrary settings management. Production
+is structurally denied; existing repair release bb799466 remains unchanged.
+No SQL, credential, runtime flag, Billing, Social or Adminchat setting changes.
+Legal/registration mandate review draft, non-atomic audit/CAS limitation and
+concrete Production activation plan: `docs/operations/SUPPORT_CREATOR_ASSISTANT_20261114.md`.
+Source tests/merge do not establish target acceptance or general legal readiness.
+
 ## Authenticated Dashboard Support correction — 14 November 2026
 
 Issue1350 / PR1485 repairs the existing in-app Help with shell-token styling,

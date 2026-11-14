@@ -61,3 +61,7 @@
 
 .fm-support-ai-consent label { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-weight: 600; }
 .fm-support-ai-consent input { width: 20px; height: 20px; flex-shrink: 0; accent-color: var(--fanmind-shell-accent, #67e8f9); }
+
+.fm-help select {width:100%;min-height:44px;padding:10px;border:1px solid var(--fanmind-shell-border,#475569);border-radius:12px;background:var(--fanmind-input-bg,#020617);color:var(--fanmind-shell-text,#fff);font:inherit;}
+.fm-help-actions label {display:grid;gap:6px;}
+.fm-help-actions input[type=checkbox] {width:20px;height:20px;accent-color:var(--fanmind-shell-accent,#67e8f9);}
