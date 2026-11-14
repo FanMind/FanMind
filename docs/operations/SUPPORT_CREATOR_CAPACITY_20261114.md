@@ -73,7 +73,7 @@ local Help remains available. This is not a timed Support shutdown.
 
 ## Validation and recovery
 
-`tests/support-creator-capacity.test.mjs` is included in required `test:ai-capacity`.
+`tests/support-creator-capacity.cases.mjs` is imported by the existing required `test:website-chat` suite. The checksum-pinned capacity preparation package remains unchanged.
 It executes the real Capacity runtime, accounting, admission and shared provider
 transport against isolated synthetic authorization/DB/provider adapters. Tests
 cover identity/entitlement negatives, real usage settlement, duplicate concurrent

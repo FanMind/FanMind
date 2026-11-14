@@ -125,7 +125,7 @@ test('Support POST routes accept the configured HTTPS origin behind an internal 
 });
 
 
-test("authenticated AI Support reuses the public guarded pipeline only after consent and identity checks",async()=>{
+test("authenticated AI Support uses Creator capacity only after consent and identity checks",async()=>{
  const policy=await import('./publicSupportPolicy.mjs');
  let identity={actor:id,workspace,scope:"bound"},enabled=true,allowed=true,modelCalls=0,writes=0,providerStatus=200,reply="Synthetische KI-Antwort",changeIdentity=false,abort;
  let retained=Array.from({length:3},(_,i)=>({request_id:`previous-${i}`,question:`own-question-${i}`,answer:`own-answer-${i}`,unanswered:false}));
@@ -137,7 +137,7 @@ test("authenticated AI Support reuses the public guarded pipeline only after con
   "@/lib/supportCentreRequest":load("src/lib/supportCentreRequest.ts"),"@/lib/supportCentrePolicy":load("src/lib/supportCentrePolicy.ts"),
   "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed})},"@/lib/supportKnowledge":{supportAnswer:()=>({answer:"approved local knowledge",unanswered:false})},
   "@/lib/publicSupportPolicy.mjs":policy,
-  "../../public-support/route":{POST:async request=>{modelCalls++;forwarded=await request.json();if(changeIdentity)identity={...identity,scope:"foreign"};abort?.();return new Response(JSON.stringify({reply}),{status:providerStatus,headers:{'Content-Type':'application/json'}});}},
+  "@/lib/supportCreatorCapacity":{answerCreatorSupport:async input=>{modelCalls++;forwarded=input;await input.beforeProvider();if(changeIdentity)identity={...identity,scope:"foreign"};abort?.();if(providerStatus!==200)throw Error("support_provider_unavailable");return reply;}},
  });
  const request=(body,origin="https://example.test",signal)=>new Request("https://example.test/api/support/conversation",{method:"POST",headers:{origin,'content-type':'application/json'},body:JSON.stringify(body),signal});
  const message={requestId:id,scope:"bound",question:"How do I review an answer?",context:"dashboard",aiConsent:true};
@@ -147,8 +147,8 @@ test("authenticated AI Support reuses the public guarded pipeline only after con
  allowed=false;assert.equal((await POST(request(message))).status,429);allowed=true;
  assert.equal(modelCalls,0);assert.equal(writes,0);
  const ok=await POST(request(message));assert.equal(ok.status,200);assert.equal(ok.body.answerMode,"ai");assert.equal(modelCalls,1);assert.equal(writes,1);
- assert.equal(forwarded.consent,true);assert.equal(forwarded.question,message.question);assert.equal(forwarded.history.length,4);assert.equal(forwarded.history[0].text,'own-question-1');
- assert.deepEqual(Object.keys(forwarded).sort(),['consent','history','language','question']);
+ assert.equal(forwarded.identity.actor,id);assert.equal(forwarded.identity.workspace,workspace);assert.equal(forwarded.requestId,id);assert.equal(forwarded.question,message.question);assert.equal(forwarded.history.length,4);assert.equal(forwarded.history[0].text,'own-question-1');
+ assert.deepEqual(Object.keys(forwarded).sort(),['beforeProvider','history','identity','question','requestId','signal']);
  const replay=await POST(request(message));assert.equal(replay.body.answerMode,'stored');assert.equal(modelCalls,1);assert.equal(writes,1);
  providerStatus=503;
  retained=[{request_id:'legacy',question:'Support-Prüfung: character|fan|analysis',answer:'PRIVATE FAN AND PERSONA',unanswered:false}];
@@ -156,7 +156,7 @@ test("authenticated AI Support reuses the public guarded pipeline only after con
  assert.equal(forwarded.history.length,0);assert.equal(JSON.stringify(forwarded).includes('PRIVATE FAN'),false);
  retained=[];
  providerStatus=503;assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
- providerStatus=429;assert.equal((await POST(request(message))).status,429);assert.equal(writes,1);
+ providerStatus=429;assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
  providerStatus=200;reply='x'.repeat(2001);assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
  reply='bounded';changeIdentity=true;assert.equal((await POST(request(message))).status,409);assert.equal(writes,1);
  identity={actor:id,workspace,scope:"bound"};changeIdentity=false;const controller=new AbortController();abort=()=>controller.abort();assert.equal((await POST(request(message,'https://example.test',controller.signal))).status,503);assert.equal(writes,1);abort=undefined;
