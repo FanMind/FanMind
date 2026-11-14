@@ -1,20 +1,29 @@
-## Creator Support 2.0 bounded Staging pilot — 14 November 2026
+## FanMind platform Support scope correction — 14 November 2026
 
-The existing authenticated Support composer/history now has an exact-Operator,
-Staging-only tool layer. It can inspect selected Character/Fan context locally,
-show current rules/media/diagnostic facts, and apply two explicitly authorized
-reversible style presets using existing JWT/RLS and revision CAS. Signed own
-Support write-ahead/completion evidence, independent readback, revision-bound
-undo and opt-in synthetic before/after model examples reuse existing storage,
-provider and usage controls. A separate, read-only semantic analysis opt-in is
-limited to the selected Support-QA synthetic fixtures (up to8short messages),
-with structured evidence references and no model-selected administrative action.
-Default local diagnostics send no Fan text externally. This is not universal CRM analysis or arbitrary settings management. Production
-is structurally denied; existing repair release bb799466 remains unchanged.
-No SQL, credential, runtime flag, Billing, Social or Adminchat setting changes.
-Legal/registration mandate review draft, non-atomic audit/CAS limitation and
-concrete Production activation plan: `docs/operations/SUPPORT_CREATOR_ASSISTANT_20261114.md`.
-Source tests/merge do not establish target acceptance or general legal readiness.
+Owner correction for Issue1350 supersedes the Creator Support pilot from PR1488.
+Support explains FanMind, login/registration, dashboard, current catalogue prices,
+channel connection/sync and technical processing problems. Existing authorized
+technical diagnostics, safe repairs and explicit unresolved-case handoff remain.
+Support does not select or administer Models/Fans, inspect private conversations,
+Personas, media or individual offers, change Character styles, or generate style
+comparisons. Those capabilities belong to the existing Creator-Chat /chatadmin
+under Issue1425; no new ChatAdmin implementation or tool migration is introduced.
+
+The Creator UI and its unused server/tool policy are removed after dependency
+inspection. The old /api/support/creator-context returns410 before identity,
+CRM, database or provider access, including stale-client GET/POST attempts.
+Retained pilot history stays subject to the same own-data export/erase/retention;
+a read-only compatibility label identifies it and excludes all four pilot record
+types from future platform AI history. Public Support and authenticated optional
+AI, persistence, consent/withdrawal, privacy, responsive shell, tenant authorization,
+Origin checks and rate/cost limits remain. No SQL, key, flag, role, Billing, Meta,
+media or Operator configuration changes. Production stays unchanged.
+
+New checked merge, protected Staging rollout, actual platform desktop/mobile
+acceptance, remaining tenant negatives and exact synthetic cleanup are required;
+source checks alone do not establish target acceptance. Historical Creator-tool
+mobile and second-identity tests are retired with the tools, not declared passed.
+See docs/operations/SUPPORT_CREATOR_ASSISTANT_20261114.md for scope and cleanup.
 
 ## Authenticated Dashboard Support correction — 14 November 2026
 

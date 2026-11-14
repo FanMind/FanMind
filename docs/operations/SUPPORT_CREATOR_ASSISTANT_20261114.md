@@ -1,3 +1,78 @@
+# FanMind platform Support — Owner correction, 14 November 2026
+
+Issue #1350; supersedes the Creator pilot of merged PR #1488.
+
+## Current scope and dependency decision
+
+The Owner correction removes all Character administration from Support.
+Repository-wide import/reference inspection found that supportCreatorServer and
+supportCreatorPolicy have no Adminchat consumer: only the retired route, Support
+composer, legacy history formatting, and pilot tests depended on them. The server
+and action policy are therefore removed, not copied into a second administration
+system. Existing ChatAdmin settings, Personas, styles, initiative, sales rules,
+private fan conversations, media and per-Character prices remain exclusively in
+their existing implementation under #1425. No ChatAdmin source is modified.
+
+The retired endpoint is an unconditional private/no-store HTTP410 tombstone,
+with no identity/CRM/provider/database dependency. Stale clients cannot read,
+write, undo or analyse. UI selects, grants and action dispatch are removed.
+Read-only legacy-history recognition survives separately: historical records
+stay exportable/erasable and retained by existing Support contracts, but all
+four historical Creator record prefixes are excluded before building AI history.
+No private Fan/Persona record is automatically forwarded through those records.
+The user may still voluntarily type a question: no automatic CRM lookup occurs.
+
+Platform functions remain: public Help; authenticated AI with default-off consent;
+approved knowledge/prices/navigation; persisted own history and scoped privacy;
+authorized technical diagnostics/safe repair and explicit handoff. Existing
+scoped authentication, Origin, rate/cost, cancellation, replay, RLS, retention,
+responsive CSS and Operator sessions remain. This correction adds no generic
+technical scanner or permissions. Unsupported diagnoses stay unknown/escalated.
+Affected contracts: DISCLOSURE-DELETE-001 and AI-BILLING-001 (history minimization,
+unchanged lifecycle/cost guards); CHATADMIN-AI-001 / CHATADMIN-STORAGE-001 are
+regression-only consumers, with Support dependency removed. No gates bypassed.
+
+## Reassessed acceptance
+
+Retire mobile/second-identity tests for withdrawn Character tools. Preserve the
+normal platform mobile, own-history tenant isolation, consent/withdrawal,
+public/authenticated AI, technical diagnosis, privacy and handoff acceptance.
+Unconditional410 must be verified against real Staging as well as module tests.
+Actual mobile viewport must be measured; automated browser evidence is separate.
+Production is not authorized for a new rollout by this correction.
+
+## Exact synthetic cleanup boundary
+
+Existing real Models, Aurela records, old FM1425 fixtures and original Support
+questions must not be deleted. This run owns only:
+- Model Support-QA-20261114-1350 /338ec41f-67e9-4681-92e0-123af9d1e175;
+- Fan Support-QA-Fan-20261114-1350 /6d6b4967-497c-44e1-8092-0e868b027029;
+- their explicitly synthetic local conversation/votes and uniquely identified
+  pilot Support audit/report/test records from the prior acceptance.
+
+Before cleanup confirm exact identity, synthetic description, current revisions,
+restored style values, no other dependencies and regular deletion semantics.
+Delete only through existing authorized scoped paths; preserve unrelated rows.
+If the existing UI/API cannot remove exact Support records without deleting
+older unrelated history, retain those records under existing retention and
+report that cleanup limitation; never purge the whole Operator Support history.
+
+## Evidence
+
+Source corrections, checks, PR and later target acceptance are recorded in
+Issue1350. No Staging deployment or complete acceptance is claimed in this source
+preparation. Later Production requires the exact reviewed correction, successful
+Staging evidence and explicit protected Production authorization. It must never
+reactivate the retired pilot.
+
+---
+
+## Archived preparation: superseded by Owner correction above
+
+The text below is historical implementation context only. Its Creator pilot,
+legal-mandate expansion and Production-activation proposal are withdrawn; do not
+execute them. Historical results remain scoped in Issue1350.
+
 # Creator Support pilot — 14 November 2026
 
 Issue #1350. Owner authorizes checked source development/merges and protected
