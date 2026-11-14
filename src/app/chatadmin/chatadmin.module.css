@@ -260,12 +260,12 @@
 .modelsCollapsed{grid-template-columns:80px minmax(0,1fr)}
 .modelsCollapsed .characterSidebar{padding:16px 8px}
 .modelsCollapsed .modelRailHeader{flex-direction:column;gap:12px;justify-content:center;margin-bottom:14px}
-.modelsCollapsed .paneLabel,.modelsCollapsed .searchLabel,.modelsCollapsed .sidebarFooter{display:none}
+.modelsCollapsed .characterSidebar .paneLabel,.modelsCollapsed .characterSidebar .searchLabel,.modelsCollapsed .characterSidebar .sidebarFooter{display:none}
 .modelsCollapsed .characterCard{border-radius:14px}
 .modelsCollapsed .characterSelect{padding:7px;justify-content:center}
 .modelsCollapsed .modelIdentity{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .modelsCollapsed .modelSettingsButton,.modelsCollapsed .characterMenu{display:none}
-.modelsCollapsed .emptyList{font-size:10px;overflow-wrap:anywhere;padding:6px}
+.modelsCollapsed .characterSidebar .emptyList{font-size:10px;overflow-wrap:anywhere;padding:6px}
 .characterSelected .modelPortrait{box-shadow:0 0 0 2px #7ca6ff}
 @media(max-width:760px){
  .modelsCollapsed{display:block}

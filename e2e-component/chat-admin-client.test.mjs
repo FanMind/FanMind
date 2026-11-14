@@ -419,7 +419,7 @@ test("CRM keeps Models, Fans and conversation in order and returns to the same f
  const fans=await page.getByRole("region",{name:"Fans von Synthetic Anna",exact:true}).boundingBox();
  const conversation=await page.getByRole("region",{name:"Gespräch mit Fan A1",exact:true}).boundingBox();
  assert.ok(models.x+models.width<=fans.x+1);assert.ok(fans.x+fans.width<=conversation.x+1);
- await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-desktop.png",fullPage:true});
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-desktop.png",fullPage:true,animations:"disabled"});
  await expect(page.getByRole("button",{name:"Bilder",exact:true})).toHaveCount(0);
  await expect(page.getByRole("button",{name:"Gespräch",exact:true})).toHaveCount(0);
  await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();
@@ -455,7 +455,7 @@ test("CRM media settings fit a narrow screen and retain the private upload and p
  await page.getByLabel("Startpreis",{exact:true}).fill("12");
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"settings have no horizontal overflow");
  const field=await page.getByLabel("Startpreis",{exact:true}).boundingBox();assert.ok(field.x>=0&&field.x+field.width<=390);
- await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-mobile-settings.png",fullPage:true});
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-mobile-settings.png",fullPage:true,animations:"disabled"});
 });
 
 
@@ -466,8 +466,10 @@ test("Model portrait rail collapses to pictures and expands names without losing
  await openFan(page,"Fan A1");
  const nav=page.getByRole("navigation",{name:"Models",exact:true});
  assert.ok((await nav.boundingBox()).width<=81);
+ await expect(page.getByText("Fans",{exact:true})).toBeVisible();
+ await expect(page.getByRole("searchbox",{name:"Fans durchsuchen",exact:true})).toBeVisible();
  await expect(nav.getByRole("button",{name:"Model-Leiste ausklappen",exact:true})).toHaveAttribute("aria-expanded","false");
- await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-portrait-rail.png",fullPage:true});
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-portrait-rail.png",fullPage:true,animations:"disabled"});
  await nav.getByRole("button",{name:"Model-Leiste ausklappen",exact:true}).click();
  assert.ok((await nav.boundingBox()).width>=190);
  await expect(nav.getByRole("heading",{name:"Synthetic Anna",exact:true})).toBeVisible();
