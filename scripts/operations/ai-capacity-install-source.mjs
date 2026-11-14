@@ -1,0 +1,4 @@
+import {completeChecks,REQUIRED_MAIN_CHECKS,REQUIRED_PR_CHECKS} from './production-release-preflight.mjs';
+export function capacityInstallSourceReady(e,branch,run,pr,checks,prChecks){
+ return e.GITHUB_REPOSITORY==='FanMind/FanMind'&&branch?.protected===true&&branch.commit?.sha===e.GITHUB_SHA&&run?.id===Number(e.GITHUB_RUN_ID)&&run.head_sha===e.GITHUB_SHA&&run.event==='workflow_dispatch'&&run.path==='.github/workflows/ai-capacity-staging-install.yml'&&run.repository?.full_name==='FanMind/FanMind'&&run.actor?.id===270165082&&Number.isSafeInteger(run.check_suite_id)&&pr?.merge_commit_sha===e.GITHUB_SHA&&!!pr.merged_at&&pr.base?.ref==='main'&&pr.head?.repo?.full_name==='FanMind/FanMind'&&completeChecks(checks,REQUIRED_MAIN_CHECKS,run.check_suite_id)&&completeChecks(prChecks,REQUIRED_PR_CHECKS);
+}

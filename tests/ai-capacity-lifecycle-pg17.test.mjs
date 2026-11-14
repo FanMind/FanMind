@@ -1,3 +1,4 @@
+import "./ai-capacity-install.cases.mjs";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { readFileSync } from "node:fs";

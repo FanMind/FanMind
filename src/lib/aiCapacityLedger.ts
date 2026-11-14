@@ -1,4 +1,5 @@
 import "server-only";
+import {capacityEntitlementCommand} from "@/lib/aiCapacityEntitlementWriter.mjs";
 
 import { getSupabaseApiKeyHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 
@@ -341,4 +342,16 @@ export async function getAiCapacityBalanceSnapshot(
       row.remaining_percent === null ? null : Number(row.remaining_percent),
     hasCapacityHistory: row.has_capacity_history,
   };
+}
+
+/** Explicit canonical Billing consumer; never invoked by a Web deploy or browser. */
+export async function syncCanonicalAiCapacityEntitlement(input: {
+  observation: unknown; command: unknown; expectedRevision: number;
+}): Promise<number> {
+  const body = capacityEntitlementCommand(input);
+  const revision = await postRpc<number>("sync_ai_capacity_entitlement", body);
+  if (!Number.isSafeInteger(revision) || revision !== input.expectedRevision + 1) {
+    throw Error("ai_capacity_entitlement_commit_unconfirmed");
+  }
+  return revision;
 }

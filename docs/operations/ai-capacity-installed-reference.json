@@ -1,0 +1,1467 @@
+{
+  "version": 1,
+  "origin": "isolated-postgresql-17.11-source-reconciliation-no-target",
+  "catalogue_sha256": "fafa936dc3c588780c4fd1c0be447566b8cb2f31b77c968cccc8c786da29ed51",
+  "catalogue": {
+    "triggers": [
+      [
+        "public",
+        "ai_capacity_admin_policy",
+        "ai_capacity_admin_activation_guard",
+        "CREATE TRIGGER ai_capacity_admin_activation_guard BEFORE INSERT OR UPDATE ON ai_capacity_admin_policy FOR EACH ROW EXECUTE FUNCTION ai_capacity_admin_activation_guard()",
+        "O"
+      ],
+      [
+        "public",
+        "ai_capacity_ledger_events",
+        "ai_capacity_ledger_immutable_update_delete",
+        "CREATE TRIGGER ai_capacity_ledger_immutable_update_delete BEFORE DELETE OR UPDATE ON ai_capacity_ledger_events FOR EACH ROW EXECUTE FUNCTION ai_capacity_ledger_immutable()",
+        "O"
+      ],
+      [
+        "public",
+        "workspace_stripe_billing_streams",
+        "capacity_billing_delete",
+        "CREATE TRIGGER capacity_billing_delete AFTER DELETE ON workspace_stripe_billing_streams FOR EACH ROW WHEN (old.event_stream = 'lifecycle'::text) EXECUTE FUNCTION fanmind_capacity_private.invalidate_entitlement()",
+        "O"
+      ],
+      [
+        "public",
+        "workspace_stripe_billing_streams",
+        "capacity_billing_invalidate",
+        "CREATE TRIGGER capacity_billing_invalidate AFTER UPDATE OF projection_revision, sync_state, lifecycle_terminal ON workspace_stripe_billing_streams FOR EACH ROW WHEN (new.event_stream = 'lifecycle'::text AND (old.projection_revision IS DISTINCT FROM new.projection_revision OR old.sync_state IS DISTINCT FROM new.sync_state OR old.lifecycle_terminal IS DISTINCT FROM new.lifecycle_terminal)) EXECUTE FUNCTION fanmind_capacity_private.invalidate_entitlement()",
+        "O"
+      ],
+      [
+        "public",
+        "workspaces",
+        "capacity_workspace_invalidate",
+        "CREATE TRIGGER capacity_workspace_invalidate AFTER UPDATE OF billing_status, workspace_access_mode, billing_suspended_at, stripe_customer_id, stripe_subscription_id, billing_current_period_end_at ON workspaces FOR EACH ROW WHEN (old.billing_status IS DISTINCT FROM new.billing_status OR old.workspace_access_mode IS DISTINCT FROM new.workspace_access_mode OR old.billing_suspended_at IS DISTINCT FROM new.billing_suspended_at OR old.stripe_customer_id IS DISTINCT FROM new.stripe_customer_id OR old.stripe_subscription_id IS DISTINCT FROM new.stripe_subscription_id OR old.billing_current_period_end_at IS DISTINCT FROM new.billing_current_period_end_at) EXECUTE FUNCTION fanmind_capacity_private.invalidate_entitlement()",
+        "O"
+      ]
+    ],
+    "functions": [
+      {
+        "acl": "{postgres=X/postgres}",
+        "name": "invalidate_entitlement",
+        "owner": "postgres",
+        "schema": "fanmind_capacity_private",
+        "definition": "CREATE OR REPLACE FUNCTION fanmind_capacity_private.invalidate_entitlement()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare w uuid;\nbegin\n if tg_op='DELETE' then w:=old.workspace_id;elsif tg_table_name='workspaces' then w:=new.id;else w:=new.workspace_id;end if;\n update public.ai_capacity_workspace_entitlements set active=false,revision=revision+1,\n source_fingerprint=encode(sha256(convert_to(source_fingerprint||':billing-invalidated:'||(revision+1)::text,'UTF8')),'hex') where workspace_id=w and active;\n return new;\nend $function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "name": "invalidate_mapping",
+        "owner": "postgres",
+        "schema": "fanmind_capacity_private",
+        "definition": "CREATE OR REPLACE FUNCTION fanmind_capacity_private.invalidate_mapping()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\nbegin\n update public.ai_capacity_workspace_entitlements set active=false,revision=revision+1,\n source_fingerprint=encode(sha256(convert_to(source_fingerprint||':mapping-invalidated:'||(revision+1)::text,'UTF8')),'hex') where active;\n return null;\nend $function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "name": "write_entitlement",
+        "owner": "postgres",
+        "schema": "fanmind_capacity_private",
+        "definition": "CREATE OR REPLACE FUNCTION fanmind_capacity_private.write_entitlement(w uuid, package text, period text, starts timestamp with time zone, ends timestamp with time zone, expected bigint, enabled boolean, fingerprint text)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare old public.ai_capacity_workspace_entitlements%rowtype; next_revision bigint;\nbegin\n if w is null or package is null or package not in ('capacity_99','capacity_199','capacity_312')\n or period is null or btrim(period)='' or starts is null or ends is null or ends<=starts\n or expected is null or expected<0 or expected>=9007199254740991 or enabled is null\n or fingerprint is null or fingerprint !~ '^[a-f0-9]{64}$' then raise exception 'capacity_writer_invalid'; end if;\n perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(w::text,41001));\n if not exists(select from public.workspaces where id=w) then raise exception 'capacity_writer_workspace_missing'; end if;\n select * into old from public.ai_capacity_workspace_entitlements where workspace_id=w for update;\n if found and old.source_fingerprint=fingerprint then\n  if old.package_id is distinct from package or old.billing_period_key is distinct from period or old.period_start is distinct from starts\n   or old.period_end is distinct from ends or old.active is distinct from enabled or old.revision<>expected+1 then raise exception 'capacity_writer_replay_conflict'; end if;\n  return old.revision;\n end if;\n if coalesce(old.revision,0)<>expected then raise exception 'capacity_writer_revision_conflict'; end if;\n next_revision:=expected+1;\n insert into public.ai_capacity_workspace_entitlements(workspace_id,billing_contract_version,package_id,billing_period_key,period_start,period_end,revision,active,source_fingerprint)\n values(w,'capacity_v2',package,period,starts,ends,next_revision,enabled,fingerprint)\n on conflict(workspace_id) do update set package_id=excluded.package_id,billing_period_key=excluded.billing_period_key,\n period_start=excluded.period_start,period_end=excluded.period_end,revision=excluded.revision,active=excluded.active,source_fingerprint=excluded.source_fingerprint;\n return next_revision;\nend $function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "admin_get_ai_capacity_policy",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.admin_get_ai_capacity_policy()\n RETURNS TABLE(global_capacity_enabled boolean, emergency_spend_freeze boolean, top_up_sales_enabled boolean, package_99_sales_enabled boolean, package_199_sales_enabled boolean, package_312_sales_enabled boolean, fast_enabled boolean, balanced_enabled boolean, premium_enabled boolean, package_99_budget_eur_microcents bigint, package_199_budget_eur_microcents bigint, package_312_budget_eur_microcents bigint, revision bigint, updated_at timestamp with time zone)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\n  select\n    p.global_capacity_enabled,\n    p.emergency_spend_freeze,\n    p.top_up_sales_enabled,\n    p.package_99_sales_enabled,\n    p.package_199_sales_enabled,\n    p.package_312_sales_enabled,\n    p.fast_enabled,\n    p.balanced_enabled,\n    p.premium_enabled,\n    p.package_99_budget_eur_microcents,\n    p.package_199_budget_eur_microcents,\n    p.package_312_budget_eur_microcents,\n    p.revision,\n    p.updated_at\n  from public.ai_capacity_admin_policy as p\n  where p.singleton_id = 1\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "admin_update_ai_capacity_policy",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.admin_update_ai_capacity_policy(p_admin_user_id uuid, p_admin_email text, p_expected_revision bigint, p_global_capacity_enabled boolean, p_emergency_spend_freeze boolean, p_top_up_sales_enabled boolean, p_package_99_sales_enabled boolean, p_package_199_sales_enabled boolean, p_package_312_sales_enabled boolean, p_fast_enabled boolean, p_balanced_enabled boolean, p_premium_enabled boolean, p_package_99_budget_eur_microcents bigint, p_package_199_budget_eur_microcents bigint, p_package_312_budget_eur_microcents bigint)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_next_revision bigint;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_admin_service_role_required';\n  end if;\n  if p_admin_user_id is null or p_expected_revision is null or p_expected_revision < 1 then\n    raise exception using errcode = '22023', message = 'ai_capacity_admin_identity_or_revision_invalid';\n  end if;\n  if p_global_capacity_enabled and not (p_fast_enabled or p_balanced_enabled or p_premium_enabled) then\n    raise exception using errcode = '23514', message = 'ai_capacity_admin_quality_mode_required';\n  end if;\n  if p_package_99_budget_eur_microcents is not null and p_package_99_budget_eur_microcents <= 0\n     or p_package_199_budget_eur_microcents is not null and p_package_199_budget_eur_microcents <= 0\n     or p_package_312_budget_eur_microcents is not null and p_package_312_budget_eur_microcents <= 0 then\n    raise exception using errcode = '23514', message = 'ai_capacity_admin_budget_invalid';\n  end if;\n\n  update public.ai_capacity_admin_policy\n     set global_capacity_enabled = p_global_capacity_enabled,\n         emergency_spend_freeze = p_emergency_spend_freeze,\n         top_up_sales_enabled = p_top_up_sales_enabled,\n         package_99_sales_enabled = p_package_99_sales_enabled,\n         package_199_sales_enabled = p_package_199_sales_enabled,\n         package_312_sales_enabled = p_package_312_sales_enabled,\n         fast_enabled = p_fast_enabled,\n         balanced_enabled = p_balanced_enabled,\n         premium_enabled = p_premium_enabled,\n         package_99_budget_eur_microcents = p_package_99_budget_eur_microcents,\n         package_199_budget_eur_microcents = p_package_199_budget_eur_microcents,\n         package_312_budget_eur_microcents = p_package_312_budget_eur_microcents,\n         revision = revision + 1,\n         updated_at = statement_timestamp(),\n         updated_by_user_id = p_admin_user_id\n   where singleton_id = 1\n     and revision = p_expected_revision\n  returning revision into v_next_revision;\n\n  if v_next_revision is null then\n    raise exception using errcode = '40001', message = 'ai_capacity_admin_revision_conflict';\n  end if;\n\n  insert into public.operations_audit_log (\n    actor_user_id, actor_email, action, target_table, target_id, severity, outcome, metadata\n  ) values (\n    p_admin_user_id,\n    case when coalesce(p_admin_email, '') ~* '(secret|token|apikey|api_key|password|bearer)' then null else nullif(btrim(p_admin_email), '') end,\n    'ai_capacity_admin_policy_change',\n    'ai_capacity_admin_policy',\n    null,\n    case when p_emergency_spend_freeze then 'warning' else 'info' end,\n    'success',\n    jsonb_build_object(\n      'revision', v_next_revision,\n      'global_capacity_enabled', p_global_capacity_enabled,\n      'emergency_spend_freeze', p_emergency_spend_freeze,\n      'top_up_sales_enabled', p_top_up_sales_enabled,\n      'package_sales', jsonb_build_object('capacity_99', p_package_99_sales_enabled, 'capacity_199', p_package_199_sales_enabled, 'capacity_312', p_package_312_sales_enabled),\n      'quality_modes', jsonb_build_object('fast', p_fast_enabled, 'balanced', p_balanced_enabled, 'premium', p_premium_enabled)\n    )\n  );\n\n  return v_next_revision;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres}",
+        "name": "ai_capacity_admin_activation_guard",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_admin_activation_guard()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\nbegin\n  if new.global_capacity_enabled and not new.runtime_activation_ready then\n    raise exception using errcode = '23514', message = 'ai_capacity_runtime_activation_not_ready';\n  end if;\n  if (new.package_99_sales_enabled or new.package_199_sales_enabled or new.package_312_sales_enabled)\n     and not new.package_sales_activation_ready then\n    raise exception using errcode = '23514', message = 'ai_capacity_package_sales_activation_not_ready';\n  end if;\n  if new.top_up_sales_enabled and not new.top_up_activation_ready then\n    raise exception using errcode = '23514', message = 'ai_capacity_top_up_activation_not_ready';\n  end if;\n  if new.global_capacity_enabled\n     and (\n       new.package_99_budget_eur_microcents is null\n       or new.package_199_budget_eur_microcents is null\n       or new.package_312_budget_eur_microcents is null\n     ) then\n    raise exception using errcode = '23514', message = 'ai_capacity_budget_approval_required';\n  end if;\n  return new;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_balance_snapshot",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_balance_snapshot(p_workspace_id uuid)\n RETURNS TABLE(total_granted_eur_microcents bigint, consumed_eur_microcents bigint, held_eur_microcents bigint, available_eur_microcents bigint, remaining_percent integer, has_capacity_history boolean)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\n  with active_grants as (\n    select\n      g.id,\n      greatest(0::bigint, g.granted_eur_microcents - g.reversed_eur_microcents) as active_amount\n    from public.ai_capacity_grants g\n    where g.workspace_id = p_workspace_id\n      and g.reversed_eur_microcents < g.granted_eur_microcents\n      and (\n        (g.grant_kind = 'included_period' and g.period_start <= clock_timestamp()\n          and g.period_end > clock_timestamp())\n        or\n        (g.grant_kind = 'purchased' and (g.expires_at is null or g.expires_at > clock_timestamp()))\n      )\n  ),\n  usage_by_grant as (\n    select\n      a.grant_id,\n      coalesce(sum(\n        case when r.state = 'settled'\n          then coalesce(a.settled_eur_microcents, a.reserved_eur_microcents)\n          else 0 end\n      ),0)::bigint as consumed,\n      coalesce(sum(\n        case when r.state in ('reserved','indeterminate','reconciliation_required')\n          then a.reserved_eur_microcents\n          else 0 end\n      ),0)::bigint as held\n    from public.ai_capacity_reservation_allocations a\n    join public.ai_capacity_reservations r on r.id = a.reservation_id\n    join active_grants g on g.id = a.grant_id\n    group by a.grant_id\n  ),\n  totals as (\n    select\n      coalesce(sum(g.active_amount),0)::bigint as total_granted,\n      coalesce(sum(coalesce(u.consumed,0)),0)::bigint as consumed,\n      coalesce(sum(coalesce(u.held,0)),0)::bigint as held\n    from active_grants g\n    left join usage_by_grant u on u.grant_id = g.id\n  )\n  select\n    total_granted,\n    consumed,\n    held,\n    greatest(0::bigint, total_granted - consumed - held) as available,\n    case\n      when total_granted <= 0 then null\n      else floor(\n        greatest(0::numeric, (total_granted - consumed - held)::numeric)\n        * 100::numeric\n        / total_granted::numeric\n      )::integer\n    end as remaining_percent,\n    exists (\n      select 1 from public.ai_capacity_grants h where h.workspace_id = p_workspace_id\n      union all\n      select 1 from public.ai_capacity_reservations r where r.workspace_id = p_workspace_id\n    ) as has_capacity_history\n  from totals\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_grant_credit",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_grant_credit(p_workspace_id uuid, p_grant_kind text, p_grant_key text, p_package_id text, p_billing_period_key text, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_expires_at timestamp with time zone, p_granted_eur_microcents bigint, p_metadata jsonb DEFAULT '{}'::jsonb)\n RETURNS uuid\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_id uuid;\n  v_entitlement public.ai_capacity_workspace_entitlements%rowtype;\n  v_budget bigint;\n  v_existing public.ai_capacity_grants%rowtype;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_workspace_id is null\n     or p_grant_kind is null\n     or p_grant_kind not in ('included_period','purchased')\n     or p_grant_key is null\n     or btrim(p_grant_key) = ''\n     or p_granted_eur_microcents is null\n     or p_granted_eur_microcents <= 0 then\n    raise exception using errcode = '22023', message = 'ai_capacity_grant_invalid';\n  end if;\n  if p_grant_kind = 'included_period' then\n    if p_package_id is null\n       or p_package_id not in ('capacity_99','capacity_199','capacity_312')\n       or p_billing_period_key is null\n       or btrim(p_billing_period_key) = ''\n       or p_period_start is null\n       or p_period_end is null\n       or p_period_end <= p_period_start then\n      raise exception using errcode = '22023', message = 'ai_capacity_included_grant_invalid';\n    end if;\n  end if;\n\n  perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));\n\n  select *\n    into v_existing\n    from public.ai_capacity_grants\n   where workspace_id = p_workspace_id\n     and grant_key = p_grant_key;\n\n  if found then\n    if v_existing.grant_kind is distinct from p_grant_kind\n       or v_existing.package_id is distinct from p_package_id\n       or v_existing.billing_period_key is distinct from p_billing_period_key\n       or v_existing.period_start is distinct from p_period_start\n       or v_existing.period_end is distinct from p_period_end\n       or v_existing.expires_at is distinct from p_expires_at\n       or v_existing.granted_eur_microcents is distinct from p_granted_eur_microcents then\n      raise exception using errcode = '23505', message = 'ai_capacity_grant_idempotency_conflict';\n    end if;\n    return v_existing.id;\n  end if;\n\n  if p_grant_kind = 'included_period' then\n    select *\n      into v_existing\n      from public.ai_capacity_grants\n     where workspace_id = p_workspace_id\n       and grant_kind = 'included_period'\n       and billing_period_key = p_billing_period_key;\n    if found then\n      raise exception using errcode = '23505', message = 'ai_capacity_included_period_idempotency_conflict';\n    end if;\n  end if;\n\n  -- A service grant must name an existing Workspace even for purchased credit.\n  perform 1 from public.workspaces where id = p_workspace_id for key share;\n  if not found then\n    raise exception using errcode = '23514', message = 'ai_capacity_workspace_missing';\n  end if;\n  if p_grant_kind = 'included_period' then\n    select * into v_entitlement from public.ai_capacity_workspace_entitlements\n     where workspace_id = p_workspace_id for share;\n    if not found or not v_entitlement.active\n       or v_entitlement.billing_contract_version <> 'capacity_v2'\n       or v_entitlement.package_id is distinct from p_package_id\n       or v_entitlement.billing_period_key is distinct from p_billing_period_key\n       or v_entitlement.period_start is distinct from p_period_start\n       or v_entitlement.period_end is distinct from p_period_end\n       or p_expires_at is not null then\n      raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';\n    end if;\n    select case p_package_id\n      when 'capacity_99' then package_99_budget_eur_microcents\n      when 'capacity_199' then package_199_budget_eur_microcents\n      when 'capacity_312' then package_312_budget_eur_microcents end\n      into v_budget from public.ai_capacity_admin_policy where singleton_id = 1 for share;\n    if v_budget is null or v_budget is distinct from p_granted_eur_microcents then\n      raise exception using errcode = '23514', message = 'ai_capacity_grant_budget_mismatch';\n    end if;\n  elsif p_package_id is not null or p_billing_period_key is not null\n     or p_period_start is not null or p_period_end is not null then\n    raise exception using errcode = '22023', message = 'ai_capacity_grant_invalid';\n  end if;\n\n  insert into public.ai_capacity_grants (\n    workspace_id, grant_kind, grant_key, package_id, billing_period_key,\n    period_start, period_end, expires_at, granted_eur_microcents, metadata\n  ) values (\n    p_workspace_id, p_grant_kind, p_grant_key, p_package_id, p_billing_period_key,\n    p_period_start, p_period_end, p_expires_at, p_granted_eur_microcents,\n    coalesce(p_metadata, '{}'::jsonb)\n  )\n  returning id into v_id;\n\n  insert into public.ai_capacity_ledger_events (\n    workspace_id, event_type, bucket_kind, grant_id, amount_eur_microcents, metadata\n  ) values (\n    p_workspace_id,\n    case when p_grant_kind = 'included_period' then 'included_period_grant' else 'purchased_credit_grant' end,\n    p_grant_kind,\n    v_id,\n    p_granted_eur_microcents,\n    coalesce(p_metadata, '{}'::jsonb)\n  );\n\n  return v_id;\nend\n$function$\n"
+      },
+      {
+        "acl": "{=X/postgres,postgres=X/postgres}",
+        "name": "ai_capacity_ledger_immutable",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_ledger_immutable()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\nAS $function$\nbegin\n  raise exception using errcode = '42501', message = 'ai_capacity_ledger_immutable';\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_mark_indeterminate",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_mark_indeterminate(p_reservation_id uuid, p_reason text)\n RETURNS TABLE(reservation_id uuid, state text)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_reservation public.ai_capacity_reservations%rowtype;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_reservation_id is null or p_reason is null or btrim(p_reason) = '' then\n    raise exception using errcode = '22023', message = 'ai_capacity_indeterminate_invalid';\n  end if;\n\n  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));\n  select * into v_reservation from public.ai_capacity_reservations\n   where id = p_reservation_id for update;\n\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n\n  if v_reservation.state = 'indeterminate' then\n    return query select v_reservation.id, v_reservation.state;\n    return;\n  end if;\n\n  if v_reservation.state <> 'reserved' then\n    raise exception using errcode = '23514', message = 'ai_capacity_indeterminate_state_invalid';\n  end if;\n\n  update public.ai_capacity_reservations\n     set state = 'indeterminate',\n         updated_at = statement_timestamp()\n   where id = v_reservation.id;\n\n  insert into public.ai_capacity_ledger_events (\n    workspace_id, reservation_id, generation_key, event_type,\n    amount_eur_microcents, metadata\n  ) values (\n    v_reservation.workspace_id, v_reservation.id, v_reservation.generation_key,\n    'reservation_indeterminate', v_reservation.reserved_eur_microcents,\n    jsonb_build_object('reason', left(p_reason, 120))\n  );\n\n  return query select v_reservation.id, 'indeterminate'::text;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_release",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_release(p_reservation_id uuid, p_reason text)\n RETURNS TABLE(reservation_id uuid, state text, released_eur_microcents bigint)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_reservation public.ai_capacity_reservations%rowtype;\n  v_allocation record;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_reservation_id is null or p_reason is null or btrim(p_reason) = '' then\n    raise exception using errcode = '22023', message = 'ai_capacity_release_invalid';\n  end if;\n\n  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));\n  select * into v_reservation from public.ai_capacity_reservations\n   where id = p_reservation_id for update;\n\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n\n  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));\n\n  if v_reservation.state = 'released' then\n    return query select v_reservation.id, v_reservation.state, v_reservation.reserved_eur_microcents;\n    return;\n  end if;\n\n  if v_reservation.state not in ('reserved','indeterminate') then\n    raise exception using errcode = '23514', message = 'ai_capacity_release_state_invalid';\n  end if;\n\n  for v_allocation in\n    select a.grant_id, a.reserved_eur_microcents, g.grant_kind\n    from public.ai_capacity_reservation_allocations a\n    join public.ai_capacity_grants g on g.id = a.grant_id\n    where a.reservation_id = v_reservation.id\n  loop\n    insert into public.ai_capacity_ledger_events (\n      workspace_id, reservation_id, generation_key, event_type,\n      bucket_kind, grant_id, amount_eur_microcents, metadata\n    ) values (\n      v_reservation.workspace_id, v_reservation.id, v_reservation.generation_key,\n      'reservation_released', v_allocation.grant_kind, v_allocation.grant_id,\n      v_allocation.reserved_eur_microcents,\n      jsonb_build_object('reason', left(p_reason, 120))\n    );\n  end loop;\n\n  update public.ai_capacity_reservations\n     set state = 'released',\n         settled_eur_microcents = 0,\n         updated_at = statement_timestamp()\n   where id = v_reservation.id;\n\n  return query select v_reservation.id, 'released'::text, v_reservation.reserved_eur_microcents;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_reserve",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_reserve(p_workspace_id uuid, p_generation_key text, p_billing_period_key text, p_package_id text, p_quality_mode text, p_reserved_eur_microcents bigint, p_expected_policy_revision bigint, p_expected_entitlement_revision bigint, p_provider text, p_model text, p_pricing_version text, p_fx_version text, p_metadata jsonb DEFAULT '{}'::jsonb)\n RETURNS TABLE(reservation_id uuid, reserved_eur_microcents bigint, state text, created boolean)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_existing public.ai_capacity_reservations%rowtype;\n  v_reservation_id uuid;\n  v_remaining bigint;\n  v_available bigint;\n  v_take bigint;\n  v_grant record;\n  v_policy public.ai_capacity_admin_policy%rowtype;\n  v_entitlement public.ai_capacity_workspace_entitlements%rowtype;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_workspace_id is null\n     or p_generation_key is null or btrim(p_generation_key) = ''\n     or p_billing_period_key is null or btrim(p_billing_period_key) = ''\n     or p_package_id is null\n     or p_package_id not in ('capacity_99','capacity_199','capacity_312')\n     or p_quality_mode is null\n     or p_quality_mode not in ('fast','balanced','premium')\n     or p_reserved_eur_microcents is null\n     or p_reserved_eur_microcents <= 0\n     or p_expected_policy_revision is null\n     or p_expected_policy_revision < 1\n     or p_expected_entitlement_revision is null or p_expected_entitlement_revision < 1\n     or p_provider is null or btrim(p_provider) = ''\n     or p_model is null or btrim(p_model) = ''\n     or p_pricing_version is null or btrim(p_pricing_version) = ''\n     or p_fx_version is null or btrim(p_fx_version) = '' then\n    raise exception using errcode = '22023', message = 'ai_capacity_reservation_invalid';\n  end if;\n\n  perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));\n\n  -- Lock the authoritative entitlement and policy until transaction end.\n  -- No sales switch: disabling new package sales does not revoke existing usage.\n  select * into v_entitlement from public.ai_capacity_workspace_entitlements\n   where workspace_id = p_workspace_id for share;\n  if not found or not v_entitlement.active\n     or v_entitlement.billing_contract_version <> 'capacity_v2'\n     or v_entitlement.package_id is distinct from p_package_id\n     or v_entitlement.billing_period_key is distinct from p_billing_period_key\n then\n    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';\n  end if;\n  if exists (\n    select 1 from public.ai_capacity_grants g\n     where g.workspace_id = p_workspace_id and g.grant_kind = 'included_period'\n       and g.billing_period_key = p_billing_period_key\n       and (g.package_id is distinct from v_entitlement.package_id\n         or g.period_start is distinct from v_entitlement.period_start\n         or g.period_end is distinct from v_entitlement.period_end)\n  ) then\n    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';\n  end if;\n  if v_entitlement.revision is distinct from p_expected_entitlement_revision then\n    raise exception using errcode = '40001', message = 'ai_capacity_entitlement_revision_conflict';\n  end if;\n\n  select *\n    into v_policy\n    from public.ai_capacity_admin_policy\n   where singleton_id = 1\n   for share;\n\n  if not found then\n    raise exception using errcode = '23514', message = 'ai_capacity_policy_missing';\n  end if;\n  if v_policy.revision is distinct from p_expected_policy_revision then\n    raise exception using errcode = '40001', message = 'ai_capacity_policy_revision_conflict';\n  end if;\n  if not v_policy.global_capacity_enabled or v_policy.emergency_spend_freeze then\n    raise exception using errcode = '23514', message = 'ai_capacity_admission_closed';\n  end if;\n  if (p_quality_mode = 'fast' and not v_policy.fast_enabled)\n     or (p_quality_mode = 'balanced' and not v_policy.balanced_enabled)\n     or (p_quality_mode = 'premium' and not v_policy.premium_enabled) then\n    raise exception using errcode = '23514', message = 'ai_capacity_quality_mode_disabled';\n  end if;\n\n  -- Time can advance while either SHARE lock waits. Check only after both\n  -- authoritative rows are locked, immediately before replay/new reservation.\n  if v_entitlement.period_start > clock_timestamp()\n     or v_entitlement.period_end <= clock_timestamp() then\n    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';\n  end if;\n\n  select *\n    into v_existing\n    from public.ai_capacity_reservations\n   where workspace_id = p_workspace_id\n     and generation_key = p_generation_key;\n\n  if found then\n    if v_existing.billing_period_key is distinct from p_billing_period_key\n       or v_existing.package_id is distinct from p_package_id\n       or v_existing.quality_mode is distinct from p_quality_mode\n       or v_existing.reserved_eur_microcents is distinct from p_reserved_eur_microcents\n       or v_existing.policy_revision is distinct from p_expected_policy_revision\n       or v_existing.entitlement_revision is distinct from p_expected_entitlement_revision\n       or v_existing.provider is distinct from p_provider\n       or v_existing.model is distinct from p_model\n       or v_existing.pricing_version is distinct from p_pricing_version\n       or v_existing.fx_version is distinct from p_fx_version then\n      raise exception using errcode = '23505', message = 'ai_capacity_reservation_idempotency_conflict';\n    end if;\n    if v_existing.state <> 'reserved' then\n      raise exception using errcode = '23514', message = 'ai_capacity_generation_not_replayable';\n    end if;\n    return query select v_existing.id, v_existing.reserved_eur_microcents, v_existing.state, false;\n    return;\n  end if;\n\n  insert into public.ai_capacity_reservations (\n    workspace_id, generation_key, billing_period_key, package_id, quality_mode,\n    reserved_eur_microcents, state, policy_revision, entitlement_revision,\n    provider, model, pricing_version, fx_version\n  ) values (\n    p_workspace_id, p_generation_key, p_billing_period_key, p_package_id, p_quality_mode,\n    p_reserved_eur_microcents, 'reserved', p_expected_policy_revision, p_expected_entitlement_revision,\n    p_provider, p_model, p_pricing_version, p_fx_version\n  )\n  returning id into v_reservation_id;\n\n  v_remaining := p_reserved_eur_microcents;\n\n  for v_grant in\n    select\n      g.*,\n      greatest(\n        0::bigint,\n        g.granted_eur_microcents\n        - g.reversed_eur_microcents\n        - coalesce((\n            select sum(\n              case\n                when r.state in ('reserved','indeterminate','reconciliation_required')\n                  then a.reserved_eur_microcents\n                when r.state = 'settled'\n                  then coalesce(a.settled_eur_microcents, a.reserved_eur_microcents)\n                else 0\n              end\n            )\n            from public.ai_capacity_reservation_allocations a\n            join public.ai_capacity_reservations r on r.id = a.reservation_id\n            where a.grant_id = g.id\n          ), 0)\n      ) as available_eur_microcents\n    from public.ai_capacity_grants g\n    where g.workspace_id = p_workspace_id\n      and g.reversed_eur_microcents < g.granted_eur_microcents\n      and (\n        (\n          g.grant_kind = 'included_period'\n          and g.billing_period_key = p_billing_period_key\n          and g.package_id = p_package_id\n          and g.period_start = v_entitlement.period_start\n          and g.period_end = v_entitlement.period_end\n          and g.period_start <= clock_timestamp()\n          and g.period_end > clock_timestamp()\n        )\n        or (\n          g.grant_kind = 'purchased'\n          and (g.expires_at is null or g.expires_at > clock_timestamp())\n        )\n      )\n    order by\n      case g.grant_kind when 'included_period' then 0 else 1 end,\n      g.created_at,\n      g.id\n  loop\n    exit when v_remaining <= 0;\n    v_available := v_grant.available_eur_microcents;\n    if v_available <= 0 then\n      continue;\n    end if;\n    v_take := least(v_remaining, v_available);\n\n    insert into public.ai_capacity_reservation_allocations (\n      reservation_id, grant_id, reserved_eur_microcents\n    ) values (\n      v_reservation_id, v_grant.id, v_take\n    );\n\n    insert into public.ai_capacity_ledger_events (\n      workspace_id, reservation_id, generation_key, event_type,\n      bucket_kind, grant_id, amount_eur_microcents,\n      provider, model, pricing_version, fx_version, metadata\n    ) values (\n      p_workspace_id, v_reservation_id, p_generation_key, 'reservation_created',\n      v_grant.grant_kind, v_grant.id, v_take,\n      p_provider, p_model, p_pricing_version, p_fx_version, coalesce(p_metadata, '{}'::jsonb)\n    );\n\n    v_remaining := v_remaining - v_take;\n  end loop;\n\n  if v_remaining > 0 then\n    raise exception using errcode = '23514', message = 'ai_capacity_insufficient_balance';\n  end if;\n\n  return query select v_reservation_id, p_reserved_eur_microcents, 'reserved'::text, true;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_reverse_purchase",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_reverse_purchase(p_workspace_id uuid, p_grant_key text, p_reversal_key text, p_reason text, p_metadata jsonb DEFAULT '{}'::jsonb)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_grant public.ai_capacity_grants%rowtype;\n  v_consumed bigint;\n  v_held bigint;\n  v_available bigint;\n  v_existing bigint;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_workspace_id is null\n     or p_grant_key is null or btrim(p_grant_key) = ''\n     or p_reversal_key is null or btrim(p_reversal_key) = ''\n     or p_reason is null or btrim(p_reason) = '' then\n    raise exception using errcode = '22023', message = 'ai_capacity_reversal_invalid';\n  end if;\n\n  perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));\n\n  select amount_eur_microcents\n    into v_existing\n    from public.ai_capacity_ledger_events\n   where workspace_id = p_workspace_id\n     and event_type = 'purchase_reversal'\n     and metadata ->> 'reversal_key' = p_reversal_key\n   limit 1;\n  if found then\n    return v_existing;\n  end if;\n\n  select *\n    into v_grant\n    from public.ai_capacity_grants\n   where workspace_id = p_workspace_id\n     and grant_kind = 'purchased'\n     and grant_key = p_grant_key\n   for update;\n\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_purchase_grant_missing';\n  end if;\n\n  select\n    coalesce(sum(case when r.state = 'settled'\n      then coalesce(a.settled_eur_microcents, a.reserved_eur_microcents)\n      else 0 end), 0)::bigint,\n    coalesce(sum(case when r.state in ('reserved','indeterminate','reconciliation_required')\n      then a.reserved_eur_microcents\n      else 0 end), 0)::bigint\n    into v_consumed, v_held\n    from public.ai_capacity_reservation_allocations a\n    join public.ai_capacity_reservations r on r.id = a.reservation_id\n   where a.grant_id = v_grant.id;\n\n  v_available := greatest(\n    0::bigint,\n    v_grant.granted_eur_microcents - v_grant.reversed_eur_microcents - v_consumed - v_held\n  );\n\n  if v_available > 0 then\n    update public.ai_capacity_grants\n       set reversed_eur_microcents = reversed_eur_microcents + v_available\n     where id = v_grant.id;\n  end if;\n\n  insert into public.ai_capacity_ledger_events (\n    workspace_id, event_type, bucket_kind, grant_id, amount_eur_microcents, metadata\n  ) values (\n    p_workspace_id, 'purchase_reversal', 'purchased', v_grant.id, v_available,\n    coalesce(p_metadata, '{}'::jsonb) || jsonb_build_object(\n      'reversal_key', p_reversal_key,\n      'reason', left(p_reason, 120),\n      'grant_key', p_grant_key\n    )\n  );\n\n  return v_available;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "ai_capacity_settle",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.ai_capacity_settle(p_reservation_id uuid, p_actual_eur_microcents bigint, p_provider text, p_model text, p_input_tokens bigint, p_cached_input_tokens bigint, p_cache_write_tokens bigint, p_output_tokens bigint, p_reasoning_tokens bigint, p_pricing_version text, p_fx_version text, p_metadata jsonb DEFAULT '{}'::jsonb)\n RETURNS TABLE(reservation_id uuid, state text, settled_eur_microcents bigint, released_eur_microcents bigint)\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'pg_catalog', 'public', 'pg_temp'\n SET row_security TO 'off'\nAS $function$\ndeclare\n  v_reservation public.ai_capacity_reservations%rowtype;\n  v_remaining bigint;\n  v_settle bigint;\n  v_release bigint;\n  v_allocation record;\n  v_reconciliation public.ai_capacity_ledger_events%rowtype;\n  v_evidence jsonb;\nbegin\n  if auth.role() is distinct from 'service_role' then\n    raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';\n  end if;\n  if p_reservation_id is null\n     or p_actual_eur_microcents is null or p_actual_eur_microcents < 0\n     or p_provider is null or btrim(p_provider) = ''\n     or p_model is null or btrim(p_model) = ''\n     or p_pricing_version is null or btrim(p_pricing_version) = ''\n     or p_fx_version is null or btrim(p_fx_version) = ''\n     or p_input_tokens is null or p_input_tokens < 0\n     or p_cached_input_tokens is null or p_cached_input_tokens < 0\n     or p_cache_write_tokens is null or p_cache_write_tokens < 0\n     or p_output_tokens is null or p_output_tokens < 0\n     or p_reasoning_tokens is null or p_reasoning_tokens < 0\n     or p_cached_input_tokens + p_cache_write_tokens > p_input_tokens\n     or p_reasoning_tokens > p_output_tokens then\n    raise exception using errcode = '22023', message = 'ai_capacity_settlement_invalid';\n  end if;\n\n  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));\n  select * into v_reservation from public.ai_capacity_reservations\n   where id = p_reservation_id for update;\n\n  if not found then\n    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';\n  end if;\n\n  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));\n\n  if v_reservation.provider is distinct from p_provider\n     or v_reservation.model is distinct from p_model\n     or v_reservation.pricing_version is distinct from p_pricing_version\n     or v_reservation.fx_version is distinct from p_fx_version then\n    raise exception using errcode = '23505', message = 'ai_capacity_settlement_idempotency_conflict';\n  end if;\n  v_evidence := jsonb_build_array(p_actual_eur_microcents,p_provider,p_model,\n    p_input_tokens,p_cached_input_tokens,p_cache_write_tokens,p_output_tokens,\n    p_reasoning_tokens,p_pricing_version,p_fx_version);\n\n  if v_reservation.state = 'settled' then\n    if v_reservation.settlement_evidence is distinct from v_evidence then\n      raise exception using errcode = '23505', message = 'ai_capacity_settlement_idempotency_conflict';\n    end if;\n    return query\n      select v_reservation.id, v_reservation.state, v_reservation.settled_eur_microcents,\n             v_reservation.reserved_eur_microcents - v_reservation.settled_eur_microcents;\n    return;\n  end if;\n\n  if v_reservation.state = 'reconciliation_required' then\n    select *\n      into v_reconciliation\n      from public.ai_capacity_ledger_events e\n     where e.reservation_id = v_reservation.id\n       and e.event_type = 'reservation_reconciliation_required'\n     order by occurred_at, id\n     limit 1;\n\n    if not found then\n      raise exception using errcode = '23514', message = 'ai_capacity_reconciliation_evidence_missing';\n    end if;\n\n    if v_reconciliation.amount_eur_microcents is distinct from p_actual_eur_microcents\n       or v_reconciliation.provider is distinct from p_provider\n       or v_reconciliation.model is distinct from p_model\n       or v_reconciliation.input_tokens is distinct from p_input_tokens\n       or v_reconciliation.cached_input_tokens is distinct from p_cached_input_tokens\n       or v_reconciliation.cache_write_tokens is distinct from p_cache_write_tokens\n       or v_reconciliation.output_tokens is distinct from p_output_tokens\n       or v_reconciliation.reasoning_tokens is distinct from p_reasoning_tokens\n       or v_reconciliation.pricing_version is distinct from p_pricing_version\n       or v_reconciliation.fx_version is distinct from p_fx_version then\n      raise exception using errcode = '23505', message = 'ai_capacity_reconciliation_idempotency_conflict';\n    end if;\n\n    return query\n      select v_reservation.id, 'reconciliation_required'::text, null::bigint, 0::bigint;\n    return;\n  end if;\n\n  if v_reservation.state not in ('reserved','indeterminate') then\n    raise exception using errcode = '23514', message = 'ai_capacity_settlement_state_invalid';\n  end if;\n\n  if p_actual_eur_microcents > v_reservation.reserved_eur_microcents then\n    update public.ai_capacity_reservations\n       set state = 'reconciliation_required',\n           updated_at = statement_timestamp()\n     where id = v_reservation.id;\n\n    insert into public.ai_capacity_ledger_events (\n      workspace_id, reservation_id, generation_key, event_type,\n      amount_eur_microcents, provider, model, input_tokens, cached_input_tokens,\n      cache_write_tokens, output_tokens, reasoning_tokens, pricing_version, fx_version, metadata\n    ) values (\n      v_reservation.workspace_id, v_reservation.id, v_reservation.generation_key,\n      'reservation_reconciliation_required', p_actual_eur_microcents,\n      p_provider, p_model, p_input_tokens, p_cached_input_tokens,\n      p_cache_write_tokens, p_output_tokens, p_reasoning_tokens,\n      p_pricing_version, p_fx_version, coalesce(p_metadata, '{}'::jsonb)\n    );\n\n    return query\n      select v_reservation.id, 'reconciliation_required'::text, null::bigint, 0::bigint;\n    return;\n  end if;\n\n  v_remaining := p_actual_eur_microcents;\n\n  for v_allocation in\n    select\n      a.reservation_id,\n      a.grant_id,\n      a.reserved_eur_microcents,\n      g.grant_kind,\n      g.created_at\n    from public.ai_capacity_reservation_allocations a\n    join public.ai_capacity_grants g on g.id = a.grant_id\n    where a.reservation_id = v_reservation.id\n    order by\n      case g.grant_kind when 'included_period' then 0 else 1 end,\n      g.created_at,\n      g.id\n    for update of a\n  loop\n    v_settle := least(v_remaining, v_allocation.reserved_eur_microcents);\n    v_release := v_allocation.reserved_eur_microcents - v_settle;\n\n    update public.ai_capacity_reservation_allocations as allocation\n       set settled_eur_microcents = v_settle\n     where allocation.reservation_id = v_reservation.id\n       and allocation.grant_id = v_allocation.grant_id;\n\n    if v_settle > 0 then\n      insert into public.ai_capacity_ledger_events (\n        workspace_id, reservation_id, generation_key, event_type,\n        bucket_kind, grant_id, amount_eur_microcents, provider, model,\n        input_tokens, cached_input_tokens, cache_write_tokens, output_tokens,\n        reasoning_tokens, pricing_version, fx_version, metadata\n      ) values (\n        v_reservation.workspace_id, v_reservation.id, v_reservation.generation_key,\n        'reservation_settled', v_allocation.grant_kind, v_allocation.grant_id,\n        v_settle, p_provider, p_model, p_input_tokens, p_cached_input_tokens,\n        p_cache_write_tokens, p_output_tokens, p_reasoning_tokens,\n        p_pricing_version, p_fx_version, coalesce(p_metadata, '{}'::jsonb)\n      );\n    end if;\n\n    if v_release > 0 then\n      insert into public.ai_capacity_ledger_events (\n        workspace_id, reservation_id, generation_key, event_type,\n        bucket_kind, grant_id, amount_eur_microcents, metadata\n      ) values (\n        v_reservation.workspace_id, v_reservation.id, v_reservation.generation_key,\n        'reservation_released', v_allocation.grant_kind, v_allocation.grant_id,\n        v_release, jsonb_build_object('reason','settlement_remainder')\n      );\n    end if;\n\n    v_remaining := v_remaining - v_settle;\n  end loop;\n\n  if v_remaining <> 0 then\n    raise exception using errcode = '23514', message = 'ai_capacity_allocation_incomplete';\n  end if;\n\n  update public.ai_capacity_reservations\n     set state = 'settled',\n         settlement_evidence = v_evidence,\n         settled_eur_microcents = p_actual_eur_microcents,\n         updated_at = statement_timestamp()\n   where id = v_reservation.id;\n\n  return query\n    select v_reservation.id, 'settled'::text, p_actual_eur_microcents,\n           v_reservation.reserved_eur_microcents - p_actual_eur_microcents;\nend\n$function$\n"
+      },
+      {
+        "acl": "{postgres=X/postgres,service_role=X/postgres}",
+        "name": "sync_ai_capacity_entitlement",
+        "owner": "postgres",
+        "schema": "public",
+        "definition": "CREATE OR REPLACE FUNCTION public.sync_ai_capacity_entitlement(p_snapshot text, p_envelope text, p_expected_revision bigint)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare s jsonb; e jsonb; b jsonb; w uuid; r record; stream record; ws record; mapping record; item jsonb;\n snapshot_hash text; envelope_hash text; start_at timestamptz; end_at timestamptz; allowed boolean; period text; fingerprint text; result bigint;\nbegin\n if auth.role() is distinct from 'service_role' then raise exception 'ai_capacity_service_role_required'; end if;\n if p_snapshot is null or p_envelope is null or octet_length(p_snapshot)>65536 or octet_length(p_envelope)>65536 then raise exception 'capacity_writer_invalid'; end if;\n s:=p_snapshot::jsonb; e:=p_envelope::jsonb; b:=e->0;\n snapshot_hash:=encode(sha256(convert_to(p_snapshot,'UTF8')),'hex'); envelope_hash:=encode(sha256(convert_to(p_envelope,'UTF8')),'hex');\n if jsonb_typeof(s) is distinct from 'object' or jsonb_typeof(e) is distinct from 'array' or jsonb_array_length(e)<>2\n or e->>1 is distinct from snapshot_hash or b->>'p_event_stream' is distinct from 'lifecycle'\n or b->>'p_workspace_id' is distinct from s->>'workspaceId' or b->>'p_stripe_request_id' is distinct from s->>'requestId'\n or b->>'p_customer_id' is distinct from s->>'customerId' or b->>'p_subscription_id' is distinct from s->>'subscriptionId'\n or b->>'p_snapshot_observed_at' is distinct from s->>'observedAt' then raise exception 'capacity_writer_evidence_invalid'; end if;\n if exists(select from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('workspace_stripe_billing_reconciliations','workspace_stripe_billing_streams') and (not c.relrowsecurity or not c.relforcerowsecurity or c.relowner<>to_regrole('postgres') or exists(select from unnest(array['anon','authenticated','service_role']) role_name where has_table_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))) then raise exception 'capacity_writer_billing_boundary_invalid';end if;\n w:=(s->>'workspaceId')::uuid;\n perform pg_advisory_xact_lock(hashtextextended(w::text,41001));\n select * into r from public.workspace_stripe_billing_reconciliations where stripe_request_id=s->>'requestId' and workspace_id=w and event_stream='lifecycle' for share;\n if not found or r.snapshot_fingerprint is distinct from envelope_hash or r.stripe_customer_id is distinct from s->>'customerId'\n or r.stripe_subscription_id is distinct from s->>'subscriptionId' or r.expected_revision is distinct from (b->>'p_expected_revision')::bigint\n or r.snapshot_observed_at is distinct from (s->>'observedAt')::timestamptz then raise exception 'capacity_writer_receipt_missing'; end if;\n select * into stream from public.workspace_stripe_billing_streams where workspace_id=w and event_stream='lifecycle' for share;\n if not found or stream.sync_state is distinct from 'in_sync' or stream.projection_revision is distinct from r.resulting_revision\n or stream.stripe_customer_id is distinct from r.stripe_customer_id or stream.stripe_subscription_id is distinct from r.stripe_subscription_id\n then raise exception 'capacity_writer_billing_changed'; end if;\n if r.snapshot_observed_at<clock_timestamp()-interval '15 minutes' or r.snapshot_observed_at>clock_timestamp() then raise exception 'capacity_writer_snapshot_expired'; end if;\n select * into ws from public.workspaces where id=w for share;\n if not found or ws.stripe_customer_id is distinct from r.stripe_customer_id or ws.stripe_subscription_id is distinct from r.stripe_subscription_id\n or ws.billing_status is distinct from b->'p_projection'->>'billing_status' or ws.workspace_access_mode is distinct from b->'p_projection'->>'workspace_access_mode'\n then raise exception 'capacity_writer_workspace_changed'; end if;\n select * into mapping from fanmind_capacity_private.package_prices where price_id=s->>'basePriceId' and active for share;\n if not found then raise exception 'capacity_writer_mapping_missing'; end if;\n if jsonb_typeof(s->'items') is distinct from 'array' or (select count(*) from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id)<>1 then raise exception 'capacity_writer_period_invalid'; end if;\n select x into item from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id;\n start_at:=to_timestamp((item->>'start')::bigint); end_at:=to_timestamp((item->>'end')::bigint);\n if start_at>=end_at or end_at is distinct from ws.billing_current_period_end_at then raise exception 'capacity_writer_period_invalid'; end if;\n allowed:=s->>'status'='active' and ws.billing_status='active' and ws.workspace_access_mode='active' and ws.billing_suspended_at is null\n and s->'latestInvoice'->>'status'='paid' and (s->'latestInvoice'->>'amountRemaining')::bigint=0\n and start_at<=clock_timestamp() and end_at>clock_timestamp() and not stream.lifecycle_terminal;\n period:=encode(sha256(convert_to(jsonb_build_array(w,r.stripe_subscription_id,mapping.price_id,extract(epoch from start_at)::bigint,extract(epoch from end_at)::bigint)::text,'UTF8')),'hex');\n fingerprint:=encode(sha256(convert_to(jsonb_build_array(envelope_hash,mapping.mapping_revision,mapping.package_id,period,allowed)::text,'UTF8')),'hex');\n result:=fanmind_capacity_private.write_entitlement(w,mapping.package_id,period,start_at,end_at,p_expected_revision,coalesce(allowed,false),fingerprint);\n return result;\nend $function$\n"
+      }
+    ],
+    "relations": [
+      {
+        "acl": "{postgres=arwdDxtm/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "package_prices",
+        "force": false,
+        "owner": "postgres",
+        "schema": "fanmind_capacity_private",
+        "columns": [
+          [
+            "price_id",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "package_id",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "mapping_revision",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "active",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE UNIQUE INDEX package_prices_pkey ON fanmind_capacity_private.package_prices USING btree (price_id)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "package_prices_mapping_revision_check",
+            "CHECK (mapping_revision > 0)",
+            true
+          ],
+          [
+            "package_prices_package_id_check",
+            "CHECK (package_id = ANY (ARRAY['capacity_99'::text, 'capacity_199'::text, 'capacity_312'::text]))",
+            true
+          ],
+          [
+            "package_prices_pkey",
+            "PRIMARY KEY (price_id)",
+            true
+          ],
+          [
+            "package_prices_price_id_check",
+            "CHECK (price_id ~ '^price_[A-Za-z0-9]+$'::text)",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_admin_policy",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "singleton_id",
+            "smallint",
+            true,
+            "1",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "global_capacity_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "emergency_spend_freeze",
+            "boolean",
+            true,
+            "true",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "top_up_sales_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_99_sales_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_199_sales_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_312_sales_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "fast_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "balanced_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "premium_enabled",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_99_budget_eur_microcents",
+            "bigint",
+            false,
+            "1500000000",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_199_budget_eur_microcents",
+            "bigint",
+            false,
+            "'3000000000'::bigint",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_312_budget_eur_microcents",
+            "bigint",
+            false,
+            "'5000000000'::bigint",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "revision",
+            "bigint",
+            true,
+            "1",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "updated_at",
+            "timestamp with time zone",
+            true,
+            "statement_timestamp()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "updated_by_user_id",
+            "uuid",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "runtime_activation_ready",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "package_sales_activation_ready",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "top_up_activation_ready",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE UNIQUE INDEX ai_capacity_admin_policy_pkey ON public.ai_capacity_admin_policy USING btree (singleton_id)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_admin_policy_pkey",
+            "PRIMARY KEY (singleton_id)",
+            true
+          ],
+          [
+            "ai_capacity_admin_policy_revision_check",
+            "CHECK (revision > 0)",
+            true
+          ],
+          [
+            "ai_capacity_admin_policy_singleton_id_check",
+            "CHECK (singleton_id = 1)",
+            true
+          ],
+          [
+            "ai_capacity_budget_199_positive",
+            "CHECK (package_199_budget_eur_microcents IS NULL OR package_199_budget_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_budget_312_positive",
+            "CHECK (package_312_budget_eur_microcents IS NULL OR package_312_budget_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_budget_99_positive",
+            "CHECK (package_99_budget_eur_microcents IS NULL OR package_99_budget_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_enabled_mode_required",
+            "CHECK (NOT global_capacity_enabled OR fast_enabled OR balanced_enabled OR premium_enabled)",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_grants",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "id",
+            "uuid",
+            true,
+            "gen_random_uuid()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "workspace_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "grant_kind",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "grant_key",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "package_id",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "billing_period_key",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "period_start",
+            "timestamp with time zone",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "period_end",
+            "timestamp with time zone",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "expires_at",
+            "timestamp with time zone",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "granted_eur_microcents",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "reversed_eur_microcents",
+            "bigint",
+            true,
+            "0",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "created_at",
+            "timestamp with time zone",
+            true,
+            "statement_timestamp()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "metadata",
+            "jsonb",
+            true,
+            "'{}'::jsonb",
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE INDEX ai_capacity_grants_workspace_idx ON public.ai_capacity_grants USING btree (workspace_id, created_at)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_grants_pkey ON public.ai_capacity_grants USING btree (id)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_grants_workspace_id_grant_key_key ON public.ai_capacity_grants USING btree (workspace_id, grant_key)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_grants_workspace_period_unique ON public.ai_capacity_grants USING btree (workspace_id, billing_period_key) WHERE (grant_kind = 'included_period'::text)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_grants_check",
+            "CHECK (reversed_eur_microcents >= 0 AND reversed_eur_microcents <= granted_eur_microcents)",
+            true
+          ],
+          [
+            "ai_capacity_grants_grant_kind_check",
+            "CHECK (grant_kind = ANY (ARRAY['included_period'::text, 'purchased'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_grants_granted_eur_microcents_check",
+            "CHECK (granted_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_grants_package_id_check",
+            "CHECK (package_id IS NULL OR (package_id = ANY (ARRAY['capacity_99'::text, 'capacity_199'::text, 'capacity_312'::text])))",
+            true
+          ],
+          [
+            "ai_capacity_grants_pkey",
+            "PRIMARY KEY (id)",
+            true
+          ],
+          [
+            "ai_capacity_grants_workspace_id_grant_key_key",
+            "UNIQUE (workspace_id, grant_key)",
+            true
+          ],
+          [
+            "ai_capacity_included_period_shape",
+            "CHECK (grant_kind <> 'included_period'::text OR package_id IS NOT NULL AND billing_period_key IS NOT NULL AND period_start IS NOT NULL AND period_end IS NOT NULL AND period_end > period_start)",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_ledger_events",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "id",
+            "uuid",
+            true,
+            "gen_random_uuid()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "workspace_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "reservation_id",
+            "uuid",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "generation_key",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "event_type",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "bucket_kind",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "grant_id",
+            "uuid",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "amount_eur_microcents",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "provider",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "model",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "input_tokens",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "cached_input_tokens",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "cache_write_tokens",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "output_tokens",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "reasoning_tokens",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "pricing_version",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "fx_version",
+            "text",
+            false,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "occurred_at",
+            "timestamp with time zone",
+            true,
+            "statement_timestamp()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "metadata",
+            "jsonb",
+            true,
+            "'{}'::jsonb",
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE INDEX ai_capacity_ledger_workspace_time_idx ON public.ai_capacity_ledger_events USING btree (workspace_id, occurred_at DESC)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_ledger_events_pkey ON public.ai_capacity_ledger_events USING btree (id)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_ledger_events_amount_eur_microcents_check",
+            "CHECK (amount_eur_microcents >= 0)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_bucket_kind_check",
+            "CHECK (bucket_kind IS NULL OR (bucket_kind = ANY (ARRAY['included_period'::text, 'purchased'::text])))",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_cache_write_tokens_check",
+            "CHECK (cache_write_tokens IS NULL OR cache_write_tokens >= 0)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_cached_input_tokens_check",
+            "CHECK (cached_input_tokens IS NULL OR cached_input_tokens >= 0)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_event_type_check",
+            "CHECK (event_type = ANY (ARRAY['included_period_grant'::text, 'purchased_credit_grant'::text, 'reservation_created'::text, 'reservation_settled'::text, 'reservation_released'::text, 'reservation_indeterminate'::text, 'reservation_reconciliation_required'::text, 'purchase_reversal'::text, 'reconciliation_adjustment'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_input_tokens_check",
+            "CHECK (input_tokens IS NULL OR input_tokens >= 0)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_output_tokens_check",
+            "CHECK (output_tokens IS NULL OR output_tokens >= 0)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_pkey",
+            "PRIMARY KEY (id)",
+            true
+          ],
+          [
+            "ai_capacity_ledger_events_reasoning_tokens_check",
+            "CHECK (reasoning_tokens IS NULL OR reasoning_tokens >= 0)",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_reservation_allocations",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "reservation_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "grant_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "reserved_eur_microcents",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "settled_eur_microcents",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE UNIQUE INDEX ai_capacity_reservation_allocations_pkey ON public.ai_capacity_reservation_allocations USING btree (reservation_id, grant_id)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_reservation_allocatio_reserved_eur_microcents_check",
+            "CHECK (reserved_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_reservation_allocations_check",
+            "CHECK (settled_eur_microcents IS NULL OR settled_eur_microcents >= 0 AND settled_eur_microcents <= reserved_eur_microcents)",
+            true
+          ],
+          [
+            "ai_capacity_reservation_allocations_grant_id_fkey",
+            "FOREIGN KEY (grant_id) REFERENCES ai_capacity_grants(id) ON DELETE RESTRICT",
+            true
+          ],
+          [
+            "ai_capacity_reservation_allocations_pkey",
+            "PRIMARY KEY (reservation_id, grant_id)",
+            true
+          ],
+          [
+            "ai_capacity_reservation_allocations_reservation_id_fkey",
+            "FOREIGN KEY (reservation_id) REFERENCES ai_capacity_reservations(id) ON DELETE RESTRICT",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_reservations",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "id",
+            "uuid",
+            true,
+            "gen_random_uuid()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "workspace_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "generation_key",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "billing_period_key",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "package_id",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "quality_mode",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "reserved_eur_microcents",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "settled_eur_microcents",
+            "bigint",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "state",
+            "text",
+            true,
+            "'reserved'::text",
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "created_at",
+            "timestamp with time zone",
+            true,
+            "statement_timestamp()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "updated_at",
+            "timestamp with time zone",
+            true,
+            "statement_timestamp()",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "policy_revision",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "entitlement_revision",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "provider",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "model",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "pricing_version",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "fx_version",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "settlement_evidence",
+            "jsonb",
+            false,
+            null,
+            null,
+            "",
+            "",
+            null
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE INDEX ai_capacity_reservations_workspace_state_idx ON public.ai_capacity_reservations USING btree (workspace_id, state, created_at)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_reservations_pkey ON public.ai_capacity_reservations USING btree (id)",
+            true,
+            true
+          ],
+          [
+            "CREATE UNIQUE INDEX ai_capacity_reservations_workspace_id_generation_key_key ON public.ai_capacity_reservations USING btree (workspace_id, generation_key)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_reservations_check",
+            "CHECK (settled_eur_microcents IS NULL OR settled_eur_microcents >= 0 AND settled_eur_microcents <= reserved_eur_microcents)",
+            true
+          ],
+          [
+            "ai_capacity_reservations_entitlement_revision_check",
+            "CHECK (entitlement_revision > 0)",
+            true
+          ],
+          [
+            "ai_capacity_reservations_package_id_check",
+            "CHECK (package_id = ANY (ARRAY['capacity_99'::text, 'capacity_199'::text, 'capacity_312'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_reservations_pkey",
+            "PRIMARY KEY (id)",
+            true
+          ],
+          [
+            "ai_capacity_reservations_policy_revision_check",
+            "CHECK (policy_revision > 0)",
+            true
+          ],
+          [
+            "ai_capacity_reservations_quality_mode_check",
+            "CHECK (quality_mode = ANY (ARRAY['fast'::text, 'balanced'::text, 'premium'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_reservations_reserved_eur_microcents_check",
+            "CHECK (reserved_eur_microcents > 0)",
+            true
+          ],
+          [
+            "ai_capacity_reservations_state_check",
+            "CHECK (state = ANY (ARRAY['reserved'::text, 'settled'::text, 'released'::text, 'indeterminate'::text, 'reconciliation_required'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_reservations_workspace_id_generation_key_key",
+            "UNIQUE (workspace_id, generation_key)",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      },
+      {
+        "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
+        "rls": true,
+        "kind": "r",
+        "name": "ai_capacity_workspace_entitlements",
+        "force": false,
+        "owner": "postgres",
+        "schema": "public",
+        "columns": [
+          [
+            "workspace_id",
+            "uuid",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "billing_contract_version",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "package_id",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "billing_period_key",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ],
+          [
+            "period_start",
+            "timestamp with time zone",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "period_end",
+            "timestamp with time zone",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "revision",
+            "bigint",
+            true,
+            null,
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "active",
+            "boolean",
+            true,
+            "false",
+            null,
+            "",
+            "",
+            null
+          ],
+          [
+            "source_fingerprint",
+            "text",
+            true,
+            null,
+            null,
+            "",
+            "",
+            "default"
+          ]
+        ],
+        "indexes": [
+          [
+            "CREATE UNIQUE INDEX ai_capacity_workspace_entitlements_pkey ON public.ai_capacity_workspace_entitlements USING btree (workspace_id)",
+            true,
+            true
+          ]
+        ],
+        "options": null,
+        "policies": null,
+        "constraints": [
+          [
+            "ai_capacity_workspace_entitlemen_billing_contract_version_check",
+            "CHECK (billing_contract_version = 'capacity_v2'::text)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_billing_period_key_check",
+            "CHECK (btrim(billing_period_key) <> ''::text)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_check",
+            "CHECK (period_end > period_start)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_package_id_check",
+            "CHECK (package_id = ANY (ARRAY['capacity_99'::text, 'capacity_199'::text, 'capacity_312'::text]))",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_pkey",
+            "PRIMARY KEY (workspace_id)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_revision_check",
+            "CHECK (revision > 0)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_source_fingerprint_check",
+            "CHECK (source_fingerprint ~ '^[0-9a-f]{64}$'::text)",
+            true
+          ],
+          [
+            "ai_capacity_workspace_entitlements_workspace_id_fkey",
+            "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE RESTRICT",
+            true
+          ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
+      }
+    ],
+    "private_schema": [
+      "postgres",
+      "{postgres=UC/postgres}"
+    ]
+  }
+}
