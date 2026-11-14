@@ -1,3 +1,20 @@
+## Authenticated Dashboard Support correction — 14 November 2026
+
+Issue1350 / PR1485 repairs the existing in-app Help with shell-token styling,
+bounded responsive scrolling, a separately fixed composer, accessible controls
+and diagnostic disabled/failure distinctions with retry. Authenticated AI is
+optional and initially unchecked: only explicit consent permits reuse of the
+existing public Support server pipeline, its configured provider/model, bounded
+public knowledge/output rules, rate/cost controls and store:false. Only the
+current question and last two own Support turns are supplied; no automatic CRM
+context, external identifiers or additional credentials are introduced. Without
+consent the approved local knowledge response remains available. Withdrawal
+aborts pending work and clears future AI retry consent; account/focus/panel
+lifecycle requires fresh consent. Saved messages retain existing own-scope
+persist/export/erase/handoff and Retention contracts. No schema or runtime flag
+changes. Source preparation is not live acceptance; protected rollout and actual
+authenticated model-response checks remain required.
+
 ## Facebook Staging reception continuation — 13 November 2026
 
 Shared Main/Staging release a8a74f67d92180f2c7a2fa9bb4f4a98486527dbf was

@@ -65,3 +65,33 @@ the body viewport. The composer is now outside the scrolling information body;
 the same component retains all privacy/identity logic. New geometry assertions
 require both input and send control inside the viewport after expansion. These
 changed bytes require fresh final-head CI; the earlier green run is historical.
+
+## Explicit AI acceptance gap correction
+
+The initial finding above describes the old endpoint. The same existing
+conversation route now accepts only a strict optional aiConsent boolean. Without
+consent it retains local knowledge; with consent it delegates to the existing
+public Support handler after auth/scope/Origin/length/rate checks. Pricing stays
+catalogue-only. It forwards only current question plus last two own retained
+Support turns (at most four history contributions,6000characters), never actor,
+Workspace or CRM metadata to the model. Existing owner-bound operational usage
+attribution and provider/model keys, public knowledge/output guard, store:false,
+provider timeout and shared global/IP cost controls are reused, not duplicated.
+The already authorized existing Production provider was independently verified
+with one neutral public test answer; no key was read, replaced or created.
+
+A retained request ID returns its stored result without a new model call.
+Provider/rate/invalid-output/cancellation or identity-change failures never save
+an invented response. Concurrent duplicate generation is still bounded by the
+existing rate controls; SQL remains the idempotent persistence boundary.
+Client opt-in is initially false, can be withdrawn during pending work and is
+reset across panel/account/focus lifecycle. Withdrawal cancels the request and
+suppresses late UI results and future AI retry. It cannot undo a provider request
+already processed while consent was valid. Existing own-data deletion remains a
+separate explicit confirmation. Privacy disclosure updated in the same change.
+
+Actual-route negative test covers no consent, bad consent type, wrong Origin,
+foreign scope, missing auth, rate denial, provider errors, oversize reply,
+identity change, cancellation and stored retry. Actual-component browser tests
+cover default-off, opt-in, withdrawal and late-answer suppression. New source
+requires fresh final-head CI and actual Staging/Production model acceptance.
