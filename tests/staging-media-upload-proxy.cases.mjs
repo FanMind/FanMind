@@ -96,3 +96,28 @@ test('transport reports only fixed status counters and still requires exact unau
   assert.doesNotMatch(diagnostics[0],/private|token|content|other/);
  }
 });
+
+
+test('reload readiness uses fresh connections, retries only transient 413, and requires both exact limits',async()=>{
+ const calls=[],reports=[],pauses=[];
+ const statuses=[413,401,413,401];
+ await transport(async(url,options)=>{
+  calls.push({url,size:options.body.length,connection:options.headers.Connection});
+  const status=statuses.shift();return status===401?Response.json({error:'unauthenticated'},{status}):new Response('private',{status});
+ },line=>reports.push(line),{reloadReadiness:true,pause:async ms=>pauses.push(ms)});
+ assert.deepEqual(calls.map(x=>x.size),[7100000,7100000,35100000,35100000]);
+ assert.ok(calls.every(x=>x.connection==='close'));assert.deepEqual(pauses,[250,250]);
+ assert.equal(reports.length,4);assert.ok(reports.every(x=>!x.includes('private')));
+ for(const status of [400,403,429,500]){
+  let count=0;await assert.rejects(transport(async()=>{count++;return new Response('private',{status});},()=>{},{reloadReadiness:true,pause:async()=>assert.fail('unexpected retry')}),/proxy_transport/);assert.equal(count,1);
+ }
+ let attempts=0,waits=0;
+ await assert.rejects(transport(async()=>{attempts++;return new Response('private',{status:413});},()=>{},{reloadReadiness:true,pause:async()=>{waits++;}}),/proxy_transport/);
+ assert.equal(attempts,5);assert.equal(waits,4);
+ let catalogueCalls=0;
+ await assert.rejects(transport(async(url)=>{
+  if(url.endsWith('/catalogue')){catalogueCalls++;return new Response('private',{status:413});}
+  return Response.json({error:'unauthenticated'},{status:401});
+ },()=>{},{reloadReadiness:true,pause:async()=>{}}),/proxy_transport/);
+ assert.equal(catalogueCalls,5);
+});
