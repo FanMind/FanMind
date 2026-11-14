@@ -438,3 +438,24 @@ mediaLibrary uses remaining scroll space. Narrow-screen display:block is retaine
 No feature/backend/schema/flag/provider behavior changes. Root conversion proof,
 exact extended schema and controlled base/catalogue/video activation are carried;
 this does not certify unfinished upload/private-preview/deletion/mobile cases.
+
+## 14 November: actual continuation and remaining sidebar correction
+
+PR1484 regularly merged as f8a3737f9a47430e9c97ad76c7a483ae84f31fc8 after all
+16 head checks and protected requirements passed. Protected Staging deploy
+43583484674/job132412979512 succeeded; independent HTTPS version matched.
+Billing=false and the existing Operator were retained; private recovery snapshot
+accepted. Tabs now appear above the separately scrolling media panel.
+
+The actual long synthetic Character names expose a second small layout issue:
+list clientWidth205 versus scrollWidth265; management menus clip to the right.
+Set only characterCard min-width:0, retaining name ellipsis and the explicit
+178px mobile card minimum. No schema, permissions, flags, provider or Production
+change. Complete Desktop/Mobile PASS remains pending actual target acceptance.
+
+Live missing-image test returned three distinct safe suggestions without an
+inventory, price or delivery claim. Editing/replacing one and copy-and-use
+persisted exactly the manual text, without any external send. Upload chooser
+still explicitly rejects missing Chrome extension file-URL access. The390x844
+viewport override still measured1504x778 and was reset; no mobile PASS. Existing
+synthetic fixture prefix FM1425-20261113-1900 remains reserved pending completion.
