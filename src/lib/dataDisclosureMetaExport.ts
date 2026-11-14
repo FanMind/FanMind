@@ -82,7 +82,9 @@ export type DisclosureMetaDataset = {
     | "referrals_given"
     | "referrals_received"
     | "referral_discount_snapshots"
-    | "account_deletion_requests";
+    | "account_deletion_requests"
+    | "support_conversations"
+    | "support_ai_consent";
   rows: DisclosureMetaRow[];
 };
 
@@ -117,7 +119,6 @@ const DATASETS: DatasetDefinition[] = [
   { key: "contact_profiles", table: "contact_ai_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "voice_profiles", table: "workspace_voice_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "ai_usage", table: "ai_usage_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "connections", table: "social_connections", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "meta_webhook_events", table: "meta_webhook_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "content_sources", table: "content_sources", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "content_metrics", table: "content_metric_snapshots", scope: "workspace", order: "captured_at.asc.nullsfirst,id.asc", optionalUntilInstalled: true },

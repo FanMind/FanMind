@@ -23,7 +23,8 @@ die dauerhafte Kontoentscheidung und deren zusätzliche Datenverarbeitung.
 > werden nach Widerruf blockiert. Eine AGB-Annahme ersetzt diese Entscheidung nicht.
 >
 > Eigene Supportfragen und Antworten werden nach der bestehenden Regel bis zu
-> 30Tage gespeichert; ihr Export und ihre Löschung sind im Support erreichbar.
+> 30Tage gespeichert; ihre PDF-Datenauskunft ist unter Profil & Konto → DSGVO erreichbar;
+> die Löschung des eigenen Supportverlaufs bleibt im Support erreichbar.
 > Gesprächslöschung und Widerruf sind getrennte Funktionen. Der aktuelle positive
 > Nachweis bleibt während der Aktivierung gespeichert; nach Widerruf wird der
 > vollständige Nachweis innerhalb von30Tagen minimiert. Anschließend bleiben nur
