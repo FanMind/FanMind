@@ -69,6 +69,13 @@ test('media-only boundary preserves absent WhatsApp while default and every pres
  const plan=planUploadProxy(absent,tlsEnd);
  assert.equal(plan.next.replace(UPLOAD_BLOCK,''),absent);
  assert.doesNotMatch(plan.next,/location.*whatsapp/);
+
+ const route=before.match(/    location = \/api\/webhooks\/whatsapp \{\n[^{}]*\n    \}\n/u)[0];
+ const http='server {\n    listen 80;\n    server_name staging.fanmind.ch;\n'+route+'}\n';
+ for(const misplaced of [absent+http,http+absent]){
+  assert.equal(run(misplaced,''),'invalid');assert.equal(run(misplaced,'media_end_line'),'invalid');
+  assert.throws(()=>planUploadProxy(misplaced,tlsEnd));
+ }
  assert.equal(run(before,''),'valid');assert.match(run(before,'media_end_line'),/^[1-9][0-9]*$/u);
  for(const source of [before.replace('location = /api/webhooks/whatsapp {','location /api/webhooks/whatsapp {'),before.replace('access_log off;','access_log /private/sensitive.log;'),before.replace('proxy_pass http://127.0.0.1:3001;','proxy_pass http://127.0.0.1:3000;'),before+before,absent.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),absent.replace('listen 443 ssl;','listen 443;'),absent.replace('ssl_certificate /etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem;','ssl_certificate /foreign/fullchain.pem;')]){
   assert.equal(run(source,''),'invalid');assert.equal(run(source,'media_end_line'),'invalid');
