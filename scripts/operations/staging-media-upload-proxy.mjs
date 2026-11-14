@@ -61,14 +61,22 @@ function selectTlsEnd(source){
  return Number(text);
 }
 async function live(sha){const r=await fetch(ORIGIN+'/api/version',{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('proxy_release');const v=await r.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==sha)fail('proxy_release');}
-export async function transport(fetcher=fetch,report=console.log){
+export async function transport(fetcher=fetch,report=console.log,{reloadReadiness=false,pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))}={}){
  for(const [path,size] of UPLOAD_LIMITS){
   const body=Buffer.alloc(size,32);body.write('{}');
-  const r=await fetcher(ORIGIN+path,{method:'POST',headers:{Origin:ORIGIN,'Content-Type':'application/json'},body,redirect:'error',signal:AbortSignal.timeout(30000)});
-  const json=r.headers.get('content-type')?.includes('application/json')===true;
-  const auth=r.status===401&&json&&(await r.text()).trim()==='{"error":"unauthenticated"}';
-  report('STAGING_MEDIA_UPLOAD_TRANSPORT='+ (path==='/api/chatadmin/media'?'image':'catalogue')+',bytes='+size+',status='+r.status+',json='+Number(json)+',auth='+Number(auth));
-  if(r.status!==401||!json||!auth)fail('proxy_transport');
+  // nginx reload is graceful: pre-reload keep-alive clients may still use
+  // retiring workers. Probe new connections; allow only a bounded 413 transition
+  // immediately after our own reload. Every final result still requires 401 JSON.
+  for(let attempt=1;attempt<=5;attempt++){
+   const r=await fetcher(ORIGIN+path,{method:'POST',headers:{Origin:ORIGIN,'Content-Type':'application/json',Connection:'close'},body,redirect:'error',signal:AbortSignal.timeout(30000)});
+   const json=r.headers.get('content-type')?.includes('application/json')===true;
+   const text=await r.text();
+   const auth=r.status===401&&json&&text.trim()==='{"error":"unauthenticated"}';
+   report('STAGING_MEDIA_UPLOAD_TRANSPORT='+ (path==='/api/chatadmin/media'?'image':'catalogue')+',bytes='+size+',status='+r.status+',json='+Number(json)+',auth='+Number(auth));
+   if(auth)break;
+   if(!reloadReadiness||r.status!==413||attempt===5)fail('proxy_transport');
+   await pause(250);
+  }
  }
 }
 export async function runProxy(action,env=process.env){
@@ -79,7 +87,8 @@ export async function runProxy(action,env=process.env){
  command('/usr/sbin/nginx',['-t']);
  if(action==='verify'){if(plan.state==='READY')await transport();console.log('STAGING_MEDIA_UPLOAD_PROXY='+plan.state);return;}
  if(plan.state==='READY'){await transport();console.log('STAGING_MEDIA_UPLOAD_PROXY=PASS');return;}
- await applyProxyPlan({before,next:plan.next,read:protectedConfig,write:replace,global:()=>command('/usr/sbin/nginx',['-T']),check:()=>command('/usr/sbin/nginx',['-t']),reload:()=>command('/usr/bin/systemctl',['reload','nginx']),probe:async()=>{await live(env.GITHUB_SHA);await transport();},onRollback:()=>console.log('STAGING_MEDIA_UPLOAD_PROXY_ROLLBACK=PASS')});
+ await applyProxyPlan({before,next:plan.next,read:protectedConfig,write:replace,global:()=>command('/usr/sbin/nginx',['-T']),check:()=>command('/usr/sbin/nginx',['-t']),reload:()=>command('/usr/bin/systemctl',['reload','nginx']),probe:async()=>{await live(env.GITHUB_SHA);await transport(fetch,console.log,{reloadReadiness:true});},onRollback:()=>console.log('STAGING_MEDIA_UPLOAD_PROXY_ROLLBACK=PASS')});
  console.log('STAGING_MEDIA_UPLOAD_PROXY=PASS');
 }
 if(process.argv[1]===fileURLToPath(import.meta.url)){try{await runProxy(process.argv[2]);}catch(error){console.error('STAGING_MEDIA_UPLOAD_PROXY=BLOCK');console.error('STAGING_MEDIA_UPLOAD_PROXY_REASON='+(['proxy_target','proxy_config','proxy_existing_route','proxy_upstream_drift','proxy_tls_boundary','proxy_block_drift','proxy_concurrent_config','proxy_rollback_drift','proxy_rollback_failed','proxy_host_operation','proxy_file','proxy_release','proxy_transport','proxy_root','proxy_directory','proxy_active_binding'].includes(error?.message)?error.message:'operation_failed'));process.exitCode=1;}}
+
