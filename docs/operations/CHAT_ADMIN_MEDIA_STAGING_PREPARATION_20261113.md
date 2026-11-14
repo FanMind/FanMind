@@ -459,3 +459,13 @@ persisted exactly the manual text, without any external send. Upload chooser
 still explicitly rejects missing Chrome extension file-URL access. The390x844
 viewport override still measured1504x778 and was reset; no mobile PASS. Existing
 synthetic fixture prefix FM1425-20261113-1900 remains reserved pending completion.
+
+
+First custom-policy INSERT committed on the real target but reported a generic
+error because PostgREST default-minimal201 has no JSON body. Request the existing
+representation contract explicitly for this one INSERT. A faithful empty-response
+regression fails503 before the change and succeeds200 afterward. Existing policy
+updates, Character/Workspace/revision checks and permission boundaries remain.
+Actual custom reply acceptance remains OPEN: long ambiguous request safely
+refused; short motif request rejected by reply_price_not_permitted. No rejection
+is relabeled successful and no guard is weakened.
