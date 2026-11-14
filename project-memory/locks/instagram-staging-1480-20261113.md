@@ -25,3 +25,13 @@ this required memory checkpoint missing; no gate bypass or manual success retry.
 Exact new-head CI, reviewed merge, protected Staging rollout and real ingress
 acceptance remain required. Facebook Production Configure43623829681 and
 subscription43624048062 are already successful and are not repeated.
+
+Post-rollout actual provider diagnostics confirm SYSTEM_USER and intended scopes;
+account subscription remains unconfirmed after one activation attempt. Existing
+UI suppressed the provider failure. Continue in the same integration with only
+bounded phase/HTTP/numeric-code diagnostics and explicit requested app identity
+in the readback projection. No raw provider text, token or new OAuth. App-level
+messages/comments v27 callback is independently present. Meta's official setup
+requires Advanced Access for comment notifications; dashboard still shows Ready
+to test, not an approved general comment receipt. Real input requests remain on
+hold until account subscription and applicable provider access are proven.
