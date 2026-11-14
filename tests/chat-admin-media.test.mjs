@@ -1,3 +1,4 @@
+import "./chat-admin-mixer.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";

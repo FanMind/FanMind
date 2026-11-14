@@ -8,7 +8,7 @@ import { buildCatalogueGrounding, mediaExtension, mediaMime, MEDIA_VIDEO_MAX_BYT
 
 export type MediaPriceRules={negotiation_allowed:boolean;special_discounts_allowed:boolean};
 export type MediaFolder={id:string;workspace_id:string;character_id:string;parent_id:string|null;name:string;kind:"image"|"video";offer_id:string;price_rules:MediaPriceRules;revision:number};
-export type MediaAsset={id:string;workspace_id:string;character_id:string;description:string;tags:string[];folder:string;offer_id:string;reviewed:boolean;available:boolean;deleted:boolean;revision:number;media_type?:"image"|"video";folder_id?:string|null;byte_size?:number;duration_ms?:number|null;price_rules?:MediaPriceRules};
+export type MediaAsset={id:string;workspace_id:string;character_id:string;description:string;tags:string[];folder:string;offer_id:string;reviewed:boolean;available:boolean;deleted:boolean;revision:number;original_filename?:string;uploaded_at?:string|null;media_type?:"image"|"video";folder_id?:string|null;byte_size?:number;duration_ms?:number|null;price_rules?:MediaPriceRules};
 export type CustomMediaPolicy={enabled:boolean;offer_id:string;delivery_hours:number|null;motifs:string[];requires_confirmation:boolean;revision:number};
 export const emptyCustomMediaPolicy:CustomMediaPolicy={enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0};
 export const mediaEnabled=()=>process.env.FANMIND_CHAT_ADMIN_MEDIA_ENABLED==="true";

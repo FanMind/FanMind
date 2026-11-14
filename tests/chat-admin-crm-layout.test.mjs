@@ -1,3 +1,4 @@
+import * as mixerPolicy from "../src/lib/chatAdminMixer.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -25,6 +26,8 @@ function loadClient() {
       const mediaModule={exports:{}};const mediaCode=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
       new Function("module","exports","require",mediaCode)(mediaModule,mediaModule.exports,localRequire);return mediaModule.exports;
     }
+    if(name === "@/lib/chatAdminMixer.mjs")return mixerPolicy;
+    if(name === "./CharacterMixer"){const m={exports:{}};const c=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMixer.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",c)(m,m.exports,localRequire);return m.exports;}
     if(name === "@/lib/chatAdminMediaCatalogue.mjs") return mediaCatalogue;
     if(name === "./CharacterMediaCatalogueControls"){const controls={exports:{}};const code=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",code)(controls,controls.exports,localRequire);return controls.exports;}
     if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;

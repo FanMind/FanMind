@@ -1,6 +1,9 @@
 -- CONTROLLED / UNAPPLIED extension of #1425. Never run from a Web deploy.
 -- Requires the existing reviewed private-media schema, not a second library.
 begin;
+-- Storage finalizes an authorized upload under service_role while retaining caller claims.
+-- Keep the exact Owner/Workspace/deletion checks; this grants only their boolean predicate.
+grant execute on function public.chat_admin_media_writes_allowed(uuid) to service_role;
 create function public.chat_admin_media_price_rules_valid(value jsonb) returns boolean
  language sql immutable security invoker set search_path='' as $$
  select jsonb_typeof(value)='object'
@@ -149,4 +152,7 @@ begin
 end;$$;
 revoke all on function public.chat_admin_media_catalogue_write(uuid,uuid,integer,text,jsonb,jsonb) from public,anon,service_role;
 grant execute on function public.chat_admin_media_catalogue_write(uuid,uuid,integer,text,jsonb,jsonb) to authenticated;
+alter table public.chat_character_media add column original_filename text not null default '' constraint chat_media_filename_length check (char_length(original_filename)<=255 and original_filename !~ '[[:cntrl:]]');
+alter table public.chat_character_media add column uploaded_at timestamptz;
+alter table public.chat_character_media alter column uploaded_at set default now();
 commit;

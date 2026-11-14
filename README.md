@@ -1245,3 +1245,11 @@ echte Seiten-/Nachrichtenabnahme bleiben bis zu ihren eigenen Nachweisen offen.
 Internal ChatAdmin #1425 catalogue continuation (folders, inherited prices and
 private video source; not activated) is documented in
 [CHAT_ADMIN_MEDIA_CATALOGUE](docs/CHAT_ADMIN_MEDIA_CATALOGUE.md).
+
+### Internal Character configuration continuation (#1425, 14 November 2026)
+
+The existing internal CRM has a source continuation for private media upload
+repair, folder/gallery navigation, an independent personality/behavior mixer
+and a non-persisting AI comparison. It reuses existing Character settings and
+reply controls. This source change is not target acceptance or Production
+activation; see `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`.
