@@ -1,6 +1,6 @@
 ## Central profile data disclosure — Owner correction 14 November 2026
 
-Issue #1350: the only Creator data download is the existing PDF button at
+Support1350: the only Creator data download is the existing PDF button at
 Profile & account → GDPR → Data disclosure (/settings/profile/data-export).
 Help explains this location and links to the profile section; its former JSON
 export now redirects to that profile section. Own Support history uses the
