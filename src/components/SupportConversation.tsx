@@ -50,12 +50,6 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   if(!value){sending.current?.abort();generation.current++;pending.current=null;void load();}
  }
  async function older(){if(!turns.length)return;const version=++generation.current;try{const response=await fetch(`/api/support/conversation?before=${turns[0].request_id}`,{cache:"no-store"});if(!response.ok)throw new Error("unavailable");const data=await response.json();if(version!==generation.current)return;if(data.scope!==boundScope.current){await load();return;}browsingOlder.current=true;setTurns(previous=>[...data.turns,...previous]);setMore(data.turns.length===100);}catch{if(version===generation.current){browsingOlder.current=false;setTurns([]);setStatus("unavailable");}}}
- async function download(){
-  if(!scope||privacyBusy.current)return;const selected=scope,version=generation.current;
-  try{const r=await fetch(`/api/support/privacy?scope=${selected}`,{cache:"no-store"});if(!r.ok)throw new Error("unavailable");const data=await r.json();if(version!==generation.current||selected!==boundScope.current||data.scope!==selected)return;
-   const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="fanmind-support-data.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),0);
-  }catch{if(version===generation.current)setStatus("unavailable");}
- }
  async function erase(){
   if(!scope||privacyBusy.current)return;
   setPrivacyError(false);privacyBusy.current=true;const selected=scope,version=++generation.current;
@@ -88,7 +82,7 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   <SupportAIConsentControl scope={scope} legacyValue={aiConsent} onValue={consent} beforeRevoke={()=>{sending.current?.abort();generation.current++;pending.current=null;}}/>
   {answerMode==="ai"&&<p role="status">KI-Antwort gespeichert. KI kann Fehler machen.</p>}
   <details className="fm-help-privacy"><summary>Datenschutz und Support-Übergabe</summary>
-   <div className="fm-help-actions"><button disabled={!scope||status==="sending"} onClick={()=>void download()}>Eigene Supportdaten herunterladen</button><button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button><a href="/datenschutz">Datenschutzinformationen</a>
+   <div className="fm-help-actions"><span>Deine Datenauskunft findest du unter Profil &amp; Konto → DSGVO.</span><a href="/settings/profile#gdpr-profile-title">Zum Datenschutzbereich im Profil</a><button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button><a href="/datenschutz">Datenschutzinformationen</a>
    <button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button></div>
    {handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}
   </details>

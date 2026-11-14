@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
+import {collectSupportExport} from '../src/lib/supportPrivacy.mjs';
 import { buildSupabaseApiKeyHeaders } from '../src/lib/supabase/apiKeyPolicy.mjs';
 
 const workspace='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -53,7 +54,7 @@ test('protected provider metadata remains owner-only and fail-closed',async()=>{
 const expectedTables=[
   'profiles','workspace_members','workspaces','contacts','memories','followups','conversations',
   'conversation_messages','conversation_summaries','contact_reply_targets','fan_analysis_reports',
-  'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','social_connections','meta_webhook_events',
+  'contact_ai_profiles','workspace_voice_profiles','ai_usage_events','meta_webhook_events',
   'content_sources','content_metric_snapshots','communication_analysis_reports','workspace_analysis_settings',
   'creators','creator_voice_profiles','creator_sales_playbooks','creator_commercial_events','creator_confirmed_chat_learning',
   'workspace_chat_admin_capabilities','chat_characters','chat_character_media','chat_character_media_policies','chat_character_media_folders','chat_character_fans','chat_character_current_facts','chat_character_conversations','chat_character_messages',
@@ -117,7 +118,6 @@ test('profile, membership, workspace and social rows remain Creator-bound and cr
   });
   const result=await h.run();assert.equal(result.find(x=>x.key==='profile_record').rows[0].phone,'+43 1 234');assert.equal(result.find(x=>x.key==='membership_record').rows[0].role,'owner');
   const ws=result.find(x=>x.key==='workspace_record').rows[0];assert.equal(ws.name,'Creator workspace');assert.equal(ws.billing_status,'active');assert.equal(ws.stripe_customer_id,undefined);assert.equal(ws.api_key,undefined);
-  const social=result.find(x=>x.key==='connections').rows[0];assert.equal(social.page_name,'Creator page');assert.equal(social.page_access_token_encrypted,undefined);assert.equal(social.token_last_four,undefined);assert.equal(social.refresh_token,undefined);
 });
 
 test('safe current and future CRM fields are preserved instead of narrow projections',async()=>{
@@ -153,18 +153,32 @@ test('missing session, workspace or user identity never reaches browser-readable
   }
 });
 
-function privateFixture({member=false,foreign=false,key='sb_secret_synthetic',override=()=>undefined}={}) {
+function privateFixture({member=false,foreign=false,key='sb_secret_synthetic',override=()=>undefined,runtime='production',persistent=false}={}) {
   const calls=[];let auths=0;
   const config={SUPABASE_ACCESS_TOKEN_COOKIE:'cookie',getSupabaseApiKeyHeaders:buildSupabaseApiKeyHeaders,getSupabaseRestUrl:table=>`https://synthetic.invalid/rest/v1/${table}`};
+  const policy=load('src/lib/supportAIConsentPolicy.ts',{}, {FANMIND_RUNTIME_ENVIRONMENT:runtime,FANMIND_SUPPORT_PERSISTENT_CONSENT_VERSION:persistent?'support-ai-20261114-v1':''});
+  const continuity=load('src/lib/supportContinuityServer.ts',{'server-only':{},'./supportCentrePolicy':{isSupportUuid:v=>typeof v==='string'&&/^[a-f0-9-]{36}$/.test(v)},'node:crypto':{},'@/lib/supabase/server':{},'./supportCentreServer':{}});
   const run=load('src/lib/dataDisclosurePrivateExport.ts',{
+    '@/lib/supportPrivacy.mjs':{collectSupportExport},
+    '@/lib/supportContinuityServer':continuity,
+    '@/lib/supportAIConsentPolicy':policy,
     'server-only':{},
     'next/headers':{cookies:async()=>({get:()=>({value:'synthetic-user-jwt'})})},
     '@/lib/supabase/config':config,
     '@/lib/workspaceAuthorization':{requireAuthorizedWorkspace:async token=>{assert.equal(token,'synthetic-user-jwt');auths++;return{user:{id:foreign?'foreign':userId},workspace:{id:workspace,owner_user_id:member?'different':userId}};}},
     '@/lib/dataDisclosurePagination':{DataDisclosureExportError:DisclosureFailure},
-  },{SUPABASE_SERVICE_ROLE_KEY:key}).getPrivateAccountDataForDisclosure;
+  },{SUPABASE_SERVICE_ROLE_KEY:key,FANMIND_RUNTIME_ENVIRONMENT:runtime}).getPrivateAccountDataForDisclosure;
   const fetchImpl=async(url,options)=>{
     const table=url.pathname.split('/').at(-1);const offset=Number(url.searchParams.get('offset')||0);calls.push({table,offset,url,options});assert.equal(options.cache,'no-store');assert.equal(options.redirect,'error');
+    if(table==='support_chat_read'||table==='support_chat_page') {
+      const body=JSON.parse(options.body);assert.equal(body.p_actor,userId);assert.equal(body.p_workspace,workspace);
+      return (await override({table,url,offset,body})) ?? jsonResponse([]);
+    }
+    if(table==='support_ai_consent_state') {
+      assert.equal(JSON.parse(options.body).p_actor,userId);
+      return (await override({table,url,offset})) ?? jsonResponse({granted:false,revision:2,version:'support-ai-20261114-v1',grantedAt:'2026-11-14T14:40:50Z',revokedAt:'2026-11-14T14:44:08Z'});
+    }
+    if(table==='social_connections') return (await override({table,url,offset})) ?? jsonResponse([{id:'c1',workspace_id:workspace,page_name:'Own page',page_access_token_encrypted:'NEVER_EXPORT',token_last_four:'NEVER_EXPORT',unexpected:'NEVER_EXPORT'}]);
     if(table==='pilot_inquiries') return (await override({table,url,offset})) ?? jsonResponse([{id:'p1',email,name:'Old inquiry',message:'Hello'}]);
     if(table==='referral_program_members') return (await override({table,url,offset})) ?? jsonResponse([{id:'rm1',workspace_id:workspace,user_id:userId,referral_code:'OWNCODE',eligible:true,status:'active'}]);
     if(table==='referrals') {
@@ -182,7 +196,7 @@ function privateFixture({member=false,foreign=false,key='sb_secret_synthetic',ov
 
 test('owner-only service data includes own inquiry/referral/deletion records but strips counterparty identifiers',async()=>{
   const h=privateFixture();const result=await h.run();assert.equal(h.auths(),2);
-  assert.deepEqual(h.calls.map(x=>x.table).sort(),['account_deletion_requests','pilot_inquiries','referral_discount_snapshots','referral_program_members','referrals','referrals'].sort());
+  assert.deepEqual(h.calls.map(x=>x.table).sort(),['social_connections','support_chat_read','support_ai_consent_state','account_deletion_requests','pilot_inquiries','referral_discount_snapshots','referral_program_members','referrals','referrals'].sort());
   const given=result.find(x=>x.key==='referrals_given').rows[0];const received=result.find(x=>x.key==='referrals_received').rows[0];
   assert.equal(given.relationship_role,'referrer');assert.equal(received.relationship_role,'referred');
   for(const item of [given,received]) {
@@ -221,11 +235,11 @@ function routeFixture({datasets=[],privateDatasets=[],failAt,authReadError=false
 
 test('successful disclosure binds both readers to the signed-in Creator and is explicitly complete',async()=>{
   const datasets=[{key:'profile_record',rows:[{id:userId,display_name:'Synthetic Creator'}]},{key:'membership_record',rows:[{id:'membership-1',workspace_id:workspace,user_id:userId,role:'owner'}]},{key:'workspace_record',rows:[{id:workspace,name:'Synthetic workspace',billing_status:'active'}]},{key:'memories',rows:[{id:'m1',workspace_id:workspace,content:'PRESERVE_MEMORY'}]},{key:'messages',rows:[{id:'msg1',workspace_id:workspace,source_platform:'x',content:'PRESERVE_X_MESSAGE'}]},{key:'creator_confirmed_chat_learning',rows:[{proposal_id:'p1',workspace_id:workspace,proposed_text:'PRESERVE_CONFIRMED_CHAT'}]}];
-  const privateDatasets=[{key:'referral_membership',rows:[{workspace_id:workspace,user_id:userId,referral_code:'OWNCODE'}]}];
+  const privateDatasets=[{key:'support_conversations',rows:[{question:'OWN_SUPPORT_QUESTION',answer:'OWN_SUPPORT_ANSWER'}]},{key:'support_ai_consent',rows:[{granted:false,revision:2,version:'support-ai-20261114-v1',grantedAt:'2026-11-14T14:40:50Z',revokedAt:'2026-11-14T14:44:08Z'}]},{key:'referral_membership',rows:[{workspace_id:workspace,user_id:userId,referral_code:'OWNCODE'}]}];
   const h=routeFixture({datasets,privateDatasets});const response=await h.run('de');
   assert.deepEqual(h.collectorArgs(),[workspace,userId]);assert.deepEqual(h.privateArgs(),[workspace,userId,email]);
   assert.equal(response.status,200);assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');assert.match(response.headers.get('Content-Disposition'),/fanmind-datenauskunft\.pdf/);assert.doesNotMatch(response.headers.get('Content-Disposition'),/teilweise|partial/i);
-  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/Bestätigte Chat-Lernevidenz/);assert.match(lines,/PRESERVE_CONFIRMED_CHAT/);assert.match(lines,/OWNCODE/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
+  const lines=h.lines().join('\n');assert.match(lines,/Kontoprofil und gespeicherte Präferenzen/);assert.match(lines,/phone: \+43 1 234/);assert.match(lines,/PRESERVE_SAFE/);assert.match(lines,/Gespeichertes Nutzerprofil/);assert.match(lines,/PRESERVE_MEMORY/);assert.match(lines,/PRESERVE_X_MESSAGE/);assert.match(lines,/Bestätigte Chat-Lernevidenz/);assert.match(lines,/PRESERVE_CONFIRMED_CHAT/);assert.match(lines,/OWNCODE/);assert.match(lines,/OWN_SUPPORT_QUESTION/);assert.match(lines,/OWN_SUPPORT_ANSWER/);assert.match(lines,/support-ai-20261114-v1/);assert.match(lines,/revokedAt: 2026-11-14T14:44:08Z/);assert.doesNotMatch(lines,/NEVER_EXPORT|provider_token|refresh_token|Vollständigkeit nicht bestätigt|Teilauskunft/);
 });
 
 test('workspace members cannot export the Creator Workspace disclosure',async()=>{
@@ -275,4 +289,26 @@ test('private Character media disclosure handles absent preinstall tables and re
   const denied=collectorFixture(({table:current})=>current===table?jsonResponse({code:'42501'},403):undefined);
   await assert.rejects(denied.run(),DisclosureFailure);
  }
+});
+
+
+test('central private collector exports own Support pages and consent even when Help activation is off',async()=>{
+  const turn=i=>({request_id:`10000000-0000-4000-8000-${String(i).padStart(12,'0')}`,question:`Own question ${i}`,answer:'Own answer',context:'support',unanswered:false,created_at:'2026-11-14T10:00:00Z',secret:'NEVER_EXPORT'});
+  const h=privateFixture({override:({table})=>table==='support_chat_read'?jsonResponse(Array.from({length:100},(_,i)=>turn(101-i))):table==='support_chat_page'?jsonResponse([turn(1)]):undefined});
+  const result=await h.run();const turns=result.find(d=>d.key==='support_conversations').rows;
+  assert.equal(turns.length,101);assert.equal(turns[0].question,'Own question 1');
+  const consent=result.find(d=>d.key==='support_ai_consent').rows[0];assert.equal(consent.granted,false);assert.equal(consent.revision,2);assert.equal(consent.version,'support-ai-20261114-v1');assert.equal(consent.revokedAt,'2026-11-14T14:44:08Z');assert.equal(consent.persistent_activation,false);
+  const social=result.find(d=>d.key==='connections').rows[0];assert.equal(social.page_name,'Own page');assert.doesNotMatch(JSON.stringify(result),/NEVER_EXPORT/);
+  const query=h.calls.find(c=>c.table==='social_connections').url.searchParams;assert.notEqual(query.get('select'),'*');assert.doesNotMatch(query.get('select'),/page_access_token_encrypted|token_last_four/);
+});
+
+test('support read failures, malformed consent, partial installation and foreign connection rows fail closed',async()=>{
+  for(const override of [
+    ({table})=>table==='support_chat_read'?jsonResponse({error:'private'},503):undefined,
+    ({table})=>table==='support_ai_consent_state'?jsonResponse(null):undefined,
+    ({table})=>table==='support_ai_consent_state'?jsonResponse({granted:true}):undefined,
+    ({table})=>table==='social_connections'?jsonResponse([{workspace_id:'foreign'}]):undefined,
+  ]) await assert.rejects(privateFixture({override}).run());
+  const missing=({table})=>table==='support_ai_consent_state'?jsonResponse({code:'PGRST202',message:'Could not find the function public.support_ai_consent_state(p_actor, p_version) in the schema cache'},404):undefined;
+  for(const flags of [{},{runtime:'staging'},{persistent:true}])await assert.rejects(privateFixture({...flags,override:missing}).run());
 });

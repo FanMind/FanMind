@@ -22,6 +22,25 @@ runtime activation and actual Desktop acceptance remain separate requirements.
 Existing PNG/MP4 upload and verified-deletion work continues under #1425.
 Details: docs/operations/CHAT_ADMIN_MEDIA_PRICES_20261114.md.
 
+## Central profile data disclosure — Owner correction 14 November 2026
+
+Support1350: the only Creator data download is the existing PDF button at
+Profile & account → GDPR → Data disclosure (/settings/profile/data-export).
+Help explains this location and links to the profile section; its former JSON
+export now redirects to that profile section. Own Support history uses the
+existing paginated RPCs and collector; current AI consent uses the existing
+read-only consent RPC and parser. Private collection rechecks the authenticated
+Creator/Workspace Owner before and after all privileged reads. Help activation
+is not required to export retained own data. Consent activation and withdrawal
+remain separately accessible. Conversation erasure remains its existing flow;
+account deletion remains in Profile & account.
+
+The PDF already includes account/preferences, authorized Workspace, CRM, Meta,
+Creator/ChatAdmin data and private inquiry/referral/deletion records. It now also
+includes own Support questions/answers and current consent status, revision,
+text version and grant/revocation timestamps. No foreign Workspace, credential,
+token, schema install, consent mutation or Production activation is added.
+
 ## Support Web: persistent optional AI choice — 14 November 2026
 
 Owner decision1350/1425 moves actual mobile acceptance to **VERSCHOBEN – APP-ABNAHME**.

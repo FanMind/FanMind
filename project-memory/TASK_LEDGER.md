@@ -4,6 +4,11 @@
 - Initial hosted CI found a duplicate auto-created conversation in the new PG fixture and an omitted pure dependency in the component harness. Correct those fixtures; retain the existing full native RLS/lifecycle and browser assertions. Reconcile the reviewed Source of Truth fingerprint without refreshing live evidence or altering accepted gates.
 - Prepare exact-Main/protected-Staging/TLS/checksum schema control with read-only preflight, atomic apply/postflight and full source-derived verification. No workflow dispatched. Existing upload/delete Desktop acceptance remains open; no browser or native-source result is a target PASS.
 
+## FM-SUPPORT-PROFILE-DISCLOSURE-1350-20261114
+- Owner correction: one existing central Profile/GDPR PDF export; no Help download. Reuse #1491/#1496, existing PDF renderer and private collector, paginated own Support RPCs/collector and current-consent parser. Retain historical redacted proof; do not re-read private Support content for it.
+- Actual Staging click returned safe PDF failure HTML. Read-only schema metadata identifies authenticated SELECT-star conflict on credential-bearing social_connections; moved its explicit safe projection into existing twice-Owner-authorized private collection. No DB grants, schema, retention, consent mutations or Production changes.
+- Missing own Support history/current consent wired into existing PDF; Help points to Profile section, legacy JSON URL redirects there; erasure and separate AI consent settings preserved. FM-CONTRACT-DISCLOSURE-DELETE-001 / FM-IGATE-DISCLOSURE-DELETE-001 consumers and isolation/negative/recovery boundaries covered by targeted tests; current-head CI and corrected live PDF download remain separately required. Not a legal/Production release approval.
+
 ## FM-SUPPORT-CONSENT-WEB-1350-20261114
 
 ## FM-SUPPORT-PROD-PREP-1350-20261114
