@@ -67,14 +67,15 @@ for(const status of [409,503])test(`failed Owner acknowledgment (${status}) rema
  await expect(page.getByText("Meldungen oder Wiederaufnahme derzeit nicht bestätigt.",{exact:false})).toBeVisible();
  await mount(page,"owner");await expect(page.getByText("Sicherheitswarnung",{exact:true})).toBeVisible();expect(ackPosts).toBe(1);
 });
-test("support export suppresses a late download after account revalidation",async({page})=>{
- let scope="scope-a",release:()=>void=()=>{};const gate=new Promise<void>(resolve=>{release=resolve;});let started=false,downloads=0;
+test("Support points to the central profile privacy area without a second download",async({page})=>{
+ let downloads=0,privacyRequests=0;
  page.on('download',()=>downloads++);
- await page.route("**/api/support/conversation",route=>route.fulfill({json:{scope,turns:[]}}));
- await page.route("**/api/support/privacy?**",async route=>{started=true;await gate;await route.fulfill({json:{scope:"scope-a",turns:[]}});});
- await mount(page);await page.getByRole('button',{name:'Eigene Supportdaten herunterladen'}).click();await expect.poll(()=>started).toBe(true);
- scope='scope-b';await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();
- release();await page.waitForTimeout(150);expect(downloads).toBe(0);
+ await page.route("**/api/support/conversation",route=>route.fulfill({json:{scope:'scope-a',turns:[]}}));
+ await page.route("**/api/support/privacy**",route=>{privacyRequests++;return route.fulfill({json:{}});});
+ await mount(page);
+ await expect(page.getByRole('button',{name:'Eigene Supportdaten herunterladen'})).toHaveCount(0);
+ await expect(page.getByRole('link',{name:'Zum Datenschutzbereich im Profil'})).toHaveAttribute('href','/settings/profile#gdpr-profile-title');
+ expect(downloads).toBe(0);expect(privacyRequests).toBe(0);
 });
 test("support erase clears ambiguous pending text despite focus refresh and preserves failure feedback",async({page})=>{
  let release:()=>void=()=>{};const gate=new Promise<void>(resolve=>{release=resolve;});let started=false,posts=0;
@@ -86,7 +87,7 @@ test("support erase clears ambiguous pending text despite focus refresh and pres
  // A fresh explicit erase may fail; a subsequent successful reload must not hide it.
  await page.unroute("**/api/support/privacy?**");await page.route("**/api/support/privacy?**",route=>route.fulfill({status:503,json:{error:'unavailable'}}));await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect(page.getByText('Löschung nicht bestätigt.',{exact:false})).toBeVisible();
 });
-test("own support export downloads retained data and confirmed erasure submits the exact preview",async({page})=>{
+test("confirmed support erasure submits the exact preview",async({page})=>{
  const thread='10000000-0000-4000-8000-000000000001';let erased=false,submissions=0;
  const turns=[{request_id:'10000000-0000-4000-8000-000000000002',question:'Synthetic own question',answer:'Synthetic answer',unanswered:false}];
  await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns:erased?[]:turns}}));
@@ -95,8 +96,6 @@ test("own support export downloads retained data and confirmed erasure submits t
   await route.fulfill({json:route.request().url().includes('preview=erase')?{scope:'scope-a',state:{thread,sequence:12}}:{scope:'scope-a',turns}});
  });
  await mount(page);await expect(page.getByText('Synthetic own question',{exact:false})).toBeVisible();
- const download=page.waitForEvent('download');await page.getByRole('button',{name:'Eigene Supportdaten herunterladen'}).click();const artifact=await download;expect(artifact.suggestedFilename()).toBe('fanmind-support-data.json');
- const stream=await artifact.createReadStream();let content='';for await(const chunk of stream!)content+=chunk.toString();expect(JSON.parse(content)).toEqual({scope:'scope-a',turns});
  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect(page.getByText('Synthetic own question',{exact:false})).toHaveCount(0);await expect.poll(()=>submissions).toBe(1);await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();
 });
 

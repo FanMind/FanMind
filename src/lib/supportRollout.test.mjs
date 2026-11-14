@@ -99,7 +99,7 @@ test('actual own-data route rejects stale scope/foreign Origin and never substit
  const exports={},dependencies={
   '@/lib/supportAIConsentPolicy':{persistentSupportConsentEnabled:()=>false},'@/lib/supportAIConsentServer':{},
   '@/lib/httpMutationPolicy.mjs':http,
-  'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
+  'next/server':{NextResponse:class {constructor(body,options={}){this.body=body;this.status=options.status??200;this.headers=options.headers;} static json(body,options={}){return {body,status:options.status??200};}}},
   '@/lib/supportContinuityServer':{supportCustomer:async()=>identity,readSupportConversation:async()=>{if(failed)throw new Error('store_failed');return [];}},
   '@/lib/supportCentreServer':{supportCentreEnabled:()=>true,supportCentreDatabase:async(path,args)=>{assert.equal(args.p_actor,'actor-a');assert.equal(args.p_workspace,'workspace-a');if(path.endsWith('privacy_state'))return erased?null:{thread:'10000000-0000-4000-8000-000000000001',sequence:2};erased++;return true;}},
   '@/lib/supportPrivacy.mjs':{collectSupportExport},'@/lib/sharedRateLimit':{consumeSharedRateLimit:async()=>({allowed})},
@@ -108,8 +108,8 @@ test('actual own-data route rejects stale scope/foreign Origin and never substit
  runInNewContext(ts.transpileModule(readFileSync('src/app/api/support/privacy/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:n=>dependencies[n],Date,Number,Object});
  const request=(query='',body,origin='https://staging.fanmind.ch')=>({url:`https://staging.fanmind.ch/api/support/privacy${query}`,nextUrl:new URL(`https://staging.fanmind.ch/api/support/privacy${query}`),headers:new Headers({origin}),json:async()=>body});
  assert.equal((await exports.GET(request('?scope=foreign'))).status,400);
- const data=await exports.GET(request('?scope=scope-a'));assert.equal(data.status,200);assert.equal(data.body.scope,'scope-a');
- failed=true;assert.equal((await exports.GET(request('?scope=scope-a'))).status,503);failed=false;
+ const data=await exports.GET(request('?scope=scope-a'));assert.equal(data.status,303);assert.equal(data.headers.Location,'/settings/profile#gdpr-profile-title');
+ assert.equal((await exports.GET(request('?scope=scope-a&preview=erase'))).body.scope,'scope-a');failed=false;
  const body={action:'erase',confirmed:true,scope:'scope-a',thread:'10000000-0000-4000-8000-000000000001',sequence:2};
  assert.equal((await exports.POST(request('',body,'https://evil.invalid'))).status,403);
  assert.equal((await exports.POST(request('',{...body,actor:'other'}))).status,400);

@@ -1,10 +1,7 @@
-import {persistentSupportConsentEnabled} from "@/lib/supportAIConsentPolicy";
-import {readSupportAIConsent} from "@/lib/supportAIConsentServer";
 import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import {NextRequest,NextResponse} from "next/server";
-import {supportCustomer,readSupportConversation} from "@/lib/supportContinuityServer";
+import {supportCustomer} from "@/lib/supportContinuityServer";
 import {supportCentreDatabase,supportCentreEnabled} from "@/lib/supportCentreServer";
-import {collectSupportExport} from "@/lib/supportPrivacy.mjs";
 import {consumeSharedRateLimit} from "@/lib/sharedRateLimit";
 import {readSupportRequest} from "@/lib/supportCentreRequest";
 import {isSupportUuid} from "@/lib/supportCentrePolicy";
@@ -22,8 +19,8 @@ export async function GET(request:NextRequest){
    if(state!==null&&(!isSupportUuid(state.thread)||!Number.isSafeInteger(state.sequence)||state.sequence<0))return failure(503);
    return NextResponse.json({scope:identity.scope,state},{headers});
   }
-  const turns=await collectSupportExport(before=>readSupportConversation(identity,before));
-  return NextResponse.json({generated_at:new Date().toISOString(),retention_days:30,...(persistentSupportConsentEnabled()?{ai_consent:await readSupportAIConsent(identity.actor)}:{}),scope:identity.scope,description:"Current retained own support conversation; paginated, not an atomic snapshot",turns},{headers:{...headers,"Content-Disposition":'attachment; filename="fanmind-support-data.json"'}});
+  // Legacy links lead to the one central profile export, never another file.
+  return new NextResponse(null,{status:303,headers:{...headers,Location:"/settings/profile#gdpr-profile-title"}});
  }catch{return failure(503);}
 }
 export async function POST(request:NextRequest){

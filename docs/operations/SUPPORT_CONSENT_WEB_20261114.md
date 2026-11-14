@@ -1,3 +1,44 @@
+## Central profile data disclosure — Owner correction 14 November 2026
+
+Support1350: the only Creator data download is the existing PDF button at
+Profile & account → GDPR → Data disclosure (/settings/profile/data-export).
+Help explains this location and links to the profile section; its former JSON
+export now redirects to that profile section. Own Support history uses the
+existing paginated RPCs and collector; current AI consent uses the existing
+read-only consent RPC and parser. Private collection rechecks the authenticated
+Creator/Workspace Owner before and after all privileged reads. Help activation
+is not required to export retained own data. Consent activation and withdrawal
+remain separately accessible. Conversation erasure remains its existing flow;
+account deletion remains in Profile & account.
+
+The PDF already includes account/preferences, authorized Workspace, CRM, Meta,
+Creator/ChatAdmin data and private inquiry/referral/deletion records. It now also
+includes own Support questions/answers and current consent status, revision,
+text version and grant/revocation timestamps. No foreign Workspace, credential,
+token, schema install, consent mutation or Production activation is added.
+
+The actual pre-change Staging PDF click returned the existing safe disclosure
+failure page, not a downloaded PDF. Read-only catalogue verification proves
+social_connections has columns unavailable to authenticated SELECT *, including
+its encrypted token. Reuse the existing twice-Owner-authorized private collector
+with an explicit non-credential metadata projection. Do not widen DB grants.
+Support/schema/provider failures still abort the complete PDF, including a
+missing consent RPC even while persistence is off. Schema-cache errors cannot
+prove absence of stored personal data. The already separately prepared Consent
+schema must be installed/verified before the corrected PDF can be complete on
+Production; this PR grants no Apply permission. Source preparation does not
+establish corrected live acceptance.
+
+The independent redacted #1496 proof (18 own records/0 foreign, consent revision2)
+is retained as historical PASS and is not regenerated. Its source hash identifies
+the old JSON serializer. It is not a PASS for the central PDF HTTP/browser path.
+Actual corrected PDF browser download remains pending a checked Staging rollout.
+Mobile live stays VERSCHOBEN – APP-ABNAHME. Production remains unchanged.
+
+Affected boundary: FM-CONTRACT-DISCLOSURE-DELETE-001 /
+FM-IGATE-DISCLOSURE-DELETE-001 (Creator/ChatAdmin disclosure, tenant negatives,
+existing erasure/account-delete consumers unchanged). No SQL or retention change.
+
 # Support Web completion and consent — 14 November 2026
 
 Issue1350. Owner authorizes development, checked merge, separately protected
