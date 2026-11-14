@@ -8,7 +8,7 @@ type Connection = {
   status: "connected" | "attention_required";
   issue: "connection" | "message_sync";
 };
-type DiagnosticState = "idle" | "loading" | "ready" | "unavailable";
+type DiagnosticState = "idle" | "loading" | "ready" | "disabled" | "unavailable";
 type RepairState =
   | "idle"
   | "loading"
@@ -24,6 +24,10 @@ const providerNames: Record<string, string> = {
 
 export function WorkspaceHelpLauncher() {
   const [open, setOpen] = useState(false);
+  const launcher = useRef<HTMLButtonElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const [diagnosticAttempt, setDiagnosticAttempt] = useState(0);
+  function close() { setOpen(false); launcher.current?.focus(); }
   const handoffGeneration = useRef(0);
   const [handoff, setHandoff] = useState<"idle" | "busy" | "recorded" | "failed">("idle");
   const [diagnosticState, setDiagnosticState] =
@@ -121,8 +125,9 @@ export function WorkspaceHelpLauncher() {
   useEffect(() => {
     if (!open) return;
     function onEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     }
+    closeButton.current?.focus();
     document.addEventListener("keydown", onEscape);
     return () => document.removeEventListener("keydown", onEscape);
   }, [open]);
@@ -137,6 +142,13 @@ export function WorkspaceHelpLauncher() {
       signal: controller.signal,
     })
       .then(async (response) => {
+        if (response.status === 404) {
+          const error = await response.json();
+          if (error?.error === "not_available") {
+            if (!controller.signal.aborted) setDiagnosticState("disabled");
+            return;
+          }
+        }
         if (!response.ok) throw new Error("diagnostics_unavailable");
         const payload: unknown = await response.json();
         if (
@@ -170,7 +182,7 @@ export function WorkspaceHelpLauncher() {
         if (!controller.signal.aborted) setDiagnosticState("unavailable");
       });
     return () => controller.abort();
-  }, [open]);
+  }, [open, diagnosticAttempt]);
 
   function selectProvider(platform: string) {
     handoffGeneration.current++;
@@ -185,38 +197,32 @@ export function WorkspaceHelpLauncher() {
   return (
     <aside
       aria-label="FanMind Hilfe"
-      style={{ position: "fixed", right: 20, bottom: 20, zIndex: 1000 }}
+      className="fm-help"
     >
       {open ? (
         <section
           id="fanmind-inapp-help-panel"
           aria-label="FanMind Hilfe"
-          style={{
-            width: "min(340px, calc(100vw - 40px))",
-            background: "#fff",
-            color: "#14243a",
-            border: "1px solid #cbd5e1",
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 8,
-            boxShadow: "0 12px 36px #0003",
-          }}
+          className="fm-help-panel"
         >
-          <h2 style={{ fontSize: 18, margin: "0 0 8px" }}>
-            Wie können wir helfen?
-          </h2>
-          <p>
-            Hier kannst du den Verbindungsstatus deiner Kanäle prüfen. Die
-            Prüfung verändert keine Einstellungen.
-          </p>
+          <header className="fm-help-header">
+            <div><span className="fm-help-eyebrow">FanMind Support</span><h2>Wie können wir helfen?</h2></div>
+            <button ref={closeButton} type="button" aria-label="Hilfe minimieren" onClick={close}>×</button>
+          </header>
+          <div className="fm-help-content">
+          <details className="fm-help-diagnostics">
+            <summary>Kanäle und Verbindungsstatus</summary>
+            <p>Diese Prüfung liest nur den Verbindungsstatus. Sie ändert keine Einstellungen.</p>
           {diagnosticState === "loading" ? (
             <p role="status">Verbindungen werden geprüft …</p>
           ) : null}
-          {diagnosticState === "unavailable" ? (
-            <p role="status">
-              Die Kontoprüfung ist derzeit nicht verfügbar. Bitte versuche es
-              später erneut.
-            </p>
+          {diagnosticState === "unavailable" || diagnosticState === "disabled" ? (
+            <div role="status" className="fm-help-notice">
+              <p>{diagnosticState === "disabled"
+                ? "Die Verbindungsprüfung ist für diese Umgebung noch nicht aktiviert. Den Supportchat kannst du weiterhin nutzen."
+                : "Der Verbindungsstatus konnte nicht geladen werden. Den Supportchat kannst du weiterhin nutzen."}</p>
+              <button type="button" onClick={() => { setDiagnosticState("loading"); setDiagnosticAttempt(value => value + 1); }}>Kontoprüfung erneut versuchen</button>
+            </div>
           ) : null}
           {diagnosticState === "ready" ? (
             connections.length ? (
@@ -347,8 +353,9 @@ export function WorkspaceHelpLauncher() {
               </div>
             </section>
           ) : null}
+          </details>
           <SupportConversation />
-          <p>
+          <details className="fm-help-diagnostics"><summary>Sichere Fehlerbehebung</summary><p>
             Automatische Reparaturen sind auf bestätigte, sichere Aktionen
             begrenzt. OAuth, Berechtigungen und Zugangsdaten bleiben immer
             manuell.
@@ -365,15 +372,14 @@ export function WorkspaceHelpLauncher() {
             </div>
           )}
           <a href="/channels">Kanäle öffnen</a>
-          <div style={{ marginTop: 12 }}>
-            <button type="button" onClick={() => setOpen(false)}>
-              Schließen
-            </button>
+          </details>
           </div>
         </section>
       ) : null}
       <button
         type="button"
+        ref={launcher}
+        className="fm-help-launcher"
         aria-expanded={open}
         aria-controls="fanmind-inapp-help-panel"
         onClick={() => {
@@ -388,17 +394,9 @@ export function WorkspaceHelpLauncher() {
             setRepairState("idle");
             setCheckState("idle");
           }
-          setOpen((current) => !current);
+          if (open) close(); else setOpen(true);
         }}
-        style={{
-          background: "#0877d9",
-          color: "#fff",
-          border: 0,
-          borderRadius: 24,
-          padding: "12px 18px",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
+
       >
         {open ? "Hilfe schließen" : "Hilfe"}
       </button>

@@ -1,0 +1,59 @@
+/* Existing shell tokens keep the in-app support within the active FanMind theme. */
+.fm-help {
+  position: fixed; right: 20px; bottom: 20px; z-index: 1000;
+  width: min(440px, calc(100vw - 40px)); font: 14px/1.5 Arial, Helvetica, sans-serif;
+  color: var(--fanmind-shell-text, #fff); overflow-wrap: anywhere;
+}
+.fm-help-panel {
+  display: flex; flex-direction: column; min-height: 0;
+  max-height: min(760px, calc(100dvh - 100px)); margin-bottom: 10px;
+  background: var(--fanmind-shell-card-strong, #0f172a);
+  backdrop-filter: blur(24px); border: 1px solid var(--fanmind-shell-border, #475569);
+  border-radius: 20px; box-shadow: 0 20px 70px #0008; overflow: hidden;
+}
+.fm-help-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--fanmind-shell-border, #475569); flex-shrink: 0; }
+.fm-help-header h2 { font-size: 19px; line-height: 1.3; margin: 4px 0 0; }
+.fm-help-eyebrow { color: var(--fanmind-shell-accent, #67e8f9); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.fm-help-content { padding: 16px 20px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; scrollbar-gutter: stable; }
+.fm-help p { margin: 8px 0; }
+.fm-help h3 { font-size: 16px; margin: 0 0 8px; }
+.fm-help button, .fm-support-conversation button, .fm-help summary, .fm-support-conversation summary {
+  font: inherit; min-height: 44px; border-radius: 12px; padding: 10px 12px;
+  border: 1px solid var(--fanmind-shell-border, #475569); color: var(--fanmind-shell-text, #fff);
+  background: var(--fanmind-input-bg, #020617); cursor: pointer; line-height: 1.4;
+  white-space: normal; max-width: 100%; text-align: start;
+}
+.fm-help summary, .fm-support-conversation summary { display: list-item; font-weight: 600; }
+.fm-help-header button { flex: 0 0 44px; text-align: center; font-size: 24px; padding: 0; }
+.fm-help button:disabled, .fm-support-conversation button:disabled { opacity: .5; cursor: not-allowed; }
+.fm-help button:hover:not(:disabled), .fm-support-conversation button:hover:not(:disabled) { border-color: var(--fanmind-shell-accent, #67e8f9); }
+.fm-help :is(button, a, textarea, summary, [tabindex]):focus-visible, .fm-support-conversation :is(button, a, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--fanmind-shell-accent, #67e8f9); outline-offset: 3px; }
+.fm-help .fm-help-launcher, .fm-help .fm-help-primary, .fm-support-conversation .fm-help-primary { background: var(--fanmind-shell-accent, #67e8f9); color: #07111f; font-weight: 700; }
+.fm-help .fm-help-launcher { display: block; margin-left: auto; box-shadow: 0 6px 24px #0005; border-radius: 28px; padding: 12px 22px; }
+.fm-help-diagnostics { margin-bottom: 14px; }
+.fm-help-diagnostics > :not(summary) { margin-top: 10px; }
+.fm-help-diagnostics ul { padding-left: 20px; }
+.fm-help-diagnostics li { margin: 10px 0; }
+.fm-help-diagnostics li button { display: block; margin-top: 6px; }
+.fm-help-notice { border-left: 3px solid var(--fanmind-shell-accent, #67e8f9); padding-left: 12px; }
+.fm-help a, .fm-support-conversation a { color: var(--fanmind-shell-accent, #67e8f9); text-decoration: underline; text-underline-offset: 3px; }
+.fm-support-conversation { display: flex; flex-direction: column; min-width: 0; gap: 10px; }
+.fm-help-muted { color: var(--fanmind-shell-muted, #cbd5e1); font-size: 13px; line-height: 1.5; }
+.fm-support-turns { max-height: 240px; min-height: 56px; overflow-y: auto; overscroll-behavior: contain; padding: 4px; scrollbar-gutter: stable; }
+.fm-support-turns article + article { margin-top: 16px; }
+.fm-support-turns p { padding: 12px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fm-support-turns strong { display: block; font-size: 12px; color: var(--fanmind-shell-accent, #67e8f9); margin-bottom: 4px; }
+.fm-support-question { background: var(--fanmind-input-bg, #020617); margin-left: 24px !important; }
+.fm-support-answer { border: 1px solid var(--fanmind-shell-border, #475569); margin-right: 16px !important; }
+.fm-support-composer { display: grid; gap: 10px; }
+.fm-support-composer label { display: grid; gap: 6px; font-weight: 600; }
+.fm-support-composer textarea { display: block; width: 100%; min-height: 80px; max-height: 140px; resize: vertical; padding: 12px; font: 16px/1.5 Arial, Helvetica, sans-serif; color: var(--fanmind-shell-text, #fff); background: var(--fanmind-input-bg, #020617); border: 1px solid var(--fanmind-shell-border, #475569); border-radius: 12px; }
+.fm-help-actions { display: grid; gap: 10px; padding-top: 10px; }
+.fm-help-privacy { margin-top: 4px; }
+@media (max-width: 600px) {
+  .fm-help { right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); width: calc(100vw - 16px); }
+  .fm-help-panel { max-height: calc(100dvh - 82px - env(safe-area-inset-bottom)); border-radius: 16px; }
+  .fm-help-header { padding: 12px 14px; }
+  .fm-help-content { padding: 12px 14px; }
+  .fm-support-turns { max-height: 24dvh; }
+}

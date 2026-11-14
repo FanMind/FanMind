@@ -61,5 +61,27 @@ export function SupportConversation(){
   finally{privacyBusy.current=false;await load();}
  }
  async function share(){const version=++generation.current;const selectedScope=scope;setHandoff(false);try{const r=await fetch("/api/support/conversation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({scope,handoff:true})});if(!r.ok)throw new Error("unavailable");const data=await r.json();if(version===generation.current&&selectedScope===boundScope.current&&data.scope===selectedScope)setHandoff(true);}catch{if(version===generation.current)setStatus("unavailable");}}
- return <section aria-label="Dein Supportgespräch"><h3>Dein Supportgespräch</h3>{privacyError&&<p role="alert">Löschung nicht bestätigt. Bitte erneut prüfen und bestätigen.</p>}<p><button disabled={!scope||status==="sending"} onClick={()=>void download()}>Eigene Supportdaten herunterladen</button> · <button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button> · <a href="/datenschutz">Datenschutzinformationen</a></p><p>Verlauf für dein Konto und deinen Workspace, bis zu 30 Tage gespeichert. Keine Passwörter oder sensiblen Daten eingeben. Antworten basieren auf freigegebenen Produktinformationen.</p>{status==="unavailable"?<p role="alert">Gespräch nicht verfügbar. <button onClick={()=>void load()}>Erneut laden</button></p>:<>{more&&<button disabled={status!=="ready"} onClick={()=>void older()}>Ältere Nachrichten laden</button>}<div aria-live="polite">{turns.map(t=><article key={t.request_id}><p><strong>Du:</strong> {t.question}</p><p><strong>Support:</strong> {t.answer}</p></article>)}</div><label>Deine Frage<textarea maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label><button disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"} onClick={()=>void send()}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":"Speichern und senden"}</button>{status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}<button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button>{handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}</>}</section>;
+ return <section aria-label="Dein Supportgespräch" className="fm-support-conversation">
+  <h3>Dein Supportgespräch</h3>
+  <p className="fm-help-muted">Verlauf für dein Konto und deinen Workspace, bis zu 30 Tage gespeichert. Keine Passwörter oder sensiblen Daten eingeben. Antworten basieren auf freigegebenen Produktinformationen.</p>
+  {privacyError&&<p role="alert">Löschung nicht bestätigt. Bitte erneut prüfen und bestätigen.</p>}
+  {status==="loading"&&<p role="status">Supportgespräch wird geladen …</p>}
+  {status==="unavailable"?<p role="alert">Gespräch nicht verfügbar. <button onClick={()=>void load()}>Erneut laden</button></p>:<>
+   {more&&<button disabled={status!=="ready"} onClick={()=>void older()}>Ältere Nachrichten laden</button>}
+   <div className="fm-support-turns" role="log" aria-label="Gesprächsverlauf" tabIndex={0} aria-live="polite">
+    {!turns.length&&status==="ready"&&<p className="fm-help-muted">Stelle uns eine Frage zu FanMind. Deine Antworten bleiben hier gespeichert.</p>}
+    {turns.map(t=><article key={t.request_id}><p className="fm-support-question"><strong>Du</strong>{t.question}</p><p className="fm-support-answer"><strong>Support</strong>{t.answer}</p></article>)}
+   </div>
+   <form className="fm-support-composer" onSubmit={event=>{event.preventDefault();if(scope&&status!=="sending"&&(status==="retry"||text.trim()))void send();}}>
+    <label>Deine Frage<textarea rows={3} maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
+    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":"Speichern und senden"}</button>
+   </form>
+   {status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}
+  </>}
+  <details className="fm-help-privacy"><summary>Datenschutz und Support-Übergabe</summary>
+   <div className="fm-help-actions"><button disabled={!scope||status==="sending"} onClick={()=>void download()}>Eigene Supportdaten herunterladen</button><button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button><a href="/datenschutz">Datenschutzinformationen</a>
+   <button disabled={!scope||!turns.length||status==="sending"||status==="retry"} onClick={()=>void share()}>Aktuellen Verlauf mit meiner Zustimmung an Support übergeben</button></div>
+   {handoff&&<p role="status">Support-Übergabe erfasst. Spätere Nachrichten benötigen eine neue Freigabe.</p>}
+  </details>
+ </section>;
 }

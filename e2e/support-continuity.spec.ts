@@ -3,6 +3,7 @@ import {supportClientBundle} from "./support-client-bundle.mts";
 async function mount(page:Page,kind="chat"){
  await page.goto("/support");await page.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px sans-serif;margin:12px}section{max-width:620px;overflow-wrap:anywhere}textarea{display:block;max-width:100%;min-height:70px}button{min-height:44px;margin:4px}</style><div id="support-fixture"></div>');
  await page.evaluate(kind=>{(window as Window & {supportFixture?:string}).supportFixture=kind;},kind);await page.addScriptTag({content:await supportClientBundle()});
+ if(kind==="chat")await page.getByText("Datenschutz und Support-Übergabe",{exact:true}).click();
 }
 test("authenticated support restores persisted turns, retries the same request and clears a changed account",async({page})=>{
  let scope="scope-a",first=true;const ids:string[]=[];let turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
