@@ -250,6 +250,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       STAGING_DEPLOY_WORKFLOW,
       "install-production-audit-policy.yml",
       DAILY_PRODUCTION_CONTROL_WORKFLOW,
+      "production-meta-runtime.yml",
       STAGING_PROVISION_WORKFLOW,
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,

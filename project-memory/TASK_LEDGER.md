@@ -1088,3 +1088,30 @@ regressions cover both rebind and repeat configure selection.
 ## Instagram Unified Login #1480 — 2026-11-13
 
 Owner-approved single-account fanmind.crm Staging continuation on existing App1547928503809961. Configuration2150411132228815 uses only Instagram asset/basic/messages/comments. Existing Operator/CRM paths reused; protected source implementation and real account/ingress acceptance remain separate. Main88898c6f incorporated; #1479 kept separate. Evidence and limitations: docs/operations/INSTAGRAM_STAGING_1480_20261113.md. Production unchanged.
+
+
+## FM-FACEBOOK-PRODUCTION-REGISTRATION-20261114
+
+- Issue1464 continuation; existing PR1482 merged, no second integration.
+- Risk R3 / source-only registration recovery: same workflow gains hosted,
+  secret-free path-limited push/PR validation; Production control explicitly
+  dispatch-only with unchanged Owner/current-main/live-ancestor/app/environment
+  checks and job-scoped shared Production deployment lock.
+- FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001 remain open; no general
+  Creator availability, real reception or second-identity acceptance claimed.
+- Fresh initial HTTPS Productionbb799466 / Staging8db6c86. GitHub Actions
+  filename page not found;0filtered runs, source exists on Main. Existing19
+  offline boundary tests pass before change. Actual GitHub indexing cause
+  unproven; registration recovery must be checked after regular merge.
+- Meta business verification incomplete/submission pending; app unpublished.
+  Personal identity/legal steps remain Owner-only. Production login needed for
+  Creator acceptance. No configuration/provider/schema/CRM/Billing writes.
+
+Protected inspect43603995152 reached fanmind-prod-01 but exited before git fetch
+and before the controller. The Meta source remote allowlist omitted the original
+Bernds-tech/FanMind repository aliases already accepted by the existing protected
+Support controller. Align the exact four aliases, retain current-Main/ancestry
+checks, add redacted remote-stage markers, and test accepted/foreign remotes
+against the actual shell case block. No remote URL/credential values are logged.
+The initial PR validation43603787681 registered the workflow successfully and
+exposed Run workflow even before merge; final required CI/merge still pending.
