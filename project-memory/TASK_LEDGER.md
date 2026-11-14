@@ -1135,3 +1135,30 @@ Publication remains disabled, required scopes remain Ready for testing only.
 Production Creator login is available; Facebook connection remains disabled for
 missing/invalid app-ID/callback/encryption. Actual HTTPS Productionbb799466;
 Staging95c93bf. No secret value, Staging token or identity document was copied.
+
+
+## Managed-worker inspection — 14 November 2026
+
+PR1493 merged as c0c1a191 after10successful exact-head workflow groups.
+Protected inspect43607939664 accepts the file/project target but rejects the
+process environment marker before readiness/configuration. Linux /proc/PID/environ
+contains exec-time state, not subsequent process.env changes; PM2-managed worker
+markers must instead be required from the exact online cluster worker metadata,
+in conjunction with the already pinned symlink, cwd, release and HTTPS runtime.
+Startup markers may be absent only with exact managed Production/live markers;
+contradictory startup values still block. Compare file/Meta aliases/service-key
+bindings against both startup and managed sources; block managed overrides of
+new values before writing. After reload and rollback revalidate the appropriate
+expected file values against both sources and preserve unrelated managed state.
+No target relaxation to Staging, optional managed marker or public-only proof.
+Add a real Linux subprocess test for the proc environment premise and negative
+managed/startup/alias/database/key cases. Actual target success remains unproven
+until the next protected inspect. No configuration, provider or database writes.
+Reference: https://man7.org/linux/man-pages/man5/proc_pid_environ.5.html
+
+The reviewed PM2 config deliberately owns Support and Character/Fan flags, so
+those two known values need not equal legacy environment-file text. Preserve
+their actual managed values explicitly before/after reload and rollback, even
+when absent from the file. A dedicated executed helper rejects changed/missing
+flags and unrelated Stripe drift. Do not treat those intended overrides as
+Meta-file conflicts or use file text to reset the running feature switches.
