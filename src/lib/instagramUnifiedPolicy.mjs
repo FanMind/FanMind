@@ -14,6 +14,12 @@ export function instagramUnifiedEnabled(env) {
 export function assertUnifiedOperator(env, user, workspace) {
   if (!instagramUnifiedEnabled(env) || user !== OPERATOR_USER || workspace !== OPERATOR_WORKSPACE) throw Error('instagram_unified_target');
 }
+export function stagingInstagramIngressEnabled(env, user, workspace, accountName) {
+  try {
+    assertUnifiedOperator(env, user, workspace);
+    return accountName === 'fanmind.crm';
+  } catch { return false; }
+}
 export function validateUnifiedDiagnostics(value, now = Date.now()) {
   if (value?.is_valid !== true || value.app_id !== UNIFIED_APP || value.type !== 'SYSTEM_USER' ||
       !Array.isArray(value.scopes) || !UNIFIED_SCOPES.every(s=>value.scopes.includes(s)) ||

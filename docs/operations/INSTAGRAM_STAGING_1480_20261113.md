@@ -1,3 +1,31 @@
+# Staging continuation — 14 November 2026
+
+The existing Instagram tester invitation was accepted. The authorized normal
+OAuth flow returned to the existing Operator Workspace and persisted fanmind.crm
+as a Professional account with Unified Login, the three intended Instagram
+permissions plus public_profile, an encrypted credential and an initial empty
+DM reconciliation. This is connection evidence, not real receipt acceptance.
+The account webhook subscription remains false; no fresh DM/comment test was
+requested while it was inactive. Production Facebook Configure 43623829681 and
+subscription 43624048062 already passed and must not be repeated for this fix.
+
+The first connected-account inspection exposed a reader defect: both connection
+readers omitted oauth_login_type and expiry metadata. The browser-safe query
+must remain unchanged because authenticated has no SELECT grants on those
+columns. Add them only to the existing service-role projection. The channels
+page exposes the existing ingress controls using exact Staging configuration,
+Operator identity, Workspace and account-name eligibility; it does not claim a
+valid token or subscription from that UI predicate. The server actions still
+require the stored Unified mode and verify the actual app/account/token before
+any subscription action. No schema, grants, credentials or second connection
+are introduced. Wrong environment/identity/Workspace/account stays disabled.
+
+The stored token expiry is not substituted for actual provider diagnostics.
+After reviewed rollout, inspect the provider's token type and both expiry
+fields, then activate/read back exact messages/comments before requesting real
+tests. This source correction does not itself complete the Staging acceptance.
+Affected boundary: FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001.
+
 # Unified Login implementation checkpoint — approved Staging scope
 
 PR1481 continuation: browser control recovered after runtime renewal; the Meta
