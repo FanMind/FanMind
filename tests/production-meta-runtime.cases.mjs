@@ -91,3 +91,14 @@ test('Production remote guard accepts the existing transferred-repository aliase
   assert.notEqual(result.status,0);assert.equal(result.stdout.trim(),'PRODUCTION_META_SOURCE=remote_rejected');
  }
 });
+
+test('Production origin accepts only the fixed root with optional one slash and distinguishes wrong targets',()=>{
+ assert.doesNotThrow(()=>assertProductionMetaTarget({...values,NEXT_PUBLIC_APP_URL:'https://fanmind.ch/'},control,'inspect'));
+ for(const origin of ['https://fanmind.ch//','https://fanmind.ch/path','https://fanmind.ch?x=1','https://fanmind.ch/#x','https://fanmind.ch:443','https://user:secret@fanmind.ch','http://fanmind.ch','https://staging.fanmind.ch']){
+  assert.throws(()=>assertProductionMetaTarget({...values,NEXT_PUBLIC_APP_URL:origin},control,'inspect'),/^Error: app_origin_mismatch$/u);
+ }
+ assert.throws(()=>assertProductionMetaTarget({...values,NEXT_PUBLIC_SUPABASE_URL:'https://foreign.supabase.co'},control,'inspect'),/^Error: database_target_mismatch$/u);
+ assert.throws(()=>assertProductionMetaTarget({...values,FANMIND_RUNTIME_ENVIRONMENT:'staging'},control,'inspect'),/^Error: environment_target_mismatch$/u);
+ assert.throws(()=>assertProductionRuntimeConsistency(values,{FANMIND_RUNTIME_ENVIRONMENT:'staging'},control.LIVE_COMMIT),/^Error: process_environment_mismatch$/u);
+ assert.throws(()=>assertProductionRuntimeConsistency(values,{FANMIND_RUNTIME_ENVIRONMENT:'production',FANMIND_RELEASE_COMMIT:'f'.repeat(40)},control.LIVE_COMMIT),/^Error: process_release_mismatch$/u);
+});
