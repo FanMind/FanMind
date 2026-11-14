@@ -5,7 +5,7 @@ import { supportCentreDatabase,supportCentreEnabled } from "@/lib/supportCentreS
 import { readSupportRequest } from "@/lib/supportCentreRequest";
 import { isSupportUuid } from "@/lib/supportCentrePolicy";
 import { consumeSharedRateLimit } from "@/lib/sharedRateLimit";
-import { supportTurnQuestion } from "@/lib/supportCreatorPolicy";
+import { isRetiredCreatorSupportTurn } from "@/lib/supportHistoryPolicy";
 import { supportAnswer } from "@/lib/supportKnowledge";
 const headers={"Cache-Control":"no-store"};
 const fail=(status:number)=>NextResponse.json({error:"support_unavailable"},{status,headers});
@@ -36,7 +36,7 @@ export async function POST(request:NextRequest){
     const forwarded=new Headers(request.headers);forwarded.delete("content-length");forwarded.set("Content-Type","application/json");
     const generated=await answerQuestion(new NextRequest(new URL("/api/public-support",request.url),{
      method:"POST",headers:forwarded,signal:request.signal,
-     body:JSON.stringify({question:body.question,history:retained.slice(-2).flatMap(turn=>[{role:"user",text:supportTurnQuestion(turn.question)},{role:"assistant",text:turn.answer}]),consent:true,language:"de"}),
+     body:JSON.stringify({question:body.question,history:retained.filter(turn=>!isRetiredCreatorSupportTurn(turn.question)).slice(-2).flatMap(turn=>[{role:"user",text:turn.question},{role:"assistant",text:turn.answer}]),consent:true,language:"de"}),
     }));
     if(!generated.ok)return fail(generated.status===429?429:503);
     const result=await generated.json();

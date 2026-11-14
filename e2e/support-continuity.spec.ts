@@ -125,44 +125,22 @@ test("authenticated AI requires opt-in, supports withdrawal and suppresses a lat
  await expect(page.getByRole('button',{name:'Mit gleicher Anfrage erneut versuchen'})).toHaveCount(0);
 });
 
-test('Creator pilot uses the existing composer, preserves one session grant, exposes test/undo and revokes on focus change',async({page})=>{
- const turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];const actions:Array<Record<string,unknown>>=[];
- const character='10000000-0000-4000-8000-000000000003';
- await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns}}));
- await page.route('**/api/support/creator-context**',async route=>{
-  if(route.request().method()==='GET'){await route.fulfill({json:route.request().url().includes('?')?{scope:'scope-a',fans:[{id:'10000000-0000-4000-8000-000000000004',name:'Synthetic fan'}]}:{scope:'scope-a',characters:[{id:character,name:'Synthetic model'}]}});return;}
-  const b=route.request().postDataJSON();actions.push(b);expect(b.scope).toBe('scope-a');expect(b.characterId).toBe(character);expect(b.readConsent).toBe(true);
-  turns.push({request_id:b.requestId,question:!b.undo&&!b.test?'Support-Stiländerung: '+JSON.stringify({v:1,character,revision:1,field:'writing_style',before:'Formell',after:'Locker'}):b.question,answer:b.undo?'Stil wiederhergestellt':b.test?'Synthetischer Vorher-/Nachhervergleich':'Schreibstil gespeichert und erneut gelesen',unanswered:false});
-  await route.fulfill({json:{scope:'scope-a',answer:'verified',...(b.undo||b.test?{}:{undo:b.requestId})}});
+test('platform Support never requests Character context or offers administration tools',async({page})=>{
+ const requests:string[]=[];
+ await page.route('**/api/support/creator-context**',route=>{requests.push(route.request().url());return route.fulfill({status:410,json:{error:'creator_support_retired'}});});
+ await page.route('**/api/support/conversation',async route=>{
+  if(route.request().method()==='POST'){
+   const body=route.request().postDataJSON();expect(Object.keys(body).sort()).toEqual(['aiConsent','context','question','requestId','scope']);
+   await route.fulfill({json:{scope:'scope-a',turns:[{request_id:body.requestId,question:body.question,answer:'Öffne die vorhandenen Model-Einstellungen im Creator-Chat.',unanswered:false}]}});return;
+  }
+  await route.fulfill({json:{scope:'scope-a',turns:[]}});
  });
- await mount(page);await page.getByText('Creator-Unterstützung · Staging-Test',{exact:true}).click();
- await page.getByRole('combobox',{name:'Support-Model'}).selectOption(character);
- await expect(page.getByRole('combobox',{name:'Support-Fan'}).getByRole('option',{name:'Synthetic fan'})).toHaveCount(1);
- await page.getByRole('checkbox',{name:'Ausgewählte Einstellungen und zugeordneten Verlauf lokal prüfen',exact:true}).check();
- await page.getByRole('checkbox',{name:'Begrenzte Stiländerungen für diese Sitzung verwalten',exact:true}).check();
- await page.getByRole('textbox',{name:'Deine Frage'}).fill('Mach die Antworten lockerer');await page.getByRole('button',{name:'Prüfen und ausführen',exact:true}).click();
- await expect(page.getByText('Schreibstil gespeichert und erneut gelesen',{exact:false})).toBeVisible();expect(actions.length).toBe(1);expect(actions[0].manageConsent).toBe(true);
- await page.getByRole('checkbox',{name:'Ausgewählte Model-Einstellungen für zwei synthetische KI-Testantworten mit OpenAI verarbeiten',exact:true}).check();
- await page.getByRole('button',{name:'Stiländerung synthetisch vergleichen',exact:true}).click();await expect(page.getByText('Synthetischer Vorher-/Nachhervergleich',{exact:false})).toBeVisible();expect(actions[1].aiConsent).toBe(true);
- await page.getByRole('button',{name:'Letzte Stiländerung rückgängig',exact:true}).click();await expect(page.getByText('Stil wiederhergestellt',{exact:false})).toBeVisible();expect(actions.length).toBe(3);
- await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('combobox',{name:'Support-Model',includeHidden:true})).toHaveValue('');
- await expect(page.getByRole('checkbox',{name:'Begrenzte Stiländerungen für diese Sitzung verwalten',exact:true,includeHidden:true})).not.toBeChecked();
- expect(actions.length).toBe(3);
-});
-
-test('synthetic conversation analysis requires its separate consent and sends no management grant',async({page})=>{
- const character='10000000-0000-4000-8000-000000000003',fan='10000000-0000-4000-8000-000000000004';let posted:Record<string,unknown>|null=null;
- const turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
- await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns}}));
- await page.route('**/api/support/creator-context**',async route=>{
-  if(route.request().method()==='GET'){await route.fulfill({json:route.request().url().includes('?')?{scope:'scope-a',fans:[{id:fan,name:'Support-QA-Fan'}]}:{scope:'scope-a',characters:[{id:character,name:'Support-QA-Model'}]}});return;}
-  const b=route.request().postDataJSON();posted=b;turns.push({request_id:b.requestId,question:b.question,answer:'KI-Analyse: formelle Stilvorgabe; keine Änderung.',unanswered:false});await route.fulfill({json:{scope:'scope-a',changed:false}});
- });
- await mount(page);await page.getByText('Creator-Unterstützung · Staging-Test',{exact:true}).click();await page.getByRole('combobox',{name:'Support-Model'}).selectOption(character);
- await page.getByRole('combobox',{name:'Support-Fan'}).selectOption(fan);
- await page.getByRole('checkbox',{name:'Ausgewählte Einstellungen und zugeordneten Verlauf lokal prüfen',exact:true}).check();
- await page.getByRole('checkbox',{name:'Synthetischen Support-QA-Verlauf und Model-Einstellungen mit OpenAI analysieren',exact:true}).check();
- await page.getByRole('textbox',{name:'Deine Frage'}).fill('Warum antwortet das Model zu förmlich?');await page.getByRole('button',{name:'Testverlauf mit KI analysieren',exact:true}).click();
- await expect(page.getByText('KI-Analyse: formelle Stilvorgabe; keine Änderung.',{exact:false})).toBeVisible();
- expect(posted).toMatchObject({characterId:character,fanId:fan,analyse:true,aiConsent:true,manageConsent:false});
+ await mount(page);await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();
+ await expect(page.getByRole('combobox')).toHaveCount(0);
+ await expect(page.getByText('Creator-Unterstützung · Staging-Test',{exact:true})).toHaveCount(0);
+ await expect(page.getByRole('button',{name:'Letzte Stiländerung rückgängig'})).toHaveCount(0);
+ await page.getByRole('textbox',{name:'Deine Frage'}).fill('Wo ändere ich meinen Schreibstil?');
+ await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();
+ await expect(page.getByText('Öffne die vorhandenen Model-Einstellungen im Creator-Chat.',{exact:false})).toBeVisible();
+ expect(requests).toEqual([]);
 });

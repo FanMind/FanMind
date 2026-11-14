@@ -8,7 +8,7 @@ import * as http from "./httpMutationPolicy.mjs";
 function load(file, dependencies = {}) {
   const exports = {};
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: name => { if(name === "@/lib/supportCreatorPolicy")return load("src/lib/supportCreatorPolicy.ts"); if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder, Headers, URL });
+    { exports, require: name => { if(name === "@/lib/supportHistoryPolicy")return load("src/lib/supportHistoryPolicy.ts"); if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder, Headers, URL });
   return exports;
 }
 const { isSupportCase, supportCaseNeedsAttention, performSupportDecision } = load("src/lib/supportCentrePolicy.ts");
@@ -149,6 +149,10 @@ test("authenticated AI Support reuses the public guarded pipeline only after con
  assert.equal(forwarded.consent,true);assert.equal(forwarded.question,message.question);assert.equal(forwarded.history.length,4);assert.equal(forwarded.history[0].text,'own-question-1');
  assert.deepEqual(Object.keys(forwarded).sort(),['consent','history','language','question']);
  const replay=await POST(request(message));assert.equal(replay.body.answerMode,'stored');assert.equal(modelCalls,1);assert.equal(writes,1);
+ providerStatus=503;
+ retained=[{request_id:'legacy',question:'Support-Prüfung: character|fan|analysis',answer:'PRIVATE FAN AND PERSONA',unanswered:false}];
+ await POST(request({...message,requestId:workspace}));
+ assert.equal(forwarded.history.length,0);assert.equal(JSON.stringify(forwarded).includes('PRIVATE FAN'),false);
  retained=[];
  providerStatus=503;assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
  providerStatus=429;assert.equal((await POST(request(message))).status,429);assert.equal(writes,1);
