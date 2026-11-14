@@ -1,3 +1,12 @@
+## FM-SUPPORT-CAPACITY-INSTALL-1350-20261114 — R4 source preparation
+- Owner authorizes missing Writer/controller implementation and isolated tests; future A15EUR/B0 synthetic bindings approved, target writes still require separate exact protected approval.
+- Reuse pinned lifecycle; separate prerequisite source PR avoids merging/deploying unsafe1500 before its schema exists. Main e2b1dff / Instagram1501 preserved,1500 remains DRAFT.
+- Canonical Billing receipt/snapshot, private allowlist, CAS/replay and immediate invalidation; no new balance, no grants or sales by Writer. Existing service transport reused.
+- Staging controller: exact source/Owner/Main/Live/package/history, unchanged required checks, shared lease, private passfile and backup/restore receipt. Atomic install/full-catalogue postflight; rollback-only A/B acceptance and exact pre/post invariants.
+- Local PG17 real SQL + postflight mutation/rollback and negatives PASS; exact-head hosted gates required. No Supabase writes, provider/Stripe calls, secrets, merge or deploy. No target readiness inferred.
+- FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001; deletion/privacy/operator/commercial approvals still separate. Full reference is source-generated, history unchanged; no weakening of old readonly Capacity gate.
+- Recovery: source revert before apply; atomic rollback before COMMIT; after COMMIT preserve ledger/holds/history, forward repair only.
+
 ## FM-CHATADMIN-MEDIA-PRICES-1425-20261114 — scoped price extension, PR1497
 - Risk R3. Owner explicitly authorizes public publication of the existing feature branch and exactly one review PR, CI corrections and protected Staging preparation. No automatic merge, Production action, real-customer price activation or edits to existing Character data.
 - Reuse existing sales_playbook offers and catalogue; add folder/file/Model/package rules, inheritance, bounded negotiation, explicit tax display and exact file/revision evidence. Example amounts remain synthetic. Controlled append-only history/atomic quote SQL stays unapplied and the new runtime defaults off.

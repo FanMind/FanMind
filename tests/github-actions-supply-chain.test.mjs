@@ -371,13 +371,19 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(mediaPrices.source, /environment: staging/u);
   assert.match(mediaPrices.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(mediaPrices.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
-  assert.equal(hostedWorkflows.length, 78);
+  const capacityInstall = hostedWorkflows.find(workflow => workflow.file === 'ai-capacity-staging-install.yml');
+  assert.deepEqual(capacityInstall?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(capacityInstall.source, /environment: staging/u);
+  assert.match(capacityInstall.source, /group: fanmind-staging-deploy/u);
+  assert.match(capacityInstall.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.doesNotMatch(capacityInstall.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
+  assert.equal(hostedWorkflows.length, 79);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    88, // Includes independent price evidence schema control, media SQL and video processing.
+    89, // Includes the protected Capacity prerequisite controller.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

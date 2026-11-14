@@ -1,0 +1,122 @@
+name: Capacity Staging Schema and Writer
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [verify, apply, acceptance]
+        default: verify
+        required: true
+      reviewed_commit:
+        description: Exact current reviewed Main controller SHA
+        type: string
+        required: true
+      expected_live:
+        description: Exact current Staging Web SHA; no Web deployment is performed
+        type: string
+        required: true
+      source_pr:
+        description: Reviewed merged installation PR number
+        type: string
+        required: true
+      package_sha256:
+        description: Reviewed ai-capacity-install.json SHA256
+        type: string
+        required: true
+      marker_sha256:
+        description: Owner-reviewed unchanged Capacity migration-history digest
+        type: string
+        required: true
+      backup_receipt_sha256:
+        description: Owner-reviewed private backup and restore receipt digest, required for writes
+        type: string
+        required: false
+      workspace_a:
+        description: Acceptance only; approved synthetic A Workspace UUID
+        type: string
+        required: false
+      workspace_b:
+        description: Acceptance only; approved synthetic B Workspace UUID
+        type: string
+        required: false
+      fx_snapshot:
+        description: Acceptance only; dated reviewed EUR/USD snapshot JSON
+        type: string
+        required: false
+      confirmation:
+        description: capacity-staging-verify, capacity-staging-apply or capacity-staging-acceptance
+        type: string
+        required: true
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  pull-requests: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  capacity:
+    if: github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha && inputs.confirmation == format('capacity-staging-{0}', inputs.action)
+    environment: staging
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      CAPACITY_ACTION: ${{ inputs.action }}
+      REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      EXPECTED_LIVE: ${{ inputs.expected_live }}
+      INSTALL_SOURCE_PR: ${{ inputs.source_pr }}
+      PACKAGE_SHA256: ${{ inputs.package_sha256 }}
+      REVIEWED_MARKER_SHA256: ${{ inputs.marker_sha256 }}
+      BACKUP_RECEIPT_SHA256: ${{ inputs.backup_receipt_sha256 }}
+      CAPACITY_WORKSPACE_A: ${{ inputs.workspace_a }}
+      CAPACITY_WORKSPACE_B: ${{ inputs.workspace_b }}
+      CAPACITY_FX_SNAPSHOT: ${{ inputs.fx_snapshot }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ inputs.action != 'verify' && 'true' || 'false' }}
+      FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ inputs.action != 'verify' && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      PGPORT: '5432'
+      PGDATABASE: postgres
+      PGUSER: postgres.vshyhvgcmrlagvfnvomc
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Prepare private target connection and reviewed backup evidence
+        env:
+          PGPASSFILE: ${{ runner.temp }}/capacity.pgpass
+          CAPACITY_BACKUP_RECEIPT: ${{ runner.temp }}/capacity-backup.json
+          PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
+          BACKUP_RECEIPT: ${{ secrets.FANMIND_STAGING_CAPACITY_BACKUP_RECEIPT }}
+        run: |
+          set -euo pipefail
+          umask 077
+          case "$PASSWORD" in ''|*$'\n'*|*$'\r'*) exit 1 ;; esac
+          ESCAPED="${PASSWORD//\\/\\\\}"
+          ESCAPED="${ESCAPED//:/\\:}"
+          printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+          printf '%s' "$BACKUP_RECEIPT" > "$CAPACITY_BACKUP_RECEIPT"
+      - name: Verify, install atomically or run separately approved rollback-only acceptance
+        env:
+          PGPASSFILE: ${{ runner.temp }}/capacity.pgpass
+          CAPACITY_BACKUP_RECEIPT: ${{ runner.temp }}/capacity-backup.json
+        run: node scripts/operations/ai-capacity-staging-install.mjs
+      - name: Remove private files
+        if: always()
+        env:
+          PGPASSFILE: ${{ runner.temp }}/capacity.pgpass
+          CAPACITY_BACKUP_RECEIPT: ${{ runner.temp }}/capacity-backup.json
+        run: rm -f "$PGPASSFILE" "$CAPACITY_BACKUP_RECEIPT"
