@@ -35,3 +35,10 @@ messages/comments v27 callback is independently present. Meta's official setup
 requires Advanced Access for comment notifications; dashboard still shows Ready
 to test, not an approved general comment receipt. Real input requests remain on
 hold until account subscription and applicable provider access are proven.
+
+#1502 deployed in run43632402637 / release615b0a0; actual account subscription
+GET fails HTTP400/code100. Official IGUser Subscribed Apps reference documents
+the default response without a fields parameter. Remove only the Unified field
+selection, retaining exact-app and both-field proof; never accept a successful
+POST alone. Operator workspace baseline is 0 Instagram conversations/messages.
+No new OAuth, provider grants, schema, Production or unrelated runtime changes.

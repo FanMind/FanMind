@@ -107,7 +107,7 @@ test('actual subscription refuses another app readback despite successful POST',
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),false);assert.equal(posts,1);
 });
 test('actual subscription confirms both exact-app fields after POST',async()=>{
- let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}assert.equal(new URL(url).searchParams.get('fields'),'id,subscribed_fields');return Response.json({data:posts?[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]:[]});});
+ let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}assert.equal(new URL(url).searchParams.has('fields'),false);return Response.json({data:posts?[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]:[]});});
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),true);assert.equal(posts,1);
 });
 test('Unified subscription failures retain only phase, HTTP status and bounded numeric provider code',async()=>{
