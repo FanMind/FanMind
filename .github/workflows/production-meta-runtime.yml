@@ -1,5 +1,10 @@
 name: FanMind Production Meta Runtime
 on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/production-meta-runtime.yml]
+  pull_request:
+    paths: [.github/workflows/production-meta-runtime.yml]
   workflow_dispatch:
     inputs:
       action:
@@ -24,12 +29,22 @@ on:
         required: true
 permissions:
   contents: read
-concurrency:
-  group: fanmind-production-deploy
-  cancel-in-progress: false
 jobs:
+  validate:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check Production Meta control boundaries without target access
+        run: node --test tests/production-meta-runtime.cases.mjs tests/github-actions-supply-chain.test.mjs
   control:
-    if: github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha && inputs.app_id == '2214477125984114' && inputs.confirmation == format('production-meta-{0}', inputs.action)
+    concurrency:
+      group: fanmind-production-deploy
+      cancel-in-progress: false
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha && inputs.app_id == '2214477125984114' && inputs.confirmation == format('production-meta-{0}', inputs.action)
     environment: production
     runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
     timeout-minutes: 8

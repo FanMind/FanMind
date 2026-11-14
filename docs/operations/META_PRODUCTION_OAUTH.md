@@ -126,3 +126,27 @@ Owner reception test also requires publication; permission test readiness does
 not bypass that requirement. Controller configuration first authenticates the
 secret against the pinned app and rejects inherited runtime target conflicts.
 Provider subscription changes also save a private durable prechange inventory.
+
+
+## Workflow registration continuation — 14 November 2026
+
+On Main8db6c86 the source file exists, but GitHub Actions returns “This workflow
+ does not exist” and the exact filename filter returns0runs. Local YAML parsing,
+existing workflow-environment/supply-chain checks and controller tests pass;
+there is no established YAML/permission fault. The server-side indexing cause
+remains unproven. The existing workflow now has a path-limited Main push and
+PR validation job to exercise registration through a normal event. This hosted,
+secret-free job runs only offline boundary tests. It never takes the Production
+lock or reaches the host. The original controller now explicitly requires
+workflow_dispatch and retains Owner actor, reviewed current Main, exact live
+ancestor, protected environment, pinned app and shared deployment lock. No
+runtime code or application deployment changes. Registration and target
+inspection must be confirmed after the regular checked merge.
+
+Fresh HTTPS baseline: Productionbb799466d2c235195fedcb4d80568f9f0bd56969;
+Staging8db6c86d6319c4fd30b22809eece09148faa311b. Meta app2214477125984114
+remains unpublished; portfolio1363510325173493 verification for the legal
+operator is incomplete/submission pending. The regular Production Creator URL
+currently redirects to login, so no signed-in connection acceptance is claimed.
+Affected boundary: FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001;
+registration alone does not close either live acceptance gate.
