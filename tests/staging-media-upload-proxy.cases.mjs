@@ -43,11 +43,11 @@ test('fixed protected job never invokes provisioning, certbot, application resta
  const runner=readFileSync('scripts/operations/staging-media-upload-proxy.mjs','utf8');assert.match(runner,/sites-available\/fanmind-staging/);assert.match(runner,/fchmodSync\(fd,0o644\)/);assert.doesNotMatch(runner,/sites-available\/fanmind['"/]|\.env\.production|SUPABASE_SERVICE|STRIPE/);
 });
 
-test('TLS diagnostics expose only fixed counters and preserve all existing validation decisions',()=>{
+test('TLS diagnostics expose only fixed counters and match media boundary decisions',()=>{
  const path='scripts/operations/verify-staging-nginx-whatsapp-boundary.awk';
  const run=(source,mode)=>spawnSync('awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode='+mode,'-f',path],{input:source,encoding:'utf8'}).stdout.trim();
  for(const source of [before,before.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),before.replace('access_log off;','access_log /private/sensitive.log;'),before.replace('location = /api/webhooks/whatsapp {','location = /private/unexpected {')]){
-  const normal=run(source,'');
+  const mediaResult=run(source,'media_end_line'),normal=/^[1-9][0-9]*$/u.test(mediaResult)?'valid':'invalid';
   const lines=run(source,'media_diagnostic').split('\n');
   assert.equal(lines.length,2);
   assert.match(lines[0],/^[a-z_]+=[0-9]+(?:[,;][a-z_]+=[0-9]+)*$/u);
@@ -57,4 +57,28 @@ test('TLS diagnostics expose only fixed counters and preserve all existing valid
  assert.match(run(before,'media_diagnostic'),/valid_tls_servers=1/);
  assert.match(run(before.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),'media_diagnostic'),/exact_names=0/);
  assert.match(run(before.replace('access_log off;','access_log /private/sensitive.log;'),'media_diagnostic'),/invalid_whatsapp=1/);
+});
+
+test('media-only boundary preserves absent WhatsApp while default and every present-route check stay strict',()=>{
+ const path='scripts/operations/verify-staging-nginx-whatsapp-boundary.awk';
+ const run=(source,mode)=>spawnSync('awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode='+mode,'-f',path],{input:source,encoding:'utf8'}).stdout.trim();
+ const absent=before.replace(/    location = \/api\/webhooks\/whatsapp \{\n[^{}]*\n    \}\n/u,'');
+ assert.notEqual(absent,before);assert.doesNotMatch(absent,/location.*whatsapp/);
+ assert.equal(run(absent,''),'invalid');
+ assert.match(run(absent,'media_end_line'),/^[1-9][0-9]*$/u);
+ const plan=planUploadProxy(absent,tlsEnd);
+ assert.equal(plan.next.replace(UPLOAD_BLOCK,''),absent);
+ assert.doesNotMatch(plan.next,/location.*whatsapp/);
+
+ const route=before.match(/    location = \/api\/webhooks\/whatsapp \{\n[^{}]*\n    \}\n/u)[0];
+ const http='server {\n    listen 80;\n    server_name staging.fanmind.ch;\n'+route+'}\n';
+ for(const misplaced of [absent+http,http+absent]){
+  assert.equal(run(misplaced,''),'invalid');assert.equal(run(misplaced,'media_end_line'),'invalid');
+  assert.throws(()=>planUploadProxy(misplaced,tlsEnd));
+ }
+ assert.equal(run(before,''),'valid');assert.match(run(before,'media_end_line'),/^[1-9][0-9]*$/u);
+ for(const source of [before.replace('location = /api/webhooks/whatsapp {','location /api/webhooks/whatsapp {'),before.replace('access_log off;','access_log /private/sensitive.log;'),before.replace('proxy_pass http://127.0.0.1:3001;','proxy_pass http://127.0.0.1:3000;'),before+before,absent.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),absent.replace('listen 443 ssl;','listen 443;'),absent.replace('ssl_certificate /etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem;','ssl_certificate /foreign/fullchain.pem;')]){
+  assert.equal(run(source,''),'invalid');assert.equal(run(source,'media_end_line'),'invalid');
+  assert.throws(()=>planUploadProxy(source,tlsEnd));
+ }
 });

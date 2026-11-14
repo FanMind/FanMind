@@ -224,10 +224,13 @@ function finish_server() {
         server_name_directives == 1 && exact_server_names == 1 &&
         certificate_directives == 1 && exact_certificates == 1 &&
         certificate_key_directives == 1 && exact_certificate_keys == 1 &&
-        whatsapp_locations == 1 && valid_whatsapp_locations == 1 &&
-        invalid_whatsapp_locations == 0 &&
+        ((whatsapp_locations == 1 && valid_whatsapp_locations == 1 &&
+          invalid_whatsapp_locations == 0) ||
+         (media_route_mode && whatsapp_locations == 0 &&
+          valid_whatsapp_locations == 0 && invalid_whatsapp_locations == 0)) &&
         server_request_flow_directives == 0) {
       valid_tls_servers += 1
+      if (media_route_mode && whatsapp_locations == 0) media_tls_without_whatsapp += 1
       valid_tls_server_end = NR
     }
   }
@@ -237,6 +240,9 @@ function finish_server() {
 }
 
 BEGIN {
+  # The media-only controller preserves a genuinely absent WhatsApp route.
+  # Default verification still requires it; a present/aliased route stays strict.
+  media_route_mode = (output_mode == "media_end_line" || output_mode == "media_diagnostic")
   if (expected_certificate == "" || expected_certificate_key == "") {
     fatal = 1
     exit
@@ -409,12 +415,19 @@ BEGIN {
 }
 
 END {
+  whatsapp_boundary_invalid = (global_whatsapp_locations != 1 || global_whatsapp_path_locations != 1)
+  if (media_route_mode && global_whatsapp_locations == 0 && global_whatsapp_path_locations == 0) {
+    whatsapp_boundary_invalid = 0
+  }
+  if (media_route_mode && media_tls_without_whatsapp > 0 &&
+      (global_whatsapp_locations != 0 || global_whatsapp_path_locations != 0)) {
+    whatsapp_boundary_invalid = 1
+  }
   if (output_mode == "media_diagnostic") {
     printf "fatal=%d,unclosed=%d,malformed=%d,tls_servers=%d,valid_tls_servers=%d,global_whatsapp=%d,global_whatsapp_paths=%d;%s\n", fatal, in_server, malformed, port_443_servers, valid_tls_servers, global_whatsapp_locations, global_whatsapp_path_locations, media_diagnostic
   }
   if (fatal || in_server || malformed || port_443_servers != 1 ||
-      valid_tls_servers != 1 || global_whatsapp_locations != 1 ||
-      global_whatsapp_path_locations != 1) {
+      valid_tls_servers != 1 || whatsapp_boundary_invalid) {
     print "invalid"
   } else {
     if (output_mode == "media_end_line") print valid_tls_server_end
