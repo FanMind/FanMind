@@ -24,7 +24,7 @@ export function SupportAIConsentControl({scope,legacyValue,onValue,beforeRevoke,
    if(version!==generation.current||selected!==binding.current)return;
    if(!r.ok)throw Error("unconfirmed");const d=await r.json();if(version!==generation.current||d.scope!==selected||d.state.granted!==granted)throw Error("unconfirmed");
    pending.current=null;setState(d.state);notify.current(d.state.granted);setMode("saved");window.dispatchEvent(new Event("fanmind-support-consent"));
-  }catch{if(version===generation.current){setMode("unconfirmed");notify.current(false);setError("Speicherung nicht bestätigt. Bitte aktuellen Status erneut laden; keine erfolgreiche Änderung behauptet.");}}
+  }catch{if(version===generation.current){setMode("unconfirmed");notify.current(false);setError("Speicherung konnte nicht bestätigt werden. Bitte lade den aktuellen Status erneut.");}}
  }
  return <details className="fm-help-privacy" id="support-ai-settings" open={accountSettings||undefined}><summary>KI & Datenschutz</summary>
   {mode==="legacy"?accountSettings?<p>Diese dauerhafte Konto-Einstellung ist noch nicht freigeschaltet. Die bestehende Einwilligung im Hilfechat bleibt verfügbar.</p>:<label><input type="checkbox" checked={legacyValue} onChange={e=>notify.current(e.target.checked)}/>KI-Antworten mit OpenAI erlauben</label>:<>

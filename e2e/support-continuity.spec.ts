@@ -157,9 +157,9 @@ test('persistent account consent survives remount and withdrawal is stored witho
  await page.goto('/support');await page.setContent('<div id="support-fixture"></div>');await page.addScriptTag({content:await supportClientBundle()});
  await page.getByText('KI & Datenschutz',{exact:true}).click();
  const checkbox=page.getByRole('checkbox',{name:'KI-Antworten mit OpenAI erlauben',exact:true});await expect(checkbox).toBeEnabled();await expect(checkbox).not.toBeChecked();
- await checkbox.check();await expect(checkbox).toBeChecked();await expect(checkbox).toBeEnabled();expect(writes).toBe(1);
+ await checkbox.click();await expect(checkbox).toBeChecked();await expect(checkbox).toBeEnabled();expect(writes).toBe(1);
  await page.setContent('<div id="support-fixture"></div>');await page.addScriptTag({content:await supportClientBundle()});await page.getByText('KI & Datenschutz',{exact:true}).click();await expect(checkbox).toBeEnabled();await expect(checkbox).toBeChecked();expect(writes).toBe(1);
  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(checkbox).toBeEnabled();await expect(checkbox).toBeChecked();expect(writes).toBe(1);
- await checkbox.uncheck();await expect.poll(()=>state.granted).toBe(false);await expect(checkbox).not.toBeChecked();expect(writes).toBe(2);
+ await checkbox.click();await expect.poll(()=>state.granted).toBe(false);await expect(checkbox).not.toBeChecked();expect(writes).toBe(2);
  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(checkbox).not.toBeChecked();expect(writes).toBe(2);
 });
