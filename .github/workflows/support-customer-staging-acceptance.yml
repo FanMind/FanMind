@@ -2,6 +2,15 @@ name: FanMind Support Customer Staging Acceptance
 on:
   workflow_dispatch:
     inputs:
+      consent_schema_action:
+        description: Separate additive Support AI consent schema control; none preserves existing acceptance
+        type: choice
+        options: [none, verify, apply]
+        default: none
+      expected_current_release:
+        description: Exact observed Staging release for consent schema control
+        type: string
+        required: false
       reviewed_commit:
         description: Exact reviewed main commit already deployed to Staging
         type: string
@@ -33,7 +42,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   acceptance:
-    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && inputs.confirmation == 'run-staging-support-customer-acceptance'
+    if: github.ref == 'refs/heads/main' && inputs.reviewed_commit == github.sha && ((inputs.consent_schema_action == 'none' && inputs.confirmation == 'run-staging-support-customer-acceptance') || (inputs.consent_schema_action != 'none' && inputs.confirmation == 'support-ai-consent-staging-only'))
     environment: staging
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -74,7 +83,8 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - name: Prepare private read-only database proof connection
+        if: inputs.consent_schema_action == 'none'
+      - name: Prepare private database proof connection
         env:
           PASSWORD: ${{ secrets.FANMIND_STAGING_DB_PASSWORD }}
           PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
@@ -85,8 +95,15 @@ jobs:
           ESCAPED="${PASSWORD//\\/\\\\}"
           ESCAPED="${ESCAPED//:/\\:}"
           printf '%s:%s:%s:%s:%s\n' "$PGHOST" "$PGPORT" "$PGDATABASE" "$PGUSER" "$ESCAPED" > "$PGPASSFILE"
+      - name: Separately verify or install additive consent schema
+        if: inputs.consent_schema_action != 'none'
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
+          CONSENT_SCHEMA_ACTION: ${{ inputs.consent_schema_action }}
+          CONSENT_EXPECTED_RELEASE: ${{ inputs.expected_current_release }}
+        run: node scripts/operations/support-ai-consent-schema.mjs
       - name: Test only synthetic customer sessions and prove cleanup
-        if: inputs.widget_only != true
+        if: inputs.consent_schema_action == 'none' && inputs.widget_only != true
         env:
           PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
           FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
@@ -95,7 +112,7 @@ jobs:
           FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
         run: node scripts/operations/support-customer-staging-acceptance.mjs
       - name: Test actual synthetic widget UI and endpoints and restore its disabled state
-        if: inputs.widget_only == true
+        if: inputs.consent_schema_action == 'none' && inputs.widget_only == true
         env:
           PGPASSFILE: ${{ runner.temp }}/support-customer.pgpass
         run: node scripts/operations/support-widget-staging-acceptance.mjs

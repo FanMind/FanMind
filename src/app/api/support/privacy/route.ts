@@ -1,3 +1,5 @@
+import {persistentSupportConsentEnabled} from "@/lib/supportAIConsentPolicy";
+import {readSupportAIConsent} from "@/lib/supportAIConsentServer";
 import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import {NextRequest,NextResponse} from "next/server";
 import {supportCustomer,readSupportConversation} from "@/lib/supportContinuityServer";
@@ -21,7 +23,7 @@ export async function GET(request:NextRequest){
    return NextResponse.json({scope:identity.scope,state},{headers});
   }
   const turns=await collectSupportExport(before=>readSupportConversation(identity,before));
-  return NextResponse.json({generated_at:new Date().toISOString(),retention_days:30,scope:identity.scope,description:"Current retained own support conversation; paginated, not an atomic snapshot",turns},{headers:{...headers,"Content-Disposition":'attachment; filename="fanmind-support-data.json"'}});
+  return NextResponse.json({generated_at:new Date().toISOString(),retention_days:30,...(persistentSupportConsentEnabled()?{ai_consent:await readSupportAIConsent(identity.actor)}:{}),scope:identity.scope,description:"Current retained own support conversation; paginated, not an atomic snapshot",turns},{headers:{...headers,"Content-Disposition":'attachment; filename="fanmind-support-data.json"'}});
  }catch{return failure(503);}
 }
 export async function POST(request:NextRequest){

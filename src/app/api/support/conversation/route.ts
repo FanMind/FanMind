@@ -1,3 +1,5 @@
+import {persistentSupportConsentEnabled} from "@/lib/supportAIConsentPolicy";
+import {readSupportAIConsent} from "@/lib/supportAIConsentServer";
 import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { NextRequest,NextResponse } from "next/server";
 import { supportCustomer,readSupportConversation } from "@/lib/supportContinuityServer";
@@ -26,6 +28,8 @@ export async function POST(request:NextRequest){
   if(body.aiConsent!==undefined&&typeof body.aiConsent!=="boolean")return fail(400);
   let response=supportAnswer(body.question),answerMode="knowledge";
   if(body.aiConsent===true){
+   const consent=persistentSupportConsentEnabled()?await readSupportAIConsent(identity.actor):null;
+   if(consent&&!consent.granted)return fail(409);
    // Reuse the existing approved Support provider pipeline. Only this actor's
    // explicitly consented Support text is passed, never CRM, credentials or IDs.
    const retained=await readSupportConversation(identity);
@@ -38,6 +42,7 @@ export async function POST(request:NextRequest){
      method:"POST",headers:forwarded,signal:request.signal,
      body:JSON.stringify({question:body.question,history:retained.filter(turn=>!isRetiredCreatorSupportTurn(turn.question)).slice(-2).flatMap(turn=>[{role:"user",text:turn.question},{role:"assistant",text:turn.answer}]),consent:true,language:"de"}),
     }));
+    if(consent){const latest=await readSupportAIConsent(identity.actor);if(!latest.granted||latest.revision!==consent.revision)return fail(409);}
     if(!generated.ok)return fail(generated.status===429?429:503);
     const result=await generated.json();
     if(typeof result.reply!=="string"||!result.reply.trim()||result.reply.length>2000||request.signal.aborted)return fail(503);

@@ -113,3 +113,22 @@ test("support centre native PG17: ACL, tenant, expiry, atomic concurrent claim, 
     assert.equal(sql("select count(*) from public.support_centre_events;"),"0");
   } finally { sql(`drop database ${database} with (force);`,"postgres"); }
 });
+
+test("Support AI consent native PG17: deny browser writes, revision CAS, idempotency, withdrawal and account deletion",{skip:!required},()=>{
+ const db=database+'_consent';sql(`create database ${db};`,'postgres');
+ try{
+  sql(`create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('${id(1)}'),('${id(2)}');grant usage on schema public to anon,authenticated,service_role;`,db);
+  sql(readFileSync(new URL('../../supabase/controlled/support_ai_consent.sql',import.meta.url),'utf8'),db);
+  for(const role of ['anon','authenticated','service_role']){assert.throws(()=>sql(`set role ${role};select * from public.support_ai_consents;`,db));assert.equal(sql(`select has_table_privilege('${role}','public.support_ai_consents','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER');`,db),'f');}
+  for(const role of ['anon','authenticated'])assert.throws(()=>sql(`set role ${role};select public.support_ai_consent_state('${id(1)}','v1');`,db));
+  const read=actor=>JSON.parse(sql(`set role service_role;select public.support_ai_consent_state('${actor}','v1');`,db));
+  const grant=`set role service_role;select public.support_ai_consent_decide('${id(1)}','v1',true,0,'${id(10)}');`;
+  assert.equal(read(id(1)).granted,false);sql(grant,db);assert.equal(read(id(1)).granted,true);assert.equal(read(id(2)).granted,false);
+  sql(grant,db);assert.equal(read(id(1)).revision,1);
+  assert.throws(()=>sql(`set role service_role;select public.support_ai_consent_decide('${id(1)}','v1',false,0,'${id(11)}');`,db));
+  sql(`set role service_role;select public.support_ai_consent_decide('${id(1)}','v1',false,1,'${id(11)}');`,db);assert.equal(read(id(1)).granted,false);
+  assert.throws(()=>sql(grant,db));assert.equal(read(id(1)).revision,2);
+  assert.equal(JSON.parse(sql(`set role service_role;select public.support_ai_consent_state('${id(1)}','changed-version');`,db)).granted,false);
+  sql(`delete from auth.users where id='${id(1)}';`,db);assert.equal(sql('select count(*) from public.support_ai_consents;',db),'0');
+ }finally{sql(`drop database ${db} with(force);`,'postgres');}
+});

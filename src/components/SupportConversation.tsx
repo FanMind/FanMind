@@ -1,5 +1,6 @@
 "use client";
 import { useCallback,useEffect,useRef,useState,type ReactNode } from "react";
+import {SupportAIConsentControl} from "./SupportAIConsentControl";
 import {supportTurnQuestion} from "../lib/supportHistoryPolicy";
 type Turn={request_id:string;question:string;answer:string;unanswered:boolean};
 type Pending={requestId:string;question:string;context:string;scope:string;aiConsent:boolean};
@@ -84,10 +85,7 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
    </div>
    {status==="retry"&&<p role="alert">Antwort nicht bestätigt. Die Wiederholung verwendet dieselbe Anfragekennung.</p>}
   </>}
-  <div className="fm-support-ai-consent">
-   <label><input type="checkbox" checked={aiConsent} onChange={event=>consent(event.target.checked)}/>KI-Antworten mit OpenAI erlauben</label>
-   <p className="fm-help-muted">Nur mit deiner Zustimmung werden deine Frage und die letzten zwei eigenen Supportfragen mit Antworten zur KI-Beantwortung verarbeitet. Keine automatischen CRM-Abfragen. Du kannst diese Einwilligung hier jederzeit widerrufen. Ohne Zustimmung antwortet die freigegebene Wissensbasis. <a href="/datenschutz">Datenschutz</a></p>
-  </div>
+  <SupportAIConsentControl scope={scope} legacyValue={aiConsent} onValue={consent} beforeRevoke={()=>{sending.current?.abort();generation.current++;pending.current=null;}}/>
   {answerMode==="ai"&&<p role="status">KI-Antwort gespeichert. KI kann Fehler machen.</p>}
   <details className="fm-help-privacy"><summary>Datenschutz und Support-Übergabe</summary>
    <div className="fm-help-actions"><button disabled={!scope||status==="sending"} onClick={()=>void download()}>Eigene Supportdaten herunterladen</button><button disabled={!scope||status==="sending"} onClick={()=>void erase()}>Eigenen Supportverlauf löschen</button><a href="/datenschutz">Datenschutzinformationen</a>
@@ -98,7 +96,7 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   {status!=="unavailable"&&<>
    <form className="fm-support-composer" onSubmit={event=>{event.preventDefault();if(scope&&status!=="sending"&&(status==="retry"||text.trim()))void send();}}>
     <label>Deine Frage<textarea rows={3} maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
-    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":aiConsent?"Speichern und KI fragen":"Speichern und senden"}</button>
+    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":"Senden"}</button>
    </form>
   </>}
  </section>;

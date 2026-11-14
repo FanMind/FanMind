@@ -27,7 +27,7 @@ test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries dis
  expect(await log.evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
  await log.focus();await log.press('End');await expect.poll(()=>log.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
  await page.getByRole('textbox',{name:'Deine Frage'}).fill('Neutrale Testfrage');
- await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();
+ await page.getByRole('button',{name:'Senden',exact:true}).click();
  await expect(page.getByText('Synthetische gespeicherte Antwort')).toBeAttached();
  await page.getByText('Kanäle und Verbindungsstatus',{exact:true}).click();
  await expect(page.getByText('Die Verbindungsprüfung ist für diese Umgebung noch nicht aktiviert.',{exact:false})).toBeVisible();
@@ -37,7 +37,7 @@ test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries dis
  const position=await composer.evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,viewport:innerHeight}));
  expect(position.top).toBeGreaterThanOrEqual(0);expect(position.bottom).toBeLessThan(position.viewport);
  await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeInViewport();
- await expect(page.getByRole('button',{name:'Speichern und senden',exact:true})).toBeInViewport();
+ await expect(page.getByRole('button',{name:'Senden',exact:true})).toBeInViewport();
  await page.screenshot({path:testInfo.outputPath('dashboard-help.png')});
  await page.getByRole('button',{name:'Hilfe minimieren'}).click();await expect(panel).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Hilfe',exact:true})).toBeFocused();
