@@ -619,7 +619,7 @@ test("failed PNG upload keeps the primary HTTP error, failed count and retry con
  await expect(upload).toContainText("image/png");
  await expect(upload.getByRole("button",{name:"Fehlgeschlagene Dateien erneut versuchen (1)",exact:true})).toBeEnabled();
  await expect(page.getByText("private proxy error")).toHaveCount(0);
- await upload.getByLabel("Zielordner",{exact:true}).selectOption(folder.id);
+ await upload.getByRole("combobox",{name:"Zielordner",exact:true}).selectOption(folder.id);
  await expect(upload.getByRole("button",{name:"Fehlgeschlagene Dateien erneut versuchen (1)",exact:true})).toHaveCount(0);
  assert.equal(await page.evaluate(()=>window.testRequests.length),1);
 });
