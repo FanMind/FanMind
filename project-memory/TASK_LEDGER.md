@@ -1177,3 +1177,15 @@ their actual managed values explicitly before/after reload and rollback, even
 when absent from the file. A dedicated executed helper rejects changed/missing
 flags and unrelated Stripe drift. Do not treat those intended overrides as
 Meta-file conflicts or use file text to reset the running feature switches.
+
+## Support1350 Creator capacity — 14 November 2026
+
+Owner explicitly commissions the existing Support correction: no timed consent
+shutdown, authenticated actual AI usage belongs to the Creator's capacity.
+R4 source scope FM-CONTRACT-AI-BILLING-001 / FM-IGATE-AI-BILLING-001. Reuses
+existing Capacity runtime, entitlement projection, accounting and provider
+instructions; no second ledger/Support/export. Source validation is separate
+from target schema/entitlement-writer/FX/monetary acceptance and protected release.
+No target mutation or activation. Existing Support remains live on prior release.
+Exact next step: current corrective-PR checks, then reconcile the documented
+Capacity rollout prerequisites before any changed authenticated AI deployment.

@@ -184,7 +184,7 @@
     "db:chat-admin-offers:check": "node scripts/operations/chat-admin-structured-offers-migration-check.mjs",
     "db:chat-admin-offers:verify": "node scripts/operations/chat-admin-structured-offers-staging-runner.mjs --verify",
     "db:chat-admin-offers:apply": "node scripts/operations/chat-admin-structured-offers-staging-runner.mjs --apply",
-    "test:ai-capacity": "node --test --test-concurrency=1 tests/ai-capacity-policy.test.mjs tests/ai-capacity-reserve-settle.test.mjs tests/ai-capacity-lifecycle-pg17.test.mjs tests/ai-capacity-staging-preflight.test.mjs tests/ai-capacity-staging-integration.test.mjs"
+    "test:ai-capacity": "node --test --test-concurrency=1 tests/support-creator-capacity.test.mjs tests/ai-capacity-policy.test.mjs tests/ai-capacity-reserve-settle.test.mjs tests/ai-capacity-lifecycle-pg17.test.mjs tests/ai-capacity-staging-preflight.test.mjs tests/ai-capacity-staging-integration.test.mjs"
   },
   "dependencies": {
     "next": "16.4.3",

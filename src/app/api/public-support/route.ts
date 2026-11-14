@@ -5,6 +5,7 @@ import {buildBoundedReplySuggestionContext} from "@/lib/aiExecutionPolicy.mjs";
 import {getClientIp} from "@/lib/rateLimit";
 import {consumeSharedRateLimit} from "@/lib/sharedRateLimit";
 import {getFanMindAiModel,recordAiUsageEvent} from "@/lib/aiUsage";
+import {requestSupportReply} from "@/lib/supportReplyProvider";
 import {supportCentreDatabase} from "@/lib/supportCentreServer";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -45,15 +46,9 @@ export async function POST(request:NextRequest){
  const model=getFanMindAiModel(),started=Date.now(),inputChars=system.length+content.length;
  let providerUsage:unknown;
  try{
-  const provider=await fetch("https://api.openai.com/v1/responses",{
-   method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},
-   body:JSON.stringify({model,store:false,max_output_tokens:800,input:[{role:"system",content:system},{role:"user",content}]}),
-   signal:AbortSignal.any([request.signal,AbortSignal.timeout(20000)]),
-  });
-  if(!provider.ok)throw Error("provider_unavailable");
-  const data=await provider.json();providerUsage=data.usage;
-  const text=typeof data.output_text==="string"?data.output_text:(Array.isArray(data.output)?data.output.flatMap((o:{content?:Array<{type?:string;text?:string}>})=>o.content??[]).filter((c:{type?:string;text?:string})=>c.type==="output_text"&&typeof c.text==="string").map((c:{text:string})=>c.text).join("\n"):"");
-  const reply=guardPublicSupportReply(text,input.language);
+  const result=await requestSupportReply({key,model,system,content,signal:request.signal,maxOutputTokens:800});
+  providerUsage=result.usage;
+  const reply=guardPublicSupportReply(result.text,input.language);
   await recordAiUsageEvent({workspaceId,feature:"website_chat_reply",model,inputChars,outputChars:reply.length,status:"ok",latencyMs:Date.now()-started,sourceRoute:"/api/public-support",providerUsage});
   return NextResponse.json({reply},{headers});
  }catch{
