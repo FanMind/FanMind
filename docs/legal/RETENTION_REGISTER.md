@@ -27,6 +27,7 @@ identifizierbar zu halten. Maßgebliche Prüfeinstiege sind insbesondere
 
 | Datenbereich | Technische Grenze oder Kriterium | Status | Quelle |
 | --- | --- | --- | --- |
+| Support-KI-Kontoentscheidung | Ein minimierter aktueller Nachweis pro Auth-Nutzer bis Kontolöschung, dann FK-Kaskade; eigenständig vom 30-Tage-Supportverlauf. Rechtsfreigabe dieser Frist offen | kontrolliert vorbereitet, Production nicht aktiviert | `supabase/controlled/support_ai_consent.sql`, `docs/legal/SUPPORT_AI_REVIEW_DRAFT.md` |
 | Marketing-Einwilligung | Consent-Cookie höchstens 180 Tage; jederzeit änderbar | umgesetzt | `src/lib/metaPixelPolicy.mjs` |
 | Meta-Pixel-Ereignisse | nur nach Einwilligung; ausschließlich parameterloses `PageView`; vorbereitete Conversion-Events unverdrahtet; keine FanMind-seitige Event-Payload-Retention | umgesetzt | `src/lib/metaPixelPolicy.mjs`, `src/lib/metaPixel.ts` |
 | Auth-Session | Access-Cookie höchstens Provider-Ablauf beziehungsweise 1 Stunde; Refresh-Cookie 30 Tage | umgesetzt | `src/app/api/auth/session/route.ts` |

@@ -1,3 +1,27 @@
+## Support Web: persistent optional AI choice — 14 November 2026
+
+Owner decision1350/1425 moves actual mobile acceptance to **VERSCHOBEN – APP-ABNAHME**.
+It is no Web blocker; automated mobile/responsive regression and actual Desktop
+acceptance remain mandatory. No App feature is added.
+
+Platform Support remains separate from Character administration. Compact KI &
+Datenschutz controls and /settings/support replace the permanently visible block.
+A separately installed RPC-only consent record stores the authenticated user's
+fixed text version, server timestamps and revision. Missing/old consent stays off;
+no AGB or historic session opt-in becomes a durable grant. First activation is
+optional for both new and existing users, with local Help available without it.
+Later sessions reuse verified consent; server gates stop stale-client requests
+following revocation and suppress changed-consent provider results. Own Support
+export includes current consent evidence. Registration terms are unchanged.
+
+Separate exact-Main/protected-Staging schema control, target acceptance and legal
+review remain distinct. New Production persistence is default-off and requires
+an explicitly approved exact version flag after schema/provider/legal signoff.
+Current approved Production Support is preserved. No automatic schema install,
+private Fan context, Model tool, Billing/Meta/media activation or new credential.
+Technical plan: docs/operations/SUPPORT_CONSENT_WEB_20261114.md. Legal draft:
+docs/legal/SUPPORT_AI_REVIEW_DRAFT.md, not newly published binding terms.
+
 ## FanMind platform Support scope correction — 14 November 2026
 
 Owner correction for Issue1350 supersedes the Creator Support pilot from PR1488.
