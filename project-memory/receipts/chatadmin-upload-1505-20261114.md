@@ -1,0 +1,12 @@
+# ChatAdmin #1425 upload repair continuation — 14 November 2026
+
+Owner instruction: finish existing #1505, regular checked merge, protected Staging deployment and Verify before any bounded nginx Apply. Preserve Production, Support, Social, Billing, Aurela and other nginx routes. Synthetic media/Characters only; reuse successful schema/retention/folder/price evidence.
+
+- #1505 exact head e16cfd201f53d026d60862cd4b871ed9e1c9e7d6: all 16 checks successful, including native media/video, both required PostgreSQL authorization roundtrips, browser, build and security. No unresolved review threads. Regular merge: ee3be9fb8d5ca52bae52d907bbba37b10d26a498.
+- Protected Staging deployment 43639380591/job132583260332 SUCCESS. Independently observed HTTPS /api/version confirms that exact merge with runtimeEnvironment=staging. Existing Operator opt-in preserved; Billing freeze resolved false; RELEASE_ACCEPTED_SNAPSHOT_RETAINED.
+- Protected read-only media-proxy Verify 43639626450/job132584052013 BLOCKED with proxy_tls_boundary before configuration mutation or nginx reload. No Apply dispatched. Do not infer complete repair from the deployed Base64 correction.
+- Necessary follow-up #1507 adds only fixed numeric TLS/route counters to the rejected existing parser path. Validation decisions, exact release/target checks, mutation and rollback stay unchanged. Seven focused tests pass, including privacy-negative and unchanged-validity checks. Hosted exact-head required checks still required before merge and repeat Verify. No guessed parser relaxation.
+- Existing authenticated Staging Operator successfully continued to Creator CRM and selected synthetic FM1425-20261114-1945-A. Aurela untouched. No media uploaded or price/folder retest performed in this continuation.
+- Browser download event and image-download path each timed out for the existing neutral PNG fixture. This is a separate tool file-transfer limitation. No current PNG/MP4 Storage lifecycle, preview, inherited-media negotiation, move/delete or independent absence PASS is claimed. Do not ask for another personal upload before both application and proxy repairs are demonstrably deployed.
+
+Affected contracts/gates: FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001. Target evidence remains incomplete; conservative release status BLOCK remains honest. No DB/schema/grant/provider/flag/Production mutation and no second upload implementation.
