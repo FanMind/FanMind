@@ -2,7 +2,7 @@ import {expect,test} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import {supportClientBundle} from './support-client-bundle.mts';
 
-test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries disabled diagnostics without blocking chat',async({page})=>{
+test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries disabled diagnostics without blocking chat',async({page},testInfo)=>{
  let diagnostics=0;
  const turns=Array.from({length:15},(_,i)=>({request_id:`synthetic-${i}`,question:`Synthetische Frage ${i} ${'lang '.repeat(30)}`,answer:`Antwort ${i} ${'Text '.repeat(40)}`,unanswered:false}));
  await page.route('**/api/support/diagnostics',route=>{diagnostics++;return route.fulfill(diagnostics===1?{status:404,json:{error:'not_available'}}:{json:{connections:[]}});});
@@ -33,6 +33,7 @@ test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries dis
  await expect(page.getByText('Die Verbindungsprüfung ist für diese Umgebung noch nicht aktiviert.',{exact:false})).toBeVisible();
  await page.getByRole('button',{name:'Kontoprüfung erneut versuchen'}).click();
  await expect(page.getByText('Keine unterstützten Verbindungen gefunden.')).toBeVisible();expect(diagnostics).toBe(2);
+ await page.screenshot({path:testInfo.outputPath('dashboard-help.png')});
  await page.getByRole('button',{name:'Hilfe minimieren'}).click();await expect(panel).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Hilfe',exact:true})).toBeFocused();
  await page.getByRole('button',{name:'Hilfe',exact:true}).click();await expect(page.getByText('Synthetische gespeicherte Antwort')).toBeAttached();

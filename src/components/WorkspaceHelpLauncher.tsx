@@ -210,6 +210,7 @@ export function WorkspaceHelpLauncher() {
             <button ref={closeButton} type="button" aria-label="Hilfe minimieren" onClick={close}>×</button>
           </header>
           <div className="fm-help-content">
+          {diagnosticState === "disabled" || diagnosticState === "unavailable" ? <p className="fm-help-muted" role="status">{diagnosticState === "disabled" ? "Verbindungsprüfung nicht aktiviert." : "Verbindungsprüfung derzeit nicht verfügbar."} Details und Wiederholung unter „Kanäle und Verbindungsstatus“.</p> : null}
           <details className="fm-help-diagnostics">
             <summary>Kanäle und Verbindungsstatus</summary>
             <p>Diese Prüfung liest nur den Verbindungsstatus. Sie ändert keine Einstellungen.</p>
