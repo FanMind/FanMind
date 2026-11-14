@@ -12,7 +12,7 @@ export function syntheticAcceptanceSql({workspaceA,workspaceB,runId,fx,now=Date.
  const reserve=(w,k)=>`public.ai_capacity_reserve(${w},${k},${key},'capacity_99','balanced',${reservation.reservedEurMicrocents},2,1,'openai',${model},${pricing},${fxVersion},'{}')`;
  return `BEGIN;SET LOCAL statement_timeout='30s';SET LOCAL lock_timeout='2s';SET LOCAL search_path=pg_catalog,public;SET LOCAL row_security=off;
  SELECT pg_advisory_xact_lock(hashtextextended('fanmind-capacity-install-v1',0));
- LOCK TABLE public.ai_capacity_admin_policy,public.ai_capacity_grants,public.ai_capacity_reservations,public.ai_capacity_reservation_allocations,public.ai_capacity_ledger_events IN SHARE ROW EXCLUSIVE MODE;
+ LOCK TABLE public.ai_capacity_admin_policy,public.ai_capacity_grants,public.ai_capacity_reservations,public.ai_capacity_reservation_allocations,public.ai_capacity_ledger_events,public.ai_capacity_workspace_entitlements,fanmind_capacity_private.package_prices IN SHARE ROW EXCLUSIVE MODE;
  DO $guard$ BEGIN
  IF (SELECT count(*) FROM public.workspaces w JOIN auth.users u ON u.id=w.owner_user_id WHERE w.id=${a} AND u.email='capacity1350-a@test.fanmind.invalid' AND u.raw_app_meta_data @> '{"capacity1350_synthetic":true}'::jsonb AND w.test_access_flags @> '{"capacity1350_synthetic":true}'::jsonb AND w.stripe_customer_id IS NULL AND w.stripe_subscription_id IS NULL)<>1
  OR (SELECT count(*) FROM public.workspaces w JOIN auth.users u ON u.id=w.owner_user_id WHERE w.id=${b} AND u.email='capacity1350-b@test.fanmind.invalid' AND u.raw_app_meta_data @> '{"capacity1350_synthetic":true}'::jsonb AND w.test_access_flags @> '{"capacity1350_synthetic":true}'::jsonb AND w.stripe_customer_id IS NULL AND w.stripe_subscription_id IS NULL)<>1

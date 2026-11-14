@@ -11,7 +11,7 @@
     "docs/operations/ai-capacity-installed-reference.json": "05531a9fa58d127459ad2a27f3ed557eec91f5bb5103aaae6044d6cf34513730",
     "scripts/operations/ai-capacity-install-contract.mjs": "5c6d43ac504e9c91071ffcb702272d11cd92d3384375348e5646e3224ad34818",
     "scripts/operations/ai-capacity-staging-install.mjs": "418c3ed12adb8f1a1d4f49cc96ac93f97358f1b0ec010721fe68b2ba200984c1",
-    "scripts/operations/ai-capacity-synthetic-acceptance.mjs": "f2dc44b6424abff22a014a7b4d1b0c7eb6807e2c9feda451a297c09f5f32baa0",
+    "scripts/operations/ai-capacity-synthetic-acceptance.mjs": "b42a4c46fb4066bc8a2b528f624887bdb0965b617bbc2b02be79d442e25d77dd",
     "src/lib/aiCapacityEntitlementWriter.mjs": "dc94196d912dd703d984968d0c248f7ffb77e0a92353bf810269b3c9fe72cc78",
     "src/lib/supportCapacityConfiguration.mjs": "8535f981ba34148d17eebc9e2f3742f12e94e56b0414d08eaa6f76ce5a8b4495",
     "scripts/operations/ai-capacity-install-source.mjs": "3f336a616f49b01e7a46e8b500c5237dd30ec2939ae6489b67f88735965444da",
