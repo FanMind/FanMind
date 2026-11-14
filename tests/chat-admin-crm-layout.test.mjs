@@ -65,7 +65,7 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
   const { ChatAdminClient } = loadClient();
   const html = renderToStaticMarkup(React.createElement(ChatAdminClient, { initialCharacters: [arela] }));
 
-  assert.match(html, /aria-label="Charaktere"/);
+  assert.match(html, /aria-label="Models"/);
   assert.match(html, /aria-label="Fans von Arela Voss"/);
   assert.match(html, /aria-label="Gespräch"/);
   assert.doesNotMatch(html, /Revision 7/);

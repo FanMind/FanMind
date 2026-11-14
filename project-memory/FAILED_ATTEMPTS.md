@@ -1,3 +1,13 @@
+## FM1425 Owner rejected the previous presentation — 14 November 2026
+Prior technical layout checks did not establish an understandable CRM for the
+Owner. The Owner explicitly requests Models on the left, Fans next, conversation
+on the right, with media/prices inside Model settings and a quiet dark interface
+like the supplied reference. Replace the chat/media toggle; preserve selected
+fan and unsent inbound text when merely visiting settings. Abort pending AI
+generation at that boundary and retain revision/authority checks. Upload trials
+are paused by Owner until this graphical revision is reviewable. Historical
+media/desktop PASS must not be reused as acceptance of the new navigation.
+
 ## FM1425 first custom-policy save reports failure after commit — 14 November 2026
 The first policy INSERT omitted return=representation; PostgREST committed but
 returned an empty201 body, and mediaRest JSON parsing failed. Actual reload

@@ -109,3 +109,34 @@ test("first custom policy save returns success after a committed PostgREST inser
  assert.equal(h.calls.writes[0].body.workspace_id,w);
  assert.equal(h.calls.writes[0].body.character_id,c);
 });
+
+function portraitHarness(options={}){
+ const calls={storage:[],characters:0,decode:0};
+ const path=`chat-characters/${w}/${c}/portrait.jpg`;
+ const deps={
+  "next/server":{NextResponse},
+  "next/headers":{cookies:async()=>({get:()=>options.noToken?undefined:{value:"synthetic-owner-jwt"}})},
+  "@/lib/chatAdmin":{
+   requireChatAdminCapability:async()=>{if(options.denied)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {workspace:{id:w}};},
+   getChatCharacter:async(workspace,id)=>{assert.equal(workspace,w);assert.equal(id,c);calls.characters++;return {id:c,workspace_id:w,revision:options.stale&&calls.characters>1?2:1,profile_image_path:options.path===undefined?path:options.path};},
+  },
+  "@/lib/supabase/config":{SUPABASE_ACCESS_TOKEN_COOKIE:"synthetic",getSupabaseHeaders:token=>({Authorization:`Bearer ${token}`}),requireSupabasePublicConfig:()=>({url:"https://storage.invalid"})},
+  "@/lib/chatAdminMediaImage":{normalizeMediaImage:async bytes=>{calls.decode++;if(options.invalidImage)throw Error("bad image");return bytes;}},
+  "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
+  "@/lib/workspaceAuthorization":{WorkspaceAuthorizationError},
+ };
+ const route={};runInNewContext(compile("src/app/api/chatadmin/characters/portrait/route.ts"),{exports:route,Response,Buffer,Uint8Array,AbortSignal,require:name=>{assert.ok(Object.hasOwn(deps,name),name);return deps[name];},fetch:async(url,init)=>{calls.storage.push({url,init});return new Response(options.oversized?new Uint8Array(mediaPolicy.MEDIA_MAX_BYTES+1):"synthetic decoded portrait",{status:options.missing?404:200});}});
+ return {calls,get:()=>route.GET({nextUrl:new URL(`https://fanmind.invalid/api/chatadmin/characters/portrait?character_id=${c}&revision=1`)})};
+}
+test("Model portraits use the assigned private path, owner JWT, no-store and a final revision check",async()=>{
+ const h=portraitHarness(),response=await h.get();assert.equal(response.status,200);assert.equal(response.headers.get("content-type"),"image/webp");assert.equal(response.headers.get("cache-control"),"private, no-store");
+ assert.equal(h.calls.storage[0].url,`https://storage.invalid/storage/v1/object/authenticated/chat-characters/${w}/${c}/portrait.jpg`);
+ assert.equal(h.calls.storage[0].init.headers.Authorization,"Bearer synthetic-owner-jwt");assert.equal(h.calls.storage[0].init.redirect,"error");assert.equal(h.calls.characters,2);assert.equal(h.calls.decode,1);
+});
+test("Model portrait fallback never reads another workspace, Model, public URL or unassigned media",async()=>{
+ for(const path of [null,`chat-characters/${id}/${c}/portrait.jpg`,`chat-characters/${w}/${id}/portrait.jpg`,"https://external.invalid/photo.jpg",`chat-characters/${w}/${c}/../secret.jpg`]){const h=portraitHarness({path});assert.equal((await h.get()).status,404);assert.equal(h.calls.storage.length,0);}
+ for(const options of [{denied:true},{noToken:true}]){const h=portraitHarness(options);assert.ok([401,403].includes((await h.get()).status));assert.equal(h.calls.storage.length,0);}
+});
+test("Model portrait read fails closed for changed revision, missing object, invalid and oversized images",async()=>{
+ for(const options of [{stale:true},{missing:true},{invalidImage:true},{oversized:true}]){const h=portraitHarness(options);assert.equal((await h.get()).status,404);}
+});

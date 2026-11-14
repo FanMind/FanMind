@@ -469,3 +469,43 @@ updates, Character/Workspace/revision checks and permission boundaries remain.
 Actual custom reply acceptance remains OPEN: long ambiguous request safely
 refused; short motif request rejected by reply_price_not_permitted. No rejection
 is relabeled successful and no guard is weakened.
+
+## Owner-directed CRM presentation revision — 14 November 2026
+
+The Owner rejects the previous presentation as cluttered and cannot complete the
+manual image upload. New priority is the graphical interface; defer image/video
+upload trials until the revised interface is reviewed. No upload success or
+complete media acceptance is implied by this UI work.
+
+Use the supplied quiet dark reference and the explicit Models → Fans →
+conversation arrangement. Keep existing scoped Characters, fans and messages.
+Move the existing media library and category/file prices to Model settings,
+next to the existing profile/rules/structured offers. No second library or
+server/schema/provider/flag/Production change. Conversation identity, a stable
+composer, visible note/profile actions, restrained buttons, explicit settings
+return, mobile layout and scroll boundaries are part of this revision.
+
+Merely opening settings retains the selected fan/history and unsent inbound
+text; pending AI work is aborted and old drafts invalidated. A changed Character
+revision still resets the bound conversation component; existing price freshness
+and copy-and-use controls remain. Unsaved profile/offer changes require explicit
+discard before navigation. Model and media mutations retain existing contracts.
+Affected consumers: ChatAdmin CRM and private-media UI under
+FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001; no source-only
+result is a live integration PASS. Preserve Main bb799466 (Support1485) and later
+shared successors during any protected Staging rollout.
+
+Validation: existing module/API/manual-flow regressions plus actual Chromium
+client tests cover three-column geometry, absence of chat/media tabs, settings
+return continuity, dirty-profile protection, scoped media and390px controls.
+Generated screenshots use neutral synthetic fixtures only. Exact-head CI and
+actual Staging visual review remain required before target PASS.
+
+Owner refinement: Model rail starts collapsed with explicit assigned portraits;
+expanding adds names, status and management controls. Missing/inaccessible portraits
+show initials. The read-only portrait proxy uses the existing private
+`chat-characters` contract, normal owner JWT and exact workspace/Character/path/
+revision checks, bounded image decoding and private no-store responses. No bucket,
+Storage policy, database or public URL is created or activated. Do not use a paid
+library image automatically as a portrait. Actual portrait availability on Staging
+remains a separate check; a fallback is not evidence of an uploaded portrait.
