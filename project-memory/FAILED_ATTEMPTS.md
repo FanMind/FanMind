@@ -1,3 +1,10 @@
+## FM1425 CRM first hosted browser pass — 14 November 2026
+Two browser assertions failed after the layout revision: the compact two-column
+Fan profile now fits the old 520px viewport, and exact label text on a select
+includes its options in the test selector. Exercise profile scrolling at 380px
+and use the combobox accessible name for Zielordner; keep the overflow, save,
+isolation and mobile width assertions. Other 50 component/boundary tests passed.
+
 ## FM1425 Owner rejected the previous presentation — 14 November 2026
 Prior technical layout checks did not establish an understandable CRM for the
 Owner. The Owner explicitly requests Models on the left, Fans next, conversation

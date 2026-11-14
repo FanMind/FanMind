@@ -108,7 +108,7 @@ async function complete(page,index=0,overrides={},status=200){const request=awai
 test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Models"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
 
 for(const mode of ["create","profile","knowledge"])test(`Fan ${mode} form scrolls independently and keeps its save action reachable`,async t=>{
- const page=await mount(t);await page.setViewportSize({width:1280,height:520});
+ const page=await mount(t);await page.setViewportSize({width:1280,height:mode==="profile"?380:520});
  await page.evaluate(()=>{document.getElementById("root").className="page";});
  await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
  if(mode==="create")await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
@@ -450,7 +450,7 @@ test("CRM media settings fit a narrow screen and retain the private upload and p
  await page.evaluate(character=>{window.fixture.media[character.id]={assets:[],folders:[],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},characterA);
  await openMediaSettings(page);
  await expect(page.getByRole("heading",{name:"Medien & Preise",exact:true})).toBeVisible();
- await expect(page.getByLabel("Zielordner",{exact:true})).toBeVisible();
+ await expect(page.getByRole("combobox",{name:"Zielordner",exact:true})).toBeVisible();
  await page.getByRole("button",{name:"Ordner anlegen",exact:true}).click();await page.getByLabel("Eigener Kategoriepreis",{exact:true}).check();
  await page.getByLabel("Startpreis",{exact:true}).fill("12");
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"settings have no horizontal overflow");
