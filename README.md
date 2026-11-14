@@ -11,6 +11,17 @@ certificate provisioning. A normal Web deploy never applies this host repair.
 No schema, grants, provider, Billing or Production change. Actual Staging media
 lifecycle acceptance remains distinct and pending.
 
+## Support1350: Capacity installation prerequisite — source preparation
+
+The Owner-authorized prerequisite prepares the missing canonical entitlement writer
+and protected Staging-only install/rollback-only synthetic acceptance controller.
+It reuses the pinned Capacity lifecycle; no real entitlements, monetary writes,
+Runtime/Sales activation, host configuration, Web rollout or Production action
+has occurred. Support PR1500 remains Draft until actual target prerequisites.
+A separate prerequisite PR is necessary to put the controller on Main without
+prematurely deploying1500's authenticated route. Details and exact approval
+sequence: docs/operations/CAPACITY_STAGING_INSTALL_1350_20261114.md.
+
 ## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
 
 Source preparation extends the existing Character sales_playbook offers with
