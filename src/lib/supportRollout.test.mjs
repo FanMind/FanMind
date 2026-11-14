@@ -97,6 +97,7 @@ test('actual own-data route rejects stale scope/foreign Origin and never substit
  let identity={actor:'actor-a',workspace:'workspace-a',scope:'scope-a'},allowed=true,erased=0,failed=false;
  const http=await import('./httpMutationPolicy.mjs');
  const exports={},dependencies={
+  '@/lib/supportAIConsentPolicy':{persistentSupportConsentEnabled:()=>false},'@/lib/supportAIConsentServer':{},
   '@/lib/httpMutationPolicy.mjs':http,
   'next/server':{NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
   '@/lib/supportContinuityServer':{supportCustomer:async()=>identity,readSupportConversation:async()=>{if(failed)throw new Error('store_failed');return [];}},

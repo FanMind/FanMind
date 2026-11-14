@@ -1,9 +1,10 @@
 import {expect,test,type Page} from "@playwright/test";
 import {supportClientBundle} from "./support-client-bundle.mts";
 async function mount(page:Page,kind="chat"){
+ await page.route("**/api/support/ai-consent",route=>route.fulfill({status:404,json:{error:"unavailable"}}));
  await page.goto("/support");await page.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px sans-serif;margin:12px}section{max-width:620px;overflow-wrap:anywhere}textarea{display:block;max-width:100%;min-height:70px}button{min-height:44px;margin:4px}</style><div id="support-fixture"></div>');
  await page.evaluate(kind=>{(window as Window & {supportFixture?:string}).supportFixture=kind;},kind);await page.addScriptTag({content:await supportClientBundle()});
- if(kind==="chat")await page.getByText("Datenschutz und Support-Übergabe",{exact:true}).click();
+ if(kind==="chat"){await page.getByText("Datenschutz und Support-Übergabe",{exact:true}).click();await page.getByText("KI & Datenschutz",{exact:true}).click();}
 }
 test("authenticated support restores persisted turns, retries the same request and clears a changed account",async({page})=>{
  let scope="scope-a",first=true;const ids:string[]=[];let turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
@@ -16,7 +17,7 @@ test("authenticated support restores persisted turns, retries the same request a
   await route.fulfill({json:{scope,turns}});
  });
  await mount(page);await expect(page.getByRole("textbox",{name:"Deine Frage"})).toBeEnabled();
- await page.getByRole("textbox",{name:"Deine Frage"}).fill("Meine technische Frage");await page.getByRole("button",{name:"Speichern und senden",exact:true}).click();
+ await page.getByRole("textbox",{name:"Deine Frage"}).fill("Meine technische Frage");await page.getByRole("button",{name:"Senden",exact:true}).click();
  await page.getByRole("button",{name:"Mit gleicher Anfrage erneut versuchen"}).click();await expect(page.getByText("Gespeicherte Antwort",{exact:false})).toBeVisible();expect(ids[0]).toBe(ids[1]);
  await mount(page);await expect(page.getByText("Meine technische Frage",{exact:false})).toBeVisible();
  scope="scope-b";turns=[];await page.evaluate(()=>window.dispatchEvent(new Event("focus")));await expect(page.getByText("Meine technische Frage",{exact:false})).toHaveCount(0);
@@ -79,7 +80,7 @@ test("support erase clears ambiguous pending text despite focus refresh and pres
  let release:()=>void=()=>{};const gate=new Promise<void>(resolve=>{release=resolve;});let started=false,posts=0;
  await page.route("**/api/support/conversation",async route=>{if(route.request().method()==='POST'){posts++;await route.abort('failed');return;}await route.fulfill({json:{scope:'scope-a',turns:[]}});});
  await page.route("**/api/support/privacy?**",async route=>{started=true;await gate;await route.fulfill({json:{scope:'scope-a',state:{thread:'10000000-0000-4000-8000-000000000001',sequence:1}}});});
- await mount(page);await page.getByRole('textbox',{name:'Deine Frage'}).fill('Pending private question');await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();await expect(page.getByRole('button',{name:'Mit gleicher Anfrage erneut versuchen'})).toBeVisible();
+ await mount(page);await page.getByRole('textbox',{name:'Deine Frage'}).fill('Pending private question');await page.getByRole('button',{name:'Senden',exact:true}).click();await expect(page.getByRole('button',{name:'Mit gleicher Anfrage erneut versuchen'})).toBeVisible();
  await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect.poll(()=>started).toBe(true);
  release();page.once('dialog',async dialog=>{await dialog.accept();await page.evaluate(()=>window.dispatchEvent(new Event('focus')));});await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();await expect(page.getByRole('textbox',{name:'Deine Frage'})).toHaveValue('');await expect(page.getByRole('button',{name:'Mit gleicher Anfrage erneut versuchen'})).toHaveCount(0);expect(posts).toBe(1);
  // A fresh explicit erase may fail; a subsequent successful reload must not hide it.
@@ -116,9 +117,9 @@ test("authenticated AI requires opt-in, supports withdrawal and suppresses a lat
  });
  await mount(page);
  const consent=page.getByRole('checkbox',{name:'KI-Antworten mit OpenAI erlauben',exact:true});await expect(consent).not.toBeChecked();
- await page.getByRole('textbox',{name:'Deine Frage'}).fill('Knowledge question');await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();await expect(page.getByText('Approved knowledge',{exact:false})).toBeVisible();expect(posts[0].aiConsent).toBe(false);
- await consent.check();await page.getByRole('textbox',{name:'Deine Frage'}).fill('Consented AI question');await page.getByRole('button',{name:'Speichern und KI fragen',exact:true}).click();await expect(page.getByText('KI-Antwort gespeichert.',{exact:false})).toBeVisible();expect(posts[1].aiConsent).toBe(true);
- late=true;await page.getByRole('textbox',{name:'Deine Frage'}).fill('Pending AI question');await page.getByRole('button',{name:'Speichern und KI fragen',exact:true}).click();await expect.poll(()=>started).toBe(true);
+ await page.getByRole('textbox',{name:'Deine Frage'}).fill('Knowledge question');await page.getByRole('button',{name:'Senden',exact:true}).click();await expect(page.getByText('Approved knowledge',{exact:false})).toBeVisible();expect(posts[0].aiConsent).toBe(false);
+ await consent.check();await page.getByRole('textbox',{name:'Deine Frage'}).fill('Consented AI question');await page.getByRole('button',{name:'Senden',exact:true}).click();await expect(page.getByText('KI-Antwort gespeichert.',{exact:false})).toBeVisible();expect(posts[1].aiConsent).toBe(true);
+ late=true;await page.getByRole('textbox',{name:'Deine Frage'}).fill('Pending AI question');await page.getByRole('button',{name:'Senden',exact:true}).click();await expect.poll(()=>started).toBe(true);
  await consent.uncheck();release();await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();await expect(page.getByText('Late AI answer must stay hidden',{exact:false})).toHaveCount(0);await expect(consent).not.toBeChecked();
  expect(posts).toHaveLength(3);
  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(consent).not.toBeChecked();
@@ -140,7 +141,25 @@ test('platform Support never requests Character context or offers administration
  await expect(page.getByText('Creator-Unterstützung · Staging-Test',{exact:true})).toHaveCount(0);
  await expect(page.getByRole('button',{name:'Letzte Stiländerung rückgängig'})).toHaveCount(0);
  await page.getByRole('textbox',{name:'Deine Frage'}).fill('Wo ändere ich meinen Schreibstil?');
- await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();
+ await page.getByRole('button',{name:'Senden',exact:true}).click();
  await expect(page.getByText('Öffne die vorhandenen Model-Einstellungen im Creator-Chat.',{exact:false})).toBeVisible();
  expect(requests).toEqual([]);
+});
+
+test('persistent account consent survives remount and withdrawal is stored without preselection',async({page})=>{
+ const version='support-ai-20261114-v1';let writes=0;
+ let state={granted:false,revision:0,version:null as string|null,grantedAt:null as string|null,revokedAt:null as string|null};
+ await page.route('**/api/support/ai-consent',async route=>{
+  if(route.request().method()==='POST'){const b=route.request().postDataJSON();expect(b.scope).toBe('scope-a');expect(b.confirmed).toBe(true);expect(b.version).toBe(version);expect(b.revision).toBe(state.revision);writes++;state={granted:b.granted,revision:state.revision+1,version,grantedAt:b.granted?new Date().toISOString():state.grantedAt,revokedAt:b.granted?null:new Date().toISOString()};}
+  await route.fulfill({json:{scope:'scope-a',state,version,text:'Synthetic informed decision'}});
+ });
+ await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns:[]}}));
+ await page.goto('/support');await page.setContent('<div id="support-fixture"></div>');await page.addScriptTag({content:await supportClientBundle()});
+ await page.getByText('KI & Datenschutz',{exact:true}).click();
+ const checkbox=page.getByRole('checkbox',{name:'KI-Antworten mit OpenAI erlauben',exact:true});await expect(checkbox).toBeEnabled();await expect(checkbox).not.toBeChecked();
+ await checkbox.check();await expect(checkbox).toBeChecked();await expect(checkbox).toBeEnabled();expect(writes).toBe(1);
+ await page.setContent('<div id="support-fixture"></div>');await page.addScriptTag({content:await supportClientBundle()});await page.getByText('KI & Datenschutz',{exact:true}).click();await expect(checkbox).toBeEnabled();await expect(checkbox).toBeChecked();expect(writes).toBe(1);
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(checkbox).toBeEnabled();await expect(checkbox).toBeChecked();expect(writes).toBe(1);
+ await checkbox.uncheck();await expect.poll(()=>state.granted).toBe(false);await expect(checkbox).not.toBeChecked();expect(writes).toBe(2);
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(checkbox).not.toBeChecked();expect(writes).toBe(2);
 });
