@@ -108,3 +108,12 @@ explicit exact-version Production authorization remain separate decisions.
 
 This source preparation records implementation only, not completed Staging or
 Production acceptance. Concrete run IDs, targets and cleanup belong in Issue1350.
+
+
+## Follow-up: remaining release preparation
+
+See SUPPORT_PRODUCTION_PREPARATION_20261114.md for the read-only actual target
+audit, independent redacted export proof, separately protected Production
+verify/apply preparation and exact legal decision documents. Original1491
+acceptance is retained. The new controller cannot enable consent or run retention;
+no normal deploy or this source merge authorizes Production apply.

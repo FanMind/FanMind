@@ -164,3 +164,5 @@ test("authenticated AI Support reuses the public guarded pipeline only after con
  retained=[];assert.equal((await POST(request({...message,question:'What is the price?'}))).body.answerMode,'knowledge');assert.equal(modelCalls,before);
  identity=null;assert.equal((await POST(request(message))).status,401);enabled=false;assert.equal((await POST(request(message))).status,404);assert.equal(modelCalls,before);
 });
+
+await import('./supportReleasePreparation.test.mjs');

@@ -1,6 +1,13 @@
 # FanMind Support-KI — prüffähiger Datenschutzentwurf, 14.11.2026
 
 **ENTWURF – keine Rechtsfreigabe, keine neuen veröffentlichten AGB.**
+
+Fortsetzung14.11.: Konkreter Veröffentlichungstext und getrennte Entscheidungen
+in SUPPORT_AI_PRODUCTION_APPROVAL.md. Die bisherige Kontolaufzeit ist für vollständige
+widerrufene Nachweise nicht als notwendig belegt; Empfehlung B und kontrollierter
+technischer Minimierungsvorschlag in SUPPORT_AI_RETENTION_DECISION.md. Anbieter-
+Standard und fehlender FanMind-Kontobeleg in SUPPORT_OPENAI_EVIDENCE_20261114.md.
+Diese Fortsetzung ersetzt keine wirksame Einwilligung und ändert keine öffentlichen Texte.
 Verantwortliche laut bestehenden bestätigten Betreiberangaben: Brigitte Erika
 Guggenberger, Einzelunternehmen FanMind. Bezug: Issue1350. Gegenstand ausschließlich
 Plattformhilfe; keine Fan-Konversationen, Personas, Medien oder Character-Verwaltung.

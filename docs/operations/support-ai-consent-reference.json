@@ -1,0 +1,240 @@
+{
+  "version": 1,
+  "sql_sha256": "cd610fc3775b5d6e9f074b6f8af0125effd5bc360367bf992e5809b45c0f8e61",
+  "provenance": {
+    "kind": "accepted_staging_pg17",
+    "release": "95c93bf69046fb9349cecc28afc69b70a7a133c7",
+    "note": "No user rows; mandatory CI reproduces this contract from the pinned SQL."
+  },
+  "catalogue": {
+    "functions": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE r public.support_ai_consents%ROWTYPE;\nBEGIN\n IF p_actor IS NULL OR p_request IS NULL OR p_granted IS NULL OR p_revision IS NULL OR p_revision<0 OR p_version IS NULL OR length(p_version) NOT BETWEEN 1 AND 80 THEN RAISE EXCEPTION 'invalid_decision'; END IF;\n IF NOT EXISTS(SELECT 1 FROM auth.users WHERE id=p_actor) THEN RAISE EXCEPTION 'actor_required'; END IF;\n PERFORM pg_advisory_xact_lock(hashtextextended('support-ai-consent:'||p_actor::text,1350));\n SELECT * INTO r FROM public.support_ai_consents WHERE user_id=p_actor FOR UPDATE;\n IF r.request_id=p_request THEN\n  IF r.granted IS DISTINCT FROM p_granted OR r.text_version IS DISTINCT FROM p_version THEN RAISE EXCEPTION 'request_conflict'; END IF;\n  RETURN public.support_ai_consent_state(p_actor,p_version);\n END IF;\n IF coalesce(r.revision,0)<>p_revision THEN RAISE EXCEPTION 'revision_conflict'; END IF;\n INSERT INTO public.support_ai_consents(user_id,granted,text_version,granted_at,revoked_at,revision,request_id)\n VALUES(p_actor,p_granted,p_version,CASE WHEN p_granted THEN clock_timestamp() ELSE r.granted_at END,CASE WHEN NOT p_granted THEN clock_timestamp() END,p_revision+1,p_request)\n ON CONFLICT(user_id) DO UPDATE SET granted=EXCLUDED.granted,text_version=EXCLUDED.text_version,granted_at=EXCLUDED.granted_at,revoked_at=EXCLUDED.revoked_at,revision=EXCLUDED.revision,request_id=EXCLUDED.request_id;\n RETURN public.support_ai_consent_state(p_actor,p_version);\nEND;\n",
+        "kind": "f",
+        "name": "support_ai_consent_decide",
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "parallel": "u",
+        "settings": [
+          "search_path=pg_catalog, public"
+        ],
+        "arguments": "p_actor uuid, p_version text, p_granted boolean, p_revision bigint, p_request uuid",
+        "volatility": "v"
+      },
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          }
+        ],
+        "body": "\nDECLARE r public.support_ai_consents%ROWTYPE;\nBEGIN\n IF p_actor IS NULL OR NOT EXISTS(SELECT 1 FROM auth.users WHERE id=p_actor) THEN RAISE EXCEPTION 'actor_required'; END IF;\n SELECT * INTO r FROM public.support_ai_consents WHERE user_id=p_actor;\n RETURN jsonb_build_object('granted',coalesce(r.granted AND r.text_version=p_version,false),'revision',coalesce(r.revision,0),'version',r.text_version,'grantedAt',r.granted_at,'revokedAt',r.revoked_at);\nEND;\n",
+        "kind": "f",
+        "name": "support_ai_consent_state",
+        "owner": "postgres",
+        "result": "jsonb",
+        "strict": false,
+        "definer": true,
+        "defaults": null,
+        "parallel": "u",
+        "settings": [
+          "search_path=pg_catalog, public"
+        ],
+        "arguments": "p_actor uuid, p_version text",
+        "volatility": "v"
+      }
+    ],
+    "relations": [
+      {
+        "acl": [
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "DELETE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "INSERT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "MAINTAIN"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "REFERENCES"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "SELECT"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRIGGER"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "TRUNCATE"
+          },
+          {
+            "role": "postgres",
+            "grantable": false,
+            "privilege": "UPDATE"
+          }
+        ],
+        "rls": true,
+        "kind": "r",
+        "name": "support_ai_consents",
+        "force": false,
+        "owner": "postgres",
+        "columns": [
+          {
+            "acl": null,
+            "name": "user_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "granted",
+            "type": "boolean",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "text_version",
+            "type": "text",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "granted_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "revoked_at",
+            "type": "timestamp with time zone",
+            "default": null,
+            "notnull": false,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "revision",
+            "type": "bigint",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "request_id",
+            "type": "uuid",
+            "default": null,
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          }
+        ],
+        "indexes": [
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_ai_consents_pkey ON public.support_ai_consents USING btree (user_id)"
+          },
+          {
+            "ready": true,
+            "valid": true,
+            "definition": "CREATE UNIQUE INDEX support_ai_consents_request_id_key ON public.support_ai_consents USING btree (request_id)"
+          }
+        ],
+        "options": null,
+        "policies": 0,
+        "triggers": 0,
+        "constraints": [
+          {
+            "name": "support_ai_consents_check",
+            "type": "c",
+            "validated": true,
+            "definition": "CHECK (granted AND granted_at IS NOT NULL AND revoked_at IS NULL OR NOT granted AND revoked_at IS NOT NULL)"
+          },
+          {
+            "name": "support_ai_consents_pkey",
+            "type": "p",
+            "validated": true,
+            "definition": "PRIMARY KEY (user_id)"
+          },
+          {
+            "name": "support_ai_consents_request_id_key",
+            "type": "u",
+            "validated": true,
+            "definition": "UNIQUE (request_id)"
+          },
+          {
+            "name": "support_ai_consents_revision_check",
+            "type": "c",
+            "validated": true,
+            "definition": "CHECK (revision > 0)"
+          },
+          {
+            "name": "support_ai_consents_text_version_check",
+            "type": "c",
+            "validated": true,
+            "definition": "CHECK (length(text_version) >= 1 AND length(text_version) <= 80)"
+          },
+          {
+            "name": "support_ai_consents_user_id_fkey",
+            "type": "f",
+            "validated": true,
+            "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+          }
+        ],
+        "persistence": "p"
+      }
+    ]
+  },
+  "catalogue_sha256": "8475639bb58362bc515661f7fbad1693d0db4feb9b76f78b5725d1bb945e38ff"
+}
