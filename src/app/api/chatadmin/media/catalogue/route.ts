@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
 import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
-import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId } from "@/lib/chatAdminMediaPolicy.mjs";
+import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText } from "@/lib/chatAdminMediaPolicy.mjs";
 import { MEDIA_VIDEO_MAX_BYTES, mediaKind, mediaPriceRules, normalizeMediaFolder, validateMediaFolders, withMediaPrice } from "@/lib/chatAdminMediaCatalogue.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { normalizeMediaVideo } from "@/lib/chatAdminMediaVideo";
@@ -45,9 +45,9 @@ async function change(request:NextRequest,upload:boolean){
    const authority=await requireChatAdminCapability();
    if(authority.workspace.id!==workspace.id||authority.user.id!==user.id)throw new WorkspaceAuthorizationError("Kontext geändert.","resource_forbidden");
    await assertMediaCharacter(workspace.id,characterId,character.revision);
-   const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),workspace_id:workspace.id,character_id:characterId,media_type:kind,folder_id:folderId,byte_size:normalized.bytes.length,duration_ms:normalized.duration_ms})});
+   const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),workspace_id:workspace.id,character_id:characterId,media_type:kind,folder_id:folderId,original_filename:mediaText(body.original_name??"",255),byte_size:normalized.bytes.length,duration_ms:normalized.duration_ms})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
-   try{await mediaObject(workspace.id,characterId,rows[0].id,"POST",normalized.bytes,kind);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
+   try{await mediaObject(workspace.id,characterId,rows[0].id,"POST",normalized.bytes,kind);await mediaObject(workspace.id,characterId,rows[0].id,"PROBE",undefined,kind);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
    catch{await updateMediaAsset(workspace.id,characterId,rows[0],{deleted:true,available:false,reviewed:false});throw new ChatAdminMediaError("media_upload_incomplete");}
   }else{
    let payload:Record<string,unknown>,playbook=character.sales_playbook;

@@ -1854,3 +1854,33 @@ counteroffers. Controlled catalogue SQL/bucket expansion is unapplied; image
 analysis remains separately gated, video analysis unavailable. Source, exact-head
 CI and target acceptance are distinct. See `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`;
 no public FanMind roadmap completion or Production activation follows from this.
+
+### Internal Character setup and media repair — 14 November 2026
+
+Issue #1425 continues the existing CRM from #1487 and preserves Support #1488.
+Source adds independent Character personality/initiative/style/sales strengths
+in the existing revision-bound `sales_playbook.characterMixer`; no second
+Persona store or automatic percentage normalization. Legacy text and offers
+remain intact. Humor/directness aliases have one canonical value. Preview uses
+the actual authorized reply pipeline, bounded usage/rate/price/media checks,
+current draft mixer and saved profile/offers, without Fan persistence or send.
+
+A synthetic Staging upload reproduced Storage finalization failing with
+`permission denied for function chat_admin_media_writes_allowed`. The bounded
+source repair grants that existing boolean predicate to the internal Storage
+service role; its Owner/Workspace/deletion checks remain unchanged. A rollback
+probe on actual PG17 allowed the existing Owner and denied a foreign Workspace;
+the actual Storage insert trigger also passed under the finalization role.
+No permanent schema/ACL repair or successful target upload is claimed here.
+The source-derived exact extended catalogue and its guarded legacy delta include
+original filenames and nullable historical upload timestamps. Existing rows
+retain an unknown upload time; new uploads receive the database timestamp.
+
+UI source adds explicit folder opening/counts/breadcrumbs, gallery/list views,
+private enlarged previews, filters/sort, sequential batch progress and failed
+file retry with revision readback. Source checks, hosted native/browser checks,
+merge and actual Staging acceptance remain separate. Aurela appears as
+“Aurela Foss” with synthetic legacy fields in the observed Owner session;
+Owner confirmed this is the intended Aurela persona in the current session.
+Existing prices are retained; new proposed strengths must stay visibly labeled.
+No Production, provider-image activation, new project or public roadmap change.

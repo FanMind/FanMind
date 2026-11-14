@@ -1,3 +1,4 @@
+import * as mixerPolicy from "../src/lib/chatAdminMixer.mjs";
 import * as cataloguePolicy from "../src/lib/chatAdminMediaCatalogue.mjs";
 import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
 import { randomUUID } from "node:crypto";
@@ -108,6 +109,7 @@ function harness(change, abortController, options = {}) {
   const calls = { provider: 0, authorization: 0, character: 0, usage: 0, usageEvents: [], providerBody: null, providerSignals: [], providerBodies: [], rateLimitCalls: 0, persistedHistoryIds: null, persistedGenerations: [], confirmations: [], currentFactWrites: [], memoryWrites: [] };
   const dependencies = {
     "node:crypto": { randomUUID },
+    "@/lib/chatAdminMixer.mjs": mixerPolicy,
     "@/lib/chatAdminUsageWitness.mjs": usageWitness,
     "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
@@ -181,7 +183,7 @@ function harness(change, abortController, options = {}) {
   });
   const request = (revision = 1, origin = "https://fanmind.invalid", incomingMessage = "Ich will ein privates Foto von dir.", generationId = defaultGenerationId) => new Request("https://fanmind.invalid/api/chatadmin/reply-suggestions", {
     method: "POST", signal: abortController?.signal, headers: { origin, "content-type": "application/json" },
-    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:generationId, incoming_message: incomingMessage }),
+    body: JSON.stringify({ character_id: characterId, character_revision: revision, fan_id: fanId, conversation_id: conversationId, generation_id:generationId, incoming_message: incomingMessage, ...(options.preview?{preview:true,preview_mixer:options.previewMixer}:{} ) }),
   });
   const confirm=(incomingMessage,confirmedReply,turn)=>{
     const createdAt=new Date(Date.UTC(2026,9,30,12,turn*2)).toISOString();
@@ -1021,4 +1023,21 @@ test('usage storage preserves a server-generated event ID and leaves generic cal
  await exported.recordAiUsageEvent({...input,eventId});assert.equal(bodies[0].id,eventId);
  await exported.recordAiUsageEvent(input);assert.equal(Object.hasOwn(bodies[1],'id'),false);
  await exported.recordAiUsageEvent({...input,eventId:"'; private"});assert.equal(bodies.length,2);
+});
+
+
+test("actual preview uses the draft mixer with existing prices and never writes Fan history or knowledge",async()=>{
+ const mix=mixerPolicy.setMixerControl(mixerPolicy.emptyCharacterMixer(),"personality","elegant",{enabled:true,intensity:87});
+ const h=harness(undefined,undefined,{preview:true,previewMixer:mix});
+ const response=await h.route(h.request(1,"https://fanmind.invalid","Hallo, wie geht es dir?"));
+ assert.equal(response.status,200);assert.equal((await response.json()).preview,true);
+ const context=JSON.parse(h.calls.providerBody.input.at(-1).content);
+ assert.equal(context.character_mixer.strengths.personality[0].strength,87);
+ assert.equal(context.fan,null);assert.equal(h.calls.persistedGenerations.length,0);assert.equal(h.calls.memoryWrites.length,0);assert.equal(h.calls.currentFactWrites.length,0);assert.equal(h.calls.usage,1);
+});
+test("preview rejects malformed controls before a provider call and drops output after a Character revision change",async()=>{
+ const malformed=harness(undefined,undefined,{preview:true,previewMixer:{version:1,personality:{elegant:{enabled:true,intensity:101}}}});
+ assert.equal((await malformed.route(malformed.request())).status,400);assert.equal(malformed.calls.provider,0);
+ const stale=harness("revision",undefined,{preview:true,previewMixer:mixerPolicy.emptyCharacterMixer()});
+ assert.equal((await stale.route(stale.request(1,"https://fanmind.invalid","Hallo"))).status,409);assert.equal(stale.calls.persistedGenerations.length,0);
 });

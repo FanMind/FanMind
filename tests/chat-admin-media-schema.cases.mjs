@@ -43,6 +43,9 @@ export async function runMediaSchemaNativeCases(sql,profile){
  ];
  if(profile==='extended')drifts.push(
   'alter table public.chat_character_media drop constraint chat_media_folder_scope;',
+  'alter table public.chat_character_media drop column original_filename;',
+  'alter table public.chat_character_media drop column uploaded_at;',
+  'revoke execute on function public.chat_admin_media_writes_allowed(uuid) from service_role;',
   'alter table public.chat_character_media_folders disable row level security;',
   'grant update on public.chat_character_media_folders to authenticated;',
   'revoke update(name) on public.chat_character_media_folders from authenticated;',

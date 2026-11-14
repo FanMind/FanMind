@@ -5,7 +5,7 @@ export type CreatorVoice = {
   preferredEmojis: string[]; greetings: string[]; closings: string[]; commonPhrases: string[]; avoidedPhrases: string[]; goodExamples: string[]; badExamples: string[];
 };
 export type CreatorOffer = { id: string; name: string; category: string; description: string; currency: string; minimumPriceMinor: number; recommendedPriceMinor: number; maximumPriceMinor: number; maximumDiscountPercent: number; delivery: string; exclusivity: string; requiresConfirmation: boolean; active: boolean };
-export type CreatorPlaybook = { positioning: string; offers: CreatorOffer[]; minimumHoursBetweenOffers: number; aftercareHours: number; contentBoundaries: string[]; confirmationRequired: string[]; noGos: string[] };
+export type CreatorPlaybook = { characterMixer?: import("./chatAdminMixer.mjs").CharacterMixer; positioning: string; offers: CreatorOffer[]; minimumHoursBetweenOffers: number; aftercareHours: number; contentBoundaries: string[]; confirmationRequired: string[]; noGos: string[] };
 export type CreatorPersona = { displayName: string; bio: string; publicAge: number | null; location: string; languages: string[]; platforms: string[]; internalNotes?: string; status: "draft" | "active" | "paused" | "archived" };
 export type CreatorBundle = { id: string | null; revision: number; persona: CreatorPersona; voice: CreatorVoice; playbook: CreatorPlaybook; approve: boolean };
 export type CreatorStrategy = { state: CreatorState; reason: string; temperature: number | null; purchaseIntent: number | null; offerFatigue: number | null; sellNow: boolean; offer: { id: string; name: string; priceMinor: number; currency: string } | null };

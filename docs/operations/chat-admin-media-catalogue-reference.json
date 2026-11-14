@@ -1,7 +1,7 @@
 {
   "version": 1,
   "source": "supabase/controlled/chat_admin_media_catalogue.sql",
-  "sourceSha256": "10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2",
+  "sourceSha256": "47220fcf870d70ac6fa9c64c8305c4b9170df374fe0610293d14d274c09a150e",
   "initialSourceSha256": "3c4fa2214b5721dd8a7bc85d9ea3ef3b6b8c592c5305315eb623cf99cf1d59fe",
   "collectorSha256": "68246a670d21bc4050c79b7c36bab0b1088d9db83535f2cd4423a44a355515e1",
   "catalogue": {
@@ -264,6 +264,24 @@
             "notnull": true,
             "identity": "",
             "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "original_filename",
+            "type": "text",
+            "default": "''::text",
+            "notnull": true,
+            "identity": "",
+            "generated": ""
+          },
+          {
+            "acl": null,
+            "name": "uploaded_at",
+            "type": "timestamp with time zone",
+            "default": "now()",
+            "notnull": false,
+            "identity": "",
+            "generated": ""
           }
         ],
         "indexes": [
@@ -350,6 +368,11 @@
             "name": "chat_character_media_workspace_id_character_id_fkey",
             "type": "f",
             "definition": "FOREIGN KEY (workspace_id, character_id) REFERENCES chat_characters(workspace_id, id) ON DELETE RESTRICT"
+          },
+          {
+            "name": "chat_media_filename_length",
+            "type": "c",
+            "definition": "CHECK (char_length(original_filename) <= 255 AND original_filename !~ '[[:cntrl:]]'::text)"
           },
           {
             "name": "chat_media_folder_scope",
@@ -1127,6 +1150,11 @@
           },
           {
             "role": "postgres",
+            "grantable": false,
+            "privilege": "EXECUTE"
+          },
+          {
+            "role": "service_role",
             "grantable": false,
             "privilege": "EXECUTE"
           }

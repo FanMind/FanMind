@@ -31,6 +31,8 @@ const controlsClient=ts.transpileModule(readFileSync("src/app/chatadmin/Characte
 const mediaPolicyClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaPolicy.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const catalogueClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaCatalogue.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const salesClient=ts.transpileModule(readFileSync("src/lib/chatAdminSalesPlaybook.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const mixerClient=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMixer.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+const mixerPolicyClient=ts.transpileModule(readFileSync("src/lib/chatAdminMixer.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const bundle = `(() => {
   const modules = {${moduleSources.join(",")},
     "./chatadmin.module.css": function(module) { module.exports = {__esModule: true, default: new Proxy({}, {get: (_, key) => String(key)})}; },
@@ -43,6 +45,9 @@ const bundle = `(() => {
     "./chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
     "./chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
     "./chatAdminSalesPlaybook.mjs": function(module,exports,require) {${salesClient}},
+    "./CharacterMixer": function(module,exports,require) {${mixerClient}},
+    "@/lib/chatAdminMixer.mjs": function(module,exports,require) {${mixerPolicyClient}},
+    "./chatAdminMixer.mjs": function(module,exports,require) {${mixerPolicyClient}},
     client: function(module, exports, require) {${client}}
   };
   const cache = {};
@@ -156,10 +161,10 @@ test("conversation status is inline and dismissible without covering the compose
  await page.getByRole("button",{name:"Meldung schließen",exact:true}).click();await expect(page.getByRole("status")).toHaveCount(0);
 });
 
-test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
+test("structured Character prices save and reload through the Character API",async t=>{const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();const privatePhoto=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");await privatePhoto.getByLabel("Empfohlener Preis").fill("27.50");await privatePhoto.getByLabel("Mindestpreis").fill("25.00");await privatePhoto.getByLabel("Höchstpreis").fill("35.00");await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const request=await page.evaluate(()=>window.testRequests[0]);const offer=request.body.sales_playbook.offers.find(item=>item.category==="private_photo");assert.deepEqual({currency:offer.currency,minimum:offer.minimumPriceMinor,recommended:offer.recommendedPriceMinor,maximum:offer.maximumPriceMinor},{currency:"EUR",minimum:2500,recommended:2750,maximum:3500});const saved={...characterA,...request.body,revision:2};await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},saved);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();await expect(page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis")).toHaveValue("27.50");});
 
 test("Staging offer setup creates four named offers from an empty Character without duplicates",async t=>{
- const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  await page.getByRole("button",{name:"Angebot entfernen",exact:true}).click();
  await expect(page.getByText("Noch keine Angebote angelegt.",{exact:true})).toBeVisible();
  const names=["Foto","Video","Privates Foto","Privates Video"],prices=["10.00","20.00","25.00","40.00"];
@@ -175,7 +180,7 @@ test("Staging offer setup creates four named offers from an empty Character with
  assert.deepEqual(offers.map(offer=>({name:offer.name,price:offer.recommendedPriceMinor,active:offer.active})),names.map((name,index)=>({name,price:Math.round(Number(prices[index])*100),active:name!=="Privates Foto"})));
  assert.ok(offers.every(offer=>offer.category==="custom"));assert.equal(new Set(offers.map(offer=>offer.id)).size,4);
  await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request.body,revision:2});
- await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  for(const [index,name] of names.entries()){
   const editor=await ensureOfferEditor(page,name);
   await expect(editor.getByLabel("Empfohlener Preis",{exact:true})).toHaveValue(prices[index]);
@@ -288,7 +293,7 @@ test("Fan customer classification is editable and remains independent from techn
 });
 
 test("unavailable price storage stays visible and disabled without deleting existing offers",async t=>{
- const page=await mount(t,false);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const page=await mount(t,false);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  await expect(page.getByRole("alert")).toContainText("Preise können noch nicht gespeichert werden");
  const price=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..").getByLabel("Empfohlener Preis");
  await expect(price).toBeVisible();await expect(price).toBeDisabled();await expect(price).toHaveValue("25.00");
@@ -300,7 +305,7 @@ test("unavailable price storage stays visible and disabled without deleting exis
 
 
 test("own offers add, rename, reload and remove without resurrecting fixed categories",async t=>{
- const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  const original=page.getByRole("heading",{name:"Privates Foto",exact:true}).locator("..");
  await original.getByLabel("Angebotsname",{exact:true}).fill("Lieblingsfoto");
  await page.getByRole("button",{name:"+ Angebot",exact:true}).click();
@@ -317,14 +322,14 @@ test("own offers add, rename, reload and remove without resurrecting fixed categ
  assert.match(offers[1].id,/^offer_[a-z0-9-]+$/u);
  assert.deepEqual({name:offers[1].name,currency:offers[1].currency,min:offers[1].minimumPriceMinor,price:offers[1].recommendedPriceMinor,max:offers[1].maximumPriceMinor,active:offers[1].active},{name:"Sommerpaket (VIP+)",currency:"CHF",min:3750,price:3750,max:3750,active:true});
  await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request.body,revision:2});
- await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Empfohlener Preis",{exact:true})).toHaveValue("37.50");
  await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true})).toHaveValue("5 Landschaftsfotos im digitalen Set, keine persönliche Anfertigung.");
  await page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true}).fill("");
  await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
  const cleared=await page.evaluate(()=>window.testRequests[1].body);assert.equal(cleared.sales_playbook.offers[1].description,"");
  await page.evaluate(async saved=>{window.testRequests[1].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...cleared,revision:3});
- await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  await expect(page.getByRole("heading",{name:"Sommerpaket (VIP+)",exact:true}).locator("..").getByLabel("Beschreibung / enthaltene Leistung",{exact:true})).toHaveValue("");
  await page.getByRole("button",{name:"Angebot entfernen",exact:true}).first().click();await page.getByRole("button",{name:"Angebot entfernen",exact:true}).click();
  await expect(page.getByText("Noch keine Angebote angelegt.", {exact:true})).toBeVisible();
@@ -333,11 +338,11 @@ test("own offers add, rename, reload and remove without resurrecting fixed categ
 });
 
 test("offer addition respects twenty rows and storage readiness",async t=>{
- const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const page=await mount(t);await manageCharacter(page,"Synthetic Anna");await card(page,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await page.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  for(let count=1;count<20;count++)await page.getByRole("button",{name:"+ Angebot",exact:true}).click();
  await expect(page.getByLabel("Angebotsname",{exact:true})).toHaveCount(20);await expect(page.getByRole("button",{name:"+ Angebot",exact:true})).toBeDisabled();
  await page.getByRole("button",{name:"Angebot entfernen",exact:true}).last().click();await expect(page.getByRole("button",{name:"+ Angebot",exact:true})).toBeEnabled();
- const unavailable=await mount(t,false);await manageCharacter(unavailable,"Synthetic Anna");await card(unavailable,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();
+ const unavailable=await mount(t,false);await manageCharacter(unavailable,"Synthetic Anna");await card(unavailable,"Synthetic Anna").getByRole("button",{name:"Bearbeiten"}).click();await unavailable.getByRole("button",{name:"Preise & Angebote",exact:true}).click();
  await expect(unavailable.getByRole("button",{name:"+ Angebot",exact:true})).toBeDisabled();await expect(unavailable.getByRole("button",{name:"Angebot entfernen",exact:true})).toBeDisabled();
 });
 
@@ -488,4 +493,20 @@ test("Model rail uses assigned portrait endpoint and falls back without exposing
  await expect.poll(()=>portrait.count()).toBe(0);
  assert.equal(await page.locator('img[src*="chat-characters/"]').count(),0);
  await expect(page.getByRole("button",{name:"Model-Leiste ausklappen",exact:true})).toHaveAttribute("aria-expanded","false");
+});
+
+test("independent Character mixer strengths survive save and reopening without normalizing their sum",async t=>{
+ const page=await mount(t);await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();await page.getByRole("button",{name:"Persönlichkeit",exact:true}).click();
+ for(const name of ["Locker","Elegant","Selbstbewusst","Sachlich"]){await page.getByRole("checkbox",{name,exact:true}).check();await page.getByRole("slider",{name:`${name} Intensität`,exact:true}).press("End");}
+ await page.getByRole("button",{name:"Speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const request=await page.evaluate(()=>window.testRequests[0].body);assert.equal(Object.values(request.sales_playbook.characterMixer.personality).reduce((sum,item)=>sum+item.intensity,0),400);assert.equal(request.personality,characterA.personality);
+ await page.evaluate(async saved=>{window.testRequests[0].resolve(Response.json({character:saved}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{...characterA,...request,revision:2});
+ await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();await page.getByRole("button",{name:"Persönlichkeit",exact:true}).click();
+ for(const name of ["Locker","Elegant","Selbstbewusst","Sachlich"])await expect(page.getByRole("slider",{name:`${name} Intensität`,exact:true})).toHaveValue("100");
+});
+test("live mixer preview compares two bounded requests without saving Character or Fan data",async t=>{
+ const page=await mount(t);await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();await page.getByRole("button",{name:"KI-Vorschau",exact:true}).click();await page.getByRole("button",{name:"Antwort testen",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);let body=await page.evaluate(()=>window.testRequests[0].body);assert.equal(body.preview,true);assert.equal(Object.hasOwn(body,"fan_id"),false);assert.equal(Object.hasOwn(body,"preview_mixer"),false);
+ await complete(page,0,{preview:true});await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);body=await page.evaluate(()=>window.testRequests[1].body);assert.equal(body.preview_mixer.version,1);await complete(page,1,{preview:true});
+ await expect(page.getByText("Synthetic reply one",{exact:true})).toHaveCount(2);assert.equal(await page.evaluate(()=>window.testRequests.every(r=>r.url==="/api/chatadmin/reply-suggestions")),true);
 });

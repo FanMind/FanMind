@@ -1,3 +1,4 @@
+import { normalizeCharacterMixer } from "./chatAdminMixer.mjs";
 export { assertReplyPrices as assertChatAdminReplyPrices } from "./replyPricePolicy.mjs";
 import { defaultCreatorBundle, normalizeCreatorBundle } from "./creatorIntelligencePolicy.mjs";
 
@@ -21,7 +22,9 @@ export function normalizeChatAdminSalesPlaybook(value) {
   bundle.playbook = value;
   const normalized = normalizeCreatorBundle(bundle).playbook;
   if (normalized.offers.some((offer) => !CHAT_ADMIN_OFFER_CURRENCIES.includes(offer.currency))) throw new Error("unsupported_chat_admin_currency");
-  return normalized;
+  const result=Object.hasOwn(value, "characterMixer") ? {...normalized,characterMixer:normalizeCharacterMixer(value.characterMixer)} : normalized;
+  if(new TextEncoder().encode(JSON.stringify(result)).length>18000)throw Error("chat_admin_playbook_too_large");
+  return result;
 }
 
 export function resolveChatAdminRequestedOffer(playbook, incomingMessage) {

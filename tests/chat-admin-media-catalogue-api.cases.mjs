@@ -36,7 +36,7 @@ test('foreign folders, wrong media type, nonempty delete and stale assets never 
  for(const [body,status] of [[{action:'move_asset',id:asset,revision:1,folder_id:id(9)},400],[{action:'move_asset',id:asset,revision:0,folder_id:folder},409],[{action:'delete_folder',id:folder,revision:0},409],[{action:'save_folder',folder:{id:id(8),revision:0,name:'Video',kind:'video',parent_id:folder},price:null},400]]){const h=harness();assert.equal((await h.route.PATCH(h.request(body))).status,status);assert.equal(h.calls.writes.length,0);}
 });
 test('uploads require rights, video gate and matching folder, then recheck revoked authority after processing',async()=>{
- const upload={media_type:'image',folder_id:null,data:Buffer.from('synthetic').toString('base64'),rights_confirmed:true};
+ const upload={media_type:'image',folder_id:null,data:Buffer.from('synthetic').toString('base64'),rights_confirmed:true,original_name:'synthetic-blue.png'};
  for(const [options,body,status] of [[{}, {rights_confirmed:false},400],[{}, {media_type:'video'},503],[{video:true},{media_type:'video',folder_id:folder},400],[{revoke:true},{},403]]){const h=harness(options);assert.equal((await h.route.POST(h.request({...upload,...body}))).status,status);assert.equal(h.calls.writes.length,0);assert.equal(h.calls.objects.length,0);}
- const h=harness();assert.equal((await h.route.POST(h.request(upload))).status,200);assert.equal(h.calls.writes[0].body.workspace_id,w);assert.equal(h.calls.objects[0][5],'image');
+ const h=harness();assert.equal((await h.route.POST(h.request(upload))).status,200);assert.equal(h.calls.writes[0].body.workspace_id,w);assert.equal(h.calls.objects[0][5],'image');assert.equal(h.calls.objects[1][3],'PROBE');assert.equal(h.calls.writes[0].body.original_filename,'synthetic-blue.png');
 });
