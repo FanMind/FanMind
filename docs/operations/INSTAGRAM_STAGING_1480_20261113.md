@@ -1,3 +1,24 @@
+# Account-subscription diagnosis — 14 November 2026
+
+After #1501 rollout, the existing Operator check verifies the actual SYSTEM_USER
+credential, exact account and minimal granted scopes. Account subscription is
+still unconfirmed after an activation attempt. The existing GET path collapsed
+provider failures into an empty field list, and the action suppressed POST
+errors, so the UI could not distinguish rejection from absent subscription.
+Expose only get/post phase, HTTP status and bounded numeric provider error code
+through the existing protected Operator action. Reject all raw/unrecognized
+error messages at the action boundary. Request id explicitly alongside
+subscribed_fields for the existing exact-app readback; never relax the app or
+field checks. No token, provider body, new endpoint, OAuth or schema change.
+
+Meta UI readback confirms the existing App callback and messages/comments v27
+fields. Official reference:
+https://developers.facebook.com/documentation/instagram-platform/webhooks/setup
+requires Advanced Access for comments/live_comments notifications. The current
+dashboard's Ready to test status is not approval for general comment receipt;
+do not assume this is the cause of an unobserved subscription API error. No
+fresh DM/comment test is requested while account subscription is unconfirmed.
+
 # Staging continuation — 14 November 2026
 
 The existing Instagram tester invitation was accepted. The authorized normal

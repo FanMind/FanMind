@@ -407,6 +407,7 @@ export async function subscribeInstagramAccount(
     error?: { message?: string; code?: number; type?: string };
   } | null;
   if (!response.ok || payload?.success !== true) {
+    if (instagramUnifiedEnabled(process.env)) throw instagramSubscriptionFailure("post", response.status, payload);
     logInstagramApiError("Instagram webhook subscription failed", payload);
     return false;
   }
@@ -421,13 +422,17 @@ export async function fetchInstagramSubscribedFields(
   const url = new URL(
     `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/subscribed_apps`,
   );
-  url.searchParams.set("fields", "subscribed_fields");
+  url.searchParams.set("fields", instagramUnifiedEnabled(process.env) ? "id,subscribed_fields" : "subscribed_fields");
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
-  if (!response.ok) return [];
   const payload = (await response.json().catch(() => null)) as {
     data?: Array<{ id?: string; subscribed_fields?: unknown }>;
+    error?: { code?: number };
   } | null;
+  if (!response.ok || payload?.error) {
+    if (instagramUnifiedEnabled(process.env)) throw instagramSubscriptionFailure("get", response.status, payload);
+    return [];
+  }
   const entries = instagramUnifiedEnabled(process.env) ? payload?.data?.filter(entry => entry.id === UNIFIED_APP) : payload?.data;
   if (instagramUnifiedEnabled(process.env) && entries?.length !== 1) return [];
   const values = entries?.flatMap((entry) =>
@@ -443,6 +448,12 @@ export async function fetchInstagramSubscribedFields(
       ),
     ),
   ];
+}
+
+function instagramSubscriptionFailure(phase: "get" | "post", status: number, payload: unknown) {
+  const error = isRecord(payload) ? payload.error : null;
+  const code = sanitizeMetaProviderError(error).code;
+  return new Error(`instagram_subscription_${phase}_http_${status}_code_${code ?? "none"}`);
 }
 
 export function isInstagramOAuthConfigured(): boolean {

@@ -416,8 +416,13 @@ export async function inspectUnifiedInstagramIngress(activate = false) {
     const messages = fields.includes("messages"), comments = fields.includes("comments");
     const saved = await updateInstagramWebhookSubscribed(connection.id,messages && comments);
     revalidatePath("/channels");
-    return {ok:messages && comments && !saved.error,messages,comments,diagnostics};
-  } catch { return {ok:false,messages:false,comments:false,diagnostics:null}; }
+    const ok = messages && comments && !saved.error;
+    return {ok,messages,comments,diagnostics,failureCode:ok?null:"instagram_subscription_readback_missing"};
+  } catch (error) {
+    const code = error instanceof Error && /^instagram_subscription_(get|post)_http_[1-5][0-9]{2}_code_(none|[0-9]{1,6})$/u.test(error.message)
+      ? error.message : "instagram_subscription_check_failed";
+    return {ok:false,messages:false,comments:false,diagnostics:null,failureCode:code};
+  }
 }
 export async function syncUnifiedInstagramComments() {
   try {
