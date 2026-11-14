@@ -1,3 +1,9 @@
+## FM-CHATADMIN-MEDIA-PRICES-1425-20261114 — scoped price extension, PR1497
+- Risk R3. Owner explicitly authorizes public publication of the existing feature branch and exactly one review PR, CI corrections and protected Staging preparation. No automatic merge, Production action, real-customer price activation or edits to existing Character data.
+- Reuse existing sales_playbook offers and catalogue; add folder/file/Model/package rules, inheritance, bounded negotiation, explicit tax display and exact file/revision evidence. Example amounts remain synthetic. Controlled append-only history/atomic quote SQL stays unapplied and the new runtime defaults off.
+- Initial hosted CI found a duplicate auto-created conversation in the new PG fixture and an omitted pure dependency in the component harness. Correct those fixtures; retain the existing full native RLS/lifecycle and browser assertions. Reconcile the reviewed Source of Truth fingerprint without refreshing live evidence or altering accepted gates.
+- Prepare exact-Main/protected-Staging/TLS/checksum schema control with read-only preflight, atomic apply/postflight and full source-derived verification. No workflow dispatched. Existing upload/delete Desktop acceptance remains open; no browser or native-source result is a target PASS.
+
 ## FM-SUPPORT-PROFILE-DISCLOSURE-1350-20261114
 - Owner correction: one existing central Profile/GDPR PDF export; no Help download. Reuse #1491/#1496, existing PDF renderer and private collector, paginated own Support RPCs/collector and current-consent parser. Retain historical redacted proof; do not re-read private Support content for it.
 - Actual Staging click returned safe PDF failure HTML. Read-only schema metadata identifies authenticated SELECT-star conflict on credential-bearing social_connections; moved its explicit safe projection into existing twice-Owner-authorized private collection. No DB grants, schema, retention, consent mutations or Production changes.

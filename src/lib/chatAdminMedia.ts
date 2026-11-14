@@ -14,6 +14,7 @@ export type CustomMediaPolicy={enabled:boolean;offer_id:string;delivery_hours:nu
 export const emptyCustomMediaPolicy:CustomMediaPolicy={enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0};
 export const mediaEnabled=()=>process.env.FANMIND_CHAT_ADMIN_MEDIA_ENABLED==="true";
 export const mediaCatalogueEnabled=()=>process.env.FANMIND_CHAT_ADMIN_MEDIA_CATALOGUE_ENABLED==="true";
+export const mediaPricingV2Enabled=()=>mediaCatalogueEnabled()&&process.env.FANMIND_CHAT_ADMIN_MEDIA_PRICING_V2_ENABLED==="true";
 export const mediaVideoEnabled=()=>mediaCatalogueEnabled()&&process.env.FANMIND_CHAT_ADMIN_MEDIA_VIDEO_ENABLED==="true";
 export function requireMediaCatalogue(){requireMediaEnabled();if(!mediaCatalogueEnabled())throw new ChatAdminMediaError("media_catalogue_not_enabled");}
 export function requireMediaEnabled(){if(!mediaEnabled())throw new ChatAdminMediaError("media_not_enabled");}
@@ -35,7 +36,7 @@ export async function loadCharacterMedia(workspaceId:string,characterId:string){
   const folders=mediaCatalogueEnabled()?await mediaRest<MediaFolder[]>(`chat_character_media_folders?${scope}&select=*&order=id.asc&limit=101`):[];
   if(folders.length>100)throw new ChatAdminMediaError("media_folder_limit");
   if(mediaCatalogueEnabled())validateMediaFolders({id:characterId,workspace_id:workspaceId},folders);
-  return {assets,policy:policies[0]??emptyCustomMediaPolicy,folders,catalogue_enabled:mediaCatalogueEnabled(),video_enabled:mediaVideoEnabled()};
+  return {assets,policy:policies[0]??emptyCustomMediaPolicy,folders,catalogue_enabled:mediaCatalogueEnabled(),video_enabled:mediaVideoEnabled(),pricing_v2_enabled:mediaPricingV2Enabled()};
 }
 export async function getMediaAsset(workspaceId:string,characterId:string,id:string){
   const rows=await mediaRest<MediaAsset[]>(`chat_character_media?${mediaScope(workspaceId,characterId)}&id=eq.${mediaId(id)}&select=*&limit=2`);
@@ -82,8 +83,15 @@ export async function groundChatAdminContext(context:string,character:ChatCharac
   const {assets,policy,folders}=await loadCharacterMedia(character.workspace_id,character.id);
   if(mediaCatalogueEnabled())validateMediaFolders(character,folders);
   const legacy=attachMediaGrounding(context,character,fan,assets.filter(a=>(a.media_type??"image")==="image"),policy,incoming,now);
+  if(!mediaPricingV2Enabled()&&character.sales_playbook?.offers.some(o=>o.mediaTerms))throw new ChatAdminMediaError("media_pricing_v2_not_enabled");
   const grounded=mediaCatalogueEnabled()?buildCatalogueGrounding(legacy,character,fan,assets,folders,incoming,now,history):legacy;
   const matches=JSON.parse(grounded).media_inventory.matches as Array<{id:string}>;
   for(const match of matches){const asset=assets.find(a=>a.id===match.id)!;await mediaObject(character.workspace_id,character.id,match.id,asset.media_type==="video"?"PROBE":"GET",undefined,asset.media_type??"image");}
   return grounded;
+}
+
+export async function recordMediaOfferSnapshot(character:ChatCharacter,fanId:string,conversationId:string,generationId:string,binding:Record<string,unknown>|null){
+ if(!binding||binding.offered_price_minor===null||!mediaPricingV2Enabled())return;
+ const saved=await mediaRest<boolean>("rpc/chat_admin_price_offer_record",{method:"POST",body:JSON.stringify({p_workspace:character.workspace_id,p_character:character.id,p_fan:fanId,p_conversation:conversationId,p_generation:generationId,p_revision:character.revision,p_binding:binding})});
+ if(saved!==true)throw new ChatAdminMediaError("media_offer_snapshot_unavailable");
 }

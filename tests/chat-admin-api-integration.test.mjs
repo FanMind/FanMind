@@ -37,7 +37,7 @@ function authorityHarness(email, role = "owner") {
     require(name) { assert.ok(["next/navigation", "@/lib/supabase/server"].includes(name)); return {}; },
   });
   const dependencies = {
-    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context,recordMediaOfferSnapshot:async()=>{},mediaPricingV2Enabled:()=>false},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
@@ -111,7 +111,7 @@ function harness(change, abortController, options = {}) {
     "node:crypto": { randomUUID },
     "@/lib/chatAdminMixer.mjs": mixerPolicy,
     "@/lib/chatAdminUsageWitness.mjs": usageWitness,
-    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context,recordMediaOfferSnapshot:async()=>{},mediaPricingV2Enabled:()=>false},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,
@@ -328,7 +328,7 @@ test("actual Fan route deletes only the revision-bound Fan in the authorized wor
     exports: route, Response, Request, URL,
     require(name) {
       const dependencies = {
-    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context},
+    "@/lib/chatAdminMedia": {groundChatAdminContext:async context=>context,recordMediaOfferSnapshot:async()=>{},mediaPricingV2Enabled:()=>false},
     "@/lib/chatAdminMediaPolicy.mjs": mediaPolicy,
     "@/lib/chatAdminMediaCatalogue.mjs": cataloguePolicy,
     "@/lib/replyQualityPolicy.mjs": replyQualityPolicy,

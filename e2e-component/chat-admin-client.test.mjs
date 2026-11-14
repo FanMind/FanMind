@@ -29,6 +29,7 @@ const replyPricePolicyClient = ts.transpileModule(readFileSync("src/lib/replyPri
 const mediaClient = ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx", "utf8"), {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
 const controlsClient=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
 const mediaPolicyClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaPolicy.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
+const mediaTermsClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaTerms.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const catalogueClient=ts.transpileModule(readFileSync("src/lib/chatAdminMediaCatalogue.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const salesClient=ts.transpileModule(readFileSync("src/lib/chatAdminSalesPlaybook.mjs","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,allowJs:true}}).outputText;
 const mixerClient=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMixer.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
@@ -42,6 +43,7 @@ const bundle = `(() => {
     "./CharacterMediaLibrary": function(module,exports,require) {${mediaClient}},
     "./CharacterMediaCatalogueControls": function(module,exports,require) {${controlsClient}},
     "@/lib/chatAdminMediaCatalogue.mjs": function(module,exports,require) {${catalogueClient}},
+    "./chatAdminMediaTerms.mjs": function(module,exports,require) {${mediaTermsClient}},
     "./chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
     "./chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
     "./chatAdminSalesPlaybook.mjs": function(module,exports,require) {${salesClient}},
@@ -393,6 +395,58 @@ test("catalogue folder editor submits individual category prices and private vid
  await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
  const sent=await page.evaluate(()=>({url:window.testRequests[0].url,body:window.testRequests[0].body}));
  assert.equal(sent.body.action,"save_folder");assert.equal(sent.body.price.start_minor,2350);assert.equal(sent.body.price.minimum_minor,1700);assert.equal(sent.body.price.negotiation_allowed,true);assert.equal(sent.body.character_id,characterA.id);
+});
+
+test("media pricing v2 saves explicit folder terms, reloads them and submits a separate package total",async t=>{
+ const page=await mount(t,true,true);
+ const policy={enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0};
+ await page.evaluate(({character,policy})=>{window.fixture.media[character.id]={assets:[],folders:[],policy,character,catalogue_enabled:true,video_enabled:true,pricing_v2_enabled:true,analysis_enabled:false};},{character:characterA,policy});
+ await openMediaSettings(page);
+ const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});
+ await region.getByRole("button",{name:"Ordner anlegen",exact:true}).click();
+ await region.getByLabel("Ordnername",{exact:true}).fill("Synthetic Evening");
+ const form=region.locator("form").filter({has:page.getByRole("button",{name:"Ordner speichern",exact:true})});
+ await form.getByLabel("Eigener Kategoriepreis",{exact:true}).check();
+ await expect(form.getByLabel("Preis pro Bild",{exact:true})).toHaveValue("");
+ await form.getByLabel("Preis pro Bild",{exact:true}).fill("35");
+ await form.getByLabel("Preise & Verkaufsregeln konfigurieren",{exact:true}).check();
+ await form.getByLabel("Maximaler Nachlass (%)",{exact:true}).fill("10");
+ await form.getByLabel("Verhandlungen erlauben",{exact:true}).check();
+ await form.getByLabel("Nach oben unbegrenzt",{exact:true}).check();
+ await form.getByLabel("Vor einer Preiszusage manuell bestätigen",{exact:true}).uncheck();
+ await form.getByLabel("Steuerliche Darstellung",{exact:true}).selectOption("vat_included");
+ await expect(form.getByLabel("Enthaltener Umsatzsteuersatz (%)",{exact:true})).toHaveValue("");
+ await form.getByLabel("Enthaltener Umsatzsteuersatz (%)",{exact:true}).fill("20");
+ await form.getByRole("button",{name:"Ordner speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);
+ const sent=await page.evaluate(()=>window.testRequests[0].body);
+ assert.equal(sent.price.start_minor,3500);assert.equal(sent.price.maximum_discount_percent,10);assert.equal(sent.price.requires_confirmation,false);
+ assert.deepEqual(sent.terms,{inherit:true,upper_unlimited:true,tax_mode:"vat_included",vat_basis_points:2000,unit_seconds:null});
+ const offer={...characterA.sales_playbook.offers[0],id:"media_synthetic",name:"Synthetic Evening",category:"custom",minimumPriceMinor:3150,recommendedPriceMinor:3500,maximumPriceMinor:3500,maximumDiscountPercent:10,mediaTerms:{...sent.terms,scope:"folder",target_id:sent.folder.id,kind:"image",quantity:1,negotiation_allowed:true,special_discounts_allowed:false}};
+ const folder={...sent.folder,workspace_id:characterA.workspace_id,character_id:characterA.id,offer_id:offer.id,price_rules:{negotiation_allowed:true,special_discounts_allowed:false},revision:1};
+ const character={...characterA,revision:2,sales_playbook:{...characterA.sales_playbook,offers:[...characterA.sales_playbook.offers,offer]}};
+ await page.evaluate(({character,folder})=>{const fresh={...window.fixture.media[character.id],folders:[folder],character};window.fixture.media[character.id]=fresh;window.testRequests[0].resolve(Response.json(fresh));},{character,folder});
+ await expect(region.getByRole("status")).toContainText("Gespeichert");
+ await region.getByLabel("Synthetic Evening verwalten",{exact:true}).click();
+ await region.getByRole("button",{name:"Synthetic Evening bearbeiten",exact:true}).click();
+ const reopened=region.locator("form").filter({has:page.getByRole("button",{name:"Ordner speichern",exact:true})});
+ await expect(reopened.getByLabel("Preis pro Bild",{exact:true})).toHaveValue("35.00");
+ await expect(reopened.getByLabel("Maximaler Nachlass (%)",{exact:true})).toHaveValue("10");
+ await expect(reopened.getByLabel("Nach oben unbegrenzt",{exact:true})).toBeChecked();
+ await reopened.getByRole("button",{name:"Abbrechen",exact:true}).click();
+ await region.getByText("Model-Standardpreise & Paketangebote",{exact:true}).click();
+ const packages=region.locator("details").filter({has:page.getByText("Model-Standardpreise & Paketangebote",{exact:true})});
+ await packages.getByLabel("Ordner",{exact:true}).selectOption(folder.id);
+ await packages.getByLabel("Eigenen Paketgesamtpreis speichern",{exact:true}).check();
+ await packages.getByLabel("Preise & Verkaufsregeln konfigurieren",{exact:true}).check();
+ await packages.getByLabel("Paketgesamtpreis",{exact:true}).fill("70");
+ await packages.getByLabel("Maximaler Nachlass (%)",{exact:true}).fill("10");
+ await packages.getByLabel("Verhandlungen erlauben",{exact:true}).check();
+ await packages.getByLabel("Steuerliche Darstellung",{exact:true}).selectOption("vat_exempt");
+ await packages.getByRole("button",{name:"Preisregel speichern",exact:true}).click();
+ await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
+ const bundle=await page.evaluate(()=>window.testRequests[1].body);
+ assert.equal(bundle.action,"save_product_price");assert.equal(bundle.quantity,3);assert.equal(bundle.price.start_minor,7000);assert.equal(bundle.price.maximum_discount_percent,10);assert.equal(bundle.target_id,folder.id);
 });
 
 test("changed Character price revision blocks stale clipboard use before confirmation",async t=>{
