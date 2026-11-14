@@ -50,3 +50,30 @@ the fixed two allowed fields, followed by mandatory exact-app/both-field GET.
 Keep legacy merge behavior and all credential/Operator guards. Add only bounded
 numeric subcode plus fixed cause enum to diagnose any remaining rejection;
 never raw provider text. Real acceptance remains OPEN and no input is requested.
+
+2026-11-14 Meta-review governance continuation (#1509), documentation only:
+Owner authorizes introducing authority-request legality review, challenge,
+minimization and confidential records. Exact procedure1.0 and blank case template
+are prepared in existing legal governance, not legally approved or operated.
+Existing approvals.legalReview/retentionDecision and private evidence boundary
+remain authoritative; no new register control or runtime service. Historical
+national-security disclosures remain UNKNOWN pending one responsible fact
+confirmation. No new private identities/case details enter this checkpoint.
+Review package has exactly the three required Instagram scopes, conditional
+English drafts, API evidence matrix and real screencast/reviewer plan. Current
+source proves zero returned media causes no comment-edge call, so0of1 remains
+open. GET/POST400/code100/subcode33 is not explained or fixed by this source.
+Existing Verified business/Tech designation is recorded in the protected dossier;
+Advanced/Access Verification, correct account subscription, reviewer access and
+real DM/comment acceptance remain distinct. No new provider/OAuth/config/data
+action, submission, merge or deployment. Other workstreams preserved.
+18/18 existing legal/evidence tests pass;27-control register remains2confirmed/
+25pending and complete-readiness correctly blocks. Initial PR checks identified
+the missing durable checkpoint and the reviewed SOURCE_OF_TRUTH blob update.
+Only that documented drift hash is reconciled; no runtime acceptance baseline
+or protected release evidence is upgraded. Existing social contract/gate remain
+FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001. Next: responsible historical
+fact, qualified legal/exact operator release, secure handling/transfer/training
+evidence, then genuine API/reviewer/video evidence before final Owner submission
+approval. Browser content reread currently blocked by focus/CDP timeout; previous
+UI findings are not represented as fresh observations.
