@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {priceSchemaPostflight} from '../scripts/operations/chat-admin-media-prices-schema.mjs';
 import {defaultChatAdminSalesPlaybook} from '../src/lib/chatAdminSalesPlaybook.mjs';
 import {withMediaPrice,withMediaProductPrice,buildCatalogueGrounding} from '../src/lib/chatAdminMediaCatalogue.mjs';
-export async function runMediaPricesSqlCases(sql){
+export async function runMediaPricesSqlCases(sql,beforePrices=async()=>{},afterPrices=async()=>{}){
  const w='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',c='cccccccc-cccc-4ccc-8ccc-cccccccccccc',owner='11111111-1111-4111-8111-111111111111',foreign='22222222-2222-4222-8222-222222222222';
  const id=n=>`12345678-1234-4123-8123-${String(n).padStart(12,'0')}`;
  const literal=o=>`'${JSON.stringify(o).replaceAll("'","''")}'::jsonb`;
@@ -16,7 +16,9 @@ export async function runMediaPricesSqlCases(sql){
  await sql(readFileSync('supabase/controlled/20260927200000_chat_admin_character_fans.sql','utf8'));
  const catalogue=readFileSync('scripts/operations/chat-admin-media-runtime-catalogue.sql','utf8');
  const beforeCatalogue=await sql(catalogue);
+ await beforePrices();
  await sql(readFileSync('supabase/controlled/chat_admin_media_prices.sql','utf8'));
+ await afterPrices();
  await sql(priceSchemaPostflight());
  assert.equal(await sql(catalogue),beforeCatalogue,'price evidence must not invalidate the existing media catalogue');
  for(const drift of ["grant execute on function public.chat_admin_price_write(uuid,uuid,integer,jsonb) to anon;","grant usage on schema fanmind_media_price_evidence to authenticated;","alter table public.chat_characters disable trigger chat_media_price_audit;","alter table fanmind_media_price_evidence.offers disable row level security;"]){
