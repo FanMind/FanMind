@@ -419,7 +419,7 @@ export async function inspectUnifiedInstagramIngress(activate = false) {
     const ok = messages && comments && !saved.error;
     return {ok,messages,comments,diagnostics,failureCode:ok?null:"instagram_subscription_readback_missing"};
   } catch (error) {
-    const code = error instanceof Error && /^instagram_subscription_(get|post)_http_[1-5][0-9]{2}_code_(none|[0-9]{1,6})$/u.test(error.message)
+    const code = error instanceof Error && /^instagram_subscription_(get|post)_http_[1-5][0-9]{2}_code_(none|[0-9]{1,6})_subcode_(none|[0-9]{1,9})_reason_(field_unavailable|object_unavailable|permission_denied|other)$/u.test(error.message)
       ? error.message : "instagram_subscription_check_failed";
     return {ok:false,messages:false,comments:false,diagnostics:null,failureCode:code};
   }

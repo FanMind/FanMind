@@ -1,3 +1,15 @@
+# Unified activation sequencing — 14 November 2026
+
+#1504 deployed successfully in run43633998420 / release619e2a2. GET still returns
+HTTP400/code100; removing field selection was not the cause or a subscription
+fix. The current activation throws at that same preliminary GET, before its
+POST. Unified already knows the exact two allowed fields and does not need to
+read/merge previous fields. Send the documented form-body POST directly, then
+retain mandatory exact-app/both-field GET readback before marking subscribed.
+Legacy merging is untouched. Provider errors expose only bounded numeric
+code/subcode and a fixed cause enum, never raw provider text. Unknown errors
+remain unconfirmed. No fresh OAuth or test inputs are requested.
+
 # Actual subscription readback — 14 November 2026
 
 Diagnostic #1502 deployed successfully in run43632402637, release615b0a0.
