@@ -217,6 +217,7 @@ function finish_server() {
 
   if (server_443_listens > 0) {
     port_443_servers += 1
+    media_diagnostic = sprintf("tls_listens=%d,insecure=%d,ipv_six=%d,noncanonical=%d,names=%d,exact_names=%d,certificates=%d,exact_certificates=%d,keys=%d,exact_keys=%d,whatsapp=%d,valid_whatsapp=%d,invalid_whatsapp=%d,request_flow=%d", exact_tls_listens, server_insecure_443_listens, server_ipv6_443_listens, server_noncanonical_non_ipv6_443_listens, server_name_directives, exact_server_names, certificate_directives, exact_certificates, certificate_key_directives, exact_certificate_keys, whatsapp_locations, valid_whatsapp_locations, invalid_whatsapp_locations, server_request_flow_directives)
     if (exact_tls_listens == 1 && server_insecure_443_listens == 0 &&
         server_ipv6_443_listens <= 1 &&
         server_noncanonical_non_ipv6_443_listens == 0 &&
@@ -408,6 +409,9 @@ BEGIN {
 }
 
 END {
+  if (output_mode == "media_diagnostic") {
+    printf "fatal=%d,unclosed=%d,malformed=%d,tls_servers=%d,valid_tls_servers=%d,global_whatsapp=%d,global_whatsapp_paths=%d;%s\n", fatal, in_server, malformed, port_443_servers, valid_tls_servers, global_whatsapp_locations, global_whatsapp_path_locations, media_diagnostic
+  }
   if (fatal || in_server || malformed || port_443_servers != 1 ||
       valid_tls_servers != 1 || global_whatsapp_locations != 1 ||
       global_whatsapp_path_locations != 1) {
