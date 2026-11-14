@@ -248,6 +248,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
+      "enable-staging-tls.yml",
       "install-production-audit-policy.yml",
       DAILY_PRODUCTION_CONTROL_WORKFLOW,
       "production-meta-runtime.yml",
@@ -263,6 +264,11 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       "support-ai-consent-production.yml",
     ],
   );
+  const mediaProxyWorkflow=selfHostedWorkflows.find(workflow=>workflow.file==='enable-staging-tls.yml');
+  assert.deepEqual(mediaProxyWorkflow?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA]);
+  const mediaProxyJob=mediaProxyWorkflow.source.split('  media-upload-proxy:')[1];
+  for(const binding of ["github.ref == 'refs/heads/main'","github.actor == 'Bernds-tech'","inputs.reviewed_commit == github.sha","inputs.expected_staging_commit == github.sha","environment: staging","group: fanmind-staging-deploy","staging-media-upload-proxy.mjs"] )assert.ok(mediaProxyJob.includes(binding));
+  assert.doesNotMatch(mediaProxyJob,/secrets\.|certbot|provision-staging-host|systemctl restart|sudoers/);
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
   const mediaHost = selfHostedWorkflows.find(workflow => workflow.file === CHAT_ADMIN_MEDIA_HOST_WORKFLOW);
   assert.deepEqual(mediaHost?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
