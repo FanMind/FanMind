@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { instagramUnifiedEnabled, assertUnifiedOperator, validateUnifiedDiagnostics, selectUnifiedAccount, readUnifiedCredential, instagramUnifiedContinuation, UNIFIED_SCOPES } from '../src/lib/instagramUnifiedPolicy.mjs';
+import { instagramUnifiedEnabled, assertUnifiedOperator, stagingInstagramIngressEnabled, validateUnifiedDiagnostics, selectUnifiedAccount, readUnifiedCredential, instagramUnifiedContinuation, UNIFIED_SCOPES } from '../src/lib/instagramUnifiedPolicy.mjs';
 import { OPERATOR_USER, OPERATOR_WORKSPACE } from '../src/lib/stagingOperatorIdentity.mjs';
 import { validateInstagramGraphPagingUrl, resolveInstagramGraphPagingCursor } from '../src/lib/instagramGraphPagingPolicy.mjs';
 const env={INSTAGRAM_LOGIN_MODE:'unified',FANMIND_RUNTIME_ENVIRONMENT:'staging',FANMIND_STAGING_OPERATOR_SESSION_ENABLED:'true',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://vshyhvgcmrlagvfnvomc.supabase.co',INSTAGRAM_APP_ID:'1547928503809961',FACEBOOK_APP_ID:'1547928503809961',INSTAGRAM_APP_SECRET:'a'.repeat(32),FACEBOOK_APP_SECRET:'a'.repeat(32),INSTAGRAM_UNIFIED_CONFIG_ID:'12345678',INSTAGRAM_REDIRECT_URI:'https://staging.fanmind.ch/api/integrations/instagram/callback'};
@@ -9,6 +9,14 @@ test('Unified configuration refuses Production, wrong app/project/secret and for
  for(const patch of [{FANMIND_RUNTIME_ENVIRONMENT:'production'},{FACEBOOK_APP_ID:'wrong'},{INSTAGRAM_APP_SECRET:'b'.repeat(32)},{NEXT_PUBLIC_SUPABASE_URL:'https://drqkpdvtbbrrdwmtrodz.supabase.co'},{META_APP_SECRET:'foreign'}])assert.equal(instagramUnifiedEnabled({...env,...patch}),false);
  assert.doesNotThrow(()=>assertUnifiedOperator(env,OPERATOR_USER,OPERATOR_WORKSPACE));
  assert.throws(()=>assertUnifiedOperator(env,'foreign',OPERATOR_WORKSPACE));assert.throws(()=>assertUnifiedOperator(env,OPERATOR_USER,'foreign'));
+});
+test('ingress controls use exact Staging Operator/account eligibility without browser-denied OAuth columns',()=>{
+ assert.equal(stagingInstagramIngressEnabled(env,OPERATOR_USER,OPERATOR_WORKSPACE,'fanmind.crm'),true);
+ for(const [configuration,user,workspace,name] of [
+  [{...env,FANMIND_RUNTIME_ENVIRONMENT:'production'},OPERATOR_USER,OPERATOR_WORKSPACE,'fanmind.crm'],
+  [env,'foreign',OPERATOR_WORKSPACE,'fanmind.crm'],[env,OPERATOR_USER,'foreign','fanmind.crm'],
+  [env,OPERATOR_USER,OPERATOR_WORKSPACE,'foreign'],[{},OPERATOR_USER,OPERATOR_WORKSPACE,'fanmind.crm'],
+ ])assert.equal(stagingInstagramIngressEnabled(configuration,user,workspace,name),false);
 });
 test('System User diagnostics reject user/Page tokens, wrong app, missing/extra scopes and expired credentials',()=>{
  const d={is_valid:true,app_id:env.INSTAGRAM_APP_ID,type:'SYSTEM_USER',scopes:[...UNIFIED_SCOPES],expires_at:2000000000};
@@ -55,6 +63,28 @@ import * as crypto from 'node:crypto';
 import * as unifiedPolicy from '../src/lib/instagramUnifiedPolicy.mjs';
 import * as paging from '../src/lib/instagramGraphPagingPolicy.mjs';
 import { renderInstagramUnifiedConfiguration, subscribeStagingMetaWebhook } from '../scripts/operations/staging-meta-runtime.mjs';
+test('server connection read preserves persisted Unified identity and expiry without expanding public column grants',async()=>{
+ const source=ts.createSourceFile('server.ts',readFileSync('src/lib/supabase/server.ts','utf8'),ts.ScriptTarget.Latest,true);
+ const names=new Set(['SOCIAL_CONNECTION_PUBLIC_COLUMNS','SOCIAL_CONNECTION_SECRET_COLUMNS']);
+ const nodes=source.statements.filter(node=>ts.isVariableStatement(node)?node.declarationList.declarations.some(d=>names.has(d.name.getText(source))):ts.isFunctionDeclaration(node)&&node.name?.text==='getWorkspaceSocialConnectionsServer');
+ const exports={};let selected;
+ const stored={id:'synthetic-connection',workspace_id:OPERATOR_WORKSPACE,platform:'instagram',status:'connected',external_account_name:'fanmind.crm',oauth_login_type:'instagram_unified_login',external_account_type:'professional',token_expires_at:'2030-01-01T00:00:00Z',permissions_verified_at:'2026-11-14T00:00:00Z',page_access_token_encrypted:'synthetic-ciphertext'};
+ const code=ts.transpileModule(nodes.map(n=>n.getText(source)).join('\n'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const context={exports,getServiceAccessToken:()=> 'synthetic-service-key',socialConnectionsError:()=>({connections:[],error:'denied'}),postgrestSelect:async(table,key,columns,filters)=>{
+  assert.equal(table,'social_connections');assert.equal(key,'synthetic-service-key');assert.equal(filters[0][1],OPERATOR_WORKSPACE);
+  selected=columns.split(',');return{data:[Object.fromEntries(Object.entries(stored).filter(([name])=>selected.includes(name)))],error:null};
+ }};
+ runInNewContext(code,context);
+ const result=await exports.getWorkspaceSocialConnectionsServer(OPERATOR_WORKSPACE);
+ assert.equal(result.connections[0].oauth_login_type,'instagram_unified_login');
+ for(const name of ['external_account_type','token_expires_at','permissions_verified_at'])assert.equal(result.connections[0][name],stored[name]);
+ const publicColumns=readFileSync('src/lib/supabase/server.ts','utf8').match(/const SOCIAL_CONNECTION_PUBLIC_COLUMNS =\s*"([^"]+)";/u)[1].split(',');
+ for(const name of ['oauth_login_type','external_account_type','token_expires_at','permissions_verified_at','page_access_token_encrypted'])assert.equal(publicColumns.includes(name),false);
+ context.getServiceAccessToken=()=>null;selected=null;
+ assert.equal((await exports.getWorkspaceSocialConnectionsServer(OPERATOR_WORKSPACE)).error,'denied');assert.equal(selected,null);
+ const page=readFileSync('src/app/channels/page.tsx','utf8');
+ assert.match(page,/unified: stagingInstagramIngressEnabled\(process\.env, data\.user\.id, workspace\.id, instagramConnection\.external_account_name\)/u);
+});
 function integration(fetchImpl) {
  const exports={};
  const deps={'node:crypto':crypto,'@/lib/instagramUnifiedPolicy.mjs':unifiedPolicy,'@/lib/instagramGraphPagingPolicy.mjs':paging,'@/lib/metaIntegrationPolicy.mjs':{META_GRAPH_API_VERSION:'v25.0'},'@/lib/metaConversationPaginationPolicy.mjs':{normalizeMetaPagingCursor:x=>x,createMetaConversationSyncAbortSignal:()=>undefined},'@/lib/metaRuntimeConfigPolicy.mjs':{isUsableMetaAppId:x=>/^\d+$/u.test(x??''),isUsableMetaAppSecret:x=>/^[a-f0-9]{32}$/u.test(x??''),normalizeMetaRuntimeValue:x=>x,normalizeMetaCallbackUrl:x=>x},'@/lib/instagramScopes':{},'@/lib/metaProviderErrorPolicy.mjs':{sanitizeMetaProviderError:()=>({})}};
