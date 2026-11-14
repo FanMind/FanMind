@@ -102,3 +102,27 @@ test('Production origin accepts only the fixed root with optional one slash and 
  assert.throws(()=>assertProductionRuntimeConsistency(values,{FANMIND_RUNTIME_ENVIRONMENT:'staging'},control.LIVE_COMMIT),/^Error: process_environment_mismatch$/u);
  assert.throws(()=>assertProductionRuntimeConsistency(values,{FANMIND_RUNTIME_ENVIRONMENT:'production',FANMIND_RELEASE_COMMIT:'f'.repeat(40)},control.LIVE_COMMIT),/^Error: process_release_mismatch$/u);
 });
+
+test('PM2-managed markers may be absent at exec time, but neither source may contradict the live target or file',()=>{
+ const managed={FANMIND_RUNTIME_ENVIRONMENT:'production',FANMIND_RELEASE_COMMIT:control.LIVE_COMMIT};
+ assert.doesNotThrow(()=>assertProductionRuntimeConsistency(values,{},control.LIVE_COMMIT,managed));
+ assert.throws(()=>assertProductionRuntimeConsistency(values,{},control.LIVE_COMMIT,{}),/process_environment_mismatch/);
+ for(const bad of [{FANMIND_RUNTIME_ENVIRONMENT:'staging'},{FANMIND_RELEASE_COMMIT:'e'.repeat(40)}]){
+  assert.throws(()=>assertProductionRuntimeConsistency(values,bad,control.LIVE_COMMIT,managed));
+  assert.throws(()=>assertProductionRuntimeConsistency(values,{},control.LIVE_COMMIT,{...managed,...bad}));
+ }
+ for(const bad of [{NEXT_PUBLIC_SUPABASE_URL:'https://foreign.supabase.co'},{SUPABASE_SERVICE_ROLE_KEY:'synthetic-other'},{FACEBOOK_APP_SECRET:'e'.repeat(32)},{META_APP_SECRET:'synthetic-alias'}]){
+  assert.throws(()=>assertProductionRuntimeConsistency({...values,SUPABASE_SERVICE_ROLE_KEY:'synthetic-expected'},{},control.LIVE_COMMIT,{...managed,...bad}),/inherited_configuration_conflict/);
+ }
+});
+test('real Linux process proves exec-time proc environment can omit subsequently managed markers',{skip:process.platform!=='linux'},()=>{
+ const source=`import {readFileSync} from 'node:fs';
+ import {assertProductionRuntimeConsistency} from './scripts/operations/production-meta-runtime.mjs';
+ const startup=Object.fromEntries(readFileSync('/proc/self/environ','utf8').split('\\0').filter(x=>x.includes('=')).map(x=>{const i=x.indexOf('=');return[x.slice(0,i),x.slice(i+1)];}));
+ process.env.FANMIND_RUNTIME_ENVIRONMENT='production';process.env.FANMIND_RELEASE_COMMIT='d'.repeat(40);
+ if(startup.FANMIND_META_STARTUP_MARKER!=='present'||startup.FANMIND_RUNTIME_ENVIRONMENT!==undefined||startup.FANMIND_RELEASE_COMMIT!==undefined)process.exit(2);
+ assertProductionRuntimeConsistency({},startup,'d'.repeat(40),process.env);
+ console.log('MANAGED_RUNTIME_BOUNDARY=PASS');`;
+ const result=spawnSync(process.execPath,['--input-type=module','-e',source],{env:{PATH:'/usr/bin:/bin',FANMIND_META_STARTUP_MARKER:'present'},encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr);assert.equal(result.stdout.trim(),'MANAGED_RUNTIME_BOUNDARY=PASS');
+});
