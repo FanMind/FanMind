@@ -17,7 +17,7 @@ function fixture(){
  './supportCreatorPolicy':policy,'./supportCentrePolicy':{isSupportUuid:x=>typeof x==='string'&&/^[a-f0-9-]{36}$/.test(x)},'./chatAdminMedia':{loadCharacterMedia:async()=>({assets:[],folders:[]})},
  './chatAdminPolicy.mjs':{buildChatAdminCharacterContext:(c,q)=>JSON.stringify({writing_style:c.writing_style,question:q}),assertChatAdminReplySemantics:r=>r},'./chatAdminModelPolicy.mjs':{getChatAdminModelProfile:()=>({model:'fixture'}),buildChatAdminModelRequest:context=>({model:'fixture',store:false,input:context}),CHAT_ADMIN_MODEL_TIMEOUT_MS:1000},'./aiUsage':{recordAiUsageEvent:async e=>state.usage.push(e)},'./sharedRateLimit':{consumeSharedRateLimit:async()=>({allowed:true})},'./chatAdminSalesPlaybook.mjs':{},'./aiExecutionPolicy.mjs':{buildBoundedReplySuggestionContext:x=>({context:x})},
  };
- return {state,...load('src/lib/supportCreatorServer.ts',deps,{process:{env:state.env},fetch:async(url,init)=>{assert.equal(url,'https://api.openai.com/v1/responses');const b=JSON.parse(init.body);assert.equal(b.store,false);state.providerCalls.push(b);return new Response(JSON.stringify({output_text:JSON.stringify(b.text?.format?.name==='support_creator_analysis'?{summary:'Der aktuelle Schreibstil ist formell, die Antwort verwendet eine höfliche Anrede.',evidenceRefs:['writing_style','M1'],suggestedStyle:'casual',uncertainty:'Historischer Providerkontext fehlt.'}:{replies:['Synthetic A','Synthetic B','Synthetic C']})}),{status:state.providerFailure?503:200});}})};
+ return {state,...load('src/lib/supportCreatorServer.ts',deps,{process:{env:state.env},fetch:async(url,init)=>{assert.equal(url,'https://api.openai.com/v1/responses');const b=JSON.parse(init.body);assert.equal(b.store,false);state.providerCalls.push(b);return new Response(JSON.stringify({output_text:JSON.stringify(b.text?.format?.name==='support_creator_analysis'?(state.analysisOutput??{summary:'Der aktuelle Schreibstil ist formell, die Antwort verwendet eine höfliche Anrede.',evidenceRefs:['writing_style','M1'],suggestedStyle:'casual',uncertainty:'Historischer Providerkontext fehlt.'}):{replies:['Synthetic A','Synthetic B','Synthetic C']})}),{status:state.providerFailure?503:200});}})};
 }
 const input=(n=10)=>({scope:'scope',requestId:uuid(n),question:'Mach die Antworten lockerer',characterId:uuid(3),readConsent:true,manageConsent:true});
 test('creator style commands are bounded; no negation, financial/permission change, ambiguous compound or untrusted command',()=>{
@@ -95,4 +95,12 @@ test('semantic analysis is separate opt-in, synthetic-only, bounded/read-only an
  const r=await f.runCreatorSupport(analysis);assert.match(r.answer,/KI-Analyse/);assert.equal(f.state.writes,0);assert.equal(f.state.providerCalls.length,1);assert.equal(f.state.usage[0].status,'ok');
  const request=f.state.providerCalls[0];assert.match(request.input[0].content,/unvertrauenswürdige Daten/);assert.ok(request.text.format.schema.additionalProperties===false);assert.equal(request.tools,undefined);
  const g=fixture();g.state.c.display_name='Customer';await assert.rejects(g.runCreatorSupport(analysis));assert.equal(g.state.providerCalls.length,0);
+});
+
+test('semantic output rejects fabricated refs, privileged claims, foreign links and prices without persisting a success',async()=>{
+ for(const patch of [{evidenceRefs:['foreign-workspace']},{summary:'Ich habe die Einstellung geändert.'},{summary:'Preis: 20 EUR.'},{summary:'Mehr unter https://evil.test'},{suggestedStyle:'grant_admin'}]){
+  const f=fixture();f.state.analysisOutput={summary:'Belegte Stilbeobachtung.',evidenceRefs:['M1'],suggestedStyle:'none',uncertainty:'Historischer Kontext fehlt.',...patch};
+  await assert.rejects(f.runCreatorSupport({...input(),question:'Bitte analysieren',fanId:uuid(4),manageConsent:false,analyse:true,aiConsent:true}));assert.equal(f.state.turns.length,0);assert.equal(f.state.writes,0);assert.equal(f.state.usage[0].status,'error');
+ }
+ const f=fixture();const controller=new AbortController();controller.abort();await assert.rejects(f.runCreatorSupport(input(),controller.signal));assert.equal(f.state.writes,0);assert.equal(f.state.providerCalls.length,0);
 });
