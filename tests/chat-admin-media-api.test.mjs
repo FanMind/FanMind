@@ -23,11 +23,11 @@ function harness(options={}){
   "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
   "@/lib/chatAdminMedia":{
    requireMediaEnabled(){if(options.disabled)throw new mediaPolicy.ChatAdminMediaError("media_not_enabled");},
-   async assertMediaCharacter(workspaceId,characterId,expected){if(workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
+   async assertMediaCharacter(workspaceId,characterId,expected){if(options.revokeAfterStorage&&calls.objects.length||workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
    async getMediaAsset(workspaceId,characterId,assetId){if(workspaceId!==w||characterId!==c||assetId!==id)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {...asset};},
    loadCharacterMedia:async()=>({assets:[{...asset}],policy:{enabled:false,revision:0}}),
    mediaScope:(workspaceId,characterId)=>`workspace_id=eq.${workspaceId}&character_id=eq.${characterId}`,
-   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}"),headers:init.headers});revision++;if(options.minimalPolicyResponse&&path==="chat_character_media_policies"&&init.headers?.Prefer!=="return=representation")throw new SyntaxError("Empty PostgREST 201 response is not JSON");return [{...asset}];},
+   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}"),headers:init.headers});revision++;if(init.method==="DELETE"&&options.emptyMetadataDelete)return [];if(options.minimalPolicyResponse&&path==="chat_character_media_policies"&&init.headers?.Prefer!=="return=representation")throw new SyntaxError("Empty PostgREST 201 response is not JSON");return [{...asset}];},
    mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");return Buffer.from("synthetic-private-image");},
    updateMediaAsset:async(workspaceId,characterId,previous,patch)=>{calls.writes.push({patch,workspaceId,characterId});Object.assign(asset,patch,{revision:asset.revision+1});revision++;return {...asset};},
   },
@@ -74,7 +74,7 @@ test("account deletion requires exact owned metadata, physical absence and fails
  const config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"},path=`${w}/${c}/${id}.webp`;
  for(const absent of [true,false]){
   const calls=[];
-  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET"});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:absent?404:200});return new Response(null,{status:204});};
+  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET"});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return Response.json(absent?{statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"}:{},{status:absent?400:200});return new Response(null,{status:204});};
   if(absent){await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.at(-1).url.includes("deleted=eq.true"));}
   else{await assert.rejects(deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]}),/media_deletion_absence_failed/u);assert.ok(!calls.some(call=>call.method==="DELETE"&&call.url.includes("/rest/")));}
  }
@@ -91,7 +91,7 @@ test("video preview is private, range-aware and budgeted; video analysis never i
 });
 test("account erasure deletes video MP4 paths with authenticated absence before metadata",async()=>{
  const calls=[],path=`${w}/${c}/${id}.mp4`,config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"};
- const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:404});return new Response(null,{status:204});};
+ const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return Response.json({statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"},{status:400});return new Response(null,{status:204});};
  await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.some(call=>call.url.endsWith(`/${path}`)));assert.ok(calls.some(call=>call.body===JSON.stringify({prefixes:[path]})));assert.ok(calls.at(-1).url.includes("deleted=eq.true"));
 });
 
@@ -140,3 +140,6 @@ test("Model portrait fallback never reads another workspace, Model, public URL o
 test("Model portrait read fails closed for changed revision, missing object, invalid and oversized images",async()=>{
  for(const options of [{stale:true},{missing:true},{invalidImage:true},{oversized:true}]){const h=portraitHarness(options);assert.equal((await h.get()).status,404);}
 });
+
+test("authority revoked during Storage deletion keeps the metadata tombstone",async()=>{const h=harness({revokeAfterStorage:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,403);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.filter(call=>call.path).length,0);});
+test("metadata cleanup must acknowledge the exact row instead of silently accepting an RLS no-op",async()=>{const h=harness({emptyMetadataDelete:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,400);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.at(-1).headers.Prefer,"return=representation");});

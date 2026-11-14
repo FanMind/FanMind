@@ -74,7 +74,11 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    if(method==="DELETE"){
     if(!asset.deleted)await updateMediaAsset(workspace.id,characterId,asset,{deleted:true,available:false,reviewed:false});
     await mediaObject(workspace.id,characterId,asset.id,"DELETE",undefined,asset.media_type??"image");
-    await mediaRest(`chat_character_media?${mediaScope(workspace.id,characterId)}&id=eq.${asset.id}&deleted=eq.true`,{method:"DELETE"});
+    // NoSuchKey can also mask revoked Storage visibility. Revalidate current
+    // Character authority before removing its tombstone; RLS remains final.
+    await assertMediaCharacter(workspace.id,characterId,undefined,true);
+    const removed=await mediaRest<MediaAsset[]>(`chat_character_media?${mediaScope(workspace.id,characterId)}&id=eq.${asset.id}&deleted=eq.true`,{method:"DELETE",headers:{Prefer:"return=representation"}});
+    if(removed.length!==1||removed[0].id!==asset.id)throw new ChatAdminMediaError("media_cleanup_unverified");
    }else{if(asset.deleted)throw new ChatAdminMediaError("media_deleted");const edit=normalizeMediaEdit(body);if(edit.offer_id&&!(character.sales_playbook?.offers??[]).some(offer=>offer.id===edit.offer_id&&offer.active))throw new ChatAdminMediaError("invalid_media_offer");await updateMediaAsset(workspace.id,characterId,asset,edit);}
   }
   return NextResponse.json({...await loadCharacterMedia(workspace.id,characterId),character:await assertMediaCharacter(workspace.id,characterId,undefined,method==="DELETE")},{headers:privateHeaders});
