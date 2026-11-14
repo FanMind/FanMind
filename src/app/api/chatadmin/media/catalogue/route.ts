@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
 import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaPricingV2Enabled, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
-import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText } from "@/lib/chatAdminMediaPolicy.mjs";
+import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText } from "@/lib/chatAdminMediaPolicy.mjs";
 import { MEDIA_VIDEO_MAX_BYTES, mediaKind, mediaPriceRules, normalizeMediaFolder, validateMediaFolders, withMediaPrice, withMediaProductPrice } from "@/lib/chatAdminMediaCatalogue.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { normalizeMediaVideo } from "@/lib/chatAdminMediaVideo";
@@ -35,8 +35,8 @@ async function change(request:NextRequest,upload:boolean){
    const folderId=body.folder_id===null?null:mediaId(body.folder_id);
    if(folderId&&folders.get(folderId)?.kind!==kind)throw new ChatAdminMediaError("media_folder_binding_invalid");
    const max=kind==="image"?MEDIA_MAX_BYTES:MEDIA_VIDEO_MAX_BYTES;
-   if(typeof body.data!=="string"||!body.data.length||body.data.length>Math.ceil(max/3)*4||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(body.data))throw new ChatAdminMediaError("invalid_media_file");
-   const input=Buffer.from(body.data,"base64");
+   if(!isMediaBase64(body.data,max))throw new ChatAdminMediaError("invalid_media_file");
+   const input=Buffer.from(body.data as string,"base64");
    if(kind==="video"){
     const budget=await consumeSharedRateLimit({scope:"chat_admin_media_video_processing",subject:workspace.id,maxRequests:2,windowMs:60_000});
     if(!budget.allowed)return NextResponse.json({error:"rate_limited"},{status:429,headers});

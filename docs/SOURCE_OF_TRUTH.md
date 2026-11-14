@@ -1,3 +1,15 @@
+## Adminchat #1425: folder actions and upload failures — 14 November 2026
+
+Source correction: folder deletion asks for explicit confirmation inside the
+existing catalogue, retains empty-only server deletion, and never removes files.
+Folder content shows direct files and navigable child folders with ancestor/back
+navigation. Bounded upload encoding validation scans without a repeated-group
+regexp stack overflow at allowed file sizes. HTTP failures retain their status,
+safe explanation and failed batch count even if the independent refresh fails;
+changing the upload destination clears the old retry selection. No schema,
+permission, runtime flag, provider or Production change. Actual Staging lifecycle
+acceptance remains separate and pending.
+
 ## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
 
 Source preparation extends the existing Character sales_playbook offers with

@@ -128,3 +128,32 @@ No real Character data or sample prices are installed by this change.
 9. Complete cleanup and retain redacted, exact-release evidence. Practical
    Mobile remains deferred to App acceptance. No Production action is prepared
    or authorized by these Staging controls. All steps above remain unexecuted.
+
+## Folder/upload follow-up source correction
+
+The manual evening-dress attempt observed on 14 November targeted an existing non-synthetic Character
+and its existing selected folder. No media row was present in the
+read-only inventory. That real user attempt is separate from earlier automation
+file-transfer failures. Its historical exact HTTP response, bytes and detected
+image format were not available; no assertion about its specific cause is made.
+
+A concrete server defect is reproducible independently: the old four-character
+repeated-group Base64 regexp can throw RangeError on an otherwise permitted
+5-MiB image/25-MiB video payload, resulting in the generic 503 catalogue error
+before normalization or Storage. The correction uses bounded alphabet/padding
+validation without recursive regexp repetition. Limits, decoding, actual image
+and video normalization, owner revalidation and private Storage remain intact.
+
+Folder deletion now uses an explicit in-page confirmation/cancellation over the
+same atomic empty-only RPC, without a native confirm dialog. Occupied folders
+remain rejected; no media deletion or cascade is added. Direct content and child
+navigation replace the misleading recursive file view. Mutation errors retain
+the primary HTTP status even when a refresh fails, proxy HTML is never shown,
+and retry selection is cleared when its destination changes. The failed batch
+state shows file type/size and an explicit failure phase rather than leaving
+processing active. Existing retained customer folders/prices are not test data.
+
+Affected contracts: FM-CONTRACT-CHATADMIN-AI-001 and
+FM-CONTRACT-CHATADMIN-STORAGE-001; gates unchanged. No SQL, grants, packages,
+runtime switches, Support, Meta, Billing or Production changes. Source/CI PASS
+must not be described as deployed or as complete real Storage acceptance.

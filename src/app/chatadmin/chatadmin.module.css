@@ -304,3 +304,8 @@
 .folderActions { align-self:flex-end;position:relative; }
 .folderActions summary { cursor:pointer;list-style:none;padding:4px 10px;border-radius:8px;background:#23334d; }
 .folderActions>div { position:absolute;right:0;top:100%;display:grid;gap:5px;z-index:4;min-width:130px;padding:8px;border:1px solid var(--fanmind-shell-border);border-radius:9px;background:#142139;box-shadow:0 8px 24px #0008; }
+
+.mediaContents { display:grid;gap:16px;scroll-margin-top:20px;min-width:0; }
+.mediaContents:focus { outline:2px solid #6099ef;outline-offset:6px; }
+.folderDeleteConfirmation { display:grid;gap:10px;padding:14px;border:1px solid #c9856b;border-radius:10px; }
+.mediaBreadcrumb [aria-current=page] { font-weight:700;border-color:#6099ef; }

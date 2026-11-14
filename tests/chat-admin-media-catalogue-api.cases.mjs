@@ -13,7 +13,7 @@ function harness(options={}){
  const calls={writes:[],objects:[],normalized:0,auth:0};
  const character={id:c,workspace_id:w,revision:1,status:'active',sales_playbook:defaultChatAdminSalesPlaybook()};
  const folders=[{id:folder,workspace_id:w,character_id:c,parent_id:null,kind:'image',name:'Wald',offer_id:'',price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1}];
- const assets=[{id:asset,workspace_id:w,character_id:c,revision:1,media_type:'image',folder_id:null,deleted:false,offer_id:''}];
+ const assets=[{id:asset,workspace_id:w,character_id:c,revision:1,media_type:'image',folder_id:options.occupied?folder:null,deleted:false,offer_id:''}];
  const deps={
  'next/server':{NextResponse:class extends Response{static json(body,init){return Response.json(body,init);}}},
  '@/lib/chatAdmin':{requireChatAdminCapability:async()=>{calls.auth++;if(options.denied||options.revoke&&calls.auth>1)throw new WorkspaceAuthorizationError('denied','resource_forbidden');return {workspace:{id:w},user:{id:id(5)}};}},
@@ -39,4 +39,28 @@ test('uploads require rights, video gate and matching folder, then recheck revok
  const upload={media_type:'image',folder_id:null,data:Buffer.from('synthetic').toString('base64'),rights_confirmed:true,original_name:'synthetic-blue.png'};
  for(const [options,body,status] of [[{}, {rights_confirmed:false},400],[{}, {media_type:'video'},503],[{video:true},{media_type:'video',folder_id:folder},400],[{revoke:true},{},403]]){const h=harness(options);assert.equal((await h.route.POST(h.request({...upload,...body}))).status,status);assert.equal(h.calls.writes.length,0);assert.equal(h.calls.objects.length,0);}
  const h=harness();assert.equal((await h.route.POST(h.request(upload))).status,200);assert.equal(h.calls.writes[0].body.workspace_id,w);assert.equal(h.calls.objects[0][5],'image');assert.equal(h.calls.objects[1][3],'PROBE');assert.equal(h.calls.writes[0].body.original_filename,'synthetic-blue.png');
+});
+
+test('valid maximum-size media uploads do not overflow the base64 validator',async()=>{
+ for(const [media_type,size,options] of [['image',5*1024*1024,{}],['video',25*1024*1024,{video:true}]]){
+  const h=harness(options),data=Buffer.alloc(size,42).toString('base64');
+  const response=await h.route.POST(h.request({media_type,folder_id:null,data,rights_confirmed:true,original_name:'neutral.'+(media_type==='image'?'png':'mp4')}));
+  assert.equal(response.status,200);assert.equal(h.calls.normalized,1);assert.equal(h.calls.objects.length,2);
+ }
+});
+test('occupied folder deletion is rejected before the atomic writer and never deletes media',async()=>{
+ const h=harness({occupied:true});const response=await h.route.PATCH(h.request({action:'delete_folder',id:folder,revision:1}));
+ assert.equal(response.status,409);assert.equal((await response.json()).error,'media_folder_not_empty');assert.equal(h.calls.writes.length,0);assert.equal(h.calls.objects.length,0);
+});
+test('base64 validation rejects malformed or oversized payloads without normalization or storage',async()=>{
+ for(const data of ['YWJj\n','Y=Jj','YQ===','YQ=',Buffer.alloc(5*1024*1024+1).toString('base64')]){
+  const h=harness();assert.equal((await h.route.POST(h.request({media_type:'image',folder_id:null,data,rights_confirmed:true}))).status,400);assert.equal(h.calls.normalized,0);assert.equal(h.calls.objects.length,0);
+ }
+});
+test('HTTP failure classification handles proxy HTML without exposing raw response text',async()=>{
+ for(const [status,error] of [[413,'media_payload_too_large'],[401,'unauthenticated'],[403,'resource_forbidden'],[502,'media_http_failed']]){
+  assert.deepEqual(await policy.readMediaMutationResponse(new Response('<h1>private proxy details</h1>',{status})),{error});
+ }
+ assert.deepEqual(await policy.readMediaMutationResponse(Response.json({error:'media_folder_not_empty'},{status:409})),{error:'media_folder_not_empty'});
+ await assert.rejects(policy.readMediaMutationResponse(new Response('unexpected success')),/media_response_invalid/);
 });

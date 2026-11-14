@@ -8,6 +8,22 @@ export const MEDIA_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a
 export class ChatAdminMediaError extends Error {
   constructor(code) { super(code); this.name = "ChatAdminMediaError"; this.code = code; }
 }
+// Validate the bounded alphabet in one scan. A repeated four-character group
+// exhausts V8's regexp stack on otherwise valid multi-megabyte uploads.
+export function isMediaBase64(value, maximumBytes) {
+  if (typeof value !== "string" || !value.length || value.length % 4 || !Number.isSafeInteger(maximumBytes) || maximumBytes < 1 || value.length > Math.ceil(maximumBytes / 3) * 4) return false;
+  const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  return value.length / 4 * 3 - padding <= maximumBytes && !/[^A-Za-z0-9+/]/u.test(value.slice(0, value.length - padding));
+}
+export async function readMediaMutationResponse(response) {
+  let data;
+  try { data = await response.json(); } catch {
+    if (response.ok) throw Error("media_response_invalid");
+  }
+  if (!response.ok) return {error:typeof data?.error === "string" ? data.error : response.status === 413 ? "media_payload_too_large" : response.status === 401 ? "unauthenticated" : response.status === 403 ? "resource_forbidden" : "media_http_failed"};
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw Error("media_response_invalid");
+  return data;
+}
 export function mediaId(value) {
   if (typeof value !== "string" || !MEDIA_UUID.test(value)) throw new ChatAdminMediaError("invalid_media_binding");
   return value;

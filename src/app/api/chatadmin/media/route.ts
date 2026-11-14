@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
 import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaScope, requireMediaEnabled, updateMediaAsset, type MediaAsset, type CustomMediaPolicy } from "@/lib/chatAdminMedia";
-import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText, normalizeCustomPolicy, normalizeMediaEdit } from "@/lib/chatAdminMediaPolicy.mjs";
+import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText, normalizeCustomPolicy, normalizeMediaEdit } from "@/lib/chatAdminMediaPolicy.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import { WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
@@ -61,8 +61,8 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    if(body.rights_confirmed!==true)throw new ChatAdminMediaError("media_rights_required");
    const limit=await consumeSharedRateLimit({scope:"chat_admin_media_upload",subject:user.id,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
    const {assets}=await loadCharacterMedia(workspace.id,characterId);if(assets.length>=MEDIA_MAX_ITEMS)throw new ChatAdminMediaError("media_library_limit");
-   if(typeof body.image!=="string"||body.image.length>Math.ceil(MEDIA_MAX_BYTES/3)*4||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(body.image))throw new ChatAdminMediaError("invalid_image");
-   const image=await normalizeMediaImage(Buffer.from(body.image,"base64"));
+   if(!isMediaBase64(body.image,MEDIA_MAX_BYTES))throw new ChatAdminMediaError("invalid_image");
+   const image=await normalizeMediaImage(Buffer.from(body.image as string,"base64"));
    const id=crypto.randomUUID();
    const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id,workspace_id:workspace.id,character_id:characterId,folder:mediaText(body.folder??"",80)})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
