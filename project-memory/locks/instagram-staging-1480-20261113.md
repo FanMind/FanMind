@@ -42,3 +42,11 @@ the default response without a fields parameter. Remove only the Unified field
 selection, retaining exact-app and both-field proof; never accept a successful
 POST alone. Operator workspace baseline is 0 Instagram conversations/messages.
 No new OAuth, provider grants, schema, Production or unrelated runtime changes.
+
+#1504 deployed run43633998420 / release619e2a2; GET still HTTP400/code100, so field
+selection was not the cause. Unified activation currently aborts at its optional
+preliminary GET and never reaches POST. Use the documented form-body POST with
+the fixed two allowed fields, followed by mandatory exact-app/both-field GET.
+Keep legacy merge behavior and all credential/Operator guards. Add only bounded
+numeric subcode plus fixed cause enum to diagnose any remaining rejection;
+never raw provider text. Real acceptance remains OPEN and no input is requested.
