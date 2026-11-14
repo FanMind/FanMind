@@ -45,6 +45,7 @@ const bundle = `(() => {
     "@/lib/chatAdminMediaCatalogue.mjs": function(module,exports,require) {${catalogueClient}},
     "./chatAdminMediaTerms.mjs": function(module,exports,require) {${mediaTermsClient}},
     "./chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
+    "@/lib/chatAdminMediaPolicy.mjs": function(module,exports,require) {${mediaPolicyClient}},
     "./chatAdminKnowledge.mjs": function(module,exports,require) {${knowledgeClient}},
     "./chatAdminSalesPlaybook.mjs": function(module,exports,require) {${salesClient}},
     "./CharacterMixer": function(module,exports,require) {${mixerClient}},
