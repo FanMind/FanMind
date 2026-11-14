@@ -1,3 +1,4 @@
+import { normalizeMediaTerms } from "./chatAdminMediaTerms.mjs";
 import { normalizeCharacterMixer } from "./chatAdminMixer.mjs";
 export { assertReplyPrices as assertChatAdminReplyPrices } from "./replyPricePolicy.mjs";
 import { defaultCreatorBundle, normalizeCreatorBundle } from "./creatorIntelligencePolicy.mjs";
@@ -22,6 +23,12 @@ export function normalizeChatAdminSalesPlaybook(value) {
   bundle.playbook = value;
   const normalized = normalizeCreatorBundle(bundle).playbook;
   if (normalized.offers.some((offer) => !CHAT_ADMIN_OFFER_CURRENCIES.includes(offer.currency))) throw new Error("unsupported_chat_admin_currency");
+  for(const offer of normalized.offers){
+    const raw=value.offers.find(o=>o.id===offer.id);
+    if(Object.hasOwn(raw,"mediaTerms"))offer.mediaTerms=normalizeMediaTerms(raw.mediaTerms);
+  }
+  const products=normalized.offers.filter(o=>o.mediaTerms).map(o=>JSON.stringify([o.mediaTerms.scope,o.mediaTerms.target_id,o.mediaTerms.kind,o.mediaTerms.quantity]));
+  if(new Set(products).size!==products.length)throw Error("duplicate_media_product");
   const result=Object.hasOwn(value, "characterMixer") ? {...normalized,characterMixer:normalizeCharacterMixer(value.characterMixer)} : normalized;
   if(new TextEncoder().encode(JSON.stringify(result)).length>18000)throw Error("chat_admin_playbook_too_large");
   return result;

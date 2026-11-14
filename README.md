@@ -1,3 +1,27 @@
+## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
+
+Source preparation extends the existing Character sales_playbook offers with
+validated mediaTerms (scope/file binding, quantity, inheritance, upward limits,
+video unit and confirmed tax display). Monetary values remain in those offers.
+Explicit packages override file prices for that exact quantity; otherwise file,
+nearest applicable folder, then explicitly configured Model standard applies.
+Missing/inactive explicit rules never invent a replacement price. No sample
+35/70 EUR values are installed and existing individual prices remain unchanged.
+Server arithmetic enforces a single discount floor and validates exact approved,
+available media. Higher counteroffers require explicitly enabled negotiation.
+An optional new tax classification defaults to unconfirmed and withholds a firm
+price; no tax rate, exemption or legal approval is inferred.
+
+New behavior is default-off under FANMIND_CHAT_ADMIN_MEDIA_PRICING_V2_ENABLED.
+The separate controlled chat_admin_media_prices.sql adds append-only evidence
+for playbook revisions and atomically persisted generation/offer snapshots tied
+to exact files/revisions. Snapshots cascade with inbound message retention;
+price history cascades with Character erase. No Checkout, payment, automatic
+send or Production activation is added. Native SQL, protected Staging install,
+runtime activation and actual Desktop acceptance remain separate requirements.
+Existing PNG/MP4 upload and verified-deletion work continues under #1425.
+Details: docs/operations/CHAT_ADMIN_MEDIA_PRICES_20261114.md.
+
 ## Support Web: persistent optional AI choice — 14 November 2026
 
 Owner decision1350/1425 moves actual mobile acceptance to **VERSCHOBEN – APP-ABNAHME**.

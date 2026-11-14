@@ -32,7 +32,7 @@ export function normalizeCustomPolicy(value, offers) {
   const hours = value.delivery_hours;
   if (hours !== null && (!Number.isSafeInteger(hours) || hours < 1 || hours > 720)) throw new ChatAdminMediaError("invalid_delivery_hours");
   const motifs = mediaTags(value.motifs);
-  const offer = offers.find(item => item.id === offerId && item.active && item.category === "custom" && item.recommendedPriceMinor > 0);
+  const offer = offers.find(item => item.id === offerId && item.active && item.category === "custom" && !item.mediaTerms && item.recommendedPriceMinor > 0);
   if (value.enabled && (!offer || !hours || !motifs.length)) throw new ChatAdminMediaError("custom_offer_not_ready");
   return {enabled:value.enabled,offer_id:offerId,delivery_hours:hours,motifs,requires_confirmation:value.requires_confirmation};
 }
@@ -51,7 +51,7 @@ export function buildMediaGrounding(character, assets, policy, incoming, request
   const terms = requestedMediaTerms(incoming);
   const available = assets.filter(asset => asset.reviewed === true && asset.available === true && asset.deleted === false);
   const matches = terms.length ? available.filter(asset => containsAll(asset.tags, terms) && (!requestedOffer || asset.offer_id===requestedOffer.id)).slice(0,3) : [];
-  const offer = (character.sales_playbook?.offers ?? []).find(item => item.id === policy?.offer_id && item.category === "custom" && item.active && !item.requiresConfirmation && item.recommendedPriceMinor > 0);
+  const offer = (character.sales_playbook?.offers ?? []).find(item => item.id === policy?.offer_id && item.category === "custom" && !item.mediaTerms && item.active && !item.requiresConfirmation && item.recommendedPriceMinor > 0);
   // Custom price still comes exclusively from the selected Character playbook.
   const custom = !matches.length && terms.length && policy?.enabled === true && policy.requires_confirmation === false && Number.isSafeInteger(policy.delivery_hours) && policy.delivery_hours >= 1 && policy.delivery_hours <= 720 && containsAll(policy.motifs,terms) && offer && requestedOffer?.id === offer.id;
   return {status:matches.length ? "verified_match" : custom ? "custom_available" : "unconfirmed",terms,

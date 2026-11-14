@@ -58,3 +58,11 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
   });}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}
 });
+
+import {runMediaPricesSqlCases} from './chat-admin-media-prices-sql.cases.mjs';
+test("native PG17 media prices: immutable audit, scoped quote, transactional rollback and retention",{skip:!enabled},async()=>{
+ const db="fanmind_media_prices_ci";
+ sql(`create database ${db};`,"postgres");
+ try{await runMediaPricesSqlCases(async query=>sql(query,db));}
+ finally{sql(`drop database if exists ${db} with (force);`,"postgres");}
+});

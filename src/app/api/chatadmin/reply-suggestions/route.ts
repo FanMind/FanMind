@@ -1,5 +1,5 @@
 import { normalizeCharacterMixer } from "@/lib/chatAdminMixer.mjs";
-import { groundChatAdminContext } from "@/lib/chatAdminMedia";
+import { groundChatAdminContext, recordMediaOfferSnapshot, mediaPricingV2Enabled } from "@/lib/chatAdminMedia";
 import { randomUUID } from "node:crypto";
 import { CHAT_ADMIN_USAGE_HEADER } from "@/lib/chatAdminUsageWitness.mjs";
 import { assertMediaReplyClaims } from "@/lib/chatAdminMediaPolicy.mjs";
@@ -58,6 +58,7 @@ export async function POST(request:NextRequest){
    const memoryStatus=await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim());
    const replayCharacter=await getChatCharacter(workspaceId,character.id);
    if(replayCharacter.revision!==character.revision||replayCharacter.status!=="active"||await groundChatAdminContext(rawContext,replayCharacter,fan,body.incoming_message,started,history)!==context)return NextResponse.json({error:"stale_generation_revision"},{status:409});
+   await recordMediaOfferSnapshot(character,fan!.id,conversation!.id,body.generation_id as string,JSON.parse(context).media_pricing??null);
    return NextResponse.json({memory_status:memoryStatus,replies:storedReplies,character_id:character.id,character_revision:character.revision,fan_id:fan!.id,conversation_id:conversation!.id,safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."});
   }
   const limit=await consumeSharedRateLimit({scope:"ai_reply_user_ip",subject:`chatadmin:${user.id}`,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
@@ -137,7 +138,7 @@ export async function POST(request:NextRequest){
   const freshPause=deriveChatAdminReplyPause(currentFan?.notes,freshConfirmed);if(freshPause.paused)return NextResponse.json({error:"conversation_paused",reply_pause:freshPause},{status:409});
   if(freshConfirmed?.id!==lastConfirmed?.id)return NextResponse.json({error:"stale_conversation"},{status:409});
   if(request.signal.aborted)return NextResponse.json({error:"request_cancelled"},{status:499});
-  const persisted=fanMode?await persistChatAdminGeneration(workspaceId,character.id,fan!.id,conversation!.id,character.revision,currentFan!.revision,body.generation_id as string,currentHistory.map(message=>message.id),String(body.incoming_message).trim(),replies):replies;
+  const persisted=fanMode?await persistChatAdminGeneration(workspaceId,character.id,fan!.id,conversation!.id,character.revision,currentFan!.revision,body.generation_id as string,currentHistory.map(message=>message.id),String(body.incoming_message).trim(),replies,...(mediaPricingV2Enabled()?[JSON.parse(context).media_pricing??null] as [Record<string,unknown>|null]:[])):replies;
   const memoryStatus = fanMode ? await saveGenerationKnowledge(workspaceId,userId,character.id,character.revision,fan!.id,conversation!.id,String(body.generation_id),String(body.incoming_message).trim()) : "unchanged";
   return NextResponse.json({preview,memory_status:memoryStatus,replies:persisted,character_id:character.id,character_revision:character.revision,...(fanMode?{fan_id:fan!.id,conversation_id:conversation!.id}:{}),safety_note:"Antwort kopieren und manuell bei OnlyFans einfügen. Keine Verbindung und kein automatisches Senden."},{headers:{[CHAT_ADMIN_USAGE_HEADER]:usageAttempts.join(",")}});
  }catch(error){const timedOut=typeof error==="object"&&error!==null&&"name" in error&&error.name==="TimeoutError";if(workspaceId&&!usageRecorded&&providerAttemptStarted)await recordAiUsageEvent({workspaceId,userId,feature:"chat_admin_reply",model,inputChars,status:"error",errorCode:timedOut?"chat_admin_provider_timeout":"chat_admin_reply_failed",latencyMs:Date.now()-started,sourceRoute:"/api/chatadmin/reply-suggestions",providerUsage});if(error instanceof WorkspaceAuthorizationError)return NextResponse.json({error:error.code},{status:error.code==="unauthenticated"?401:403});if(error instanceof ReplyQualityError)return NextResponse.json({error:error.code},{status:502});if(error instanceof ChatAdminPolicyError)return NextResponse.json({error:error.code},{status:error.code==="rate_limited"?429:400});if(timedOut)return NextResponse.json({error:"reply_generation_timeout"},{status:504});return NextResponse.json({error:"reply_generation_failed"},{status:503});}

@@ -30,6 +30,7 @@ function salesPlaybookFromForm(fd:FormData,current:CreatorPlaybook|undefined):Cr
   const name=String(fd.get(`offer_${id}_name`)??"").trim();
   const toMinor=(field:string,fallback:string)=>Math.round(Number((String(fd.get(field)??"").trim()||fallback).replace(",","."))*100);
   offers.push({
+   ...(previous?.mediaTerms?{mediaTerms:previous.mediaTerms}:{}),
    id,name,category:previous?.name===name?previous.category:"custom",description:String(fd.get(`offer_${id}_description`)??previous?.description??"").trim(),
    currency:String(fd.get(`offer_${id}_currency`)??previous?.currency??"EUR"),
    minimumPriceMinor:toMinor(`offer_${id}_minimum`,recommended),recommendedPriceMinor:toMinor(`offer_${id}_recommended`,recommended),
