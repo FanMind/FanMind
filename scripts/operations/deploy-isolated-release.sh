@@ -19,6 +19,26 @@ PREVIOUS_LINK_TARGET=""
 AVAILABILITY_LOG=""
 AVAILABILITY_PID=""
 
+monthly_boundary() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    node "$FANMIND_MONTHLY_CONTROL" checkpoint "${1:-boundary}"
+  fi
+}
+
+# Only read/build/test npm children are cancellable. PM2 reload/rollback,
+# privileged host updates and all SQL remain outside this timeout wrapper.
+npm() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    monthly_boundary
+    local remaining
+    remaining="$(node "$FANMIND_MONTHLY_CONTROL" remaining)"
+    (( remaining > 0 )) || return 124
+    timeout --foreground --signal=TERM --kill-after=10s "$remaining" "$(type -P npm)" "$@"
+  else
+    command npm "$@"
+  fi
+}
+
 log() {
   printf '[fanmind-release] %s\n' "$*"
 }
@@ -328,6 +348,7 @@ PREVIOUS_COMMIT="$(read_live_commit || true)"
 PREVIOUS_EXEC_MODE="$(read_previous_pm2_exec_mode || true)"
 PREVIOUS_LINK_TARGET="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
 
+monthly_boundary
 log "building isolated release $RELEASE_COMMIT"
 log "previous cwd: ${PREVIOUS_CWD:-unknown}"
 log "previous commit: ${PREVIOUS_COMMIT:-unknown}"
@@ -400,6 +421,7 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   TEMP_RELEASE=""
 fi
 
+monthly_boundary switch
 verify_built_deployment_id "$RELEASE_DIR" "$RELEASE_COMMIT" \
   || fail "Next.js deployment ID is not bound to the release commit"
 
@@ -494,6 +516,7 @@ if ! verify_availability_probe; then
 fi
 
 cd "$SOURCE_DIR"
+monthly_boundary
 if ! git reset --hard "$RELEASE_COMMIT"; then
   rollback "source checkout synchronization failed" || true
   fail "source checkout could not be synchronized"
@@ -501,6 +524,7 @@ fi
 
 pm2 save
 SWITCHED=0
+monthly_boundary
 
 mapfile -t RELEASE_PATHS < <(
   find "$RELEASE_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |

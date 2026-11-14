@@ -1,56 +1,87 @@
-# FM-MONTHLY-RELEASE-20261114
+# FM-MONTHLY-RELEASE-20261114 — PR1512 continuation
 
-Risk R2, repository-only preparation. Owner requests a bundled monthly release
-with maximum 60-minute execution window. No Production deployment, protected
-configuration, schema action, provider action, monetary write or extra resource.
-Baseline Main bbe29a0924448330159996de8591f6654d493b3a.
+Initial R2 package-only head d332c4401cba7c12199a60b1b871e96ac7230dbe is retained.
+Current explicit Owner continuation upgrades source work to R3: complete existing
+controller binding, timing, negative/recovery and integrated nonproductive proof.
+Current Main55a0df4 is integrated by ancestry; its already merged media reload
+source/receipts/tests are preserved unchanged. No new PR or second deploy system.
 
-Source inventory: deploy-fanmind.yml remains the only Production entry point;
-current protected exact-Main/Owner/check/expected-base gates and
-fanmind-production-deploy concurrency remain untouched. deploy-isolated-release.sh
-builds in isolated directories, checks and rolls back the application switch;
-subsequent host installations are outside that script's rollback scope. Historical
-AGENTS sealing/legacy-fallback statements disagree with executable source.
+## Source implementation
 
-Scope: deterministic source package, exact GitHub source/Staging evidence
-references, changed-SQL inventory, conservative timing-only evaluator, no-secret
-GitHub-hosted preparation workflow, focused negative/recovery tests and runbook.
-Package preparation is not a release controller or protected attestation.
-No existing deploy/DB/Backup/Restore controller or active task file changed.
+- Optional package-hash mode in existing deploy-fanmind.yml. Existing hosted
+  Owner/current-Main/merge/required-check gate, protected Production environment
+  and fanmind-production-deploy concurrency remain. Extra local host lock.
+- One canonical marked Deployment body remains in that workflow. The monthly
+  adapter extracts and executes it, reusing deploy-isolated-release.sh plus
+  existing host installs and existing app rollback.
+- Fixed separately installed root read-only evidence wrapper, pre-import root
+  ownership/closure verification and exact reviewed-code hashes. Complete actual
+  private restore/report/SQL receipt bytes are read, frozen and verified. No
+  new secret, server, service, resource, database or permission is installed.
+- Fresh existing Production audit before/after, real GitHub source/Staging/
+  native-rehearsal evidence and per-file acceptance mapping. Actions token is
+  removed before deployment/PM2 child processes.
+- SQL is never applied here. Registered existing verifier path/workflow and
+  canonical SQL digest plus actual fresh protected verify evidence are required;
+  unknown/modified/unapplied SQL blocks. Existing source/live binding can prevent
+  preverification of new SQL. This is an explicit external protected prerequisite,
+  not claimed support for arbitrary new schema releases.
+- Monotonic10/20/15/15-minute budgets; safe read/build/test subprocess timeouts,
+  five-minute pre-switch reserve and cooperative host boundaries. Never kills
+  database commits, PM2 rollback or privileged protective writes for budget.
+  Over-budget protective settling is NOT a completed <=60-minute release.
+- Atomic private Latest state plus immutable per-attempt events. Blind rejected
+  retry preserves the original interrupted evidence. Resumption requires exact
+  package/candidate, fresh proof and protected prior-attempt inspection approval.
+- Offline private admission proposal generator computes hashes/copies and checks
+  existing canonical receipts. No root execution, protected write or self-approval.
 
-Consumer impact: preparation reads the existing production-release-preflight
-check-completeness function; it cannot alter it or its callers. Application,
-schema and all seven FM-CONTRACT-* / FM-IGATE-* consumer boundaries are unchanged;
-this PR does not revalidate or mark any of their external evidence VERIFIED.
-Package evidence never manufactures God Mode ALLOW. Existing conservative
-RELEASE_DECISION remains BLOCK. Recovery: revert preparation-only source; no
-runtime rollback or SQL rollback is needed for this PR.
+## Synthetic integration evidence and independent countercheck
 
-Source tests include actual temporary Git and CLI, immutable file creation,
-tamper rejection, failed preparation followed by deterministic recovery, and
-broken-check/target/run mutations. Existing isolated-deploy executed harness is
-reused rather than creating another deployment harness.
+The existing deployment harness was factored into one shared fixture. The full
+probe uses the actual createProductionAdapter, subprocess/token/deadline logic,
+full extracted workflow body and actual isolated shell with monthly mode ON.
+Git archives and child HTTP applications are real; privileged host, process-
+manager and external GitHub/root proof transports are synthetic and bounded.
+The required native CI step reuses the existing disposable PostgreSQL17 service,
+executes a separate synthetic idempotent migration/rollback/preserved-data proof
+and removes only its test-created schema. It does not apply Production SQL or
+use any existing real Restore target/data. Report source/elapsed/PG17/negative/
+Recovery fields are retained as a pinned Actions artifact.
 
-Open work is explicit in docs/operations/MONTHLY_PRODUCTION_RELEASE.md:
-protected controller package consumption/fresh backup integration, safe real
-deadline enforcement, complete feature acceptance mapping and a full timed
-nonproductive rehearsal including state-bound recovery. The new package cannot
-be used to bypass these remaining steps. No 60-minute overall PASS is claimed.
+Local focused result:49/49 PASS, ~13.4 seconds. This is not a real FanMind host
+capacity measurement and the local run lacks PG17. Final native CI and all
+required checks on the committed final Head remain required; terminal results
+are recorded on PR1512 without fabricating a Production acceptance.
 
-Local verification: 45 focused package/preflight/deployment/supply-chain/CI-
-ownership tests passed in 5.268 seconds. This includes the existing synthetic
-deployment harness, not a real build/DB/host rehearsal. Production build and
-TypeScript succeeded (Next compile 5.5 s, TypeScript 8.4 s; component times only).
-Lint completed with zero errors and seven existing unrelated warnings.
-All 162 God Mode/admission adversarial tests passed; registry preflight,
-Project Memory quality/V8 and accepted-state drift checks passed. The checked-in
-release decision correctly remains BLOCK, not Production authority.
+Separate Guardian reproduced and blocked four P2 findings, then implementation
+closed delayed-save false success, rejected-retry journal loss, arbitrary SQL
+proof/digest acceptance and disconnected synthetic E2E. Regressions exercise
+these failures, canonical SQL pinning and apply-only receipt rejection.
+Final independent source review: PASS, no remaining concrete P2. Independent
+integrated run4/4 groups PASS, full rehearsal13050ms, all negative/Recovery/cleanup
+flags true, PG17 still pending hosted CI. Final hosted native result remains an
+explicit acceptance gate. All seven FM-CONTRACT/FM-IGATE application consumers remain
+unchanged; no external gate is marked VERIFIED from a local source test.
+God Mode baseline remains BLOCK; source checks never grant runtime authority.
 
-Initial broad Operations run was not green: 2419 pass / 15 fail / 13 skip.
-One new hosted-workflow count was corrected. A package.json hash dependency
-was discovered and avoided entirely by importing the new release cases from
-the existing required release-preflight test; package.json is byte-identical
-to Main. Clean committed-source and hosted-CI results are still required;
-local host ownership assumptions and absent rsync are not waived or fixed by
-weakening tests. None of these local results is actual Staging/Production
-acceptance or a full 60-minute rehearsal.
+## External protected boundary — no duplicate Operations work
+
+Read-only official evidence still finds last scheduled audit43590551891 failed:
+DB226.04h>36h and Full321.04h>192h; Storage/config10.04h within36h. Post-deploy
+43590220136 also failed. These are historical results, not a fresh direct host
+inspection. Exact current worker cause remains unproven; do not re-label the
+historical20/13 guard mismatch as today's diagnosis or claim worker disabled.
+
+Existing responsible path is backup-worker-production-control.yml, protected
+backup-production-recovery, shared Production lock and fixed existing root
+controller. No verify/install/queue/backup/restore run is started by this task.
+Restore state remains accepted DB_POSTCHECKED / overall PARTIAL. Resource
+readiness43638416183 is already queued at its host step. Consume its results;
+do not dispatch another readiness/restore or reset real data.
+
+Private verifier/admission installation and a fully valid current backup/restore
+chain remain protected prerequisites to actual monthly use. No Production,
+Staging rollout, DB mutation, Billing/Meta/Support change or protected config
+change occurred. Source recovery is ordinary reviewed source revert; no target
+undo is needed. R3 source merge and every Production release remain distinct.

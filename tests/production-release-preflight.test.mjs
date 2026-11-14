@@ -1,3 +1,4 @@
+import "./monthly-release-control.cases.mjs";
 import "./monthly-release-package.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";

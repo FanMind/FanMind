@@ -1,182 +1,257 @@
-# Monatliches Production-Update: Vorbereitung und offene Gesamtprobe
+# FanMind Monatsrelease — bestehender geschützter Controller
 
-Stand: 14. November 2026. Auftrag: ein gebündeltes Monatsupdate, höchstens
-60 Minuten vom tatsächlichen Releasebeginn bis Abschluss oder kontrolliertem
-Abbruch. Entwicklung, Staging-Abnahme und Paketvorbereitung liegen davor.
-Kein kalendergesteuertes Production-Deployment. Jeder Release braucht eine
-ausdrückliche Owner-Freigabe für sein genaues Paket und den bestehenden
-geschützten Production-Weg.
+PR1512, Source-Vorbereitung. Keine Production-Bereitstellung, kein Backup,
+Restore, SQL-Apply oder geschützter Installationsschritt wurde ausgeführt.
+Technische Abnahme erfordert die vollständige native CI-Generalprobe und
+Guardian-Gegenprüfung am endgültigen Head; ein Paketgenerator-Test reicht nicht.
 
-**Status: Quellcodevorbereitung, noch keine betriebliche Gesamtabnahme.**
-Der neue Vorbereitungsschritt deployt nichts. Seine Prüfsumme bestätigt
-Paketidentität, keine Echtheit externer Betriebsnachweise und keine Freigabe.
-Das 60-Minuten-Ziel ist noch nicht als vollständiges Verfahren nachgewiesen.
+## Einmaliger Aufbau und monatlicher Ablauf
 
-## Bestandsanalyse am Main bbe29a0924448330159996de8591f6654d493b3a
+Der einzige Deployment-Einstieg bleibt `deploy-fanmind.yml`: aktueller exakter
+Main, feste Owner-ID, vollständige Main-/PR-Pflichtprüfungen, geschütztes
+`production` Environment und `fanmind-production-deploy`, ohne Abbruch eines
+laufenden Releases. Main-Merge deployt nichts. Die bestehende isolierte
+Build/PM2/nginx/Smoke/Host-Installation bleibt einmal im Workflow definiert.
+Der Monatsadapter extrahiert genau diesen markierten Codeblock; es existiert
+keine zweite Deploymentimplementierung. Ohne Monatsparameter bleibt der bisherige
+separat freizugebende Einzelrelease erhalten.
 
-| Bestehender Baustein | Tatsächlich im geprüften Quellcode | Konsequenz |
-| --- | --- | --- |
-| `deploy-fanmind.yml` | Manueller Dispatch, aktueller geschützter Main, feste Owner-ID, gemergter PR und vollständige Main-/PR-Checks | Bestehender einziger Production-Einstieg bleibt erhalten; Merge deployt nicht |
-| Production-Lock | `fanmind-production-deploy`, `cancel-in-progress: false`, Environment `production` | Kein zweiter Production-Controller und kein Überschreiben laufender Releases |
-| Live-Bindung | Erwartete bisherige Version und exakter aktueller Main werden vor dem Build geprüft | Drift blockiert; ein vorbereiteter Kandidat darf nicht still durch neueren Main ersetzt werden |
-| `deploy-isolated-release.sh` | Git-Archiv des exakten SHA, getrennte Releaseverzeichnisse, zwei `npm ci`, Truth/Lint/Operations/Integrationstests und Build | Frühere Staging-Erfolge ersetzen diese Pflichtprüfungen aktuell nicht |
-| Umschaltung | Next.js deploymentId, nginx-Prüfung, atomischer Symlink, PM2-Cluster-Reload, Versions-/Login-/Public-Smoke und Verfügbarkeitsprobe | Vorheriger Release bleibt beim Build erreichbar; Umschaltfehler lösen bestehenden Rückwechsel aus |
-| Grenzen des Rückwechsels | EXIT-Trap im isolierten Script; weitere systemd-/Backup-Installationen folgen im Workflow | Kein Nachweis eines atomaren Rollbacks des gesamten Workflows; hartes Runner-Ende ist keine sichere Rückwechselstrategie |
-| SQL | Separate checksum-/target-/environment-gebundene Controller unter `scripts/operations/`, `supabase/migrations/` und `supabase/controlled/` | Kein generisches `supabase db push`, keine automatische SQL-Ausführung im Webdeploy |
-| Backups | Backup-Worker, verschlüsselte Artefakte, Prüfsummen, getrennte Vollbackup-/Restore-Receipts und private Restore-Identität | Aktuelle Verifikation und Wiederherstellbarkeit bleiben zwingend; Quellcode ist kein Live-Backupnachweis |
-| Staging | Eigener Workflow/Target/Schutz und eigene Locks | Laufende Support-, Medien-, Meta- und Billing-Arbeiten nicht für die Probe verdrängen |
-| Zeitgrenzen heute | Validation 5 Minuten, Production-Job 45 Minuten | Job-Timeouts sind kein Gesamtzeit- und Wiederherstellungsnachweis |
+Vor dem ersten produktiven Gebrauch ist der feste read-only Evidence-Wrapper
+separat durch den autorisierten Administrator zu installieren. Das ist eine
+**noch nicht ausgeführte geschützte Voraussetzung**, kein Teil dieses PR-Laufs.
+Es entstehen keine Server, Datenbanken, Dienste, Timer oder neuen Secrets.
 
-Ältere Abschnitte in `AGENTS.md` beschreiben den Production-Einstieg als
-versiegelt; der aktuelle Workflow enthält wieder erreichbare geschützte Jobs.
-`ISOLATED_RELEASE_DEPLOY.md` beschreibt außerdem noch einen Legacy-Fallback,
-den der aktuelle Workflow ausdrücklich ablehnt. Für diese Analyse ist der
-aktuelle Quellcode maßgeblich. Es wurde kein Production-Host untersucht oder
-verändert und kein aktueller Laufzeitzustand daraus abgeleitet.
+Danach ist der monatliche Bedienablauf:
 
-## Minimaler Verbesserungsplan
+1. Entwicklung und fachliche Staging-Abnahme abschließen; exakten Kandidaten
+   festhalten. Der bestehende Controller verlangt weiterhin aktuellen Main;
+   während Vorbereitung/Freigabe/Ausführung nicht unbemerkt Main ersetzen.
+2. `Prepare FanMind monthly release (no deployment)` auf genau diesem Main
+   ausführen. Eingaben: frisch verifizierter Production-Base-SHA,
+   `staging_deployment_run`, JSON-Liste `staging_acceptance_runs`.
+3. Das unveränderte Quellpaket samt SHA256, vollständiger Dateidifferenz,
+   einzelnen Feature-/Abnahmezuordnungen und SQL-Entscheidungen freigabefertig
+   vorbereiten. Root-Evidence-Bundle aus bereits vorhandenen offiziellen
+   Backup-/Restore-/SQL-/Generalproben-Nachweisen vorbereiten. Fehlende Belege
+   bleiben Blocker; keine Behauptung allein aufgrund grüner Quellcode-CI.
+4. Owner genehmigt genau Base → Kandidat, Paket-Hash und Konfiguration.
+   Bestehenden `Deploy FanMind` mit `reviewed_main_commit`,
+   `expected_current_release`, unveränderter Bestätigung
+   `deploy-reviewed-chatadmin` und `monthly_release_sha256` starten.
+   Die bisherigen Support-Optionen müssen exakt zur freigegebenen Konfiguration
+   passen. Bestehende Environment-Freigabe bleibt zusätzlich erforderlich.
+5. Derselbe geschützte Controller prüft Paket, GitHub-/Staging-Nachweise,
+   aktuelle Sicherungen, vollständige Restore-Kette und SQL-Postflights,
+   deployt, prüft Funktion und Runtime und schreibt Status sowie Zeiten.
 
-1. **In diesem PR:** deterministisches Quellpaket mit Base, Kandidat, Git-Tree,
-   Archiv-Prüfsumme, vollständiger Dateidifferenz, SQL-Inventar und separaten
-   obligatorischen Freigabe-/Backup-/Probenblockern. Ein reiner GitHub-hosted
-   Vorbereitungslauf bindet echte GitHub-Checks und ausgewählte anschließende
-   Staging-Läufe an exakt denselben Kandidaten. Keine neue Deploymentplattform.
-2. **Vor betrieblich nutzbarem Monatsrelease:** dieses Paket im bestehenden
-   Production-Controller verbindlich konsumieren, inklusive frischer
-   Backup-/Restore-Nachweise, vollständiger fachlicher Abnahmematrix und
-   einzeln freigegebener SQL-Entscheidungen. Diese Verbindung ist hier bewusst
-   noch nicht implementiert: das Paket ist keine alternative Freigabequelle.
-3. **Vor erster Nutzung:** eine terminierte Gesamtprobe unter dem bestehenden
-   Staging-Lock durchführen. Den tatsächlichen Production-Pfad einschließlich
-   Build, Host-Nacharbeiten, Prüfungen, Abbruch und Wiederaufnahme in einer
-   geeigneten isolierten vorhandenen Umgebung erproben. Keine neue DB/Instanz
-   und keinen konkurrierenden Rollout starten. Den Production-Controller erst
-   nach diesem Nachweis um sichere phasenbezogene Fristen erweitern; keinen
-   beliebigen SIGKILL als kontrollierten Abbruch ausgeben.
+Kein kalendergesteuerter Production-Start. Jeder Monat benötigt seine eigene
+Owner-Freigabe. Alle aufwendigen Entwicklungs-, fachlichen und Restore-Prüfungen
+gehören möglichst vor den Beginn des eigentlichen Releasefensters.
 
-Punkt 2 und 3 sind offene Umsetzung und Abnahme, kein bereits erledigter
-Release. Falls das vorhandene Testziel den Production-Pfad nicht ausführen
-kann, muss die konkrete Einschränkung vor der Probe geklärt werden.
+## Paket und Nachweise
 
-## Paket vorbereiten
+`monthly-release-package.mjs` erzeugt deterministisch Base, Kandidat, Git-Tree,
+Git-Archiv-SHA256, vollständige Dateidifferenz und alle geänderten SQL-Dateien
+unter `supabase/` einschließlich Änderung/Löschung und Prüfsummen.
+Das Paket ist unveränderliche Quellidentität, niemals eigene Freigabeautorität.
+`verifySource` berechnet die Daten erneut aus Git; neue Main-Commits, andere
+Archive, fehlende Vorgänger oder manipulierte SQL-Hashes blockieren.
 
-Vorher den gemeinsamen Main/Staging-Kandidaten fertig prüfen und fachlich
-abnehmen. In einer kurzen Releasephase Main unverändert halten: der bestehende
-Controller verlangt weiterhin den **aktuellen** Main. Andere Entwicklung darf
-auf ihren Branches weitergehen. Keine Dateien manuell nach Production kopieren
-und keine Features aus parallelen Draft-PRs hinzufügen.
+`collectEvidence` liest GitHub selbst. Erforderlich sind geschützter aktueller
+Main, gemergter PR und dessen Pflichtprüfungen, erfolgreicher exakter Staging-
+Rollout und tatsächlich ausgeführte erfolgreiche Abnahmejobs danach. Jede
+geänderte Datei erhält genau eine fachliche Staging-Zuordnung; reine
+Dokumentations-/Test-/Operationsänderungen dürfen stattdessen ihre Quellcode-CI
+referenzieren. Runtime-Dateien dürfen nicht pauschal als `source_ci` gelten.
+Diese Zuordnung ist Bestandteil des geschützten, vom Owner geprüften Plans;
+noch fehlende fachliche Abnahmen werden nicht durch einen grünen Browserjob
+für einen anderen Funktionsumfang ersetzt.
 
-GitHub Actions → **Prepare FanMind monthly release (no deployment)** → Main:
+Die Generalproben-Evidence bindet den tatsächlichen Bericht-Hash, native PG17-
+Erfolg, Quellbaum, gemessene Gesamtdauer und negative/Recovery-Fälle. Der Root-
+Verifier liest die tatsächlichen privaten Berichtbytes. Der Monatsadapter
+prüft zusätzlich den echten erfolgreichen GitHub-CI-Lauf, dessen Commit-Tree
+und den tatsächlich bestandenen Schritt
+`Prove full monthly release rehearsal with PostgreSQL 17`.
 
-| Eingabe | Inhalt |
-| --- | --- |
-| `production_base` | Vollständiger, frisch verifizierter tatsächlicher Production-Commit |
-| `staging_deployment_run` | Erfolgreicher `deploy-staging.yml`-Lauf für exakt diesen Main |
-| `staging_acceptance_runs` | JSON-Liste erfolgreicher nachfolgender Staging-Abnahmen für denselben SHA |
+### Evidence-Vorschlag ohne manuelle Prüfsummenarbeit
 
-Der Vorbereitungslauf prüft GitHub-Metadaten selbst, nicht vom Nutzer
-gelieferte Erfolgszeichen. Fehlende/fehlgeschlagene Checks, falscher SHA,
-fremdes Repository, ungeschützter Main, unbekannte Workflowpfade und zeitlich
-vor dem Rollout liegende Abnahmen blockieren. Die begrenzte Liste unterstützt
-Browser-/Admin-/ChatAdmin-Abnahmen; fehlende Fachprüfungen müssen weiterhin
-separat in die Abnahmematrix. Ein ausgewählter grüner Lauf beweist ausdrücklich
-keine Vollständigkeit aller Feature-Abnahmen. Bei mehr als einer API-Seite
-Check-Runs stoppt die bestehende Prüflogik konservativ.
-
-Das nur einmal beschreibbare Actions-Artefakt enthält `monthly-release.json`.
-SHA256 aus dem Log zusammen mit Actions-Lauf, Versuch und Artifact-Digest
-aufbewahren. Ein erneuter Versuch erzeugt ein eigenes Artefakt, ersetzt kein
-genehmigtes Paket. Artefakte verfallen nach 35 Tagen; dauerhafte Historie durch
-den üblichen geprüften Abschlussbericht mit SHA/Prüfsumme erhalten.
-
-Offline ohne GitHub-/Production-Zugriff, für lokale Planung:
+Vor dem Release kann der Operator lokal aus dem Quellpaket, einem geprüften
+Plan und den bereits vorhandenen privaten Nachweisen einen Vorschlag erzeugen:
 
 ```bash
-node scripts/operations/monthly-release-package.mjs plan BASE_SHA CANDIDATE_SHA /private/path/monthly-release.json
-node scripts/operations/monthly-release-package.mjs verify /private/path/monthly-release.json
+node scripts/operations/monthly-release-admission.mjs monthly-release.json plan.json .monthly-release-prepared
 ```
 
-Die SHA-Platzhalter durch vollständige 40-stellige Commits ersetzen. Beide
-müssen lokal vorhanden sein und Base muss Vorfahr des Kandidaten sein.
-`verify` prüft nur Quellcodeidentität; es authentifiziert keine beigefügten
-Nachweise. Auch der Online-Vorbereitungslauf setzt immer
-`PREPARED_NOT_AUTHORIZED`. Keine Paketdatei ins öffentliche Repository legen,
-wenn ihre späteren ergänzenden Betriebsnachweise vertraulich sind. Keine
-Secrets, privaten Backup-URLs oder Kundendaten hinzufügen.
+`plan.json` enthält `coverage`, `configuration` (die beiden bestehenden Support-
+Optionen), `restoreFiles` mit `evidence/full/runner/postcheck`-Dateipfaden,
+`rehearsalFile` und `sql` mit `path`, `controller`, `backwardCompatible` sowie
+`receiptFile`. Bei einer bestätigten Recovery kommt `resumeAfterAttempt` hinzu.
+Der Generator berechnet alle Hashes, bindet Kandidat/Zeiten/Berichte, prüft die
+kanonische Restore-Kette und erzeugt ausschließlich ein neues privates lokales
+Verzeichnis. Ein vorhandener Vorschlag wird nicht überschrieben oder gelöscht.
+`PROPOSED_NOT_AUTHORIZED` wird erst durch die getrennte genehmigte Root-
+Installation zum verwendbaren Evidence-Bundle. Der Generator installiert
+nichts auf Production, startet keinen Workflow und erzeugt keine Owner-Freigabe.
 
-## SQL-Entscheidungen vor Freigabe
+## Sichere SQL-Strategie und ihre tatsächliche Grenze
 
-Jede geänderte SQL-Datei unter `supabase/` wird inklusive Änderung/Löschung,
-Pfad und gegebenenfalls SHA256 erfasst. Das ist eine **Quellcodedifferenz**,
-keine Aussage darüber, was in Production schon installiert ist. Nicht jede
-enthaltene SQL-Datei muss ausgeführt werden. Produktionsstand ausschließlich
-durch den bestehenden zuständigen read-only Verifier ermitteln.
+Der Webrelease führt **keine** SQL-Migration automatisch aus. Benötigte
+Änderungen müssen vorher über ihren bestehenden separat freigegebenen
+kontrollierten Migrationsweg angewendet und lesend abgenommen sein. Es gibt
+keinen generischen Migration-Push und keine automatische Wiederholung eines
+unbekannt abgeschlossenen DB-Vorgangs.
 
-Pro tatsächlich benötigter Änderung festhalten: zuständiger vorhandener
-Controller, SQL-Checksumme, Targetbindung, Abhängigkeiten/Reihenfolge,
-verifiziertes `skip` oder genehmigtes `apply`, Laufzeitobergrenze,
-Idempotenz-/Wiederholungsnachweis und Postflight. Teilzustand/Drift blockiert.
-Geänderte oder gelöschte historische Migrationen nicht automatisch als
-auszuführen behandeln. Dafür eine neue geprüfte Korrekturmigration entwerfen.
+Für die vier bereits vorhandenen Production-Verifier sind Workflow, SQL-Pfad
+und der unveränderliche SQL-Hash in `SQL_PROOFS` gebunden: Backup-Verifikation,
+Operations-Monitor, Server-Error-Schema und Trigger-Hardening. Die privaten
+Postflight-Receipts werden tatsächlich gelesen und gehasht. Target,
+Base/Kandidat, SQL-Hash, Run/Versuch/Job, `verify` und PASS müssen stimmen.
+Der Adapter überprüft den offiziellen erfolgreichen Lauf und dessen echte
+`ACTION=verify`/`RESULT=verified`-Ausgabe. Die SQL-Prüfung muss höchstens
+15 Minuten alt sein. Ein beliebiger Prüfhash oder ein Apply-Lauf genügt nicht.
 
-Nicht rückwärtskompatible Änderungen in Expand → kompatible App → getrennte
-Datenübernahme → spätere Contract-Phase zerlegen. Bereits verwendete Strukturen
-und Daten niemals automatisch mit Down-SQL zurückrollen. Ein sicherer App-
-Rückwechsel setzt die Kompatibilität mit dem **nach** der Migration vorhandenen
-Schema voraus. Andernfalls vor Releasebeginn blockieren. Echte Guthaben,
-Zahlungen, Meta-Konfiguration oder Feature-Aktivierungen sind kein impliziter
-Bestandteil des Monatsupdates.
+**Wichtige Begrenzung:** Diese vorhandenen Controller verlangen teilweise,
+Main-/Controller-/Live-Version gleichzuhalten. Ein neuer SQL-Stand lässt sich
+unter Umständen nicht vor einem Base→Kandidat-Wechsel mit ihnen nachweisen.
+Dann blockiert der Monatsrelease. Er lockert diese vorhandenen Regeln nicht.
+Ebenso blockieren unbekannte SQL-Adapter, geänderte historische SQL-Bytes,
+fehlende Postflights und nicht angewendete Migrationen. Neue/dormante SQL wird
+nicht ohne überprüfbaren bestehenden Gate automatisch als unnötig eingestuft.
+Das ist eine separat geschützte Schema-/Rollout-Voraussetzung, keine behauptete
+Unterstützung beliebiger neuer Migrationen.
 
-## Ablauf am Releasetag (Ziel, bis Gesamtprobe noch nicht aktiviert)
+Nicht rückwärtskompatible Änderungen bleiben mehrstufig: Expand, kompatible
+App, getrennte Datenübernahme, spätere Contract-Phase. Der Plan verlangt
+nachgewiesene Rückwärtskompatibilität. Bereits benutzte produktive Strukturen,
+Kundenguthaben, Zahlungen oder Meta-Konfiguration werden niemals mit Down-SQL
+zurückgesetzt oder implizit verändert.
 
-| Phase | Budget | Bestehende Gates und Ergebnis |
-| --- | --- | --- |
-| Vorprüfung und Start | 10 min | Paket/Digest/SHA, tatsächliche Base, Schema-/Konfigurationsdrift, frisches verschlüsseltes Backup, vollständiger passender Restore-Nachweis, Owner und Environment |
-| Migrationen und Deployment | 20 min | Nur einzeln freigegebene Controller; bestehender isolierter Build und Umschaltung; keine generische SQL-Ausführung |
-| Production-Prüfungen | 15 min | Versions-/Runtimebindung, Public Smoke, nginx/PM2/Verfügbarkeit sowie erforderliche autorisierte Funktions- und Sicherheitsprüfungen |
-| Abschluss und Reserve | 15 min | Host-Nacharbeiten prüfen, vollständigen Ergebnisstatus und gemessene Zeiten sichern; bei Fehlern kompatiblen Rückwechsel prüfen |
+## Zeitüberwachung und Recovery
 
-Vorprüfung darf fehlende Sicherung/Wiederherstellbarkeit nicht durch einen
-zeitlich unbeschränkten Restore im Releasefenster ersetzen. Vollständige
-Restore-Probe vorher erledigen; am Releasetag deren Gültigkeit und frische
-Backup-Verifikation prüfen. Abnahme-/Freigabewartezeit und Runner-Queue vor dem
-Start gesondert dokumentieren; nach Start läuft die Gesamtzeit weiter.
+| Phase | Höchstbudget | Inhalt |
+| --- | ---: | --- |
+| Vorprüfung | 10 Minuten | Paket, Version, Freigabe, Staging, Backup/Restore, SQL |
+| Deployment | 20 Minuten | bestehender isolierter Build, Umschaltung, Host-Installationen |
+| Funktionstests | 15 Minuten | abschließender Public Smoke nach Host-Nacharbeiten |
+| Abschluss/Reserve | 15 Minuten | frischer vollständiger Runtime-/Backup-Audit und Abschluss |
 
-Jede Phase mit Start, Ende, monotonic elapsed, Workflow-/Job-ID und Ergebnis
-protokollieren. Der vorhandene `evaluateTimeline`-Helper prüft die vier
-gemeldeten Phasendauern konservativ. Er steuert keine Prozesse und kann weder
-einen Release freigeben noch die Wahrheit der gemeldeten Zeiten bestätigen.
-Eine sichere Friststeuerung des tatsächlichen Controllers bleibt offen.
+Die Uhr startet im geschützten Job **vor** Archiv-/Evidence-Vorbereitung.
+Wartezeit auf Runner/Environment-Freigabe und vorgelagerte Quellcode-Prüfungen
+werden gesondert betrachtet; danach läuft das Fenster ohne Neustart der Uhr.
+Linux-Bootzeit und monotone Prozesszeit verhindern eine Verlängerung durch
+Wanduhrkorrekturen. Vor und nach jedem Schritt sowie nach der letzten
+Speicherung werden die Phasen- und Gesamtgrenzen geprüft.
 
-Bei absehbarer Überschreitung keine weitere Mutation beginnen. Einen laufenden
-Datenbank-Commit nicht blind abbrechen oder wiederholen. Bei fehlendem oder
-unterbrochenem Ergebnis tatsächlichen Schema-/Version-/Prozesszustand mit
-bestehenden read-only Verifiern ermitteln. Status `INSPECTION_REQUIRED`,
-`BUDGET_EXCEEDED_NOT_COMPLETE` oder `INCOMPLETE` bleibt offen, niemals Erfolg.
+Nur lesende/buildende npm-Kindprozesse und der abschließende Smoke-Test haben
+begrenzte TERM/KILL-Fristen. Vor einer Live-Umschaltung sind mindestens fünf
+Minuten Restzeit im Deploymentbudget nötig. Host-Schreibschritte prüfen vor
+jeder sicheren Grenze die Frist. PM2-Reload/Rückwechsel, Schutzvorgänge und
+Datenbanktransaktionen werden nicht durch eine Budget-Uhr blind getötet.
 
-Vor Wiederaufnahme das identische Paket prüfen, tatsächliche Base/Schema-
-Postflights und frische Gates erneut prüfen. Nur nachweislich vollständig
-installierte Schritte überspringen. Bestehender Production-Lock bleibt
-zwingend. Ein geänderter Kandidat, Target oder Migrationsplan benötigt ein
-neues Paket und neue passende Freigabe. Nach Live-Umschaltung genügt ein
-erneuter blinder Workflow-Start ausdrücklich nicht als Recovery.
+Bei einer bereits laufenden Schutzoperation kann das sichere Auslaufen über
+60 Minuten dauern. Dann lautet das Ergebnis ausdrücklich **nicht abgeschlossen**;
+es wird kein weiterer Mutationsschritt gestartet und kein 60-Minuten-Erfolg
+behauptet. Der monatliche GitHub-Notfalltimeout beträgt 90 Minuten, damit die
+60-Minuten-Zielgrenze einen laufenden Rückwechsel nicht hart abschneidet. Der
+bisherige Einzelrelease behält seine 45 Minuten. Ein hart beendeter Runner
+bleibt ein unbestätigter Vorgang, niemals eine automatische Recovery-Freigabe.
 
-## Nachweise und noch offene Abnahme
+Der private Zustand liegt unter
+`/var/www/fanmind/.monthly-release/<package-sha>/`, mit atomarem Latest-Stand
+und unveränderlicher Ereignishistorie pro Versuch. Nach Fehler, Timeout oder
+unklarem Zustand muss der geschützte Plan die genaue vorherige Attempt-ID
+mit `resumeAfterAttempt` und einer späteren Zustandsprüfung bestätigen.
+Ein abgewiesener blinder Retry überschreibt den vorherigen Zustand nicht.
+Ein Host-Lock verhindert parallele Monatsversuche; der bestehende GitHub-
+Deployment-Lock bleibt zusätzlich wirksam.
 
-| Nachweis | Aussage / Grenze |
+Bei Wiederaufnahme werden Paket, frische Gates und tatsächliche Live-Version
+neu geprüft. Nur Base oder derselbe Kandidat sind erlaubt. Der bestehende
+isolierte Builder erkennt einen bereits aktiven Kandidaten und prüft ihn ohne
+erneuten Build; idempotente Host-Installationen dürfen nach Freigabe ergänzt
+werden. Der Controller führt keine Migration nochmals aus. Fehler nach der
+App-Umschaltung können `INSPECTION_REQUIRED` ergeben, weil die ursprüngliche
+App-Rollbackfunktion die späteren Host-Installationen nicht vollständig undoen
+kann. Es gibt deshalb keinen erfundenen atomaren Gesamtrollback.
+
+## Geschützter Evidence-Aufbau (nur Installationsvorschlag)
+
+Ein autorisierter Administrator muss nach gesonderter Freigabe genau diese
+Dateien aus dem geprüften Commit root-eigen installieren:
+
+- Wrapper `monthly-release-evidence.sh` →
+  `/usr/local/sbin/fanmind-monthly-release-evidence`, root:root/0755.
+- Die zehn `VERIFIER_FILES` aus `monthly-release-control.mjs` unter
+  `/usr/local/lib/fanmind-monthly-release/` mit ursprünglichen relativen Pfaden,
+  root:root/0644; Verzeichnisse root-eigen, nicht gruppen-/weltbeschreibbar.
+- Der Wrapper darf nur über die bereits autorisierte sudo-Grenze mit genau
+  Paket-Hash, Base und Kandidat ausgeführt werden. Keine allgemeine neue
+  sudo-Freigabe für Node, Bash oder Migrationen.
+
+Der feste Wrapper prüft sein Root-Bundle **vor** dem Node-Import, ignoriert
+BASH_ENV/Caller-PATH/Node-Optionen und kann ausschließlich vorhandene Belege
+lesend verifizieren. Fehlende Dateien, unsichere Besitzer/Modi, Symlinks,
+Prüfsummen-/Versionsabweichungen und unvollständige Belege blockieren.
+Er erstellt keine Sicherung und führt keinen Restore oder SQL-Apply aus.
+
+Unter `/etc/fanmind-release/` (root-eigen, 0700) liegen pro Paket ausschließlich
+private, root:root/0600 installierte freigegebene Evidence-Dateien:
+
+| Datei | Inhalt |
 | --- | --- |
-| Neue Pakettests | Echter lokaler Git-/CLI-Ablauf, deterministische Wiederholung, fehlender Commit, Manipulation, exklusives Schreiben und Wiederaufnahme der **Vorbereitung** |
-| GitHub-Negativtests | Falscher SHA/Target/Workflow, rote/fehlende Checks, veraltete Abnahme blockieren |
-| Zeit-/Abbruchtests | Überbudget/unvollständige/unterbrochene Phasen erzeugen keinen Release-Erfolg; keine Live-Prozesssteuerung |
-| Bestehender isolierter Release-Test | Tatsächliches Shellscript im synthetischen npm/PM2/curl/sudo-Harness; Build-before-switch, Rolling-Reload, Smoke-/Verfügbarkeitsfehler und Rückwechsel |
-| Beobachtete Staging-Läufe | 43643452215: 110 s; 43645449548: 112 s von `run_started_at` bis `updated_at`. Nur obere Workflow-Zeitgrenze, kein Production-/Monats-Gesamtnachweis |
-| Vollständige nichtproduktive 60-min-Probe | **OFFEN**: reale Build-/Migrations-/Backup-/Host-/Test-Kette mit kontrolliertem Abbruch und zustandsgeprüfter Wiederaufnahme |
-| Production | **UNVERÄNDERT / NICHT AUSGEFÜHRT** |
+| `<hash>.json` | Admission v1: originales `source`-Paket, Owner270165082, Production-Target, Controller, höchstens 24h gültige Freigabe, vollständige `coverage`, `sql`, `configuration`, `restore`, `rehearsal`; bei Recovery genaue vorherige Attempt-ID |
+| `<hash>.evidence.json`, `.full.json`, `.runner.json`, `.postcheck.json` | Bestehende vollständige Restore-Kette; alle vier Hashes, Base-Commit und Schemafingerprint im Plan gebunden |
+| `<hash>.rehearsal.json` | Tatsächlicher nativer CI-Generalprobenbericht, SHA256 und Quellbaum gebunden |
+| `<hash>.sql-N.json` | Pro SQL ein checksum-gebundener verifizierter Postflight mit Target/Base/Kandidat/SQL/Run/Versuch/Job/Zeit |
 
-Die Freigabevorlage für den späteren Betrieb nennt lediglich: Paket-Hash,
-Base → Kandidat, benötigte SQL-Entscheidungen, gültigen Backup-/Restore-Nachweis,
-Gesamtprobenbericht, Zeitplan und Rückwechselziel. Der Owner gibt genau diese
-Version frei. Danach wird ausschließlich der bestehende geschützte
-`Deploy FanMind` verwendet. Bis Paketkonsum und sichere Zeitsteuerung dort
-integriert und die Gesamtprobe bestanden sind, ist dies ein vorbereiteter
-Arbeitsablauf und **kein fertiges automatisiertes Monatsrelease**.
+Der bestehende kanonische Restore-Verifier prüft die eingefrorenen vier
+privaten Receipts. Die vollständige Restore-Evidence darf höchstens 30 Tage
+alt sein und muss zur Base und zum gebundenen Schemafingerprint gehören.
+Eine nur teilweise DB-Abnahme genügt nicht. Rollen-/Archiv-/Receipt-Daten
+bleiben privat; der Runner erhält nur den genehmigten Plan und begrenzte
+Verifikationsergebnisse. Der GitHub-Token wird vor allen Deployment-/PM2-
+Kindprozessen entfernt und darf nicht in PM2 oder dessen Dump gelangen.
+
+Ein frischer Aufruf des vorhandenen root-eigenen read-only Production-Audits
+prüft die tatsächlich aktuellen Sicherungsalter, Prüfsummen, Offsite- und
+Worker-Gates vor dem Release und nach den Host-Nacharbeiten. Der bestehende
+kanonische Verifier bleibt erhalten. Nur `ORIGIN_MAIN` wird ausdrücklich auf
+den bereits geprüften neuen Kandidaten gebunden, während Live/Server-HEAD vor
+dem Release noch die freigegebene Base sein dürfen. Andere Drift wird nicht
+normalisiert oder ignoriert.
+
+## Nichtproduktive Generalprobe und offene Betriebsgrenze
+
+Die Generalprobe verwendet **denselben** `createProductionAdapter`, dieselbe
+Subprozess-/Token-/Fristlogik, den extrahierten vollständigen Deploymentblock
+und das wirkliche `deploy-isolated-release.sh` mit aktivierten Monatsgrenzen.
+Das vorher vorhandene Shell-Harness wird gemeinsam genutzt, nicht dupliziert.
+Git-Archive und getrennte echte HTTP-Anwendungsprozesse liefern Version1→2;
+Hostpfade, sudo/systemd/PM2, GitHub und private Root-Evidence sind streng
+isolierte synthetische Schnittstellen. Das ist kein realer Production-Host.
+
+Im verpflichtenden nativen CI-Schritt werden die bereits vorhandenen
+wegwerfbaren PostgreSQL17-Services wiederverwendet. Eine eigene synthetische
+Schemaänderung wird transaktional angewendet, idempotent wiederholt, eine
+Fehländerung zurückgerollt und erhaltene Daten nach Fehler/Recovery geprüft.
+Echte Production-SQL wird dort niemals angewendet. Gates mit falschem Backup,
+real aktivierte Deadline, Fehler nach Deployment, abgewiesener Retry und
+zustandsgeprüfte Wiederaufnahme werden im selben Ablauf durchgespielt.
+Der Bericht enthält tatsächlich gemessene Gesamtdauer, Quellbaum, PG17-Status
+und einzelne Ergebnisflags. Lokale Läufe ohne PG17 dürfen keine native
+Gesamtabnahme vortäuschen; verbindlich ist der finale native CI-Bericht.
+
+Aktuell offene externe Voraussetzungen bleiben eigene Arbeiten: gültiger
+Backup-/Restore-Nachweis und die noch nicht genehmigte Installation/Admission.
+Read-only GitHub-Nachprüfung fand weiterhin Audit43590551891 mit
+`production_audit_backup_latest_stale_or_empty`; DB226.04h>36h und Full321.04h>192h.
+Die aktuelle Worker-Ursache ist dadurch nicht bewiesen. Historische20/13-
+Kompatibilitätsprobleme dürfen nicht als heutige Diagnose ausgegeben werden.
+Bestehender zuständiger Weg: `backup-worker-production-control.yml`, geschütztes
+`backup-production-recovery`, gleicher Production-Lock und fixer Root-Controller.
+
+Restore1350 bewahrt den akzeptierten DB_POSTCHECKED-Stand; Gesamtstatus PARTIAL.
+Readiness43638416183 wartet bereits auf seinen Host-Schritt. Diese Arbeit
+konsumiert dessen Ergebnisse und startet weder einen zweiten Lauf noch einen
+Restore, ein Backup oder Änderungen an realen Restore-Daten.
