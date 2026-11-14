@@ -82,7 +82,7 @@ const drafts=["Synthetic reply one","Synthetic reply two","Synthetic reply three
 let browser;
 before(async()=>{browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});});
 after(async()=>{await browser?.close();});
-async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true){
+async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false,fanRuntimeEnabled=true,expandModels=true){
  const context=await browser.newContext({permissions:["clipboard-read","clipboard-write"]});t.after(()=>context.close());const page=await context.newPage();
  await page.route("**/*",route=>route.fulfill({contentType:"text/html",body:'<html><body><div id="root"></div></body></html>'}));await page.goto("http://localhost/chatadmin-client-test");
  await page.evaluate(({fansByCharacter,conversationFor,historyFor})=>{
@@ -94,20 +94,21 @@ async function mount(t,structuredOffersEnabled=true,mediaLibraryEnabled=false,fa
    return new Promise((resolve,reject)=>window.testRequests.push({url,method,body:options.body?JSON.parse(options.body):null,resolve,reject}));
   };
  },{fansByCharacter,conversationFor,historyFor});
- await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled,fanEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled,fanEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled,fanEnabled:fanRuntimeEnabled});if(fanRuntimeEnabled)await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();else await expect(page.getByRole("heading",{name:"Nachricht manuell einfügen",exact:true})).toBeVisible();return page;
+ await page.addScriptTag({content:bundle});await page.evaluate(({characters,enabled,mediaEnabled,fanEnabled})=>window.mountCharacters(characters,enabled,mediaEnabled,fanEnabled),{characters:[characterA,characterB],enabled:structuredOffersEnabled,mediaEnabled:mediaLibraryEnabled,fanEnabled:fanRuntimeEnabled});if(fanRuntimeEnabled)await expect(page.getByRole("button",{name:"Fan A1 öffnen",exact:true})).toBeVisible();else await expect(page.getByRole("heading",{name:"Nachricht manuell einfügen",exact:true})).toBeVisible();if(expandModels)await page.getByRole("button",{name:"Model-Leiste ausklappen",exact:true}).click();return page;
 }
 const card=(page,name)=>page.getByRole("article").filter({has:page.getByRole("heading",{name,exact:true})});
 const copies=page=>page.getByRole("button",{name:"Kopieren und verwenden",exact:true});
 async function openFan(page,name){await page.getByRole("button",{name:`${name} öffnen`,exact:true}).click();await expect(page.getByRole("region",{name:`Gespräch mit ${name}`,exact:true})).toBeVisible();}
 async function selectCharacter(page,name){await card(page,name).getByRole("button").first().click();}
+async function openMediaSettings(page,name="Synthetic Anna"){await page.getByRole("button",{name:`${name} Einstellungen`,exact:true}).click();await page.getByRole("button",{name:"Medien & Preise",exact:true}).click();}
 async function manageCharacter(page,name){const menu=card(page,name).locator("details");if(!await menu.evaluate(node=>node.open))await menu.locator("summary").click();}
 async function generate(page,message="Synthetic fan message"){await page.getByLabel("Neue eingehende Fan-Nachricht").fill(message);await page.getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBeGreaterThan(0);}
 async function complete(page,index=0,overrides={},status=200){const request=await page.evaluate(index=>window.testRequests[index],index);const base={replies:drafts,character_id:request.body.character_id,character_revision:request.body.character_revision,fan_id:request.body.fan_id,conversation_id:request.body.conversation_id,safety_note:"Manuell prüfen."};await page.evaluate(async({index,body,status})=>{window.testRequests[index].resolve(new Response(JSON.stringify(body),{status,headers:{"Content-Type":"application/json"}}));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));},{index,body:{...base,...overrides},status});}
 
-test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Charaktere"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
+test("CRM workspace prioritizes Character, Fan list and selected conversation",async t=>{const page=await mount(t);await expect(page.getByRole("navigation",{name:"Models"})).toBeVisible();await expect(page.getByRole("region",{name:"Fans von Synthetic Anna"})).toBeVisible();await expect(page.getByText("Revision 1",{exact:false})).toHaveCount(0);await openFan(page,"Fan A1");await expect(page.getByRole("region",{name:"Gespräch mit Fan A1"})).toBeVisible();});
 
 for(const mode of ["create","profile","knowledge"])test(`Fan ${mode} form scrolls independently and keeps its save action reachable`,async t=>{
- const page=await mount(t);await page.setViewportSize({width:1280,height:520});
+ const page=await mount(t);await page.setViewportSize({width:1280,height:mode==="profile"?380:520});
  await page.evaluate(()=>{document.getElementById("root").className="page";});
  await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
  if(mode==="create")await page.getByRole("button",{name:"Fan hinzufügen",exact:true}).click();
@@ -143,7 +144,7 @@ test("Fan creation stays reachable by keyboard on a narrow viewport",async t=>{
  assert.equal(await page.evaluate(()=>window.testRequests[0].body.display_name),"Synthetic mobile fan");
 });
 
-test("conversation status remains dismissible without reserving space below the composer",async t=>{
+test("conversation status is inline and dismissible without covering the composer",async t=>{
  const page=await mount(t);await page.setViewportSize({width:1280,height:720});
  await page.evaluate(()=>{document.getElementById("root").className="page";});
  await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
@@ -151,7 +152,7 @@ test("conversation status remains dismissible without reserving space below the 
  const composerBefore=await composer.boundingBox(),historyBefore=await history.boundingBox();
  await generate(page);await page.evaluate(()=>window.testRequests[0].reject(new Error("network")));
  await expect(page.getByRole("status")).toContainText("fehlgeschlagen");
- assert.deepEqual(await composer.boundingBox(),composerBefore);assert.deepEqual(await history.boundingBox(),historyBefore);
+ const status=await page.getByRole("status").boundingBox(),composerAfter=await composer.boundingBox();assert.ok(composerAfter.y+composerAfter.height<=status.y+1,"status must not overlay composer");assert.equal(composerAfter.width,composerBefore.width);assert.ok((await history.boundingBox()).height<=historyBefore.height);
  await page.getByRole("button",{name:"Meldung schließen",exact:true}).click();await expect(page.getByRole("status")).toHaveCount(0);
 });
 
@@ -361,11 +362,11 @@ test("private Character library edits reviewed metadata, scrolls and isolates Ch
  const page=await mount(t,true,true);await page.setViewportSize({width:1280,height:520});await page.evaluate(()=>{document.getElementById("root").className="page";});await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
  const asset={id:"50000000-0000-4000-8000-000000000001",workspace_id:characterA.workspace_id,character_id:characterA.id,revision:1,description:"Strand",tags:["Strand"],folder:"Sommer",offer_id:"private_photo",reviewed:false,available:true,deleted:false};
  await page.evaluate(({characterA,characterB,asset})=>{const policy={enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0};window.fixture.media[characterA.id]={assets:[asset],policy,character:characterA,analysis_enabled:false};window.fixture.media[characterB.id]={assets:[],policy,character:characterB,analysis_enabled:false};},{characterA,characterB,asset});
- await page.getByRole("button",{name:"Bilder",exact:true}).click();const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});await expect(region.getByLabel("Beschreibung",{exact:true})).toHaveValue("Strand");await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
- const before=await page.getByRole("navigation",{name:"Charaktere"}).boundingBox();await region.evaluate(node=>node.scrollTop=node.scrollHeight);await expect.poll(()=>region.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);assert.deepEqual(await page.getByRole("navigation",{name:"Charaktere"}).boundingBox(),before);
+ await openMediaSettings(page);const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});await region.getByText("Angaben, Freigabe & Dateipreis",{exact:true}).click();await expect(region.getByLabel("Beschreibung",{exact:true})).toHaveValue("Strand");await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
+ const before=await page.getByRole("navigation",{name:"Models"}).boundingBox();await region.evaluate(node=>node.scrollTop=node.scrollHeight);await expect.poll(()=>region.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);assert.deepEqual(await page.getByRole("navigation",{name:"Models"}).boundingBox(),before);
  await region.getByLabel("Beschreibung und Motive geprüft; für die KI freigeben").check();await region.getByRole("button",{name:"Bildangaben speichern",exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(1);const sent=await page.evaluate(()=>window.testRequests[0].body);assert.equal(sent.character_id,characterA.id);assert.equal(sent.id,asset.id);assert.equal(sent.reviewed,true);assert.equal(sent.offer_id,"private_photo");
  await page.evaluate(({asset,character})=>window.testRequests[0].resolve(Response.json({...window.fixture.media[character.id],assets:[{...asset,reviewed:true,revision:2}],character:{...character,revision:2}})),{asset,character:characterA});await expect(region.getByRole("status")).toContainText("Gespeichert");
- await selectCharacter(page,"Synthetic Bea");await page.getByRole("button",{name:"Bilder",exact:true}).click();await expect(page.getByRole("region",{name:"Bilder von Synthetic Bea",exact:true})).toContainText("Noch keine Bilder vorhanden");await expect(page.getByLabel("Beschreibung",{exact:true})).toHaveCount(0);
+ await selectCharacter(page,"Synthetic Bea");await openMediaSettings(page,"Synthetic Bea");await expect(page.getByRole("region",{name:"Bilder von Synthetic Bea",exact:true})).toContainText("Noch keine Bilder vorhanden");await expect(page.getByLabel("Beschreibung",{exact:true})).toHaveCount(0);
 });
 
 test("catalogue folder editor submits individual category prices and private video stays scoped",async t=>{
@@ -373,7 +374,7 @@ test("catalogue folder editor submits individual category prices and private vid
  const folder={id:"50000000-0000-4000-8000-000000000010",workspace_id:characterA.workspace_id,character_id:characterA.id,parent_id:null,kind:"video",name:"Landschaft",offer_id:"",price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1};
  const asset={id:"50000000-0000-4000-8000-000000000011",workspace_id:characterA.workspace_id,character_id:characterA.id,folder_id:folder.id,media_type:"video",duration_ms:1000,revision:1,description:"Blaue Fläche",tags:["blau"],folder:"",offer_id:"",reviewed:true,available:true,deleted:false};
  await page.evaluate(({characterA,folder,asset})=>{window.fixture.media[characterA.id]={assets:[asset],folders:[folder],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character:characterA,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},{characterA,folder,asset});
- await page.getByRole("button",{name:"Bilder",exact:true}).click();
+ await openMediaSettings(page);
  const region=page.getByRole("region",{name:"Bilder von Synthetic Anna",exact:true});
  await expect(region.locator("video")).toHaveAttribute("src",`/api/chatadmin/media?character_id=${characterA.id}&id=${asset.id}&revision=${asset.revision}`);
  await expect(region.getByRole("button",{name:"Mit KI beschreiben",exact:true})).toHaveCount(0);
@@ -407,4 +408,84 @@ test("legacy composer also blocks stale media prices before clipboard use",async
  await page.getByRole("button",{name:"Antwort kopieren",exact:true}).first().click();await expect.poll(()=>page.evaluate(()=>window.testRequests.length)).toBe(2);
  await page.evaluate(character=>window.testRequests[1].resolve(Response.json({characters:[{...character,revision:2}]})),characterA);
  await expect(page.getByRole("status")).toContainText("Medien oder Preise haben sich geändert");assert.deepEqual(await page.evaluate(()=>window.copyCalls),[]);
+});
+
+test("CRM keeps Models, Fans and conversation in order and returns to the same fan after Model settings",async t=>{
+ const page=await mount(t,true,true);await page.setViewportSize({width:1440,height:900});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await openFan(page,"Fan A1");await page.getByLabel("Neue eingehende Fan-Nachricht").fill("Keep this unsent message");
+ const models=await page.getByRole("navigation",{name:"Models",exact:true}).boundingBox();
+ const fans=await page.getByRole("region",{name:"Fans von Synthetic Anna",exact:true}).boundingBox();
+ const conversation=await page.getByRole("region",{name:"Gespräch mit Fan A1",exact:true}).boundingBox();
+ assert.ok(models.x+models.width<=fans.x+1);assert.ok(fans.x+fans.width<=conversation.x+1);
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-desktop.png",fullPage:true,animations:"disabled"});
+ await expect(page.getByRole("button",{name:"Bilder",exact:true})).toHaveCount(0);
+ await expect(page.getByRole("button",{name:"Gespräch",exact:true})).toHaveCount(0);
+ await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();
+ await expect(page.getByRole("heading",{name:"Profil & Regeln",exact:true})).toBeVisible();
+ await expect(page.getByRole("region",{name:"Gespräch mit Fan A1",exact:true})).toBeHidden();
+ await page.getByRole("button",{name:"← Zurück zu den Gesprächen",exact:true}).click();
+ await expect(page.getByRole("region",{name:"Gespräch mit Fan A1",exact:true})).toBeVisible();
+ await expect(page.getByLabel("Neue eingehende Fan-Nachricht")).toHaveValue("Keep this unsent message");
+ assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+});
+
+test("CRM Model settings protect unsaved profile input before switching to media",async t=>{
+ const page=await mount(t,true,true);await page.evaluate(character=>{window.fixture.media[character.id]={assets:[],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character,analysis_enabled:false};},characterA);
+ await page.getByRole("button",{name:"Synthetic Anna Einstellungen",exact:true}).click();
+ await page.getByLabel("Name",{exact:true}).fill("Unsaved Model name");
+ page.once("dialog",dialog=>dialog.dismiss());await page.getByRole("button",{name:"Medien & Preise",exact:true}).click();
+ await expect(page.getByLabel("Name",{exact:true})).toHaveValue("Unsaved Model name");
+ page.once("dialog",dialog=>dialog.accept());await page.getByRole("button",{name:"Medien & Preise",exact:true}).click();
+ await expect(page.getByRole("heading",{name:"Medien & Preise",exact:true})).toBeVisible();
+ await expect(page.getByLabel("Name",{exact:true})).toHaveCount(0);
+ assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+});
+
+test("CRM media settings fit a narrow screen and retain the private upload and price controls",async t=>{
+ const page=await mount(t,true,true);await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await page.evaluate(character=>{window.fixture.media[character.id]={assets:[],folders:[],policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true,revision:0},character,catalogue_enabled:true,video_enabled:true,analysis_enabled:false};},characterA);
+ await openMediaSettings(page);
+ await expect(page.getByRole("heading",{name:"Medien & Preise",exact:true})).toBeVisible();
+ await expect(page.getByRole("combobox",{name:"Zielordner",exact:true})).toBeVisible();
+ await page.getByRole("button",{name:"Ordner anlegen",exact:true}).click();await page.getByLabel("Eigener Kategoriepreis",{exact:true}).check();
+ await page.getByLabel("Startpreis",{exact:true}).fill("12");
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"settings have no horizontal overflow");
+ const field=await page.getByLabel("Startpreis",{exact:true}).boundingBox();assert.ok(field.x>=0&&field.x+field.width<=390);
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-mobile-settings.png",fullPage:true,animations:"disabled"});
+});
+
+
+test("Model portrait rail collapses to pictures and expands names without losing the active fan",async t=>{
+ const page=await mount(t,true,true,true,false);await page.setViewportSize({width:1440,height:900});
+ await page.evaluate(()=>{document.getElementById("root").className="page";});
+ await page.addStyleTag({content:'*{box-sizing:border-box}body{margin:0}'+readFileSync("src/app/chatadmin/chatadmin.module.css","utf8")});
+ await openFan(page,"Fan A1");
+ const nav=page.getByRole("navigation",{name:"Models",exact:true});
+ assert.ok((await nav.boundingBox()).width<=81);
+ await expect(page.getByText("Fans",{exact:true})).toBeVisible();
+ await expect(page.getByRole("searchbox",{name:"Fans durchsuchen",exact:true})).toBeVisible();
+ await expect(nav.getByRole("button",{name:"Model-Leiste ausklappen",exact:true})).toHaveAttribute("aria-expanded","false");
+ await page.screenshot({path:"test-results/playwright-core-flow/chatadmin-crm-portrait-rail.png",fullPage:true,animations:"disabled"});
+ await nav.getByRole("button",{name:"Model-Leiste ausklappen",exact:true}).click();
+ assert.ok((await nav.boundingBox()).width>=190);
+ await expect(nav.getByRole("heading",{name:"Synthetic Anna",exact:true})).toBeVisible();
+ await expect(nav.getByRole("button",{name:"Model-Leiste einklappen",exact:true})).toHaveAttribute("aria-expanded","true");
+ await expect(page.getByRole("region",{name:"Gespräch mit Fan A1",exact:true})).toBeVisible();
+ assert.equal(await page.evaluate(()=>window.testRequests.length),0);
+});
+
+test("Model rail uses assigned portrait endpoint and falls back without exposing private paths",async t=>{
+ const page=await mount(t,true,true,true,false);
+ await page.route("**/api/chatadmin/characters/portrait?**",route=>route.fulfill({status:404,body:""}));
+ const requested=page.waitForRequest(request=>request.url().includes("/api/chatadmin/characters/portrait?"));
+ await page.evaluate(({a,b})=>window.mountCharacters([{...a,revision:2,profile_image_path:`chat-characters/${a.workspace_id}/${a.id}/portrait.jpg`},b],true,true,true),{a:characterA,b:characterB});
+ const request=await requested;assert.ok(request.url().includes(`character_id=${characterA.id}&revision=2`));
+ const portrait=page.locator(".modelPortrait img");
+ await expect.poll(()=>portrait.count()).toBe(0);
+ assert.equal(await page.locator('img[src*="chat-characters/"]').count(),0);
+ await expect(page.getByRole("button",{name:"Model-Leiste ausklappen",exact:true})).toHaveAttribute("aria-expanded","false");
 });
