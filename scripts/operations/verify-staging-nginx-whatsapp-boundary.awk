@@ -414,13 +414,15 @@ BEGIN {
 }
 
 END {
+  whatsapp_boundary_invalid = (global_whatsapp_locations != 1 || global_whatsapp_path_locations != 1)
+  if (media_route_mode && global_whatsapp_locations == 0 && global_whatsapp_path_locations == 0) {
+    whatsapp_boundary_invalid = 0
+  }
   if (output_mode == "media_diagnostic") {
     printf "fatal=%d,unclosed=%d,malformed=%d,tls_servers=%d,valid_tls_servers=%d,global_whatsapp=%d,global_whatsapp_paths=%d;%s\n", fatal, in_server, malformed, port_443_servers, valid_tls_servers, global_whatsapp_locations, global_whatsapp_path_locations, media_diagnostic
   }
   if (fatal || in_server || malformed || port_443_servers != 1 ||
-      valid_tls_servers != 1 ||
-      !((global_whatsapp_locations == 1 && global_whatsapp_path_locations == 1) ||
-        (media_route_mode && global_whatsapp_locations == 0 && global_whatsapp_path_locations == 0))) {
+      valid_tls_servers != 1 || whatsapp_boundary_invalid) {
     print "invalid"
   } else {
     if (output_mode == "media_end_line") print valid_tls_server_end
