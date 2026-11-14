@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { isChatAdminStorageObjectAbsent } from "./chatAdminStorageAbsence.mjs";
 import { getSupabaseHeaders, getSupabaseRestUrl, requireSupabasePublicConfig, SUPABASE_ACCESS_TOKEN_COOKIE } from "./supabase/config";
 import { getChatCharacter } from "./chatAdmin";
 import { WorkspaceAuthorizationError } from "./workspaceAuthorization";
@@ -55,8 +56,7 @@ export async function mediaObject(workspaceId:string,characterId:string,id:strin
     // both normal acknowledgment and retry require an independent absence probe.
     if(!Array.isArray(result)||result.length>1||result.length===1&&result[0]?.name!==path)throw new ChatAdminMediaError("media_cleanup_unverified");
     const check=await fetch(`${requireSupabasePublicConfig().url}/storage/v1/object/authenticated/${MEDIA_BUCKET}/${path}`,{headers:getSupabaseHeaders(token),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
-    await check.body?.cancel();
-    if(check.status!==404)throw new ChatAdminMediaError("media_cleanup_unverified");
+    if(!await isChatAdminStorageObjectAbsent(check))throw new ChatAdminMediaError("media_cleanup_unverified");
     return Buffer.alloc(0);
   }
   if(probe){await response.body?.cancel();if(response.headers.get("content-type")?.split(";")[0]!==mediaMime(kind))throw new ChatAdminMediaError("media_object_unavailable");return Buffer.alloc(0);}

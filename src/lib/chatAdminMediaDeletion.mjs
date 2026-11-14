@@ -1,4 +1,5 @@
 import { MEDIA_BUCKET, MEDIA_UUID } from "./chatAdminMediaPolicy.mjs";
+import { isChatAdminStorageObjectAbsent } from "./chatAdminStorageAbsence.mjs";
 
 // Used only inside the existing explicitly gated account-deletion processor,
 // after its atomic owned-Workspace inventory. No independent execution path.
@@ -24,7 +25,7 @@ export async function deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds})
    const deletion=await removed.json();
    if(!Array.isArray(deletion)||deletion.some(item=>item.name!==path)||deletion.length>1)throw new Error("media_deletion_object_failed");
    const absent=await fetchImpl(`${object}/authenticated/${MEDIA_BUCKET}/${path}`,{headers,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(15000)});
-   await absent.body?.cancel();if(absent.status!==404)throw new Error("media_deletion_absence_failed");
+   if(!await isChatAdminStorageObjectAbsent(absent))throw new Error("media_deletion_absence_failed");
    const cleaned=await fetchImpl(`${base}&id=eq.${row.id}&deleted=eq.true`,{method:"DELETE",headers,cache:"no-store",signal:AbortSignal.timeout(15000)});
    if(!cleaned.ok)throw new Error("media_deletion_metadata_failed");
   }
