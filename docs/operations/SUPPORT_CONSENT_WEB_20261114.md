@@ -22,10 +22,12 @@ failure page, not a downloaded PDF. Read-only catalogue verification proves
 social_connections has columns unavailable to authenticated SELECT *, including
 its encrypted token. Reuse the existing twice-Owner-authorized private collector
 with an explicit non-credential metadata projection. Do not widen DB grants.
-Support/active schema/provider failures still abort the complete PDF. The known
-Production preinstall consent exception requires the exact missing-function AND
-missing-table Data API responses while persistence is off; partial/denied states
-fail closed. Source preparation does not establish corrected live acceptance.
+Support/schema/provider failures still abort the complete PDF, including a
+missing consent RPC even while persistence is off. Schema-cache errors cannot
+prove absence of stored personal data. The already separately prepared Consent
+schema must be installed/verified before the corrected PDF can be complete on
+Production; this PR grants no Apply permission. Source preparation does not
+establish corrected live acceptance.
 
 The independent redacted #1496 proof (18 own records/0 foreign, consent revision2)
 is retained as historical PASS and is not regenerated. Its source hash identifies

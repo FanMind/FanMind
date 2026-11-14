@@ -271,21 +271,6 @@ export async function getPrivateAccountDataForDisclosure(
     });
     const value: unknown = await response.json().catch(() => null);
     if (!response.ok) {
-      // The consent schema is still a separate Production rollout. Only this
-      // exact pre-install absence is allowed; active schema failures stay closed.
-      const error = value as { code?: string; message?: string } | null;
-      if (name === "support_ai_consent_state" && process.env.FANMIND_RUNTIME_ENVIRONMENT === "production" &&
-          !persistentSupportConsentEnabled() && response.status === 404 && error?.code === "PGRST202" &&
-          typeof error.message === "string" && error.message.startsWith("Could not find the function public.support_ai_consent_state(")) {
-        // A missing RPC alone could be a partial installation with retained data.
-        // Confirm exact table absence too; a denied/existing table is NOT empty.
-        const table = await fetchImpl(new URL(getSupabaseRestUrl("support_ai_consents?select=user_id&limit=0")), {
-          headers: getSupabaseApiKeyHeaders(serviceKey), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
-        });
-        const missing = await table.json().catch(() => null) as { code?: string; message?: string } | null;
-        if (table.status === 404 && missing?.code === "PGRST205" &&
-            missing.message === "Could not find the table 'public.support_ai_consents' in the schema cache") return null;
-      }
       throw new DataDisclosureExportError("Eigene Supportdaten konnten nicht vollständig geladen werden.");
     }
     if (value === null) throw new DataDisclosureExportError("Ungültige Support-Datenauskunft.");
@@ -298,9 +283,7 @@ export async function getPrivateAccountDataForDisclosure(
   const consent = await rpc("support_ai_consent_state", { p_actor: identity.userId, p_version: SUPPORT_AI_CONSENT_VERSION });
   datasets.push(
     { key: "support_conversations", rows: turns.map(turn => ({ ...turn })) },
-    { key: "support_ai_consent", rows: [consent === null
-      ? { storage: "not_installed", persistent_activation: false }
-      : { ...consentState(consent), persistent_activation: persistentSupportConsentEnabled() }] },
+    { key: "support_ai_consent", rows: [{ ...consentState(consent), persistent_activation: persistentSupportConsentEnabled() }] },
   );
   await assertOwner();
   return datasets;

@@ -178,7 +178,6 @@ function privateFixture({member=false,foreign=false,key='sb_secret_synthetic',ov
       assert.equal(JSON.parse(options.body).p_actor,userId);
       return (await override({table,url,offset})) ?? jsonResponse({granted:false,revision:2,version:'support-ai-20261114-v1',grantedAt:'2026-11-14T14:40:50Z',revokedAt:'2026-11-14T14:44:08Z'});
     }
-    if(table==='support_ai_consents') return (await override({table,url,offset})) ?? jsonResponse({code:'PGRST205',message:"Could not find the table 'public.support_ai_consents' in the schema cache"},404);
     if(table==='social_connections') return (await override({table,url,offset})) ?? jsonResponse([{id:'c1',workspace_id:workspace,page_name:'Own page',page_access_token_encrypted:'NEVER_EXPORT',token_last_four:'NEVER_EXPORT',unexpected:'NEVER_EXPORT'}]);
     if(table==='pilot_inquiries') return (await override({table,url,offset})) ?? jsonResponse([{id:'p1',email,name:'Old inquiry',message:'Hello'}]);
     if(table==='referral_program_members') return (await override({table,url,offset})) ?? jsonResponse([{id:'rm1',workspace_id:workspace,user_id:userId,referral_code:'OWNCODE',eligible:true,status:'active'}]);
@@ -311,7 +310,5 @@ test('support read failures, malformed consent, partial installation and foreign
     ({table})=>table==='social_connections'?jsonResponse([{workspace_id:'foreign'}]):undefined,
   ]) await assert.rejects(privateFixture({override}).run());
   const missing=({table})=>table==='support_ai_consent_state'?jsonResponse({code:'PGRST202',message:'Could not find the function public.support_ai_consent_state(p_actor, p_version) in the schema cache'},404):undefined;
-  const preinstall=await privateFixture({override:missing}).run();assert.equal(preinstall.find(d=>d.key==='support_ai_consent').rows[0].storage,'not_installed');
-  await assert.rejects(privateFixture({override:args=>args.table==='support_ai_consents'?jsonResponse({code:'42501'},403):missing(args)}).run());
-  for(const flags of [{runtime:'staging'},{persistent:true}])await assert.rejects(privateFixture({...flags,override:missing}).run());
+  for(const flags of [{},{runtime:'staging'},{persistent:true}])await assert.rejects(privateFixture({...flags,override:missing}).run());
 });
