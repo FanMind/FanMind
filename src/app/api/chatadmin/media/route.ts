@@ -55,7 +55,7 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    const policy=normalizeCustomPolicy(body.policy,character.sales_playbook?.offers??[]);
    const existing=await loadCharacterMedia(workspace.id,characterId);
    if(body.revision!==existing.policy.revision)throw new ChatAdminMediaError("stale_media_context");
-   if(existing.policy.revision===0)await mediaRest("chat_character_media_policies",{method:"POST",body:JSON.stringify({...policy,workspace_id:workspace.id,character_id:characterId})});
+   if(existing.policy.revision===0)await mediaRest("chat_character_media_policies",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({...policy,workspace_id:workspace.id,character_id:characterId})});
    else{const rows=await mediaRest<CustomMediaPolicy[]>(`chat_character_media_policies?${mediaScope(workspace.id,characterId)}&revision=eq.${existing.policy.revision}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(policy)});if(rows.length!==1)throw new ChatAdminMediaError("stale_media_context");}
   }else if(method==="POST"){
    if(body.rights_confirmed!==true)throw new ChatAdminMediaError("media_rights_required");

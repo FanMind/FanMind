@@ -27,7 +27,7 @@ function harness(options={}){
    async getMediaAsset(workspaceId,characterId,assetId){if(workspaceId!==w||characterId!==c||assetId!==id)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {...asset};},
    loadCharacterMedia:async()=>({assets:[{...asset}],policy:{enabled:false,revision:0}}),
    mediaScope:(workspaceId,characterId)=>`workspace_id=eq.${workspaceId}&character_id=eq.${characterId}`,
-   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}")});revision++;return [{...asset}];},
+   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}"),headers:init.headers});revision++;if(options.minimalPolicyResponse&&path==="chat_character_media_policies"&&init.headers?.Prefer!=="return=representation")throw new SyntaxError("Empty PostgREST 201 response is not JSON");return [{...asset}];},
    mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");return Buffer.from("synthetic-private-image");},
    updateMediaAsset:async(workspaceId,characterId,previous,patch)=>{calls.writes.push({patch,workspaceId,characterId});Object.assign(asset,patch,{revision:asset.revision+1});revision++;return {...asset};},
   },
@@ -97,3 +97,15 @@ test("account erasure deletes video MP4 paths with authenticated absence before 
 
 import "./chat-admin-media-catalogue.cases.mjs";
 import "./chat-admin-media-catalogue-api.cases.mjs";
+
+// PostgREST commits a default-minimal INSERT but returns no JSON body.
+test("first custom policy save returns success after a committed PostgREST insert",async()=>{
+ const h=harness({minimalPolicyResponse:true});
+ const result=await h.route.PATCH(h.request({action:"policy",revision:0,policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true}}));
+ assert.equal(result.status,200);
+ assert.equal(h.calls.writes.length,1);
+ assert.equal(h.calls.writes[0].path,"chat_character_media_policies");
+ assert.equal(h.calls.writes[0].headers.Prefer,"return=representation");
+ assert.equal(h.calls.writes[0].body.workspace_id,w);
+ assert.equal(h.calls.writes[0].body.character_id,c);
+});
