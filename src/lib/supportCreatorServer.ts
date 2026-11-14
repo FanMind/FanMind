@@ -1,5 +1,7 @@
 import "server-only";
 import {createHash,createHmac,timingSafeEqual} from "node:crypto";
+import {OPERATOR_USER,OPERATOR_WORKSPACE} from "./stagingOperatorIdentity.mjs";
+import {operatorSessionEnabled} from "./stagingOperatorSession.mjs";
 import {getChatCharacter,getChatFan,getFanConversation,listRecentChatMessages,listChatCharacters,listChatFans,requireChatAdminCapability,updateChatCharacter,type ChatCharacter} from "./chatAdmin";
 import {supportCustomer,readSupportConversation,type SupportTurn} from "./supportContinuityServer";
 import {supportCentreDatabase} from "./supportCentreServer";
@@ -14,9 +16,9 @@ import {consumeSharedRateLimit} from "./sharedRateLimit";
 
 /** No Production activation switch: this pilot is hard-bound to the existing synthetic Staging Operator. */
 export async function supportCreatorIdentity(){
- if(process.env.FANMIND_RUNTIME_ENVIRONMENT!=="staging")throw Error("creator_support_not_enabled");
+ if(!operatorSessionEnabled(process.env))throw Error("creator_support_not_enabled");
  const identity=await supportCustomer();if(!identity)throw Error("unauthorized");
- if(identity.actor!==process.env.FANMIND_CHAT_ADMIN_PREVIEW_USER_ID?.trim()||identity.workspace!==process.env.FANMIND_CHAT_ADMIN_PREVIEW_WORKSPACE_ID?.trim())throw Error("creator_support_not_enabled");
+ if(identity.actor!==OPERATOR_USER||identity.workspace!==OPERATOR_WORKSPACE)throw Error("creator_support_not_enabled");
  const context=await requireChatAdminCapability();
  if(context.user.id!==identity.actor||context.workspace.id!==identity.workspace||context.workspace.role.toLowerCase()!=="owner")throw Error("forbidden");
  return identity;
