@@ -15,6 +15,7 @@ const ROOT = '/var/www/fanmind', ENV = ROOT + '/.env.production', CURRENT = '/va
 const ORIGIN = 'https://fanmind.ch', CALLBACK = ORIGIN + '/api/integrations/facebook/callback';
 const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 const FIELDS = ['FACEBOOK_APP_ID','FACEBOOK_APP_SECRET','FACEBOOK_REDIRECT_URI','FANMIND_TOKEN_ENCRYPTION_KEY','FACEBOOK_WEBHOOK_VERIFY_TOKEN'];
+const PM2_OWNED_FLAGS = ['FANMIND_SUPPORT_CENTRE_ENABLED','FANMIND_CHAT_ADMIN_CHARACTER_FANS_ENABLED'];
 const SHA = /^[a-f0-9]{40}$/u;
 const fail = code => { throw new Error(code); };
 export function assertProductionMetaTarget(values, control, action) {
@@ -61,15 +62,26 @@ async function json(url,headers={},options={},request=fetch) {
   finally {await reader.cancel().catch(()=>{});}
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
-export function assertProductionRuntimeConsistency(values, running, liveCommit) {
-  if(running.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('process_environment_mismatch');
-  if(running.FANMIND_RELEASE_COMMIT!==liveCommit)fail('process_release_mismatch');
-  for(const name of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET','META_REDIRECT_URI','META_WEBHOOK_VERIFY_TOKEN']) {
-    if(running[name] && running[name]!==values[name])fail('inherited_configuration_conflict');
+export function assertProductionRuntimeConsistency(values, running, liveCommit, managed = running) {
+  // /proc is the exec-time environment; PM2 can populate a cluster worker later.
+  // Require exact PM2 markers, and reject any contradictory startup marker.
+  if(managed.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('process_environment_mismatch');
+  if(managed.FANMIND_RELEASE_COMMIT!==liveCommit)fail('process_release_mismatch');
+  for(const source of [running,managed]) {
+    if(source.FANMIND_RUNTIME_ENVIRONMENT!==undefined && source.FANMIND_RUNTIME_ENVIRONMENT!=='production')fail('startup_environment_conflict');
+    if(source.FANMIND_RELEASE_COMMIT!==undefined && source.FANMIND_RELEASE_COMMIT!==liveCommit)fail('startup_release_conflict');
+    for(const name of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET','META_REDIRECT_URI','META_WEBHOOK_VERIFY_TOKEN']) {
+      if(source[name] && source[name]!==values[name])fail('inherited_configuration_conflict');
+    }
+    for(const [name,value] of Object.entries(values)) {
+      if(name==='FANMIND_RELEASE_COMMIT'||PM2_OWNED_FLAGS.includes(name))continue; // Preserve PM2-owned state separately.
+      if(source[name]!==undefined && source[name]!==value)fail('inherited_configuration_conflict');
+    }
   }
-  for(const [name,value] of Object.entries(values)) {
-    if(name==='FANMIND_RELEASE_COMMIT')continue; // PM2 owns the exact live release marker.
-    if(running[name]!==undefined && running[name]!==value)fail('inherited_configuration_conflict');
+}
+export function assertProductionManagedPreserved(before, after, fileKeys) {
+  for(const name of new Set([...fileKeys.filter(name=>!FIELDS.includes(name)),...PM2_OWNED_FLAGS])) {
+    if((before[name]!==undefined||PM2_OWNED_FLAGS.includes(name)) && after[name]!==before[name])fail('unrelated_process_drift');
   }
 }
 export async function verifyProductionAppSecret(secret,request=fetch) {
@@ -123,7 +135,7 @@ export async function runProductionMeta(action,control=process.env) {
   };
   const processEnv=p=>Object.fromEntries(readFileSync(`/proc/${p.pid}/environ`,'utf8').split('\0').filter(s=>s.indexOf('=')>0).map(s=>{const i=s.indexOf('=');return[s.slice(0,i),s.slice(i+1)];}));
   const initial=processes(), baseline=processEnv(initial);
-  assertProductionRuntimeConsistency(values,baseline,control.LIVE_COMMIT);
+  assertProductionRuntimeConsistency(values,baseline,control.LIVE_COMMIT,initial.pm2_env);
   // Next loads .env after process creation; inherited values must never override it.
   for(const name of FIELDS)if(baseline[name]!==undefined && baseline[name]!==values[name])fail('inherited_configuration_conflict');
   const live=async()=>{let v;try{v=await json(ORIGIN+'/api/version');}catch{fail('target_read_failed');}if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==control.LIVE_COMMIT)fail('live_release_mismatch');};
@@ -143,7 +155,7 @@ export async function runProductionMeta(action,control=process.env) {
   }
   const after=renderMetaConfiguration(before,[],{appId:APP,appSecret:secret,webhookToken:randomBytes(32).toString('base64url')},{tokensPresent,callback:CALLBACK});
   const desired=parseEnv(after);
-  for(const name of FIELDS)if(baseline[name]!==undefined && baseline[name]!==desired[name])fail('inherited_configuration_conflict');
+  for(const source of [baseline,initial.pm2_env])for(const name of FIELDS)if(source[name]!==undefined && source[name]!==desired[name])fail('inherited_configuration_conflict');
   const saveSnapshot=text=>durableSnapshot(ENV+'.meta-before-'+control.GITHUB_RUN_ID,text);
   const write=text=>{
     if(privateFile(ENV,owner).text!==(text===after?before:after))fail('configuration_changed');
@@ -152,20 +164,22 @@ export async function runProductionMeta(action,control=process.env) {
     finally{if(f!==undefined)closeSync(f);try{unlinkSync(temp);}catch{}}
   };
   const restart=()=>execute('/usr/bin/sudo',['-n','-u','ubuntu','-H','/usr/bin/env',`FANMIND_RELEASE_COMMIT=${control.LIVE_COMMIT}`,`FANMIND_CURRENT_RELEASE_LINK=${CURRENT}`,'FANMIND_PM2_APP_NAME=fanmind',pm2,'reload',CURRENT+'/ops/pm2/fanmind.production.config.cjs','--only','fanmind','--update-env']);
-  const verify=async()=>{
+  const verify=async(expected)=>{
     await waitForStagingRelease(live);const p=processes(),running=processEnv(p);
+    assertProductionRuntimeConsistency(expected,running,control.LIVE_COMMIT,p.pm2_env);
     for(const name of Object.keys(values))if(!FIELDS.includes(name)&&baseline[name]!==undefined&&running[name]!==baseline[name])fail('unrelated_process_drift');
+    assertProductionManagedPreserved(initial.pm2_env,p.pm2_env,Object.keys(values));
     if(p.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED!==initial.pm2_env.FANMIND_SUPPORT_CENTRE_ENABLED)fail('support_drift');
     const health=await json(ORIGIN+'/api/health');if(health.status!=='ok'&&health.status!=='healthy')fail('health_failed');
   };
-  await productionMetaTransaction({before,after,saveSnapshot,read:()=>privateFile(ENV,owner).text,write,restart,verify,verifyRollback:verify});
+  await productionMetaTransaction({before,after,saveSnapshot,read:()=>privateFile(ENV,owner).text,write,restart,verify:()=>verify(desired),verifyRollback:()=>verify(values)});
   console.log('PRODUCTION_META_CONFIGURATION=PASS');
   console.log(`PRODUCTION_META_READINESS=${JSON.stringify(productionMetaReadiness(desired))}`);
 }
 function lstatExists(p){try{return Boolean(lstatSync(p));}catch{return false;}}
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   try{await runProductionMeta(process.argv[2]);}catch(error){
-    const allowed=['control_binding','target_binding','app_origin_mismatch','database_target_mismatch','environment_target_mismatch','process_environment_mismatch','process_release_mismatch','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed','app_secret_identity_invalid'];
+    const allowed=['control_binding','target_binding','app_origin_mismatch','database_target_mismatch','environment_target_mismatch','process_environment_mismatch','process_release_mismatch','startup_environment_conflict','startup_release_conflict','app_conflict','private_file_invalid','private_file_changed','release_link_mismatch','unmanaged_env_override','environment_link_mismatch','pm2_missing','process_contract','inherited_configuration_conflict','live_release_mismatch','secret_alias_conflict','token_inventory_invalid','input_invalid','existing_tokens_require_key_recovery','configuration_incomplete','subscription_conflict','provider_request_failed','host_command_failed','unrelated_process_drift','support_drift','health_failed','app_secret_identity_invalid'];
     console.error('PRODUCTION_META_CONFIGURATION=FAIL');console.error('PRODUCTION_META_CODE='+ (allowed.includes(error.message)?error.message:'operation_failed'));process.exitCode=1;
   }
 }
