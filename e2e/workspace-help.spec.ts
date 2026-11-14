@@ -25,7 +25,7 @@ test('dashboard Help uses real shell CSS, fits viewport, scrolls and retries dis
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  const log=page.getByRole('log',{name:'Gesprächsverlauf'});
  expect(await log.evaluate(el=>el.scrollHeight>el.clientHeight)).toBe(true);
- await log.focus();await log.press('End');expect(await log.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+ await log.focus();await log.press('End');await expect.poll(()=>log.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
  await page.getByRole('textbox',{name:'Deine Frage'}).fill('Neutrale Testfrage');
  await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();
  await expect(page.getByText('Synthetische gespeicherte Antwort')).toBeAttached();
