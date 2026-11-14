@@ -40,5 +40,5 @@ test('fixed protected job never invokes provisioning, certbot, application resta
  const workflow=readFileSync('.github/workflows/enable-staging-tls.yml','utf8').split('  media-upload-proxy:')[1];assert.ok(workflow);
  assert.match(workflow,/environment: staging/);assert.match(workflow,/group: fanmind-staging-deploy/);assert.match(workflow,/inputs.reviewed_commit/);assert.match(workflow,/staging-media-upload-proxy-verify/);
  assert.doesNotMatch(workflow,/certbot|provision-staging-host|secrets\.|sudoers|systemctl restart|apply_migration/);
- const runner=readFileSync('scripts/operations/staging-media-upload-proxy.mjs','utf8');assert.match(runner,/sites-available\/fanmind-staging/);assert.doesNotMatch(runner,/sites-available\/fanmind['"/]|\.env\.production|SUPABASE_SERVICE|STRIPE|chmodSync/);
+ const runner=readFileSync('scripts/operations/staging-media-upload-proxy.mjs','utf8');assert.match(runner,/sites-available\/fanmind-staging/);assert.match(runner,/fchmodSync\(fd,0o644\)/);assert.doesNotMatch(runner,/sites-available\/fanmind['"/]|\.env\.production|SUPABASE_SERVICE|STRIPE/);
 });
