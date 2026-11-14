@@ -102,6 +102,7 @@ async function prepareSupportFlow(page: Page, mode: RepairMode) {
 
   const panel = page.locator("#fanmind-inapp-help-panel");
   await expect(panel).toBeVisible();
+  await panel.getByText("Kanäle und Verbindungsstatus", {exact:true}).click();
   await expect(
     panel.getByText("Instagram", { exact: true }),
   ).toBeVisible();

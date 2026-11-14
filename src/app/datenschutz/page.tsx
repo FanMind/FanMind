@@ -351,6 +351,17 @@ const sections: PrivacySection[] = [
           jederzeit beenden, indem du keine neue Frage sendest oder ein neues Gespräch beginnst.
         </p>
         <p>
+          Im angemeldeten Dashboard ist die KI-Beantwortung im Support zunächst ausgeschaltet.
+          Nur nach deiner gesonderten Zustimmung werden die aktuelle Supportfrage und die letzten
+          zwei eigenen Supportfragen mit Antworten an OpenAI übermittelt. Dafür werden keine
+          CRM-Daten automatisch abgefragt und keine Konto- oder Workspace-Kennungen an das
+          KI-Modell übermittelt. Ohne diese Zustimmung bleibt die freigegebene lokale Wissensbasis
+          nutzbar. Die Einwilligung lässt sich im Hilfe-Panel widerrufen und wird nach Neuladen,
+          Kontowechsel oder Schließen des Panels erneut abgefragt. Bereits gespeicherte
+          Supportnachrichten unterliegen weiterhin den unten beschriebenen Export- und Löschregeln.
+          Technische Nutzungs- und Kostenzähler enthalten keine Nachrichtentexte.
+        </p>
+        <p>
           Der OpenAI API-Key wird nur serverseitig verwendet und darf niemals im Browser erscheinen.
           Produktive KI-Anfragen verwenden <code>store: false</code>. Eingabelängen werden
           begrenzt. KI-Funktionen liefern Vorschläge, Entwürfe,

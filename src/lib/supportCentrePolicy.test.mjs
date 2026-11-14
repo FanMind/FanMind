@@ -7,7 +7,7 @@ import * as http from "./httpMutationPolicy.mjs";
 function load(file, dependencies = {}) {
   const exports = {};
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: name => { if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder });
+    { exports, require: name => { if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder, Headers, URL });
   return exports;
 }
 const { isSupportCase, supportCaseNeedsAttention, performSupportDecision } = load("src/lib/supportCentrePolicy.ts");
@@ -120,4 +120,41 @@ test('Support POST routes accept the configured HTTPS origin behind an internal 
   assert.equal((await exports.POST(request('https://staging.fanmind.ch'))).status,expected,path);
   for(const [origin,site] of [[null,'same-origin'],['https://foreign.invalid','same-origin'],['https://staging.fanmind.ch','cross-site']])assert.equal((await exports.POST(request(origin,site))).status,403,path);
  }
+});
+
+
+test("authenticated AI Support reuses the public guarded pipeline only after consent and identity checks",async()=>{
+ const policy=await import('./publicSupportPolicy.mjs');
+ let identity={actor:id,workspace,scope:"bound"},enabled=true,allowed=true,modelCalls=0,writes=0,providerStatus=200,reply="Synthetische KI-Antwort",changeIdentity=false,abort;
+ let retained=Array.from({length:3},(_,i)=>({request_id:`previous-${i}`,question:`own-question-${i}`,answer:`own-answer-${i}`,unanswered:false}));
+ let forwarded;
+ const {POST}=load("src/app/api/support/conversation/route.ts",{
+  "next/server":{NextRequest:Request,NextResponse:{json:(body,options={})=>({body,status:options.status??200})}},
+  "@/lib/supportContinuityServer":{supportCustomer:async()=>identity,readSupportConversation:async target=>{assert.equal(target.actor,id);assert.equal(target.workspace,workspace);return retained;}},
+  "@/lib/supportCentreServer":{supportCentreEnabled:()=>enabled,supportCentreDatabase:async(_,body)=>{assert.equal(body.p_actor,id);assert.equal(body.p_workspace,workspace);writes++;retained=[...retained,{request_id:body.p_request,question:body.p_question,answer:body.p_answer,unanswered:body.p_unanswered}];}},
+  "@/lib/supportCentreRequest":load("src/lib/supportCentreRequest.ts"),"@/lib/supportCentrePolicy":load("src/lib/supportCentrePolicy.ts"),
+  "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed})},"@/lib/supportKnowledge":{supportAnswer:()=>({answer:"approved local knowledge",unanswered:false})},
+  "@/lib/publicSupportPolicy.mjs":policy,
+  "../../public-support/route":{POST:async request=>{modelCalls++;forwarded=await request.json();if(changeIdentity)identity={...identity,scope:"foreign"};abort?.();return new Response(JSON.stringify({reply}),{status:providerStatus,headers:{'Content-Type':'application/json'}});}},
+ });
+ const request=(body,origin="https://example.test",signal)=>new Request("https://example.test/api/support/conversation",{method:"POST",headers:{origin,'content-type':'application/json'},body:JSON.stringify(body),signal});
+ const message={requestId:id,scope:"bound",question:"How do I review an answer?",context:"dashboard",aiConsent:true};
+ assert.equal((await POST(request({...message,scope:"foreign"}))).status,409);
+ assert.equal((await POST(request(message,"https://evil.invalid"))).status,403);
+ assert.equal((await POST(request({...message,aiConsent:"true"}))).status,400);
+ allowed=false;assert.equal((await POST(request(message))).status,429);allowed=true;
+ assert.equal(modelCalls,0);assert.equal(writes,0);
+ const ok=await POST(request(message));assert.equal(ok.status,200);assert.equal(ok.body.answerMode,"ai");assert.equal(modelCalls,1);assert.equal(writes,1);
+ assert.equal(forwarded.consent,true);assert.equal(forwarded.question,message.question);assert.equal(forwarded.history.length,4);assert.equal(forwarded.history[0].text,'own-question-1');
+ assert.deepEqual(Object.keys(forwarded).sort(),['consent','history','language','question']);
+ const replay=await POST(request(message));assert.equal(replay.body.answerMode,'stored');assert.equal(modelCalls,1);assert.equal(writes,1);
+ retained=[];
+ providerStatus=503;assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
+ providerStatus=429;assert.equal((await POST(request(message))).status,429);assert.equal(writes,1);
+ providerStatus=200;reply='x'.repeat(2001);assert.equal((await POST(request(message))).status,503);assert.equal(writes,1);
+ reply='bounded';changeIdentity=true;assert.equal((await POST(request(message))).status,409);assert.equal(writes,1);
+ identity={actor:id,workspace,scope:"bound"};changeIdentity=false;const controller=new AbortController();abort=()=>controller.abort();assert.equal((await POST(request(message,'https://example.test',controller.signal))).status,503);assert.equal(writes,1);abort=undefined;
+ const before=modelCalls;assert.equal((await POST(request({...message,aiConsent:false}))).body.answerMode,'knowledge');assert.equal(modelCalls,before);
+ retained=[];assert.equal((await POST(request({...message,question:'What is the price?'}))).body.answerMode,'knowledge');assert.equal(modelCalls,before);
+ identity=null;assert.equal((await POST(request(message))).status,401);enabled=false;assert.equal((await POST(request(message))).status,404);assert.equal(modelCalls,before);
 });

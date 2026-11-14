@@ -1,0 +1,97 @@
+# Dashboard Support repair — 14 November 2026
+
+Issue #1350; explicit Owner authorization covers correction, checked merge,
+protected Staging/Production rollout and synthetic browser acceptance.
+
+## Reproduction and cause
+
+- PASS: actual authenticated Production `/dashboard`, normal Creator account,
+  Help opened. Runtime independently read as
+  `3af87d509e8ffdfc33b14b47f2983645c4ecd5b3`.
+- Main and Staging were independently confirmed at
+  `f8a3737f9a47430e9c97ad76c7a483ae84f31fc8`. Latest observed Staging deploy
+  succeeded; no active deployment appeared in the fresh Actions list.
+- PASS: computed DOM panel width 340px, white background, `max-height:none`,
+  `overflow:visible`. Buttons/textarea had zero padding, browser dark native
+  backgrounds and inherited light text; global reset removes all spacing.
+  Neither component had a stylesheet. This is missing component styling and
+  viewport constraints, not a missing Tailwind build or an OAuth fault.
+- PASS: live authenticated `/api/support/diagnostics` returned
+  `{"error":"not_available"}`. The route emits this exact branch at HTTP404
+  before auth/database access when its diagnostics switch is not true.
+  The old UI collapsed a deliberately disabled capability into a transient
+  account-check warning. No session or permission is relaxed by this repair.
+
+## Changes and boundaries
+
+Scoped shell-token CSS, bounded responsive panel and conversation scrolling,
+readable controls, 44px touch targets, keyboard focus/return and Escape.
+Channel checks and own-data/handoff controls remain available in named details.
+Disabled diagnostics and transport failures have separate nonblocking text and
+an explicit retry. Existing API authorization, identity revalidation,
+idempotent request IDs, privacy preview/confirmation and handoff remain intact.
+No flags, SQL, Retention, provider, Billing, Social or Adminchat settings change.
+
+The existing authenticated `/api/support/conversation` uses `supportAnswer`
+from approved local product knowledge. It does **not** call a model; the public
+support endpoint does. A stored authenticated reply must not be reported as an
+actual model answer. This UI repair does not silently introduce new customer
+content disclosure/provider processing or claim complete AI parity.
+
+No registered API/schema/AI contract is changed. The affected consumers are
+WorkspaceHelpLauncher and SupportConversation; public support and OwnerInbox
+are regression consumers. Existing privacy scope boundaries remain unchanged.
+
+## Validation and rollout status at source preparation
+
+- PASS: webpack production build including TypeScript.
+- PASS: 22 Support Centre/rollout/auth/privacy unit and route tests.
+- PASS: God Mode structural preflight; existing conservative unsigned release
+  decision stays BLOCK and is not rewritten into authorization.
+- Browser regression: pending final CI, using actual shell/reset CSS and actual
+  mounted components on desktop/mobile. Coverage includes scroll geometry,
+  diagnostics disabled/retry, send/persist/reopen, focus and privacy regression.
+- Staging/Production rollout and actual dashboard acceptance: NOT_TESTED on
+  this candidate until the protected release and live-version checks finish.
+- Actual authenticated model answer: NOT_TESTED; existing endpoint is knowledge
+  based as stated above. Do not close the full requested acceptance on that basis.
+
+## Visual countercheck follow-up
+
+Hosted run43584716588 passed102/102 browser cases (plus6/6 core and47/47
+ChatAdmin component regressions). Its actual desktop/mobile screenshots revealed
+that expanded diagnostics plus long history could still move the composer below
+the body viewport. The composer is now outside the scrolling information body;
+the same component retains all privacy/identity logic. New geometry assertions
+require both input and send control inside the viewport after expansion. These
+changed bytes require fresh final-head CI; the earlier green run is historical.
+
+## Explicit AI acceptance gap correction
+
+The initial finding above describes the old endpoint. The same existing
+conversation route now accepts only a strict optional aiConsent boolean. Without
+consent it retains local knowledge; with consent it delegates to the existing
+public Support handler after auth/scope/Origin/length/rate checks. Pricing stays
+catalogue-only. It forwards only current question plus last two own retained
+Support turns (at most four history contributions,6000characters), never actor,
+Workspace or CRM metadata to the model. Existing owner-bound operational usage
+attribution and provider/model keys, public knowledge/output guard, store:false,
+provider timeout and shared global/IP cost controls are reused, not duplicated.
+The already authorized existing Production provider was independently verified
+with one neutral public test answer; no key was read, replaced or created.
+
+A retained request ID returns its stored result without a new model call.
+Provider/rate/invalid-output/cancellation or identity-change failures never save
+an invented response. Concurrent duplicate generation is still bounded by the
+existing rate controls; SQL remains the idempotent persistence boundary.
+Client opt-in is initially false, can be withdrawn during pending work and is
+reset across panel/account/focus lifecycle. Withdrawal cancels the request and
+suppresses late UI results and future AI retry. It cannot undo a provider request
+already processed while consent was valid. Existing own-data deletion remains a
+separate explicit confirmation. Privacy disclosure updated in the same change.
+
+Actual-route negative test covers no consent, bad consent type, wrong Origin,
+foreign scope, missing auth, rate denial, provider errors, oversize reply,
+identity change, cancellation and stored retry. Actual-component browser tests
+cover default-off, opt-in, withdrawal and late-answer suppression. New source
+requires fresh final-head CI and actual Staging/Production model acceptance.

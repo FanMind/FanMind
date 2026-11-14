@@ -3,6 +3,7 @@ import {supportClientBundle} from "./support-client-bundle.mts";
 async function mount(page:Page,kind="chat"){
  await page.goto("/support");await page.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px sans-serif;margin:12px}section{max-width:620px;overflow-wrap:anywhere}textarea{display:block;max-width:100%;min-height:70px}button{min-height:44px;margin:4px}</style><div id="support-fixture"></div>');
  await page.evaluate(kind=>{(window as Window & {supportFixture?:string}).supportFixture=kind;},kind);await page.addScriptTag({content:await supportClientBundle()});
+ if(kind==="chat")await page.getByText("Datenschutz und Support-Übergabe",{exact:true}).click();
 }
 test("authenticated support restores persisted turns, retries the same request and clears a changed account",async({page})=>{
  let scope="scope-a",first=true;const ids:string[]=[];let turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
@@ -96,4 +97,30 @@ test("own support export downloads retained data and confirmed erasure submits t
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Eigene Supportdaten herunterladen'}).click();const artifact=await download;expect(artifact.suggestedFilename()).toBe('fanmind-support-data.json');
  const stream=await artifact.createReadStream();let content='';for await(const chunk of stream!)content+=chunk.toString();expect(JSON.parse(content)).toEqual({scope:'scope-a',turns});
  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Eigenen Supportverlauf löschen'}).click();await expect(page.getByText('Synthetic own question',{exact:false})).toHaveCount(0);await expect.poll(()=>submissions).toBe(1);await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();
+});
+
+
+test("authenticated AI requires opt-in, supports withdrawal and suppresses a late answer",async({page})=>{
+ let turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
+ const posts:Array<{aiConsent:boolean;question:string}>=[];
+ let late=false,release:()=>void=()=>{},started=false;
+ const gate=new Promise<void>(resolve=>{release=resolve;});
+ await page.route('**/api/support/conversation',async route=>{
+  if(route.request().method()==='POST'){
+   const body=route.request().postDataJSON();posts.push(body);
+   if(late){started=true;await gate;await route.fulfill({json:{scope:'scope-a',turns:[{request_id:body.requestId,question:body.question,answer:'Late AI answer must stay hidden',unanswered:false}],answerMode:'ai'}}).catch(()=>{});return;}
+   turns=[...turns,{request_id:body.requestId,question:body.question,answer:body.aiConsent?'Consented synthetic AI answer':'Approved knowledge',unanswered:false}];
+   await route.fulfill({json:{scope:'scope-a',turns,answerMode:body.aiConsent?'ai':'knowledge'}});return;
+  }
+  await route.fulfill({json:{scope:'scope-a',turns}});
+ });
+ await mount(page);
+ const consent=page.getByRole('checkbox',{name:'KI-Antworten mit OpenAI erlauben',exact:true});await expect(consent).not.toBeChecked();
+ await page.getByRole('textbox',{name:'Deine Frage'}).fill('Knowledge question');await page.getByRole('button',{name:'Speichern und senden',exact:true}).click();await expect(page.getByText('Approved knowledge',{exact:false})).toBeVisible();expect(posts[0].aiConsent).toBe(false);
+ await consent.check();await page.getByRole('textbox',{name:'Deine Frage'}).fill('Consented AI question');await page.getByRole('button',{name:'Speichern und KI fragen',exact:true}).click();await expect(page.getByText('KI-Antwort gespeichert.',{exact:false})).toBeVisible();expect(posts[1].aiConsent).toBe(true);
+ late=true;await page.getByRole('textbox',{name:'Deine Frage'}).fill('Pending AI question');await page.getByRole('button',{name:'Speichern und KI fragen',exact:true}).click();await expect.poll(()=>started).toBe(true);
+ await consent.uncheck();release();await expect(page.getByRole('textbox',{name:'Deine Frage'})).toBeEnabled();await expect(page.getByText('Late AI answer must stay hidden',{exact:false})).toHaveCount(0);await expect(consent).not.toBeChecked();
+ expect(posts).toHaveLength(3);
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(consent).not.toBeChecked();
+ await expect(page.getByRole('button',{name:'Mit gleicher Anfrage erneut versuchen'})).toHaveCount(0);
 });
