@@ -227,6 +227,7 @@ function finish_server() {
         invalid_whatsapp_locations == 0 &&
         server_request_flow_directives == 0) {
       valid_tls_servers += 1
+      valid_tls_server_end = NR
     }
   }
 
@@ -412,6 +413,7 @@ END {
       global_whatsapp_path_locations != 1) {
     print "invalid"
   } else {
-    print "valid"
+    if (output_mode == "media_end_line") print valid_tls_server_end
+    else print "valid"
   }
 }

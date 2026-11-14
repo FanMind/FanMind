@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
 import * as mediaCatalogue from "../src/lib/chatAdminMediaCatalogue.mjs";
 import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import ts from "typescript";
@@ -28,6 +29,7 @@ function loadClient() {
     }
     if(name === "@/lib/chatAdminMixer.mjs")return mixerPolicy;
     if(name === "./CharacterMixer"){const m={exports:{}};const c=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMixer.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",c)(m,m.exports,localRequire);return m.exports;}
+    if(name === "@/lib/chatAdminMediaPolicy.mjs") return mediaPolicy;
     if(name === "@/lib/chatAdminMediaCatalogue.mjs") return mediaCatalogue;
     if(name === "./CharacterMediaCatalogueControls"){const controls={exports:{}};const code=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",code)(controls,controls.exports,localRequire);return controls.exports;}
     if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;

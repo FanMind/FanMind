@@ -1,3 +1,16 @@
+## Adminchat #1425: folder actions and upload failures — 14 November 2026
+
+Source correction retains the confirmed empty-only folder deletion and shows
+direct files, child folders and ancestor/back navigation. Bounded upload encoding
+validation avoids regexp stack overflow at permitted file sizes; safe HTTP
+failure details and retry state are retained. The Staging nginx source keeps its
+2-MB generic limit and adds bounded exact media-route limits. Its existing TLS
+maintenance workflow gains separate reviewed-Main/Owner/protected-Staging proxy
+verify/apply actions with exact live binding, byte-preserving rollback and no
+certificate provisioning. A normal Web deploy never applies this host repair.
+No schema, grants, provider, Billing or Production change. Actual Staging media
+lifecycle acceptance remains distinct and pending.
+
 ## Support1350: Capacity installation prerequisite — source preparation
 
 The Owner-authorized prerequisite prepares the missing canonical entitlement writer
