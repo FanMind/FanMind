@@ -53,7 +53,12 @@ function protectedConfig(){
 function replace(source){const path=CONFIG+'.media-'+randomBytes(12).toString('hex');let fd;try{fd=openSync(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);writeFileSync(fd,source);fchmodSync(fd,0o644);fsyncSync(fd);closeSync(fd);fd=undefined;renameSync(path,CONFIG);}finally{if(fd!==undefined)closeSync(fd);try{unlinkSync(path);}catch{}}}
 function selectTlsEnd(source){
  const text=command('/usr/bin/awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode=media_end_line','-f',fileURLToPath(new URL('./verify-staging-nginx-whatsapp-boundary.awk',import.meta.url))],source).trim();
- if(!/^[1-9][0-9]*$/u.test(text))fail('proxy_tls_boundary');return Number(text);
+ if(!/^[1-9][0-9]*$/u.test(text)){
+  const diagnostic=command('/usr/bin/awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode=media_diagnostic','-f',fileURLToPath(new URL('./verify-staging-nginx-whatsapp-boundary.awk',import.meta.url))],source).trim().split('\n')[0];
+  if(/^[a-z_]+=[0-9]+(?:[,;][a-z_]+=[0-9]+)*$/u.test(diagnostic)&&diagnostic.length<1024)console.log('STAGING_MEDIA_UPLOAD_PROXY_TLS_DIAGNOSTIC='+diagnostic);
+  fail('proxy_tls_boundary');
+ }
+ return Number(text);
 }
 async function live(sha){const r=await fetch(ORIGIN+'/api/version',{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('proxy_release');const v=await r.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==sha)fail('proxy_release');}
 async function transport(){
