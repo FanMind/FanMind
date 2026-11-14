@@ -81,7 +81,7 @@ begin
  allowed:=s->>'status'='active' and ws.billing_status='active' and ws.workspace_access_mode='active' and ws.billing_suspended_at is null
  and s->'latestInvoice'->>'status'='paid' and (s->'latestInvoice'->>'amountRemaining')::bigint=0
  and start_at<=clock_timestamp() and end_at>clock_timestamp() and not stream.lifecycle_terminal;
- period:=encode(sha256(convert_to(jsonb_build_array(w,r.stripe_subscription_id,mapping.price_id,start_at,end_at)::text,'UTF8')),'hex');
+ period:=encode(sha256(convert_to(jsonb_build_array(w,r.stripe_subscription_id,mapping.price_id,extract(epoch from start_at)::bigint,extract(epoch from end_at)::bigint)::text,'UTF8')),'hex');
  fingerprint:=encode(sha256(convert_to(jsonb_build_array(envelope_hash,mapping.mapping_revision,mapping.package_id,period,allowed)::text,'UTF8')),'hex');
  result:=fanmind_capacity_private.write_entitlement(w,mapping.package_id,period,start_at,end_at,p_expected_revision,coalesce(allowed,false),fingerprint);
  return result;

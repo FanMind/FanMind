@@ -93,7 +93,7 @@ export async function exerciseCapacityInstall({sql,select,context}){
  insert into public.workspace_stripe_billing_reconciliations values(${literal(s.requestId)},'${wC}','lifecycle',${literal(s.customerId)},${literal(s.subscriptionId)},${literal(s.observedAt)},${literal(c.p_snapshot_fingerprint)},0,1);
  insert into fanmind_capacity_private.package_prices values(${literal(s.basePriceId)},'capacity_99',1,true);`;
   sql(`begin;${setup} set local role service_role;set local "request.jwt.claim.role"='service_role';
- DO $$declare rejected boolean:=false;begin if ${call}<>1 or ${call}<>1 then raise exception 'writer_replay_invalid';end if;
+ DO $$declare rejected boolean:=false;begin perform set_config('TimeZone','UTC',true);if ${call}<>1 or ${call}<>1 then raise exception 'writer_replay_invalid';end if;perform set_config('TimeZone','America/Los_Angeles',true);if ${call}<>1 then raise exception 'writer_timezone_replay_invalid';end if;
  begin perform public.sync_ai_capacity_entitlement(${literal(b.p_snapshot)},${literal(b.p_envelope)},1);exception when others then if SQLERRM<>'capacity_writer_replay_conflict' then raise;end if;rejected:=true;end;
  if not rejected then raise exception 'writer_cas_accepted';end if;end$$;reset role;
  update public.workspaces set billing_status='suspended' where id='${wC}';
