@@ -391,17 +391,22 @@ export async function subscribeInstagramAccount(
   if (connectionType === "instagram_insights") return false;
   const requestedField =
     connectionType === "instagram_comments" ? "comments" : "messages";
-  const currentFields = await fetchInstagramSubscribedFields(
+  const unified = instagramUnifiedEnabled(process.env);
+  const currentFields = unified ? [] : await fetchInstagramSubscribedFields(
     profileId,
     accessToken,
   );
-  const subscribedFields = instagramUnifiedEnabled(process.env) ? [...UNIFIED_FIELDS] : [...new Set([...currentFields, requestedField])];
+  const subscribedFields = unified ? [...UNIFIED_FIELDS] : [...new Set([...currentFields, requestedField])];
   const url = new URL(
     `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/subscribed_apps`,
   );
-  url.searchParams.set("subscribed_fields", subscribedFields.join(","));
-  url.searchParams.set("access_token", accessToken);
-  const response = await fetch(url, { method: "POST", cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
+  if (!unified) {
+    url.searchParams.set("subscribed_fields", subscribedFields.join(","));
+    url.searchParams.set("access_token", accessToken);
+  }
+  const response = await fetch(url, { method: "POST", ...(unified ? {
+    body: new URLSearchParams({subscribed_fields:subscribedFields.join(","),access_token:accessToken}),
+  } : {}), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   const payload = (await response.json().catch(() => null)) as {
     success?: boolean;
     error?: { message?: string; code?: number; type?: string };
@@ -455,7 +460,13 @@ export async function fetchInstagramSubscribedFields(
 function instagramSubscriptionFailure(phase: "get" | "post", status: number, payload: unknown) {
   const error = isRecord(payload) ? payload.error : null;
   const code = sanitizeMetaProviderError(error).code;
-  return new Error(`instagram_subscription_${phase}_http_${status}_code_${code ?? "none"}`);
+  const subcode = isRecord(error) && Number.isSafeInteger(error.error_subcode) &&
+    (error.error_subcode as number) >= 0 && (error.error_subcode as number) <= 999_999_999 ? error.error_subcode : "none";
+  const message = isRecord(error) && typeof error.message === "string" ? error.message.slice(0,2048) : "";
+  const reason = /nonexisting field|non-existing field/iu.test(message) ? "field_unavailable" :
+    /unsupported (get|post) request|object .*does not exist/iu.test(message) ? "object_unavailable" :
+    code === 200 || code === 10 ? "permission_denied" : "other";
+  return new Error(`instagram_subscription_${phase}_http_${status}_code_${code ?? "none"}_subcode_${subcode}_reason_${reason}`);
 }
 
 export function isInstagramOAuthConfigured(): boolean {

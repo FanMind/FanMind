@@ -107,7 +107,7 @@ test('actual subscription refuses another app readback despite successful POST',
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),false);assert.equal(posts,1);
 });
 test('actual subscription confirms both exact-app fields after POST',async()=>{
- let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}assert.equal(new URL(url).searchParams.has('fields'),false);return Response.json({data:posts?[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]:[]});});
+ let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;assert.equal(new URL(url).search,'');assert.equal(options.body.get('subscribed_fields'),'messages,comments');assert.equal(options.body.get('access_token'),'synthetic');return Response.json({success:true});}assert.equal(posts,1);assert.equal(new URL(url).searchParams.has('fields'),false);return Response.json({data:[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]});});
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),true);assert.equal(posts,1);
 });
 test('Unified subscription failures retain only phase, HTTP status and bounded numeric provider code',async()=>{
@@ -116,8 +116,17 @@ test('Unified subscription failures retain only phase, HTTP status and bounded n
    if(phase==='post'&&options.method!=='POST')return Response.json({data:[]});
    return Response.json({error:{code,message:'PRIVATE_TOKEN PRIVATE_BODY',type:'PRIVATE_TYPE',access_token:'PRIVATE_TOKEN'}},{status});
   });
-  await assert.rejects(api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),error=>{
-   assert.equal(error.message,`instagram_subscription_${phase}_http_${status}_code_${expected}`);assert.doesNotMatch(error.message,/PRIVATE/u);return true;
+  await assert.rejects(phase==='get'?api.fetchInstagramSubscribedFields('12345678','synthetic'):api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),error=>{
+   const reason=code===200?'permission_denied':'other';
+   assert.equal(error.message,`instagram_subscription_${phase}_http_${status}_code_${expected}_subcode_none_reason_${reason}`);assert.doesNotMatch(error.message,/PRIVATE/u);return true;
+  });
+ }
+});
+test('Unified subscription diagnostic classifies only fixed causes and bounded subcodes',async()=>{
+ for(const [message,subcode,reason,expected] of [['Unsupported get request. PRIVATE_TOKEN',33,'object_unavailable','33'],['Tried accessing nonexisting field PRIVATE_TOKEN',2534018,'field_unavailable','2534018'],['PRIVATE_TOKEN',1000000000,'other','none'],['PRIVATE_TOKEN','PRIVATE_TOKEN','other','none']]){
+  const api=integration(async()=>Response.json({error:{code:100,error_subcode:subcode,message}},{status:400}));
+  await assert.rejects(api.fetchInstagramSubscribedFields('12345678','synthetic'),error=>{
+   assert.equal(error.message,`instagram_subscription_get_http_400_code_100_subcode_${expected}_reason_${reason}`);assert.doesNotMatch(error.message,/PRIVATE/u);return true;
   });
  }
 });
