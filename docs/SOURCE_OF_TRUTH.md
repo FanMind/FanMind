@@ -1,3 +1,14 @@
+## Meta App Review #1480: Behördenprozesse und Nachweise — 14 November 2026
+
+Documentation preparation only: the Owner authorized introducing the required
+procedures; exact legal/operator release and practical adoption remain pending.
+[Authority-request procedure](legal/AUTHORITY_REQUEST_PROCESS.md) reuses the
+existing legal/retention/evidence structure and includes a confidential register
+template. [Meta review readiness](operations/META_APP_REVIEW_READINESS_20261114.md)
+separates actual evidence from draft declarations, the historical disclosure
+question, API proof and screencasts. No questionnaire submission, provider call,
+permission, credential, runtime or Production change. Error100/33 remains open.
+
 ## Adminchat #1425: folder actions and upload failures — 14 November 2026
 
 Source correction retains the confirmed empty-only folder deletion and shows

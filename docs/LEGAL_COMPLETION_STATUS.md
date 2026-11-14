@@ -104,3 +104,15 @@ Vorbereitung und konkrete Restarbeiten: `docs/legal/COMMERCIAL_LAUNCH_REVIEW_202
 ## Stripe-Unternehmensdaten – 08.11.2026
 
 Steuernummer aus dem vorgelegten Nachweis im vorgesehenen Stripe-Steuerfeld gespeichert; nicht öffentlich im Impressum. UID amtlich bestätigt und separat gespeichert. Rechtsgültiger Unternehmensname, Supportadresse und Support-E-Mail korrigiert; Telefonnummer beibehalten. Der frühere Kontovertreter Bernd bleibt als verifizierte Einzelperson bestehen: vollständige rechtliche Identitätsberichtigung, Vollmacht und allfällige persönliche Prüfung sind noch offen. Stripe Tax hat weiterhin keine Registrierung; keine OSS- oder Steuerbefreiung abgeleitet. Aktuelle Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+## Meta-Review und Behördenanfragen — Ergänzung14.11.2026
+
+Die Einführung ist vom Owner beauftragt. Die genaue Fassung des
+[Behördenanfrageverfahrens](legal/AUTHORITY_REQUEST_PROCESS.md) samt
+[vertraulicher Registervorlage](legal/templates/AUTHORITY_REQUEST_REGISTER_TEMPLATE.md)
+ist ZUR FREIGABE VORBEREITET. Rechtsprüfung, Betreiberfreigabe, zugewiesene
+Vertretung, tatsächlich geschützter Fallraum/Transfer und praktische Einweisung
+sind noch nicht nachgewiesen. Keine Meta-Prozessbehauptung daraus ableiten.
+Das bestehende externe Register bleibt maßgeblich; keine offene Freigabe wurde
+umgestellt. Der historische Sicherheitsanfragen-Sachverhalt bleibt unbekannt.
+Reviewnachweise und Blocker: [Vorbereitung](operations/META_APP_REVIEW_READINESS_20261114.md).
