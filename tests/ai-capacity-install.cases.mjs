@@ -72,6 +72,7 @@ export async function exerciseCapacityInstall({sql,select,context}){
  const install=installSql(marker,reference);
  await context.test('unknown marker identity and partial schema block without modifications',()=>{
   assert.throws(()=>sql(installSql('0'.repeat(64),reference)));assert.equal(select("select to_regclass('public.ai_capacity_workspace_entitlements') is null;"),'t');
+  sql('alter table public.ai_capacity_admin_policy set unlogged;');assert.throws(()=>sql(install));sql('alter table public.ai_capacity_admin_policy set logged;');
   sql('create table public.ai_capacity_workspace_entitlements(x int);');assert.throws(()=>sql(install));sql('drop table public.ai_capacity_workspace_entitlements;');
  });
  await context.test('real postflight mutation rolls back DDL, ACL and defaults; valid transaction then installs',()=>{
@@ -116,6 +117,7 @@ test('Capacity installation and canonical Writer execute in the existing isolate
  const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID;assert.match(container??'',/^[a-f0-9]{12,64}$/u);
  const database='fanmind_capacity_install_ci';
  const query=(s,db=database)=>execFileSync('docker',['--host=unix:///var/run/docker.sock','exec','-i',container,'psql','-X','-qAt','-U','postgres','-d',db,'-v','ON_ERROR_STOP=1'],{input:s,encoding:'utf8',timeout:90000,maxBuffer:8*1024*1024,stdio:['pipe','pipe','pipe']}).trim();
+ query("do $$begin if not exists(select from pg_roles where rolname='anon') then create role anon nologin;end if;if not exists(select from pg_roles where rolname='authenticated') then create role authenticated nologin;end if;if not exists(select from pg_roles where rolname='service_role') then create role service_role nologin bypassrls;end if;end$$;",'postgres');
  query(`create database ${database};`,'postgres');
  try{await exerciseCapacityInstall({sql:query,select:query,context});}finally{query(`drop database ${database} with(force);`,'postgres');}
 });

@@ -23,7 +23,7 @@ export function backupReceipt(e,now=Date.now()){
 }
 export async function runInstallation(e=process.env){
  sourcePackage();installationRequest(e);
- const git=(args)=>{const r=spawnSync('git',args,{encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});if(r.status!==0)fail();return r.stdout.trim();};
+ const git=(args)=>{const r=spawnSync('git',args,{cwd:process.cwd(),env:{PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C',HOME:process.env.HOME,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'},encoding:'utf8',timeout:15000,stdio:['ignore','pipe','pipe']});if(r.status!==0)fail();return r.stdout.trim();};
  if(git(['rev-parse','HEAD'])!==e.GITHUB_SHA||git(['status','--porcelain','--untracked-files=normal']))fail();
  if(git(['ls-remote','origin','refs/heads/main']).split(/\s/u)[0]!==e.GITHUB_SHA)fail();
  const live=async()=>{const r=await fetch('https://staging.fanmind.ch/api/version',{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)fail();const v=await r.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==e.EXPECTED_LIVE)fail();};

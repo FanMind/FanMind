@@ -1,7 +1,7 @@
 {
   "version": 1,
   "origin": "isolated-postgresql-17.11-source-reconciliation-no-target",
-  "catalogue_sha256": "1e9e12a32a8c571b2964416b668be19ae47a152bb4325dd0bfb6d2db269d71cc",
+  "catalogue_sha256": "9f6e390059e024d628743454dc4e5006a883b427ec525b543c745327e8d0e030",
   "catalogue": {
     "triggers": [
       [
@@ -144,7 +144,7 @@
         "name": "sync_ai_capacity_entitlement",
         "owner": "postgres",
         "schema": "public",
-        "definition": "CREATE OR REPLACE FUNCTION public.sync_ai_capacity_entitlement(p_snapshot text, p_envelope text, p_expected_revision bigint)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare s jsonb; e jsonb; b jsonb; w uuid; r record; stream record; ws record; mapping record; item jsonb;\n snapshot_hash text; envelope_hash text; start_at timestamptz; end_at timestamptz; allowed boolean; period text; fingerprint text; result bigint;\nbegin\n if auth.role() is distinct from 'service_role' then raise exception 'ai_capacity_service_role_required'; end if;\n if p_snapshot is null or p_envelope is null or octet_length(p_snapshot)>65536 or octet_length(p_envelope)>65536 then raise exception 'capacity_writer_invalid'; end if;\n s:=p_snapshot::jsonb; e:=p_envelope::jsonb; b:=e->0;\n snapshot_hash:=encode(sha256(convert_to(p_snapshot,'UTF8')),'hex'); envelope_hash:=encode(sha256(convert_to(p_envelope,'UTF8')),'hex');\n if jsonb_typeof(s) is distinct from 'object' or jsonb_typeof(e) is distinct from 'array' or jsonb_array_length(e)<>2\n or e->>1 is distinct from snapshot_hash or b->>'p_event_stream' is distinct from 'lifecycle'\n or b->>'p_workspace_id' is distinct from s->>'workspaceId' or b->>'p_stripe_request_id' is distinct from s->>'requestId'\n or b->>'p_customer_id' is distinct from s->>'customerId' or b->>'p_subscription_id' is distinct from s->>'subscriptionId'\n or b->>'p_snapshot_observed_at' is distinct from s->>'observedAt' then raise exception 'capacity_writer_evidence_invalid'; end if;\n if exists(select from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('workspace_stripe_billing_reconciliations','workspace_stripe_billing_streams') and (not c.relrowsecurity or not c.relforcerowsecurity or c.relowner<>to_regrole('postgres') or exists(select from unnest(array['anon','authenticated','service_role']) role_name where has_table_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))) then raise exception 'capacity_writer_billing_boundary_invalid';end if;\n w:=(s->>'workspaceId')::uuid;\n perform pg_advisory_xact_lock(hashtextextended(w::text,41001));\n select * into r from public.workspace_stripe_billing_reconciliations where stripe_request_id=s->>'requestId' and workspace_id=w and event_stream='lifecycle' for share;\n if not found or r.snapshot_fingerprint<>envelope_hash or r.stripe_customer_id is distinct from s->>'customerId'\n or r.stripe_subscription_id is distinct from s->>'subscriptionId' or r.expected_revision is distinct from (b->>'p_expected_revision')::bigint\n or r.snapshot_observed_at is distinct from (s->>'observedAt')::timestamptz then raise exception 'capacity_writer_receipt_missing'; end if;\n select * into stream from public.workspace_stripe_billing_streams where workspace_id=w and event_stream='lifecycle' for share;\n if not found or stream.sync_state<>'in_sync' or stream.projection_revision<>r.resulting_revision\n or stream.stripe_customer_id is distinct from r.stripe_customer_id or stream.stripe_subscription_id is distinct from r.stripe_subscription_id\n then raise exception 'capacity_writer_billing_changed'; end if;\n if r.snapshot_observed_at<clock_timestamp()-interval '15 minutes' or r.snapshot_observed_at>clock_timestamp() then raise exception 'capacity_writer_snapshot_expired'; end if;\n select * into ws from public.workspaces where id=w for share;\n if not found or ws.stripe_customer_id is distinct from r.stripe_customer_id or ws.stripe_subscription_id is distinct from r.stripe_subscription_id\n or ws.billing_status is distinct from b->'p_projection'->>'billing_status' or ws.workspace_access_mode is distinct from b->'p_projection'->>'workspace_access_mode'\n then raise exception 'capacity_writer_workspace_changed'; end if;\n select * into mapping from fanmind_capacity_private.package_prices where price_id=s->>'basePriceId' and active for share;\n if not found then raise exception 'capacity_writer_mapping_missing'; end if;\n if jsonb_typeof(s->'items') is distinct from 'array' or (select count(*) from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id)<>1 then raise exception 'capacity_writer_period_invalid'; end if;\n select x into item from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id;\n start_at:=to_timestamp((item->>'start')::bigint); end_at:=to_timestamp((item->>'end')::bigint);\n if start_at>=end_at or end_at is distinct from ws.billing_current_period_end_at then raise exception 'capacity_writer_period_invalid'; end if;\n allowed:=s->>'status'='active' and ws.billing_status='active' and ws.workspace_access_mode='active' and ws.billing_suspended_at is null\n and s->'latestInvoice'->>'status'='paid' and (s->'latestInvoice'->>'amountRemaining')::bigint=0\n and start_at<=clock_timestamp() and end_at>clock_timestamp() and not stream.lifecycle_terminal;\n period:=encode(sha256(convert_to(jsonb_build_array(w,r.stripe_subscription_id,mapping.price_id,start_at,end_at)::text,'UTF8')),'hex');\n fingerprint:=encode(sha256(convert_to(jsonb_build_array(envelope_hash,mapping.mapping_revision,mapping.package_id,period,allowed)::text,'UTF8')),'hex');\n result:=fanmind_capacity_private.write_entitlement(w,mapping.package_id,period,start_at,end_at,p_expected_revision,coalesce(allowed,false),fingerprint);\n return result;\nend $function$\n"
+        "definition": "CREATE OR REPLACE FUNCTION public.sync_ai_capacity_entitlement(p_snapshot text, p_envelope text, p_expected_revision bigint)\n RETURNS bigint\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare s jsonb; e jsonb; b jsonb; w uuid; r record; stream record; ws record; mapping record; item jsonb;\n snapshot_hash text; envelope_hash text; start_at timestamptz; end_at timestamptz; allowed boolean; period text; fingerprint text; result bigint;\nbegin\n if auth.role() is distinct from 'service_role' then raise exception 'ai_capacity_service_role_required'; end if;\n if p_snapshot is null or p_envelope is null or octet_length(p_snapshot)>65536 or octet_length(p_envelope)>65536 then raise exception 'capacity_writer_invalid'; end if;\n s:=p_snapshot::jsonb; e:=p_envelope::jsonb; b:=e->0;\n snapshot_hash:=encode(sha256(convert_to(p_snapshot,'UTF8')),'hex'); envelope_hash:=encode(sha256(convert_to(p_envelope,'UTF8')),'hex');\n if jsonb_typeof(s) is distinct from 'object' or jsonb_typeof(e) is distinct from 'array' or jsonb_array_length(e)<>2\n or e->>1 is distinct from snapshot_hash or b->>'p_event_stream' is distinct from 'lifecycle'\n or b->>'p_workspace_id' is distinct from s->>'workspaceId' or b->>'p_stripe_request_id' is distinct from s->>'requestId'\n or b->>'p_customer_id' is distinct from s->>'customerId' or b->>'p_subscription_id' is distinct from s->>'subscriptionId'\n or b->>'p_snapshot_observed_at' is distinct from s->>'observedAt' then raise exception 'capacity_writer_evidence_invalid'; end if;\n if exists(select from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relname in ('workspace_stripe_billing_reconciliations','workspace_stripe_billing_streams') and (not c.relrowsecurity or not c.relforcerowsecurity or c.relowner<>to_regrole('postgres') or exists(select from unnest(array['anon','authenticated','service_role']) role_name where has_table_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,DELETE') or has_any_column_privilege(role_name,c.oid,'SELECT,INSERT,UPDATE,REFERENCES')))) then raise exception 'capacity_writer_billing_boundary_invalid';end if;\n w:=(s->>'workspaceId')::uuid;\n perform pg_advisory_xact_lock(hashtextextended(w::text,41001));\n select * into r from public.workspace_stripe_billing_reconciliations where stripe_request_id=s->>'requestId' and workspace_id=w and event_stream='lifecycle' for share;\n if not found or r.snapshot_fingerprint is distinct from envelope_hash or r.stripe_customer_id is distinct from s->>'customerId'\n or r.stripe_subscription_id is distinct from s->>'subscriptionId' or r.expected_revision is distinct from (b->>'p_expected_revision')::bigint\n or r.snapshot_observed_at is distinct from (s->>'observedAt')::timestamptz then raise exception 'capacity_writer_receipt_missing'; end if;\n select * into stream from public.workspace_stripe_billing_streams where workspace_id=w and event_stream='lifecycle' for share;\n if not found or stream.sync_state is distinct from 'in_sync' or stream.projection_revision is distinct from r.resulting_revision\n or stream.stripe_customer_id is distinct from r.stripe_customer_id or stream.stripe_subscription_id is distinct from r.stripe_subscription_id\n then raise exception 'capacity_writer_billing_changed'; end if;\n if r.snapshot_observed_at<clock_timestamp()-interval '15 minutes' or r.snapshot_observed_at>clock_timestamp() then raise exception 'capacity_writer_snapshot_expired'; end if;\n select * into ws from public.workspaces where id=w for share;\n if not found or ws.stripe_customer_id is distinct from r.stripe_customer_id or ws.stripe_subscription_id is distinct from r.stripe_subscription_id\n or ws.billing_status is distinct from b->'p_projection'->>'billing_status' or ws.workspace_access_mode is distinct from b->'p_projection'->>'workspace_access_mode'\n then raise exception 'capacity_writer_workspace_changed'; end if;\n select * into mapping from fanmind_capacity_private.package_prices where price_id=s->>'basePriceId' and active for share;\n if not found then raise exception 'capacity_writer_mapping_missing'; end if;\n if jsonb_typeof(s->'items') is distinct from 'array' or (select count(*) from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id)<>1 then raise exception 'capacity_writer_period_invalid'; end if;\n select x into item from jsonb_array_elements(s->'items') x where x->>'priceId'=mapping.price_id;\n start_at:=to_timestamp((item->>'start')::bigint); end_at:=to_timestamp((item->>'end')::bigint);\n if start_at>=end_at or end_at is distinct from ws.billing_current_period_end_at then raise exception 'capacity_writer_period_invalid'; end if;\n allowed:=s->>'status'='active' and ws.billing_status='active' and ws.workspace_access_mode='active' and ws.billing_suspended_at is null\n and s->'latestInvoice'->>'status'='paid' and (s->'latestInvoice'->>'amountRemaining')::bigint=0\n and start_at<=clock_timestamp() and end_at>clock_timestamp() and not stream.lifecycle_terminal;\n period:=encode(sha256(convert_to(jsonb_build_array(w,r.stripe_subscription_id,mapping.price_id,start_at,end_at)::text,'UTF8')),'hex');\n fingerprint:=encode(sha256(convert_to(jsonb_build_array(envelope_hash,mapping.mapping_revision,mapping.package_id,period,allowed)::text,'UTF8')),'hex');\n result:=fanmind_capacity_private.write_entitlement(w,mapping.package_id,period,start_at,end_at,p_expected_revision,coalesce(allowed,false),fingerprint);\n return result;\nend $function$\n"
       }
     ],
     "relations": [
@@ -162,20 +162,29 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "package_id",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "mapping_revision",
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -183,6 +192,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -193,6 +205,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -215,7 +228,10 @@
             "CHECK (price_id ~ '^price_[A-Za-z0-9]+$'::text)",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -231,6 +247,9 @@
             "smallint",
             true,
             "1",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -238,6 +257,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -245,6 +267,9 @@
             "boolean",
             true,
             "true",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -252,6 +277,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -259,6 +287,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -266,6 +297,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -273,6 +307,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -280,6 +317,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -287,6 +327,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -294,6 +337,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -301,6 +347,9 @@
             "bigint",
             false,
             "1500000000",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -308,6 +357,9 @@
             "bigint",
             false,
             "'3000000000'::bigint",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -315,6 +367,9 @@
             "bigint",
             false,
             "'5000000000'::bigint",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -322,6 +377,9 @@
             "bigint",
             true,
             "1",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -329,6 +387,9 @@
             "timestamp with time zone",
             true,
             "statement_timestamp()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -336,6 +397,9 @@
             "uuid",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -343,6 +407,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -350,6 +417,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -357,6 +427,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -367,6 +440,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -404,7 +478,10 @@
             "CHECK (NOT global_capacity_enabled OR fast_enabled OR balanced_enabled OR premium_enabled)",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -420,6 +497,9 @@
             "uuid",
             true,
             "gen_random_uuid()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -427,6 +507,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -434,34 +517,49 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "grant_key",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "package_id",
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "billing_period_key",
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "period_start",
             "timestamp with time zone",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -469,6 +567,9 @@
             "timestamp with time zone",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -476,6 +577,9 @@
             "timestamp with time zone",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -483,6 +587,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -490,6 +597,9 @@
             "bigint",
             true,
             "0",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -497,6 +607,9 @@
             "timestamp with time zone",
             true,
             "statement_timestamp()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -504,6 +617,9 @@
             "jsonb",
             true,
             "'{}'::jsonb",
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -529,6 +645,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -566,7 +683,10 @@
             "CHECK (grant_kind <> 'included_period'::text OR package_id IS NOT NULL AND billing_period_key IS NOT NULL AND period_start IS NOT NULL AND period_end IS NOT NULL AND period_end > period_start)",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -582,6 +702,9 @@
             "uuid",
             true,
             "gen_random_uuid()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -589,6 +712,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -596,6 +722,9 @@
             "uuid",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -603,27 +732,39 @@
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "event_type",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "bucket_kind",
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "grant_id",
             "uuid",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -631,6 +772,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -638,20 +782,29 @@
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "model",
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "input_tokens",
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -659,6 +812,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -666,6 +822,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -673,6 +832,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -680,6 +842,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -687,20 +852,29 @@
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "fx_version",
             "text",
             false,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "occurred_at",
             "timestamp with time zone",
             true,
             "statement_timestamp()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -708,6 +882,9 @@
             "jsonb",
             true,
             "'{}'::jsonb",
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -723,6 +900,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -770,7 +948,10 @@
             "CHECK (reasoning_tokens IS NULL OR reasoning_tokens >= 0)",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -786,6 +967,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -793,6 +977,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -800,6 +987,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -807,6 +997,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -817,6 +1010,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -844,7 +1038,10 @@
             "FOREIGN KEY (reservation_id) REFERENCES ai_capacity_reservations(id) ON DELETE RESTRICT",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -860,6 +1057,9 @@
             "uuid",
             true,
             "gen_random_uuid()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -867,6 +1067,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -874,34 +1077,49 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "billing_period_key",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "package_id",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "quality_mode",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "reserved_eur_microcents",
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -909,6 +1127,9 @@
             "bigint",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -916,13 +1137,19 @@
             "text",
             true,
             "'reserved'::text",
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "created_at",
             "timestamp with time zone",
             true,
             "statement_timestamp()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -930,6 +1157,9 @@
             "timestamp with time zone",
             true,
             "statement_timestamp()",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -937,6 +1167,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -944,6 +1177,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -951,34 +1187,49 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "model",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "pricing_version",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "fx_version",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "settlement_evidence",
             "jsonb",
             false,
             null,
+            null,
+            "",
+            "",
             null
           ]
         ],
@@ -999,6 +1250,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -1046,7 +1298,10 @@
             "UNIQUE (workspace_id, generation_key)",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       },
       {
         "acl": "{postgres=arwdDxtm/postgres,service_role=r/postgres}",
@@ -1062,6 +1317,9 @@
             "uuid",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -1069,27 +1327,39 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "package_id",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "billing_period_key",
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ],
           [
             "period_start",
             "timestamp with time zone",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -1097,6 +1367,9 @@
             "timestamp with time zone",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -1104,6 +1377,9 @@
             "bigint",
             true,
             null,
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -1111,6 +1387,9 @@
             "boolean",
             true,
             "false",
+            null,
+            "",
+            "",
             null
           ],
           [
@@ -1118,7 +1397,10 @@
             "text",
             true,
             null,
-            null
+            null,
+            "",
+            "",
+            "default"
           ]
         ],
         "indexes": [
@@ -1128,6 +1410,7 @@
             true
           ]
         ],
+        "options": null,
         "policies": null,
         "constraints": [
           [
@@ -1170,7 +1453,10 @@
             "FOREIGN KEY (workspace_id) REFERENCES workspaces(id) ON DELETE RESTRICT",
             true
           ]
-        ]
+        ],
+        "persistence": "p",
+        "access_method": "heap",
+        "replica_identity": "d"
       }
     ],
     "private_schema": [

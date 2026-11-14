@@ -60,11 +60,11 @@ begin
  w:=(s->>'workspaceId')::uuid;
  perform pg_advisory_xact_lock(hashtextextended(w::text,41001));
  select * into r from public.workspace_stripe_billing_reconciliations where stripe_request_id=s->>'requestId' and workspace_id=w and event_stream='lifecycle' for share;
- if not found or r.snapshot_fingerprint<>envelope_hash or r.stripe_customer_id is distinct from s->>'customerId'
+ if not found or r.snapshot_fingerprint is distinct from envelope_hash or r.stripe_customer_id is distinct from s->>'customerId'
  or r.stripe_subscription_id is distinct from s->>'subscriptionId' or r.expected_revision is distinct from (b->>'p_expected_revision')::bigint
  or r.snapshot_observed_at is distinct from (s->>'observedAt')::timestamptz then raise exception 'capacity_writer_receipt_missing'; end if;
  select * into stream from public.workspace_stripe_billing_streams where workspace_id=w and event_stream='lifecycle' for share;
- if not found or stream.sync_state<>'in_sync' or stream.projection_revision<>r.resulting_revision
+ if not found or stream.sync_state is distinct from 'in_sync' or stream.projection_revision is distinct from r.resulting_revision
  or stream.stripe_customer_id is distinct from r.stripe_customer_id or stream.stripe_subscription_id is distinct from r.stripe_subscription_id
  then raise exception 'capacity_writer_billing_changed'; end if;
  if r.snapshot_observed_at<clock_timestamp()-interval '15 minutes' or r.snapshot_observed_at>clock_timestamp() then raise exception 'capacity_writer_snapshot_expired'; end if;
