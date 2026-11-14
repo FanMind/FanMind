@@ -1,3 +1,16 @@
+# Actual subscription readback — 14 November 2026
+
+Diagnostic #1502 deployed successfully in run43632402637, release615b0a0.
+Actual credential verification still passes; subscription GET returns HTTP400
+with provider code100. The official v27 IGUser Subscribed Apps reference gives
+GET /{ig-user-id}/subscribed_apps with no parameters and a list of
+IGUserSubscribedAppsData nodes, not an Application field projection:
+https://developers.facebook.com/docs/graph-api/reference/shadow-ig-user/subscribed_apps/
+Use its default response without the fields selection in Unified mode. Retain
+the exact app identity and both required field checks, safe errors and all
+credential/Operator guards. Do not treat POST success or missing data as proof.
+Real automatic receipt and required provider access remain unaccepted.
+
 # Account-subscription diagnosis — 14 November 2026
 
 After #1501 rollout, the existing Operator check verifies the actual SYSTEM_USER

@@ -422,7 +422,9 @@ export async function fetchInstagramSubscribedFields(
   const url = new URL(
     `https://${instagramGraphHost()}/${instagramGraphVersion()}/${encodeURIComponent(profileId)}/subscribed_apps`,
   );
-  url.searchParams.set("fields", instagramUnifiedEnabled(process.env) ? "id,subscribed_fields" : "subscribed_fields");
+  // The IGUser edge returns IGUserSubscribedAppsData, not selectable app nodes.
+  // Use the documented default response; exact-app/field validation stays below.
+  if (!instagramUnifiedEnabled(process.env)) url.searchParams.set("fields", "subscribed_fields");
   url.searchParams.set("access_token", accessToken);
   const response = await fetch(url, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15000) });
   const payload = (await response.json().catch(() => null)) as {
