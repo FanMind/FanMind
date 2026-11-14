@@ -1,3 +1,21 @@
+## FM1425 first custom-policy save reports failure after commit — 14 November 2026
+The first policy INSERT omitted return=representation; PostgREST committed but
+returned an empty201 body, and mediaRest JSON parsing failed. Actual reload
+confirmed the stored rules. Request representation for this one existing INSERT;
+keep all authorization/revision checks. A faithful route regression reproduces
+503 before repair and200 afterward. Actual custom-dialogue acceptance is still
+open after a fail-closed reply_price_not_permitted result; no guard bypass.
+
+
+## FM1425 long Character sidebar overflow — 14 November 2026
+Actual authenticated Staging acceptance on f8a3737f measured a 205px Character
+list with 265px scrollWidth for the reserved long synthetic names. The implicit
+grid track used the card minimum width, clipping its management menu. Allow the
+card to shrink with min-width:0; existing name ellipsis and mobile 178px card
+minimum remain. No access/schema/provider/runtime flag change. Verify desktop
+geometry and retained mobile horizontal navigation independently; this is not
+a complete media or mobile Staging acceptance.
+
 ## FM1425 real media-tab layout failure — 13 November 2026
 Actual authenticated Staging media UI on610566fa showed Gespräch/Bilder as
 full-height side columns: workspaceMain remained the default horizontal flex
