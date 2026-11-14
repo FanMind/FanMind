@@ -428,3 +428,13 @@ FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001 and shared
 Support retention control are affected. Production and provider analysis remain
 excluded. Source/DB proofs do not establish activation or desktop/mobile PASS;
 those remain pending until the protected workflow and practical acceptance finish.
+
+## Actual media-panel layout follow-up
+
+Real Staging UI exposed a horizontal parent-flex regression: mediaTabs and
+mediaLibrary were displayed as tall side columns. The minimal CSS correction
+sets workspaceMain flex-direction:column so tabs take their own top row and
+mediaLibrary uses remaining scroll space. Narrow-screen display:block is retained.
+No feature/backend/schema/flag/provider behavior changes. Root conversion proof,
+exact extended schema and controlled base/catalogue/video activation are carried;
+this does not certify unfinished upload/private-preview/deletion/mobile cases.
