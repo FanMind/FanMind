@@ -260,6 +260,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       "staging-meta-runtime.yml",
       STAGING_PUSH_RUNTIME_WORKFLOW,
       STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW,
+      "support-ai-consent-production.yml",
     ],
   );
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
