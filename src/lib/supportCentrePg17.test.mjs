@@ -119,7 +119,7 @@ test("Support AI consent native PG17: deny browser writes, revision CAS, idempot
  try{
   sql(`create schema auth;create table auth.users(id uuid primary key);insert into auth.users values('${id(1)}'),('${id(2)}');grant usage on schema public to anon,authenticated,service_role;`,db);
   sql(readFileSync(new URL('../../supabase/controlled/support_ai_consent.sql',import.meta.url),'utf8'),db);
-  for(const role of ['anon','authenticated','service_role'])assert.throws(()=>sql(`set role ${role};select * from public.support_ai_consents;`,db));
+  for(const role of ['anon','authenticated','service_role']){assert.throws(()=>sql(`set role ${role};select * from public.support_ai_consents;`,db));assert.equal(sql(`select has_table_privilege('${role}','public.support_ai_consents','SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER');`,db),'f');}
   for(const role of ['anon','authenticated'])assert.throws(()=>sql(`set role ${role};select public.support_ai_consent_state('${id(1)}','v1');`,db));
   const read=actor=>JSON.parse(sql(`set role service_role;select public.support_ai_consent_state('${actor}','v1');`,db));
   const grant=`set role service_role;select public.support_ai_consent_decide('${id(1)}','v1',true,0,'${id(10)}');`;
