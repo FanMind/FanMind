@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {assertProxyTarget,planUploadProxy,applyProxyPlan,UPLOAD_BLOCK,UPLOAD_LIMITS} from '../scripts/operations/staging-media-upload-proxy.mjs';
+import {assertProxyTarget,planUploadProxy,applyProxyPlan,transport,UPLOAD_BLOCK,UPLOAD_LIMITS} from '../scripts/operations/staging-media-upload-proxy.mjs';
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_ACTOR:'Bernds-tech',RUNNER_NAME:'fanmind-prod-01-exoscale',GITHUB_SHA:'a'.repeat(40),REVIEWED_COMMIT:'a'.repeat(40),EXPECTED_STAGING_COMMIT:'a'.repeat(40),CONFIRMATION:'staging-media-upload-proxy-apply',STAGING_APP_URL:'https://staging.fanmind.ch'};
 function tlsEnd(source){
  const r=spawnSync('awk',['-v','expected_certificate=/etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem','-v','expected_certificate_key=/etc/letsencrypt/live/staging.fanmind.ch/privkey.pem','-v','output_mode=media_end_line','-f','scripts/operations/verify-staging-nginx-whatsapp-boundary.awk'],{input:source,encoding:'utf8'});return Number(r.stdout.trim());
@@ -80,5 +80,19 @@ test('media-only boundary preserves absent WhatsApp while default and every pres
  for(const source of [before.replace('location = /api/webhooks/whatsapp {','location /api/webhooks/whatsapp {'),before.replace('access_log off;','access_log /private/sensitive.log;'),before.replace('proxy_pass http://127.0.0.1:3001;','proxy_pass http://127.0.0.1:3000;'),before+before,absent.replace('server_name staging.fanmind.ch;','server_name foreign.invalid;'),absent.replace('listen 443 ssl;','listen 443;'),absent.replace('ssl_certificate /etc/letsencrypt/live/staging.fanmind.ch/fullchain.pem;','ssl_certificate /foreign/fullchain.pem;')]){
   assert.equal(run(source,''),'invalid');assert.equal(run(source,'media_end_line'),'invalid');
   assert.throws(()=>planUploadProxy(source,tlsEnd));
+ }
+});
+
+test('transport reports only fixed status counters and still requires exact unauthenticated JSON at both limits',async()=>{
+ const calls=[],reports=[];
+ await transport(async(url,options)=>{calls.push({url,size:options.body.length});return Response.json({error:'unauthenticated'},{status:401});},line=>reports.push(line));
+ assert.deepEqual(calls.map(c=>c.size),[7100000,35100000]);
+ assert.equal(reports.length,2);
+ assert.match(reports[0],/^STAGING_MEDIA_UPLOAD_TRANSPORT=image,bytes=7100000,status=401,json=1,auth=1$/u);
+ assert.match(reports[1],/^STAGING_MEDIA_UPLOAD_TRANSPORT=catalogue,bytes=35100000,status=401,json=1,auth=1$/u);
+ for(const [status,type,body] of [[413,'text/html','private proxy content'],[403,'application/json','{"error":"private-token-value"}'],[401,'application/json','{"error":"other"}']]){
+  const diagnostics=[];await assert.rejects(transport(async()=>new Response(body,{status,headers:{'Content-Type':type}}),line=>diagnostics.push(line)),/proxy_transport/);
+  assert.equal(diagnostics.length,1);assert.match(diagnostics[0],/^STAGING_MEDIA_UPLOAD_TRANSPORT=image,bytes=7100000,status=[0-9]{3},json=[01],auth=0$/u);
+  assert.doesNotMatch(diagnostics[0],/private|token|content|other/);
  }
 });

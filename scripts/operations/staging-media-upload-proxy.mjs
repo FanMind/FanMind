@@ -61,11 +61,14 @@ function selectTlsEnd(source){
  return Number(text);
 }
 async function live(sha){const r=await fetch(ORIGIN+'/api/version',{redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('proxy_release');const v=await r.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==sha)fail('proxy_release');}
-async function transport(){
+export async function transport(fetcher=fetch,report=console.log){
  for(const [path,size] of UPLOAD_LIMITS){
   const body=Buffer.alloc(size,32);body.write('{}');
-  const r=await fetch(ORIGIN+path,{method:'POST',headers:{Origin:ORIGIN,'Content-Type':'application/json'},body,redirect:'error',signal:AbortSignal.timeout(30000)});
-  if(r.status!==401||!r.headers.get('content-type')?.includes('application/json')||(await r.text()).trim()!=='{"error":"unauthenticated"}')fail('proxy_transport');
+  const r=await fetcher(ORIGIN+path,{method:'POST',headers:{Origin:ORIGIN,'Content-Type':'application/json'},body,redirect:'error',signal:AbortSignal.timeout(30000)});
+  const json=r.headers.get('content-type')?.includes('application/json')===true;
+  const auth=r.status===401&&json&&(await r.text()).trim()==='{"error":"unauthenticated"}';
+  report('STAGING_MEDIA_UPLOAD_TRANSPORT='+ (path==='/api/chatadmin/media'?'image':'catalogue')+',bytes='+size+',status='+r.status+',json='+Number(json)+',auth='+Number(auth));
+  if(r.status!==401||!json||!auth)fail('proxy_transport');
  }
 }
 export async function runProxy(action,env=process.env){
