@@ -171,7 +171,7 @@
     "db:chat-admin-fans:apply": "node scripts/operations/chat-admin-fan-staging-runner.mjs --apply",
     "chat-admin:staging:check": "node scripts/operations/chat-admin-staging-acceptance.mjs --check",
     "chat-admin:staging:accept": "node scripts/operations/chat-admin-staging-acceptance.mjs --run",
-    "test:chat-admin": "node --test tests/chat-admin-policy.test.mjs tests/chat-admin-media.test.mjs tests/chat-admin-media-api.test.mjs tests/chat-admin-mixer.test.mjs",
+    "test:chat-admin": "node --test tests/chat-admin-policy.test.mjs tests/chat-admin-media.test.mjs tests/chat-admin-media-api.test.mjs",
     "db:account-deletion-workspace-inventory:check": "node scripts/operations/account-deletion-workspace-inventory-check.mjs",
     "test:chat-admin-client": "node --test e2e-component/chat-admin-client.test.mjs e2e-component/chat-admin-network-boundary.test.mjs",
     "chat-admin:manual-flow:check": "node scripts/operations/chat-admin-manual-flow-staging.mjs --check",
@@ -218,3 +218,4 @@
     "node": ">=22.13.0"
   }
 }
+

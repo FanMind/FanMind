@@ -71,3 +71,5 @@ when observed; preserve failed checkpoints.
 Local final focused checkpoint: 295 tests, 294 PASS, 0 FAIL, one existing native skip. Build/types/lint passed before publication; hosted/native/target results still required.
 
 Main advanced independently to733b4f5 (Support #1489 retirement). Merged its complete tree, preserved all Support changes and reconciled only the combined Source-of-Truth fingerprint. Source continuation is now based on that successor.
+
+Published source head2f7e0f: native schema/delta/RLS suite43598599437 PASS, real synthetic video normalization PASS, Chromium Character components in job132458302720 PASS. General operations CI found the Capacity-pinned package.json changed by adding a test command. Reverted package.json exactly; new mixer tests are imported by the existing media test entry point instead. No Capacity binding or protected package source is rewritten. Required successor checks remain mandatory.
