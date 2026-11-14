@@ -149,3 +149,20 @@ test('Creator pilot uses the existing composer, preserves one session grant, exp
  await expect(page.getByRole('checkbox',{name:'Begrenzte Stiländerungen für diese Sitzung verwalten',exact:true,includeHidden:true})).not.toBeChecked();
  expect(actions.length).toBe(3);
 });
+
+test('synthetic conversation analysis requires its separate consent and sends no management grant',async({page})=>{
+ const character='10000000-0000-4000-8000-000000000003',fan='10000000-0000-4000-8000-000000000004';let posted:Record<string,unknown>|null=null;
+ const turns:Array<{request_id:string;question:string;answer:string;unanswered:boolean}>=[];
+ await page.route('**/api/support/conversation',route=>route.fulfill({json:{scope:'scope-a',turns}}));
+ await page.route('**/api/support/creator-context**',async route=>{
+  if(route.request().method()==='GET'){await route.fulfill({json:route.request().url().includes('?')?{scope:'scope-a',fans:[{id:fan,name:'Support-QA-Fan'}]}:{scope:'scope-a',characters:[{id:character,name:'Support-QA-Model'}]}});return;}
+  const b=route.request().postDataJSON();posted=b;turns.push({request_id:b.requestId,question:b.question,answer:'KI-Analyse: formelle Stilvorgabe; keine Änderung.',unanswered:false});await route.fulfill({json:{scope:'scope-a',changed:false}});
+ });
+ await mount(page);await page.getByText('Creator-Unterstützung · Staging-Test',{exact:true}).click();await page.getByRole('combobox',{name:'Support-Model'}).selectOption(character);
+ await page.getByRole('combobox',{name:'Support-Fan'}).selectOption(fan);
+ await page.getByRole('checkbox',{name:'Ausgewählte Einstellungen und zugeordneten Verlauf lokal prüfen',exact:true}).check();
+ await page.getByRole('checkbox',{name:'Synthetischen Support-QA-Verlauf und Model-Einstellungen mit OpenAI analysieren',exact:true}).check();
+ await page.getByRole('textbox',{name:'Deine Frage'}).fill('Warum antwortet das Model zu förmlich?');await page.getByRole('button',{name:'Testverlauf mit KI analysieren',exact:true}).click();
+ await expect(page.getByText('KI-Analyse: formelle Stilvorgabe; keine Änderung.',{exact:false})).toBeVisible();
+ expect(posted).toMatchObject({characterId:character,fanId:fan,analyse:true,aiConsent:true,manageConsent:false});
+});

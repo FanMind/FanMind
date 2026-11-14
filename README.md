@@ -6,8 +6,10 @@ show current rules/media/diagnostic facts, and apply two explicitly authorized
 reversible style presets using existing JWT/RLS and revision CAS. Signed own
 Support write-ahead/completion evidence, independent readback, revision-bound
 undo and opt-in synthetic before/after model examples reuse existing storage,
-provider and usage controls. No Fan text is sent to an external model. This is
-not universal semantic CRM analysis or arbitrary settings management. Production
+provider and usage controls. A separate, read-only semantic analysis opt-in is
+limited to the selected Support-QA synthetic fixtures (up to8short messages),
+with structured evidence references and no model-selected administrative action.
+Default local diagnostics send no Fan text externally. This is not universal CRM analysis or arbitrary settings management. Production
 is structurally denied; existing repair release bb799466 remains unchanged.
 No SQL, credential, runtime flag, Billing, Social or Adminchat setting changes.
 Legal/registration mandate review draft, non-atomic audit/CAS limitation and

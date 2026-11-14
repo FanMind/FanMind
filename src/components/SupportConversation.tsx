@@ -1,19 +1,19 @@
 "use client";
 import { useCallback,useEffect,useRef,useState,type ReactNode } from "react";
 import {supportTurnQuestion,decodeStyleAudit} from "../lib/supportCreatorPolicy";
-type CreatorContext={characterId:string;fanId?:string;readConsent:boolean;manageConsent:boolean};
+type CreatorContext={characterId:string;fanId?:string;readConsent:boolean;manageConsent:boolean;analyse?:boolean;aiConsent?:boolean};
 type Turn={request_id:string;question:string;answer:string;unanswered:boolean};
 type Pending={requestId:string;question:string;context:string;scope:string;aiConsent:boolean;creator?:CreatorContext};
 export function SupportConversation({children}:{children?:ReactNode}={}){
  const [turns,setTurns]=useState<Turn[]>([]),[scope,setScope]=useState(""),[text,setText]=useState(""),[status,setStatus]=useState("loading"),[handoff,setHandoff]=useState(false);
  const [aiConsent,setAiConsent]=useState(false),[answerMode,setAnswerMode]=useState("");
  const [characters,setCharacters]=useState<Array<{id:string;name:string}>>([]),[fans,setFans]=useState<Array<{id:string;name:string}>>([]);
- const [characterId,setCharacterId]=useState(""),[fanId,setFanId]=useState(""),[creatorRead,setCreatorRead]=useState(false),[creatorManage,setCreatorManage]=useState(false),[testConsent,setTestConsent]=useState(false);
+ const [characterId,setCharacterId]=useState(""),[fanId,setFanId]=useState(""),[creatorRead,setCreatorRead]=useState(false),[creatorManage,setCreatorManage]=useState(false),[testConsent,setTestConsent]=useState(false),[analysisConsent,setAnalysisConsent]=useState(false);
  const sending=useRef<AbortController|null>(null);
  const [more,setMore]=useState(false),[privacyError,setPrivacyError]=useState(false);
  const browsingOlder=useRef(false),privacyBusy=useRef(false);
  const generation=useRef(0),pending=useRef<Pending|null>(null),boundScope=useRef("");
- const resetCreator=useCallback(()=>{setCreatorRead(false);setCreatorManage(false);setTestConsent(false);setCharacterId("");setFanId("");setCharacters([]);setFans([]);},[]);
+ const resetCreator=useCallback(()=>{setCreatorRead(false);setCreatorManage(false);setTestConsent(false);setAnalysisConsent(false);setCharacterId("");setFanId("");setCharacters([]);setFans([]);},[]);
  const undoId=[...turns].reverse().find(t=>decodeStyleAudit(t.question)?.character===characterId)?.request_id??"";
  const load=useCallback(async()=>{
   if(privacyBusy.current)return;
@@ -46,7 +46,7 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   void fetch(`/api/support/creator-context?character=${encodeURIComponent(characterId)}`,{cache:"no-store"}).then(async r=>{if(!r.ok)return;const d=await r.json();if(active&&d.scope===scope&&Array.isArray(d.fans))setFans(d.fans);}).catch(()=>undefined);
   return()=>{active=false;};
  },[scope,characterId]);
- function revokeCreator(){sending.current?.abort();generation.current++;if(pending.current?.creator)pending.current=null;setCreatorRead(false);setCreatorManage(false);setTestConsent(false);void load();}
+ function revokeCreator(){sending.current?.abort();generation.current++;if(pending.current?.creator)pending.current=null;setCreatorRead(false);setCreatorManage(false);setTestConsent(false);setAnalysisConsent(false);void load();}
  async function creatorAction(action:"undo"|"test"){
   if(!scope||!characterId||!undoId||status!=="ready")return;
   const selected=scope,version=++generation.current,controller=new AbortController();sending.current=controller;setStatus("sending");
@@ -57,7 +57,7 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
  }
  async function send(){
   if(!scope)return;const controller=new AbortController();sending.current=controller;setAnswerMode("");browsingOlder.current=false;const version=++generation.current;setStatus("sending");
-  if(!pending.current){const section=window.location.pathname.split("/")[1];pending.current={requestId:crypto.randomUUID(),question:text,context:["channels","billing","dashboard"].includes(section)?section:"support",scope,aiConsent,...(creatorRead&&characterId?{creator:{characterId,...(fanId?{fanId}:{}),readConsent:creatorRead,manageConsent:creatorManage}}:{})};}
+  if(!pending.current){const section=window.location.pathname.split("/")[1];pending.current={requestId:crypto.randomUUID(),question:text,context:["channels","billing","dashboard"].includes(section)?section:"support",scope,aiConsent,...(creatorRead&&characterId?{creator:{characterId,...(fanId?{fanId}:{}),readConsent:creatorRead,manageConsent:creatorManage,...(analysisConsent?{analyse:true,aiConsent:true}:{})}}:{})};}
   try{
    const action=pending.current;
    const response=await fetch(action.creator?"/api/support/creator-context":"/api/support/conversation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(action.creator?{scope:action.scope,requestId:action.requestId,question:action.question,...action.creator}:action),signal:controller.signal});
@@ -112,10 +112,12 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   </>}
   {characters.length>0&&<details className="fm-help-privacy"><summary>Creator-Unterstützung · Staging-Test</summary>
    <div className="fm-help-actions">
-    <label>Model<select aria-label="Support-Model" value={characterId} disabled={status!=="ready"} onChange={e=>{setCharacterId(e.target.value);setFanId("");setFans([]);setCreatorRead(false);setCreatorManage(false);setTestConsent(false);}}><option value="">Model auswählen</option>{characters.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+    <label>Model<select aria-label="Support-Model" value={characterId} disabled={status!=="ready"} onChange={e=>{setCharacterId(e.target.value);setFanId("");setFans([]);setCreatorRead(false);setCreatorManage(false);setTestConsent(false);setAnalysisConsent(false);}}><option value="">Model auswählen</option>{characters.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
     <label>Nachrichtenkontext<select aria-label="Support-Fan" value={fanId} disabled={status!=="ready"} onChange={e=>{setFanId(e.target.value);revokeCreator();}}><option value="">Kein Fan ausgewählt</option>{fans.map(f=><option key={f.id} value={f.id}>{f.name}</option>)}</select></label>
     <label><input type="checkbox" checked={creatorRead} disabled={!characterId||status==="sending"} onChange={e=>{if(e.target.checked)setCreatorRead(true);else revokeCreator();}}/>Ausgewählte Einstellungen und zugeordneten Verlauf lokal prüfen</label>
-    <label><input type="checkbox" checked={creatorManage} disabled={!creatorRead||status==="sending"} onChange={e=>{if(e.target.checked)setCreatorManage(true);else revokeCreator();}}/>Begrenzte Stiländerungen für diese Sitzung verwalten</label>
+    <label><input type="checkbox" checked={creatorManage} disabled={!creatorRead||status==="sending"} onChange={e=>{if(e.target.checked){setCreatorManage(true);setAnalysisConsent(false);}else revokeCreator();}}/>Begrenzte Stiländerungen für diese Sitzung verwalten</label>
+    <label><input type="checkbox" checked={analysisConsent} disabled={!creatorRead||!fanId||status!=="ready"} onChange={e=>{setAnalysisConsent(e.target.checked);if(e.target.checked)setCreatorManage(false);else{sending.current?.abort();generation.current++;if(pending.current?.creator)pending.current=null;void load();}}}/>Synthetischen Support-QA-Verlauf und Model-Einstellungen mit OpenAI analysieren</label>
+    <p className="fm-help-muted">KI-Analyse ist nur für die eigens angelegten Support-QA-Testdaten verfügbar. Bis zu acht gekürzte Testnachrichten und ausgewählte Einstellungen werden verarbeitet. Die Analyse führt keine Änderung aus; Ergebnis und Nachweise bleiben im eigenen Supportverlauf. KI-Nutzung kann Kosten verursachen.</p>
     <p className="fm-help-muted">Dein Auftrag im Eingabefeld steuert die Aktion. Zum Beispiel: „Mach die Antworten lockerer“ oder „Mach die Antworten kürzer“. Immer nur eine Einstellung. Zahlungsdaten, Preise, Rechte und externer Versand bleiben ausgeschlossen. Die Freigabe endet bei Konto-, Fokus- oder Panelwechsel. Nachweise bleiben im eigenen Supportverlauf bis zu 30 Tage; Löschen entfernt auch die Rückgängig-Grundlage.</p>
     {undoId&&<><label><input type="checkbox" checked={testConsent} onChange={e=>{setTestConsent(e.target.checked);if(!e.target.checked){sending.current?.abort();generation.current++;void load();}}}/>Ausgewählte Model-Einstellungen für zwei synthetische KI-Testantworten mit OpenAI verarbeiten</label>
      <button disabled={!testConsent||!creatorRead||status!=="ready"} onClick={()=>void creatorAction("test")}>Stiländerung synthetisch vergleichen</button>
@@ -137,8 +139,8 @@ export function SupportConversation({children}:{children?:ReactNode}={}){
   </div>
   {status!=="unavailable"&&<>
    <form className="fm-support-composer" onSubmit={event=>{event.preventDefault();if(scope&&status!=="sending"&&(status==="retry"||text.trim()))void send();}}>
-    <label>Deine Frage<textarea rows={3} maxLength={1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
-    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":creatorRead&&characterId?"Prüfen und ausführen":aiConsent?"Speichern und KI fragen":"Speichern und senden"}</button>
+    <label>Deine Frage<textarea rows={3} maxLength={creatorRead&&characterId?800:1000} value={text} disabled={!scope||status==="sending"||status==="retry"} onChange={e=>setText(e.target.value)}/></label>
+    <button className="fm-help-primary" type="submit" disabled={!scope||(status!=="retry"&&!text.trim())||status==="sending"}>{status==="retry"?"Mit gleicher Anfrage erneut versuchen":status==="sending"?"Antwort wird gespeichert …":creatorRead&&characterId?(analysisConsent?"Testverlauf mit KI analysieren":"Prüfen und ausführen"):aiConsent?"Speichern und KI fragen":"Speichern und senden"}</button>
    </form>
   </>}
  </section>;

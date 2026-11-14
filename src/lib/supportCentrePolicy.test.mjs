@@ -8,7 +8,7 @@ import * as http from "./httpMutationPolicy.mjs";
 function load(file, dependencies = {}) {
   const exports = {};
   runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: name => { if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder, Headers, URL });
+    { exports, require: name => { if(name === "@/lib/supportCreatorPolicy")return load("src/lib/supportCreatorPolicy.ts"); if(name === "@/lib/httpMutationPolicy.mjs") return {...http,isTrustedFanMindMutationRequest:request=>http.isTrustedMutationRequest(request,["https://staging.fanmind.ch"])}; if (Object.hasOwn(dependencies,name)) return dependencies[name]; throw new Error(`unexpected import ${name}`); }, Date, TextDecoder, Headers, URL });
   return exports;
 }
 const { isSupportCase, supportCaseNeedsAttention, performSupportDecision } = load("src/lib/supportCentrePolicy.ts");

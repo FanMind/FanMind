@@ -39,11 +39,27 @@ No prior gate is changed from BLOCK to ALLOW by module tests or this document.
 - Latest20 own Character/Fan/conversation messages, at most3 reply observations:
   revision/date/length/question count, price validation against current rules
   only when the message revision and paired inbound are available. No external
-  transmission of Fan text. No historical cause invented when configuration or
+  transmission of Fan text in this default local diagnostic. No historical cause invented when configuration or
   generation traces are missing. This is a bounded local diagnostic, **not** a
   semantic evaluation of every CRM message or a reconstruction of deleted data.
 - Recent signed style evidence is read only from the actor's existing retained
   Support history. No independent long-term memory or reconstructed erasure.
+
+### Separate semantic test analysis
+
+A separate explicit opt-in allows up to8messages, each at most500characters,
+and selected style/rule snippets through the existing bounded-context policy,
+configured Character model/structured Responses request/store:false, short-window
+rate and own Workspace usage attribution. It is hard-limited to the exact
+Staging Operator plus selected Character and Fan both named Support-QA-*; these
+are deliberately created synthetic fixtures, not general Creator datasets.
+Real customer/ordinary Fan content is outside this pilot. No account identifiers,
+profile notes, images, credentials or arbitrary metadata are sent. Model output
+has a strict schema with validated evidence refs and length/claim guards.
+Changed context/role/session or cancellation suppresses persistence. The output
+is a proposal with stated historical uncertainty; it never executes a tool.
+Analysis consent and mutation grant are mutually exclusive in this mode.
+General external Fan-content processing remains blocked for legal/provider review.
 
 ### Write tools
 
@@ -95,7 +111,7 @@ for arbitrary support reading/writing. Do not silently amend accepted contracts.
 | Selected settings/status/local diagnostic | Authenticated scoped role + transparent support purpose | Explicit session read grant, exact synthetic Operator only |
 | Two reversible style presets | Explicit scoped management mandate, current CAS revision | Session grant + current direct instruction; audit/readback/undo |
 | External AI processing of Model configuration | Separate informed, revocable processing decision; verify provider/DPA/region/legal basis | Separate opt-in for fixed synthetic comparison only |
-| Fan-content external semantic analysis | Specific purpose/minimized content, proper legal basis and third-party-data/provider review | NOT IMPLEMENTED / NOT ACTIVATED |
+| Fan-content external semantic analysis | Specific purpose/minimized content, proper legal basis and third-party-data/provider review | Synthetic Support-QA pilot only with separate opt-in; general customer processing NOT ACTIVATED |
 | Payments/contracts/permissions/large deletion/external sending | Separate consequential authorization and suitable confirmation | DENIED by this tool layer |
 
 Required before general Creator release: legal review of purposes/legal basis,
