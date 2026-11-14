@@ -1,5 +1,6 @@
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
+import {priceSchemaPostflight} from '../scripts/operations/chat-admin-media-prices-schema.mjs';
 import {defaultChatAdminSalesPlaybook} from '../src/lib/chatAdminSalesPlaybook.mjs';
 import {withMediaPrice,withMediaProductPrice,buildCatalogueGrounding} from '../src/lib/chatAdminMediaCatalogue.mjs';
 export async function runMediaPricesSqlCases(sql){
@@ -13,8 +14,17 @@ export async function runMediaPricesSqlCases(sql){
  await sql(readFileSync('supabase/controlled/chat_admin_media.sql','utf8'));
  await sql(readFileSync('supabase/controlled/chat_admin_media_catalogue.sql','utf8'));
  await sql(readFileSync('supabase/controlled/20260927200000_chat_admin_character_fans.sql','utf8'));
+ const catalogue=readFileSync('scripts/operations/chat-admin-media-runtime-catalogue.sql','utf8');
+ const beforeCatalogue=await sql(catalogue);
  await sql(readFileSync('supabase/controlled/chat_admin_media_prices.sql','utf8'));
- await sql(`insert into public.workspace_chat_admin_capabilities(workspace_id,chat_admin_multi_character,granted_to_user_id) values('${w}',true,'${owner}');insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values('${c}','${w}','${owner}','Synthetic',25,'','','','','','','');insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,creation_id) values('${id(1)}','${w}','${c}','Synthetic','manual','${id(2)}');insert into public.chat_character_conversations(id,workspace_id,character_id,fan_id,fan_reference) values('${id(3)}','${w}','${c}','${id(1)}','Synthetic');`);
+ await sql(priceSchemaPostflight());
+ assert.equal(await sql(catalogue),beforeCatalogue,'price evidence must not invalidate the existing media catalogue');
+ for(const drift of ["grant execute on function public.chat_admin_price_write(uuid,uuid,integer,jsonb) to anon;","grant usage on schema fanmind_media_price_evidence to authenticated;","alter table public.chat_characters disable trigger chat_media_price_audit;","alter table fanmind_media_price_evidence.offers disable row level security;"]){
+  await assert.rejects(()=>sql(`begin;${drift}${priceSchemaPostflight().replace('BEGIN READ ONLY;','').replace('ROLLBACK;','')}rollback;`));
+ }
+
+ await sql(`insert into public.workspace_chat_admin_capabilities(workspace_id,chat_admin_multi_character,granted_to_user_id) values('${w}',true,'${owner}');insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules) values('${c}','${w}','${owner}','Synthetic',25,'','','','','','','');insert into public.chat_character_fans(id,workspace_id,character_id,display_name,platform,creation_id) values('${id(1)}','${w}','${c}','Synthetic','manual','${id(2)}');`);
+ const conversationId=(await sql(`select id from public.chat_character_conversations where workspace_id='${w}' and character_id='${c}' and fan_id='${id(1)}';`)).trim();
  const who={id:c,workspace_id:w,revision:1,sales_playbook:defaultChatAdminSalesPlaybook()};
  const terms={scope:'folder',target_id:id(4),kind:'image',quantity:1,inherit:true,upper_unlimited:true,negotiation_allowed:true,special_discounts_allowed:false,tax_mode:'vat_included',vat_basis_points:2000,unit_seconds:null};
  const price={name:'Abendkleidung',start_minor:3500,maximum_discount_percent:10,currency:'EUR',requires_confirmation:false,negotiation_allowed:true,special_discounts_allowed:false};
@@ -25,7 +35,7 @@ export async function runMediaPricesSqlCases(sql){
  for(const a of assets)await sql(`insert into public.chat_character_media(id,workspace_id,character_id,folder_id,description,tags,reviewed,available) values('${a.id}','${w}','${c}','${folder.id}','Abendkleidung',array['Abendkleidung'],true,true);`);
  const playbook=withMediaProductPrice({...who,sales_playbook:single.playbook},[folder],{scope:'folder',kind:'image',target_id:folder.id,quantity:3,terms,price:{...price,name:'3 Bilder Abendkleidung',start_minor:7000}});
  const revision=async()=>Number((await sql(`select revision from public.chat_characters where id='${c}';`)).trim());
- const write=rev=>`select public.chat_admin_media_prices_write('${w}','${c}',${rev},${literal(playbook)});`;
+ const write=rev=>`select public.chat_admin_price_write('${w}','${c}',${rev},${literal(playbook)});`;
  const rev=await revision();assert.match(await as(write(rev)),/t\s*$/u);
  await assert.rejects(()=>as(write(rev)),/stale_media_context/u);
  await assert.rejects(()=>as(write(rev+1),foreign));
@@ -34,8 +44,8 @@ export async function runMediaPricesSqlCases(sql){
  who.sales_playbook=playbook;who.revision=await revision();
  const binding=JSON.parse(buildCatalogueGrounding(JSON.stringify({sales_playbook:{offers:[],requested_offer:null}}),who,null,assets,[folder],'3 Bilder Abendkleidung für 1 EUR',Date.now())).media_pricing;
  assert.equal(binding.offered_price_minor,6300);
- const record=(b,g=id(30))=>`select public.chat_admin_media_offer_record('${w}','${c}','${id(1)}','${id(3)}','${g}',${who.revision},${literal(b)});`;
- const persist=(b,g=id(30))=>`select public.persist_chat_admin_media_generation('${w}','${c}','${id(1)}','${id(3)}',${who.revision},1,'${g}','{}','Synthetic request',array['63 EUR','63 EUR','63 EUR'],${literal(b)});`;
+ const record=(b,g=id(30))=>`select public.chat_admin_price_offer_record('${w}','${c}','${id(1)}','${conversationId}','${g}',${who.revision},${literal(b)});`;
+ const persist=(b,g=id(30))=>`select public.persist_chat_admin_media_generation('${w}','${c}','${id(1)}','${conversationId}',${who.revision},1,'${g}','{}','Synthetic request',array['63 EUR','63 EUR','63 EUR'],${literal(b)});`;
  for(const patch of [{offered_price_minor:6299},{assets:binding.assets.slice(0,2)},{tax:{...binding.tax,vat_minor:0}},{source_id:id(99)},{workspace_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'}]){
   await assert.rejects(()=>as(persist({...binding,...patch})),/invalid_media_offer|stale_media_context/u);
   assert.equal((await sql('select count(*) from public.chat_character_messages;')).trim(),'0','failed quote must roll generation back');
@@ -45,7 +55,7 @@ export async function runMediaPricesSqlCases(sql){
  await assert.rejects(()=>as(record(binding),foreign),/owner_required/u);
  await assert.rejects(()=>as(record({...binding,offered_price_minor:6400,tax:{...binding.tax,gross_minor:6400,net_minor:5333,vat_minor:1067}})),/media_offer_conflict/u);
  const original=(await sql('select binding::text from fanmind_media_price_evidence.offers;')).trim();
- await as(`select public.chat_admin_media_prices_write('${w}','${c}',${who.revision},${literal({...playbook,positioning:'Changed price revision'})});`);
+ await as(`select public.chat_admin_price_write('${w}','${c}',${who.revision},${literal({...playbook,positioning:'Changed price revision'})});`);
  assert.equal((await sql('select binding::text from fanmind_media_price_evidence.offers;')).trim(),original,'historic offer is immutable after edit');
  await assert.rejects(()=>as(record(binding)),/stale_media_context/u);
  await sql('delete from public.chat_character_messages;');

@@ -87,3 +87,36 @@ The new feature remains off. The protected schema/runtime control path must be
 validated before activation. Actual PNG/MP4 lifecycle, private Storage absence
 and complete Desktop acceptance remain required on the existing Staging target.
 No real Character data or sample prices are installed by this change.
+
+## Protected Staging procedure (prepared, not executed)
+
+1. Complete current-head CI, native PostgreSQL and review. Merge requires a
+   separate Owner decision; this PR must not merge itself.
+2. Deploy that exact accepted Main to the existing protected Staging target,
+   with the new price flag off. Preserve existing customer/Character data.
+3. Obtain a fresh healthy retention proof on that source. The new evidence SQL
+   is not excluded from retention source checks; old proof is not silently reused.
+4. Use `.github/workflows/chat-admin-media-prices-staging.yml`, action `verify`,
+   reviewed_commit equal to deployed Main, confirmation `staging-media-prices-verify`.
+   ABSENT is readiness information only, not a schema PASS or activation grant.
+5. A separately approved `apply` uses confirmation `staging-media-prices-apply`.
+   The checksum-pinned runner installs only this additive evidence schema inside
+   one transaction with advisory lock, timeout and source-derived postflight;
+   partial/drifted existing state blocks. It creates no customer prices or media.
+6. Re-run read-only verification. It checks exact function bodies/privileges,
+   private schema access, RLS, cascades and the revision trigger. Native tests
+   also prove denial on altered grants, disabled trigger and disabled RLS.
+7. Only after authorized synthetic acceptance preparation may the existing
+   `staging-media-catalogue-runtime.yml` use `pricing-on`. Its independent
+   preflight requires an exact price-schema PASS; ABSENT cannot enable it.
+   `pricing-verify` reads effective state. `pricing-off` owns only the new price
+   flag. Existing catalogue/video, Support, provider and billing flags are
+   preserved, with config/process readback and the existing rollback path.
+8. Use dedicated disposable synthetic Characters/Fans for example prices and
+   package negotiation. Never overwrite an existing real Character's biography,
+   media, prices, rules or settings. Prove one image, one normalized video,
+   explicit media review, exact offer source/quantity, lower/upper negotiation,
+   reload, isolation, revoke/delete and independent private-object absence.
+9. Complete cleanup and retain redacted, exact-release evidence. Practical
+   Mobile remains deferred to App acceptance. No Production action is prepared
+   or authorized by these Staging controls. All steps above remain unexecuted.

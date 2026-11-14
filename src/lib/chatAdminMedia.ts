@@ -92,6 +92,6 @@ export async function groundChatAdminContext(context:string,character:ChatCharac
 
 export async function recordMediaOfferSnapshot(character:ChatCharacter,fanId:string,conversationId:string,generationId:string,binding:Record<string,unknown>|null){
  if(!binding||binding.offered_price_minor===null||!mediaPricingV2Enabled())return;
- const saved=await mediaRest<boolean>("rpc/chat_admin_media_offer_record",{method:"POST",body:JSON.stringify({p_workspace:character.workspace_id,p_character:character.id,p_fan:fanId,p_conversation:conversationId,p_generation:generationId,p_revision:character.revision,p_binding:binding})});
+ const saved=await mediaRest<boolean>("rpc/chat_admin_price_offer_record",{method:"POST",body:JSON.stringify({p_workspace:character.workspace_id,p_character:character.id,p_fan:fanId,p_conversation:conversationId,p_generation:generationId,p_revision:character.revision,p_binding:binding})});
  if(saved!==true)throw new ChatAdminMediaError("media_offer_snapshot_unavailable");
 }

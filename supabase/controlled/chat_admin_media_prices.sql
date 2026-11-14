@@ -32,7 +32,7 @@ end $$;
 revoke all on function fanmind_media_price_evidence.audit() from public,anon,authenticated,service_role;
 create trigger chat_media_price_audit after update of sales_playbook on public.chat_characters for each row execute function fanmind_media_price_evidence.audit();
 
-create function public.chat_admin_media_prices_write(p_workspace uuid,p_character uuid,p_character_revision integer,p_playbook jsonb) returns boolean
+create function public.chat_admin_price_write(p_workspace uuid,p_character uuid,p_character_revision integer,p_playbook jsonb) returns boolean
 language plpgsql security invoker set search_path='' as $$
 begin
  if not public.chat_admin_media_writes_allowed(p_workspace) then raise exception 'owner_required';end if;
@@ -42,8 +42,8 @@ begin
  if not found then raise exception 'stale_media_context';end if;
  return true;
 end $$;
-revoke all on function public.chat_admin_media_prices_write(uuid,uuid,integer,jsonb) from public,anon,service_role;
-grant execute on function public.chat_admin_media_prices_write(uuid,uuid,integer,jsonb) to authenticated;
+revoke all on function public.chat_admin_price_write(uuid,uuid,integer,jsonb) from public,anon,service_role;
+grant execute on function public.chat_admin_price_write(uuid,uuid,integer,jsonb) to authenticated;
 
 create table fanmind_media_price_evidence.offers (
  workspace_id uuid not null,
@@ -66,7 +66,7 @@ revoke all on fanmind_media_price_evidence.offers from public,anon,authenticated
 
 -- Evidence writer validates current authority/revision, generation, stock and bounds.
 -- No Checkout, payment, fulfillment or message send is created here.
-create function public.chat_admin_media_offer_record(p_workspace uuid,p_character uuid,p_fan uuid,p_conversation uuid,p_generation uuid,p_revision integer,p_binding jsonb) returns boolean
+create function public.chat_admin_price_offer_record(p_workspace uuid,p_character uuid,p_fan uuid,p_conversation uuid,p_generation uuid,p_revision integer,p_binding jsonb) returns boolean
 language plpgsql security definer set search_path='' as $$
 declare c public.chat_characters; o jsonb; a jsonb; row_media public.chat_character_media;
  selected_offer jsonb; ids uuid[]:='{}'; selected_id uuid; inbound uuid;
@@ -136,8 +136,8 @@ begin
  if not exists(select 1 from fanmind_media_price_evidence.offers where workspace_id=p_workspace and character_id=p_character and generation_id=p_generation and fan_id=p_fan and conversation_id=p_conversation and character_revision=p_revision and binding=p_binding and playbook_offer=o) then raise exception 'media_offer_conflict';end if;
  return true;
 end $$;
-revoke all on function public.chat_admin_media_offer_record(uuid,uuid,uuid,uuid,uuid,integer,jsonb) from public,anon,service_role;
-grant execute on function public.chat_admin_media_offer_record(uuid,uuid,uuid,uuid,uuid,integer,jsonb) to authenticated;
+revoke all on function public.chat_admin_price_offer_record(uuid,uuid,uuid,uuid,uuid,integer,jsonb) from public,anon,service_role;
+grant execute on function public.chat_admin_price_offer_record(uuid,uuid,uuid,uuid,uuid,integer,jsonb) to authenticated;
 -- Generation text and its exact immutable price/file binding commit together.
 create function public.persist_chat_admin_media_generation(
  target_workspace_id uuid,target_character_id uuid,target_fan_id uuid,target_conversation_id uuid,
@@ -148,7 +148,7 @@ declare result text[];
 begin
  result:=public.persist_chat_admin_generation(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,target_character_revision,target_fan_revision,target_generation_id,expected_history_ids,inbound_content,suggested_contents);
  if media_binding is not null and media_binding->>'offered_price_minor' is not null then
-  perform public.chat_admin_media_offer_record(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,target_generation_id,target_character_revision,media_binding);
+  perform public.chat_admin_price_offer_record(target_workspace_id,target_character_id,target_fan_id,target_conversation_id,target_generation_id,target_character_revision,media_binding);
  end if;
  return result;
 end $$;

@@ -54,7 +54,7 @@ async function change(request:NextRequest,upload:boolean){
    if(body.action==="save_product_price"){
     if(!mediaPricingV2Enabled())throw new ChatAdminMediaError("media_pricing_v2_not_enabled");
     playbook=withMediaProductPrice(character,library.folders,body);
-    const saved=await mediaRest("rpc/chat_admin_media_prices_write",{method:"POST",body:JSON.stringify({p_workspace:workspace.id,p_character:characterId,p_character_revision:character.revision,p_playbook:playbook})});
+    const saved=await mediaRest("rpc/chat_admin_price_write",{method:"POST",body:JSON.stringify({p_workspace:workspace.id,p_character:characterId,p_character_revision:character.revision,p_playbook:playbook})});
     if(saved!==true)throw new ChatAdminMediaError("stale_media_context");
     return NextResponse.json({...await loadCharacterMedia(workspace.id,characterId),character:await assertMediaCharacter(workspace.id,characterId)},{headers});
    }

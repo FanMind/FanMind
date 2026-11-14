@@ -1,3 +1,9 @@
+## FM-CHATADMIN-MEDIA-PRICES-1425-20261114 — scoped price extension, PR1497
+- Risk R3. Owner explicitly authorizes public publication of the existing feature branch and exactly one review PR, CI corrections and protected Staging preparation. No automatic merge, Production action, real-customer price activation or edits to existing Character data.
+- Reuse existing sales_playbook offers and catalogue; add folder/file/Model/package rules, inheritance, bounded negotiation, explicit tax display and exact file/revision evidence. Example amounts remain synthetic. Controlled append-only history/atomic quote SQL stays unapplied and the new runtime defaults off.
+- Initial hosted CI found a duplicate auto-created conversation in the new PG fixture and an omitted pure dependency in the component harness. Correct those fixtures; retain the existing full native RLS/lifecycle and browser assertions. Reconcile the reviewed Source of Truth fingerprint without refreshing live evidence or altering accepted gates.
+- Prepare exact-Main/protected-Staging/TLS/checksum schema control with read-only preflight, atomic apply/postflight and full source-derived verification. No workflow dispatched. Existing upload/delete Desktop acceptance remains open; no browser or native-source result is a target PASS.
+
 ## FM-SUPPORT-CONSENT-WEB-1350-20261114
 
 ## FM-SUPPORT-PROD-PREP-1350-20261114

@@ -1,3 +1,4 @@
+import "./chat-admin-media-prices-control.cases.mjs";
 import "./chat-admin-media-pricing-v2.cases.mjs";
 import "./chat-admin-mixer.cases.mjs";
 import assert from "node:assert/strict";
