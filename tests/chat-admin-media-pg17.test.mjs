@@ -63,6 +63,15 @@ import {runMediaPricesSqlCases} from './chat-admin-media-prices-sql.cases.mjs';
 test("native PG17 media prices: immutable audit, scoped quote, transactional rollback and retention",{skip:!enabled},async()=>{
  const db="fanmind_media_prices_ci";
  sql(`create database ${db};`,"postgres");
- try{await runMediaPricesSqlCases(async query=>sql(query,db));}
+ let supportCatalogue;
+ const query=async query=>sql(query,db);
+ try{await runMediaPricesSqlCases(query,async()=>{
+  supportCatalogue=await installRetentionIndependenceFixture(query);
+  await proveMediaRetentionIndependence(query,supportCatalogue);
+ },async()=>{
+  await proveMediaRetentionIndependence(query,supportCatalogue);
+  await query(readFileSync('supabase/controlled/support_ai_consent.sql','utf8'));
+  await proveMediaRetentionIndependence(query,supportCatalogue);
+ });}
  finally{sql(`drop database if exists ${db} with (force);`,"postgres");}
 });

@@ -7,18 +7,25 @@ import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.m
 import {canonical} from './support-centre-schema.mjs';
 import {loadMediaSchemaProfile,mediaSchemaProfileSql,CATALOGUE_MEDIA_SHA256} from './chat-admin-media-schema-profile.mjs';
 export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBoundaryPolicy.mjs','src/lib/websiteChatStagingControlPolicy.mjs','src/lib/websiteChatRetentionStagingPolicy.mjs','scripts/operations/support-centre-staging.mjs','scripts/operations/support-centre-schema.mjs','scripts/operations/website-chat-retention-staging-runner.mjs','scripts/operations/website-chat-retention-migration-check.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','config/certificates/supabase-root-2021-ca.crt','package-lock.json'];
+// Reviewed additive files only. Native PG17 proves the full existing Support
+// catalogue and real retention results unchanged before/after each addition.
+// No existing-file change, unknown SQL, mode change or receipt rewrite is admitted.
+export const RETENTION_INDEPENDENT_ADDITIONS=Object.freeze({
+ 'supabase/controlled/chat_admin_media_catalogue.sql':CATALOGUE_MEDIA_SHA256,
+ 'supabase/controlled/chat_admin_media_prices.sql':'9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4',
+ 'supabase/controlled/support_ai_consent.sql':'cd610fc3775b5d6e9f074b6f8af0125effd5bc360367bf992e5809b45c0f8e61',
+});
 export function assertRetentionSourceEquivalent(source,commit,cwd=process.cwd()){
  if(!/^[a-f0-9]{40}$/.test(source??'')||! /^[a-f0-9]{40}$/.test(commit??''))throw Error('retention_source_invalid');
  const git=args=>{const r=spawnSync('git',args,{cwd,encoding:'utf8',timeout:10000,maxBuffer:65536});if(r.error||r.status!==0)throw Error('retention_source_not_equivalent');return r.stdout;};
  git(['merge-base','--is-ancestor',source,commit]);
  for(const path of [...RETENTION_PROOF_PATHS,'package.json']){git(['cat-file','-e',`${source}:${path}`]);git(['cat-file','-e',`${commit}:${path}`]);}
- const paths=[...RETENTION_PROOF_PATHS],media='supabase/controlled/chat_admin_media_catalogue.sql';
- // The independently reviewed media extension touches no Support/retention
- // object. Admit only its exact additive source, never a modified/deleted SQL
- // file or a general exclusion of the controlled migration directory.
- if(git(['diff','--no-renames','--name-status',source,commit,'--',media]).trim()===`A\t${media}`){
-  if(createHash('sha256').update(git(['show',`${commit}:${media}`])).digest('hex')!==CATALOGUE_MEDIA_SHA256)throw Error('retention_source_not_equivalent');
-  paths.push(`:(exclude)${media}`);
+ const paths=[...RETENTION_PROOF_PATHS];
+ for(const [path,sha256] of Object.entries(RETENTION_INDEPENDENT_ADDITIONS)){
+  if(git(['diff','--no-renames','--name-status',source,commit,'--',path]).trim()!==`A\t${path}`)continue;
+  if(!git(['ls-tree',commit,'--',path]).startsWith('100644 blob ')||
+   createHash('sha256').update(git(['show',`${commit}:${path}`])).digest('hex')!==sha256)throw Error('retention_source_not_equivalent');
+  paths.push(`:(exclude)${path}`);
  }
  git(['diff','--quiet',source,commit,'--',...paths]);
  // The pinned Support workflow invokes node directly, never an npm script.
