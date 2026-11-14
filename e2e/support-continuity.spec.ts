@@ -145,7 +145,7 @@ test('Creator pilot uses the existing composer, preserves one session grant, exp
  await page.getByRole('checkbox',{name:'Ausgewählte Model-Einstellungen für zwei synthetische KI-Testantworten mit OpenAI verarbeiten',exact:true}).check();
  await page.getByRole('button',{name:'Stiländerung synthetisch vergleichen',exact:true}).click();await expect(page.getByText('Synthetischer Vorher-/Nachhervergleich',{exact:false})).toBeVisible();expect(actions[1].aiConsent).toBe(true);
  await page.getByRole('button',{name:'Letzte Stiländerung rückgängig',exact:true}).click();await expect(page.getByText('Stil wiederhergestellt',{exact:false})).toBeVisible();expect(actions.length).toBe(3);
- await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('combobox',{name:'Support-Model'})).toHaveValue('');
- await expect(page.getByRole('checkbox',{name:'Begrenzte Stiländerungen für diese Sitzung verwalten',exact:true})).not.toBeChecked();
+ await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(page.getByRole('combobox',{name:'Support-Model',includeHidden:true})).toHaveValue('');
+ await expect(page.getByRole('checkbox',{name:'Begrenzte Stiländerungen für diese Sitzung verwalten',exact:true,includeHidden:true})).not.toBeChecked();
  expect(actions.length).toBe(3);
 });
