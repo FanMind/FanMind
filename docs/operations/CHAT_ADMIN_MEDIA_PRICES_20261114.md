@@ -94,8 +94,16 @@ No real Character data or sample prices are installed by this change.
    separate Owner decision; this PR must not merge itself.
 2. Deploy that exact accepted Main to the existing protected Staging target,
    with the new price flag off. Preserve existing customer/Character data.
-3. Obtain a fresh healthy retention proof on that source. The new evidence SQL
-   is not excluded from retention source checks; old proof is not silently reused.
+3. Require a healthy retention proof younger than30hours on an ancestor with
+   the identical retention executable/import/SQL/reference/workflow/TLS/lockfile
+   and runtime dependency contract. The retained daily run is not re-executed or
+   relabelled. The protected read-only preflight revalidates it on the reviewed
+   target: only exact regular-file additions of the pinned catalogue, price
+   evidence and existing Consent SQL may differ. Native PG17 compares the full
+   base Support catalogue and actual retention behavior before/after additions.
+   Changed/removed/renamed/executable/unpinned files and unknown SQL still block.
+   Target, Owner, role/schema, latest status and database-clock freshness checks
+   remain required; source equivalence alone is not target acceptance.
 4. Use `.github/workflows/chat-admin-media-prices-staging.yml`, action `verify`,
    reviewed_commit equal to deployed Main, confirmation `staging-media-prices-verify`.
    ABSENT is readiness information only, not a schema PASS or activation grant.
