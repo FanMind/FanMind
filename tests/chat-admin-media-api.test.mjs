@@ -134,7 +134,7 @@ test("Model portraits use the assigned private path, owner JWT, no-store and a f
  assert.equal(h.calls.storage[0].init.headers.Authorization,"Bearer synthetic-owner-jwt");assert.equal(h.calls.storage[0].init.redirect,"error");assert.equal(h.calls.characters,2);assert.equal(h.calls.decode,1);
 });
 test("Model portrait fallback never reads another workspace, Model, public URL or unassigned media",async()=>{
- for(const path of [null,`chat-characters/${id}/${c}/portrait.jpg`,`chat-characters/${w}/${id}/portrait.jpg`,"https://external.invalid/photo.jpg",`chat-characters/${w}/${c}/../secret.jpg`]){const h=portraitHarness({path});assert.equal((await h.get()).status,404);assert.equal(h.calls.storage.length,0);}
+ for(const path of [null,`chat-characters/${id}/${c}/portrait.jpg`,`chat-characters/${w}/${id}/portrait.jpg`,"https://external.invalid/photo.jpg",`chat-characters/${w}/${c}/../secret.jpg`,`chat-characters/${w}/${c}/.`,`chat-characters/${w}/${c}/..`]){const h=portraitHarness({path});assert.equal((await h.get()).status,404);assert.equal(h.calls.storage.length,0);}
  for(const options of [{denied:true},{noToken:true}]){const h=portraitHarness(options);assert.ok([401,403].includes((await h.get()).status));assert.equal(h.calls.storage.length,0);}
 });
 test("Model portrait read fails closed for changed revision, missing object, invalid and oversized images",async()=>{

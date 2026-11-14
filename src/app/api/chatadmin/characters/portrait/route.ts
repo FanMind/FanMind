@@ -18,7 +18,7 @@ export async function GET(request:NextRequest){
   const character=await getChatCharacter(workspace.id,id);
   const path=character.profile_image_path;
   // Only the explicitly assigned portrait of this workspace and this Model.
-  if(character.revision!==revision||!path||!path.startsWith(`chat-characters/${workspace.id}/${id}/`)||!/^chat-characters\/[0-9a-f-]+\/[0-9a-f-]+\/[A-Za-z0-9._-]+$/u.test(path))return absent();
+  if(character.revision!==revision||!path||!path.startsWith(`chat-characters/${workspace.id}/${id}/`)||!/^chat-characters\/[0-9a-f-]+\/[0-9a-f-]+\/(?!\.{1,2}$)[A-Za-z0-9._-]+$/u.test(path))return absent();
   const token=(await cookies()).get(SUPABASE_ACCESS_TOKEN_COOKIE)?.value;
   if(!token)return new NextResponse(null,{status:401,headers:privateHeaders});
   const response=await fetch(`${requireSupabasePublicConfig().url}/storage/v1/object/authenticated/${path}`,{headers:getSupabaseHeaders(token),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
