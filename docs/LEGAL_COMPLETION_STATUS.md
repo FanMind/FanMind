@@ -114,5 +114,9 @@ ist ZUR FREIGABE VORBEREITET. Rechtsprüfung, Betreiberfreigabe, zugewiesene
 Vertretung, tatsächlich geschützter Fallraum/Transfer und praktische Einweisung
 sind noch nicht nachgewiesen. Keine Meta-Prozessbehauptung daraus ableiten.
 Das bestehende externe Register bleibt maßgeblich; keine offene Freigabe wurde
-umgestellt. Der historische Sicherheitsanfragen-Sachverhalt bleibt unbekannt.
+umgestellt. Ausschließlich der historische National-Security-Sachverhalt ist
+durch ausdrückliche Owner-Erklärung vom14.11.2026 für14.11.2025–einschließlich
+14.11.2026 bestätigt: keine entsprechende Meta-Datenweitergabe.
+[Begrenzter Tatsachennachweis](legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md).
+Keine sonstige Behörden-/Prozess- oder Rechtsfreigabe daraus ableiten.
 Reviewnachweise und Blocker: [Vorbereitung](operations/META_APP_REVIEW_READINESS_20261114.md).

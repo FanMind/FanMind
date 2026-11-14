@@ -21,14 +21,16 @@ im privaten Statusbericht; keine Originalantworten/Trace-IDs hier hinterlegen.
 | Kontoabonnement | GET/POST HTTP400, Code100/Subcode33, object_unavailable | Kein PASS, genaue Providerursache nicht nachgewiesen |
 | Unabhängiger Kontozugriff | Bestehender gleichgebundener Kommentarabgleich:0Medien,0Kommentare | Kein erfolgreicher Kommentar-API-Aufruf daraus ableitbar |
 | Kommentar-Testbadge | Zuletzt offiziell0von1 | Tatsächlicher berechtigter Kommentar-Aufruf und providerseitige Zählung fehlen |
-| Andere API-Testbadges | Kein aktueller Einzelzählstand für beide anderen Rechte belegt | Im vorhandenen Dialog lesen; nicht aus Tokenrechten ableiten |
+| Weitere API-Testanzeigen, frisch14.11.2026 gelesen | instagram_basic0von1; instagram_manage_messages0API-Testaufrufe | Nachrichtenanzeige enthält hier keine1-Aufruf-Mindestanforderung; trotzdem kein echter Nutzungsnachweis |
 | Behördenprozesse | [Verfahren](../legal/AUTHORITY_REQUEST_PROCESS.md) und Vorlage vorbereitet | Exakte Rechts-/Betreiberfreigabe, sicherer Fallraum, Übung |
-| Historische Sicherheitsanfragen | In geprüften Unterlagen nicht abschließend feststellbar | Eine verantwortliche Tatsachenbestätigung; kein voreingestelltesNo |
+| Historische Sicherheitsanfragen | Owner am14.11.2026 ausdrücklich: keine national-security-bedingte Weitergabe14.11.2025–einschließlich14.11.2026 | [Begrenzter Tatsachennachweis](../legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md); keine Ausweitung auf andere Fragen |
 | Anbieter/DPA/Region/Transfers | Bestehende Kandidaten und offenes externes Register | Tatsächliche Empfänger-/Kontobelege und fachliche Rollenprüfung |
 
-Der aktuelle Browser-Zugriff konnte in dieser Fortsetzung den Reviewinhalt
-nicht erneut laden (Fokus-/CDP-Timeout). Die markierten UI-Befunde stammen aus
-dem zuletzt unabhängig gelesenen Stand, nicht aus einem erfundenen frischen Abruf.
+Der Reviewdialog und die Instagram-Testanzeige wurden am14.11.2026 in der
+Fortsetzung wieder tatsächlich gelesen. HistorischesNo ist automatisch
+gespeichert. Die drei ausgewählten Rechte bleiben unverändert. Ein früherer
+Fokus-/CDP-Timeout ist kein aktueller Portal-Blocker mehr. Testdaten können laut
+aktuellem Dialog bis24Stunden verzögert sein und sind jeweils30Tage gültig.
 
 ## 2. API-Nachweis und Fehler100/33
 
@@ -124,11 +126,17 @@ transfer and recipient evidence remain in the existing external register.
 Do not include payment/email providers solely because they exist; examine
 actual Meta-data access, including operational access and diagnostic flows.
 
-**National-security requests in the past12months:** UNKNOWN. Leave unanswered
-until the responsible historical fact is confirmed. If confirmed none: "No."
-If any: use the form's real count/category and legally permitted accurate
-description. If secrecy prevents disclosure, use only the form's applicable
-option after legal review. Never infer prohibition from uncertainty.
+**National-security requests in the past12months:** confirmed by the Owner on
+14November2026 for14November2025 through14November2026 inclusive:
+
+"No. FanMind has not disclosed Meta user personal data to government authorities
+in response to national security requests during the specified 12-month period."
+
+Source: [explicit Owner attestation](../legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md).
+The correspondingNo selection is saved in the existing official draft. This
+confirms only that historical fact, not other requests, future periods, legally
+reviewed procedures or completed operating safeguards. No submission is authorized.
+
 
 **Review legality / challenge unlawful requests / minimize disclosure /
 document requests and responses:** no implemented-process checkbox is yet
@@ -187,7 +195,7 @@ and prepare its narrow follow-up separately; do not silently broaden this task.
 
 - [ ] Exact procedure legally reviewed and released by the operator; assigned
   handling/representation, secure case space/transfer and synthetic exercise proved.
-- [ ] Historical national-security answer responsibly confirmed for the form's period.
+- [x] Historical national-security answer expressly confirmed by the Owner on14.11.2026 for14.11.2025–14.11.2026 inclusive; limited attestation recorded.
 - [ ] Actual Meta-data recipients, legal entities, DPA/regions/transfers verified.
 - [ ] Separate Access Verification requirements read and satisfied where required.
 - [ ] Real API evidence for each requested permission and current provider badges.
@@ -210,3 +218,21 @@ pending controls are not all automatically Instagram-review prerequisites:
 map actual Meta-data recipients and the relevant legal/retention controls to
 the form. Unrelated tax/payment controls are neither changed nor declared a
 new blocker for this preparation.
+
+## Konkrete Betriebs- und Kontonachweise dieser Fortsetzung
+
+Der bestehende FanMind-Unternehmensordner im verbundenen Drive wurde nur auf
+Metadaten und vorhandene Dokumentnamen geprüft. Ergebnis: nicht geteilt, eine
+Owner-Berechtigung, kein offener Link/Domain-/Gruppenzugriff in der gelesenen
+Berechtigungsliste. Das ist ein konkreter Ablagekandidat; Zuordnung des Owners
+zur befugten Betreiberrolle, MFA, Audit, Entzug/Recovery und Übermittlungsweg
+sind damit noch nicht geprüft. Keine Rechte erweitert und keine echten
+Fall-/Creator-/Credential-Dateien geöffnet. Kein produktiver Fallraum eingerichtet.
+
+Gezielte Suche nach FanMind-DPA-/Vertragsbelegen in der verbundenen Ablage
+lieferte keine passenden Treffer. Das beweist weder fehlende Verträge noch
+derzeit gültige Annahmen. Vorhandene DPA-/Region-/Transfer-Controls bleiben
+pending; keine pauschale externe Bestätigung aus öffentlichen Vertragstexten.
+Die konkrete Schlussprüfungs-/Einweisungsvorlage steht in Abschnitt12 des
+Behördenverfahrens. Sie benennt die jetzt tatsächlich fehlenden persönlichen
+Freigaben und Zugriffsnachweise statt die allgemeine Einführung erneut abzufragen.

@@ -244,6 +244,11 @@ oder Gerichtsanordnungen nach Metas Frageabgrenzung nicht automatisch mitzählen
 Ohne vollständig geeigneten Nachweis und verantwortliche Tatsachenbestätigung
 bleibt die Antwort **UNBEKANNT**, nicht `No` und nicht `0`.
 
+Für den ausdrücklich bestätigten Zeitraum14.11.2025–einschließlich14.11.2026
+liegt jetzt die [Owner-Tatsachenbestätigung vom14.11.2026](META_NATIONAL_SECURITY_ATTESTATION_20261114.md)
+vor: keine national-security-bedingte Meta-Datenweitergabe. Diese begrenzte
+historische Antwort istNo; die Einführung dieses Verfahrens bleibt davon getrennt.
+
 ## Quellen und rechtliche Prüfung
 
 - EDPB, [Leitlinien02/2024 Art.48 DSGVO, endgültige Fassung2.1](https://www.edpb.europa.eu/system/files/documents/2025-06/edpb_guidelines_202402_article48_v2_en.pdf), insbesondere Rn.4–5,16ff.,33ff.: Drittstaatenanfragen und getrennte Rechts-/Transferprüfung.
@@ -252,3 +257,33 @@ bleibt die Antwort **UNBEKANNT**, nicht `No` und nicht `0`.
 Die übrigen operativen Schritte sind ein FanMind-Verfahrensvorschlag zur
 versionsbezogenen Rechtsprüfung, keine Behauptung eines bestimmten gesetzlichen
 Rechtsbehelfs, einer gesetzlichen Standardfrist oder bereits gelebter Praxis.
+
+## 12. Konkrete Einführungsvorlage zur Schlussprüfung
+
+Status: ZUR FREIGABE VORBEREITET; keine rechtsverbindliche Annahme oder
+Betriebsfreigabe durch das Erstellen dieser Vorlage. Sie konkretisiert die
+bestehenden Abschnitte2,7,8 und10, ohne eine neue Zuständigkeit zu erfinden.
+
+| Maßnahme | Konkret vorbereiteter Ablauf | Vor tatsächlicher Betriebsfreigabe zu belegen |
+| --- | --- | --- |
+| Fallraum | Bestehenden FanMind-Unternehmensablageort nutzen. Original, minimiertes Fallblatt und Änderungshistorie je zufälliger Fallkennung getrennt führen. | Betreiberin benennt den Ort und Berechtigte; Identität des Ablage-Owners, Einzelkonten/MFA, Entzug und Sicherung/Recovery prüfen. Kein neues Konto oder öffentlicher Link. |
+| Übermittlung | Vorhandenen verwalteten Dateiaustausch nur mit benanntem, unabhängig verifiziertem Empfänger, Zugriffsbefristung und separat übermitteltem Schlüssel verwenden. Test ausschließlich mit neutralem synthetischem Inhalt. | Konkreter Kanal/Vertrag, Empfänger-Authentisierung, Ablauf und Sperr-/Entzugstest fehlen. Normale E-Mail/Drive-Link allein ist keine geprüfte Zustelllösung. |
+| Vertretung | Schriftliche Übernahme der operativen Rolle und benannte, befristet bevollmächtigte Vertretung; Fristennachverfolgung im bestehenden Fallregister. | Betreiberin bestätigt Personen, Umfang und Erreichbarkeit. Keine automatische Übertragung von Herausgabe- oder Unterschriftsrechten an den operativen Kontakt. |
+| Einweisung | Verfahrensfassung lesen; Eingang/Frist, Identitätsprüfung, Rechtsprüfung, Freigabe, Umfang und Incidentweg gemeinsam anhand der acht Szenarien aus Abschnitt10 durchgehen. | Teilnahme, tatsächliche Entscheidungen, Abweichungen und Korrekturen mit Datum privat dokumentieren. Eine vorbereitete Lösung ist keine teilgenommene Schulung. |
+
+Vorbereitete Sollentscheidungen der Übung: gefälschte Behörde→Sperre/Verifikation;
+Vollauskunft→Umfang klären; ungeklärter Drittstaat→Rechts-/Transferprüfung; enger
+rechtmäßiger Fall→erst nach getrennten Freigaben minimiert ausführen; Eilfall
+ohne Vertretung→sofort eskalieren, keine Freigabe erfinden; Tokenanforderung→
+keine Credential-Herausgabe; abgelaufene Sperre→Rechtsgrund/Wiedervorlage prüfen;
+Fehlversand→stoppen, eindämmen, zuständige Personen und Incidentprüfung.
+Dies sind Lösungsvorlagen, keine tatsächlich bearbeiteten Fälle oder bestandenen
+Übungen. Ein späteres Betriebsprotokoll muss Ist-Ergebnisse getrennt festhalten.
+
+Versionierte Schlussfreigabe privat erfassen: genaue Dokumentfassung/Hash;
+qualifizierte Rechtsprüfung samt Umfang; Zustimmung der rechtlichen Betreiberin;
+operative Übernahme/Vertretung; geprüfter Fallraum/Transfer; Einweisungsnachweis;
+Fristenentscheidung; Inkrafttreten und nächste Überprüfung. Erst danach die
+belegten einzelnen Maßnahmen auf TATSÄCHLICH IMPLEMENTIERT UND GEPRÜFT setzen.
+Die allgemeine Owner-Einführungsentscheidung ist davon bereits bestätigt und
+wird nicht erneut abgefragt.
