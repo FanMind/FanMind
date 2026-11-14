@@ -22,7 +22,7 @@ im privaten Statusbericht; keine Originalantworten/Trace-IDs hier hinterlegen.
 | Unabhängiger Kontozugriff | Bestehender gleichgebundener Kommentarabgleich:0Medien,0Kommentare | Kein erfolgreicher Kommentar-API-Aufruf daraus ableitbar |
 | Kommentar-Testbadge | Zuletzt offiziell0von1 | Tatsächlicher berechtigter Kommentar-Aufruf und providerseitige Zählung fehlen |
 | Weitere API-Testanzeigen, frisch14.11.2026 gelesen | instagram_basic0von1; instagram_manage_messages0API-Testaufrufe | Nachrichtenanzeige enthält hier keine1-Aufruf-Mindestanforderung; trotzdem kein echter Nutzungsnachweis |
-| Behördenprozesse | [Verfahren](../legal/AUTHORITY_REQUEST_PROCESS.md) und Vorlage vorbereitet | Exakte Rechts-/Betreiberfreigabe, sicherer Fallraum, Übung |
+| Behördenprozesse | Betreiberzustimmung zur unveränderten Fassung unter Prüfvorbehalten übermittelt; [Status](../legal/AUTHORITY_REQUEST_RELEASE_STATUS.md) | Qualifizierte Rechtsprüfung, tatsächlicher Fallraum/Transfer, Rollen/Vertretung und Übung offen |
 | Historische Sicherheitsanfragen | Owner am14.11.2026 ausdrücklich: keine national-security-bedingte Weitergabe14.11.2025–einschließlich14.11.2026 | [Begrenzter Tatsachennachweis](../legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md); keine Ausweitung auf andere Fragen |
 | Anbieter/DPA/Region/Transfers | Bestehende Kandidaten und offenes externes Register | Tatsächliche Empfänger-/Kontobelege und fachliche Rollenprüfung |
 
@@ -193,8 +193,8 @@ and prepare its narrow follow-up separately; do not silently broaden this task.
 
 ## 6. Final release checklist — all still independent
 
-- [ ] Exact procedure legally reviewed and released by the operator; assigned
-  handling/representation, secure case space/transfer and synthetic exercise proved.
+- [x] Operator consent to exact head8dc11de / procedure SHA2567d1fb132… was explicitly relayed by the Owner, with legal/verification reservations; not an independently authenticated signature.
+- [ ] Qualified legal review; assigned handling/representation, secure case space/transfer and actual exercise evidence remain open.
 - [x] Historical national-security answer expressly confirmed by the Owner on14.11.2026 for14.11.2025–14.11.2026 inclusive; limited attestation recorded.
 - [ ] Actual Meta-data recipients, legal entities, DPA/regions/transfers verified.
 - [ ] Separate Access Verification requirements read and satisfied where required.

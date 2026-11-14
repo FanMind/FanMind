@@ -196,3 +196,13 @@ Control-ID und kein Statuswechsel ohne tatsächlichen Freigabebeleg. Reale
 Anfragen, Beteiligte, Aktenzeichen, Rechtsbewertungen und Herausgaben bleiben
 ausschließlich vertraulich außerhalb Git. Eine leere Vorlage belegt keine
 fehlenden historischen Behördenweitergaben oder bereits betriebenen Prozesse.
+
+### Übermittelte Betreiberzustimmung —14.11.2026
+
+[Teilfreigabestatus](AUTHORITY_REQUEST_RELEASE_STATUS.md) dokumentiert die
+begrenzte Zustimmung zur bytegleich erhaltenen Verfahrensfassung und deren
+Fristenvorschlägen. Der private Beleg enthält Quelle/Datum/Umfang/Vorbehalte;
+die öffentliche Referenz nur dessen Hash. Kein eigenständiger Signaturnachweis.
+`approvals.legalReview` und `approvals.retentionDecision` bleibenpending, bis
+die jeweils vollständigen fachlichen Nachweise vorliegen. Keine neue Struktur
+und keine erneute allgemeine Betreiberzustimmung für dieselbe Fassung.

@@ -110,9 +110,12 @@ Steuernummer aus dem vorgelegten Nachweis im vorgesehenen Stripe-Steuerfeld gesp
 Die Einführung ist vom Owner beauftragt. Die genaue Fassung des
 [Behördenanfrageverfahrens](legal/AUTHORITY_REQUEST_PROCESS.md) samt
 [vertraulicher Registervorlage](legal/templates/AUTHORITY_REQUEST_REGISTER_TEMPLATE.md)
-ist ZUR FREIGABE VORBEREITET. Rechtsprüfung, Betreiberfreigabe, zugewiesene
-Vertretung, tatsächlich geschützter Fallraum/Transfer und praktische Einweisung
-sind noch nicht nachgewiesen. Keine Meta-Prozessbehauptung daraus ableiten.
+bleibt die unveränderte freigegebene Fassung. Die vom Owner übermittelte
+Betreiberzustimmung vom14.11.2026 ist unter Prüfvorbehalten dokumentiert.
+[Aktueller Teilfreigabestatus](legal/AUTHORITY_REQUEST_RELEASE_STATUS.md):
+qualifizierte Rechtsprüfung und betriebliche Einführung offen; Meta-Einreichung
+nicht freigegeben. Vertretung, Fallraum/Transfer und Einweisung bleiben zu
+belegen. Keine tatsächliche Prozessimplementierung daraus ableiten.
 Das bestehende externe Register bleibt maßgeblich; keine offene Freigabe wurde
 umgestellt. Ausschließlich der historische National-Security-Sachverhalt ist
 durch ausdrückliche Owner-Erklärung vom14.11.2026 für14.11.2025–einschließlich

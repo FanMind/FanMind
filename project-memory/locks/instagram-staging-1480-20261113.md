@@ -101,3 +101,16 @@ includes parallel1508 and is preserved. New-head CI remains a separate check.
 action. Next personal boundary: exact legal/operator adoption, named authorized
 representation and proven private case/transfer route; genuine API/reviewer/
 screencast evidence still required before final Owner submission approval.
+
+2026-11-14 Operator-consent continuation in DraftPR1509: Owner explicitly
+relays the legal operator's consent to exact procedure head8dc11de and
+SHA2567d1fb132861e25ee928697eb4597d3caaacbfc30eac76be497ccc2eb7a6bca3c,
+including90/30day and24month proposals subject to legal/verification reservations.
+Keep the approved procedure byte-identical. Separate status sheet records only
+role/date/scope/private evidence hash, not personal identities or signatures.
+Consent is relayed, not independently authenticated. Qualified legal review and
+operational adoption remainOPEN; Meta submissionNOT APPROVED. General legal/
+retention controls remainpending; no re-request of same operator consent.
+Previous exactHead8dc11de has all10hosted workflowsPASS; current Main55a0df4
+read independently and parallel changes preserved. New documentation head needs
+its own checks. No OAuth/provider retry/new app/runtime/Production mutation.
