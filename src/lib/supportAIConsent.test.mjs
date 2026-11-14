@@ -51,7 +51,7 @@ test('actual conversation denies stale client AI after withdrawal and suppresses
   '@/lib/supportHistoryPolicy':{isRetiredCreatorSupportTurn:()=>false},
   '@/lib/supportKnowledge':{supportAnswer:()=>({answer:'local',unanswered:false})},
   '@/lib/publicSupportPolicy.mjs':{isPublicSupportPricingQuestion:()=>false},
-  '../../public-support/route':{POST:async()=>{calls++;if(revokeDuringProvider){allowed=false;revision++;}return new Response(JSON.stringify({reply:'synthetic AI'}),{status:200});}}
+  '@/lib/supportCreatorCapacity':{answerCreatorSupport:async input=>{assert.equal(input.identity.actor,'actor');assert.equal(input.identity.workspace,'workspace');await input.beforeProvider();calls++;if(revokeDuringProvider){allowed=false;revision++;}return 'synthetic AI';}}
  });
  const request=(aiConsent=true)=>new Request('https://staging.fanmind.ch/api/support/conversation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:'id',scope:'own',question:'How does FanMind work?',context:'support',aiConsent})});
  assert.equal((await route.POST(request())).status,409);assert.equal(calls,0);assert.equal(writes,0);

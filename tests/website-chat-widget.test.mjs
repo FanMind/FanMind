@@ -1,3 +1,4 @@
+import "./support-creator-capacity.cases.mjs";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -183,10 +184,12 @@ test("actual public route answers without login and fails closed before provider
   "@/lib/rateLimit":{getClientIp:()=>"test-client"},
   "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed})},
   "@/lib/aiUsage":{getFanMindAiModel:()=>"test-model",recordAiUsageEvent:async data=>{usage++;assert.equal(data.workspaceId,"20000000-0000-4000-8000-000000000001");assert.equal(data.question,undefined);}},
+  "@/lib/supportReplyProvider":{requestSupportReply:async input=>{calls++;seen=input;if(providerFails)throw Error("private provider error");return {text:providerText,usage:{}};}},
   "@/lib/supportCentreServer":{supportCentreDatabase:async path=>path.startsWith("support_centre_owners")?(owner?[{user_id:"10000000-0000-4000-8000-000000000001"}]:[]):[{id:"20000000-0000-4000-8000-000000000001"}]},
  };
  const exports={};runInNewContext(ts.transpileModule(await readFile("src/app/api/public-support/route.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{
- exports,require:n=>{assert.ok(dependencies[n],n);return dependencies[n];},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:"true",OPENAI_API_KEY:"ci-only-placeholder"}},Date,AbortSignal,fetch:async(url,init)=>{calls++;assert.equal(url,"https://api.openai.com/v1/responses");seen=JSON.parse(init.body);if(providerFails)throw Error("private provider error");return {ok:true,json:async()=>({output:[{content:[{type:"output_text",text:providerText}]}],usage:{}})};}
+ exports,require:n=>{assert.ok(dependencies[n],n);return dependencies[n];},process:{env:{FANMIND_SUPPORT_CENTRE_ENABLED:"true",OPENAI_API_KEY:"ci-only-placeholder"}},Date,AbortSignal,fetch:()=>{throw Error("unexpected direct provider access");}
+
  });
  const body={question:"Was kann FanMind?",history:[],consent:true,language:"de"};
  const req=(b=body,origin="https://fanmind.ch")=>new Request("https://fanmind.ch/api/public-support",{method:"POST",headers:{"content-type":"application/json",origin},body:JSON.stringify(b)});
@@ -199,7 +202,7 @@ test("actual public route answers without login and fails closed before provider
  allowed=false;assert.equal((await exports.POST(req({...body,question:"Prices?"}))).status,429);allowed=true;
  owner=false;assert.equal((await exports.POST(req({...body,question:"Prices?"}))).status,503);owner=true;
  const english=await exports.POST(req({...body,question:"What are the setup fees?",language:"en"}));assert.match(english.body.reply,/no setup fee/);assert.match(english.body.reply,/in preparation/);assert.equal(calls,0);
- const result=await exports.POST(req());assert.equal(result.status,200);assert.match(result.body.reply,/FanMind/);assert.equal(calls,1);assert.equal(usage,1);assert.equal(seen.store,false);assert.equal(seen.max_output_tokens,800);assert.doesNotMatch(JSON.stringify(seen),/owner_user_id|ci-only-placeholder|workspace_id/);
+ const result=await exports.POST(req());assert.equal(result.status,200);assert.match(result.body.reply,/FanMind/);assert.equal(calls,1);assert.equal(usage,1);assert.equal(seen.maxOutputTokens,800);assert.doesNotMatch(seen.system+seen.content,/owner_user_id|ci-only-placeholder|workspace_id/);
  providerText="Fragen zu FanMind: fanmind@fandomind.ch.";
  const contact=await exports.POST(req());assert.equal(contact.status,200);assert.equal(contact.body.reply,"Fragen zu FanMind: fanmind@fanmind.ch.");assert.equal(calls,2);assert.equal(usage,2);
  providerFails=true;const failed=await exports.POST(req());assert.equal(failed.status,503);assert.doesNotMatch(JSON.stringify(failed),/private provider error/);assert.equal(usage,3);

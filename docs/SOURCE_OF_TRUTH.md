@@ -1,3 +1,16 @@
+## Support #1350: Creator-funded authenticated AI — source correction
+
+Authenticated Support now uses the existing Creator-bound Capacity reservation
+and actual-usage settlement path rather than the public Owner-funded route.
+Anonymous Support keeps its existing operational attribution; both reuse one
+provider transport. Closing/reopening Help does not revoke consent and no timed
+Support/consent expiry is introduced. No provider, DB, Billing or Production
+activation is performed. The corrected authenticated path must not be rolled
+out until existing Capacity schema/entitlement/FX/acceptance gates are satisfied;
+missing prerequisites deny new AI requests without charging the platform Owner.
+Local Help and the central profile PDF remain separate. Details and unresolved
+rollout dependencies: docs/operations/SUPPORT_CREATOR_CAPACITY_20261114.md.
+
 ## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
 
 Source preparation extends the existing Character sales_playbook offers with
