@@ -150,3 +150,12 @@ operator is incomplete/submission pending. The regular Production Creator URL
 currently redirects to login, so no signed-in connection acceptance is claimed.
 Affected boundary: FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001;
 registration alone does not close either live acceptance gate.
+
+Protected inspect43603995152 reached fanmind-prod-01 but exited before git fetch
+and before the controller. The Meta source remote allowlist omitted the original
+Bernds-tech/FanMind repository aliases already accepted by the existing protected
+Support controller. Align the exact four aliases, retain current-Main/ancestry
+checks, add redacted remote-stage markers, and test accepted/foreign remotes
+against the actual shell case block. No remote URL/credential values are logged.
+The initial PR validation43603787681 registered the workflow successfully and
+exposed Run workflow even before merge; final required CI/merge still pending.

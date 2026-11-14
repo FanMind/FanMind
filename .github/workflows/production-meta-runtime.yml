@@ -63,9 +63,10 @@ jobs:
           case "$ACTION" in inspect|configure|subscribe-webhook) ;; *) exit 1 ;; esac
           cd /var/www/fanmind
           case "$(git remote get-url origin)" in
-            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git) ;;
-            *) exit 1 ;;
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            *) echo 'PRODUCTION_META_SOURCE=remote_rejected'; exit 1 ;;
           esac
+          echo 'PRODUCTION_META_SOURCE=remote_accepted'
           git fetch --prune origin main
           [[ "$(git rev-parse origin/main)" == "$GITHUB_SHA" ]]
           git merge-base --is-ancestor "$LIVE_COMMIT" "$REVIEWED_COMMIT"

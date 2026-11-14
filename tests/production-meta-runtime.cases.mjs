@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { assertProductionMetaTarget, assertProductionRuntimeConsistency, verifyProductionAppSecret, productionMetaTransaction, productionMetaReadiness, productionAppSubscription, APP } from '../scripts/operations/production-meta-runtime.mjs';
 import { renderMetaConfiguration } from '../scripts/operations/staging-meta-runtime.mjs';
 const values={FANMIND_RUNTIME_ENVIRONMENT:'production',NEXT_PUBLIC_APP_URL:'https://fanmind.ch',NEXT_PUBLIC_SUPABASE_URL:'https://drqkpdvtbbrrdwmtrodz.supabase.co',FACEBOOK_APP_ID:APP,FACEBOOK_APP_SECRET:'a'.repeat(32),FACEBOOK_REDIRECT_URI:'https://fanmind.ch/api/integrations/facebook/callback',FANMIND_TOKEN_ENCRYPTION_KEY:'b'.repeat(64),FACEBOOK_WEBHOOK_VERIFY_TOKEN:'synthetic'.repeat(8)};
@@ -76,4 +77,17 @@ test('automatic registration validation cannot reach the protected host job or d
  assert.match(host,/environment: production/u);
  assert.match(host,/github.actor_id == '270165082'/u);
  assert.match(host,/inputs.reviewed_commit == github.sha/u);
+});
+
+test('Production remote guard accepts the existing transferred-repository aliases and rejects foreign remotes',()=>{
+ const workflow=readFileSync('.github/workflows/production-meta-runtime.yml','utf8');
+ const guard=workflow.match(/          case "\$\(git remote get-url origin\)" in[\s\S]*?          esac/u)[0]
+   .replace('"$(git remote get-url origin)"','"$META_TEST_REMOTE"');
+ for(const remote of ['git@github.com:FanMind/FanMind.git','https://github.com/FanMind/FanMind.git','git@github.com:Bernds-tech/FanMind.git','https://github.com/Bernds-tech/FanMind.git']){
+  assert.equal(spawnSync('/bin/bash',['-c',guard],{env:{META_TEST_REMOTE:remote}}).status,0);
+ }
+ for(const remote of ['https://github.com/foreign/FanMind.git','git@github.com:FanMind/other.git','https://github.com.evil.invalid/FanMind/FanMind.git','https://user:secret@github.com/FanMind/FanMind.git','']){
+  const result=spawnSync('/bin/bash',['-c',guard],{env:{META_TEST_REMOTE:remote},encoding:'utf8'});
+  assert.notEqual(result.status,0);assert.equal(result.stdout.trim(),'PRODUCTION_META_SOURCE=remote_rejected');
+ }
 });

@@ -1101,3 +1101,12 @@ Owner-approved single-account fanmind.crm Staging continuation on existing App15
 - Meta business verification incomplete/submission pending; app unpublished.
   Personal identity/legal steps remain Owner-only. Production login needed for
   Creator acceptance. No configuration/provider/schema/CRM/Billing writes.
+
+Protected inspect43603995152 reached fanmind-prod-01 but exited before git fetch
+and before the controller. The Meta source remote allowlist omitted the original
+Bernds-tech/FanMind repository aliases already accepted by the existing protected
+Support controller. Align the exact four aliases, retain current-Main/ancestry
+checks, add redacted remote-stage markers, and test accepted/foreign remotes
+against the actual shell case block. No remote URL/credential values are logged.
+The initial PR validation43603787681 registered the workflow successfully and
+exposed Run workflow even before merge; final required CI/merge still pending.
