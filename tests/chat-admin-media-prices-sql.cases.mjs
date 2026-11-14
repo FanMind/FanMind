@@ -60,6 +60,9 @@ export async function runMediaPricesSqlCases(sql){
  await assert.rejects(()=>as(record(binding)),/stale_media_context/u);
  await sql('delete from public.chat_character_messages;');
  assert.equal((await sql('select count(*) from fanmind_media_price_evidence.offers;')).trim(),'0','message retention cascades to offer evidence');
+ await assert.rejects(()=>sql(`delete from public.chat_characters where id='${c}';`),/foreign key constraint/u);
+ await as(`update public.chat_character_media set deleted=true,available=false,reviewed=false where workspace_id='${w}' and character_id='${c}';delete from public.chat_character_media where workspace_id='${w}' and character_id='${c}';`);
+ assert.equal((await sql(`select count(*) from public.chat_character_media where character_id='${c}';`)).trim(),'0');
  await sql(`delete from public.chat_characters where id='${c}';`);
  assert.equal((await sql('select count(*) from fanmind_media_price_evidence.revisions;')).trim(),'0','Character erase cascades to pricing history');
 }

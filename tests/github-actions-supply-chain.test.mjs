@@ -366,13 +366,18 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(supportCustomer.source, /environment: staging/u);
   assert.match(supportCustomer.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(supportCustomer.source, /SERVICE_ROLE|permissions:\s*write-all/u);
-  assert.equal(hostedWorkflows.length, 77);
+  const mediaPrices = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-media-prices-staging.yml');
+  assert.deepEqual(mediaPrices?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaPrices.source, /environment: staging/u);
+  assert.match(mediaPrices.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.doesNotMatch(mediaPrices.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
+  assert.equal(hostedWorkflows.length, 78);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    87, // Includes independent media SQL and actual video processing jobs.
+    88, // Includes independent price evidence schema control, media SQL and video processing.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
