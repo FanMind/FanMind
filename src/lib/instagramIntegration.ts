@@ -714,6 +714,7 @@ export async function verifyUnifiedInstagramCredential(accessToken: string, acco
 export async function fetchInstagramOwnComments(accountId: string, accessToken: string) {
   const media = await unifiedJson(encodeURIComponent(accountId)+"/media",accessToken,{fields:"id,permalink",limit:"25"});
   if (!Array.isArray(media.data) || media.paging?.next) throw new Error("instagram_media_limit");
+  const mediaEvidence: Array<{mediaId:string;permalink:string|null;commentsRead:true}> = [];
   const rows: Array<{postId:string;id:string;text:string;senderId:string;username:string;timestamp:string|null;url:string|null}> = [];
   for (const post of media.data) {
     if (!/^\d+$/u.test(post.id ?? "")) throw new Error("instagram_media_identity");
@@ -721,12 +722,15 @@ export async function fetchInstagramOwnComments(accountId: string, accessToken: 
     if (!Array.isArray(comments.data) || comments.paging?.next) throw new Error("instagram_comment_limit");
     let permalink: string|null = null;
     try { const u = new URL(post.permalink); if (u.protocol === "https:" && ["www.instagram.com","instagram.com"].includes(u.host) && /^\/(?:p|reel)\/[A-Za-z0-9_-]+\//u.test(u.pathname)) permalink = u.origin+u.pathname; } catch {}
+    // Retain only the validated own-media identity after its comments GET succeeds.
+    // No credential, provider payload, comment body or trace enters this evidence.
+    mediaEvidence.push({mediaId:post.id,permalink,commentsRead:true});
     for (const c of comments.data) {
       if (!/^\d+$/u.test(c.id ?? "") || !/^\d+$/u.test(c.from?.id ?? "") || c.from.id === accountId || typeof c.text !== "string" || !c.text.trim()) continue;
       rows.push({postId:post.id,id:c.id,text:c.text,senderId:c.from.id,username:c.from.username ?? "Instagram Nutzer",timestamp:typeof c.timestamp === "string"?c.timestamp:null,url:permalink ? permalink+"?comment_id="+encodeURIComponent(c.id):null});
     }
   }
-  return {posts:media.data.length,comments:rows};
+  return {posts:media.data.length,comments:rows,mediaEvidence};
 }
 
 function instagramGraphVersion(): string { return instagramUnifiedEnabled(process.env) ? "v27.0" : META_GRAPH_API_VERSION; }

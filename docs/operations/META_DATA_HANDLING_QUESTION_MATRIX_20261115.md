@@ -18,6 +18,35 @@ Exoscale-/Supabase-/OpenAI-Vertrags-/Fernzugriffslücken bleiben einzeln offen.
 
 ## 1. Tatsächlicher Fragebogen
 
+### Ergänzung: kontrollierter technischer Mediennachweis
+
+Der bestehende eigene Medien-/Kommentar-Leselauf hat inzwischen tatsächlich
+einen Beitrag und eine erfolgreiche leere Kommentarantwort geliefert.
+Die Operator-Antwort hatte dabei nur Zähler und verlor die konkrete Medien-ID
+und den Provider-Permalink. Die gezielte Ergänzung gibt ausschließlich die
+validierte eigene Medien-ID, den bereits normalisierten öffentlichen
+Instagram-Permalink und die nach erfolgreichem Kommentar-GET gesetzte
+Bestätigung zurück. Keine neuen Provider-Aufrufe, gespeicherten Daten,
+Berechtigungen, Tokenausgaben, Rohantworten oder Traces. Bestehende
+Staging-/Operator-/Workspace-/Kontogrenzen bleiben erhalten.
+
+Die synthetische Prüfung belegt die Rückgabe auch bei null Kommentaren,
+verwirft ungültige IDs/fehlgeschlagene Antworten und unterdrückt fremde
+Permalink-Hosts sowie URL-Querydaten. Das ist eine vorbereitete
+Diagnoseergänzung, noch kein neuer bereitgestellter oder tatsächlicher
+numerischer Live-Mediennachweis. Keine ID aus einem Shortcode errechnen.
+
+Metas bis24Stunden dauernde Aktualisierungsfrist ist am15.11. noch nicht
+abgelaufen. Eine einmalige Nachprüfung ist für16.11.2026 um13:00
+Europe/Vienna eingerichtet; keine automatischen neuen Provider-Aufrufe oder
+Autorisierungen. Der tatsächliche aktuelle0von1-Stand bleibt offen, bis Meta
+den erforderlichen Kommentar-Test tatsächlich anerkennt. Die spätere
+Automatisierung muss einen fehlenden autorisierten Zugang als Blocker melden.
+
+Kontoabonnement bleibt getrennt: letzter echter GET und vorheriger POST
+HTTP400/Code100/Subcode33, object_unavailable, trotz funktionierender eigener
+Kommentar-Lesekante. Kein erneuter POST und kein spekulativer API-Fix.
+
 Der aktuelle App-Review-Entwurf empfiehlt juristische/strategische Expertise
 innerhalb der Organisation. Er verlangt hier keine externe anwaltliche
 Bescheinigung. Die Owner-Entscheidung stellt diese Beauftragung zurück; sie
