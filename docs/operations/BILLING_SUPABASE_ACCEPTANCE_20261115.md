@@ -355,3 +355,13 @@ bis diese Voraussetzungen tatsächlich installiert/abgenommen und die
 synthetischen Identitäten sowie Price-/Steuer-/Runtimegates gebunden sind.
 Monatsrelease-Übergabe entsprechend aktualisiert. Keine Production-SQL-,
 Deployment-,Merge-,Zahlungs- oder zusätzliche Secretfreigabe verbraucht.
+
+Ergänzender Production-Guard-Vorabgleich12:20:13UTC:2 Legacy-Starter-
+Workspaces erfüllen die unveränderte Vertragsannahme-Prüfung nicht;1 Workspace
+hat mindestens eine NULL-Core-Invariante,0 fehlende Owner-Mitgliedschaften.
+Nur Zähler, keine Kundendaten gelesen/veröffentlicht. Keine Datenreparatur
+oder rückdatierte Zustimmung. Production-Contract-Apply bleibt ausdrücklich
+BLOCKED auch nach einer künftigen RPC-Bereitstellung, bis diese Befunde
+anhand autoritativer Vertrags-/Auditbelege geklärt sind. Eine neue native
+Negativprüfung führt den bestehenden Annahme-Guard tatsächlich aus und weist
+die unveränderten ACLs/Policies nach dessen Abbruch nach.

@@ -63,7 +63,12 @@ Keine neue Rolle, kein neuer Definer und kein Secret erforderlich.
 
 Production-Vorprüfung12:13:43UTC: alle sieben Step-A-Spalten vorhanden,
 0 doppelte Ownergruppen,0 doppelte Mitgliedschaftsgruppen, aber **0 Provisioning-
-RPCs**. Das ist kein vollständiger Expand-Nachweis. Nicht automatisch die alte
+RPCs**. Ergänzender read-only Vorabgleich12:20:13UTC: **2 Legacy-Starter-
+Annahmen scheitern am unveränderten Contract-Guard**,1 Workspace hat mindestens
+eine NULL-Core-Invariante;0 fehlende Owner-Mitgliedschaften. Keine betroffenen
+Identitäten oder Annahmedaten veröffentlicht. Der Contract-Guard würde derzeit
+selbst abbrechen. Keine historischen Annahmen oder Datenwerte erfinden/backfillen.
+Das ist kein vollständiger Expand-Nachweis. Nicht automatisch die alte
 additive Migration erneut anwenden: sie enthält Demo-Normalisierung und muss
 mit dem tatsächlichen installierten Schema/Funktionsbestand klassifiziert werden.
 Die erste Migration hat SHA256
@@ -99,6 +104,8 @@ Der zusätzliche Pflichtschritt im bestehenden nativen CI-Job setzt REQUIRED=tru
 Lokale Umgebung ohne Docker/PG17 meldet ausdrücklich SKIP, niemals Native-PASS.
 
 - Vorzustand: alle sechs eigenen Billingfelder sind tatsächlich schreibbar.
+- Fehlende Legacy-Annahmedaten: tatsächlicher Contract-Guard bricht vor jeder
+  Berechtigungsänderung ab; exakte ACLs/Policies bleiben erhalten.
 - Exakte ACL-/Column-Grant-/Policy-Rückkehr nach ROLLBACK-Rehearsal.
 - Owner und zweiter owning Creator: zehn Stammdatenfelder positiv.
 - Owner, Creator, Mitglied, authentifizierter Fremdnutzer, anon: alle sechs

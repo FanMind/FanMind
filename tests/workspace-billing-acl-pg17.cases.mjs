@@ -70,6 +70,15 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
       for (const [field,value] of Object.entries(fields)) assert.equal(as("authenticated",owner,`with changed as(update public.workspaces set ${field}=${value} where id='${owner}' returning id) select count(*) from changed`),"1");
     });
     const before = snapshot();
+    await t.test("missing legacy acceptance evidence aborts before any privilege change", () => {
+      sql(`update public.workspaces set plan_id='starter',commercial_option='starter_paid_setup',payment_terms_version=null where id='${owner}';`);
+      try {
+        assert.throws(() => sql(contract), e => /workspace_payment_terms_evidence_missing/u.test(String(e.stderr)));
+        assert.equal(snapshot(),before);
+      } finally {
+        sql(`update public.workspaces set plan_id='capacity_199',commercial_option='capacity_199' where id='${owner}';`);
+      }
+    });
     await t.test("rollback rehearsal restores exact ACLs, column grants and policies", () => {
       sql(`begin;${contractBody}rollback;`);
       assert.equal(snapshot(), before);
