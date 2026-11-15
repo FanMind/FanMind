@@ -383,13 +383,17 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(capacityInstall.source, /group: fanmind-staging-deploy/u);
   assert.match(capacityInstall.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(capacityInstall.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
-  assert.equal(hostedWorkflows.length, 79);
+  const monthlyPrepare = hostedWorkflows.find(workflow => workflow.file === 'monthly-release-prepare.yml');
+  assert.deepEqual(monthlyPrepare?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(monthlyPrepare.source, /persist-credentials: false/u);
+  assert.doesNotMatch(monthlyPrepare.source.replace(/^\s*#.*$/gmu, ''), /environment:|self-hosted|secrets\.|permissions:\s*write-all|pull_request:|schedule:/u);
+  assert.equal(hostedWorkflows.length, 80);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    89, // Includes the protected Capacity prerequisite controller.
+    90, // Includes the secret-free monthly preparation workflow.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
