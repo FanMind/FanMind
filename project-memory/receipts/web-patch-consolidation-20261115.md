@@ -10,3 +10,5 @@ Erster tatsächlicher Audit des Paares: 9 Befunde, 2 High/7 Moderate im Entwickl
 Ergebnis auf dem endgültigen Paketbaum: npm ci erfolgreich; npm audit --json meldet 0/0/0/0 (417/418 Paketmetadaten sind kein Risikoindikator); 10/10 bestehende Dependency-Audit-/Pin-/Sharp-Tests PASS; komplettes ESLint PASS (0 Fehler, 7 bestehende Warnungen); synthetisch konfigurierter Next-16.4.6-Production-Build inklusive TypeScript PASS. Lint und Build prüfen die reale AST-/Glob-Kompatibilität der eng begrenzten Entwicklerkorrektur. Keine Provider-/Datenbank-/Runtimeaktion.
 
 GitHub muss den endgültigen Head prüfen. Kein Merge und keine Release-/Staging-/Productionfreigabe. #1430 wird erst nach unabhängig bestätigter vollständiger Übernahme in #1456 als redundant geschlossen.
+
+Zusätzliche Sourcebindung: Der Capacity-Integrationsmanifest hasht package.json. Ausschließlich dieser Hash wird nach Prüfung des Paket-/Override-Diffs erneuert; alle Capacity-Kommandos, Transportdateien und übrigen Hashes bleiben identisch. Kein Guard wird entfernt.
