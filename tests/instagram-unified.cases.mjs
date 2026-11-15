@@ -106,6 +106,29 @@ test('actual subscription refuses another app readback despite successful POST',
  let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;return Response.json({success:true});}return Response.json({data:[{id:'foreign',subscribed_fields:['messages','comments']}]});});
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),false);assert.equal(posts,1);
 });
+test('own-media evidence retains provider IDs after successful empty comments reads without extra requests or raw fields',async()=>{
+ const calls=[];const api=integration(async(url,options)=>{
+  const u=new URL(url);calls.push(u.pathname);
+  assert.equal(u.host,'graph.facebook.com');assert.equal(options.headers.Authorization,'Bearer synthetic');
+  return Response.json(u.pathname.endsWith('/media')?{data:[{id:'123456789',permalink:'https://www.instagram.com/p/TestPost_1/?private=must-not-escape',access_token:'must-not-escape'}]}:{data:[],private:'must-not-escape'});
+ });
+ const result=await api.fetchInstagramOwnComments('12345678','synthetic');
+ assert.equal(JSON.stringify(result),JSON.stringify({posts:1,comments:[],mediaEvidence:[{mediaId:'123456789',permalink:'https://www.instagram.com/p/TestPost_1/',commentsRead:true}]}));
+ assert.deepEqual(calls,['/v27.0/12345678/media','/v27.0/123456789/comments']);
+ assert.doesNotMatch(JSON.stringify(result),/synthetic|must-not-escape|access_token/u);
+});
+test('own-media evidence rejects forged IDs and failed comments reads and never links an untrusted permalink',async()=>{
+ for(const post of [{id:'invalid',permalink:'https://www.instagram.com/p/TestPost_1/'},{id:'123456789',permalink:'https://attacker.invalid/p/TestPost_1/'}]) {
+  let commentsCalls=0;const api=integration(async url=>{
+   if(new URL(url).pathname.endsWith('/media'))return Response.json({data:[post]});
+   commentsCalls++;return Response.json({data:[]});
+  });
+  if(post.id==='invalid'){await assert.rejects(api.fetchInstagramOwnComments('12345678','synthetic'),/instagram_media_identity/u);assert.equal(commentsCalls,0);}
+  else {const result=await api.fetchInstagramOwnComments('12345678','synthetic');assert.equal(result.mediaEvidence[0].permalink,null);assert.equal(commentsCalls,1);}
+ }
+ const failed=integration(async url=>new URL(url).pathname.endsWith('/media')?Response.json({data:[{id:'123456789'}]}):Response.json({error:{code:100}},{status:400}));
+ await assert.rejects(failed.fetchInstagramOwnComments('12345678','synthetic'),/instagram_unified_provider/u);
+});
 test('actual subscription confirms both exact-app fields after POST',async()=>{
  let posts=0;const api=integration(async(url,options)=>{if(options?.method==='POST'){posts++;assert.equal(new URL(url).search,'');assert.equal(options.body.get('subscribed_fields'),'messages,comments');assert.equal(options.body.get('access_token'),'synthetic');return Response.json({success:true});}assert.equal(posts,1);assert.equal(new URL(url).searchParams.has('fields'),false);return Response.json({data:[{id:env.INSTAGRAM_APP_ID,subscribed_fields:['messages','comments']}]});});
  assert.equal(await api.subscribeInstagramAccount('12345678','synthetic','instagram_messages'),true);assert.equal(posts,1);

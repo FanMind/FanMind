@@ -50,3 +50,111 @@ the fixed two allowed fields, followed by mandatory exact-app/both-field GET.
 Keep legacy merge behavior and all credential/Operator guards. Add only bounded
 numeric subcode plus fixed cause enum to diagnose any remaining rejection;
 never raw provider text. Real acceptance remains OPEN and no input is requested.
+
+2026-11-14 Meta-review governance continuation (#1509), documentation only:
+Owner authorizes introducing authority-request legality review, challenge,
+minimization and confidential records. Exact procedure1.0 and blank case template
+are prepared in existing legal governance, not legally approved or operated.
+Existing approvals.legalReview/retentionDecision and private evidence boundary
+remain authoritative; no new register control or runtime service. Historical
+national-security disclosures remain UNKNOWN pending one responsible fact
+confirmation. No new private identities/case details enter this checkpoint.
+Review package has exactly the three required Instagram scopes, conditional
+English drafts, API evidence matrix and real screencast/reviewer plan. Current
+source proves zero returned media causes no comment-edge call, so0of1 remains
+open. GET/POST400/code100/subcode33 is not explained or fixed by this source.
+Existing Verified business/Tech designation is recorded in the protected dossier;
+Advanced/Access Verification, correct account subscription, reviewer access and
+real DM/comment acceptance remain distinct. No new provider/OAuth/config/data
+action, submission, merge or deployment. Other workstreams preserved.
+18/18 existing legal/evidence tests pass;27-control register remains2confirmed/
+25pending and complete-readiness correctly blocks. Initial PR checks identified
+the missing durable checkpoint and the reviewed SOURCE_OF_TRUTH blob update.
+Only that documented drift hash is reconciled; no runtime acceptance baseline
+or protected release evidence is upgraded. Existing social contract/gate remain
+FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001. Next: responsible historical
+fact, qualified legal/exact operator release, secure handling/transfer/training
+evidence, then genuine API/reviewer/video evidence before final Owner submission
+approval. Browser content reread currently blocked by focus/CDP timeout; previous
+UI findings are not represented as fresh observations.
+
+2026-11-14 Owner attestation continuation in the same DraftPR1509: the Owner
+expressly confirms no Meta-personal-data disclosure in response to national
+security requests14November2025 through14November2026 inclusive. This supersedes
+the earlierUNKNOWN for exactly that historical question, not other requests,
+future periods, procedure adoption or legal approval. Record only role/date/
+period/fact and exact approved English answer; no extra personal identifier.
+Official draftNo was selected and auto-saved; no review submission. All three
+usage descriptions are being saved as incomplete drafts, without allowed-use
+agreements or API/video success. Fresh Meta test display: basic0of1, comments
+0of1, messages0test calls (no1minimum shown there); display can lag24hours and
+tests are valid30days. No additional scopes or provider calls.
+Existing private company-folder metadata identifies oneOwner/no share as a
+case-space candidate only: identity/authority/MFA/audit/transfer/recovery remain
+unproven. No folder permissions or existing files changed. Targeted DPA/contract
+search yielded no matching evidence; absence of search results is not absence
+of a contract. Procedure closing checklist, representation and eight synthetic
+training solution outlines are prepared; no human training or approval invented.
+Prior exactHead8d40c8e hosted checks all10passed. Main independently33ae429
+includes parallel1508 and is preserved. New-head CI remains a separate check.
+100/33 still unresolved; no blind retry, OAuth, new app, runtime or Production
+action. Next personal boundary: exact legal/operator adoption, named authorized
+representation and proven private case/transfer route; genuine API/reviewer/
+screencast evidence still required before final Owner submission approval.
+
+2026-11-14 Operator-consent continuation in DraftPR1509: Owner explicitly
+relays the legal operator's consent to exact procedure head8dc11de and
+SHA2567d1fb132861e25ee928697eb4597d3caaacbfc30eac76be497ccc2eb7a6bca3c,
+including90/30day and24month proposals subject to legal/verification reservations.
+Keep the approved procedure byte-identical. Separate status sheet records only
+role/date/scope/private evidence hash, not personal identities or signatures.
+Consent is relayed, not independently authenticated. Qualified legal review and
+operational adoption remainOPEN; Meta submissionNOT APPROVED. General legal/
+retention controls remainpending; no re-request of same operator consent.
+Previous exactHead8dc11de has all10hosted workflowsPASS; current Main55a0df4
+read independently and parallel changes preserved. New documentation head needs
+its own checks. No OAuth/provider retry/new app/runtime/Production mutation.
+
+2026-11-15 continuation in existing DraftPR1509: inherited46674b2 has all10
+hosted workflowsPASS; current Main30e8ddc independently read and preserved.
+Owner defers external attorney engagement/costs. Prior conditional operator
+consent and express operational role acceptance remain; no positive legal
+opinion, deputy power or full operational release. Approved SOP checksum stays
+7d1fb132861e25ee928697eb4597d3caaacbfc30eac76be497ccc2eb7a6bca3c.
+Exact live Meta data-handling questions/conditional provider country fields
+mapped in META_DATA_HANDLING_QUESTION_MATRIX_20261115.md. ProcessorsYes,
+existing legal operator andAustria saved in draft, dated national-securityNo
+retained; no policy-box speculation or submission. Existing business folder
+now contains a restricted synthetic tabletop annex: owner-only metadata and
+same operational account's active2FA observed, write/readback works. All8
+assistant tabletop decisions documented; no human exercise/legal review or
+external secure transfer falsely passed. Account-specific provider remote
+processing countries remain incomplete; Supabase primary region is proven
+eu-west-3, not proof of all processing locations. Current Meta test badges:
+basicComplete, messages1APItest, comments0of1. These are app-wide evidence,
+not correct-account subscribed_appsPASS. Known GET/POST400/100/33 remains
+unresolved; official Unified BISU/FacebookGraph/IGaccount POST contract matches
+source. Advanced comments requirement is independent, not proven cause.
+Website platform and business/pages category saved in existing Staging app;
+actual icon upload failed to load. Reviewer draft explicitly labels missing
+subscription, recordings and safe credentials; no claim of reproducible access.
+No extra rights/OAuth/token/code/deploy or unrelated workstream change.
+
+Final read10:01UTC: parallelPR1513 moved Main to63e8b0d6; independent public
+Staging version reports same releaseCommit and runtimeEnvironmentstaging.
+Existing Operator session works through Dashboard/channels/Instagram details;
+stored connection/scopes remain, webhook still inactive. No sync/provider
+button used. Saved reviewer draft was independently reopened successfully.
+
+2026-11-15 latest Owner authorizes complete Meta submission conditionally on
+all actual evidence and protected scope, then integration-only Production after
+Meta approval, full Staging acceptance and all Production/backup/restore gates.
+No general release or automatic legal/process completion. Exoscale unchanged.
+IconPASS already independently recorded privately; prior3cb04a81 all10checksPASS.
+Fresh Main5fc2832b introduces only shared-doc header/baseline conflicts here;
+preserve all parallel Main source and combine documentation fingerprint.
+Staging browser now returns Login, so no fresh comment/media/subscription call
+performed. Current Meta bug reporter for Instagram Graph API/Webhooks states
+advanced technical support unavailable for this product and redirects to the
+Developer Community Forum. No trace/credential/private account data posted.
+These are actual next boundaries;100/33 remains unresolved, not fixed by consent.

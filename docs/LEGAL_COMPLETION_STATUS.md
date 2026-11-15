@@ -104,3 +104,22 @@ Vorbereitung und konkrete Restarbeiten: `docs/legal/COMMERCIAL_LAUNCH_REVIEW_202
 ## Stripe-Unternehmensdaten – 08.11.2026
 
 Steuernummer aus dem vorgelegten Nachweis im vorgesehenen Stripe-Steuerfeld gespeichert; nicht öffentlich im Impressum. UID amtlich bestätigt und separat gespeichert. Rechtsgültiger Unternehmensname, Supportadresse und Support-E-Mail korrigiert; Telefonnummer beibehalten. Der frühere Kontovertreter Bernd bleibt als verifizierte Einzelperson bestehen: vollständige rechtliche Identitätsberichtigung, Vollmacht und allfällige persönliche Prüfung sind noch offen. Stripe Tax hat weiterhin keine Registrierung; keine OSS- oder Steuerbefreiung abgeleitet. Aktuelle Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+## Meta-Review und Behördenanfragen — Ergänzung14.11.2026
+
+Die Einführung ist vom Owner beauftragt. Die genaue Fassung des
+[Behördenanfrageverfahrens](legal/AUTHORITY_REQUEST_PROCESS.md) samt
+[vertraulicher Registervorlage](legal/templates/AUTHORITY_REQUEST_REGISTER_TEMPLATE.md)
+bleibt die unveränderte freigegebene Fassung. Die vom Owner übermittelte
+Betreiberzustimmung vom14.11.2026 ist unter Prüfvorbehalten dokumentiert.
+[Aktueller Teilfreigabestatus](legal/AUTHORITY_REQUEST_RELEASE_STATUS.md):
+qualifizierte Rechtsprüfung und betriebliche Einführung offen; Meta-Einreichung
+nicht freigegeben. Vertretung, Fallraum/Transfer und Einweisung bleiben zu
+belegen. Keine tatsächliche Prozessimplementierung daraus ableiten.
+Das bestehende externe Register bleibt maßgeblich; keine offene Freigabe wurde
+umgestellt. Ausschließlich der historische National-Security-Sachverhalt ist
+durch ausdrückliche Owner-Erklärung vom14.11.2026 für14.11.2025–einschließlich
+14.11.2026 bestätigt: keine entsprechende Meta-Datenweitergabe.
+[Begrenzter Tatsachennachweis](legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md).
+Keine sonstige Behörden-/Prozess- oder Rechtsfreigabe daraus ableiten.
+Reviewnachweise und Blocker: [Vorbereitung](operations/META_APP_REVIEW_READINESS_20261114.md).

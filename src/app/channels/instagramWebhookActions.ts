@@ -436,6 +436,6 @@ export async function syncUnifiedInstagramComments() {
       if (stored.error) throw stored.error;
     }
     revalidatePath("/channels");
-    return {ok:true,posts:result.posts,comments:result.comments.length};
-  } catch { return {ok:false,posts:0,comments:0}; }
+    return {ok:true,posts:result.posts,comments:result.comments.length,mediaEvidence:result.mediaEvidence};
+  } catch { return {ok:false,posts:0,comments:0,mediaEvidence:[]}; }
 }
