@@ -1,5 +1,7 @@
 # FanMind Stripe / Supabase — Abnahme 15. November 2026
 
+**Aktualisierung 15. November 2026, 13:00 Wien:** Live-Webhookkonfiguration nach ausdrücklicher Owner-Freigabe korrigiert und unabhängig zurückgelesen: **PASS, exakt22/22 Ereignisse**. Die früheren20/22-FAIL-Befunde unten sind historische Vorzustände. Vollständige Billingabnahme weiterhin **BLOCKED**; siehe Abschluss dieser Datei.
+
 FM-BILLING-SUPABASE-20261115, eigenständige fünfte Work-Sitzung.
 Gesamtergebnis **BLOCKED**. PASS gilt nur für den bezeichneten Prüfgegenstand.
 
@@ -243,3 +245,72 @@ Keine zweite Implementierung, keine dritte Datenbank, keine Secrets,
 Kundeninhalte oder privaten Zahlungsdaten im Bericht. Aktuelle Ergänzung
 ändert ausschließlich Dokumentation; die ursprünglichen Messwerte im Receipt
 bleiben als historischer Snapshot erhalten.
+
+
+## Owner-genehmigte Live-Webhookkorrektur — 15. November 2026, 13:00 Wien
+
+**Ergebnis: PASS ausschließlich für die Webhookkonfiguration.**
+
+Freigabegrundlage: ausdrücklicher Owner-Auftrag in dieser Ersatzsitzung,
+beschränkt auf customer.tax_id.created und customer.tax_id.deleted.
+Unmittelbarer GET-Preflight: genau ein vorhandener aktivierter Live-Endpoint,
+has_more=false,20 Ereignisse. Set-Abgleich gegen die vorhandene Richtlinie:
+keine unerwarteten Typen, exakt die beiden genehmigten Typen fehlen.
+
+Quellbindung: Main `4577f4c338ad19035a16f1cb11aa5a5e57524d14`,
+`src/lib/stripeWebhookEventPolicy.mjs`,
+Git-Blob `56bdeca500b78bddf7b90e330642aa1a7ba3fbaa`.
+Die Richtlinie ist gegenüber dem vorher geprüften Stand unverändert.
+
+Über die bestehende authentifizierte Stripe-Verbindung im Live-Kontext wurde
+genau ein Update auf dem bestehenden Endpoint
+`we_1TrLMNAOA7p70TO9kfBl29nt` ausgeführt. Request enthielt ausschließlich
+dessen ID und enabled_events: vollständige ursprüngliche20er Liste plus
+die zwei freigegebenen Typen. Keine weiteren Konfigurationsparameter gesendet.
+
+Unabhängiger neuer GET nach dem Update, beobachtet `2026-11-15T12:00:08.646Z`:
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| Ereignisse | PASS:22 Einträge,22 unterschiedliche Typen, exakte Gleichheit mit der Richtlinie |
+| Ergänzt | customer.tax_id.created; customer.tax_id.deleted |
+| Entfernt | Keine |
+| URL | Unverändert https://fanmind.ch/api/stripe/webhook |
+| API-Version | Unverändert2026-06-24.dahlia |
+| Status / Modus | Unverändert enabled / livemode=true |
+| Sonstige zurücklesbare Eigenschaften | ID,object,application,created,description,metadata unverändert |
+| Signing Secret | Nicht angefordert/nicht geändert; GET liefert es nicht, daher kein erfundener Bytevergleich |
+| Zahlungen, Refunds, Wiederzustellungen | Keine ausgelöst |
+| SQL, Migration, Deployment, PR-Merge | Keine ausgeführt |
+
+Diese Korrektur ersetzt keinen Zustellungs-, Signatur-, Replay- oder
+persistenten Zahlungs-/Guthaben-Lifecycle-Nachweis. Automatisch künftig
+auftretende freigegebene Ereignisse können nun an den bestehenden Endpoint
+zugestellt werden; es wurde kein Ereignis künstlich erzeugt oder wiederholt.
+
+### Fortgesetzte getrennte Supabase-Abnahme
+
+Neue ausschließlich lesende Katalogabfragen am15November12:00:33–39UTC:
+
+- Production: sechs geprüfte Billingfelder weiterhin authenticated
+  INSERT=true/UPDATE=true; Provisioning-RPC fehlt, monetäre Capacity-Funktionen
+  und allgemeiner Billingledger fehlen. **FAIL/BLOCKED unverändert.**
+- Staging: dieselben sechs Billingfelder INSERT=false/UPDATE=false,
+  Provisioning-RPC vorhanden und Billingledger vorhanden; weiterhin nur die
+  vier Policy-/Guard-Capacityfunktionen, keine monetären Lifecycle-RPCs.
+  **PASS begrenzt für ACL / BLOCKED für monetäre Capacity-Abnahme.**
+- Keine Zielmutation, Grant-, Reconciliation- oder Fixtureanlage.
+  Support1350/1500 und Production-Expand-/Contract bleiben getrennte Arbeiten.
+
+Monatsrelease-Übergabe: Der Live-Webhook20/22-Blocker ist geschlossen.
+Production-ACL/Provisioning, Staging-Lifecycle/Writer, Paketcheckout,
+Steuer-/Rechtsfreigabe und vollständige Sandbox-Zahlungs-/Replay-/Recovery-
+Abnahme bleiben offen. Kein globales Gate auf VERIFIED/ALLOW gesetzt.
+
+Die14 Checks auf dem bisherigen Dokumentationshead
+`349dc74b9e2a046cd9cf2adf30dc3e14f7583b05` sind vollständig SUCCESS.
+Diese Berichtsergänzung erzeugt einen neuen Dokumentationshead mit eigener
+CI; frühere grüne Checks gelten nicht als dessen Abschluss.
+Der ursprüngliche JSON-Receipt bleibt unveränderter historischer Snapshot;
+die neue tatsächliche Stripe-Konfigurationsmutation ist ausdrücklich hier
+vermerkt. PR1518 bleibt offen und wird ohne eigene Freigabe nicht gemergt.
