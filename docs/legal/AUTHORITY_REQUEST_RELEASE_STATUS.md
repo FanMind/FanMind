@@ -5,7 +5,8 @@ Bezug: #1509 / #1480 / #1464 · Erklärungsdatum14.11.2026 laut Owner-Mitteilung
 | Gegenstand | Tatsächlicher Status |
 | --- | --- |
 | BETREIBERZUSTIMMUNG | **erteilt, unter Prüfvorbehalten** |
-| QUALIFIZIERTE RECHTSPRÜFUNG | **offen** |
+| OPERATIVE ROLLENÜBERNAHME | **vom Owner am14.11.2026 ausdrücklich erklärt, innerhalb der Kompetenzgrenzen** |
+| QUALIFIZIERTE RECHTSPRÜFUNG | **offen, kein positives Ergebnis; externe anwaltliche Schlussprüfung seit Owner-Entscheidung15.11.2026 vorerst zurückgestellt** |
 | BETRIEBLICHE EINFÜHRUNG | **offen** |
 | META-REVIEW-EINREICHUNG | **nicht freigegeben** |
 
@@ -29,10 +30,26 @@ keine fingierte Vollmacht oder Rechtsprüfung. Personen-/Originalangaben bleiben
 im bestehenden ignorierten privaten Nachweisbereich. Belegreferenz:
 `sha256:aa18dffc22c577e2de50e225523f562d3e7bfde77bfbf3cd59ed3195fb48f42c`.
 
-Offen bleiben Rechtsprüfung der genauen Fassung und Fristen; schriftliche
-operative Rollenübernahme; konkrete Vertretung/gegebenenfalls Vollmacht;
-Fallraum samt tatsächlichen Zugriffen; sicherer Übermittlungsweg mit Test;
-praktische Einweisung und dokumentierte Übungen. Die bestehenden Controls
+Die operative Übernahme ist eine ausdrückliche schriftliche Owner-Erklärung,
+keine Vertretungsvollmacht. Die frühere Freigabe zur Durchführung einer
+qualifizierten menschlichen Schlussprüfung behauptete kein positives Ergebnis;
+der neuere Auftrag stellt externe Anwaltsbeauftragung und Kosten zurück.
+Eine externe anwaltliche Bescheinigung ist im konkret gelesenen Meta-Fragebogen
+nicht als Pflichtfeld verlangt. Ungeklärte Rechtsfragen bleiben offen;
+Einzelfallprüfung und gesonderte Herausgabefreigaben werden nicht aufgehoben.
+
+Am15.11.2026 wurde unter dem bestehenden Unternehmensordner ein nicht geteilter
+Fallraum vorbereitet und mit ausschließlich synthetischem Übungsprotokoll
+bestückt. Owner-only-Berechtigung, Kontozuordnung, aktive Zwei-Faktor-Anmeldung,
+Schreibzugriff und Rücklesen wurden beobachtet. Acht Assistenz-Tischfälle sind
+dokumentiert; das ist keine gemeinsame menschliche Einweisung, kein Test des
+externen Transfers und keine vollständige Betriebsfreigabe. Private Ablage-
+und Kontoangaben bleiben außerhalb Git.
+
+Offen bleiben ungeklärte Rechts-/Fristenfragen; konkrete Vertretung und
+gegebenenfalls Vollmacht; Mehrpersonen-Zugriff nach Need-to-know sowie
+Entzug/Recovery; sicherer externer Übermittlungsweg mit Test;
+praktische menschliche Einweisung. Die bestehenden Controls
 `approvals.legalReview` und `approvals.retentionDecision` bleiben **pending**.
 Kein neues Governance-Control und keine Gesamtfreigabe aus einem Teilnachweis.
 Die historische National-Security-Bestätigung bleibt gesondert erhalten.

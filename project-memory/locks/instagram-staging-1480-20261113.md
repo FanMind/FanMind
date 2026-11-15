@@ -114,3 +114,34 @@ retention controls remainpending; no re-request of same operator consent.
 Previous exactHead8dc11de has all10hosted workflowsPASS; current Main55a0df4
 read independently and parallel changes preserved. New documentation head needs
 its own checks. No OAuth/provider retry/new app/runtime/Production mutation.
+
+2026-11-15 continuation in existing DraftPR1509: inherited46674b2 has all10
+hosted workflowsPASS; current Main30e8ddc independently read and preserved.
+Owner defers external attorney engagement/costs. Prior conditional operator
+consent and express operational role acceptance remain; no positive legal
+opinion, deputy power or full operational release. Approved SOP checksum stays
+7d1fb132861e25ee928697eb4597d3caaacbfc30eac76be497ccc2eb7a6bca3c.
+Exact live Meta data-handling questions/conditional provider country fields
+mapped in META_DATA_HANDLING_QUESTION_MATRIX_20261115.md. ProcessorsYes,
+existing legal operator andAustria saved in draft, dated national-securityNo
+retained; no policy-box speculation or submission. Existing business folder
+now contains a restricted synthetic tabletop annex: owner-only metadata and
+same operational account's active2FA observed, write/readback works. All8
+assistant tabletop decisions documented; no human exercise/legal review or
+external secure transfer falsely passed. Account-specific provider remote
+processing countries remain incomplete; Supabase primary region is proven
+eu-west-3, not proof of all processing locations. Current Meta test badges:
+basicComplete, messages1APItest, comments0of1. These are app-wide evidence,
+not correct-account subscribed_appsPASS. Known GET/POST400/100/33 remains
+unresolved; official Unified BISU/FacebookGraph/IGaccount POST contract matches
+source. Advanced comments requirement is independent, not proven cause.
+Website platform and business/pages category saved in existing Staging app;
+actual icon upload failed to load. Reviewer draft explicitly labels missing
+subscription, recordings and safe credentials; no claim of reproducible access.
+No extra rights/OAuth/token/code/deploy or unrelated workstream change.
+
+Final read10:01UTC: parallelPR1513 moved Main to63e8b0d6; independent public
+Staging version reports same releaseCommit and runtimeEnvironmentstaging.
+Existing Operator session works through Dashboard/channels/Instagram details;
+stored connection/scopes remain, webhook still inactive. No sync/provider
+button used. Saved reviewer draft was independently reopened successfully.

@@ -1,5 +1,14 @@
 # Meta App Review — Vorbereitung #1480 / #1464
 
+**Aktualisierung15.11.2026:** Maßgeblicher neuer Fragebogen-/Teilfreigabe-/
+Betriebs-/API-Stand in der [konkreten Antwortmatrix](META_DATA_HANDLING_QUESTION_MATRIX_20261115.md).
+Externe anwaltliche Schlussprüfung vorerst zurückgestellt, kein positives
+Rechtsergebnis. Operative Rolle ausdrücklich übernommen. Fallraum mit
+Owner-only/MFA und acht Assistenz-Tischfällen vorbereitet, menschliche
+Einweisung/externer Transfer nicht vollständig abgenommen. Aktuelle Meta-
+Anzeige: basicAbgeschlossen, messages1Testaufruf, comments0von1.
+Die nachfolgenden14.11.-Anzeigen bleiben historisch; kein Abonnement-PASS.
+
 Stand14.11.2026 · ZUR FREIGABE VORBEREITET · keine Einreichung/Freischaltung.
 Genau `instagram_basic`, `instagram_manage_messages`,
 `instagram_manage_comments`. Bestehende App und Token erhalten. Keine neue
