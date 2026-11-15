@@ -35,6 +35,18 @@ export function isConfirmedChatLearningDisclosureOptional(
   return state === "preinstall";
 }
 
+// #1129: audited Production catalog has no content_sources table; Staging does.
+// This source-owned preinstall contract is independent of PostgREST errors.
+// Advance it in the reviewed Production installation release, never infer it
+// from a generic404/schema-cache message or from a client/runtime feature flag.
+export const CONTENT_SOURCES_PRODUCTION_SCHEMA_STATE: "preinstall" | "installed" = "preinstall";
+export function isContentSourcesDisclosureOptional(
+  runtimeEnvironment = process.env["FANMIND_RUNTIME_ENVIRONMENT"],
+): boolean {
+  return runtimeEnvironment?.trim().toLowerCase() === "production" &&
+    CONTENT_SOURCES_PRODUCTION_SCHEMA_STATE === "preinstall";
+}
+
 export type DisclosureMetaRow = Record<string, unknown> & {
   id?: string;
   user_id?: string;
@@ -120,7 +132,7 @@ const DATASETS: DatasetDefinition[] = [
   { key: "voice_profiles", table: "workspace_voice_profiles", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "ai_usage", table: "ai_usage_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
   { key: "meta_webhook_events", table: "meta_webhook_events", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
-  { key: "content_sources", table: "content_sources", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc" },
+  { key: "content_sources", table: "content_sources", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc", optionalUntilInstalled: isContentSourcesDisclosureOptional() },
   { key: "content_metrics", table: "content_metric_snapshots", scope: "workspace", order: "captured_at.asc.nullsfirst,id.asc", optionalUntilInstalled: true },
   { key: "conversation_reports", table: "communication_analysis_reports", scope: "workspace", order: "created_at.asc.nullsfirst,id.asc", optionalUntilInstalled: true },
   { key: "analysis_settings", table: "workspace_analysis_settings", scope: "workspace", order: "workspace_id.asc", optionalUntilInstalled: true },
@@ -167,9 +179,12 @@ function isSecretOrProviderCredentialField(key: string): boolean {
   );
 }
 
-function sanitizeRow(row: DisclosureMetaRow): DisclosureMetaRow {
+const PRIVATE_WORKSPACE_FIELDS = new Set(["billing_admin_note", "billing_note", "test_access_flags", "last_invoice_id"]);
+
+function sanitizeRow(row: DisclosureMetaRow, definition: DatasetDefinition): DisclosureMetaRow {
   return Object.fromEntries(
-    Object.entries(row).filter(([key]) => !isSecretOrProviderCredentialField(key)),
+    Object.entries(row).filter(([key]) => !isSecretOrProviderCredentialField(key) &&
+      !(definition.scope === "workspace-row" && PRIVATE_WORKSPACE_FIELDS.has(key.toLowerCase()))),
   ) as DisclosureMetaRow;
 }
 
@@ -230,15 +245,11 @@ async function fetchPage(input: {
     return { ok: false, missingSchema: false, message: `${input.definition.table}: Netzwerkfehler` };
   }
   if (!response.ok) {
-    const body = await response.text().catch(() => "");
-    const normalized = body.toLowerCase();
+    const body = await response.json().catch(() => null);
     return {
       ok: false,
       missingSchema:
-        response.status === 404 ||
-        normalized.includes("schema cache") ||
-        normalized.includes("does not exist") ||
-        normalized.includes("could not find"),
+        response.status === 404 && body?.code === "PGRST205",
       message: `${input.definition.table}: HTTP ${response.status}`,
     };
   }
@@ -268,7 +279,7 @@ async function fetchPage(input: {
       message: `${input.definition.table}: fremder Nutzer oder Workspace in Exportantwort`,
     };
   }
-  return { ok: true, rows: rows.map(sanitizeRow) };
+  return { ok: true, rows: rows.map((row) => sanitizeRow(row, input.definition)) };
 }
 
 async function fetchDataset(input: {
@@ -292,7 +303,7 @@ async function fetchDataset(input: {
       offset: rows.length,
     });
     if (!result.ok) {
-      if (input.definition.optionalUntilInstalled && result.missingSchema) {
+      if (input.definition.optionalUntilInstalled && rows.length === 0 && result.missingSchema) {
         return { key: input.definition.key, rows: [] };
       }
       throw new DataDisclosureExportError(
