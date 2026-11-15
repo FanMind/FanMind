@@ -754,7 +754,7 @@ function runCommand(command, args, { input, env } = {}) {
 }
 
 async function dockerPsql(containerId, password, sql, database = "postgres") {
-  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
   await runCommand(
     "docker",
     [
@@ -785,7 +785,7 @@ async function dockerPsqlScalar(
   sql,
   { readOnly = false, database = "postgres" } = {},
 ) {
-  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
   const result = await runCommand(
     "docker",
     [
@@ -836,7 +836,7 @@ function psqlWrapperLines(containerId, password) {
     `password=\"${password}\"`,
     "exec docker exec -i --user 0 " +
       '-e "PGPASSWORD=$password" ' +
-      '-e "PGOPTIONS=${PGOPTIONS:-}" ' +
+      '-e "PGOPTIONS=${PGOPTIONS:-} -c jit=off" ' +
       '-e "PGAPPNAME=${PGAPPNAME:-}" ' +
       `\"$container_id\" ${POSTGRES_BIN}/psql \"$@\"`,
   ];
@@ -1221,7 +1221,8 @@ test(
       HAS_SERVICE_CONTAINERS || REQUIRE_SERVICE_CONTAINERS
         ? false
         : `set ${SOURCE_CONTAINER_ENV} and ${TARGET_CONTAINER_ENV}`,
-    // Two complete legacy/current restore paths; individual commands remain bounded.
+    // Three complete generations; CI disables repeated JIT compilation only.
+    // Every command remains bounded and authorization assertions are unchanged.
     timeout: 600_000,
   },
   async (context) => {
@@ -2290,6 +2291,7 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
       try {await assert.rejects(captureContract(sourcePsql,pgpassFile),/authorization_security_definer_boundary_invalid/u,`reviewed mutation ${mutationIndex}: ${bad.slice(0,100)}`);}
       finally {await metadataOnlySql(repair);}
       assert.deepEqual(await captureContract(sourcePsql,pgpassFile),reviewedContract);
+      context.diagnostic(`Reviewed39 mutation ${mutationIndex} rejected; exact contract repaired.`);
     }
     const reviewedDirectory=join(temporaryRoot,'reviewed39-backup');await mkdir(reviewedDirectory,{mode:0o700});
     const reviewedBackup=await createDatabase(reviewedDirectory);

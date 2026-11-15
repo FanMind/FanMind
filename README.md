@@ -1,3 +1,18 @@
+## Adminchat #1425: private Storage finalization — 15 November 2026
+
+Prepared source repair for the proven media_object_binding_invalid at Storage
+finalization. Reuse the existing library, private bucket and caller JWT upload.
+The trigger revalidates Storage's assigned object Owner only in its internal
+finalization context, with exact live Workspace/Character/capability/deletion
+checks. Caller RLS, all grants and bucket settings remain unchanged. Failed
+uploads use authenticated deletion, independent absence and revision-bound
+metadata cleanup; uncertain cleanup retains a tracked, unavailable tombstone.
+
+The separately pinned Staging-only guard replacement is **unapplied** pending
+review and explicit database-function approval. No nginx action, Production
+change or target media acceptance is implied. Details and approval scope:
+docs/operations/CHAT_ADMIN_MEDIA_STORAGE_FINALIZATION_20261115.md.
+
 ## Adminchat #1425: folder actions and upload failures — 14 November 2026
 
 Source correction retains the confirmed empty-only folder deletion and shows

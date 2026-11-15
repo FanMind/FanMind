@@ -78,6 +78,15 @@ export async function updateMediaAsset(workspaceId:string,characterId:string,ass
   const rows=await mediaRest<MediaAsset[]>(`chat_character_media?${mediaScope(workspaceId,characterId)}&id=eq.${mediaId(asset.id)}&revision=eq.${asset.revision}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(patch)});
   if(rows.length!==1)throw new ChatAdminMediaError("stale_media_context");return rows[0];
 }
+// A failed upload may have created bytes before its final DB acknowledgement.
+// Keep its tombstone until authenticated deletion AND independent absence pass.
+export async function cleanupFailedMediaUpload(workspaceId:string,characterId:string,asset:MediaAsset){
+ const tombstone=await updateMediaAsset(workspaceId,characterId,asset,{deleted:true,available:false,reviewed:false});
+ await mediaObject(workspaceId,characterId,asset.id,"DELETE",undefined,asset.media_type??"image");
+ await assertMediaCharacter(workspaceId,characterId,undefined,true);
+ const removed=await mediaRest<MediaAsset[]>(`chat_character_media?${mediaScope(workspaceId,characterId)}&id=eq.${asset.id}&revision=eq.${tombstone.revision}&deleted=eq.true`,{method:"DELETE",headers:{Prefer:"return=representation"}});
+ if(removed.length!==1||removed[0].id!==asset.id)throw new ChatAdminMediaError("media_cleanup_unverified");
+}
 export async function groundChatAdminContext(context:string,character:ChatCharacter,fan:ChatCharacterFan|null,incoming:unknown,now:number,history:import("./chatAdmin").ChatCharacterMessage[]=[]){
   if(!mediaEnabled())return context;
   const {assets,policy,folders}=await loadCharacterMedia(character.workspace_id,character.id);

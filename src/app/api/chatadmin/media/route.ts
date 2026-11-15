@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
-import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaScope, requireMediaEnabled, updateMediaAsset, type MediaAsset, type CustomMediaPolicy } from "@/lib/chatAdminMedia";
+import { assertMediaCharacter, cleanupFailedMediaUpload, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaScope, requireMediaEnabled, updateMediaAsset, type MediaAsset, type CustomMediaPolicy } from "@/lib/chatAdminMedia";
 import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText, normalizeCustomPolicy, normalizeMediaEdit } from "@/lib/chatAdminMediaPolicy.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
@@ -67,7 +67,7 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id,workspace_id:workspace.id,character_id:characterId,folder:mediaText(body.folder??"",80)})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
    try{await mediaObject(workspace.id,characterId,id,"POST",image);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
-   catch{await updateMediaAsset(workspace.id,characterId,rows[0],{deleted:true,available:false,reviewed:false});throw new ChatAdminMediaError("media_upload_incomplete");}
+   catch{try{await cleanupFailedMediaUpload(workspace.id,characterId,rows[0]);}catch{throw new ChatAdminMediaError("media_cleanup_unverified");}throw new ChatAdminMediaError("media_upload_incomplete");}
   }else{
    const asset=await getMediaAsset(workspace.id,characterId,mediaId(body.id));
    if(body.revision!==asset.revision)throw new ChatAdminMediaError("stale_media_context");
