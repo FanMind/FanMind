@@ -1053,7 +1053,7 @@ test("restore runbook requires receipt-bound schema v6 evidence", async () => {
   assert.match(source, /rlsVerification.*(?:manuell|manually)/su);
 });
 
-for(const count of [12,13])test(`reviewed ${count} contract survives the full private receipt chain`,async()=>{
+for(const count of [12,13,29])test(`reviewed ${count} contract survives the full private receipt chain`,async()=>{
  await withReceiptSet(async({paths})=>{
   const full=await execFileAsync(process.execPath,[receiptVerifierPath,'--receipt',paths.full,'--dump',paths.dump]);assert.match(full.stdout,/FULL_BACKUP_RESTORE_RECEIPT=PASS/u);
   const aggregate=await execFileAsync(process.execPath,verifierArguments(paths));assert.match(aggregate.stdout,/RESTORE_DRILL_EVIDENCE=PASS/u);
