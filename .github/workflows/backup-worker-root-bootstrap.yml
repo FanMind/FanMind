@@ -36,11 +36,11 @@ jobs:
       - name: Validate current main and existing protected environment
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          REQUESTED_ACTION: verify
+          REQUESTED_ACTION: ${{ inputs.action == 'inspect' && 'inspect' || 'verify' }}
           REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_main_commit }}
-          WORKER_SOURCE_COMMIT: 8e5dcbdca844972fb2f133c188ecfee5d5252273
-          EXPECTED_APPLICATION_COMMIT: 707d22702a784e3b9999d1c9ae9c1e11c096a1bc
-          CONFIRMATION: backup-worker-verify
+          WORKER_SOURCE_COMMIT: ${{ inputs.action == 'inspect' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+          EXPECTED_APPLICATION_COMMIT: ${{ inputs.action == 'inspect' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
+          CONFIRMATION: ${{ inputs.action == 'inspect' && 'backup-worker-inspect' || 'backup-worker-verify' }}
         run: node scripts/operations/backup-worker-install-github-preflight.mjs
   bootstrap:
     needs: validate
@@ -51,6 +51,8 @@ jobs:
       ACTION: ${{ inputs.action }}
       CURRENT_MAIN: ${{ inputs.reviewed_main_commit }}
       CONFIRMATION: ${{ inputs.confirmation }}
+      WORKER_BINDING: ${{ inputs.action == 'inspect' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+      APP_BINDING: ${{ inputs.action == 'inspect' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
       APPROVAL: ${{ vars.FANMIND_BACKUP_WORKER_BOOTSTRAP_APPROVAL }}
     steps:
       - name: Use existing sudo Node capability with frozen reviewed bootstrap bytes
@@ -64,7 +66,7 @@ jobs:
           [[ "$GITHUB_ACTOR_ID" == 270165082 && "$RUNNER_NAME" == fanmind-prod-01-exoscale ]]
           [[ "$ACTION" == inspect || "$ACTION" == bootstrap ]]
           [[ "$CONFIRMATION" == "backup-worker-$ACTION" ]]
-          [[ "$APPROVAL" == "$CURRENT_MAIN:$ACTION:8e5dcbdca844972fb2f133c188ecfee5d5252273:707d22702a784e3b9999d1c9ae9c1e11c096a1bc:admin-bypass-disabled" ]]
+          [[ "$APPROVAL" == "$CURRENT_MAIN:$ACTION:$WORKER_BINDING:$APP_BINDING:admin-bypass-disabled" ]]
           # Recheck mutable main after the Environment review wait, before root.
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             https://api.github.com/repos/FanMind/FanMind/branches/main | \
@@ -75,7 +77,7 @@ jobs:
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/backup-worker-root-bootstrap.mjs" \
             --output "$SOURCE_FILE"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 30e7924e5ea46d7d1b666bb8cdec452e3a5b300adc3f4c7b7afc0ca88d304204 "$ACTION" "$CURRENT_MAIN" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 993c1d1e77ae69bf3f7adfd65e3484ee6f96441ee0eb0c17e2df271ac2cd1ed8 "$ACTION" "$CURRENT_MAIN" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {
