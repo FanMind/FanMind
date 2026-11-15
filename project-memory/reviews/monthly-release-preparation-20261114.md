@@ -85,3 +85,23 @@ chain remain protected prerequisites to actual monthly use. No Production,
 Staging rollout, DB mutation, Billing/Meta/Support change or protected config
 change occurred. Source recovery is ordinary reviewed source revert; no target
 undo is needed. R3 source merge and every Production release remain distinct.
+
+## First hosted gate correction
+
+Head405175d3 retained all Main ancestry but hosted Operations exposed the prior
+explicit input-list assertion in production-readonly-audit.test.mjs. The test
+now explicitly admits and validates only the optional monthly hash string with
+empty legacy default; no runtime/security assertion was removed.
+
+CodeQL reported one new high finding; its aggregate alert remained blocking.
+Outbound SQL-log redirect destinations are now strictly bounded to expected
+GitHub log storage, the synthetic HTTP proxy uses a fixed endpoint, and the
+executed Production body is read directly from the exact candidate Git object.
+The CodeQL workflow retains identical security-extended queries/upload/gates
+and now prints bounded rule/path/line diagnostics for connector-readable
+follow-up; no alert dismissal or suppression is used. Final CodeQL must pass.
+
+Synthetic PM2 state writes became atomic and fixture teardown now removes its
+root only after callback cleanup, avoiding read/cleanup races. Post-correction
+local23/23 focused checks PASS, full adapter rehearsal12198ms. These are source
+regressions only; final exact-head native/full CI remains required.

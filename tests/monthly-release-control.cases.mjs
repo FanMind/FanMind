@@ -124,7 +124,7 @@ test('full integrated monthly adapter rehearsal with safe transport fixtures', {
   const live = () => JSON.parse(readFileSync(pm2State)).processes[0].pm2_env.FANMIND_RELEASE_COMMIT;
   const server = createServer((req,res) => {
     if (failSmoke) { res.writeHead(503); res.end(); return; }
-    const proxy = request({ host:'127.0.0.1',port:ports.get(live()),path:req.url }, r => { res.writeHead(r.statusCode,r.headers); r.pipe(res); });
+    const proxy = request({ host:'127.0.0.1',port:ports.get(live()),path:'/api/version' }, r => { res.writeHead(r.statusCode,r.headers); r.pipe(res); });
     proxy.on('error',()=>{res.writeHead(502);res.end();});req.pipe(proxy);
   });
   await new Promise(yes=>server.listen(0,'127.0.0.1',yes));t.after(()=>new Promise(yes=>{server.closeAllConnections();server.close(yes);}));
@@ -185,6 +185,7 @@ raise SystemExit('unapproved fixture command: '+cmd)
   assert.throws(()=>validatePrivateProof({...proof,restoreVerified:false},source));
   const command=async(file,args)=>{
     if(file.endsWith('read-only-production-audit.sh')) {if(container)assert.equal(query(`SELECT count(*) FROM ${schema}.monthly_release_fixture;`),'1');return {stdout:monthlyAuditFixture(live(),target,healthyBackup)};}
+    if(file==='/usr/bin/git')return execAsync(file,args);
     assert.equal(file,'curl');return execAsync('/usr/bin/curl',args.map(x=>x.replace('https://fanmind.ch',origin)));
   };
   const phaseCommand=async(file,args,ms,options={})=>{

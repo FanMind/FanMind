@@ -55,3 +55,22 @@ jobs:
         uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         with:
           category: "/language:javascript-typescript"
+
+      - name: Summarize bounded CodeQL finding locations
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const dir = '../results';
+          if (fs.existsSync(dir)) for (const file of fs.readdirSync(dir).filter(x => x.endsWith('.sarif'))) {
+            const path = `${dir}/${file}`;
+            if (fs.statSync(path).size > 32 * 1024 * 1024) continue;
+            for (const run of JSON.parse(fs.readFileSync(path, 'utf8')).runs ?? []) {
+              for (const result of (run.results ?? []).slice(0, 20)) {
+                const loc = result.locations?.[0]?.physicalLocation;
+                console.log('CODEQL_FINDING=' + JSON.stringify({ rule: result.ruleId, path: loc?.artifactLocation?.uri, line: loc?.region?.startLine }));
+              }
+            }
+          }
+          JS

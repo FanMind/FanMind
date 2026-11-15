@@ -174,7 +174,7 @@ export function validatePrivateProof(proof, reviewed) {
   return admission;
 }
 
-export function createProductionAdapter({ admission, proof, packageHash, reviewed, root, base, candidate, previous, command, phaseCommand, get, getLog, env = process.env }) {
+export function createProductionAdapter({ admission, proof, packageHash, root, base, candidate, previous, command, phaseCommand, get, getLog, env = process.env }) {
   let actualLive;
   const audit = async live => {
     const { stdout } = await command('/usr/local/lib/fanmind-audit/read-only-production-audit.sh', [], { timeout: 90000 });
@@ -205,7 +205,8 @@ export function createProductionAdapter({ admission, proof, packageHash, reviewe
     },
     deploy: async ({ remainingMs }) => {
       validateAdmission(admission, packageHash, base, candidate);
-      const body = extractProductionBody(readFileSync(join(reviewed, '.github/workflows/deploy-fanmind.yml'), 'utf8'));
+      const { stdout: reviewedBody } = await command('/usr/bin/git', ['-C', root, 'show', `${candidate}:.github/workflows/deploy-fanmind.yml`]);
+      const body = extractProductionBody(reviewedBody);
       await phaseCommand('bash', ['-euo', 'pipefail'], remainingMs, { input: body, env: { EXPECTED_CURRENT_RELEASE: actualLive } });
     },
     tests: async ({ remainingMs }) => {
@@ -268,7 +269,13 @@ async function main() {
   const getLog = async id => {
     const r = await fetch(`https://api.github.com/repos/FanMind/FanMind/actions/jobs/${id}/logs`, { headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }, signal: AbortSignal.timeout(15000), redirect: 'manual' });
     let logResponse = r;
-    if (r.status === 302) { const url = new URL(r.headers.get('location')); assert(url.protocol === 'https:', 'sql_log_redirect'); logResponse = await fetch(url, { signal: AbortSignal.timeout(15000), redirect: 'error' }); }
+    if (r.status === 302) {
+      const url = new URL(r.headers.get('location'));
+      // GitHub Actions log storage only; never follow a header to a private
+      // address/arbitrary host and never forward the API Authorization header.
+      if (url.protocol !== 'https:' || !/^productionresultssa[0-9]+\.blob\.core\.windows\.net$/u.test(url.hostname)) throw new Error('sql_log_redirect_unsupported');
+      logResponse = await fetch(url, { signal: AbortSignal.timeout(15000), redirect: 'error' });
+    }
     assert(logResponse.ok, 'sql_log_unavailable'); const log = await logResponse.text(); assert(log.length <= 4 * 1024 * 1024, 'sql_log_too_large'); return log;
   };
   const adapter = createProductionAdapter({ admission, proof, packageHash, reviewed, root, base, candidate, previous, command, phaseCommand, get, getLog });

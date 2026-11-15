@@ -9,7 +9,7 @@ function runChecked(command,args,options={}) { const r=spawnSync(command,args,{e
 async function writeExecutable(path,body) { await writeFile(path,body); await chmod(path,0o755); }
 export async function withIsolatedReleaseHarness(t, callback) {
   const root = await mkdtemp(join(tmpdir(), "fanmind-rolling-deploy-"));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  try {
 
   const seed = join(root, "seed");
   const remote = join(root, "remote.git");
@@ -109,7 +109,8 @@ if (action === "delete") {
     },
   }];
 }
-fs.writeFileSync(statePath, JSON.stringify(state));
+fs.writeFileSync(statePath + "." + process.pid, JSON.stringify(state));
+fs.renameSync(statePath + "." + process.pid, statePath);
 `,
   );
   await writeExecutable(
@@ -177,5 +178,6 @@ fi
     FAKE_LIVE_COMMIT: "0".repeat(40),
   };
 
-  return callback({ root, seed, remote, source, releaseRoot, currentLink, fakeBin, pm2State, pm2Actions, operationsHeads, deployScript, oldRelease, baseEnv, firstCommit });
+  return await callback({ root, seed, remote, source, releaseRoot, currentLink, fakeBin, pm2State, pm2Actions, operationsHeads, deployScript, oldRelease, baseEnv, firstCommit });
+  } finally { t.after(() => rm(root, { recursive: true, force: true })); }
 }
