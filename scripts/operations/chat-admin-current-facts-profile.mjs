@@ -18,7 +18,7 @@ export const PROFILE_PINS=Object.freeze({
  "scripts/operations/chat-admin-structured-offers-staging-runner.mjs":"f1eb9c30e7c77da69c696ede51894b9de032ad06a54a9bac65f0db952f3b1029",
  "scripts/operations/chat-admin-customer-tier-staging-runner.mjs":"a72b5e5b5429cf144886585be0876a615cb9a1fd8ec969557fe572bc8c57cf42",
  "scripts/operations/chat-admin-manual-flow-staging.mjs":"cdcf0569c1e445e3145b57b81ce10da400122a992685caf7b3343eae29e2ffe6",
- "scripts/operations/database-authorization-contract.mjs":"b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de",
+ "scripts/operations/database-authorization-contract.mjs":"2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441",
 });
 // Fixed reviewed reference; never learn/approve a catalog from a checked target.
 const REFERENCE_SHA256="86a00c2039c841dbde3cd8d28f64a8bec1d8c889621b6e04e9ba6c2e234ed5ab";
