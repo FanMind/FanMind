@@ -1,19 +1,163 @@
-## Facebook Page support scope — Owner update, 13 November 2026
+## Adminchat #1425: private Storage finalization — 15 November 2026
 
-Owner explicitly requested updating Support knowledge and public landing copy.
-Facebook supports Page messaging/comment reception, not personal-profile inboxes;
-Professional Mode does not change the account type. Fans can still contact a Page
-from a personal profile. Do not label arbitrary connection failures as Meta faults.
+Prepared source repair for the proven media_object_binding_invalid at Storage
+finalization. Reuse the existing library, private bucket and caller JWT upload.
+The trigger revalidates Storage's assigned object Owner only in its internal
+finalization context, with exact live Workspace/Character/capability/deletion
+checks. Caller RLS, all grants and bucket settings remain unchanged. Failed
+uploads use authenticated deletion, independent absence and revision-bound
+metadata cleanup; uncertain cleanup retains a tracked, unavailable tombstone.
 
-Actual single-Page automatic Staging reception on 193eb1a9 passed before manual
-sync: nine distinct messages in three source conversations, correct targets,
-repeat manual sync without duplicates and Operator/RLS isolation. Evidence:
-https://github.com/FanMind/FanMind/issues/1464#issuecomment-6860293997 .
-This is not general Production/customer/multi-Page acceptance. Live Meta replay
-was not forced; synthetic replay checks remain distinct. Public and authenticated
-Support plus DE/EN landing integration copy/FAQ now explain this boundary.
-This source change performs no deployment, activation, schema, provider or billing
-change. Future Support knowledge updates remain explicit Owner decisions.
+The separately pinned Staging-only guard replacement is **unapplied** pending
+review and explicit database-function approval. No nginx action, Production
+change or target media acceptance is implied. Details and approval scope:
+docs/operations/CHAT_ADMIN_MEDIA_STORAGE_FINALIZATION_20261115.md.
+
+## Meta App Review #1480: Behördenprozesse und Nachweise — 14 November 2026
+
+Documentation preparation only: the Owner authorized introducing the required
+procedures; exact legal/operator release and practical adoption remain pending.
+[Authority-request procedure](legal/AUTHORITY_REQUEST_PROCESS.md) reuses the
+existing legal/retention/evidence structure and includes a confidential register
+template. [Meta review readiness](operations/META_APP_REVIEW_READINESS_20261114.md)
+separates actual evidence from draft declarations, the historical disclosure
+question, API proof and screencasts. No questionnaire submission, provider call,
+permission, credential, runtime or Production change. Error100/33 remains open.
+
+## Adminchat #1425: folder actions and upload failures — 14 November 2026
+
+Source correction retains the confirmed empty-only folder deletion and shows
+direct files, child folders and ancestor/back navigation. Bounded upload encoding
+validation avoids regexp stack overflow at permitted file sizes; safe HTTP
+failure details and retry state are retained. The Staging nginx source keeps its
+2-MB generic limit and adds bounded exact media-route limits. Its existing TLS
+maintenance workflow gains separate reviewed-Main/Owner/protected-Staging proxy
+verify/apply actions with exact live binding, byte-preserving rollback and no
+certificate provisioning. A normal Web deploy never applies this host repair.
+No schema, grants, provider, Billing or Production change. Actual Staging media
+lifecycle acceptance remains distinct and pending.
+
+## Support1350: Capacity installation prerequisite — source preparation
+
+The Owner-authorized prerequisite prepares the missing canonical entitlement writer
+and protected Staging-only install/rollback-only synthetic acceptance controller.
+It reuses the pinned Capacity lifecycle; no real entitlements, monetary writes,
+Runtime/Sales activation, host configuration, Web rollout or Production action
+has occurred. Support PR1500 remains Draft until actual target prerequisites.
+A separate prerequisite PR is necessary to put the controller on Main without
+prematurely deploying1500's authenticated route. Details and exact approval
+sequence: docs/operations/CAPACITY_STAGING_INSTALL_1350_20261114.md.
+
+## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
+
+Source preparation extends the existing Character sales_playbook offers with
+validated mediaTerms (scope/file binding, quantity, inheritance, upward limits,
+video unit and confirmed tax display). Monetary values remain in those offers.
+Explicit packages override file prices for that exact quantity; otherwise file,
+nearest applicable folder, then explicitly configured Model standard applies.
+Missing/inactive explicit rules never invent a replacement price. No sample
+35/70 EUR values are installed and existing individual prices remain unchanged.
+Server arithmetic enforces a single discount floor and validates exact approved,
+available media. Higher counteroffers require explicitly enabled negotiation.
+An optional new tax classification defaults to unconfirmed and withholds a firm
+price; no tax rate, exemption or legal approval is inferred.
+
+New behavior is default-off under FANMIND_CHAT_ADMIN_MEDIA_PRICING_V2_ENABLED.
+The separate controlled chat_admin_media_prices.sql adds append-only evidence
+for playbook revisions and atomically persisted generation/offer snapshots tied
+to exact files/revisions. Snapshots cascade with inbound message retention;
+price history cascades with Character erase. No Checkout, payment, automatic
+send or Production activation is added. Native SQL, protected Staging install,
+runtime activation and actual Desktop acceptance remain separate requirements.
+Existing PNG/MP4 upload and verified-deletion work continues under #1425.
+Details: docs/operations/CHAT_ADMIN_MEDIA_PRICES_20261114.md.
+
+## Central profile data disclosure — Owner correction 14 November 2026
+
+Support1350: the only Creator data download is the existing PDF button at
+Profile & account → GDPR → Data disclosure (/settings/profile/data-export).
+Help explains this location and links to the profile section; its former JSON
+export now redirects to that profile section. Own Support history uses the
+existing paginated RPCs and collector; current AI consent uses the existing
+read-only consent RPC and parser. Private collection rechecks the authenticated
+Creator/Workspace Owner before and after all privileged reads. Help activation
+is not required to export retained own data. Consent activation and withdrawal
+remain separately accessible. Conversation erasure remains its existing flow;
+account deletion remains in Profile & account.
+
+The PDF already includes account/preferences, authorized Workspace, CRM, Meta,
+Creator/ChatAdmin data and private inquiry/referral/deletion records. It now also
+includes own Support questions/answers and current consent status, revision,
+text version and grant/revocation timestamps. No foreign Workspace, credential,
+token, schema install, consent mutation or Production activation is added.
+
+## Support Web: persistent optional AI choice — 14 November 2026
+
+Owner decision1350/1425 moves actual mobile acceptance to **VERSCHOBEN – APP-ABNAHME**.
+It is no Web blocker; automated mobile/responsive regression and actual Desktop
+acceptance remain mandatory. No App feature is added.
+
+Platform Support remains separate from Character administration. Compact KI &
+Datenschutz controls and /settings/support replace the permanently visible block.
+A separately installed RPC-only consent record stores the authenticated user's
+fixed text version, server timestamps and revision. Missing/old consent stays off;
+no AGB or historic session opt-in becomes a durable grant. First activation is
+optional for both new and existing users, with local Help available without it.
+Later sessions reuse verified consent; server gates stop stale-client requests
+following revocation and suppress changed-consent provider results. Own Support
+export includes current consent evidence. Registration terms are unchanged.
+
+Separate exact-Main/protected-Staging schema control, target acceptance and legal
+review remain distinct. New Production persistence is default-off and requires
+an explicitly approved exact version flag after schema/provider/legal signoff.
+Current approved Production Support is preserved. No automatic schema install,
+private Fan context, Model tool, Billing/Meta/media activation or new credential.
+Technical plan: docs/operations/SUPPORT_CONSENT_WEB_20261114.md. Legal draft:
+docs/legal/SUPPORT_AI_REVIEW_DRAFT.md, not newly published binding terms.
+
+## FanMind platform Support scope correction — 14 November 2026
+
+Owner correction for Issue1350 supersedes the Creator Support pilot from PR1488.
+Support explains FanMind, login/registration, dashboard, current catalogue prices,
+channel connection/sync and technical processing problems. Existing authorized
+technical diagnostics, safe repairs and explicit unresolved-case handoff remain.
+Support does not select or administer Models/Fans, inspect private conversations,
+Personas, media or individual offers, change Character styles, or generate style
+comparisons. Those capabilities belong to the existing Creator-Chat /chatadmin
+under Issue1425; no new ChatAdmin implementation or tool migration is introduced.
+
+The Creator UI and its unused server/tool policy are removed after dependency
+inspection. The old /api/support/creator-context returns410 before identity,
+CRM, database or provider access, including stale-client GET/POST attempts.
+Retained pilot history stays subject to the same own-data export/erase/retention;
+a read-only compatibility label identifies it and excludes all four pilot record
+types from future platform AI history. Public Support and authenticated optional
+AI, persistence, consent/withdrawal, privacy, responsive shell, tenant authorization,
+Origin checks and rate/cost limits remain. No SQL, key, flag, role, Billing, Meta,
+media or Operator configuration changes. Production stays unchanged.
+
+New checked merge, protected Staging rollout, actual platform desktop/mobile
+acceptance, remaining tenant negatives and exact synthetic cleanup are required;
+source checks alone do not establish target acceptance. Historical Creator-tool
+mobile and second-identity tests are retired with the tools, not declared passed.
+See docs/operations/SUPPORT_CREATOR_ASSISTANT_20261114.md for scope and cleanup.
+
+## Authenticated Dashboard Support correction — 14 November 2026
+
+Issue1350 / PR1485 repairs the existing in-app Help with shell-token styling,
+bounded responsive scrolling, a separately fixed composer, accessible controls
+and diagnostic disabled/failure distinctions with retry. Authenticated AI is
+optional and initially unchecked: only explicit consent permits reuse of the
+existing public Support server pipeline, its configured provider/model, bounded
+public knowledge/output rules, rate/cost controls and store:false. Only the
+current question and last two own Support turns are supplied; no automatic CRM
+context, external identifiers or additional credentials are introduced. Without
+consent the approved local knowledge response remains available. Withdrawal
+aborts pending work and clears future AI retry consent; account/focus/panel
+lifecycle requires fresh consent. Saved messages retain existing own-scope
+persist/export/erase/handoff and Retention contracts. No schema or runtime flag
+changes. Source preparation is not live acceptance; protected rollout and actual
+authenticated model-response checks remain required.
 
 ## Facebook Staging reception continuation — 13 November 2026
 
@@ -1827,3 +1971,33 @@ counteroffers. Controlled catalogue SQL/bucket expansion is unapplied; image
 analysis remains separately gated, video analysis unavailable. Source, exact-head
 CI and target acceptance are distinct. See `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`;
 no public FanMind roadmap completion or Production activation follows from this.
+
+### Internal Character setup and media repair — 14 November 2026
+
+Issue #1425 continues the existing CRM from #1487 and preserves Support #1488.
+Source adds independent Character personality/initiative/style/sales strengths
+in the existing revision-bound `sales_playbook.characterMixer`; no second
+Persona store or automatic percentage normalization. Legacy text and offers
+remain intact. Humor/directness aliases have one canonical value. Preview uses
+the actual authorized reply pipeline, bounded usage/rate/price/media checks,
+current draft mixer and saved profile/offers, without Fan persistence or send.
+
+A synthetic Staging upload reproduced Storage finalization failing with
+`permission denied for function chat_admin_media_writes_allowed`. The bounded
+source repair grants that existing boolean predicate to the internal Storage
+service role; its Owner/Workspace/deletion checks remain unchanged. A rollback
+probe on actual PG17 allowed the existing Owner and denied a foreign Workspace;
+the actual Storage insert trigger also passed under the finalization role.
+No permanent schema/ACL repair or successful target upload is claimed here.
+The source-derived exact extended catalogue and its guarded legacy delta include
+original filenames and nullable historical upload timestamps. Existing rows
+retain an unknown upload time; new uploads receive the database timestamp.
+
+UI source adds explicit folder opening/counts/breadcrumbs, gallery/list views,
+private enlarged previews, filters/sort, sequential batch progress and failed
+file retry with revision readback. Source checks, hosted native/browser checks,
+merge and actual Staging acceptance remain separate. Aurela appears as
+“Aurela Foss” with synthetic legacy fields in the observed Owner session;
+Owner confirmed this is the intended Aurela persona in the current session.
+Existing prices are retained; new proposed strengths must stay visibly labeled.
+No Production, provider-image activation, new project or public roadmap change.

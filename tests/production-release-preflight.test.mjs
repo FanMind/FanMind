@@ -1,3 +1,5 @@
+import "./monthly-release-control.cases.mjs";
+import "./monthly-release-package.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { evaluateProductionRelease, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";

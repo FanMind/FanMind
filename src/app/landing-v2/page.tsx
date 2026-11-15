@@ -311,7 +311,7 @@ const baseIntegrationChannels = [
   { platform: "instagram", title: "Instagram", text: "DM- und Profilkontext vorbereitet, noch keine Live-Anbindung.", status: "Beta / in Vorbereitung", tone: "pink" },
   { platform: "tiktok", title: "TikTok", text: "Kommentare und Handles als geprüfter Roadmap-Kanal.", status: "Coming Soon", tone: "purple" },
   { platform: "youtube", title: "YouTube", text: "Community- und Kommentar-Kontext für spätere Workflows.", status: "Roadmap", tone: "pink" },
-  { platform: "facebook", title: "Facebook", text: "Für Facebook-Seiten: Messenger und Beitragskommentare für eine FanMind-Seite auf Staging geprüft. Persönliche Profile und private Messenger-Postfächer werden nicht unterstützt; allgemeine Freigabe noch offen.", status: "Beta / in Vorbereitung", tone: "blue" },
+  { platform: "facebook", title: "Facebook", text: "Für Facebook-Seiten vorgesehen. Persönliche Profile und private Messenger-Postfächer werden nicht unterstützt; allgemeine Freigabe noch offen.", status: "Beta / in Vorbereitung", tone: "blue" },
   { platform: "whatsapp", title: "WhatsApp", text: "Chat-Kontext für spätere Synchronisation vorbereitet.", status: "Coming Soon", tone: "green" },
   { platform: "telegram", title: "Telegram", text: "Community-Nachrichten als geplanter Kanal.", status: "Coming Soon", tone: "cyan" },
   { platform: "snapchat", title: "Snapchat", text: "Creator-Kontakte als späterer Social-Kanal.", status: "Roadmap", tone: "yellow" },
@@ -434,7 +434,7 @@ const integrationBenefits = [
   {
     icon: "◷",
     title: "Beta / vorbereitet",
-    text: "Facebook-Seiten: Empfang für eine FanMind-Seite auf Staging geprüft. Persönliche Profile nicht unterstützt. Instagram bleibt in Vorbereitung; keine allgemeine produktive Vollintegration.",
+    text: "Facebook ist für Seiten vorgesehen, nicht für persönliche Profile. Facebook und Instagram werden nur als vorbereitete Beta-Workflows gezeigt; keine produktive Vollintegration.",
     tone: "purple",
   },
   {
@@ -633,7 +633,7 @@ const faqs = [
   {
     number: "8",
     question: "Kann ich mein privates Facebook-Profil mit FanMind verbinden?",
-    answer: "Die Anbindung ist für Facebook-Seiten vorgesehen, nicht für persönliche Profile oder deren private Messenger-Postfächer. Auch der Professional Mode ändert diese Grenze der verwendeten offiziellen Meta-Schnittstelle nicht. Fans können von ihrem privaten Profil an eine verbundene Seite schreiben. Der automatische Empfang von Nachrichten und Beitragskommentaren wurde für eine FanMind-Seite auf Staging geprüft; allgemeiner Kundenzugriff und Mehrseitenbetrieb sind noch nicht freigegeben. Andere Verbindungsfehler müssen einzeln geprüft werden.",
+    answer: "Die Anbindung ist für Facebook-Seiten vorgesehen, nicht für persönliche Profile oder deren private Messenger-Postfächer. Auch der Professional Mode ändert diese Grenze der verwendeten offiziellen Meta-Schnittstelle nicht. Fans können von ihrem privaten Profil an eine verbundene Seite schreiben. Allgemeiner Kundenzugriff ist noch nicht freigegeben. Andere Verbindungsfehler müssen einzeln geprüft werden.",
   },
 ];
 

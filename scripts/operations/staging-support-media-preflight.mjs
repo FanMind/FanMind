@@ -1,18 +1,36 @@
 #!/usr/bin/env node
+import {storageFinalizationSource,STORAGE_FINALIZATION_SHA,STORAGE_FINALIZATION_PATH} from './chat-admin-media-storage-finalization.mjs';
 import {spawnSync} from 'node:child_process';
 import {readFileSync,rmSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {runSupportStaging} from './support-centre-staging.mjs';
 import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.mjs';
 import {canonical} from './support-centre-schema.mjs';
-import {loadMediaSchemaProfile,mediaSchemaProfileSql} from './chat-admin-media-schema-profile.mjs';
+import {loadMediaSchemaProfile,mediaSchemaProfileSql,CATALOGUE_MEDIA_SHA256} from './chat-admin-media-schema-profile.mjs';
 export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBoundaryPolicy.mjs','src/lib/websiteChatStagingControlPolicy.mjs','src/lib/websiteChatRetentionStagingPolicy.mjs','scripts/operations/support-centre-staging.mjs','scripts/operations/support-centre-schema.mjs','scripts/operations/website-chat-retention-staging-runner.mjs','scripts/operations/website-chat-retention-migration-check.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','config/certificates/supabase-root-2021-ca.crt','package-lock.json'];
+// Reviewed additive files only. Native PG17 proves the full existing Support
+// catalogue and real retention results unchanged before/after each addition.
+// No existing-file change, unknown SQL, mode change or receipt rewrite is admitted.
+export const RETENTION_INDEPENDENT_ADDITIONS=Object.freeze({
+ 'supabase/controlled/ai_capacity_entitlement_writer.sql':'536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc',
+ [STORAGE_FINALIZATION_PATH]:STORAGE_FINALIZATION_SHA,
+ 'supabase/controlled/chat_admin_media_catalogue.sql':CATALOGUE_MEDIA_SHA256,
+ 'supabase/controlled/chat_admin_media_prices.sql':'9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4',
+ 'supabase/controlled/support_ai_consent.sql':'cd610fc3775b5d6e9f074b6f8af0125effd5bc360367bf992e5809b45c0f8e61',
+});
 export function assertRetentionSourceEquivalent(source,commit,cwd=process.cwd()){
  if(!/^[a-f0-9]{40}$/.test(source??'')||! /^[a-f0-9]{40}$/.test(commit??''))throw Error('retention_source_invalid');
  const git=args=>{const r=spawnSync('git',args,{cwd,encoding:'utf8',timeout:10000,maxBuffer:65536});if(r.error||r.status!==0)throw Error('retention_source_not_equivalent');return r.stdout;};
  git(['merge-base','--is-ancestor',source,commit]);
  for(const path of [...RETENTION_PROOF_PATHS,'package.json']){git(['cat-file','-e',`${source}:${path}`]);git(['cat-file','-e',`${commit}:${path}`]);}
- git(['diff','--quiet',source,commit,'--',...RETENTION_PROOF_PATHS]);
+ const paths=[...RETENTION_PROOF_PATHS];
+ for(const [path,sha256] of Object.entries(RETENTION_INDEPENDENT_ADDITIONS)){
+  if(git(['diff','--no-renames','--name-status',source,commit,'--',path]).trim()!==`A\t${path}`)continue;
+  if(!git(['ls-tree',commit,'--',path]).startsWith('100644 blob ')||
+   createHash('sha256').update(git(['show',`${commit}:${path}`])).digest('hex')!==sha256)throw Error('retention_source_not_equivalent');
+  paths.push(`:(exclude)${path}`);
+ }
+ git(['diff','--quiet',source,commit,'--',...paths]);
  // The pinned Support workflow invokes node directly, never an npm script.
  const manifestAt=ref=>{try{const value=JSON.parse(git(['show',`${ref}:package.json`]));if(!value||Array.isArray(value)||typeof value!=='object')throw Error();delete value.scripts;return canonical(value);}catch{throw Error('retention_source_not_equivalent');}};
  if(manifestAt(source)!==manifestAt(commit))throw Error('retention_source_not_equivalent');
@@ -30,7 +48,7 @@ export function mediaRuntimePreflightSql(source,commit,owner,retentionSource=com
   definitions.push(...additions);
  }
  const functions=[...new Map(definitions.map(item=>[item[1],item])).values()];
- const bodies=functions.map(([,name,body])=>`EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='${name}' AND md5(p.prosrc)='${createHash('md5').update(body).digest('hex')}' AND p.proconfig=ARRAY['search_path=""'])`).join(' AND ');
+ const bodies=functions.map(([,name,body])=>`EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='${name}' AND md5(p.prosrc) IN ('${createHash('md5').update(body).digest('hex')}'${schema.profile==='extended'&&name==='chat_admin_media_object_guard'?`, '${createHash('md5').update(storageFinalizationSource().body).digest('hex')}'`:''}) AND p.proconfig=ARRAY['search_path=""'])`).join(' AND ');
  return `BEGIN READ ONLY; SET LOCAL statement_timeout='10s';
  SELECT 1/(CASE WHEN
  (SELECT count(*) FROM public.support_centre_owners)=1 AND EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id='${owner}')

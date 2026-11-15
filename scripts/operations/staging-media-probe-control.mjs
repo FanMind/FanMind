@@ -14,6 +14,11 @@ export function validateProbeArguments(args){
  if(args.length!==5||args[0]!=='probe'||!args.slice(1,3).every(x=>/^[a-f0-9]{40}$/u.test(x))||!args.slice(3).every(x=>/^[1-9][0-9]{0,19}$/u.test(x)))fail('probe_arguments');
  return {source:args[1],live:args[2],run:args[3],attempt:args[4]};
 }
+export function probeIdentityIds(status,key){
+ const pattern=key==='Uid'?/^Uid:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/m:key==='Gid'?/^Gid:\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)$/m:null;
+ if(!pattern)fail('probe_service_binding');
+ return status.match(pattern)?.slice(1);
+}
 export function probeLimitArguments(text){
  const names=new Set(['AS','CORE','CPU','DATA','FSIZE','LOCKS','MEMLOCK','MSGQUEUE','NICE','NOFILE','NPROC','RSS','RTPRIO','RTTIME','SIGPENDING','STACK']);
  const found=new Set(),args=[];
@@ -55,7 +60,7 @@ export async function runStagingProbe(args){
  if(!/^[1-9][0-9]{0,9}$/u.test(pid)||run('/usr/bin/systemctl',['show',UNIT,'--property=ControlGroup','--value'])!==CGROUP)fail('probe_service_binding');
  const uid=run('/usr/bin/id',['-u','fanmind-staging']),gid=run('/usr/bin/id',['-g','fanmind-staging']);
  const status=readFileSync(`/proc/${pid}/status`,'utf8');
- const ids=key=>status.match(new RegExp(`^${key}:\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)`,'m'))?.slice(1);
+ const ids=key=>probeIdentityIds(status,key);
  if(!ids('Uid')?.every(x=>x===uid)||!ids('Gid')?.every(x=>x===gid)||readFileSync(`/proc/${pid}/cgroup`,'utf8').trim()!==`0::${CGROUP}`)fail('probe_service_binding');
  const groups=status.match(/^Groups:\s*(.*)$/m)?.[1].trim().split(/\s+/u);
  if(!groups?.length||groups.some(x=>!/^\d+$/u.test(x)))fail('probe_service_binding');
@@ -84,4 +89,4 @@ export async function runStagingProbe(args){
  writeMediaProbeReceipt(receiptPath,receipt);
  console.log('STAGING_MEDIA_PROBE_RECEIPT=PASS');
 }
-if(process.argv[1]&&pathToFileURL(resolve(process.argv[1])).href===import.meta.url){try{await runStagingProbe(process.argv.slice(2));}catch{console.error('STAGING_MEDIA_PROBE=BLOCK');process.exitCode=1;}}
+if(process.argv[1]&&pathToFileURL(realpathSync(resolve(process.argv[1]))).href===import.meta.url){try{await runStagingProbe(process.argv.slice(2));}catch{console.error('STAGING_MEDIA_PROBE=BLOCK');process.exitCode=1;}}

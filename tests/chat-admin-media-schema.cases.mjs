@@ -1,3 +1,4 @@
+import {proveMonthlySqlNative} from './monthly-release-sql-native.cases.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -25,6 +26,7 @@ export async function runMediaSchemaNativeCases(sql,profile){
  const bundle=loadMediaSchemaProfile(profile);
  assert.equal((await sql(mediaSchemaStateSql(bundle))).trim(),profile);
  await sql(mediaSchemaProfileSql(bundle));
+ if(profile==='extended')await proveMonthlySqlNative(sql,'media_catalogue');
  const wrong=profile==='initial'?'extended':'initial';
  await assert.rejects(()=>sql(mediaSchemaProfileSql({...bundle,profile:wrong})),/division by zero/);
  const drifts=[
@@ -43,6 +45,9 @@ export async function runMediaSchemaNativeCases(sql,profile){
  ];
  if(profile==='extended')drifts.push(
   'alter table public.chat_character_media drop constraint chat_media_folder_scope;',
+  'alter table public.chat_character_media drop column original_filename;',
+  'alter table public.chat_character_media drop column uploaded_at;',
+  'revoke execute on function public.chat_admin_media_writes_allowed(uuid) from service_role;',
   'alter table public.chat_character_media_folders disable row level security;',
   'grant update on public.chat_character_media_folders to authenticated;',
   'revoke update(name) on public.chat_character_media_folders from authenticated;',

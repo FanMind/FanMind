@@ -1,3 +1,65 @@
+## FM1425 CRM first hosted browser pass — 14 November 2026
+Two browser assertions failed after the layout revision: the compact two-column
+Fan profile now fits the old 520px viewport, and exact label text on a select
+includes its options in the test selector. Exercise profile scrolling at 380px
+and use the combobox accessible name for Zielordner; keep the overflow, save,
+isolation and mobile width assertions. Other 50 component/boundary tests passed.
+
+## FM1425 Owner rejected the previous presentation — 14 November 2026
+Prior technical layout checks did not establish an understandable CRM for the
+Owner. The Owner explicitly requests Models on the left, Fans next, conversation
+on the right, with media/prices inside Model settings and a quiet dark interface
+like the supplied reference. Replace the chat/media toggle; preserve selected
+fan and unsent inbound text when merely visiting settings. Abort pending AI
+generation at that boundary and retain revision/authority checks. Upload trials
+are paused by Owner until this graphical revision is reviewable. Historical
+media/desktop PASS must not be reused as acceptance of the new navigation.
+
+## FM1425 first custom-policy save reports failure after commit — 14 November 2026
+The first policy INSERT omitted return=representation; PostgREST committed but
+returned an empty201 body, and mediaRest JSON parsing failed. Actual reload
+confirmed the stored rules. Request representation for this one existing INSERT;
+keep all authorization/revision checks. A faithful route regression reproduces
+503 before repair and200 afterward. Actual custom-dialogue acceptance is still
+open after a fail-closed reply_price_not_permitted result; no guard bypass.
+
+
+## FM1425 long Character sidebar overflow — 14 November 2026
+Actual authenticated Staging acceptance on f8a3737f measured a 205px Character
+list with 265px scrollWidth for the reserved long synthetic names. The implicit
+grid track used the card minimum width, clipping its management menu. Allow the
+card to shrink with min-width:0; existing name ellipsis and mobile 178px card
+minimum remain. No access/schema/provider/runtime flag change. Verify desktop
+geometry and retained mobile horizontal navigation independently; this is not
+a complete media or mobile Staging acceptance.
+
+## FM1425 real media-tab layout failure — 13 November 2026
+Actual authenticated Staging media UI on610566fa showed Gespräch/Bilder as
+full-height side columns: workspaceMain remained the default horizontal flex
+container after the media tab/library siblings were added. Set only its flex
+direction to column; tabs stay above the remaining scrollable media panel.
+Existing narrow-screen display:block remains unchanged. No second library,
+provider, schema, resource, access or flag change. Core Retention correction1483
+and active base/catalogue/video gates are preserved; upload acceptance is still
+blocked by Chrome extension file-URL access. Desktop/mobile PASS remains pending.
+
+## FM1425 additive-media retention prerequisite — 13 November 2026
+Actual activation43484135999 stopped before control although the target schema
+was exactly extended. Recursive SQL comparison rejected the independent media
+addition against the fresh daily30a2da24 receipt. Retention43484424494 returned
+already_completed; no receipt was rewritten. Small Owner-approved correction
+admits only the addition with existing pinned SHA256, preserving every other
+dependency and target/schema/status/freshness gate. Actual source equivalence,
+positive addition and all dependency/body/deletion/rename negatives pass.
+Disposable PG17 executes real retention before/after media apply with identical
+Support catalogue, expired-row deletion and recent-row preservation; native CI
+runs the same case. Common Mainebae223a includes Instagram1481. No schema
+reapply, host installation, direct flag bypass, provider analysis or Production
+change. Protected activation and practical acceptance remain pending.
+
+## FM1425 proc identity parser regression — 13 November 2026
+The installed probe identity matcher was independently reproduced as overescaped: valid proc Uid/Gid rows could not match. Replace only that matcher with literal exact four-ID patterns, validate real proc rows and malformed negatives. No identity check removed; target proof remains mandatory.
+
 ## FM-FAIL-CHATADMIN-FAN-POSTFLIGHT-20260927
 - Date: 2026-09-27
 - Status: OPEN_RECONCILIATION
@@ -550,3 +612,8 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Real Staging run43448723976 failed closed with missing video binaries, unbounded CPU/memory and runner outside actual application context. Same-UID runner never counted as proof. Required fixed service-context helper and resource drop-in developed under explicit Owner completion approval; target proof remains pending.
 - First follow-up #1475 head1f180567 CI correctly rejected missing project-memory update and CodeQL filesystem-check/read race in the new root diagnostic reader. Corrected with NOFOLLOW descriptor-open, fstat and descriptor-read plus change check; no security dismissal or rule exception. New full-head CI required.
 - Follow-up permission regression initially used stat(path) then read(path); CodeQL correctly rejected this test pattern at61ac4ef3. Both checks now use the same NOFOLLOW-open descriptor. Production protections and all required contexts remain enabled.
+
+## FM-FAIL-CHATADMIN-MEDIA-PROBE-SYMLINK-20261113
+- Real run43466444949 returned job success with NO readiness/cleanup/root-receipt markers and therefore is NOT a host/conversion acceptance. Installed current/control.mjs is a symlink; Node resolves import.meta.url to the release file but argv[1] retains the symlink. The CLI comparison skipped execution and exited0.
+- Local direct-vs-symlink reproduction confirms direct invalid arguments BLOCK/1 versus symlink empty/0. Correct CLI comparison uses realpath. The protected workflow now independently requires readiness, cleanup and root-receipt PASS markers, as well as exit0. Dedicated actual subprocess regression covers both entry forms. No rule bypass or success inference from job colour.
+- Current Staging d00ebd6e is deployed, host tools/drop-in prepared, but actual service-context conversion proof, SQL/bucket/flags and full practical acceptance remain pending. No media flag/schema mutation from this failed proof.

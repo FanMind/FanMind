@@ -612,3 +612,5 @@ test("staging TLS is manual, DNS-bound and reuses the existing certbot account",
   assert.doesNotMatch(workflow, /--agree-tos|register-unsafely-without-email/);
   assert.doesNotMatch(workflow, /https:\/\/fanmind\.ch\//);
 });
+
+import './staging-media-upload-proxy.cases.mjs';

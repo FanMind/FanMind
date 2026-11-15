@@ -4,7 +4,7 @@ on:
     inputs:
       action:
         type: choice
-        options: [catalogue-on, video-on, off, verify]
+        options: [catalogue-on, video-on, off, verify, pricing-on, pricing-off, pricing-verify]
         required: true
       media_schema_profile:
         description: Exact expected private media schema, never auto-detect or apply
@@ -76,6 +76,18 @@ jobs:
         env:
           PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
         run: node scripts/operations/staging-support-media-preflight.mjs
+      - name: Require exact price evidence schema before price activation or verification
+        if: inputs.action == 'pricing-on' || inputs.action == 'pricing-verify'
+        env:
+          PGPASSFILE: ${{ runner.temp }}/support-media-preflight.pgpass
+          PRICE_SCHEMA_ACTION: verify
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          CONFIRMATION: staging-media-prices-verify
+        run: |
+          set -euo pipefail
+          RESULT="$(node scripts/operations/chat-admin-media-prices-schema.mjs)"
+          test "$RESULT" = 'STAGING_MEDIA_PRICE_SCHEMA=PASS'
+          printf '%s\n' "$RESULT"
       - name: Remove private connection file
         if: always()
         env:
@@ -96,7 +108,7 @@ jobs:
           ACTION: ${{ inputs.action }}
           REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
           CONFIRMATION: ${{ inputs.confirmation }}
-          SCHEMA_VERIFIED: extended
+          SCHEMA_VERIFIED: ${{ (inputs.action == 'pricing-on' || inputs.action == 'pricing-verify') && 'prices-v1' || 'extended' }}
           TARGET_PROJECT: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
           PRODUCTION_PROJECT: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
         run: node scripts/operations/staging-media-catalogue-runtime.mjs

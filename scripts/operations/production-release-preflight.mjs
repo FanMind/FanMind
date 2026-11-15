@@ -12,7 +12,7 @@ export function isSeparateStagingDiagnostic(check, run, sha) {
     && run.event === "workflow_dispatch"
     && run.path === ".github/workflows/chat-admin-media-host-readiness.yml";
 }
-function completeChecks(payload, required, excludedSuite, stagingDiagnostics = [], sha) {
+export function completeChecks(payload, required, excludedSuite, stagingDiagnostics = [], sha) {
   if (!Array.isArray(payload?.check_runs) || payload.total_count < 1 || payload.total_count > 100 || payload.check_runs.length !== payload.total_count) return false;
   const latest = new Map();
   for (const check of payload.check_runs) {

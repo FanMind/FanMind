@@ -248,8 +248,10 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       CREATOR_TARGET_RECOVERY_WORKFLOW,
       CREATOR_TARGET_RUNTIME_WORKFLOW,
       STAGING_DEPLOY_WORKFLOW,
+      "enable-staging-tls.yml",
       "install-production-audit-policy.yml",
       DAILY_PRODUCTION_CONTROL_WORKFLOW,
+      "production-meta-runtime.yml",
       STAGING_PROVISION_WORKFLOW,
       RESTORE_DATABASE_WORKFLOW,
       RESTORE_WORKFLOW,
@@ -259,8 +261,14 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       "staging-meta-runtime.yml",
       STAGING_PUSH_RUNTIME_WORKFLOW,
       STAGING_SUPPORT_MEDIA_RUNTIME_WORKFLOW,
+      "support-ai-consent-production.yml",
     ],
   );
+  const mediaProxyWorkflow=selfHostedWorkflows.find(workflow=>workflow.file==='enable-staging-tls.yml');
+  assert.deepEqual(mediaProxyWorkflow?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA]);
+  const mediaProxyJob=mediaProxyWorkflow.source.split('  media-upload-proxy:')[1];
+  for(const binding of ["github.ref == 'refs/heads/main'","github.actor == 'Bernds-tech'","inputs.reviewed_commit == github.sha","inputs.expected_staging_commit == github.sha","environment: staging","group: fanmind-staging-deploy","staging-media-upload-proxy.mjs"] )assert.ok(mediaProxyJob.includes(binding));
+  assert.doesNotMatch(mediaProxyJob,/secrets\.|certbot|provision-staging-host|systemctl restart|sudoers/);
   const backupControl = selfHostedWorkflows.find(workflow => workflow.file === "backup-worker-production-control.yml");
   const mediaHost = selfHostedWorkflows.find(workflow => workflow.file === CHAT_ADMIN_MEDIA_HOST_WORKFLOW);
   assert.deepEqual(mediaHost?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
@@ -271,6 +279,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(mediaHost.source, /env -i PATH=\/usr\/bin:\/bin/u);
   assert.doesNotMatch(mediaHost.source, /secrets\.|--env-file|\.env\.production|npm (?:ci|install)|systemctl (?:restart|enable)|workflow_call|pull_request:/u);
   assert.deepEqual([...mediaHost.source.matchAll(/sudo[^\n]+/gu)].map(m=>m[0]), ['sudo -n /usr/local/sbin/fanmind-staging-media-probe \\']);
+  for(const marker of ['MEDIA_HOST_READINESS=PASS','MEDIA_HOST_SYNTHETIC_CLEANUP=PASS','STAGING_MEDIA_PROBE_RECEIPT=PASS'])assert.ok(mediaHost.source.includes("grep -Fxq '"+marker+"'"));
   const catalogueRuntime=selfHostedWorkflows.find(workflow=>workflow.file==='staging-media-catalogue-runtime.yml');
   assert.deepEqual(catalogueRuntime?.checkoutShas,[HOSTED_CHECKOUT_V7_0_1_SHA,HOSTED_CHECKOUT_V7_0_1_SHA]);
   for(const required of ["environment: staging","inputs.reviewed_commit == github.sha","group: fanmind-staging-deploy","options: [extended]","staging-support-media-preflight.mjs","staging-media-catalogue-runtime.mjs"])assert.ok(catalogueRuntime.source.includes(required));
@@ -363,13 +372,37 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(supportCustomer.source, /environment: staging/u);
   assert.match(supportCustomer.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(supportCustomer.source, /SERVICE_ROLE|permissions:\s*write-all/u);
-  assert.equal(hostedWorkflows.length, 77);
+  const mediaPrices = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-media-prices-staging.yml');
+  assert.deepEqual(mediaPrices?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaPrices.source, /environment: staging/u);
+  assert.match(mediaPrices.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.doesNotMatch(mediaPrices.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
+  const capacityInstall = hostedWorkflows.find(workflow => workflow.file === 'ai-capacity-staging-install.yml');
+  assert.deepEqual(capacityInstall?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(capacityInstall.source, /environment: staging/u);
+  assert.match(capacityInstall.source, /group: fanmind-staging-deploy/u);
+  assert.match(capacityInstall.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.doesNotMatch(capacityInstall.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
+  const monthlyPrepare = hostedWorkflows.find(workflow => workflow.file === 'monthly-release-prepare.yml');
+  assert.deepEqual(monthlyPrepare?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(monthlyPrepare.source, /persist-credentials: false/u);
+  assert.doesNotMatch(monthlyPrepare.source.replace(/^\s*#.*$/gmu, ''), /environment:|self-hosted|secrets\.|permissions:\s*write-all|pull_request:|schedule:/u);
+  const mediaStorage = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-media-storage-staging.yml');
+  assert.deepEqual(mediaStorage?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaStorage.source, /environment: staging/u);
+  assert.match(mediaStorage.source, /group: fanmind-staging-deploy/u);
+  assert.match(mediaStorage.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(mediaStorage.source, /staging-media-storage-/u);
+  assert.doesNotMatch(mediaStorage.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:|nginx|production:/u);
+  const mediaFlow = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-manual-flow-staging.yml');
+  assert.deepEqual(mediaFlow?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.equal(hostedWorkflows.length, 81);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    87, // Includes independent media SQL and actual video processing jobs.
+    92, // Includes the second Hosted checkout in the existing Staging media job.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

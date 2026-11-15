@@ -8,6 +8,22 @@ export const MEDIA_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a
 export class ChatAdminMediaError extends Error {
   constructor(code) { super(code); this.name = "ChatAdminMediaError"; this.code = code; }
 }
+// Validate the bounded alphabet in one scan. A repeated four-character group
+// exhausts V8's regexp stack on otherwise valid multi-megabyte uploads.
+export function isMediaBase64(value, maximumBytes) {
+  if (typeof value !== "string" || !value.length || value.length % 4 || !Number.isSafeInteger(maximumBytes) || maximumBytes < 1 || value.length > Math.ceil(maximumBytes / 3) * 4) return false;
+  const padding = value.endsWith("==") ? 2 : value.endsWith("=") ? 1 : 0;
+  return value.length / 4 * 3 - padding <= maximumBytes && !/[^A-Za-z0-9+/]/u.test(value.slice(0, value.length - padding));
+}
+export async function readMediaMutationResponse(response) {
+  let data;
+  try { data = await response.json(); } catch {
+    if (response.ok) throw Error("media_response_invalid");
+  }
+  if (!response.ok) return {error:typeof data?.error === "string" ? data.error : response.status === 413 ? "media_payload_too_large" : response.status === 401 ? "unauthenticated" : response.status === 403 ? "resource_forbidden" : "media_http_failed"};
+  if (!data || typeof data !== "object" || Array.isArray(data)) throw Error("media_response_invalid");
+  return data;
+}
 export function mediaId(value) {
   if (typeof value !== "string" || !MEDIA_UUID.test(value)) throw new ChatAdminMediaError("invalid_media_binding");
   return value;
@@ -32,7 +48,7 @@ export function normalizeCustomPolicy(value, offers) {
   const hours = value.delivery_hours;
   if (hours !== null && (!Number.isSafeInteger(hours) || hours < 1 || hours > 720)) throw new ChatAdminMediaError("invalid_delivery_hours");
   const motifs = mediaTags(value.motifs);
-  const offer = offers.find(item => item.id === offerId && item.active && item.category === "custom" && item.recommendedPriceMinor > 0);
+  const offer = offers.find(item => item.id === offerId && item.active && item.category === "custom" && !item.mediaTerms && item.recommendedPriceMinor > 0);
   if (value.enabled && (!offer || !hours || !motifs.length)) throw new ChatAdminMediaError("custom_offer_not_ready");
   return {enabled:value.enabled,offer_id:offerId,delivery_hours:hours,motifs,requires_confirmation:value.requires_confirmation};
 }
@@ -51,7 +67,7 @@ export function buildMediaGrounding(character, assets, policy, incoming, request
   const terms = requestedMediaTerms(incoming);
   const available = assets.filter(asset => asset.reviewed === true && asset.available === true && asset.deleted === false);
   const matches = terms.length ? available.filter(asset => containsAll(asset.tags, terms) && (!requestedOffer || asset.offer_id===requestedOffer.id)).slice(0,3) : [];
-  const offer = (character.sales_playbook?.offers ?? []).find(item => item.id === policy?.offer_id && item.category === "custom" && item.active && !item.requiresConfirmation && item.recommendedPriceMinor > 0);
+  const offer = (character.sales_playbook?.offers ?? []).find(item => item.id === policy?.offer_id && item.category === "custom" && !item.mediaTerms && item.active && !item.requiresConfirmation && item.recommendedPriceMinor > 0);
   // Custom price still comes exclusively from the selected Character playbook.
   const custom = !matches.length && terms.length && policy?.enabled === true && policy.requires_confirmation === false && Number.isSafeInteger(policy.delivery_hours) && policy.delivery_hours >= 1 && policy.delivery_hours <= 720 && containsAll(policy.motifs,terms) && offer && requestedOffer?.id === offer.id;
   return {status:matches.length ? "verified_match" : custom ? "custom_available" : "unconfirmed",terms,

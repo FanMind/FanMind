@@ -1,5 +1,6 @@
 "use client";
 
+import { StagingInstagramIngressControls } from "./StagingInstagramIngressControls";
 import { StagingFacebookIngressControls } from "./StagingFacebookIngressControls";
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -56,6 +57,7 @@ type FacebookConnection = {
 };
 
 type InstagramConnection = {
+  unified?: boolean;
   account_name: string | null;
   account_id: string | null;
   has_access_token: boolean;
@@ -1033,6 +1035,7 @@ export function ChannelsGrid({
                             ) : null}
                             <li>Persönliche fremde Posts: keine dauerhafte Kopie</li>
                           </ul>
+                          {instagramConnection.unified ? <StagingInstagramIngressControls /> : null}
                           <div className={styles.connectionCardActions}>
                             <form action={syncInstagramMessengerHistoryFromChannelPage}>
                               <button type="submit" disabled={demoConnectionsDisabled}>

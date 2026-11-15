@@ -56,3 +56,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Private release state is not source or release authority.
+.monthly-release/
+.monthly-release.lock
+
+.monthly-release-prepared/

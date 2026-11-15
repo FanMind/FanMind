@@ -1,3 +1,4 @@
+import "./instagram-unified.cases.mjs";
 import './facebook-staging-ingress.cases.mjs';
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -509,10 +510,10 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   assert.match(integration, /force_authentication", "1"/u);
   assert.match(integration, /https:\/\/api\.instagram\.com\/oauth\/access_token/u);
   assert.match(integration, /grant_type", "ig_exchange_token"/u);
-  assert.match(integration, /graph\.instagram\.com\/\$\{META_GRAPH_API_VERSION\}\/me/u);
+  assert.match(integration, /unified \? encodeURIComponent\(token.userId\) : "me"/u);
   assert.match(
     integration,
-    /\$\{META_GRAPH_API_VERSION\}\/\$\{encodeURIComponent\(profileId\)\}\/conversations/u,
+    /\$\{instagramGraphVersion\(\)\}\/\$\{encodeURIComponent\(profileId\)\}\/conversations/u,
   );
   assert.match(integration, /platform", "instagram"/u);
   assert.match(
@@ -521,6 +522,7 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   );
   assert.match(integration, /Authorization: `Bearer \$\{accessToken\}`/u);
   assert.match(pagingPolicy, /url\.host !== "graph\.instagram\.com"/u);
+  assert.match(pagingPolicy, /url\.host !== "graph\.facebook\.com"/u);
   assert.match(start, /requireActiveAuthorizedWorkspace\(\)/u);
   assert.match(start, /workspaceId: workspace\.id/u);
   assert.match(start, /userId: data\.user\.id/u);
@@ -529,7 +531,7 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   assert.match(callback, /requireActiveAuthorizedWorkspace\(\)/u);
   assert.match(callback, /workspace\.id !== state\.workspaceId/u);
   assert.match(callback, /areDemoConnectionsDisabled/u);
-  assert.match(callback, /encryptToken\(token\.accessToken\)/u);
+  assert.match(callback, /encryptToken\(instagramStoredToken\(token\)\)/u);
   assert.match(callback, /webhookSubscribed:\s*false/u);
   assert.match(callback, /subscribeInstagramAccount/u);
   assert.match(callback, /updateInstagramWebhookSubscribed/u);
@@ -969,3 +971,6 @@ test('Meta rebind rejects unapproved identities, child test app, stale old ID, a
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,META_APP_SECRET:'unexpected-runtime-alias'}, syntheticMetaInput.appId,rebind), /rebind_alias_conflict/);
   assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,FANMIND_TOKEN_ENCRYPTION_KEY:'f'.repeat(64)}, syntheticMetaInput.appId,rebind), /encryption_key_drift/);
 });
+
+// Production controller cases reuse the mandatory existing Meta suite.
+await import("./production-meta-runtime.cases.mjs");

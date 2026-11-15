@@ -1,7 +1,8 @@
-import { ENVIRONMENT, OWNER_ID, environmentPolicy, request } from './backup-worker-install-policy.mjs';
+import { ENVIRONMENT, OWNER_ID, environmentPolicy, request, inspectionRequest } from './backup-worker-install-policy.mjs';
 const env = process.env;
 try {
-  const input = request(env.REQUESTED_ACTION,env.REVIEWED_CONTROLLER_COMMIT,env.WORKER_SOURCE_COMMIT,env.EXPECTED_APPLICATION_COMMIT);
+  const validateRequest = env.REQUESTED_ACTION === 'inspect' ? inspectionRequest : request;
+  const input = validateRequest(env.REQUESTED_ACTION,env.REVIEWED_CONTROLLER_COMMIT,env.WORKER_SOURCE_COMMIT,env.EXPECTED_APPLICATION_COMMIT);
   if (env.GITHUB_REPOSITORY !== 'FanMind/FanMind' || env.GITHUB_REPOSITORY_ID !== '1259448985' ||
       env.GITHUB_EVENT_NAME !== 'workflow_dispatch' || env.GITHUB_REF !== 'refs/heads/main' ||
       env.GITHUB_SHA !== input.controllerCommit || env.GITHUB_ACTOR_ID !== String(OWNER_ID) ||

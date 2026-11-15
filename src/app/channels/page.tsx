@@ -1,4 +1,5 @@
 import { stagingFacebookIngressEnabled } from "@/lib/facebookStagingIngressPolicy.mjs";
+import { stagingInstagramIngressEnabled } from "@/lib/instagramUnifiedPolicy.mjs";
 import { redirect } from "next/navigation";
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import {
@@ -38,6 +39,7 @@ type SafeFacebookConnection = Pick<
 > & { has_page_access_token: boolean };
 
 type SafeInstagramConnection = {
+  unified?: boolean;
   account_name: string | null;
   account_id: string | null;
   has_access_token: boolean;
@@ -284,6 +286,7 @@ export default async function ChannelsPage({
           } : null}
           facebookError={singleSearchParam(params.facebook_error)}
           instagramConnection={instagramConnection ? {
+            unified: stagingInstagramIngressEnabled(process.env, data.user.id, workspace.id, instagramConnection.external_account_name),
             account_name: instagramConnection.external_account_name ?? instagramConnection.page_name,
             account_id: instagramConnection.external_account_id ?? instagramConnection.page_id,
             has_access_token: Boolean(instagramConnection.token_last_four),

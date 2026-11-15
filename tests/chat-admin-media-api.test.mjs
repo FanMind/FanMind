@@ -22,12 +22,13 @@ function harness(options={}){
   "@/lib/chatAdmin":{requireChatAdminCapability:async()=>{if(options.denied||options.revokeAfterProvider&&calls.providers)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return context;}},
   "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
   "@/lib/chatAdminMedia":{
+   cleanupFailedMediaUpload:async()=>{},
    requireMediaEnabled(){if(options.disabled)throw new mediaPolicy.ChatAdminMediaError("media_not_enabled");},
-   async assertMediaCharacter(workspaceId,characterId,expected){if(workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
+   async assertMediaCharacter(workspaceId,characterId,expected){if(options.revokeAfterStorage&&calls.objects.length||workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
    async getMediaAsset(workspaceId,characterId,assetId){if(workspaceId!==w||characterId!==c||assetId!==id)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {...asset};},
    loadCharacterMedia:async()=>({assets:[{...asset}],policy:{enabled:false,revision:0}}),
    mediaScope:(workspaceId,characterId)=>`workspace_id=eq.${workspaceId}&character_id=eq.${characterId}`,
-   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}")});revision++;return [{...asset}];},
+   mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body??"{}"),headers:init.headers});revision++;if(init.method==="DELETE"&&options.emptyMetadataDelete)return [];if(options.minimalPolicyResponse&&path==="chat_character_media_policies"&&init.headers?.Prefer!=="return=representation")throw new SyntaxError("Empty PostgREST 201 response is not JSON");return [{...asset}];},
    mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw new mediaPolicy.ChatAdminMediaError("media_object_unavailable");return Buffer.from("synthetic-private-image");},
    updateMediaAsset:async(workspaceId,characterId,previous,patch)=>{calls.writes.push({patch,workspaceId,characterId});Object.assign(asset,patch,{revision:asset.revision+1});revision++;return {...asset};},
   },
@@ -74,7 +75,7 @@ test("account deletion requires exact owned metadata, physical absence and fails
  const config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"},path=`${w}/${c}/${id}.webp`;
  for(const absent of [true,false]){
   const calls=[];
-  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET"});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:absent?404:200});return new Response(null,{status:204});};
+  const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET"});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return Response.json(absent?{statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"}:{},{status:absent?400:200});return new Response(null,{status:204});};
   if(absent){await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.at(-1).url.includes("deleted=eq.true"));}
   else{await assert.rejects(deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]}),/media_deletion_absence_failed/u);assert.ok(!calls.some(call=>call.method==="DELETE"&&call.url.includes("/rest/")));}
  }
@@ -91,9 +92,57 @@ test("video preview is private, range-aware and budgeted; video analysis never i
 });
 test("account erasure deletes video MP4 paths with authenticated absence before metadata",async()=>{
  const calls=[],path=`${w}/${c}/${id}.mp4`,config={supabaseUrl:"https://database.invalid",serviceKey:"synthetic-placeholder"};
- const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return new Response(null,{status:404});return new Response(null,{status:204});};
+ const fetchImpl=async(url,init={})=>{calls.push({url,method:init.method??"GET",body:init.body});if(url.includes("&select="))return Response.json([{id,workspace_id:w,character_id:c,media_type:"video"}]);if(init.method==="DELETE"&&url.endsWith("/chat-character-media"))return Response.json([{name:path}]);if(url.includes("/authenticated/"))return Response.json({statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"},{status:400});return new Response(null,{status:204});};
  await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds:[w]});assert.ok(calls.some(call=>call.url.endsWith(`/${path}`)));assert.ok(calls.some(call=>call.body===JSON.stringify({prefixes:[path]})));assert.ok(calls.at(-1).url.includes("deleted=eq.true"));
 });
 
 import "./chat-admin-media-catalogue.cases.mjs";
 import "./chat-admin-media-catalogue-api.cases.mjs";
+
+// PostgREST commits a default-minimal INSERT but returns no JSON body.
+test("first custom policy save returns success after a committed PostgREST insert",async()=>{
+ const h=harness({minimalPolicyResponse:true});
+ const result=await h.route.PATCH(h.request({action:"policy",revision:0,policy:{enabled:false,offer_id:"",delivery_hours:null,motifs:[],requires_confirmation:true}}));
+ assert.equal(result.status,200);
+ assert.equal(h.calls.writes.length,1);
+ assert.equal(h.calls.writes[0].path,"chat_character_media_policies");
+ assert.equal(h.calls.writes[0].headers.Prefer,"return=representation");
+ assert.equal(h.calls.writes[0].body.workspace_id,w);
+ assert.equal(h.calls.writes[0].body.character_id,c);
+});
+
+function portraitHarness(options={}){
+ const calls={storage:[],characters:0,decode:0};
+ const path=`chat-characters/${w}/${c}/portrait.jpg`;
+ const deps={
+  "next/server":{NextResponse},
+  "next/headers":{cookies:async()=>({get:()=>options.noToken?undefined:{value:"synthetic-owner-jwt"}})},
+  "@/lib/chatAdmin":{
+   requireChatAdminCapability:async()=>{if(options.denied)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {workspace:{id:w}};},
+   getChatCharacter:async(workspace,id)=>{assert.equal(workspace,w);assert.equal(id,c);calls.characters++;return {id:c,workspace_id:w,revision:options.stale&&calls.characters>1?2:1,profile_image_path:options.path===undefined?path:options.path};},
+  },
+  "@/lib/supabase/config":{SUPABASE_ACCESS_TOKEN_COOKIE:"synthetic",getSupabaseHeaders:token=>({Authorization:`Bearer ${token}`}),requireSupabasePublicConfig:()=>({url:"https://storage.invalid"})},
+  "@/lib/chatAdminMediaImage":{normalizeMediaImage:async bytes=>{calls.decode++;if(options.invalidImage)throw Error("bad image");return bytes;}},
+  "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
+  "@/lib/workspaceAuthorization":{WorkspaceAuthorizationError},
+ };
+ const route={};runInNewContext(compile("src/app/api/chatadmin/characters/portrait/route.ts"),{exports:route,Response,Buffer,Uint8Array,AbortSignal,require:name=>{assert.ok(Object.hasOwn(deps,name),name);return deps[name];},fetch:async(url,init)=>{calls.storage.push({url,init});return new Response(options.oversized?new Uint8Array(mediaPolicy.MEDIA_MAX_BYTES+1):"synthetic decoded portrait",{status:options.missing?404:200});}});
+ return {calls,get:()=>route.GET({nextUrl:new URL(`https://fanmind.invalid/api/chatadmin/characters/portrait?character_id=${c}&revision=1`)})};
+}
+test("Model portraits use the assigned private path, owner JWT, no-store and a final revision check",async()=>{
+ const h=portraitHarness(),response=await h.get();assert.equal(response.status,200);assert.equal(response.headers.get("content-type"),"image/webp");assert.equal(response.headers.get("cache-control"),"private, no-store");
+ assert.equal(h.calls.storage[0].url,`https://storage.invalid/storage/v1/object/authenticated/chat-characters/${w}/${c}/portrait.jpg`);
+ assert.equal(h.calls.storage[0].init.headers.Authorization,"Bearer synthetic-owner-jwt");assert.equal(h.calls.storage[0].init.redirect,"error");assert.equal(h.calls.characters,2);assert.equal(h.calls.decode,1);
+});
+test("Model portrait fallback never reads another workspace, Model, public URL or unassigned media",async()=>{
+ for(const path of [null,`chat-characters/${id}/${c}/portrait.jpg`,`chat-characters/${w}/${id}/portrait.jpg`,"https://external.invalid/photo.jpg",`chat-characters/${w}/${c}/../secret.jpg`,`chat-characters/${w}/${c}/.`,`chat-characters/${w}/${c}/..`]){const h=portraitHarness({path});assert.equal((await h.get()).status,404);assert.equal(h.calls.storage.length,0);}
+ for(const options of [{denied:true},{noToken:true}]){const h=portraitHarness(options);assert.ok([401,403].includes((await h.get()).status));assert.equal(h.calls.storage.length,0);}
+});
+test("Model portrait read fails closed for changed revision, missing object, invalid and oversized images",async()=>{
+ for(const options of [{stale:true},{missing:true},{invalidImage:true},{oversized:true}]){const h=portraitHarness(options);assert.equal((await h.get()).status,404);}
+});
+
+test("authority revoked during Storage deletion keeps the metadata tombstone",async()=>{const h=harness({revokeAfterStorage:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,403);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.filter(call=>call.path).length,0);});
+test("metadata cleanup must acknowledge the exact row instead of silently accepting an RLS no-op",async()=>{const h=harness({emptyMetadataDelete:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,400);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.at(-1).headers.Prefer,"return=representation");});
+
+import "./chat-admin-media-storage-control.cases.mjs";

@@ -5,18 +5,25 @@ import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
 import yaml from "js-yaml";
+import { gunzipSync } from "node:zlib";
 import { AUDIT_FILES, frozenFile, validatePair, replacePair } from "../scripts/operations/install-production-audit-policy.mjs";
 
-const newBytes = AUDIT_FILES.map(file => fs.readFileSync(`scripts/operations/${file.name}`));
+// The historical install workflow downloads a frozen pair, not today's working
+// tree. Preserve and test those actual pinned bytes rather than re-authorizing it.
+const frozenVerifier = JSON.parse(fs.readFileSync("tests/fixtures/production-audit-policy-verifier-935d1d8.json", "utf8"));
+const newBytes = [fs.readFileSync("scripts/operations/read-only-production-audit.sh"), gunzipSync(Buffer.from(frozenVerifier.content, "base64"))];
 const oldBytes = [
   Buffer.from(newBytes[0].toString().replace("  { name: '1h', since: now - 60 * 60 * 1000 },\n", "").replace("window.name === '1h'", "window.name === '24h'").replaceAll("BACKUP_WORKER_1H_", "BACKUP_WORKER_24H_")),
   Buffer.from(newBytes[1].toString().replaceAll("BACKUP_WORKER_1H_", "BACKUP_WORKER_24H_")),
 ];
 test("only the exact reviewed old or already installed audit pair is accepted", () => {
+  assert.equal(crypto.createHash("sha256").update(newBytes[1]).digest("hex"), frozenVerifier.sha256);
+  assert.equal(frozenVerifier.sha256, AUDIT_FILES[1].next);
   assert.equal(validatePair(oldBytes, newBytes), "replace");
   assert.equal(validatePair(newBytes, newBytes), "installed");
   assert.throws(() => validatePair([newBytes[0], oldBytes[1]], newBytes), /installed_hash_invalid/u);
   assert.throws(() => validatePair(oldBytes, [Buffer.from("changed"), newBytes[1]]), /source_hash_invalid/u);
+  assert.throws(() => validatePair(newBytes, [newBytes[0], fs.readFileSync("scripts/operations/verify-production-audit-output.mjs")]), /source_hash_invalid/u);
 });
 test("frozen input rejects symlinks, writable files and wrong owners", t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "fanmind-audit-frozen-"));

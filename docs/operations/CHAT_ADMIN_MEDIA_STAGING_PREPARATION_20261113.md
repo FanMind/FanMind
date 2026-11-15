@@ -363,3 +363,149 @@ other settings unchanged, retain compatible additive schema/private bucket while
 investigating. Never undo an evolved shared schema or downgrade a newer live
 release. Synthetic fixture IDs are recorded privately during acceptance and only
 owned synthetic records/objects are removed with authenticated absence proof.
+
+## Actual post-merge target continuation and probe correction
+
+#1475 regular Main merge `d00ebd6e32f9f816900befc9f717493ece3728ef` retained
+Facebook #1473 and Support #1474. Its final PR headccdfa48f had16/16 checks and
+all12 required contexts with expected app identities; the actual merge tree is
+identical. Staging deploy43465738123 succeeded from a8a74f67 and independently
+reportsd00ebd6e. Private prior runtime snapshot is retained/accepted. Root authority
+inspection43464862000 and bounded toolchain preparation43465036716 passed:
+ffmpeg/probe installed without upgrades, fixed helper and1GiB/100% CPU/256-task
+drop-in prepared; private config bytes unchanged, no deploy within preparation.
+
+Probe43466444949 is NOT accepted despite job success: no actual readiness,
+conversion-cleanup or root receipt marker was emitted. The installed current
+symlink caused the CLI entry comparison to skip execution. The required follow-up
+uses the real path and checks all three PASS markers independently in the workflow.
+A real direct/symlink subprocess negative regression reproduces the prior failure.
+Do not enable videos from a green job alone. After reviewed correction and its
+regular merge, prepare the exact new source, deploy the common Main, and rerun the
+actual application-context probe. Schema/bucket/new flags remain unchanged.
+
+Secure Staging login in the fallback browser was declined/not completed. The
+original Operator session is untouched; do not retry the login request without
+new user instruction. Continue independently possible server/database work.
+
+The same diagnostic followup also repairs an independently reproduced overescaped
+proc-identity expression. Literal Uid/Gid patterns now parse all four IDs from
+actual `/proc/self/status`; missing/malformed rows still fail closed. This is
+not a target-host proof. Current Main193eb1a9 (Facebook #1477) is integrated.
+
+## Retention prerequisite correction after actual extension apply
+
+Owner confirmed the controlled extension on13November. Independent target
+catalogue equality is extended: existing private bucket26214400bytes, WebP/MP4,
+exact RLS/functions/ACLs. Server proof43479092079 and rollback-only actual Staging
+role/folder/isolation/revocation/metadata proofs passed. No schema reapply or
+installation is required.
+
+Activation43484135999 stopped before control: the fresh successful daily receipt
+belongs to30a2da24, while recursive controlled-SQL comparison also included the
+later independent media addition. Retention43484424494 correctly returned
+already_completed without rewriting the receipt. Repeating it is not a repair.
+
+The narrow correction permits only addition of
+supabase/controlled/chat_admin_media_catalogue.sql with existing pinned SHA256
+10626902dcd7e4ad35508191afad89aad25292f28965fae75351ec758c4248d2.
+Every other controlled SQL, runner, imported module, reference, workflow,
+certificate, lockfile and runtime package manifest stays bound. A modified,
+deleted, renamed or different media body fails closed. Ancestor, target, exact
+live Support/media schema, Owner, receipt status and30-hour freshness are retained.
+
+Actual receipt-source/common-Mainebae223a comparison passes with only this
+bounded exception; Retention sources and dependencies are unchanged. Disposable
+PG17 executes real retention before and after the actual media extension: full
+Support catalogue remains identical; two expired turns and one expired thread
+are removed, recent rows preserved, and probes rolled back. The same semantic
+case is wired into existing native PG17 CI. Dependency mutations reject every
+bound runner/reference/runtime path, retention SQL, arbitrary additional SQL,
+modified media body, deletion and rename.
+
+Successor includes merged Instagram1481 and leaves1479 separate. Existing
+FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001 and shared
+Support retention control are affected. Production and provider analysis remain
+excluded. Source/DB proofs do not establish activation or desktop/mobile PASS;
+those remain pending until the protected workflow and practical acceptance finish.
+
+## Actual media-panel layout follow-up
+
+Real Staging UI exposed a horizontal parent-flex regression: mediaTabs and
+mediaLibrary were displayed as tall side columns. The minimal CSS correction
+sets workspaceMain flex-direction:column so tabs take their own top row and
+mediaLibrary uses remaining scroll space. Narrow-screen display:block is retained.
+No feature/backend/schema/flag/provider behavior changes. Root conversion proof,
+exact extended schema and controlled base/catalogue/video activation are carried;
+this does not certify unfinished upload/private-preview/deletion/mobile cases.
+
+## 14 November: actual continuation and remaining sidebar correction
+
+PR1484 regularly merged as f8a3737f9a47430e9c97ad76c7a483ae84f31fc8 after all
+16 head checks and protected requirements passed. Protected Staging deploy
+43583484674/job132412979512 succeeded; independent HTTPS version matched.
+Billing=false and the existing Operator were retained; private recovery snapshot
+accepted. Tabs now appear above the separately scrolling media panel.
+
+The actual long synthetic Character names expose a second small layout issue:
+list clientWidth205 versus scrollWidth265; management menus clip to the right.
+Set only characterCard min-width:0, retaining name ellipsis and the explicit
+178px mobile card minimum. No schema, permissions, flags, provider or Production
+change. Complete Desktop/Mobile PASS remains pending actual target acceptance.
+
+Live missing-image test returned three distinct safe suggestions without an
+inventory, price or delivery claim. Editing/replacing one and copy-and-use
+persisted exactly the manual text, without any external send. Upload chooser
+still explicitly rejects missing Chrome extension file-URL access. The390x844
+viewport override still measured1504x778 and was reset; no mobile PASS. Existing
+synthetic fixture prefix FM1425-20261113-1900 remains reserved pending completion.
+
+
+First custom-policy INSERT committed on the real target but reported a generic
+error because PostgREST default-minimal201 has no JSON body. Request the existing
+representation contract explicitly for this one INSERT. A faithful empty-response
+regression fails503 before the change and succeeds200 afterward. Existing policy
+updates, Character/Workspace/revision checks and permission boundaries remain.
+Actual custom reply acceptance remains OPEN: long ambiguous request safely
+refused; short motif request rejected by reply_price_not_permitted. No rejection
+is relabeled successful and no guard is weakened.
+
+## Owner-directed CRM presentation revision — 14 November 2026
+
+The Owner rejects the previous presentation as cluttered and cannot complete the
+manual image upload. New priority is the graphical interface; defer image/video
+upload trials until the revised interface is reviewed. No upload success or
+complete media acceptance is implied by this UI work.
+
+Use the supplied quiet dark reference and the explicit Models → Fans →
+conversation arrangement. Keep existing scoped Characters, fans and messages.
+Move the existing media library and category/file prices to Model settings,
+next to the existing profile/rules/structured offers. No second library or
+server/schema/provider/flag/Production change. Conversation identity, a stable
+composer, visible note/profile actions, restrained buttons, explicit settings
+return, mobile layout and scroll boundaries are part of this revision.
+
+Merely opening settings retains the selected fan/history and unsent inbound
+text; pending AI work is aborted and old drafts invalidated. A changed Character
+revision still resets the bound conversation component; existing price freshness
+and copy-and-use controls remain. Unsaved profile/offer changes require explicit
+discard before navigation. Model and media mutations retain existing contracts.
+Affected consumers: ChatAdmin CRM and private-media UI under
+FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001; no source-only
+result is a live integration PASS. Preserve Main bb799466 (Support1485) and later
+shared successors during any protected Staging rollout.
+
+Validation: existing module/API/manual-flow regressions plus actual Chromium
+client tests cover three-column geometry, absence of chat/media tabs, settings
+return continuity, dirty-profile protection, scoped media and390px controls.
+Generated screenshots use neutral synthetic fixtures only. Exact-head CI and
+actual Staging visual review remain required before target PASS.
+
+Owner refinement: Model rail starts collapsed with explicit assigned portraits;
+expanding adds names, status and management controls. Missing/inaccessible portraits
+show initials. The read-only portrait proxy uses the existing private
+`chat-characters` contract, normal owner JWT and exact workspace/Character/path/
+revision checks, bounded image decoding and private no-store responses. No bucket,
+Storage policy, database or public URL is created or activated. Do not use a paid
+library image automatically as a portrait. Actual portrait availability on Staging
+remains a separate check; a fallback is not evidence of an uploaded portrait.

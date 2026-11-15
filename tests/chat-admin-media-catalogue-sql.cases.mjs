@@ -9,6 +9,9 @@ export async function runMediaCatalogueSqlCases(sql,onInstalled=async()=>{}){
  await sql('alter table public.chat_character_media add column unexpected_drift integer;');
  await assert.rejects(()=>sql(mediaCatalogueTransaction()),/catalogue_initial_or_extended_required/);
  await sql('alter table public.chat_character_media drop column unexpected_drift;');
+ await sql('revoke execute on function public.chat_admin_media_writes_allowed(uuid) from service_role;alter table public.chat_character_media drop column original_filename;alter table public.chat_character_media drop column uploaded_at;');
+ await sql(mediaCatalogueTransaction()); // precise legacy repair, not a repeat of table creation
+ assert.equal((await sql("select has_function_privilege('service_role','public.chat_admin_media_writes_allowed(uuid)','EXECUTE');")).trim(),'t');
  await onInstalled();
  const a='10000000-0000-4000-8000-000000000001',b='10000000-0000-4000-8000-000000000002',v='10000000-0000-4000-8000-000000000003',asset='20000000-0000-4000-8000-000000000001';
  const add=(id,kind,parent=null)=>`insert into public.chat_character_media_folders(id,workspace_id,character_id,kind,name,parent_id) values('${id}','${w}','${c}','${kind}','${id}',${parent?`'${parent}'`:'null'});`;

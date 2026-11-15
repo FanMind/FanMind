@@ -4,7 +4,7 @@ on:
     inputs:
       action:
         type: choice
-        options: [inspect, configure, rebind, subscribe-webhook]
+        options: [inspect, configure, rebind, subscribe-webhook, configure-instagram, subscribe-instagram-webhook]
         required: true
       reviewed_commit:
         description: Exact main commit already deployed to Staging
@@ -16,6 +16,10 @@ on:
         required: true
       expected_previous_app_id:
         description: Required only for rebind; exact existing Staging App ID
+        type: string
+        required: false
+      instagram_config_id:
+        description: Exact reviewed Instagram Unified Login configuration
         type: string
         required: false
       confirmation:
@@ -42,6 +46,7 @@ jobs:
           ACTION: ${{ inputs.action }}
           REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
           CONFIRMATION: ${{ inputs.confirmation }}
+          META_INSTAGRAM_CONFIG_ID: ${{ inputs.instagram_config_id }}
           META_SETUP_APP_ID: ${{ inputs.app_id }}
           META_SETUP_PREVIOUS_APP_ID: ${{ inputs.expected_previous_app_id }}
           META_SETUP_APP_SECRET: ${{ secrets.FANMIND_STAGING_META_APP_SECRET }}
