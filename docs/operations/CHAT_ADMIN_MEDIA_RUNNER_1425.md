@@ -172,3 +172,31 @@ Playwright/SQL errors remain suppressed. PASS is emitted only after lifecycle,
 cleanup and login-session retirement complete. Local source checks, old Hosted
 Chromium/PG17, the Staging guard READY and actual media E2E must be listed
 separately in Issue1425. A later Production release remains separately protected.
+
+
+## Runner revision correction after43741422477
+
+The existing one-off acceptance failed at the first upload after API folder
+changes left the already mounted UI on an older Character revision. Its cleanup
+and independent inventory comparison passed; the MP4 step was never reached.
+See Issue1425 comment6898540307. The old run did not retain HTTP status/error/
+duration, so409/stale_media_context remains the expected rejection, not a
+recorded response from that run.
+
+Complete create/rename/move operations before loading the media UI. Capture the
+exact Model-library GET that populates the new UI, validate its binding and
+compare its Character revision with the current API library before each upload.
+After PNG, use its successful response library as the next UI revision baseline;
+wait for the upload control to be enabled before checking and clicking again.
+A changed revision blocks rather than modifying the server guard or retrying.
+Folder navigation now expects the final renamed child.
+
+Upload failures emit only CHATADMIN_MEDIA_UPLOAD_FAILURE with numeric HTTP
+status, an allowlisted structured error code and completed HTTP request duration
+in milliseconds. Unknown/malformed/non-JSON/oversized errors become unclassified;
+missing status/duration use0/-1. No request body, response body, headers, URL,
+filename, token or media bytes are emitted. No new acceptance run or deployment
+is authorized by this source correction; the prior one-off write approval is
+consumed. Regular source review/merge and a fresh concrete test approval remain
+separate. Local scope: only the existing media-runner regression file plus
+syntax/lint; required GitHub checks belong to the new source head.

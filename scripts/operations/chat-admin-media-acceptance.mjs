@@ -70,17 +70,48 @@ async function cleanup(actor,b,e,db,receipt){
  await expect.poll(async()=>preserved(await library(actor,b),b),{timeout:10000}).toBe(receipt.baseline);
  receipt.cleaned=true;saveMediaRecovery(e,receipt);
 }
+export function assertMediaUploadRevision(loaded,current,b){
+ assertMediaFixture(loaded,b);assertMediaFixture(current,b);
+ if(loaded.character.revision!==current.character.revision)block('upload_revision');
+}
+const uploadErrorCodes=new Set(['stale_media_context','unauthenticated','resource_forbidden','untrusted_origin','invalid_media_body','invalid_media_binding','invalid_media_file','invalid_media_kind','media_rights_required','media_library_limit','media_folder_binding_invalid','media_video_not_enabled','media_catalogue_not_enabled','media_not_enabled','invalid_video','invalid_video_size','invalid_image','invalid_image_size','media_processing_busy','rate_limited','media_store_unavailable','media_object_unavailable','media_catalogue_unavailable','media_upload_incomplete','media_cleanup_unverified']);
+export async function mediaUploadFailureDiagnostic(response){
+ const result={status:0,error:'unclassified',duration_ms:-1};
+ if(!response)return result;
+ try{
+  const status=response.status();if(Number.isInteger(status)&&status>=100&&status<=599)result.status=status;
+  await response.finished();
+  const duration=response.request().timing().responseEnd;
+  if(Number.isFinite(duration)&&duration>=0&&duration<=600000)result.duration_ms=Math.ceil(duration);
+  const headers=response.headers();if(headers['content-type']?.split(';')[0].trim()!=='application/json')return result;
+  if(headers['content-length']!==undefined&&(!/^\d+$/u.test(headers['content-length'])||Number(headers['content-length'])>1024))return result;
+  const bytes=await response.body();if(bytes.length>1024)return result;
+  const body=JSON.parse(bytes.toString('utf8'));
+  if(body&&typeof body==='object'&&!Array.isArray(body)&&uploadErrorCodes.has(body.error))result.error=body.error;
+ }catch{/* Never emit raw response, request, header or transport diagnostics. */}
+ return result;
+}
 async function exercise(owner,foreign,b,e,db,receipt){
  const {expect}=await import('@playwright/test');const page=owner.page;
  let l=await library(owner,b);if(preserved(l,b)!==receipt.baseline||db.storage()!==receipt.storage)block('prewrite_drift');assertMediaWriteApproval(e);
  const [parent,videoFolder,child]=receipt.folderIds;
  for(const [id,name,kind,parent_id] of [[parent,`${b.marker}-images`,'image',null],[videoFolder,`${b.marker}-videos`,'video',null],[child,`${b.marker}-child`,'image',parent]])await catalogue(owner,b,{action:'save_folder',folder:{id,name,kind,parent_id,revision:0},price:null});
- await page.goto('/chatadmin');await page.getByRole('button',{name:`${MEDIA_ACCEPTANCE_MODEL} Aktiv`,exact:true}).click();await page.getByRole('button',{name:'Model-Einstellungen',exact:true}).click();await page.getByRole('button',{name:'Medien & Preise',exact:true}).click();
- await page.getByRole('button',{name:`${b.marker}-images öffnen`,exact:true}).click();await expect(page.getByRole('heading',{name:`Ordnerinhalt: ${b.marker}-images`,exact:true})).toBeVisible();await page.getByRole('navigation',{name:'Unterordner',exact:true}).getByRole('button',{name:`📁 ${b.marker}-child öffnen`,exact:true}).click();await expect(page.getByRole('heading',{name:`Ordnerinhalt: ${b.marker}-child`,exact:true})).toBeVisible();await page.getByRole('button',{name:'Eine Ebene zurück',exact:true}).click();
  l=await library(owner,b);let folder=l.folders.find(f=>f.id===child);await catalogue(owner,b,{action:'save_folder',folder:{...folder,name:`${b.marker}-renamed`,parent_id:null},price:null});l=await library(owner,b);folder=l.folders.find(f=>f.id===child);if(folder.name!==`${b.marker}-renamed`||folder.parent_id!==null)block('rename_move');await catalogue(owner,b,{action:'save_folder',folder:{...folder,parent_id:parent},price:null});
+ await page.goto('/chatadmin');await page.getByRole('button',{name:`${MEDIA_ACCEPTANCE_MODEL} Aktiv`,exact:true}).click();await page.getByRole('button',{name:'Model-Einstellungen',exact:true}).click();
+ const [loadedResponse]=await Promise.all([
+  page.waitForResponse(r=>{const u=new URL(r.url());return u.origin===APP&&u.pathname==='/api/chatadmin/media'&&u.searchParams.get('character_id')===b.ids.MEDIA_CHARACTER_ID&&!u.searchParams.has('id')&&r.request().method()==='GET';},{timeout:15000}),
+  page.getByRole('button',{name:'Medien & Preise',exact:true}).click(),
+ ]);
+ if(loadedResponse.status()!==200)block('upload_library');let uiLibrary=await loadedResponse.json();assertMediaUploadRevision(uiLibrary,await library(owner,b),b);
+ await page.getByRole('button',{name:`${b.marker}-images öffnen`,exact:true}).click();await expect(page.getByRole('heading',{name:`Ordnerinhalt: ${b.marker}-images`,exact:true})).toBeVisible();await page.getByRole('navigation',{name:'Unterordner',exact:true}).getByRole('button',{name:`📁 ${b.marker}-renamed öffnen`,exact:true}).click();await expect(page.getByRole('heading',{name:`Ordnerinhalt: ${b.marker}-renamed`,exact:true})).toBeVisible();await page.getByRole('button',{name:'Eine Ebene zurück',exact:true}).click();
  for(const [ext,kind,folderId] of [['png','image',child],['mp4','video',videoFolder]]){
   const upload=page.getByRole('group',{name:'Medien hochladen',exact:true});await upload.getByRole('combobox',{name:'Medientyp',exact:true}).selectOption(kind);await upload.getByRole('combobox',{name:'Zielordner',exact:true}).selectOption(folderId);await upload.locator('input[type="file"]').setInputFiles({name:`${b.marker}.${ext}`,mimeType:kind==='image'?'image/png':'video/mp4',buffer:fixture(ext)});await upload.getByRole('checkbox').check();
-  const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/chatadmin/media/catalogue'&&r.request().method()==='POST',{timeout:45000});await upload.getByRole('button',{name:'Hochladen',exact:true}).click();if((await response).status()!==200)block('upload');
+  const uploadButton=upload.getByRole('button',{name:'Hochladen',exact:true});await expect(uploadButton).toBeEnabled();assertMediaUploadRevision(uiLibrary,await library(owner,b),b);
+  let response;
+  try{[response]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).origin===APP&&new URL(r.url()).pathname==='/api/chatadmin/media/catalogue'&&r.request().method()==='POST',{timeout:45000}),uploadButton.click()]);}
+  catch{console.error(`CHATADMIN_MEDIA_UPLOAD_FAILURE=${JSON.stringify(await mediaUploadFailureDiagnostic())}`);block('upload');}
+  if(response.status()!==200){console.error(`CHATADMIN_MEDIA_UPLOAD_FAILURE=${JSON.stringify(await mediaUploadFailureDiagnostic(response))}`);block('upload');}
+  uiLibrary=await response.json();assertMediaFixture(uiLibrary,b);
   l=await library(owner,b);const a=singleMediaUpload(l,b,ext,kind,folderId);receipt.assetIds.push(a.id);saveMediaRecovery(e,receipt);db.present(a);await denied(foreign,b,a);const anonymous=await owner.context.browser().newContext({baseURL:APP,serviceWorkers:'block'});try{const deniedPreview=await anonymous.request.get(`${APP}/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`,{maxRedirects:0,timeout:15000});if(![401,403].includes(deniedPreview.status()))block('anonymous_preview');}finally{await anonymous.close();}
   const preview=await appRequest(owner,b,`/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`);if(preview.status()!==200||preview.headers()['content-type']!==(kind==='image'?'image/webp':'video/mp4')||!preview.headers()['cache-control']?.includes('private')||(await preview.body()).length===0)block('private_preview');
  }

@@ -46,3 +46,19 @@ Actual media lifecycle remains NOT TESTED pending regular review/merge,
 coordinated protected rollout, credential/flag/variable verification, media-probe
 and separate acceptance approval. Existing Staging test-data mutation: none
 required; any later unexpected prerequisite remains a separate protected step.
+
+
+## Run43741422477 revision correction — source-only
+
+Task FM-1425-MEDIA-RUNNER-REVISION / step review-pr / revision1. Current explicit
+Owner assignment: only the proven stale-UI-revision runner defect and redacted
+upload failure diagnostics; baseline Mainf4983079. No parallel matching PR found.
+Same storage/disclosure contracts and gates. Complete API folder changes before
+UI load; compare loaded/current Character revisions before PNG and MP4. Keep
+server revision checks, identities, targets, receipts, cleanup and prices intact.
+Local tests restricted to affected runner cases and lint/syntax. Required remote
+CI is distinct from actual Staging acceptance. No deploy/dispatch, media test,
+SQL/Storagewrite, Production action or new functionality. Prior acceptance
+approval consumed; corrected source needs concrete Owner merge decision and any
+later actual test needs separate authorization. Existing Adminchat session owns
+that continuation; results are handed back through Issue1425.
