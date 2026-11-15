@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {readFileSync,writeFileSync,renameSync,existsSync,rmSync,openSync,closeSync,fstatSync,constants} from 'node:fs';
+import {readFileSync,writeFileSync,renameSync,rmSync,openSync,closeSync,fstatSync,constants} from 'node:fs';
 import {join,isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {spawnSync} from 'node:child_process';
@@ -15,10 +15,10 @@ function fixture(ext){const bytes=readFileSync(`tests/fixtures/chat-admin-media/
 function receiptPath(e){if(!isAbsolute(e.RUNNER_TEMP??''))block('receipt_path');return join(e.RUNNER_TEMP,'fanmind-chatadmin-media-recovery.json');}
 export function saveMediaRecovery(e,value){const p=receiptPath(e),tmp=`${p}.tmp`;writeFileSync(tmp,JSON.stringify(value),{mode:0o600,flag:'wx'});renameSync(tmp,p);}
 export function loadMediaRecovery(e,b){
- const p=receiptPath(e);if(!existsSync(p))block('receipt_missing');
+ const p=receiptPath(e);
  let fd;let r;
  try{fd=openSync(p,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);const stat=fstatSync(fd);if(!stat.isFile()||stat.nlink!==1||(stat.mode&0o777)!==0o600||stat.uid!==process.getuid()||stat.size>16384)block('receipt_file');r=JSON.parse(readFileSync(fd,'utf8'));}
- catch(error){if(error?.code==='ELOOP')block('receipt_file');throw error;}finally{if(fd!==undefined)closeSync(fd);}
+ catch(error){if(error?.code==='ENOENT')block('receipt_missing');if(error?.code==='ELOOP')block('receipt_file');throw error;}finally{if(fd!==undefined)closeSync(fd);}
  if(!r||digest(r.binding)!==digest(b)||r.source!==sourceHash()||!Array.isArray(r.offerIds)||r.offerIds.length>5||new Set(r.offerIds).size!==r.offerIds.length||r.offerIds.some(id=>!/^media_[a-f0-9]{32}$/u.test(id))||!Array.isArray(r.assetIds)||r.assetIds.length>2||r.assetIds.some(id=>!/^[a-f0-9-]{36}$/u.test(id))||!Array.isArray(r.folderIds)||r.folderIds.length!==3||new Set(r.folderIds).size!==3||r.folderIds.some(id=>!/^[a-f0-9-]{36}$/u.test(id))||!/^[a-f0-9]{64}$/u.test(r.baseline??'')||!/^\d+:[a-f0-9]{32}$/u.test(r.storage??''))block('receipt_binding');return r;
 }
 

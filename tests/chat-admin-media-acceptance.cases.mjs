@@ -48,6 +48,7 @@ test('preservation baseline detects changed existing prices and unrelated rows w
 test('recovery reader rejects stale runs, changed source, symlinks and insecure files before cleanup',()=>{
  const dir=mkdtempSync(join(tmpdir(),'fm-media-receipt-test-'));try{
   const e={...env,RUNNER_TEMP:dir},file=join(dir,'fanmind-chatadmin-media-recovery.json');
+  assert.throws(()=>loadMediaRecovery(e,b),/receipt_missing/);
   const source=['scripts/operations/chat-admin-media-acceptance.mjs','scripts/operations/chat-admin-media-acceptance-policy.mjs','.github/workflows/chat-admin-manual-flow-staging.yml'];
   // A foreign-source receipt must fail even with a matching target and run.
   const receipt={binding:b,source:'0'.repeat(64),baseline:'a'.repeat(64),storage:`0:${'a'.repeat(32)}`,folderIds:ids.slice(0,3),assetIds:[],offerIds:[]};
