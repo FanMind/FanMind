@@ -1,5 +1,54 @@
 # Support #1350: reviewed backup authorization contract
 
+## Current-host inspection prerequisite — source preparation, 15 November 2026
+
+The existing protected bootstrap workflow's `inspect` action is adapted to the
+actual application `bb799466d2c235195fedcb4d80568f9f0bd56969` and the exact
+authorization module from merged PR1515, source
+`6bc209851b4a54609747099ec34264318dc7f4c4`, SHA256
+`2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441`.
+Its immutable contract still validates all reviewed definitions and privileges,
+not merely the 39/29 counts. The historical `bootstrap`, install and rollback
+bindings and their pinned three-file bundles remain unchanged; a current
+inspection request cannot authorize them.
+
+This is the existing main-/Owner-/protected-environment-bound workflow, runner
+and frozen-byte sudo launcher. It creates no new access, runner, service or
+infrastructure. Main is checked before and after the environment-review wait.
+The existing approval variable must bind the actual reviewed Main, action
+`inspect`, source `6bc209851b4a54609747099ec34264318dc7f4c4`, application above
+and `admin-bypass-disabled`. No approval variable is set by this source PR.
+The current independent environment/host-capability checks remain necessary.
+
+Inspection measures the installed three worker files, exact unit and process
+identity, release.env, optional controller/authorization/bootstrap-receipt
+hashes, bounded existing rollback directories and snapshot hashes, four timer
+states/schedule hashes, existing installation-lock identity and kernel-held
+state, and counts of the five fixed backup/restore tools. It does not read
+arbitrary process arguments, emit configuration contents, inspect private
+media, execute measured installed code, create a receipt or acquire/create a
+host lock. As in the old inspect path, database verification temporarily freezes
+the existing passfile/CA into a private `/run` directory and removes only those
+new temporary copies. It never provisions credentials.
+
+The worker source version is a disk observation, not proof of an in-memory
+import version. Tool-process counts are bounded diagnostics, not an exhaustive
+deployment detector. Host/queue/lock/timer observations are point-in-time facts,
+not a maintenance lock, a safe future installation or an automatic restart
+approval. Before/after unit, release, process and worker hashes must match;
+unsafe paths/permissions or an inconsistent observation block. Unknown timer
+formats fail closed. A failed database/queue verification may retain redacted
+host evidence with `databaseContractVerified=false`, but the job exits nonzero;
+it never hides the failure or grants installation authority.
+
+Actual Production execution is **NOT TESTED** until this source is separately
+reviewed, all final-head checks pass, a regular merge is approved, and the
+existing protected inspection is authorized. No Production installation,
+worker restart, backup, IAM, database apply or Restore is part of this change.
+Only after genuine host evidence can the smallest installation/rollback PR and
+the exact Production-installation approval be completed. No invented old
+hashes or promise of an already available root capability is permitted.
+
 ## Scope and evidence boundary
 
 Source-only correction from Main `63e8b0d656c4d0f14eaaa500a16cac65116380ee`. PR #1500 is the unrelated Creator-balance Draft and is untouched. No worker installation, backup execution, database apply, Restore, IAM change, boot or runner registration is authorized by this change. Existing archive formats, encryption, retention, storage/config backup implementation and release implementation are unchanged.
