@@ -69,5 +69,11 @@ export function singleMediaUpload(l,b,ext,kind,folderId){
  return assets[0];
 }
 export async function mediaExerciseWithCleanup(exercise,cleanup){
- try{await exercise();}finally{await cleanup();}
+ let exerciseError,exerciseFailed=false;
+ try{await exercise();}catch(error){exerciseFailed=true;exerciseError=error;}
+ try{await cleanup();}catch(cleanupError){
+  if(exerciseFailed)throw new AggregateError([exerciseError,cleanupError],'MEDIA_ACCEPTANCE_BLOCKED=exercise_and_cleanup');
+  throw cleanupError;
+ }
+ if(exerciseFailed)throw exerciseError;
 }
