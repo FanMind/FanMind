@@ -12,7 +12,7 @@ const objectPath = `${workspace}/${character}/${asset}.webp`;
 const bucketUrl = "https://storage.invalid/storage/v1/object/chat-character-media";
 const probeUrl = `https://storage.invalid/storage/v1/object/authenticated/chat-character-media/${objectPath}`;
 
-function storageHarness({ deletion = [{ name: objectPath }], status = 404, probeError = false, malformed = false, probeBody={statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"} } = {}) {
+function storageHarness({ deletion = [{ name: objectPath }], status = 404, probeError = false, malformed = false, revoked=false,metadataMissing=false,probeBody={statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"} } = {}) {
   const calls = [];
   let cancelled = false;
   class MediaError extends Error { constructor(code) { super(code); this.code = code; } }
@@ -27,6 +27,8 @@ function storageHarness({ deletion = [{ name: objectPath }], status = 404, probe
     cookies: async () => ({ get: () => ({ value: "synthetic-owner-jwt" }) }),
     SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic-session",
     getSupabaseHeaders: token => ({ apikey: "synthetic-public-key", Authorization: `Bearer ${token}` }),
+    getSupabaseRestUrl: path => `https://rest.invalid/${path}`,
+    getChatCharacter: async () => {if(revoked)throw new MediaError('resource_forbidden');return {id:character,workspace_id:workspace,status:'active'};},
     requireSupabasePublicConfig: () => ({ url: "https://storage.invalid" }),
     ChatAdminMediaError: MediaError,
     WorkspaceAuthorizationError: MediaError,
@@ -37,14 +39,15 @@ function storageHarness({ deletion = [{ name: objectPath }], status = 404, probe
     mediaId: value => value,
     fetch: async (url, init) => {
       calls.push({ url, init });
+      if(url.startsWith('https://rest.invalid/'))return Response.json(metadataMissing&&init.method==='DELETE'?[]:[{id:asset,workspace_id:workspace,character_id:character,revision:2}]);
       if (init.method === "DELETE") return malformed ? new Response("not-json") : Response.json(deletion);
       if (probeError) throw new Error("synthetic_transport_failure");
       const response=Response.json(probeBody,{status}),reader=response.body.getReader();
       return {status,headers:response.headers,body:{getReader:()=>({read:()=>reader.read(),cancel:async()=>{cancelled=true;await reader.cancel();}})}};
     },
   };
-  runInNewContext(`${code}\nglobalThis.mediaObjectUnderTest = mediaObject;`, context);
-  return { calls, cancelled: () => cancelled, remove: () => context.mediaObjectUnderTest(workspace, character, asset, "DELETE") };
+  runInNewContext(`${code}\nglobalThis.mediaObjectUnderTest = mediaObject;globalThis.cleanupUnderTest = cleanupFailedMediaUpload;`, context);
+  return { calls, cancelled: () => cancelled, cleanup: () => context.cleanupUnderTest(workspace,character,{id:asset,workspace_id:workspace,character_id:character,revision:1,media_type:'image'}), remove: () => context.mediaObjectUnderTest(workspace, character, asset, "DELETE") };
 }
 
 test("Storage deletion acknowledgment and retry both require the same authenticated absence probe", async () => {
@@ -109,4 +112,20 @@ test("Storage deletion rejects ambiguous response identities before probing", as
   const h = storageHarness({ malformed: true });
   await assert.rejects(h.remove(), SyntaxError);
   assert.equal(h.calls.length, 1);
+});
+
+test('failed upload cleanup tombstones first, verifies physical absence, reauthorizes and removes only the exact tombstone revision',async()=>{
+ const h=storageHarness();await h.cleanup();
+ assert.equal(h.calls.length,4);
+ assert.equal(h.calls[0].init.method,'PATCH');
+ assert.deepEqual(JSON.parse(h.calls[0].init.body),{deleted:true,available:false,reviewed:false});
+ assert.equal(h.calls[1].url,bucketUrl);assert.equal(h.calls[2].url,probeUrl);
+ assert.equal(h.calls[3].init.method,'DELETE');
+ assert.match(h.calls[3].url,/workspace_id=eq\./);assert.match(h.calls[3].url,/character_id=eq\./);
+ assert.match(h.calls[3].url,/revision=eq\.2&deleted=eq\.true/);
+ for(const opts of [{status:200,probeBody:{}},{probeError:true},{revoked:true}]){
+  const h=storageHarness(opts);await assert.rejects(h.cleanup());
+  assert.ok(!h.calls.some(x=>x.url.startsWith('https://rest.invalid/')&&x.init.method==='DELETE'),'uncertain absence or revoked authority must retain the tracked tombstone');
+ }
+ await assert.rejects(storageHarness({metadataMissing:true}).cleanup(),/media_cleanup_unverified/);
 });

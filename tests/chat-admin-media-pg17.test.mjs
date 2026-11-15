@@ -1,3 +1,4 @@
+import {runStorageFinalizationSqlCases} from './chat-admin-media-storage-finalization-sql.cases.mjs';
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
@@ -54,6 +55,7 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
    }
   });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query),async()=>{
    await runMediaSchemaNativeCases(async query=>sql(query),'extended');
+   await runStorageFinalizationSqlCases(async query=>sql(query));
    await proveMediaRetentionIndependence(async query=>sql(query),supportCatalogue);
   });}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}

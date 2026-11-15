@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
-import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaPricingV2Enabled, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
+import { assertMediaCharacter, cleanupFailedMediaUpload, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaPricingV2Enabled, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
 import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText } from "@/lib/chatAdminMediaPolicy.mjs";
 import { MEDIA_VIDEO_MAX_BYTES, mediaKind, mediaPriceRules, normalizeMediaFolder, validateMediaFolders, withMediaPrice, withMediaProductPrice } from "@/lib/chatAdminMediaCatalogue.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
@@ -48,7 +48,7 @@ async function change(request:NextRequest,upload:boolean){
    const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),workspace_id:workspace.id,character_id:characterId,media_type:kind,folder_id:folderId,original_filename:mediaText(body.original_name??"",255),byte_size:normalized.bytes.length,duration_ms:normalized.duration_ms})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
    try{await mediaObject(workspace.id,characterId,rows[0].id,"POST",normalized.bytes,kind);await mediaObject(workspace.id,characterId,rows[0].id,"PROBE",undefined,kind);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
-   catch{await updateMediaAsset(workspace.id,characterId,rows[0],{deleted:true,available:false,reviewed:false});throw new ChatAdminMediaError("media_upload_incomplete");}
+   catch{try{await cleanupFailedMediaUpload(workspace.id,characterId,rows[0]);}catch{throw new ChatAdminMediaError("media_cleanup_unverified");}throw new ChatAdminMediaError("media_upload_incomplete");}
   }else{
    let payload:Record<string,unknown>,playbook=character.sales_playbook;
    if(body.action==="save_product_price"){
