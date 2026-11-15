@@ -5,7 +5,7 @@ import {readFileSync,mkdtempSync,rmSync,symlinkSync,writeFileSync,chmodSync} fro
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {mediaAcceptanceBinding,assertMediaWriteApproval,assertMediaFixture,MEDIA_ACCEPTANCE_MODEL,mediaRequestAllowed,ownsMediaResource,originalState,digest,MEDIA_ACCEPTANCE_CHARACTER_ID,mediaOwnerMappingSql,assertMediaStoragePresent,singleMediaUpload,mediaExerciseWithCleanup} from '../scripts/operations/chat-admin-media-acceptance-policy.mjs';
-import {saveMediaRecovery,loadMediaRecovery} from '../scripts/operations/chat-admin-media-acceptance.mjs';
+import {saveMediaRecovery,loadMediaRecovery,assertMediaUploadRevision,mediaUploadFailureDiagnostic} from '../scripts/operations/chat-admin-media-acceptance.mjs';
 import {OPERATOR_USER,OPERATOR_WORKSPACE} from '../src/lib/stagingOperatorIdentity.mjs';
 const ids=Array.from({length:6},(_,i)=>`${i+1}0000000-1111-4111-8111-111111111111`);
 ids[0]=MEDIA_ACCEPTANCE_CHARACTER_ID;ids[1]=OPERATOR_WORKSPACE;ids[3]=OPERATOR_USER;
@@ -91,4 +91,35 @@ test('failed completion always cleans up and neither exercise nor cleanup failur
   if(exerciseFails||cleanupFails)await assert.rejects(run);else await run;
   assert.deepEqual(calls,['exercise','cleanup']);
  }
+});
+
+test('upload uses the post-folder UI revision and blocks a stale or foreign library before upload',()=>{
+ const current=structuredClone(original);current.character.revision+=4;
+ assert.throws(()=>assertMediaUploadRevision(original,current,b),/upload_revision/);
+ assert.doesNotThrow(()=>assertMediaUploadRevision(current,current,b));
+ assert.throws(()=>assertMediaUploadRevision({...current,character:{...current.character,workspace_id:ids[2]}},current,b),/model_or_flags/);
+ const afterPng=structuredClone(current);afterPng.character.revision++;
+ assert.throws(()=>assertMediaUploadRevision(current,afterPng,b),/upload_revision/);
+ assert.doesNotThrow(()=>assertMediaUploadRevision(afterPng,afterPng,b));
+ const source=readFileSync('scripts/operations/chat-admin-media-acceptance.mjs','utf8');
+ const exercise=source.slice(source.indexOf('async function exercise('),source.indexOf('export async function runMediaAcceptance('));
+ const finalMove=exercise.indexOf("folder:{...folder,parent_id:parent}");
+ assert.ok(finalMove>0&&finalMove<exercise.indexOf("await page.goto('/chatadmin')"),'all API folder changes must precede UI loading');
+ const beforeUpload=exercise.indexOf('assertMediaUploadRevision(uiLibrary,await library(owner,b),b);',exercise.indexOf('for(const [ext,kind,folderId]'));
+ assert.ok(beforeUpload>=0&&beforeUpload<exercise.indexOf('uploadButton.click()'));
+ assert.ok(exercise.includes('📁 ${b.marker}-renamed öffnen'));
+ assert.ok(exercise.includes('Ordnerinhalt: ${b.marker}-renamed'));
+ assert.match(exercise,/uiLibrary=await response.json\(\)/);
+});
+test('upload failure diagnostic emits only bounded status, allowlisted error and request duration',async()=>{
+ const response=(body,headers={'content-type':'application/json'},duration=12.3)=>({status:()=>409,finished:async()=>null,request:()=>({timing:()=>({responseEnd:duration})}),headers:()=>headers,body:async()=>Buffer.from(body)});
+ assert.deepEqual(await mediaUploadFailureDiagnostic(response('{"error":"stale_media_context","token":"PRIVATE","payload":"PRIVATE"}')),{status:409,error:'stale_media_context',duration_ms:13});
+ for(const body of ['{"error":"PRIVATE\\nTOKEN"}','<html>PRIVATE</html>','{"error":"stale_media_context","padding":"'+ 'PRIVATE'.repeat(200)+'"}']){
+  const value=await mediaUploadFailureDiagnostic(response(body));assert.deepEqual(value,{status:409,error:'unclassified',duration_ms:13});assert.ok(!JSON.stringify(value).includes('PRIVATE'));
+ }
+ assert.deepEqual(await mediaUploadFailureDiagnostic(response('{"error":"stale_media_context"}',{'content-type':'text/html'})),{status:409,error:'unclassified',duration_ms:13});
+ assert.deepEqual(await mediaUploadFailureDiagnostic(response('{"error":"stale_media_context"}',{'content-type':'application/json','content-length':'999999'})),{status:409,error:'unclassified',duration_ms:13});
+ assert.equal((await mediaUploadFailureDiagnostic(response('{}',{'content-type':'application/json'},-1))).duration_ms,-1);
+ assert.deepEqual(await mediaUploadFailureDiagnostic(),{status:0,error:'unclassified',duration_ms:-1});
+ const broken=response('{}');broken.finished=async()=>{throw Error('PRIVATE_TOKEN');};assert.deepEqual(await mediaUploadFailureDiagnostic(broken),{status:409,error:'unclassified',duration_ms:-1});
 });
