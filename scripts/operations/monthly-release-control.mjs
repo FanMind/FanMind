@@ -49,6 +49,11 @@ export function extractProductionBody(text) {
 }
 
 export const SQL_PROOFS = Object.freeze({
+  'supabase/controlled/ai_capacity_entitlement_writer.sql': { sqlSha256: '536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'capacity_writer' },
+  'supabase/controlled/chat_admin_media_catalogue.sql': { sqlSha256: '47220fcf870d70ac6fa9c64c8305c4b9170df374fe0610293d14d274c09a150e', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'media_catalogue' },
+  'supabase/controlled/chat_admin_media_prices.sql': { sqlSha256: '9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'media_prices' },
+  'supabase/controlled/support_ai_consent.sql': { sqlSha256: 'cd610fc3775b5d6e9f074b6f8af0125effd5bc360367bf992e5809b45c0f8e61', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'support_consent' },
+  'supabase/controlled/chat_admin_media_storage_finalization.sql': { sqlSha256: 'd021366a66d968d3ddeeb594a67ded277e723a0bd9759a439e4f8fb5ae3f8218', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'media_storage' },
   'supabase/migrations/20260718173000_enable_safe_backup_verification.sql': { sqlSha256: '8eed56adadef5c5a9a6075ead6a956d8414b8c592fe583ce8cdb6a4ab00e0cfa', workflow: '.github/workflows/backup-verification-production-migration.yml', prefix: 'BACKUP_VERIFICATION_MIGRATION' },
   'supabase/migrations/20260718190000_operations_monitor_components.sql': { sqlSha256: '7470587f067152bbf40679572bd7f34e0e7fef281e71ca771da151abad402a06', workflow: '.github/workflows/operations-monitor-production-migration.yml', prefix: 'OPERATIONS_MONITOR_MIGRATION' },
   'supabase/migrations/20260718203000_privacy_server_error_tracking.sql': { sqlSha256: 'de48786613b33bc7d592d018c365cff5ca1417f18176e47c964d9d6a796f3cef', workflow: '.github/workflows/server-error-production-control.yml', prefix: 'SERVER_ERROR_MIGRATION' },
@@ -60,7 +65,10 @@ export function validateSqlReceipt(receipt, item, a, now = Date.now()) {
   assert(adapter && item.controller === adapter.workflow && item.sha256 === adapter.sqlSha256, 'sql_adapter_required');
   assert(receipt?.target === 'production' && receipt.candidate === a.source.candidate && receipt.base === a.source.base
     && receipt.path === item.path && receipt.sqlSha256 === item.sha256 && receipt.action === 'verify' && receipt.result === 'PASS'
-    && Number.isSafeInteger(receipt.runId) && Number.isSafeInteger(receipt.jobId) && Number.isSafeInteger(receipt.runAttempt), 'sql_receipt_binding');
+    && Number.isSafeInteger(receipt.runId) && receipt.runId > 0 && Number.isSafeInteger(receipt.jobId) && receipt.jobId > 0 && Number.isSafeInteger(receipt.runAttempt) && receipt.runAttempt > 0, 'sql_receipt_binding');
+  if (adapter.evidenceVersion === 2) assert(receipt.version === 2 && receipt.state === 'EXACT'
+    && receipt.project === 'drqkpdvtbbrrdwmtrodz' && receipt.sourceTree === a.source.tree
+    && SHA.test(receipt.sourceTree ?? ''), 'sql_state_not_exact');
   assert(now >= Date.parse(receipt.verifiedAt) && now - Date.parse(receipt.verifiedAt) <= 900000, 'sql_receipt_expired');
 }
 
@@ -71,11 +79,32 @@ export async function verifySqlProvenance(a, receipts, get, getLog) {
     const adapter = SQL_PROOFS[item.path], run = await get(`actions/runs/${receipt.runId}`);
     assert(run.repository?.full_name === 'FanMind/FanMind' && run.head_sha === a.source.candidate && run.path === adapter.workflow
       && run.status === 'completed' && run.conclusion === 'success' && run.run_attempt === receipt.runAttempt, 'sql_run_binding');
+    if (adapter.evidenceVersion === 2) assert(run.event === 'workflow_dispatch' && run.head_branch === 'main'
+      && String(run.actor?.id) === '270165082', 'sql_controller_authority');
     const jobs = await get(`actions/runs/${receipt.runId}/attempts/${receipt.runAttempt}/jobs?per_page=100`);
     assert(jobs.total_count <= 100 && jobs.jobs?.length === jobs.total_count, 'sql_jobs_incomplete');
     const job = jobs.jobs.find(j => j.id === receipt.jobId);
     assert(job?.conclusion === 'success' && Date.parse(job.completed_at) === Date.parse(receipt.verifiedAt), 'sql_job_binding');
+    if (adapter.evidenceVersion === 2) assert(job.name === 'Verify one installed SQL state (read only)'
+      && job.steps?.some(s => s.name === 'Collect exact Production SQL state without writes' && s.conclusion === 'success')
+      && Date.parse(job.started_at) <= Date.parse(job.completed_at), 'sql_verifier_step');
     const log = await getLog(receipt.jobId);
+    if (adapter.evidenceVersion === 2) {
+      const expected = { ADAPTER: adapter.id, PATH: item.path, SHA256: item.sha256, TARGET: 'production',
+        PROJECT: receipt.project, BASE: a.source.base, CANDIDATE: a.source.candidate, TREE: a.source.tree,
+        ACTION: 'verify', STATE: 'EXACT', RESULT: 'verified' };
+      const values = new Map();
+      for (const line of log.split(/\r?\n/u)) {
+        const m = line.match(/^(\d{4}-\d\d-\d\dT[0-9:.]+Z) MONTHLY_SQL_([A-Z0-9_]+)=([a-zA-Z0-9_./-]+)$/u);
+        if (!m) continue;
+        assert(Date.parse(m[1]) >= Date.parse(job.started_at) && Date.parse(m[1]) < Date.parse(job.completed_at) + 1000
+          && Date.parse(m[1]) <= Date.now() && Date.now() - Date.parse(m[1]) <= 900000, 'sql_log_time');
+        assert(!values.has(m[2]), 'sql_log_duplicate'); values.set(m[2], m[3]);
+      }
+      assert(values.size === Object.keys(expected).length
+        && Object.entries(expected).every(([key, value]) => values.get(key) === value), 'sql_postflight_not_verified');
+      continue;
+    }
     // Only actual timestamped output, never echoed shell source/ANSI groups.
     const lines = log.split(/\r?\n/u).map(line => line.match(/^\d{4}-\d\d-\d\dT[0-9:.]+Z ([_A-Z]+=[a-z_]+)$/u)?.[1]).filter(Boolean);
     assert(lines.includes(`${adapter.prefix}_ACTION=verify`) && lines.includes(`${adapter.prefix}_RESULT=verified`), 'sql_postflight_not_verified');

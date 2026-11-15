@@ -255,3 +255,85 @@ Restore1350 bewahrt den akzeptierten DB_POSTCHECKED-Stand; Gesamtstatus PARTIAL.
 Readiness43638416183 wartet bereits auf seinen Host-Schritt. Diese Arbeit
 konsumiert dessen Ergebnisse und startet weder einen zweiten Lauf noch einen
 Restore, ein Backup oder Änderungen an realen Restore-Daten.
+
+## Five controlled SQL evidence adapters — 15 November 2026
+
+Source-only extension of the existing monthly controller. No schema apply,
+Root-verifier installation or Production rollout is performed by this change.
+The four earlier Production adapters keep their existing strict semantics.
+
+| SQL | Required installed state | Reused source contract |
+| --- | --- | --- |
+| `ai_capacity_entitlement_writer.sql` | Entire installed Capacity catalogue EXACT | `sourcePackage`, installed-reference and complete catalogue collector; writer alone never suffices |
+| `chat_admin_media_catalogue.sql` | Exact extended catalogue, including only the two pinned guard bodies | media source profile/classifier; initial, extended_legacy and drift reject |
+| `chat_admin_media_prices.sql` | Exact extended media prerequisite and full price postflight/structure | source-pinned function body/ACL/RLS checker plus strict columns, constraints, indexes, schema objects and grant-option checks |
+| `support_ai_consent.sql` | Full source-reference EXACT | existing consent + base Support catalogue/classifier, role boundary, confirmed allowlisted Owner and disabled activation; ABSENT/DRIFT reject |
+| `chat_admin_media_storage_finalization.sql` | Exact ready post-repair catalogue | existing guard-state query; pending rejects |
+
+Four specialist controllers are Staging-only. Their target guards remain
+unchanged; Staging PASS cannot become Production evidence. The existing
+Production consent controller also has distinct ABSENT/SKIP semantics and is
+not silently treated as generic `RESULT=verified`.
+
+The new `monthly-release-sql-verify.yml` is only a bounded read-only evidence
+producer for these five registered paths. It has no apply action, arbitrary SQL
+input, schedule, installation, feature switch or deployment path. It reuses the
+existing Production environment, Owner270165082, Production runner, protected
+backup connection and `fanmind-production-deploy` lock; also takes the existing
+monthly host lock. It snapshots the full exact reviewed Main archive into a
+private temporary directory; source SQL hashes and reviewed references are
+validated there. It never replaces the app checkout. Full source imports must
+stay together, with no files cherry-picked from an open parallel PR.
+
+Inputs: `adapter` (one fixed allowlisted name), `reviewed_commit`,
+`expected_live_commit`, `sql_sha256`, `confirmation=verify-monthly-sql-only`.
+Only invoke after the candidate is merged/reviewed and exact current Main.
+The live base is checked before/after the read; all SQL checks share one
+repeatable-read READ ONLY snapshot, a server read-only default and fixed TLS
+connection with a private passfile snapshot. Only metadata is queried; no RPC
+with mutation, customer content, entitlement/price/consent change or schema
+repair is called. Missing objects/partial states fail without a PASS marker.
+
+For each SQL the private receipt uses version2 and the existing common fields
+`target=production`, `base`, `candidate`, `path`, `sqlSha256`, `action=verify`,
+`result=PASS`, positive `runId/jobId/runAttempt`, `verifiedAt` (actual successful
+job completion). Additional fields are `project=drqkpdvtbbrrdwmtrodz`,
+`sourceTree` (exact package tree), `state=EXACT`. Bind its actual bytes through
+the existing admission generator; never manufacture a receipt from this text.
+The monthly controller independently re-reads the exact completed successful
+Owner/Main/dispatch workflow run/attempt, selected successful collector job and
+step, plus timestamped actual output. It requires one unique matching set of
+adapter/path/hash/target/project/base/candidate/tree/action/state/result lines;
+echoed shell commands, apply results, duplicates, another target/candidate,
+missing data and stale/future evidence reject. TTL remains15minutes. Repeat
+only read-only verification near the release window if it expires.
+
+The fixed Root-evidence closure still has its ten existing modules. It imports
+no specialist collector or mutable Staging module; only the existing monthly
+control validates the pinned receipt. The collector runs solely in the exact
+reviewed archive. No installation is authorized by this source preparation.
+
+### Relationship to Support1350 / PR1515
+
+Reviewed parallel head `4ee6ef40a98d3360c626a9899b60c2ac5d3d1293` changes the
+current Production SECURITY-DEFINER contract and the full-receipt/restore-drill
+verifiers. These three Root-closure files remain untouched by this PR. Do not
+cherry-pick them into an old candidate/package, raise counts or combine old
+Root code with new receipts. After relevant regular merges, bind the final
+combined source tree, full CI/native-PG17 evidence and successor package again.
+The old candidate63e8 is historical, not reapproved. Support owns backup repair,
+final-schema backup compatibility and independent Recovery. Adminchat owns
+actual guarded function installation and real media lifecycle acceptance.
+
+The adapters verify installed schema only. They neither provide missing
+Production apply controllers nor authorize those actions. Database action,
+feature acceptance, backup/restore integrity, protected verifier installation,
+Owner/environment approval and actual release acceptance remain separate.
+
+Recovery: a failed verification writes no database state. Correct the specific
+missing prerequisite through its specialist workflow, then verify the same
+explicit candidate again; a changed Main requires reviewed source rebinding.
+No automatic down migration or generic legacy/empty-parameter fallback exists.
+Native tests extend the existing disposable PG17 specialist fixtures, including
+price structure/ACL drift and read-only attempts. Local PG17 skips are reported
+as skips; mandatory native CI remains the acceptance evidence.

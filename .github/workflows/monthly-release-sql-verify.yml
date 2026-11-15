@@ -1,0 +1,79 @@
+name: FanMind monthly SQL evidence (read only)
+on:
+  workflow_dispatch:
+    inputs:
+      adapter:
+        type: choice
+        options: [capacity_writer, media_catalogue, media_prices, support_consent, media_storage]
+        required: true
+      reviewed_commit:
+        description: Exact reviewed current Main candidate (not an automatic latest-Main selection)
+        type: string
+        required: true
+      expected_live_commit:
+        description: Exact independently observed Production base
+        type: string
+        required: true
+      sql_sha256:
+        description: Exact SQL checksum from the reviewed adapter
+        type: string
+        required: true
+      confirmation:
+        description: verify-monthly-sql-only
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+jobs:
+  verify:
+    name: Verify one installed SQL state (read only)
+    if: github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha && inputs.confirmation == 'verify-monthly-sql-only'
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 5
+    env:
+      REVIEWED: ${{ inputs.reviewed_commit }}
+      EXPECTED_LIVE: ${{ inputs.expected_live_commit }}
+      SQL_SHA: ${{ inputs.sql_sha256 }}
+      SQL_ADAPTER: ${{ inputs.adapter }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Collect exact Production SQL state without writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REVIEWED" =~ ^[a-f0-9]{40}$ && "$EXPECTED_LIVE" =~ ^[a-f0-9]{40}$ && "$SQL_SHA" =~ ^[a-f0-9]{64}$ ]]
+          [[ "$REVIEWED" == "$GITHUB_SHA" && "$CONFIRMATION" == 'verify-monthly-sql-only' ]]
+          case "$SQL_ADAPTER" in capacity_writer|media_catalogue|media_prices|support_consent|media_storage) ;; *) exit 1 ;; esac
+          cd /var/www/fanmind
+          exec 9>.monthly-release.lock
+          flock -n 9
+          case "$(git remote get-url origin)" in
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            *) exit 1 ;;
+          esac
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$REVIEWED" ]]
+          git merge-base --is-ancestor "$EXPECTED_LIVE" "$REVIEWED"
+          TREE="$(git rev-parse "$REVIEWED^{tree}")"
+          [[ "$TREE" =~ ^[a-f0-9]{40}$ ]]
+          ROOT_SOURCE="$(sudo -n mktemp -d /tmp/fanmind-monthly-sql-source.XXXXXXXX)"
+          trap 'sudo -n rm -rf -- "$ROOT_SOURCE"' EXIT
+          # The full reviewed archive keeps imports, pinned references and SQL
+          # together. Nothing is installed and no working checkout is replaced.
+          git archive "$REVIEWED" | sudo -n tar -xf - -C "$ROOT_SOURCE"
+          printf '{"commit":"%s","tree":"%s"}\n' "$REVIEWED" "$TREE" | sudo -n tee "$ROOT_SOURCE/.monthly-reviewed-source" >/dev/null
+          sudo -n chmod 0600 "$ROOT_SOURCE/.monthly-reviewed-source"
+          sudo -n /usr/bin/env -i PATH=/usr/bin:/bin NODE_OPTIONS='' NODE_PATH='' \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_SHA="$GITHUB_SHA" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_ACTOR_ID="$GITHUB_ACTOR_ID" \
+            FANMIND_RUNTIME_ENVIRONMENT=production \
+            MONTHLY_SQL_ACTION=verify MONTHLY_SQL_CONFIRMATION="$CONFIRMATION" \
+            MONTHLY_SQL_CANDIDATE="$REVIEWED" MONTHLY_SQL_BASE="$EXPECTED_LIVE" \
+            MONTHLY_SQL_TREE="$TREE" MONTHLY_SQL_SHA256="$SQL_SHA" MONTHLY_SQL_ADAPTER="$SQL_ADAPTER" \
+            /bin/bash --noprofile --norc -c 'cd "$1"; exec /usr/bin/node --env-file=/var/www/fanmind/.env.production --env-file=/etc/fanmind-backup/worker.env scripts/operations/monthly-release-sql-verify.mjs' \
+            monthly-sql-verify "$ROOT_SOURCE"
+          [[ "$(git ls-remote origin refs/heads/main | cut -f1)" == "$REVIEWED" ]]

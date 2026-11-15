@@ -1,3 +1,4 @@
+import {proveMonthlySqlNative,proveMonthlyPriceDrift} from './monthly-release-sql-native.cases.mjs';
 import {runStorageFinalizationSqlCases} from './chat-admin-media-storage-finalization-sql.cases.mjs';
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -73,6 +74,9 @@ test("native PG17 media prices: immutable audit, scoped quote, transactional rol
  },async()=>{
   await proveMediaRetentionIndependence(query,supportCatalogue);
   await query(readFileSync('supabase/controlled/support_ai_consent.sql','utf8'));
+  await proveMonthlySqlNative(query,'support_consent');
+  await proveMonthlySqlNative(query,'media_prices');
+  await proveMonthlyPriceDrift(query);
   await proveMediaRetentionIndependence(query,supportCatalogue);
  });}
  finally{sql(`drop database if exists ${db} with (force);`,"postgres");}
