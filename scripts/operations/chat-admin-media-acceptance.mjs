@@ -7,8 +7,8 @@ import {createHash,randomUUID} from 'node:crypto';
 import {normalizeChatAdminSalesPlaybook} from '../../src/lib/chatAdminSalesPlaybook.mjs';
 import {privatePassfileSnapshot} from './website-chat-retention-staging-runner.mjs';
 import {storageGuardStateSql} from './chat-admin-media-storage-control.mjs';
-import {MEDIA_ACCEPTANCE_MODEL,MEDIA_ACCEPTANCE_ORIGIN as APP,MEDIA_ACCEPTANCE_REF,mediaAcceptanceBinding,assertMediaWriteApproval,assertMediaFixture,ownsMediaResource,originalState,mediaRequestAllowed,block,digest} from './chat-admin-media-acceptance-policy.mjs';
-const sources=['scripts/operations/chat-admin-media-acceptance.mjs','scripts/operations/chat-admin-media-acceptance-policy.mjs','.github/workflows/chat-admin-manual-flow-staging.yml'];
+import {MEDIA_ACCEPTANCE_MODEL,MEDIA_ACCEPTANCE_ORIGIN as APP,MEDIA_ACCEPTANCE_REF,mediaAcceptanceBinding,assertMediaWriteApproval,assertMediaFixture,ownsMediaResource,originalState,mediaRequestAllowed,block,digest,mediaOwnerMappingSql,assertMediaStoragePresent,singleMediaUpload,mediaExerciseWithCleanup} from './chat-admin-media-acceptance-policy.mjs';
+const sources=['scripts/operations/chat-admin-media-acceptance.mjs','scripts/operations/chat-admin-media-acceptance-policy.mjs','.github/workflows/chat-admin-manual-flow-staging.yml','src/lib/stagingOperatorIdentity.mjs'];
 const sourceHash=()=>createHash('sha256').update(Buffer.concat(sources.map(f=>readFileSync(f)))).digest('hex');
 const fixtureHashes={png:'9422141015adb7dd3fd44443c1bc03f25d7755f6b3f0049f4fa076f20c8da08f',mp4:'68cc1c8984f7388ecd79a54ff7c94869ae305ff9f41158b455a7f12b909287f2'};
 function fixture(ext){const bytes=readFileSync(`tests/fixtures/chat-admin-media/neutral.${ext}`);if(createHash('sha256').update(bytes).digest('hex')!==fixtureHashes[ext])block('fixture_hash');return bytes;}
@@ -26,13 +26,13 @@ function database(e,b){
  if(e.FANMIND_PRODUCTION_DB_HOST!=='db.drqkpdvtbbrrdwmtrodz.supabase.co'||!e.PGHOST||e.PGHOST!==e.FANMIND_TARGET_DB_HOST||e.PGHOST===e.FANMIND_PRODUCTION_DB_HOST||e.PGUSER!==`postgres.${MEDIA_ACCEPTANCE_REF}`||e.PGSSLMODE!=='verify-full'||e.PGPORT!=='5432'||e.PGDATABASE!=='postgres'||!e.PGSSLROOTCERT||!e.PGPASSFILE)block('database_binding');
  const frozen=privatePassfileSnapshot(e);
  const query=sql=>{const p=spawnSync('psql',['--no-password','--no-psqlrc','-Atq','-v','ON_ERROR_STOP=1'],{env:{PATH:'/usr/bin:/bin',LANG:'C',PGHOST:e.PGHOST,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:e.PGUSER,PGSSLMODE:'verify-full',PGSSLROOTCERT:e.PGSSLROOTCERT,PGPASSFILE:frozen.snapshotPath,PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c default_transaction_read_only=on -c statement_timeout=10000'},input:`BEGIN READ ONLY;${sql};ROLLBACK;`,encoding:'utf8',timeout:15000,maxBuffer:65536});if(p.status!==0||p.error)block('database_read');return p.stdout.trim();};
- const c=b.ids.MEDIA_CHARACTER_ID,w=b.ids.STAGING_WORKSPACE_ID,o=b.ids.OWNER_ID;
+ const c=b.ids.MEDIA_CHARACTER_ID,w=b.ids.STAGING_WORKSPACE_ID;
  return {query,close:()=>rmSync(frozen.directory,{force:true,recursive:true}),
   preflight(){if(query(storageGuardStateSql())!=='ready')block('guard_not_ready');
-   if(query(`SELECT count(*) FROM public.chat_characters c JOIN public.workspaces w ON w.id=c.workspace_id JOIN public.workspace_chat_admin_capabilities cap ON cap.workspace_id=w.id JOIN auth.users u ON u.id=w.owner_user_id WHERE c.id='${c}' AND c.workspace_id='${w}' AND c.display_name='${MEDIA_ACCEPTANCE_MODEL}' AND c.status='active' AND w.owner_user_id='${o}' AND w.test_access_flags->>'staging_synthetic_fixture'='true' AND u.raw_user_meta_data->>'fanmind_staging_fixture_version'='1' AND cap.granted_to_user_id=u.id AND cap.chat_admin_multi_character AND NOT EXISTS(SELECT 1 FROM public.account_deletion_requests d WHERE d.user_id=u.id AND d.status='processing')`)!=='1')block('synthetic_owner_model_mapping');
+   if(query(mediaOwnerMappingSql(b))!=='1')block('synthetic_owner_model_mapping');
    if(query(`SELECT count(*) FROM public.workspaces w JOIN auth.users u ON u.id=w.owner_user_id WHERE w.id='${b.ids.SECOND_WORKSPACE_ID}' AND u.id='${b.ids.FOREIGN_OWNER_ID}' AND w.test_access_flags->>'staging_synthetic_fixture'='true' AND u.raw_user_meta_data->>'fanmind_staging_fixture_version'='1'`)!=='1')block('secondary_fixture_mapping');},
   storage(){return query(`SELECT count(*)::text||':'||md5(coalesce(string_agg(name||':'||coalesce(owner_id,''),',' ORDER BY name),'')) FROM storage.objects WHERE bucket_id='chat-character-media' AND name LIKE '${w}/${c}/%'`);},
-  present(asset){const extension=asset.media_type==='video'?'mp4':'webp';if(!ownsMediaResource(asset,b,'asset'))block('storage_scope');if(query(`SELECT count(*) FROM storage.objects WHERE bucket_id='chat-character-media' AND name='${w}/${c}/${asset.id}.${extension}' AND owner_id='${o}'`)!=='1')block('storage_presence');}
+  present(asset){assertMediaStoragePresent(query,b,asset);}
  };
 }
 async function version(request,b){const response=await request.get(`${APP}/api/version`,{maxRedirects:0,timeout:15000});if(response.status()!==200)block('version');const v=await response.json();if(v.application!=='fanmind'||v.runtimeEnvironment!=='staging'||v.releaseCommit!==b.sha)block('release_mismatch');}
@@ -40,7 +40,7 @@ async function session(browser,e,b,secondary=false){
  const {expect}=await import('@playwright/test');
  const context=await browser.newContext({baseURL:APP,serviceWorkers:'block',acceptDownloads:false});const page=await context.newPage();page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(30000);let violation=false,auth;
  await context.route('**/*',async route=>{const r=route.request();let body;try{body=r.postDataJSON();}catch{/* non-JSON */}if(!mediaRequestAllowed(r.url(),r.method(),b,body)){violation=true;await route.abort();return;}try{const response=await route.fetch({maxRedirects:0,maxRetries:0,timeout:45000});if(response.status()>=300&&response.status()<400){violation=true;await route.abort();return;}await route.fulfill({response});}catch{violation=true;await route.abort().catch(()=>{});}});
- const prefix=secondary?'FANMIND_STAGING_E2E_SECONDARY':'FANMIND_STAGING_E2E';
+ const prefix=secondary?'FANMIND_STAGING_E2E_SECONDARY':'FANMIND_STAGING_ADMIN_E2E';
  try{for(const suffix of ['EMAIL','PASSWORD'])if(typeof e[`${prefix}_${suffix}`]!=='string'||!e[`${prefix}_${suffix}`]||/[\r\n]/u.test(e[`${prefix}_${suffix}`]))block('credentials_missing');
  await page.goto('/login');await page.getByRole('textbox',{name:'E-Mail',exact:true}).fill(e[`${prefix}_EMAIL`]);await page.locator('input[name="password"]').fill(e[`${prefix}_PASSWORD`]);
  const pending=page.waitForResponse(r=>new URL(r.url()).origin===`https://${MEDIA_ACCEPTANCE_REF}.supabase.co`&&new URL(r.url()).pathname==='/auth/v1/token',{timeout:30000});await page.getByRole('button',{name:/Einloggen/u}).click();const response=await pending;if(response.status()!==200)block('login');auth=await response.json();auth.apikey=response.request().headers().apikey;if(auth.user?.id!==b.ids[secondary?'FOREIGN_OWNER_ID':'OWNER_ID']||typeof auth.access_token!=='string')block('login_identity');await expect(page).toHaveURL(/\/dashboard(?:\?|$)/u,{timeout:30000});
@@ -81,7 +81,7 @@ async function exercise(owner,foreign,b,e,db,receipt){
  for(const [ext,kind,folderId] of [['png','image',child],['mp4','video',videoFolder]]){
   const upload=page.getByRole('group',{name:'Medien hochladen',exact:true});await upload.getByRole('combobox',{name:'Medientyp',exact:true}).selectOption(kind);await upload.getByRole('combobox',{name:'Zielordner',exact:true}).selectOption(folderId);await upload.locator('input[type="file"]').setInputFiles({name:`${b.marker}.${ext}`,mimeType:kind==='image'?'image/png':'video/mp4',buffer:fixture(ext)});await upload.getByRole('checkbox').check();
   const response=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/chatadmin/media/catalogue'&&r.request().method()==='POST',{timeout:45000});await upload.getByRole('button',{name:'Hochladen',exact:true}).click();if((await response).status()!==200)block('upload');
-  l=await library(owner,b);const assets=l.assets.filter(a=>a.original_filename===`${b.marker}.${ext}`);if(assets.length!==1||assets[0].media_type!==kind||assets[0].folder_id!==folderId||!assets[0].available||assets[0].deleted)block('upload_binding');const a=assets[0];receipt.assetIds.push(a.id);saveMediaRecovery(e,receipt);db.present(a);await denied(foreign,b,a);const anonymous=await owner.context.browser().newContext({baseURL:APP,serviceWorkers:'block'});try{const deniedPreview=await anonymous.request.get(`${APP}/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`,{maxRedirects:0,timeout:15000});if(![401,403].includes(deniedPreview.status()))block('anonymous_preview');}finally{await anonymous.close();}
+  l=await library(owner,b);const a=singleMediaUpload(l,b,ext,kind,folderId);receipt.assetIds.push(a.id);saveMediaRecovery(e,receipt);db.present(a);await denied(foreign,b,a);const anonymous=await owner.context.browser().newContext({baseURL:APP,serviceWorkers:'block'});try{const deniedPreview=await anonymous.request.get(`${APP}/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`,{maxRedirects:0,timeout:15000});if(![401,403].includes(deniedPreview.status()))block('anonymous_preview');}finally{await anonymous.close();}
   const preview=await appRequest(owner,b,`/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`);if(preview.status()!==200||preview.headers()['content-type']!==(kind==='image'?'image/webp':'video/mp4')||!preview.headers()['cache-control']?.includes('private')||(await preview.body()).length===0)block('private_preview');
  }
  // Show actual decoded media in Chromium, with all browser requests still restricted.
@@ -107,7 +107,7 @@ export async function runMediaAcceptance(action,e=process.env){
  assertMediaWriteApproval(e);const receipt=loadMediaRecovery(e,b);
  if(action==='--cleanup'){await cleanup(owner,b,e,db,receipt);result='CLEANUP';}else{
  if(!e.FANMIND_CHAT_ADMIN_MEDIA_RECOVERY_ARTIFACT_ID?.match(/^\d+$/u)||!e.FANMIND_CHAT_ADMIN_MEDIA_RECOVERY_ARTIFACT_DIGEST?.match(/^(?:sha256:)?[a-f0-9]{64}$/u))block('durable_receipt_required');
- let completed=false;try{await exercise(owner,foreign,b,e,db,receipt);completed=true;}finally{await cleanup(owner,b,e,db,receipt);}if(!completed)block('incomplete');result='E2E';
+ await mediaExerciseWithCleanup(()=>exercise(owner,foreign,b,e,db,receipt),()=>cleanup(owner,b,e,db,receipt));result='E2E';
  }}
  }finally{let failed=false;for(const s of [foreign,owner])if(s)try{await s.close();}catch{failed=true;}try{await browser?.close();}finally{db.close();}if(failed)block('session_cleanup');}
  console.log(`CHATADMIN_MEDIA_${result}=PASS`);

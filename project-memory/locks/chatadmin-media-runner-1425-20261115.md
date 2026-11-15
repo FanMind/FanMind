@@ -18,3 +18,31 @@ Source tests, negative boundary and recovery tests are not target acceptance.
 Actual E2E remains BLOCKED until review, exact live binding, preflight and the
 separate precise synthetic lifecycle/cleanup acknowledgement. Hard runner-loss
 recovery is fail-closed; no automatic cross-run artifact admission is prepared.
+
+
+## Binding continuation after regular1522 merge
+
+Task FM-1425-MEDIA-RUNNER-BINDING / step source-review / revision1.
+Owner's explicit current assignment authorizes one narrow correction PR and
+Issue1425 handback, no merge, deployment, secret or target-data change. Source
+baseline b517916fc560d333ebaf150457443cc79218bbf3 (1522 merged15:18:44UTC).
+Existing runner claim reused; no parallel media implementation or Adminchat
+browser work started. Same FM-CONTRACT-CHATADMIN-STORAGE-001 /
+FM-CONTRACT-DISCLOSURE-DELETE-001 and corresponding FM-IGATE boundaries.
+
+Read-only Staging verified exact Operator/Workspace/synthetic Model binding1,
+missing unrelated synthetic-fixture markers, distinct Primary/Secondary owners,
+full guard READY, media/storage0 and preserved Abendkleidung25EUR. The media job
+now pins existing Operator identity constants and Model UUID and validates its
+actual login using existing Admin-E2E secret references. This is a test identity
+correction, not account reassignment or synthetic provenance inferred from
+user-editable metadata. No secret availability/login claim. Secondary fixture,
+full Guard/RLS/ACL/Storage, source/release, receipt and write approval checks stay.
+
+Tests: targeted policy/runner, native PG17 binding/storage negatives and existing
+media SQL lifecycle, supply-chain and governance checks required for this new
+source head; results recorded in the PR/Issue. No previous18-check rerun requested.
+Actual media lifecycle remains NOT TESTED pending regular review/merge,
+coordinated protected rollout, credential/flag/variable verification, media-probe
+and separate acceptance approval. Existing Staging test-data mutation: none
+required; any later unexpected prerequisite remains a separate protected step.

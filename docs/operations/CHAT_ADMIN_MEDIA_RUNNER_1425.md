@@ -10,8 +10,10 @@ never applies SQL or enables a feature. Production is excluded.
 Extend only `chat-admin-manual-flow-staging.yml`. Its old `probe` and `acceptance`
 modes retain their original runner and fixtures. Separate `media-probe` and
 `media-acceptance` modes use its existing ubuntu-24.04 Hosted runner, protected
-`staging` environment, locked dependencies, Chromium and existing primary and
-secondary E2E credentials. No personal Chrome session, new account, service key,
+`staging` environment, locked dependencies, Chromium and existing Admin-E2E and
+secondary E2E credential references. The media job uses the existing Admin-E2E credential
+references for the primary login and verifies that the returned user is exactly
+the existing Operator; an admin role alone is insufficient. No personal Chrome session, new account, service key,
 server, database or Runner is needed. The media job holds the existing shared
 `fanmind-staging-deploy` lease in addition to the existing manual-flow lease.
 
@@ -35,11 +37,13 @@ The probe must prove:
   vshyhvgcmrlagvfnvomc, distinct Production target and live release.
 - Full exact source-derived guard catalogue READY, including private bucket,
   grants/RLS; no guard mutation or partial-state exception.
-- Existing fixed-name active Model belongs to the configured existing primary
-  Workspace and Owner. That Workspace and existing primary/secondary accounts
-  must satisfy the existing synthetic-fixture markers and identities; capability
-  already exists. No capability provisioning is requested by this runner.
-- Actual primary and secondary login responses match their protected user IDs.
+- Existing fixed-name active Model and exact UUID belong to the existing Operator
+  Workspace and Owner pinned in `src/lib/stagingOperatorIdentity.mjs`. Verify the
+  exact Workspace name and `staging_operator_workspace=true`, existing granted
+  Owner capability and no processing account deletion. The secondary identity
+  retains its synthetic-fixture checks. No capability provisioning is requested.
+- Actual primary login matches the source-pinned Operator ID and secondary
+  login matches its protected foreign Owner ID.
   Foreign Owner is denied this Model. Catalogue/video/pricing flags already
   enabled; no activation is attempted.
 - Existing Abendkleidung category is unique and retains its existing EUR25.00
@@ -50,13 +54,63 @@ The probe must prove:
 - Pinned existing neutral.png/neutral.mp4 bytes and a clean baseline digest of
   existing Model fields, offers, folders, assets, policy and Storage inventory.
 
-Unconfirmed now: the new Model UUID variable, actual relationship of that Model
-with the old E2E primary Workspace/account, current secret availability, exact
-Main/live equality after rollout, and target flag readiness. These are genuine
-probe blockers, not authority inferred from a configured secret name. In
-particular the previous interactive Operator account may differ from the old
-synthetic Processing Acceptance Owner. A mismatch must report
-`synthetic_owner_model_mapping`; it must not reassign anything.
+## Proven binding correction — 15 November 2026
+
+PR1522 was regularly merged as b517916fc560d333ebaf150457443cc79218bbf3.
+Read-only Staging proved exactly one active Model with UUID
+`32d3f909-715d-46c2-a708-a65f745d2afc`, bound to the exact existing Operator
+identity/workspace and its existing `staging_operator_workspace=true` marker.
+Its primary/secondary Processing-Acceptance fixtures are different owners and
+workspaces. Operator synthetic-fixture/version markers are NULL. That is why the
+old primary configuration and `synthetic_owner_model_mapping` could not pass.
+The full unmodified source-derived guard catalogue is READY; no apply is needed.
+
+The media-only correction pins that existing Operator/Workspace/Model tuple,
+reuses the existing Operator identity constants and requires the actual login
+response to match. It does not treat the Operator account as a synthetic Creator
+or general synthetic fixture. Only this named synthetic Model is eligible.
+The legacy manual-flow job and its Primary E2E secrets/variables stay unchanged.
+The media job reads the already existing Admin-E2E secret references; their
+current contents and Operator compatibility are **NOT VERIFIED**. A wrong or
+missing credential blocks; no fallback to the old primary, privileged session
+minting, global logout or copied browser session is allowed. No secret is changed.
+If those references do not already authenticate the exact Operator, report
+`login_identity`/`credentials_missing`/`login` and hand the protected credential
+binding back to the existing Adminchat session. Do not replace secrets here.
+
+**Protected Staging step:** no existing test data change is required or
+performed. In particular, do not set synthetic markers, move the Model, reassign
+an Owner, grant capabilities or reapply the database guard. After regular review
+and merge, coordinate the exact successor Main/live rollout with the existing
+Adminchat work session and the shared deployment lock. Confirm the protected
+Model variable equals the pinned UUID, then separately run read-only media-probe.
+Current Runtime flags, protected variable and successful login remain unverified.
+Staging live was still499ae5c at the read-only observation; source merge alone
+cannot authorize execution. Actual acceptance requires its separate approval.
+
+| Reproducible boundary case | Expected result / evidence layer |
+|---|---|
+| Existing Operator + exact synthetic Model + marked Workspace + capability | Native PG17 mapping count1; target probe still required |
+| Wrong Workspace/Owner, arbitrary Model, missing/inactive Model, removed Operator marker or capability, processing deletion | Native PG17 mapping count0; no write |
+| Unrelated manual-flow Primary configuration | Cannot replace the media job's source-pinned Owner/Workspace |
+| Wrong bucket, path/extension, Workspace prefix or Storage owner; missing/duplicate object | Native PG17 Storage proof blocks |
+| Duplicate upload result, unavailable/deleted/foreign upload | Runner blocks upload_binding; no retry that hides duplicates |
+| Exercise failure or cleanup failure | Failure propagates; cleanup attempted; no E2E PASS |
+| Safe cleanup | Existing marker+Model+Workspace ownership, receipt/source binding and baseline tests; actual target lifecycle remains NOT TESTED |
+
+Duplicate-result detection is a runner safety property, not a claim that repeated
+HTTP upload requests are globally idempotent. The existing upload API generates
+a fresh media UUID and uses x-upsert:false; this correction does not change that
+contract or introduce retries. Existing native media/RLS/Storage lifecycle proofs
+and the new binding SQL cases run together in the existing media CI workflow.
+
+Local verification on this correction: 107/107 targeted manual-flow, Actions
+supply-chain and Operator/session tests; 78/78 executed media/API tests (one
+optional real-video case skipped); 4/4 native PostgreSQL17 suites including the
+new exact-binding/Storage cases; 162/162 God Mode/adversarial tests; targeted
+ESLint, production build, governance preflight and memory-quality check passed.
+The canonical release decision remains BLOCK, as expected without target
+release evidence. These results do not authorize rollout or actual media tests.
 
 ## Separately confirmed write run
 
