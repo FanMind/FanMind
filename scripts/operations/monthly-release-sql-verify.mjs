@@ -98,14 +98,14 @@ export async function collectMonthlySql(e,deps){
 }
 function run(){
  const e=process.env;assertMonthlySqlRequest(e);if(process.getuid()!==0)fail();
- const exec=(file,args,input,env)=>execFileSync(file,args,{input,env,encoding:'utf8',timeout:45000,maxBuffer:2*1024*1024,stdio:['pipe','pipe','pipe']}).trim();
+ const exec=(file,args,input,env={PATH:'/usr/bin:/bin',LANG:'C'})=>execFileSync(file,args,{input,env,encoding:'utf8',timeout:45000,maxBuffer:2*1024*1024,stdio:['pipe','pipe','pipe']}).trim();
  const dir=mkdtempSync(join(tmpdir(),'fanmind-monthly-sql-'));
  try{
   const pass=readProductionFile(e.FANMIND_BACKUP_PGPASSFILE,[0],[0o600],65536).content;
   const passfile=join(dir,'pgpass');writeFileSync(passfile,pass,{flag:'wx',mode:0o600});
   return collectMonthlySql(e,{
    assertSource:()=>{const r=JSON.parse(readProductionFile('.monthly-reviewed-source',[0],[0o600],256).content);if(r.commit!==e.GITHUB_SHA||r.tree!==e.MONTHLY_SQL_TREE)fail();},
-   assertLive:base=>{const v=JSON.parse(exec('/usr/bin/curl',['-fsS','--proto','=https','--max-time','15','--max-filesize','16384','https://fanmind.ch/api/version']));if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==base)fail();},
+   assertLive:base=>{const v=JSON.parse(exec('/usr/bin/curl',['-q','-fsS','--proto','=https','--max-time','15','--max-filesize','16384','https://fanmind.ch/api/version']));if(v.application!=='fanmind'||v.runtimeEnvironment!=='production'||v.releaseCommit!==base)fail();},
    readSnapshot:(queries,target)=>{
     const sql="BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;SET LOCAL statement_timeout='10s';SET LOCAL lock_timeout='3s';SET LOCAL row_security=off;SET LOCAL search_path=pg_catalog,public;"+queries.map(q=>q.trim().replace(/;$/u,'')+';').join('\n')+'ROLLBACK;';
     const raw=exec('/usr/bin/psql',['--no-password','--no-psqlrc','-qAt','-v','ON_ERROR_STOP=1','-v','VERBOSITY=sqlstate'],sql,{PATH:'/usr/bin:/bin',LANG:'C',PGHOST:target.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:target.user,PGPASSFILE:passfile,PGSSLMODE:'verify-full',PGSSLROOTCERT:resolve('config/certificates/supabase-root-2021-ca.crt'),PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c default_transaction_read_only=on'});
