@@ -1,3 +1,64 @@
+# Reviewed-Main preservation proposal — 13 November 2026
+
+This source change requires separate explicit Owner approval before merge/use.
+No protected environment rule or active branch admission has been changed.
+The Owner approved repairing deployment blockers, not a Staging deployment.
+
+The previous workflow would disable the approved Operator continuation on a
+normal Main rollout, while rejecting true on Main. The prepared correction keeps
+the named feature-branch opt-in and all environment protections. Main gains only
+preservation of an already enabled state, not first activation or account rights:
+
+- Exact FanMind repository, Main ref, manual workflow_dispatch and reviewed SHA.
+- Billing freeze preserve; no recovery confirmation or previous-recovery SHA.
+- staging_operator_session_enabled=true plus the separate fixed confirmation
+  operator_session_preservation_confirmation=preserve-approved-operator-session.
+- Read the existing private .release.env through a non-symlink regular file;
+  parse only the single exact boolean flag, without executing/logging contents.
+- Existing state must already be true. False/absent/duplicate/malformed state,
+  missing confirmation, another branch, changed SHA or non-manual call is denied.
+- Missing release state blocks Main, including false/default input; use the separately reviewed metadata-recovery path before retrying.
+- A Main rollout with false/default input is denied when existing state is true;
+  it cannot silently turn continuation off. Read failures stop before writes.
+
+This modifies source admission for preserving true on Main and must be named in
+the Owner's exact-head merge approval. No wildcard branch, new environment
+exception, privilege, identity, provider credential, renewal implementation or
+Production behavior is added. The actual protected Staging environment stays
+unchanged. The later Staging request must include both explicit inputs, exact
+merged Main SHA and expected live target; do not dispatch until separately
+approved. A later parallel deployment requires reconciliation first.
+
+Earlier checkpoint evidence below is historical, not superseded live acceptance.
+
+> Final bounded acceptance,13November: exact approved d3483497 deployed in
+> 43417498761; independent version confirmed and temporary branch rule removed.
+> Two real Supabase refresh rotations without login passed; independent metadata
+> confirms predecessor revocation, stable sessions/sign-in. Real renewed-session
+> Facebook sync and Workspace/RLS passed. Actual Logout removed provider sessions
+> and refresh records; protected access and continuation were denied afterward.
+> This is user/agent-triggered continuation, not background automatic refresh.
+> See the final runtime-bound receipt in FACEBOOK_STAGING_ACCEPTANCE_20261113.md.
+> Earlier failed/pending sections below remain historical. Main/Production and
+> any later deployment require their separate approvals.
+
+> Historical checkpoint: Owner-approved e4465268 deployed in run43412732522;
+> exact SHA independently confirmed and temporary branch rule removed. Origin
+> rejection is fixed. Actual renewal now returns sign-in-required without rotation;
+> provider-format validation still rejects legitimate 12-character refresh
+> credentials. Separate bounded refresh predicate and realistic boundary tests
+> are source preparation only; successor rollout requires its own exact approval.
+> Do not label this UI-triggered continuation as background automatic refresh.
+
+> Historical runtime checkpoint, 13 November: Owner-approved a49decfd deployed in
+> 43408555294 and independently version-checked. Original two deployment branch
+> rules restored. Real private/post-separated details, selected-thread AI drafts,
+> duplicate checks and independent RLS passed. Natural access expiry was observed;
+> renewal still failed 403 origin_forbidden. Installed Next request adaptation
+> reproduces HTTPS loopback URL construction. Exact HTTPS-loopback source fix is
+> pending review/new exact-commit approval; real renewal/logout/revocation are OPEN.
+> Detailed later checkpoint: FACEBOOK_STAGING_ACCEPTANCE_20261113.md.
+
 > 13 November actual rollout: exact approved aae0003c was deployed in run
 > 43399615749, independently version-checked, and temporary branch admission
 > removed. Manual real DM/comment imports passed; actual continuation failed.

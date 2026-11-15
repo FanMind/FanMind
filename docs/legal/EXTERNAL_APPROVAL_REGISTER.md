@@ -183,3 +183,26 @@ Restore-/Löschtest erfolgen.
 6. `npm run legal:evidence:require-complete` muss grün sein, bevor echte
    Drittpersonendaten eines Pilotkunden verarbeitet werden.
 
+
+## Behördenanfragen und Meta-Review — Ergänzung14.11.2026
+
+[Verfahren1.0](AUTHORITY_REQUEST_PROCESS.md) und dessen leere vertrauliche
+Fallregistervorlage ergänzen diese Governance. Rechtsprüfung der exakten Fassung
+und Nachweis der Betreiberfreigabe gehören zum bestehenden
+`approvals.legalReview`; bestätigte Fallregister-/Belegfristen zum bestehenden
+`approvals.retentionDecision`. Bestätigungen müssen ihren jeweiligen Umfang
+benennen; eine Teilprüfung schließt nicht das gesamte Control ab. Keine neue
+Control-ID und kein Statuswechsel ohne tatsächlichen Freigabebeleg. Reale
+Anfragen, Beteiligte, Aktenzeichen, Rechtsbewertungen und Herausgaben bleiben
+ausschließlich vertraulich außerhalb Git. Eine leere Vorlage belegt keine
+fehlenden historischen Behördenweitergaben oder bereits betriebenen Prozesse.
+
+### Übermittelte Betreiberzustimmung —14.11.2026
+
+[Teilfreigabestatus](AUTHORITY_REQUEST_RELEASE_STATUS.md) dokumentiert die
+begrenzte Zustimmung zur bytegleich erhaltenen Verfahrensfassung und deren
+Fristenvorschlägen. Der private Beleg enthält Quelle/Datum/Umfang/Vorbehalte;
+die öffentliche Referenz nur dessen Hash. Kein eigenständiger Signaturnachweis.
+`approvals.legalReview` und `approvals.retentionDecision` bleibenpending, bis
+die jeweils vollständigen fachlichen Nachweise vorliegen. Keine neue Struktur
+und keine erneute allgemeine Betreiberzustimmung für dieselbe Fassung.

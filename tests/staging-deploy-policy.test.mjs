@@ -4,6 +4,7 @@ import test from "node:test";
 import { readFile, mkdtemp, mkdir, writeFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import './staging-release-recovery.cases.mjs';
 
 const workflowPath = ".github/workflows/deploy-staging.yml";
 const provisioningWorkflowPath = ".github/workflows/provision-staging-host.yml";
@@ -611,3 +612,5 @@ test("staging TLS is manual, DNS-bound and reuses the existing certbot account",
   assert.doesNotMatch(workflow, /--agree-tos|register-unsafely-without-email/);
   assert.doesNotMatch(workflow, /https:\/\/fanmind\.ch\//);
 });
+
+import './staging-media-upload-proxy.cases.mjs';

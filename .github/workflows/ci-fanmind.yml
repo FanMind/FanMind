@@ -241,6 +241,12 @@ jobs:
           FANMIND_PG17_REQUIRE_SERVICE_CONTAINERS: "true"
         run: npm run test:database-authorization:pg17
 
+      - name: Prove existing Workspace Billing ACL contract and rollback in PostgreSQL 17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_WORKSPACE_ACL_PG17_REQUIRED: "true"
+        run: node --test tests/workspace-server-owned-fields.test.mjs
+
       - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17
         env:
           FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
@@ -257,6 +263,22 @@ jobs:
         run: |
           node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs tests/chat-admin-media-pg17.test.mjs
           npm run test:creator-foundation-transition
+
+      - name: Prove full monthly release rehearsal with PostgreSQL 17
+        env:
+          FANMIND_MONTHLY_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_MONTHLY_PG17_REQUIRED: "true"
+          MONTHLY_REHEARSAL_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          FANMIND_MONTHLY_REHEARSAL_REPORT: /tmp/fanmind-monthly-rehearsal.json
+        run: node --test tests/monthly-release-control.cases.mjs
+
+      - name: Retain full monthly nonproductive rehearsal result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: monthly-rehearsal-${{ github.sha }}
+          path: /tmp/fanmind-monthly-rehearsal.json
+          if-no-files-found: error
+          retention-days: 35
 
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}

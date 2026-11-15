@@ -1,3 +1,4 @@
+import "./chat-admin-media-acceptance.cases.mjs";
 import "./staging-support-media-runtime.cases.mjs";
 import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS, CHAT_ADMIN_FLOW_TIMEOUT_MS, CHAT_ADMIN_RUNNER_TIMEOUT_MS } from "../e2e-chatadmin-staging/response-budget.mjs";
 import { CHAT_ADMIN_MODEL_TIMEOUT_MS } from "../src/lib/chatAdminModelPolicy.mjs";
@@ -73,8 +74,8 @@ test("actual Playwright CLI collects the protected probe and imports its ESM dia
 test("the browser entry assertion matches the rendered page source",()=>{
   const page=readFileSync(new URL("../src/app/chatadmin/page.tsx",import.meta.url),"utf8");
   const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
-  assert.match(page,/<h1>Creator-Building<\/h1>/u);
-  assert.match(browser,/getByRole\("heading",\{name:"Creator-Building",exact:true\}\)/u);
+  assert.match(page,/<h1>Creator CRM<\/h1>/u);
+  assert.match(browser,/getByRole\("heading",\{name:"Creator CRM",exact:true\}\)/u);
   assert.doesNotMatch(browser,/getByRole\("heading",\{name:"ChatAdmin",exact:true\}\)/u);
 });
 

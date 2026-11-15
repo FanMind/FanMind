@@ -1,3 +1,118 @@
+## FM-SUPPORT-CAPACITY-INSTALL-1350-20261114 — R4 source preparation
+- Owner authorizes missing Writer/controller implementation and isolated tests; future A15EUR/B0 synthetic bindings approved, target writes still require separate exact protected approval.
+- Reuse pinned lifecycle; separate prerequisite source PR avoids merging/deploying unsafe1500 before its schema exists. Main e2b1dff / Instagram1501 preserved,1500 remains DRAFT.
+- Canonical Billing receipt/snapshot, private allowlist, CAS/replay and immediate invalidation; no new balance, no grants or sales by Writer. Existing service transport reused.
+- Staging controller: exact source/Owner/Main/Live/package/history, unchanged required checks, shared lease, private passfile and backup/restore receipt. Atomic install/full-catalogue postflight; rollback-only A/B acceptance and exact pre/post invariants.
+- Local PG17 real SQL + postflight mutation/rollback and negatives PASS; exact-head hosted gates required. No Supabase writes, provider/Stripe calls, secrets, merge or deploy. No target readiness inferred.
+- FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001; deletion/privacy/operator/commercial approvals still separate. Full reference is source-generated, history unchanged; no weakening of old readonly Capacity gate.
+- Recovery: source revert before apply; atomic rollback before COMMIT; after COMMIT preserve ledger/holds/history, forward repair only.
+
+## FM-CHATADMIN-MEDIA-PRICES-1425-20261114 — scoped price extension, PR1497
+- Risk R3. Owner explicitly authorizes public publication of the existing feature branch and exactly one review PR, CI corrections and protected Staging preparation. No automatic merge, Production action, real-customer price activation or edits to existing Character data.
+- Reuse existing sales_playbook offers and catalogue; add folder/file/Model/package rules, inheritance, bounded negotiation, explicit tax display and exact file/revision evidence. Example amounts remain synthetic. Controlled append-only history/atomic quote SQL stays unapplied and the new runtime defaults off.
+- Initial hosted CI found a duplicate auto-created conversation in the new PG fixture and an omitted pure dependency in the component harness. Correct those fixtures; retain the existing full native RLS/lifecycle and browser assertions. Reconcile the reviewed Source of Truth fingerprint without refreshing live evidence or altering accepted gates.
+- Prepare exact-Main/protected-Staging/TLS/checksum schema control with read-only preflight, atomic apply/postflight and full source-derived verification. No workflow dispatched. Existing upload/delete Desktop acceptance remains open; no browser or native-source result is a target PASS.
+
+## FM-SUPPORT-PROFILE-DISCLOSURE-1350-20261114
+- Owner correction: one existing central Profile/GDPR PDF export; no Help download. Reuse #1491/#1496, existing PDF renderer and private collector, paginated own Support RPCs/collector and current-consent parser. Retain historical redacted proof; do not re-read private Support content for it.
+- Actual Staging click returned safe PDF failure HTML. Read-only schema metadata identifies authenticated SELECT-star conflict on credential-bearing social_connections; moved its explicit safe projection into existing twice-Owner-authorized private collection. No DB grants, schema, retention, consent mutations or Production changes.
+- Missing own Support history/current consent wired into existing PDF; Help points to Profile section, legacy JSON URL redirects there; erasure and separate AI consent settings preserved. FM-CONTRACT-DISCLOSURE-DELETE-001 / FM-IGATE-DISCLOSURE-DELETE-001 consumers and isolation/negative/recovery boundaries covered by targeted tests; current-head CI and corrected live PDF download remain separately required. Not a legal/Production release approval.
+
+## FM-SUPPORT-CONSENT-WEB-1350-20261114
+
+## FM-SUPPORT-PROD-PREP-1350-20261114
+
+Owner-authorized remaining Support1350 preparation. Preserve1491 acceptance. Production base schema read-only EXACT; new Consent schema ABSENT. Independent DB-redacted export/source serialization proof PASS, actual browser file still BLOCKED. Separate protected Production schema verify/apply prepared, no apply/activation authorization; same Production lease. Explicit retention/text/provider decision drafts; proposal SQL tested only in disposable CI. Meta process_environment_mismatch remains in1464/1495, no gate bypass. Mobile live VERSCHOBEN – APP-ABNAHME. Production unchanged. See docs/operations/SUPPORT_PRODUCTION_PREPARATION_20261114.md.
+- Owner authorizes checked source/merge, isolated additive Staging schema control and actual Desktop acceptance. Mobile live1350/1425 VERSCHOBEN – APP-ABNAHME; mandatory automated mobile/security/privacy retained. Existing Main8db6c86d/#1490 preserved.
+- Optional first-use choice for new/existing users, no inferred registration/AGB consent; compact control/account page, server-derived user RPC-only current proof with version/time/revision/idempotency. Revocation gates every provider call and suppresses changed-consent results. Export includes current proof; history retention unchanged; account deletion FK cascade. Default-off Production version flag requires separate legal/provider/retention/exact-release signoff.
+- Compatibility: FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001 (unchanged provider/cost gates), FM-CONTRACT-DISCLOSURE-DELETE-001/FM-IGATE-DISCLOSURE-DELETE-001 (new consent own-data export/FK lifecycle). No Character/Meta/Billing/schema autoapply. Separate schema action uses existing Support Staging workflow/lease. Native PG17 and route/component negatives required; actual target/cleanup/Production not claimed by source preparation.
+
+## FM-SUPPORT-PLATFORM-SCOPE-1350-20261114 — Owner correction
+- Supersedes the Creator pilot below. Existing platform Support retained; Character UI/actions/AI analysis/comparison/undo removed; old endpoint410 before any identity/content/write dependency. No new ChatAdmin path; existing #1425 source unchanged.
+- Isolated from existing uncommitted work at merged d51724f. Read-only legacy formatting retains privacy/history compatibility and prevents old private Creator turns entering subsequent platform AI context. Existing consent/auth/Origin/rate/retention/operator and responsive shell retained.
+- Exact two Support-QA objects identified in runbook; restored values must be rechecked before existing scoped cleanup. No real Model/Fan data and no unrelated historical Support turns may be erased. Old Creator mobile/isolation blockers retired with tools; platform mobile/tenant checks still required. Checked PR, protected Staging and target acceptance pending; no Production scope.
+
+## FM-SUPPORT-CREATOR-1350-20261114 — bounded Staging pilot
+- Owner attachment authorizes checked source/merge/protected Staging; new Creator-data and write Production activation explicitly separate. Existing normal Production Dashboard repair bb799466 has actual opt-in AI/persist/reopen/reload/withdrawal/Desktop/mobile/diagnostic retry PASS (Issue1350 evidence6876663564). No regression evidence discarded.
+- R3 isolated private tool route; exact existing Staging Operator + Owner/active capability, own resource binding, local latest20 message observations by default; separate read-only AI opt-in for up to8synthetic Support-QA messages only, strict evidence refs/output guard and no model-selected writes. Two single-field fixed style presets, explicit session grant, HMAC actor/Workspace/request-bound write-ahead and completion evidence, existing JWT/RLS CAS, independent readback and retained-evidence revision-bound undo. Non-atomic audit/CAS limitation explicit. Synthetic two-response comparison separately opt-in, existing canonical Character/model/semantic guard/usage, bounded rates/store:false. No Production activation, SQL, keys, flags, entitlement/Billing/Meta changes.
+- Affected existing FM-CONTRACT/IGATE-CHATADMIN-AI-001, CHATADMIN-STORAGE-001, AI-BILLING-001 and DISCLOSURE-DELETE-001 consumers identified in runbook. Conservative release gates retained. Legal/onboarding mandate draft is not published and general CRM semantic analysis/arbitrary setting changes remain out of this bounded pilot. Final-head CI and actual Staging acceptance still required.
+
+## FM-SUPPORT-DASHBOARD-AI-1350-20261114 — same repair, explicit AI acceptance
+- Existing full Owner scope includes an actual authenticated AI answer; investigation proved the old in-app route only used local knowledge. Same PR1485 now reuses the existing approved public Support handler behind initially unchecked explicit consent. Existing key/model verified by one neutral public response, never read/created/replaced.
+- Auth/scope/Origin/limits precede delegation; only current question plus last2own Support turns, no CRM/account identifiers to model. Existing public knowledge/output/cost/store:false/timeout pipeline retained. Pricing remains catalogue; stored retry avoids another model call. Revalidate identity and abort before persistence on cancellation.
+- UI withdrawal aborts, suppresses late result and removes future AI retry consent; fresh panel/account/focus consent required. Existing SQL idempotency and own-data export/erase/handoff/Retention unchanged. Compatibility consumers: FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001 (unchanged platform-owned usage accounting; no customer entitlement/Stripe change) and FM-CONTRACT-DISCLOSURE-DELETE-001/FM-IGATE-DISCLOSURE-DELETE-001 (existing own Support export/erase, no new persisted personal field). No dedicated Support AI registry contract exists. No schema/flag/provider credential or unrelated activation.
+- Local route and actual-component negative/regression coverage added; previous102browser PASS is historical, changed source awaits final-head CI and protected actual model acceptance. Main197d5250/#1486 integrated, all parallel ChatAdmin bytes preserved. Runtime still NOT_DEPLOYED at this checkpoint.
+
+## FM-SUPPORT-DASHBOARD-1350-20261114 — authenticated Help repair
+- Owner authorizes bounded correction, checked PR/merge and protected Staging/Production rollout with synthetic dashboard acceptance. R2 UI scope; same Issue1350, PR1485. No SQL, flags, permission, provider or Billing change.
+- Actual normal Production dashboard reproduced:340px white panel, no max-height/overflow, native zero-padding dark controls under global reset. Production3af87d5; Main/Stagingf8a3737. Live diagnostics returns not_available (404 feature-disabled branch); preserve auth and diagnose disabled separately from transport failure.
+- Existing shell tokens/scoped CSS, responsive scroll constraints, readable controls, focus/return/Escape and safe diagnostic retry. Existing identity/persistence/privacy/handoff consumers retained. No registered API/AI/schema contract changes; public Support and OwnerInbox are regression consumers.
+- Local webpack build/TypeScript, focused lint,26Support route/policy/Owner tests and structural GodMode pass. Unsigned release baseline remains BLOCK; no authorization fabricated. New actual-shell-CSS desktop/mobile component regression and existing privacy/continuity tests require final-head CI. Browser download unavailable locally; system Chromium attempt tracked separately.
+- Important acceptance gap: authenticated supportAnswer uses approved local knowledge, not a model; do not misreport persisted replies as real AI. Public model evidence does not close this case. Staging/Production candidate rollout and actual live dashboard acceptance still OPEN.
+
+## FM-FACEBOOK-RECEPTION-1464-20261113 — authorized receipt continuation
+- R3; existing Issue1464, deployed common Maina8a74f67. Protected inspect/rebind/App-subscription43463154880/43463354662/43463518222 PASS. Personal password/new protected secret already complete. Page subscribed_apps and real receipt OPEN.
+- Actual Meta OAuth identified Strict-cookie callback loss; same-origin Operator continuation succeeds. Narrow signed-state/Operator/exact-app same-origin callback bridge preserves Strict cookies and every existing authorization check. Existing Page helpers reused behind exact app/Page/Workspace and verified token/scopes, explicit check/activate controls. No import/send/newDB/schema/Production/WellFit change.
+- FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001 and existing Operator session consumer; negative route/action tests plus required exact-head CI. Preserve shared Support/Adminchat/Billing; refresh Main/deploy lease before normal protected rollout. No acceptance inferred from source.
+
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — full Owner Staging authorization
+- Owner authorizes source merge, one standalone app, necessary publication/review/permissions, protected credential/rebind/deployment and real inbound acceptance. Production/WellFit/outbound/newDB/paid/unrelated access excluded; personal legal/password/2FA/document steps remain Owner-only.
+- Main8f9e286d (#1471) integrated into same PR; sole ledger conflict retains both streams, all incoming runtime/diagnostic/media paths preserved. Existing Meta controller gains explicit exact-old/new identity rebind preserving encryption/webhook/Operator/Billing with alias/drift/override negatives and existing private rollback. No target write.
+- Standalone creation flow FanMind Staging Empfang / fanmind@fanmind.ch / FanMind business / Messenger+Pages prepared, final Create app requires personal legal acceptance and remains unsubmitted. No newAppID/publication/provider permission yet. Resume the same browser flow.
+- New exact-head CI required before regular merge; old8cb118tests/19green remain historical. No competing deployment or target action started.
+
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — current Main and Meta child-app boundary
+- Same Issue1464 / Draft1473; merge Main33e65696 into existing source; no conflict, Expo/session policy inherited unchanged.
+- Child1637976007865045 confirmed, Owner admin/0testers, no Page/callback/subscription. Current official Messenger guide (2026-10-28) requires publication; child apps always Development. General role-only webhook rule does not prove feed receipt or override product prerequisites. Existing banner preserved and scoped in runbook.
+- New standalone publishable Staging app proposed for a later explicit Owner decision; not created. No publication, permission/role/provider/runtime/DB/deployment/outbound action.
+- New-tree118focused PASS; exact resulting-head full hosted CI required. Historic green reports do not attest the integrated head.
+
+## FM-FACEBOOK-AUTOMATIC-INGRESS-20261113 — source preparation / protected boundary
+- Existing Issue1464; merged1465 preserved, isolated successor from current Main3912461e (includes merged1469 Adminchat); no competing implementation. Affected FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001; R3 targeted independent Guardian, negative and recovery proofs required. Historical manual/live acceptance remains bounded to d348, not transferred to this source.
+- Actual readbacks13:50 Europe/Vienna: Staging d3483497, Production a798d793. Meta App2214477125984114 Development/unpublished; Page callback https://fanmind.ch/api/webhooks/meta; feed/messages v25 subscribed, message_echoes off; Review not submitted, Business unverified. Operator continuation reached protected Dashboard again. Read-only Staging DB: one FanMind connected/subscribedfalse,3conversations,2DM+4comments,6uniqueIDs; unique externalmessage/comment indexes installed. No newcontent import or provideractivation claimed.
+- Correct existing ingress validation/routing/summary recovery; executable signed-route/TS/storage synthetic regressions distinct from actual provider acceptance. Manual recovery preserved. No newDB/schema/privilege/secret/outbound/Production action.
+- PR1470 open7c9b932a owns Main session-preserving deployment admission; no duplication or foreignPRmerge. Main/target/active deployment reread before any later shared rollout. Newmerge/deploy and isolated Meta configuration need concrete approval after exactsourcechecks; cannot reuse historical d348 grant.
+- Current safe boundary: prepare successor PR and exact-source evidence; dedicated Staging Meta App/configuration preferred to moving common Production callback. App Review/Business/legal/Production controller plus concurrent firstcontact/projection QA remain separate Production gates. Details and rollback: docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md.
+
+## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — Main33e65696 integration
+- Risk:R3, same existing Draft1471. Freshly confirm #1470 regularly merged at33e6569602e8fe910058e268b4f33c1879799869. Old977f2fc4 is behind strict Main, not a content conflict. Genuine two-parent merge into this PR; preserve all11incoming paths byte-for-byte and retain existing media/schema/diagnostic/Facebook source.
+- User authorizes Main integration/tests only, no merge/target permission. Recheck new exact head in CI; previous14/14 remains historical. Refresh obsolete current status and retain earlier checkpoint receipts as history. No new implementation/PR, no copied deployment fix or protected-action bypass.
+- Current developed source remains distinct from actual Stagingd3483497, not activated and not practically accepted there. Next Owner boundary: exact new-head regular source merge covering existing diagnostic/schema checks, then actual Main SHA-bound protected inspect proposal. No deployment/DB/bucket/feature/provider/identity/Production action here.
+
+## FM-CHATADMIN-STAGING-PREPARATION-1425-20261113 — operational source continuation
+- Risk:R3; same Issue1425/Draft1471. Owner explicitly requested initial/extended exact schema verification and narrowly bounded existing-runner host diagnosis. SQL/reference baseline retained; new exact extension reference and fail-closed profile, no target apply/activation.
+- Existing Staging runner confirmed from successful43417498761 metadata. New Main/manual/exact-source/live-SHA diagnostic preserves protected staging and canonical lease; no installs/config/secret/privateenv/DB reads. Actual app UID/mount/cgroup/security/limits are required before synthetic probes; no new authority granted.
+- Local PG17.5 WASM source recreation/lifecycle/33driftgroups (161SQLcalls),58focused tests including real syntheticvideo/errorcleanup, lint/actionpins/governancePASS. Actual live Staging initial-profile read-only equalityPASS. NativePG17.11 CI/newhead/review and actualhost evidence pending separately.
+- #1470 current7c9b932a is Draft/open/mergeable; other session owns closure. No deploymentfix duplication/foreignmerge; no Staging/Production schema,bucket,flags,Auth,Support,Meta,Billing/provider change. Exact future commonMain deployment approval remains unfilled until real merges/hostproof; source merge + protected inspect are the next concrete decisions.
+
+## FM-FACEBOOK-MAIN-1465-20261113 — Owner conditional merge request
+- Owner requested existing PR1465 merge when all checks are green. Current Main6c1e376b already contains a49decfd Facebook foundation; remaining branch delta is the reviewed HTTPS-loopback/12-character refresh fixes, tests and bounded runtime receipt.
+- Retargeted existing PR from historical Facebook feature target to Main; isolated integration preserves current Support/common-release implementation. Only drift-baseline metadata required conflict reconciliation: preserve all Main review fields, add accepted Facebook evidence and recompute combined Source-of-Truth hash.
+- Protected Main rules remain12requiredchecks/strictup-to-date/no-bypass. Merge must use unchanged expected PRhead after full Main CI and independent review. No Staging/Production deployment, Webhook/permission/DB write or runtimeflag change is authorized or performed here; accepted Staging remains d3483497.
+
+## FM-STAGING-OPERATOR-20261113 — bounded Staging acceptance complete on d3483497
+- Owner-approved d34834979cef30c9c6af567d61b3df448901bfda deployed in protected43417498761; independent version12:31:59 Europe/Vienna. Temporary branchrule removed, original2restored. No Main/Production/Webhook/permission/newDB/outbound action.
+- Actual Supabase continuation twice without login at12:32:48/12:33:34; root+independent metadata rows3->4->5, revoked0->1->2, sessions3stable,lastsigninunchanged11:59:16. Protected Dashboard/contact/source histories work. No tokenvalues exported. User/agent-triggered continuation, not backgroundauto-refresh.
+- Real afterrenewal sync2posts/4comments/0new; DM0new. 3 conversations: 1 private Messenger thread + 2 posting threads; 6 inbound messages / 6 unique IDs, posts3+1comments, ownoriginals reopened. Independent parent/provenance/RLS allPASS:Operatorforeign0,foreignownerOperator0withownWorkspacevisible. Contact knowledge remains contact-level; no synthetic test presented as realdata.
+- Actual Logout+providerrevocation PASS:protected/dashboard->login;continuation401; independent12:39:07 snapshot0sessions/0refreshrecords. Natural expiry observed earlier sameacceptance; universal instantJWTrevocation/replay notclaimed. Secure relogin restore is interactivebootstrap.
+- Secure Owner-assisted re-login restored at12:40:27 Europe/Vienna; correctOperator andInbox independently confirmed.
+- Final receipt docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md. This closeout changes documentation only and leaves runtime bound to d3483497. Same existing #1464/Draft#1465/#1463, open/unmerged; later stacked Mainintegration/requiredchecks and protecteddeploys separatelyOwner-gated. General Meta/production readiness remains outsideboundedPASS.
+
+## FM-STAGING-OPERATOR-20261113 — e446 runtime and provider-refresh format correction
+- Same #1464/Draft#1465. Owner-approved e4465268f781dfd57704070b9ae60ec6d831ca5d Staging rollout43412732522 PASS; independent version11:56:19 Europe/Vienna. Temporary feature rule removed; original2rules restored. No Main/Production/Webhook/newDB/permission/outbound changes.
+- Actual renewal passes Origin but now401sign_in_required, no Authrotation (2refreshrecords/0revoked/last11:42:14). Existing contactview remainsauthenticated. No renewalPASS or backgroundautomaticrefresh claim.
+- Concrete protocoldefect: shared access/refresh validator minimum24 rejects officialSupabase legacy12charformat. Protected SQLaggregate onlymin/maxlength12,neverrawvalues; officialAuth token_refresh.go supports12. Earlier syntheticrefreshcredentials wereunrepresentativelylong. Successor uses separatebounded12..4000nonwhitespace refreshpredicate forincoming+rotatedtokens; provider/user/exactworkspacevalidation unchanged.
+- Independent next-boundary authenticated SQLmaterialized exactworkspacecolumns/filter/limit: onecorrectid/name/owner/marker, columnprivileges/RLSPASS, nofullflagorcredentialexport. Independent realFacebookcounts/provenance/RLSPASS unchanged3threads/6uniqueinbound/2posts/foreign0.
+- Source REVIEW_PENDING; 12charroundtrip + malformedrequest/responsenegatives and sourceCI/Guardian required before concrete successorrolloutapproval. Real renewal/rotation remainsOPEN; neverinfer liveacceptance fromsyntheticprovider tests.
+
+## FM-STAGING-OPERATOR-20261113 — a49decfd runtime acceptance and exact proxy correction
+- Same #1464 / Draft #1465, no competing implementation. Owner explicitly approved a49decfdb81ea8a16ff78c134cd28b141af4a218 Staging-only; protected run43408555294 SUCCESS, independent version11:23:55 Europe/Vienna. Temporary feature rule removed; original2rules restored. No Main/Production/Webhook/newDB/permission expansion/outbound send.
+- Actual deployed browser QA: private row + base contact show only2DM; post scopes3comments/1comment, own targets, no aggregate/Messenger controls; old drafts cleared on scope switch. Two genuine selected-post AI generations succeeded (upcoming start vs latest logo comment). Contact knowledge/preferences remain shared. Sync2posts/4found/0new; all6externalIDs unique. Originals reopened correctly.
+- Independent Guardian read-only real-record QA PASS:3conversations/6inbound, all parent/provenance checks valid,4distinctcommenttargets; Operator foreign0, foreignfixtureowner Operator0 while ownworkspacevisible. No credential/message-content export.
+- Natural expiry11:31 Europe/Vienna redirected protected contact tologin. Actual continuation FAILED403 origin_forbidden; no refresh metadata rotation. Secure re-login requested; expiry/renewal/logout/revocation must remain separately reported, no complete auth acceptance.
+- Installed NextNodeServer attachRequestMeta + actual request adapter independently reproduce virtual https://localhost:3001 under nginx TLS forwarding; previous exact guard allowed HTTP only. Minimal successor adds HTTPS localhost/127 loopback at3001, preserving exact publicOrigin/path/method/runtime/project/user/workspace and no body/token-from-client boundaries.
+- Successor source REVIEW_PENDING; any new protected Staging deployment needs new exact-SHA Owner grant. Prior a49deploy is not permission for successor. Existing receipt/runbook retain the failure and bounded actual import/browser/RLS evidence.
+
 ## FM-STAGING-OPERATOR-20261113 — actual rollout and Facebook routing correction
 - Continued existing #1464 / Draft #1465; no competing branch, PR, schema or identity. FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001 and protected session boundaries.
 - Owner-approved exact aae0003c protected Staging deployment 43399615749 PASS; independent runtime SHA check PASS. Temporary feature-branch environment rule removed after success. Production readback a798d793 unchanged by this work; no Main merge or outbound send performed.
@@ -959,3 +1074,115 @@ Use one heading per task/attempt. Never delete historical entries; supersede the
 - Source-of-Truth drift reconciled after byte-level comparison with its accepted blob: prior delta was only the Operator preparation paragraph; new bounded source/rollout text added. No accepted runtime/provider evidence or other watched-file hash refreshed.
 - Independent database RLS check under authenticated Operator subject: visible conversations=1/foreign=0, messages=1/foreign=0. Does not prove two real Facebook customer imports.
 - Next: finish exact-source validation, obtain concrete Owner protected Staging deployment/renewal approval, then execute real fresh message/comment/links and renewal/logout/revocation acceptance. No merge, rollout, provider grant, app publication, Production webhook change or additional database.
+
+## FM-CHATADMIN-MEDIA-CATALOGUE-1425 — approved Staging completion, 2026-11-13
+
+- Owner explicitly authorized regular #1471 merge, bounded real host inspection/repair, controlled existing-DB schema/private-bucket extension, separate catalogue/video activation, synthetic practical acceptance/cleanup and necessary reviewed follow-ups. Production and provider image/video analysis excluded. No repeated approval for covered steps.
+- #1471 regular merge independently confirmed as Main `8f9e286d778207941c41ca6c33d23df188ac96f0`, after 14/14 checks including twelve exact protected required contexts. Preserve Support #1470, Facebook, Operator renewal and Billing.
+- Real protected host inspection run43448723976 BLOCK: missing ffmpeg/ffprobe, unbounded CPU/memory, runner outside application mount/cgroup/security context; same UID/GID/private temp confirmed. Required fixed Staging bootstrap/probe is prepared in follow-up #1475. Only fixed helper privilege, exact reviewed source, copied actual context/rlimits, bounded conversion and cleanup, root-owned fresh receipt.
+- Separate catalogue/video runtime controller uses existing complete extended-schema/Owner/retention/TLS preflight and preserves every other private setting with rollback. Video requires fresh root-owned source/live/PID-bound host receipt. Controlled SQL builder reuses unchanged checksum-pinned catalogue source with advisory lock, initial-or-complete comparison and atomic postflight; unexpected drift fails. No generic migration push or implicit web-deploy SQL.
+- Local: 195 integration/negative/conversion and 162 governance tests passed on first source tree. Current expanded head requires renewed tests/CI. PG17.5 isolated source recreation validates original/full catalogue lifecycle, repeat skip and unexpected drift rejection (168 SQL invocations). Native PG17 remains mandatory in CI.
+- Still pending: actual host repair/deploy/schema/bucket/flags and full synthetic Staging desktop/mobile acceptance. No live acceptance inferred from local tests.
+- #1475 acceptance input continuation: add source-owned neutral PNG/one-second H.264+AAC video, fixed invalid text and6MiB zeros for real browser file-selection/rejection. No private media or provider content. The changed full head receives fresh mandatory CI; prior-head results are not reused.
+
+### Facebook isolated published Staging app checkpoint — 2026-11-13
+
+Issue1464 / existing PR1473: standalone FanMind Staging Empfang1547928503809961
+created after personal Owner confirmation and published under the full Staging
+authorization. Production app/callback unchanged; no WellFit/send/DB action.
+Personal Meta password confirmation for the new app-secret reveal is pending.
+Prepared separate protected ingress secret selection and exact-new-app-only
+messages/feed App subscription with bounded reads and active callback readback.
+Real Page authorization, deployment and automatic receipt remain open.
+
+Facebook credential follow-up: the new App ID always selects its dedicated
+protected ingress secret, including later configure actions; missing new secret
+fails closed instead of restoring the original app credential. Executable
+regressions cover both rebind and repeat configure selection.
+
+- #1475 Main integration: retain all Facebook #1473 source and shared Supabase data-access changes from actual Main `deea847578b9db28b13b04ac0f71409638b0cfff`; only concurrent TASK_LEDGER append conflict combined without loss. Previous16/16 checks at98f0a510 do not cover this successor. Renew combined regressions and full exact-head CI.
+- Combined local evidence after Main integration:295/295 focused Adminchat/Support/Operator/Facebook/Meta/supply-chain/mobile regressions passed, zero skips; God Mode preflight and project-memory-quality passed. All incoming Facebook paths except the combined append-only task ledger equal actual Main byte-for-byte. No previously passed CI is attributed to this new merge commit.
+- Pre-execution mode review corrected a required permission detail: bootstrap establishes022 only for public diagnostic installation; root probe receipt uses descriptor-bound explicit0644 after its private077 umask, so Staging can read non-secret proof without obtaining write access. Actual filesystem regression verifies mode/readback under077. No private environment-file permissions are widened.
+- Common Main continuation: integrate actual Support #1474 merge `a8a74f67d92180f2c7a2fa9bb4f4a98486527dbf` without conflict; preserve its deployment recovery and inherited Production workflow byte-for-byte (no Production action). Actual Staging has advanced to that commit; never overwrite it with an older source. CodeQL's new test-only check/read finding is corrected through the same opened descriptor, without dismissal. Renew exact combined-head CI.
+- Local common-Main broad regression:317 PASS/1 FAIL/2 SKIP (320 cases); the inherited actual-rsync recovery fixture exits127 because rsync/system package privilege is unavailable in this local executor. No source guard is relaxed; the inherited hosted CI's mandatory real-rsync test must pass. Focused bounded-control21/21 and lint pass; complete combined-head hosted CI remains required. Browser replacement can operate GitHub, but its secure Staging login request was declined; do not retry it without new user instruction, and do not touch the original Operator session.
+- #1475 merged as actual Main d00ebd6e32f9f816900befc9f717493ece3728ef after16/16 checks. Protected existing-root inspection43464862000 and fixed-toolchain preparation43465036716 passed; private config unchanged. Staging deploy43465738123 passed and independently reportsd00ebd6e, preserving Billing/Operator and retaining the prior private snapshot.
+- Actual probe43466444949 had exit0 but no proof markers: NOT accepted. Required follow-up corrects installed symlink CLI entry and independently requires all three PASS markers. No SQL/bucket/catalogue/video activation yet; same #1425 completion authorization covers this bounded correction. No Production action.
+- #1478 integrates actual newer Main3af87d509e8ffdfc33b14b47f2983645c4ecd5b3 (Support #1476). All four incoming diagnostic-scope/preflight/documentation paths are preserved byte-for-byte; no Production action or parallel reimplementation. Previous e9716cdd CI does not attest this successor. The symlink correction remains the only new executable Adminchat behavior.
+
+## Instagram Unified Login #1480 — 2026-11-13
+
+Owner-approved single-account fanmind.crm Staging continuation on existing App1547928503809961. Configuration2150411132228815 uses only Instagram asset/basic/messages/comments. Existing Operator/CRM paths reused; protected source implementation and real account/ingress acceptance remain separate. Main88898c6f incorporated; #1479 kept separate. Evidence and limitations: docs/operations/INSTAGRAM_STAGING_1480_20261113.md. Production unchanged.
+
+
+## FM-FACEBOOK-PRODUCTION-REGISTRATION-20261114
+
+- Issue1464 continuation; existing PR1482 merged, no second integration.
+- Risk R3 / source-only registration recovery: same workflow gains hosted,
+  secret-free path-limited push/PR validation; Production control explicitly
+  dispatch-only with unchanged Owner/current-main/live-ancestor/app/environment
+  checks and job-scoped shared Production deployment lock.
+- FM-CONTRACT-SOCIAL-CRM-001 / FM-IGATE-SOCIAL-CRM-001 remain open; no general
+  Creator availability, real reception or second-identity acceptance claimed.
+- Fresh initial HTTPS Productionbb799466 / Staging8db6c86. GitHub Actions
+  filename page not found;0filtered runs, source exists on Main. Existing19
+  offline boundary tests pass before change. Actual GitHub indexing cause
+  unproven; registration recovery must be checked after regular merge.
+- Meta business verification incomplete/submission pending; app unpublished.
+  Personal identity/legal steps remain Owner-only. Production login needed for
+  Creator acceptance. No configuration/provider/schema/CRM/Billing writes.
+
+Protected inspect43603995152 reached fanmind-prod-01 but exited before git fetch
+and before the controller. The Meta source remote allowlist omitted the original
+Bernds-tech/FanMind repository aliases already accepted by the existing protected
+Support controller. Align the exact four aliases, retain current-Main/ancestry
+checks, add redacted remote-stage markers, and test accepted/foreign remotes
+against the actual shell case block. No remote URL/credential values are logged.
+The initial PR validation43603787681 registered the workflow successfully and
+exposed Run workflow even before merge; final required CI/merge still pending.
+
+
+## Production target continuation — 14 November 2026
+
+PR1492 merged as d402b11 after11successful current-head PR workflow groups.
+Protected inspect43606345192 now accepts the existing transferred-repository
+remote and reaches the controller, which fails closed with target_binding before
+readiness output or configuration/provider mutation. Align only the literal
+https://fanmind.ch and https://fanmind.ch/ root spellings with the existing
+Support target policy. Keep every other path, query, credential, port, origin,
+Supabase-project and runtime mismatch blocked. Separate allowlisted origin,
+database, file-environment, process-environment and process-release error codes
+identify any remaining mismatch without logging target or secret values. The
+root-slash hypothesis is not target evidence until the next protected inspect.
+
+Meta verification now shows “Wird überprüft”; Owner submitted the personal step.
+Publication remains disabled, required scopes remain Ready for testing only.
+Production Creator login is available; Facebook connection remains disabled for
+missing/invalid app-ID/callback/encryption. Actual HTTPS Productionbb799466;
+Staging95c93bf. No secret value, Staging token or identity document was copied.
+
+
+## Managed-worker inspection — 14 November 2026
+
+PR1493 merged as c0c1a191 after10successful exact-head workflow groups.
+Protected inspect43607939664 accepts the file/project target but rejects the
+process environment marker before readiness/configuration. Linux /proc/PID/environ
+contains exec-time state, not subsequent process.env changes; PM2-managed worker
+markers must instead be required from the exact online cluster worker metadata,
+in conjunction with the already pinned symlink, cwd, release and HTTPS runtime.
+Startup markers may be absent only with exact managed Production/live markers;
+contradictory startup values still block. Compare file/Meta aliases/service-key
+bindings against both startup and managed sources; block managed overrides of
+new values before writing. After reload and rollback revalidate the appropriate
+expected file values against both sources and preserve unrelated managed state.
+No target relaxation to Staging, optional managed marker or public-only proof.
+Add a real Linux subprocess test for the proc environment premise and negative
+managed/startup/alias/database/key cases. Actual target success remains unproven
+until the next protected inspect. No configuration, provider or database writes.
+Reference: https://man7.org/linux/man-pages/man5/proc_pid_environ.5.html
+
+The reviewed PM2 config deliberately owns Support and Character/Fan flags, so
+those two known values need not equal legacy environment-file text. Preserve
+their actual managed values explicitly before/after reload and rollback, even
+when absent from the file. A dedicated executed helper rejects changed/missing
+flags and unrelated Stripe drift. Do not treat those intended overrides as
+Meta-file conflicts or use file text to reset the running feature switches.

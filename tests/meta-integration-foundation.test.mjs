@@ -1,3 +1,5 @@
+import "./instagram-unified.cases.mjs";
+import './facebook-staging-ingress.cases.mjs';
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
@@ -508,10 +510,10 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   assert.match(integration, /force_authentication", "1"/u);
   assert.match(integration, /https:\/\/api\.instagram\.com\/oauth\/access_token/u);
   assert.match(integration, /grant_type", "ig_exchange_token"/u);
-  assert.match(integration, /graph\.instagram\.com\/\$\{META_GRAPH_API_VERSION\}\/me/u);
+  assert.match(integration, /unified \? encodeURIComponent\(token.userId\) : "me"/u);
   assert.match(
     integration,
-    /\$\{META_GRAPH_API_VERSION\}\/\$\{encodeURIComponent\(profileId\)\}\/conversations/u,
+    /\$\{instagramGraphVersion\(\)\}\/\$\{encodeURIComponent\(profileId\)\}\/conversations/u,
   );
   assert.match(integration, /platform", "instagram"/u);
   assert.match(
@@ -520,6 +522,7 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   );
   assert.match(integration, /Authorization: `Bearer \$\{accessToken\}`/u);
   assert.match(pagingPolicy, /url\.host !== "graph\.instagram\.com"/u);
+  assert.match(pagingPolicy, /url\.host !== "graph\.facebook\.com"/u);
   assert.match(start, /requireActiveAuthorizedWorkspace\(\)/u);
   assert.match(start, /workspaceId: workspace\.id/u);
   assert.match(start, /userId: data\.user\.id/u);
@@ -528,7 +531,7 @@ test("Instagram Business Login is workspace-bound and subscribes only authorized
   assert.match(callback, /requireActiveAuthorizedWorkspace\(\)/u);
   assert.match(callback, /workspace\.id !== state\.workspaceId/u);
   assert.match(callback, /areDemoConnectionsDisabled/u);
-  assert.match(callback, /encryptToken\(token\.accessToken\)/u);
+  assert.match(callback, /encryptToken\(instagramStoredToken\(token\)\)/u);
   assert.match(callback, /webhookSubscribed:\s*false/u);
   assert.match(callback, /subscribeInstagramAccount/u);
   assert.match(callback, /updateInstagramWebhookSubscribed/u);
@@ -831,6 +834,56 @@ test("Meta reader docs distinguish base migration state from observed continuati
 const metaRuntime = await import('../scripts/operations/staging-meta-runtime.mjs');
 const syntheticMetaInput = { appId: '123456789012345', appSecret: 'a'.repeat(32), webhookToken: 'b'.repeat(64) };
 const syntheticMetaKey = 'c'.repeat(64);
+test('Meta rebind requires its dedicated protected secret without falling back to the original app', () => {
+  const control = { META_SETUP_APP_SECRET: 'a'.repeat(32), META_REBIND_APP_SECRET: 'd'.repeat(32) };
+  assert.equal(metaRuntime.metaSetupInput('configure', control).appSecret, control.META_SETUP_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('rebind', control).appSecret, control.META_REBIND_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('rebind', { META_SETUP_APP_SECRET: control.META_SETUP_APP_SECRET }).appSecret, undefined);
+  assert.equal(metaRuntime.metaSetupInput('configure', { ...control, META_SETUP_APP_ID: '1547928503809961' }).appSecret, control.META_REBIND_APP_SECRET);
+  assert.equal(metaRuntime.metaSetupInput('configure', { META_SETUP_APP_ID: '1547928503809961', META_SETUP_APP_SECRET: control.META_SETUP_APP_SECRET }).appSecret, undefined);
+});
+test('isolated app subscription verifies a fixed Staging callback and exactly messages/feed without exporting credentials', async () => {
+  const values = { FACEBOOK_APP_ID: '1547928503809961', FACEBOOK_APP_SECRET: 'a'.repeat(32), FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'b'.repeat(64) };
+  const page = { object: 'page', callback_url: 'https://staging.fanmind.ch/api/webhooks/meta', active: true, fields: [{name:'messages'},{name:'feed'}] };
+  const calls = [];
+  const response = value => new Response(JSON.stringify(value), {headers:{'Content-Type':'application/json'}});
+  const request = async (url, options) => {
+    calls.push({url, options});
+    return response(calls.length === 1 ? {data:[]} : options.method === 'POST' ? {success:true} : {data:[page]});
+  };
+  await metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, request);
+  assert.equal(calls.length, 3);
+  for (const call of calls) {
+    assert.equal(call.url, 'https://graph.facebook.com/v25.0/1547928503809961/subscriptions');
+    assert.equal(call.options.redirect, 'error');
+    assert.equal(new URL(call.url).search, '');
+    assert.equal(call.options.headers.Authorization, `Bearer ${values.FACEBOOK_APP_ID}|${values.FACEBOOK_APP_SECRET}`);
+  }
+  assert.deepEqual(Object.fromEntries(calls[1].options.body), {object:'page',callback_url:page.callback_url,verify_token:values.FACEBOOK_WEBHOOK_VERIFY_TOKEN,fields:'messages,feed'});
+  let reads = 0;
+  await metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => { reads++; return response({data:[page]}); });
+  assert.equal(reads, 1);
+  for (const id of ['2214477125984114','1637976007865045','99999']) {
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook({...values,FACEBOOK_APP_ID:id}, id, async () => {throw Error('must not call provider');}), /subscription_identity_invalid/);
+  }
+  for (const row of [{...page,callback_url:'https://fanmind.ch/api/webhooks/meta'}, {...page,object:'instagram'}, {...page,fields:[{name:'feed'},{name:'likes'}]}]) {
+    let attempts = 0;
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => {attempts++; return response({data:[row]});}), /subscription_conflict/);
+    assert.equal(attempts, 1);
+  }
+  for (const data of [{}, {data:[page,page]}, {data:[],paging:{next:'https://example.invalid'}}])
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => response(data)), /subscription_inventory_invalid/);
+  for (const failure of ['denied','unconfirmed','readback','oversize']) {
+    let attempt = 0;
+    await assert.rejects(metaRuntime.subscribeStagingMetaWebhook(values, values.FACEBOOK_APP_ID, async () => {
+      attempt++;
+      if (attempt === 1) return response({data:[]});
+      if (failure === 'denied') return new Response('{}', {status:403});
+      if (failure === 'oversize') return new Response('x'.repeat(65537));
+      return response(attempt === 2 ? {success:failure !== 'unconfirmed'} : {data:[]});
+    }), /target_read_failed|subscription_write_unconfirmed|subscription_readback_failed/);
+  }
+});
 test('Meta runtime preserves existing encryption and changes only its explicit configuration fields', () => {
   const before = `UNCHANGED_SECRET="synthetic-preserved"\nFANMIND_SUPPORT_CENTRE_ENABLED=true\nFANMIND_TOKEN_ENCRYPTION_KEY="${syntheticMetaKey}"\n`;
   const after = metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput, {
@@ -889,3 +942,35 @@ test('Meta configure blocks pending runtime drift before any restart or write', 
 
 // Executable provider-response and reviewed Staging source regressions.
 import "./facebook-page-discovery.cases.mjs";
+
+
+test('explicit Staging Meta rebind preserves encryption, webhook verification and unrelated state', () => {
+  const before = `FACEBOOK_APP_ID=2214477125984114\nFACEBOOK_APP_SECRET=${'d'.repeat(32)}\nFACEBOOK_WEBHOOK_VERIFY_TOKEN=${'e'.repeat(64)}\nFANMIND_TOKEN_ENCRYPTION_KEY=${syntheticMetaKey}\nFANMIND_STAGING_OPERATOR_SESSION_ENABLED=true\nFANMIND_ENABLE_BILLING_WRITES=false\n`;
+  const options = { expectedPreviousAppId: '2214477125984114', generateKey() { throw Error('must never rotate'); } };
+  const after = metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput, options);
+  assert.match(after, /FACEBOOK_APP_ID="123456789012345"/);
+  assert.match(after, new RegExp('FANMIND_TOKEN_ENCRYPTION_KEY="'+syntheticMetaKey+'"'));
+  assert.match(after, new RegExp('FACEBOOK_WEBHOOK_VERIFY_TOKEN="'+'e'.repeat(64)+'"'));
+  assert.ok(after.includes('FANMIND_STAGING_OPERATOR_SESSION_ENABLED=true'));
+  assert.ok(after.includes('FANMIND_ENABLE_BILLING_WRITES=false'));
+  assert.throws(() => metaRuntime.renderMetaConfiguration(before, [], syntheticMetaInput), /existing_app_conflict/);
+  assert.throws(() => metaRuntime.renderMetaConfiguration(before, [`FACEBOOK_APP_ID=2214477125984114\n`], syntheticMetaInput, options), /override_conflict/);
+});
+test('Meta rebind rejects unapproved identities, child test app, stale old ID, aliases and missing preservation', () => {
+  const values = { FACEBOOK_APP_ID: '2214477125984114', FACEBOOK_APP_SECRET: 'd'.repeat(32), FACEBOOK_WEBHOOK_VERIFY_TOKEN: 'e'.repeat(64), FANMIND_TOKEN_ENCRYPTION_KEY: syntheticMetaKey };
+  metaRuntime.assertMetaRebind(values, syntheticMetaInput, '2214477125984114');
+  for (const old of ['', undefined, '99999']) assert.throws(() => metaRuntime.assertMetaRebind(values, syntheticMetaInput, old), /rebind_identity_invalid/);
+  for (const appId of ['1637976007865045','2214477125984114','invalid']) assert.throws(() => metaRuntime.assertMetaRebind(values, {...syntheticMetaInput, appId}, '2214477125984114'), /rebind_identity_invalid/);
+  assert.throws(() => metaRuntime.assertMetaRebind(values, {...syntheticMetaInput, appSecret:values.FACEBOOK_APP_SECRET}, '2214477125984114'), /rebind_identity_invalid/);
+  assert.throws(() => metaRuntime.assertMetaRebind({...values,FACEBOOK_APP_ID:'99999'}, syntheticMetaInput, '2214477125984114'), /rebind_identity_invalid/);
+  for (const key of ['META_APP_ID','META_APP_SECRET','META_WEBHOOK_APP_SECRET']) assert.throws(() => metaRuntime.assertMetaRebind({...values,[key]:'active-alias'}, syntheticMetaInput,'2214477125984114'), /rebind_alias_conflict/);
+  assert.throws(() => metaRuntime.assertMetaRebind({...values,META_APP_SECRET:'replace_with_secret'}, syntheticMetaInput,'2214477125984114'), /rebind_alias_conflict/);
+  for (const key of ['FANMIND_TOKEN_ENCRYPTION_KEY','FACEBOOK_WEBHOOK_VERIFY_TOKEN']) assert.throws(() => metaRuntime.assertMetaRebind({...values,[key]:undefined}, syntheticMetaInput,'2214477125984114'), /rebind_preservation_missing/);
+  const rebind = {expectedPreviousAppId:'2214477125984114', appSecret:syntheticMetaInput.appSecret};
+  metaRuntime.assertMetaRuntimeConsistency(values, {...values}, syntheticMetaInput.appId, rebind);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,META_APP_SECRET:'unexpected-runtime-alias'}, syntheticMetaInput.appId,rebind), /rebind_alias_conflict/);
+  assert.throws(() => metaRuntime.assertMetaRuntimeConsistency(values, {...values,FANMIND_TOKEN_ENCRYPTION_KEY:'f'.repeat(64)}, syntheticMetaInput.appId,rebind), /encryption_key_drift/);
+});
+
+// Production controller cases reuse the mandatory existing Meta suite.
+await import("./production-meta-runtime.cases.mjs");

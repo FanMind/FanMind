@@ -2,6 +2,8 @@ const MONEY = /(?:(EUR|CHF|USD|GBP|Euros?|Franken|Fr\.|Pfund|Pounds?|Dollars?|[â
 
 /** @param {import('@playwright/test').Page} page @param {string} name */
 export async function ensureOfferEditor(page, name) {
+  const prices=page.getByRole("button",{name:"Preise & Angebote",exact:true});
+  if(await prices.count()&&await prices.isVisible()&&await prices.getAttribute("aria-pressed")!=="true")await prices.click();
   const heading = page.getByRole("heading", { name, exact: true });
   if (await heading.count() === 0) {
     await page.getByRole("button", { name: "+ Angebot", exact: true }).click();

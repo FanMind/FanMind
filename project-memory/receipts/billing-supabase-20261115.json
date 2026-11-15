@@ -1,0 +1,536 @@
+{
+  "task": "FM-BILLING-SUPABASE-20261115",
+  "schema_version": 1,
+  "observed_utc": "2026-11-15T10:57:27Z/2026-11-15T11:07:00Z",
+  "source_sha": "e65609e23091618fd3807aeb5bb7ef816e2626a0",
+  "release_decision": "BLOCK",
+  "stripe": {
+    "connection": {
+      "status": "PASS",
+      "account_name": "FanMind",
+      "livemode": true,
+      "reauthorization_required": false
+    },
+    "catalog": {
+      "status": "PASS",
+      "has_more": false,
+      "prices": [
+        {
+          "price_id": "price_1ULesxAOA7p70TO9x2PPz9Ul",
+          "product_name": "FanMind Datenpaket 100",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 14900,
+          "interval": null,
+          "tax_code": null
+        },
+        {
+          "price_id": "price_1ULesuAOA7p70TO9rCVqcbyE",
+          "product_name": "FanMind Datenpaket 50",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 7499,
+          "interval": null,
+          "tax_code": null
+        },
+        {
+          "price_id": "price_1ULessAOA7p70TO9EPTRgwH1",
+          "product_name": "FanMind Datenpaket 25",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 3749,
+          "interval": null,
+          "tax_code": null
+        },
+        {
+          "price_id": "price_1ULesrAOA7p70TO9Nw9Ej3rh",
+          "product_name": "FanMind Datenpaket 10",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 1499,
+          "interval": null,
+          "tax_code": null
+        },
+        {
+          "price_id": "price_1ULRRQAOA7p70TO9Y7UWOP2g",
+          "product_name": "FanMind 312",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 31200,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1ULRNVAOA7p70TO9obAZlCZM",
+          "product_name": "FanMind 199",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 19900,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1ULRNOAOA7p70TO9Y8Vf6J3d",
+          "product_name": "FanMind 99",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 9900,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1U2eLGAOA7p70TO9pCmSOVfD",
+          "product_name": "FanMind AI Ultra (Legacy)",
+          "product_active": false,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 20000,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1U2eJNAOA7p70TO9CHGut39L",
+          "product_name": "FanMind AI Plus (Legacy)",
+          "product_active": false,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 10000,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1TrKRbAOA7p70TO9NiTgKpHV",
+          "product_name": "FanMind Internal Daily Test",
+          "product_active": true,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 100,
+          "interval": "day",
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1TrKMbAOA7p70TO9W1AqjC9L",
+          "product_name": "FanMind Starter Setup (Retired)",
+          "product_active": false,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 99000,
+          "interval": null,
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1TrKMXAOA7p70TO9K8EHg2gv",
+          "product_name": "FanMind Pilot / Setup (Retired)",
+          "product_active": false,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 99000,
+          "interval": null,
+          "tax_code": "txcd_10103001"
+        },
+        {
+          "price_id": "price_1TrKMXAOA7p70TO9cEVyWOUQ",
+          "product_name": "FanMind Starter Monthly (Legacy)",
+          "product_active": false,
+          "price_active": true,
+          "livemode": true,
+          "currency": "eur",
+          "unit_amount": 31200,
+          "interval": "month",
+          "tax_code": "txcd_10103001"
+        }
+      ]
+    },
+    "webhook": {
+      "status": "FAIL",
+      "url": "https://fanmind.ch/api/stripe/webhook",
+      "api_version": "2026-06-24.dahlia",
+      "enabled": true,
+      "observed_event_count": 20,
+      "required_event_count": 22,
+      "missing_events": [
+        "customer.tax_id.created",
+        "customer.tax_id.deleted"
+      ]
+    },
+    "tax": {
+      "status": "BLOCKED",
+      "registrations_count": 0,
+      "has_more": false,
+      "topup_product_tax_codes_missing": 4
+    },
+    "sandbox_current": {
+      "status": "BLOCKED",
+      "reason": "Only Live connector context available; browser DOM/control timed out. Historical catalog/endpoint/smoke passes retained, not refreshed."
+    },
+    "hosted_payment_lifecycle": {
+      "status": "NOT TESTED",
+      "writes": 0
+    }
+  },
+  "supabase": {
+    "drqkpdvtbbrrdwmtrodz": {
+      "project_name": "FanMind",
+      "status": "ACTIVE_HEALTHY",
+      "postgres_engine": "17",
+      "version": "17.6.1.127",
+      "observed_at": "2026-11-15T10:58:50.399023+00:00",
+      "billing_tables": [],
+      "workspace_billing_grants": [
+        {
+          "role": "anon",
+          "can_insert": true,
+          "can_update": true,
+          "update_billing_status": true,
+          "update_stripe_customer": true,
+          "update_stripe_subscription": true
+        },
+        {
+          "role": "authenticated",
+          "can_insert": true,
+          "can_update": true,
+          "update_billing_status": true,
+          "update_stripe_customer": true,
+          "update_stripe_subscription": true
+        },
+        {
+          "role": "service_role",
+          "can_insert": true,
+          "can_update": true,
+          "update_billing_status": true,
+          "update_stripe_customer": true,
+          "update_stripe_subscription": true
+        }
+      ],
+      "consistency": {
+        "observed_at": "2026-11-15T11:06:55.742162+00:00",
+        "synthetic_actor_exists": false,
+        "duplicate_customer_bindings": 0,
+        "workspace_server_owned_columns": [
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "payment_terms_accepted_at"
+          },
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "plan_id"
+          },
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "commercial_option"
+          },
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "billing_status"
+          },
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "stripe_customer_id"
+          },
+          {
+            "auth_insert": true,
+            "auth_update": true,
+            "column_name": "stripe_subscription_id"
+          }
+        ],
+        "duplicate_subscription_bindings": 0
+      },
+      "negative_unbound_authenticated": {
+        "role": "authenticated",
+        "contacts_visible": 0,
+        "workspaces_visible": 0,
+        "memberships_visible": 0,
+        "private_objects_visible": 0
+      },
+      "unprotected_public_tables": 0,
+      "security_advisors": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 18,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 6,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        }
+      ]
+    },
+    "vshyhvgcmrlagvfnvomc": {
+      "project_name": "FanMind Staging",
+      "status": "ACTIVE_HEALTHY",
+      "postgres_engine": "17",
+      "version": "17.6.1.155",
+      "observed_at": "2026-11-15T10:58:45.451184+00:00",
+      "billing_tables": [
+        {
+          "relname": "ai_capacity_admin_policy",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "ai_capacity_grants",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "ai_capacity_ledger_events",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "ai_capacity_reservation_allocations",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "ai_capacity_reservations",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "support_ai_consents",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": false
+        },
+        {
+          "relname": "workspace_ai_tier_stripe_events",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        },
+        {
+          "relname": "workspace_ai_tier_stripe_reconciliations",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        },
+        {
+          "relname": "workspace_stripe_billing_events",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        },
+        {
+          "relname": "workspace_stripe_billing_object_bindings",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        },
+        {
+          "relname": "workspace_stripe_billing_reconciliations",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        },
+        {
+          "relname": "workspace_stripe_billing_streams",
+          "anon_select": false,
+          "auth_select": false,
+          "auth_any_write": false,
+          "relrowsecurity": true,
+          "relforcerowsecurity": true
+        }
+      ],
+      "workspace_billing_grants": [
+        {
+          "role": "anon",
+          "can_insert": false,
+          "can_update": false,
+          "update_billing_status": false,
+          "update_stripe_customer": false,
+          "update_stripe_subscription": false
+        },
+        {
+          "role": "authenticated",
+          "can_insert": false,
+          "can_update": false,
+          "update_billing_status": false,
+          "update_stripe_customer": false,
+          "update_stripe_subscription": false
+        },
+        {
+          "role": "service_role",
+          "can_insert": true,
+          "can_update": true,
+          "update_billing_status": true,
+          "update_stripe_customer": true,
+          "update_stripe_subscription": true
+        }
+      ],
+      "consistency": {
+        "observed_at": "2026-11-15T11:07:00.401816+00:00",
+        "synthetic_actor_exists": false,
+        "duplicate_customer_bindings": 0,
+        "workspace_server_owned_columns": [
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "payment_terms_accepted_at"
+          },
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "plan_id"
+          },
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "commercial_option"
+          },
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "billing_status"
+          },
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "stripe_customer_id"
+          },
+          {
+            "auth_insert": false,
+            "auth_update": false,
+            "column_name": "stripe_subscription_id"
+          }
+        ],
+        "duplicate_subscription_bindings": 0
+      },
+      "negative_unbound_authenticated": {
+        "role": "authenticated",
+        "contacts_visible": 0,
+        "workspaces_visible": 0,
+        "memberships_visible": 0,
+        "private_objects_visible": 0
+      },
+      "unprotected_public_tables": 0,
+      "security_advisors": [
+        {
+          "name": "rls_enabled_no_policy",
+          "level": "INFO",
+          "count": 46,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+        },
+        {
+          "name": "authenticated_security_definer_function_executable",
+          "level": "WARN",
+          "count": 9,
+          "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+        }
+      ]
+    }
+  },
+  "staging_capacity": {
+    "status": "BLOCKED",
+    "counts": {
+      "grants": 0,
+      "allocations": 0,
+      "reservations": 0,
+      "ledger_events": 0,
+      "billing_events": 4,
+      "billing_streams": 0,
+      "reconciliation_required": 0
+    },
+    "policy": {
+      "revision": 2,
+      "updated_at": "2026-09-30T18:21:30.062859+00:00",
+      "fast_enabled": false,
+      "singleton_id": 1,
+      "premium_enabled": false,
+      "balanced_enabled": false,
+      "top_up_sales_enabled": false,
+      "emergency_spend_freeze": true,
+      "global_capacity_enabled": false,
+      "top_up_activation_ready": false,
+      "package_99_sales_enabled": false,
+      "runtime_activation_ready": false,
+      "package_199_sales_enabled": false,
+      "package_312_sales_enabled": false,
+      "package_sales_activation_ready": false,
+      "package_99_budget_eur_microcents": 1500000000,
+      "package_199_budget_eur_microcents": 3000000000,
+      "package_312_budget_eur_microcents": 5000000000
+    },
+    "capacity_lifecycle_rpcs_present": false,
+    "billing_event_states": [
+      {
+        "count": 4,
+        "processing_state": "unresolved"
+      }
+    ]
+  },
+  "source_tests": {
+    "status": "PASS",
+    "passed": 112,
+    "failed": 0,
+    "skipped": 0,
+    "target_acceptance": false
+  },
+  "http_staging": {
+    "source_sha": "e65609e23091618fd3807aeb5bb7ef816e2626a0",
+    "unsigned_webhook": 400,
+    "anonymous_checkout": 401,
+    "anonymous_topup": 401
+  },
+  "mutations": {
+    "database": 0,
+    "stripe": 0,
+    "payment": 0,
+    "deploy": 0
+  },
+  "independent_countercheck": "Source billing and column-ACL review completed; no target write test."
+}

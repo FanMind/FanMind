@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
+import { spawnSync } from "node:child_process";
+import { existsSync, lstatSync, realpathSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { bootSummaryFromValues } from "./production-boot-readiness.mjs";
 
 import {
@@ -288,7 +292,95 @@ export function printProductionBackupDiagnostics(diagnostics) {
   }
 }
 
-export function verifyProductionRuntimeOutput(source, expectedCommit) {
+// Only trusted code may supply test dependencies. The CLI has no path, URL,
+// evidence-file or environment override for this independent provenance read.
+const TRACKING_REPOSITORY = "FanMind/FanMind";
+const TRACKING_REF = "refs/remotes/origin/main";
+const TRACKING_ENV = Object.freeze({ PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C",
+  GIT_CONFIG_NOSYSTEM: "1", GIT_CONFIG_GLOBAL: "/dev/null", GIT_NO_REPLACE_OBJECTS: "1",
+  GIT_OPTIONAL_LOCKS: "0", GIT_NO_LAZY_FETCH: "1" });
+
+export function trackingGithubJson(endpoint) {
+  if (!/^\/(?:git\/ref\/heads\/main|compare\/[a-f0-9]{40}\.\.\.[a-f0-9]{40}\?per_page=1)?$/u.test(endpoint)) throw Error();
+  const result = spawnSync("/usr/bin/curl", ["--disable", "--fail", "--silent", "--show-error",
+    "--proto", "=https", "--tlsv1.2", "--connect-timeout", "5", "--max-time", "10",
+    "--max-filesize", "262144", "--max-redirs", "0", "--write-out", "\n%{http_code}", "--header", "Accept: application/vnd.github+json",
+    `https://api.github.com/repos/${TRACKING_REPOSITORY}${endpoint === "/" ? "" : endpoint}`],
+  { env: TRACKING_ENV, encoding: "utf8", timeout: 12000, maxBuffer: 262144 });
+  if (result.error || result.status !== 0) throw Error();
+  return decodeTrackingGithubResponse(result.stdout);
+}
+
+export function decodeTrackingGithubResponse(wire) {
+  if (typeof wire !== "string" || Buffer.byteLength(wire) > 262144 || !wire.endsWith("\n200") || wire.includes("\0")) throw Error();
+  return JSON.parse(wire.slice(0, -4));
+}
+
+export function readTrackingProvenance(live, origin, { root = "/var/www/fanmind", requestJson = trackingGithubJson } = {}) {
+  try {
+    if (![live, origin].every(v => SHA_PATTERN.test(v ?? ""))) throw Error();
+    const gitDir = join(root, ".git");
+    const identity = () => {
+      if (realpathSync(root) !== root || realpathSync(gitDir) !== gitDir || !lstatSync(gitDir).isDirectory()) throw Error();
+      return [lstatSync(root), lstatSync(gitDir)].map(s => `${s.dev}:${s.ino}`).join("|");
+    };
+    const beforeIdentity = identity();
+    const git = (...args) => {
+      const r = spawnSync("/usr/bin/git", ["--no-replace-objects", "-C", root, ...args],
+        { env: TRACKING_ENV, encoding: "utf8", timeout: 5000, maxBuffer: 262144 });
+      if (r.error || r.status !== 0 || r.stdout.includes("\0") && args[0] !== "config") throw Error();
+      return r.stdout;
+    };
+    const snapshot = () => {
+      const config = git("config", "--local", "--no-includes", "--null", "--list");
+      if (/(?:^|\0)(?:include\.|includeif\.|url\.|extensions\.(?:partialclone|worktreeconfig)|remote\.[^\n]+\.promisor\n)/iu.test(config)) throw Error();
+      if (git("rev-parse", "--show-toplevel").trim() !== root || git("rev-parse", "--absolute-git-dir").trim() !== gitDir
+        || realpathSync(git("rev-parse", "--git-common-dir").trim().startsWith("/")
+          ? git("rev-parse", "--git-common-dir").trim() : join(root, git("rev-parse", "--git-common-dir").trim())) !== gitDir
+        || git("rev-parse", "--is-bare-repository").trim() !== "false" || git("rev-parse", "--is-shallow-repository").trim() !== "false") throw Error();
+      for (const name of ["shallow", "info/grafts", "objects/info/alternates", "objects/info/http-alternates"])
+        if (existsSync(join(gitDir, name))) throw Error();
+      if (existsSync(join(gitDir, "objects/pack")) && readdirSync(join(gitDir, "objects/pack")).some(name => name.endsWith(".promisor"))) throw Error();
+      if (git("for-each-ref", "--format=%(refname)", "refs/replace/").trim()
+        || git("for-each-ref", "--format=%(symref)", TRACKING_REF).trim()) throw Error();
+      const remoteValues = git("config", "--local", "--null", "--get-all", "remote.origin.url").split("\0");
+      if (remoteValues.length !== 2 || remoteValues[1] !== "") throw Error();
+      const remote = remoteValues[0];
+      if (!["https://github.com/FanMind/FanMind.git", "https://github.com/FanMind/FanMind",
+        "git@github.com:FanMind/FanMind.git", "ssh://git@github.com/FanMind/FanMind.git"].includes(remote)) throw Error();
+      if (git("rev-parse", "--verify", TRACKING_REF).trim() !== origin
+        || git("rev-parse", "--verify", "HEAD").trim() !== live) throw Error();
+      return createHash("sha256").update(config).digest("hex") + ":" + remote;
+    };
+    const before = snapshot();
+    for (const commit of [live, origin]) {
+      if (git("cat-file", "-t", commit).trim() !== "commit") throw Error();
+      const bytes = git("cat-file", "commit", commit);
+      if (createHash("sha1").update(`commit ${Buffer.byteLength(bytes)}\0`).update(bytes).digest("hex") !== commit) throw Error();
+    }
+    git("merge-base", "--is-ancestor", live, origin);
+    const repo = requestJson("/");
+    if (repo?.id !== 1259448985 || repo.full_name !== TRACKING_REPOSITORY || repo.default_branch !== "main"
+      || repo.fork !== false || repo.archived !== false || repo.disabled !== false) throw Error();
+    const main = () => {
+      const ref = requestJson("/git/ref/heads/main");
+      if (ref?.ref !== "refs/heads/main" || ref.object?.type !== "commit" || !SHA_PATTERN.test(ref.object?.sha ?? "")) throw Error();
+      return ref.object.sha;
+    };
+    const anchor = main();
+    for (const [base, head] of [[live, origin], [origin, anchor]]) {
+      const c = requestJson(`/compare/${base}...${head}?per_page=1`);
+      if (c?.base_commit?.sha !== base || c.merge_base_commit?.sha !== base || c.behind_by !== 0
+        || !Number.isSafeInteger(c.ahead_by) || c.ahead_by < 0 || c.total_commits !== c.ahead_by
+        || c.status !== (base === head ? "identical" : "ahead") || (base === head ? c.ahead_by !== 0 : c.ahead_by < 1)) throw Error();
+    }
+    if (main() !== anchor || snapshot() !== before || identity() !== beforeIdentity) throw Error();
+    return Object.freeze({ origin, live, repository: TRACKING_REPOSITORY, ref: TRACKING_REF, anchor,
+      classification: origin === anchor ? "MAIN_EXACT" : "MAIN_ANCESTOR" });
+  } catch { fail("tracking_provenance_invalid"); }
+}
+
+export function verifyProductionRuntimeOutput(source, expectedCommit, { trackingReader = readTrackingProvenance } = {}) {
   if (!SHA_PATTERN.test(expectedCommit ?? "")) fail("expected_commit_invalid");
 
   const values = parseProductionAuditOutput(source);
@@ -308,7 +400,6 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
 
   const releaseValues = [
     single(values, "SERVER_HEAD"),
-    single(values, "ORIGIN_MAIN"),
     single(values, "LIVE_RELEASE"),
   ];
   if (
@@ -318,6 +409,16 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
   ) {
     fail("release_drift");
   }
+  const origin = single(values, "ORIGIN_MAIN");
+  if (!SHA_PATTERN.test(origin)) fail("tracking_reference_invalid");
+  // Exact equality retains the original strict identity contract. A different
+  // origin never falls back to that path, and raw PROOF=true fields authorize nothing.
+  const tracking = origin === expectedCommit ? { origin, classification: "LIVE_EXACT" }
+    : trackingReader(expectedCommit, origin);
+  if (tracking?.origin !== origin || !["LIVE_EXACT", "MAIN_EXACT", "MAIN_ANCESTOR"].includes(tracking.classification)
+    || origin !== expectedCommit && (tracking.live !== expectedCommit || tracking.repository !== TRACKING_REPOSITORY
+      || tracking.ref !== TRACKING_REF || !SHA_PATTERN.test(tracking.anchor ?? "")
+      || tracking.classification !== (origin === tracking.anchor ? "MAIN_EXACT" : "MAIN_ANCESTOR"))) fail("tracking_provenance_invalid");
   if (single(values, "LIVE_ENVIRONMENT") !== "production") {
     fail("environment_invalid");
   }
@@ -366,7 +467,7 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
 
   return {
     auditUtc, nodeVersion, pm2NodeVersion, hostUptimeSeconds, hostBootId,
-    releaseCommit: expectedCommit, healthComponentCount, pm2Restarts,
+    releaseCommit: expectedCommit, tracking, healthComponentCount, pm2Restarts,
     pm2UptimeSeconds, serverErrorTrackingEnabled, serverErrorEmailEnabled,
     localLoginHttp, publicLoginHttp, diskUsedPercent, memoryAvailableKiB,
     rebootRequired: rebootRequired === "true", systemdUnitCount,
@@ -374,11 +475,11 @@ export function verifyProductionRuntimeOutput(source, expectedCommit) {
   };
 }
 
-export function verifyProductionAuditOutput(source, expectedCommit) {
+export function verifyProductionAuditOutput(source, expectedCommit, options) {
   if (!SHA_PATTERN.test(expectedCommit ?? "")) fail("expected_commit_invalid");
   const values = parseProductionAuditOutput(source);
   if (single(values, "AUDIT_RESULT") !== "success") fail("result_failed");
-  const runtime = verifyProductionRuntimeOutput(source, expectedCommit);
+  const runtime = verifyProductionRuntimeOutput(source, expectedCommit, options);
 
   if (single(values, "BACKUP_ROOT") !== "available") {
     fail("backup_root_unavailable");
@@ -444,6 +545,9 @@ export function printProductionRuntimeSummary(summary) {
   console.log("PRODUCTION_RUNTIME_VERIFIED=true");
   console.log(`PRODUCTION_AUDIT_UTC=${summary.auditUtc}`);
   console.log(`PRODUCTION_RELEASE=${summary.releaseCommit}`);
+  console.log(`PRODUCTION_TRACKING_REFERENCE=${summary.tracking.origin}`);
+  console.log(`PRODUCTION_TRACKING_CLASSIFICATION=${summary.tracking.classification}`);
+  if (summary.tracking.anchor) console.log(`PRODUCTION_TRACKING_MAIN_ANCHOR=${summary.tracking.anchor}`);
   console.log(`PRODUCTION_SHELL_NODE_VERSION=${summary.nodeVersion}`);
   console.log(`PRODUCTION_PM2_NODE_VERSION=${summary.pm2NodeVersion}`);
   console.log(`PRODUCTION_HOST_UPTIME_SECONDS=${summary.hostUptimeSeconds}`);
