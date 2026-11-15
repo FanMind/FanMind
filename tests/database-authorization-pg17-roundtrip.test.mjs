@@ -754,7 +754,7 @@ function runCommand(command, args, { input, env } = {}) {
 }
 
 async function dockerPsql(containerId, password, sql, database = "postgres") {
-  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
   await runCommand(
     "docker",
     [
@@ -785,7 +785,7 @@ async function dockerPsqlScalar(
   sql,
   { readOnly = false, database = "postgres" } = {},
 ) {
-  assert.ok(["postgres", "fanmind_current_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
   const result = await runCommand(
     "docker",
     [
@@ -836,7 +836,7 @@ function psqlWrapperLines(containerId, password) {
     `password=\"${password}\"`,
     "exec docker exec -i --user 0 " +
       '-e "PGPASSWORD=$password" ' +
-      '-e "PGOPTIONS=${PGOPTIONS:-}" ' +
+      '-e "PGOPTIONS=${PGOPTIONS:-} -c jit=off" ' +
       '-e "PGAPPNAME=${PGAPPNAME:-}" ' +
       `\"$container_id\" ${POSTGRES_BIN}/psql \"$@\"`,
   ];
@@ -1221,7 +1221,8 @@ test(
       HAS_SERVICE_CONTAINERS || REQUIRE_SERVICE_CONTAINERS
         ? false
         : `set ${SOURCE_CONTAINER_ENV} and ${TARGET_CONTAINER_ENV}`,
-    // Two complete legacy/current restore paths; individual commands remain bounded.
+    // Three complete generations; CI disables repeated JIT compilation only.
+    // Every command remains bounded and authorization assertions are unchanged.
     timeout: 600_000,
   },
   async (context) => {
@@ -2236,6 +2237,86 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
       }
       assert.deepEqual(await captureContract(sourcePsql, pgpassFile), currentContract);
     }
+
+    // Third generation: source-backed privileged definitions, no customer data.
+    // check_function_bodies=off permits metadata-only stubs for referenced tables;
+    // this proves catalog/ACL/body guards and dump/restore, not Support behavior.
+    const {reviewedDefinitions,reviewedFixtureSql}=await import('./helpers/reviewed-security-definer-fixture.mjs');
+    const reviewedDefinitionsList=await reviewedDefinitions();
+    const definitionFor=(name)=>reviewedDefinitionsList.find(x=>x.expected.name===name).definition.replace(/^create(?:\s+or\s+replace)?\s+function/i,'create or replace function');
+    await dockerPsql(SOURCE_CONTAINER_ID,password,await reviewedFixtureSql());
+    const reviewedContract=await captureContract(sourcePsql,pgpassFile);
+    assert.equal(reviewedContract.restrictedSecurityDefinerFunctionCount,29);
+    const functionSignature='public.support_centre_check(uuid,uuid,uuid)';
+    const badBody=definitionFor('support_centre_check').replace(/as\s+\$\$[\s\S]*\$\$/i,()=> 'as $$begin return true; end$$');
+    const coreBadBody=definitionFor('claim_admin_backup_job').replace(/as\s+\$\$[\s\S]*\$\$/i,()=> 'as $$begin return null; end$$');
+    const metadataOnlySql=(sql)=>dockerPsql(SOURCE_CONTAINER_ID,password,`set check_function_bodies=off; ${sql}`);
+    const reviewedMutations=[
+      [badBody,definitionFor('support_centre_check')],
+      [
+        `drop function public.cleanup_shared_rate_limit_buckets(integer); create function public.unapproved_core_replacement() returns integer language sql security definer as 'select 0'; revoke all on function public.unapproved_core_replacement() from public,anon,authenticated; grant execute on function public.unapproved_core_replacement() to service_role;`,
+        `drop function public.unapproved_core_replacement(); ${definitionFor('cleanup_shared_rate_limit_buckets')} revoke all on function public.cleanup_shared_rate_limit_buckets(integer) from public,anon,authenticated; grant execute on function public.cleanup_shared_rate_limit_buckets(integer) to service_role;`,
+      ],
+      [
+        `grant service_role to authenticated with inherit true;`,
+        `revoke service_role from authenticated;`,
+      ],
+
+      [coreBadBody,definitionFor('claim_admin_backup_job')],
+      [definitionFor('admin_crm_read_allowed').replace(/language sql/i,'language plpgsql'),definitionFor('admin_crm_read_allowed')],
+      [`alter function ${functionSignature} set search_path=public;`,`alter function ${functionSignature} set search_path='';`],
+      [`alter function ${functionSignature} stable;`,`alter function ${functionSignature} volatile;`],
+      [`alter function ${functionSignature} strict;`,`alter function ${functionSignature} called on null input;`],
+      [`alter function ${functionSignature} parallel safe;`,`alter function ${functionSignature} parallel unsafe;`],
+      [`alter function ${functionSignature} leakproof;`,`alter function ${functionSignature} not leakproof;`],
+      [`alter function ${functionSignature} security invoker;`,`alter function ${functionSignature} security definer;`],
+      [`alter function ${functionSignature} owner to ci_owner;`,`alter function ${functionSignature} owner to postgres;`],
+      [`grant execute on function ${functionSignature} to anon;`,`revoke execute on function ${functionSignature} from anon;`],
+      [`grant execute on function ${functionSignature} to authenticated;`,`revoke execute on function ${functionSignature} from authenticated;`],
+      [`grant execute on function ${functionSignature} to service_role with grant option;`,`revoke grant option for execute on function ${functionSignature} from service_role;`],
+      [definitionFor('support_chat_review').replace('DEFAULT NULL',"DEFAULT '00000000-0000-0000-0000-000000000001'::uuid"),definitionFor('support_chat_review')],
+      [`create function public.support_centre_check(text) returns boolean language sql security definer as 'select true';`,`drop function public.support_centre_check(text);`],
+      [`create function public.unapproved_security_definer() returns boolean language sql security definer as 'select true';`,`drop function public.unapproved_security_definer();`],
+      [
+        `drop function public.support_retention_health(uuid); create function public.support_ai_consent_state(p_actor uuid) returns jsonb language sql security definer as 'select null::jsonb';`,
+        `drop function public.support_ai_consent_state(uuid); ${definitionFor('support_retention_health')} revoke all on function public.support_retention_health(uuid) from public,anon,authenticated; grant execute on function public.support_retention_health(uuid) to service_role;`,
+      ],
+      [
+        `create function public.support_centre_purge() returns integer language sql security definer as 'select 0';`,
+        `drop function public.support_centre_purge();`,
+      ],
+    ];
+    for(const [mutationIndex,[bad,repair]] of reviewedMutations.entries()){
+      await metadataOnlySql(bad);
+      try {await assert.rejects(captureContract(sourcePsql,pgpassFile),/authorization_security_definer_boundary_invalid/u,`reviewed mutation ${mutationIndex}: ${bad.slice(0,100)}`);}
+      finally {await metadataOnlySql(repair);}
+      assert.deepEqual(await captureContract(sourcePsql,pgpassFile),reviewedContract);
+      context.diagnostic(`Reviewed39 mutation ${mutationIndex} rejected; exact contract repaired.`);
+    }
+    const reviewedDirectory=join(temporaryRoot,'reviewed39-backup');await mkdir(reviewedDirectory,{mode:0o700});
+    const reviewedBackup=await createDatabase(reviewedDirectory);
+    assert.deepEqual(validateAuthorizationContract(reviewedBackup.manifest.authorization_contract),reviewedContract);
+    const reviewedReceiptPath=join(temporaryRoot,'reviewed39-full-receipt.json');
+    await writeFile(reviewedReceiptPath,`${JSON.stringify(authorizationReceipt(reviewedBackup))}\n`,{flag:'wx',mode:0o600});
+    const reviewedDatabase='fanmind_reviewed39_restore';
+    await dockerPsql(TARGET_CONTAINER_ID,password,`create database ${reviewedDatabase} template template0;`);
+    await dockerPsql(TARGET_CONTAINER_ID,password,baseline.replaceAll('database postgres',`database ${reviewedDatabase}`),reviewedDatabase);
+    assert.equal(await dockerPsqlScalar(TARGET_CONTAINER_ID,password,emptyTargetSql,{readOnly:true,database:reviewedDatabase}),'0');
+    const reviewedOptions={...currentOptions,receiptPath:reviewedReceiptPath,database:reviewedDatabase};
+    await assertDatabaseAuthorizationRoles(reviewedOptions);
+    const reviewedToc=await runCommand(sourcePgRestore,['--list',reviewedBackup.path]);
+    const reviewedTocPath=join(temporaryRoot,'reviewed39-restore.toc');
+    await writeFile(reviewedTocPath,filterExtensionsSchemaToc(reviewedToc.stdout),{flag:'wx',mode:0o600});
+    const reviewedContainerDump='/tmp/fanmind-reviewed39-contract.dump',reviewedContainerToc='/tmp/fanmind-reviewed39-contract.toc';
+    context.after(async()=>{await runCommand('docker',['exec','--user','0',TARGET_CONTAINER_ID,'rm','-f','--',reviewedContainerDump,reviewedContainerToc]).catch(()=>{});});
+    await runCommand('docker',['cp',reviewedBackup.path,`${TARGET_CONTAINER_ID}:${reviewedContainerDump}`]);
+    await runCommand('docker',['cp',reviewedTocPath,`${TARGET_CONTAINER_ID}:${reviewedContainerToc}`]);
+    await runCommand('docker',['exec','--user','0','-e',`PGPASSWORD=${RESTORE_OPERATOR_PASSWORD}`,TARGET_CONTAINER_ID,`${POSTGRES_BIN}/pg_restore`,'--exit-on-error','--single-transaction','--use-list',reviewedContainerToc,'--no-password','--host','127.0.0.1','--port','5432','--username',RESTORE_OPERATOR_ROLE,'--dbname',reviewedDatabase,reviewedContainerDump]);
+    const restoredReviewed=await snapshotTargetDatabaseAuthorization(reviewedOptions);
+    assert.equal(restoredReviewed.restrictedSecurityDefinerFunctionCount,29);
+    assert.equal(restoredReviewed.fingerprintSha256,reviewedContract.fingerprintSha256);
+    context.diagnostic('Reviewed39/29: exact source body/metadata/ACL negatives and actual dump/restore PASS.');
+
   },
 );
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
-import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaScope, requireMediaEnabled, updateMediaAsset, type MediaAsset, type CustomMediaPolicy } from "@/lib/chatAdminMedia";
-import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText, normalizeCustomPolicy, normalizeMediaEdit } from "@/lib/chatAdminMediaPolicy.mjs";
+import { assertMediaCharacter, cleanupFailedMediaUpload, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaScope, requireMediaEnabled, updateMediaAsset, type MediaAsset, type CustomMediaPolicy } from "@/lib/chatAdminMedia";
+import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText, normalizeCustomPolicy, normalizeMediaEdit } from "@/lib/chatAdminMediaPolicy.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
 import { WorkspaceAuthorizationError } from "@/lib/workspaceAuthorization";
@@ -55,26 +55,30 @@ async function mutate(request:NextRequest,method:"POST"|"PATCH"|"DELETE"){
    const policy=normalizeCustomPolicy(body.policy,character.sales_playbook?.offers??[]);
    const existing=await loadCharacterMedia(workspace.id,characterId);
    if(body.revision!==existing.policy.revision)throw new ChatAdminMediaError("stale_media_context");
-   if(existing.policy.revision===0)await mediaRest("chat_character_media_policies",{method:"POST",body:JSON.stringify({...policy,workspace_id:workspace.id,character_id:characterId})});
+   if(existing.policy.revision===0)await mediaRest("chat_character_media_policies",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({...policy,workspace_id:workspace.id,character_id:characterId})});
    else{const rows=await mediaRest<CustomMediaPolicy[]>(`chat_character_media_policies?${mediaScope(workspace.id,characterId)}&revision=eq.${existing.policy.revision}`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify(policy)});if(rows.length!==1)throw new ChatAdminMediaError("stale_media_context");}
   }else if(method==="POST"){
    if(body.rights_confirmed!==true)throw new ChatAdminMediaError("media_rights_required");
    const limit=await consumeSharedRateLimit({scope:"chat_admin_media_upload",subject:user.id,maxRequests:20,windowMs:600_000});if(!limit.allowed)return NextResponse.json({error:"rate_limited"},{status:429});
    const {assets}=await loadCharacterMedia(workspace.id,characterId);if(assets.length>=MEDIA_MAX_ITEMS)throw new ChatAdminMediaError("media_library_limit");
-   if(typeof body.image!=="string"||body.image.length>Math.ceil(MEDIA_MAX_BYTES/3)*4||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(body.image))throw new ChatAdminMediaError("invalid_image");
-   const image=await normalizeMediaImage(Buffer.from(body.image,"base64"));
+   if(!isMediaBase64(body.image,MEDIA_MAX_BYTES))throw new ChatAdminMediaError("invalid_image");
+   const image=await normalizeMediaImage(Buffer.from(body.image as string,"base64"));
    const id=crypto.randomUUID();
    const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id,workspace_id:workspace.id,character_id:characterId,folder:mediaText(body.folder??"",80)})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
    try{await mediaObject(workspace.id,characterId,id,"POST",image);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
-   catch{await updateMediaAsset(workspace.id,characterId,rows[0],{deleted:true,available:false,reviewed:false});throw new ChatAdminMediaError("media_upload_incomplete");}
+   catch{try{await cleanupFailedMediaUpload(workspace.id,characterId,rows[0]);}catch{throw new ChatAdminMediaError("media_cleanup_unverified");}throw new ChatAdminMediaError("media_upload_incomplete");}
   }else{
    const asset=await getMediaAsset(workspace.id,characterId,mediaId(body.id));
    if(body.revision!==asset.revision)throw new ChatAdminMediaError("stale_media_context");
    if(method==="DELETE"){
     if(!asset.deleted)await updateMediaAsset(workspace.id,characterId,asset,{deleted:true,available:false,reviewed:false});
     await mediaObject(workspace.id,characterId,asset.id,"DELETE",undefined,asset.media_type??"image");
-    await mediaRest(`chat_character_media?${mediaScope(workspace.id,characterId)}&id=eq.${asset.id}&deleted=eq.true`,{method:"DELETE"});
+    // NoSuchKey can also mask revoked Storage visibility. Revalidate current
+    // Character authority before removing its tombstone; RLS remains final.
+    await assertMediaCharacter(workspace.id,characterId,undefined,true);
+    const removed=await mediaRest<MediaAsset[]>(`chat_character_media?${mediaScope(workspace.id,characterId)}&id=eq.${asset.id}&deleted=eq.true`,{method:"DELETE",headers:{Prefer:"return=representation"}});
+    if(removed.length!==1||removed[0].id!==asset.id)throw new ChatAdminMediaError("media_cleanup_unverified");
    }else{if(asset.deleted)throw new ChatAdminMediaError("media_deleted");const edit=normalizeMediaEdit(body);if(edit.offer_id&&!(character.sales_playbook?.offers??[]).some(offer=>offer.id===edit.offer_id&&offer.active))throw new ChatAdminMediaError("invalid_media_offer");await updateMediaAsset(workspace.id,characterId,asset,edit);}
   }
   return NextResponse.json({...await loadCharacterMedia(workspace.id,characterId),character:await assertMediaCharacter(workspace.id,characterId,undefined,method==="DELETE")},{headers:privateHeaders});

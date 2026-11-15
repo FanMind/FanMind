@@ -7,6 +7,1192 @@ import { open } from "node:fs/promises";
 import { isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 
+// Exact reviewed Production generation: no live-catalog values are trusted as
+// an allowlist. Each body digest is derived from the public SQL source below.
+// Explicit LF/CRLF variants preserve historical Windows-applied definitions.
+// The customer-tier INSERT permutation preserves its exact column/value map.
+export const REVIEWED_SECURITY_DEFINER_PROFILE = Object.freeze(
+[
+  {
+    "name": "activate_public_demo_start",
+    "identity_arguments": "p_reservation_id uuid, p_auth_user_id uuid, p_workspace_id uuid, p_expires_at timestamp with time zone",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "3b3eec53064817e414e447a9363e83205c7fda3bd32df5b07e9ff971f390c8bd",
+      "fb1d4742ddec1483197d47619eff5014b584a471f83e334a23fc979d53d3a40e"
+    ],
+    "source": "supabase/migrations/20260713180000_public_demo_abuse_protection.sql"
+  },
+  {
+    "name": "admin_crm_read_allowed",
+    "identity_arguments": "p_workspace_id uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=pg_catalog, public, pg_temp",
+      "row_security=off"
+    ],
+    "executors": [
+      "authenticated",
+      "postgres",
+      "service_role"
+    ],
+    "language": "sql",
+    "volatility": "s",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": true,
+    "body_sha256": [
+      "8698cbdd25aa4ee6efd913407787c9f853741ecd9a3c11bb8cdfe5c40e7c7eb9",
+      "9a53f945849778d7ec7dd1e7fdf371038b14bde01f764f94807e4b36dd169c51"
+    ],
+    "source": "supabase/migrations/20260915221500_admin_crm_access.sql"
+  },
+  {
+    "name": "admin_set_registered_user_crm_access",
+    "identity_arguments": "p_target_user_id uuid, p_admin_user_id uuid, p_admin_email text, p_mode text, p_expires_at timestamp with time zone",
+    "result": "TABLE(workspace_id uuid, created boolean)",
+    "owner": "postgres",
+    "config": [
+      "search_path=pg_catalog, public, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 1,
+    "defaults": "NULL::timestamp with time zone",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "a0940188c39982639c5065139b1614a41de38ce6bbfec138f2f2af8ee9cdf513",
+      "e05aeb8958b80cdda346875ff36968fc3fd49f421047fa173d432d710d29ea31"
+    ],
+    "source": "supabase/migrations/20260915221500_admin_crm_access.sql"
+  },
+  {
+    "name": "chat_admin_media_writes_allowed",
+    "identity_arguments": "target_workspace uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "authenticated",
+      "postgres"
+    ],
+    "language": "sql",
+    "volatility": "s",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": false,
+    "body_sha256": [
+      "13a1ad5d1031c747afd2a895b6219118f4c07452fc36ac0635b22f72665a63a2",
+      "d380cb44b22747c30190cb39e5bd66fb9fdd75e437c2f2e11b3e758ac30bc085"
+    ],
+    "source": "supabase/controlled/chat_admin_media.sql"
+  },
+  {
+    "name": "claim_admin_backup_job",
+    "identity_arguments": "p_worker_id text, p_lease_seconds integer",
+    "result": "public.admin_operation_jobs",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 1,
+    "defaults": "900",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "0bb1412983af0bd26dbdc3c8454cee610dbaec307f4411c685b1f11613f4d9f6",
+      "81d768ee9922c3338c86fcab3d59fa800917a51b3e2069eb4ec4be1d49aa9818"
+    ],
+    "source": "supabase/migrations/20260718173000_enable_safe_backup_verification.sql"
+  },
+  {
+    "name": "claim_expired_demo_cleanup",
+    "identity_arguments": "p_limit integer",
+    "result": "TABLE(session_id uuid, auth_user_id uuid, workspace_id uuid)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 1,
+    "defaults": "25",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "23f8c08e5551fd9d92b1ed767d90f6627bca518107ddebbec6d56481cfd1f7a0",
+      "2530abc5db2425f3f3121aa575200f5569c135bbbfb4a7bb9f29579acb66d574"
+    ],
+    "source": "supabase/migrations/20260713180000_public_demo_abuse_protection.sql"
+  },
+  {
+    "name": "claim_public_demo_start",
+    "identity_arguments": "p_ip_hash text, p_browser_hash text, p_duration_minutes integer, p_max_per_ip_10_min integer, p_max_per_ip_day integer, p_max_per_browser_day integer, p_max_active integer",
+    "result": "TABLE(decision text, reservation_id uuid, retry_after_seconds integer, active_count integer)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 5,
+    "defaults": "60, 1, 5, 2, 50",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "a6e706e07d8f140dc7a913b4ffedd4200ec5ec9760b6db69173198eb11fd9506",
+      "e5b2b42e81ea3c511f96d99633cb50651ec2717c91212be5786c4356807a6258"
+    ],
+    "source": "supabase/migrations/20260713180000_public_demo_abuse_protection.sql"
+  },
+  {
+    "name": "cleanup_server_error_events",
+    "identity_arguments": "p_retention_days integer",
+    "result": "integer",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 1,
+    "defaults": "30",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "a7f8d1f38bd37e5f1b0c2832f2232e7407475de52caf89eea34b6a883ba96434",
+      "bf49b8a703fc96d2a44d56b5b62d78fda1f53fac43edc44868010de7e7b946cf"
+    ],
+    "source": "supabase/migrations/20260718203000_privacy_server_error_tracking.sql"
+  },
+  {
+    "name": "cleanup_shared_rate_limit_buckets",
+    "identity_arguments": "p_limit integer",
+    "result": "integer",
+    "owner": "postgres",
+    "config": [
+      "search_path=public, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 1,
+    "defaults": "1000",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "2bb708129b2d8692de064c4c2402f49475d93586acac3a97e8a079f670dfed5d",
+      "39e36aa68a1ece2d1b45a2fdd5d6148851536b06631e6b1971e16fd9893795c4"
+    ],
+    "source": "supabase/migrations/20260723102000_shared_rate_limits.sql"
+  },
+  {
+    "name": "complete_demo_cleanup",
+    "identity_arguments": "p_session_id uuid, p_success boolean, p_error_code text",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 1,
+    "defaults": "NULL::text",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "afa1b9e97027c869b236e050bf7ca32bfcecaa858187a15224a3c3b6e72a4590",
+      "c4cda9de9c41896da300acd49dc67ccf6c47979726f7cd9fdf4c4eb5fd8ec001"
+    ],
+    "source": "supabase/migrations/20260713180000_public_demo_abuse_protection.sql"
+  },
+  {
+    "name": "consume_shared_rate_limit",
+    "identity_arguments": "p_scope text, p_subject_hash text, p_window_seconds integer, p_max_requests integer",
+    "result": "TABLE(allowed boolean, remaining integer, reset_at timestamp with time zone, current_count integer)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "9aaf8cc81845295e15bea0a0185202dbf24b685b388d77f87d47f3bc38923f14",
+      "fa8b462d2d6754293977350153b05210253260ff65945a00d7ee3e8bd20802a9"
+    ],
+    "source": "supabase/migrations/20260723102000_shared_rate_limits.sql"
+  },
+  {
+    "name": "create_chat_admin_fan",
+    "identity_arguments": "target_workspace_id uuid, target_character_id uuid, target_creation_id uuid, fan_data jsonb",
+    "result": "SETOF public.chat_character_fans",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "authenticated",
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": false,
+    "body_sha256": [
+      "31d2e0579d607fe7ba8b13d971d8d5aad91cbb146f20924b04eec583d0c0e45a",
+      "5417b9d658ce18bbc7f64d2e74c80cfec3bbcace78d768da0d88df9822c11b1c",
+      "6b0962fad84b1b096ac9e4e26e7b17742c332d6dbdabc1febd935e3465233c71",
+      "93e2b6a92da44b23e0bebf5dfd0deb27bceff25ad9eeffccc1383328d7612336"
+    ],
+    "source": "supabase/controlled/20261007102000_chat_admin_customer_tier.sql"
+  },
+  {
+    "name": "create_chat_admin_fan_conversation",
+    "identity_arguments": "",
+    "result": "trigger",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "body_sha256": [
+      "9a7c95a9c8d832d94cb68c2dbb71992dcf5afe44a013a9a08046820fb2b95ee7",
+      "a9501d8174feb1e9b52601490537856e31e093dca6b2a682320bc1d6e6a2e8bb"
+    ],
+    "source": "supabase/controlled/20260927200000_chat_admin_character_fans.sql"
+  },
+  {
+    "name": "current_admin_crm_access_state",
+    "identity_arguments": "",
+    "result": "TABLE(access_state text, workspace_id uuid, workspace_name text, plan_id text, billing_status text, workspace_access_mode text, test_access_flags jsonb)",
+    "owner": "postgres",
+    "config": [
+      "search_path=pg_catalog, public, pg_temp",
+      "row_security=off"
+    ],
+    "executors": [
+      "authenticated",
+      "postgres",
+      "service_role"
+    ],
+    "language": "sql",
+    "volatility": "s",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": true,
+    "body_sha256": [
+      "0a1a5847d4176c7161ffaba0b5e78461a9cca83706dcabfd38f1957e23f52e6b",
+      "e9ddd14ccd72c1c7ccf9bd6efe0d6577f825bfc37be4c1e03056faeb1d6f9647"
+    ],
+    "source": "supabase/migrations/20260915221500_admin_crm_access.sql"
+  },
+  {
+    "name": "fail_public_demo_start",
+    "identity_arguments": "p_reservation_id uuid, p_error_code text",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "7e3fa16c9ad6dea205eaf684cfaec2fbfeadf5f6b47ca5eeddade318f021f38c",
+      "9d2773c03ebfaa918fabcb5238b50712a354661a6cd223ae790c19de789b2595"
+    ],
+    "source": "supabase/migrations/20260713180000_public_demo_abuse_protection.sql"
+  },
+  {
+    "name": "manage_meta_webhook_event_retention",
+    "identity_arguments": "p_retention_days integer, p_limit integer, p_execute boolean",
+    "result": "TABLE(candidate_count integer, deleted_count integer, has_more boolean, cutoff_at timestamp with time zone)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 3,
+    "defaults": "30, 500, false",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "4e594b6a02d1eb845a2d13df699ad4a3d8bc2a89815c2aa16511ea1142ff5344",
+      "fe6359123cc710d7e0b2af870b05f7f849e858f06fe235470667c2f1c32f4bde"
+    ],
+    "source": "supabase/migrations/20260723184500_webhook_diagnostic_retention.sql"
+  },
+  {
+    "name": "manage_server_error_event_retention",
+    "identity_arguments": "p_retention_days integer, p_limit integer, p_execute boolean",
+    "result": "TABLE(table_present boolean, candidate_count integer, deleted_count integer, has_more boolean, cutoff_at timestamp with time zone)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 3,
+    "defaults": "30, 500, false",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "efeacc120d9612f8c2b6b63c771c281f4b94119ffd6b69cf49a4ccdfce812bb8",
+      "f101ffa84cf967b78faed9c95600f0c9342c11fa384343361cc90529c060154e"
+    ],
+    "source": "supabase/migrations/20260723184500_webhook_diagnostic_retention.sql"
+  },
+  {
+    "name": "persist_chat_admin_confirmed_reply",
+    "identity_arguments": "target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_confirmation_id uuid, reply_content text",
+    "result": "SETOF public.chat_character_messages",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "authenticated",
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": false,
+    "body_sha256": [
+      "2a515274d13580fa7afa353748f59eb08de4545834d9c7b53ed68da109d95c2d",
+      "3bef98597cb9c06f911534b4d13671980bc0a3c8a05162ba971c92c3670eeb42"
+    ],
+    "source": "supabase/controlled/20260927200000_chat_admin_character_fans.sql"
+  },
+  {
+    "name": "persist_chat_admin_generation",
+    "identity_arguments": "target_workspace_id uuid, target_character_id uuid, target_fan_id uuid, target_conversation_id uuid, target_character_revision integer, target_fan_revision integer, target_generation_id uuid, expected_history_ids uuid[], inbound_content text, suggested_contents text[]",
+    "result": "text[]",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "authenticated",
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": true,
+    "service_role_execute": false,
+    "body_sha256": [
+      "9d7c2fa730c92cd0e6015dc76cad3e51bf76c742aa910af1cb15f1b6ddbae17c",
+      "ab1fb943e5f303388ea776d65c5160b6be909962c7ead0e3215cd0de0640d134"
+    ],
+    "source": "supabase/controlled/20260927200000_chat_admin_character_fans.sql"
+  },
+  {
+    "name": "record_server_error_event",
+    "identity_arguments": "p_fingerprint text, p_digest text, p_route_path text, p_route_type text, p_router_kind text, p_http_method text, p_environment text, p_release_commit text, p_alert_threshold integer, p_cooldown_minutes integer",
+    "result": "TABLE(fingerprint text, is_new boolean, recent_count integer, should_notify boolean, severity text)",
+    "owner": "postgres",
+    "config": [
+      "search_path=public"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": true,
+    "default_count": 2,
+    "defaults": "5, 30",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "13bdc2efcfe9829ef1c3f1e547640711777cbc17c6a008f0c90b540b81725824",
+      "f94bde4ebfbdd4d551072a3f5229d03340ff4b61682620e83db4a07e0f09b490"
+    ],
+    "source": "supabase/migrations/20260718203000_privacy_server_error_tracking.sql"
+  },
+  {
+    "name": "support_centre_ack",
+    "identity_arguments": "p_actor uuid, p_notification uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "1009a0c445614233618bd062a7245f3e3413f201c6640c7b618b01af2f950d0a",
+      "5c59c5b457638efe75b30598d88fde64269942098a978dc3c23f5abee0c31ab8"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_case_notification",
+    "identity_arguments": "",
+    "result": "trigger",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "body_sha256": [
+      "49e7f45db25675fdb6912e6515e92605ccdec9e90e6070e7075b629808aac052",
+      "8600025d71fc842cfb2b3648c677861d4218eec99bc2005c218f7edc629d43d8"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_check",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_case uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "439be1414a0117014580896782cd19414c195de0aafd1b272524ea3564f8a714",
+      "4f1ce53405c5f6eba83e3c8073daf3c9db036a9c14ec0db6ef7c4d069b2e81fd"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_decide",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_case uuid, p_decision text",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "18b3faa473eab98627823b04389c2308e8e3fccc021834c3e40809138854110a",
+      "e7a6ad383bc7a46343ca4b182efc2a4757b79efa401d92401bed0330b19bbee5"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_finish",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_case uuid, p_success boolean",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "ca4f3cd4ab7ba73ca69307451f1cf0af5ff77428c16558c9b0ecdfeb1a2a57bb",
+      "d7ba18365cf94f00d46a5cbe60a7a2aa25da17db9f67255601562a4bef7cfc65"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_inbox",
+    "identity_arguments": "p_actor uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "3329530dc1234dbc3c939a465fd513c9d6bc2c499b62bc457f7a055bf67e7f47",
+      "7b1670f37da4b50d9d90bcc8f84523be33b73ad0dc4f9e47eefbff8d0790a459"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_notify",
+    "identity_arguments": "p_workspace uuid, p_code text, p_reference uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "47619819229937611310385be78b83ec21c8990f52b403a5f12e3ffc8e5bc758",
+      "50ebeef684625a59459d26cf4a766028131da21aa31bd6e1142f7317bacf1623"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_recover",
+    "identity_arguments": "p_actor uuid",
+    "result": "integer",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "635de8ed937f9e0fa3b2b8c0787afa8a9f32c5f55c048eb8f5ab044b4f14b343",
+      "984855be39d935124fa7b22a459dbe121940268ef3e75d349851b2e3a8ac47ce"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_centre_report",
+    "identity_arguments": "p_workspace uuid, p_connection uuid, p_platform text, p_problem text",
+    "result": "uuid",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "b2cdf7af49424a3c6efe9c3504ad61061746731a3c91b5d7d912da203e8839ce",
+      "fa5dd3f18966c0df2b39d46718919013f76727cd89744023f9d88fde689ba18b"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_delete_notification",
+    "identity_arguments": "",
+    "result": "trigger",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": false,
+    "body_sha256": [
+      "0102f20f8e3b8b8894d5091b8ece4d91d751ee70cf94c23711a16fb85e4c9faa",
+      "2371d46fb76f3dd2d879acc2e24cb2bd294cf658f526660ea23751a602a453b9"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_erase",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_thread uuid, p_sequence bigint",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "bba0909fb9f407cc86590050547c49fa4ed99a3298b448925db3f5b65c32cbc6",
+      "ff6af06dedfbd8f6adcdc7dbadb73c3086ee442e78bc04060ece03ebbe7f3db6"
+    ],
+    "source": "supabase/controlled/support_centre_operations.sql"
+  },
+  {
+    "name": "support_chat_handoff",
+    "identity_arguments": "p_actor uuid, p_workspace uuid",
+    "result": "boolean",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "1ad56c0a3a20c532e62be8dccd27f1b2bcf596b19aeb2f64e6cd7b110c7d9913",
+      "44a6383ae0fba0bc797417ecfdc555fd0093b32c9b7f5ef2a6bc5fae798a2e56"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_page",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_before uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "3f76c55d5433537ac8ad4b1a819c2dafbb337d5af1532114d4b77ae537afac46",
+      "eafc91bb682bed943d5546fad8381a21033543d8373ca1aa830c4191a09eaff8"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_privacy_state",
+    "identity_arguments": "p_actor uuid, p_workspace uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "sql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "003a118e6467ed249f5eff73542a85008a34f0d3b4bfd9b5f508304889dd3707",
+      "44cbf2cd82a79e24b9c8e252cb9f89d2a6fe21ca57c8331f86b788c3cd62191c"
+    ],
+    "source": "supabase/controlled/support_centre_operations.sql"
+  },
+  {
+    "name": "support_chat_read",
+    "identity_arguments": "p_actor uuid, p_workspace uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "911c50716eb277b9ab7f65138f48e858bf8740a2ee83077041027bad9ec4fc84",
+      "a879bcb98b3cf3edf452914186d30b57ce3171f0753683424dbd019ae35279a8"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_review",
+    "identity_arguments": "p_workspace uuid, p_thread uuid, p_before uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 1,
+    "defaults": "NULL::uuid",
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "6af331762a36d6c2d3b2f9d8110da3b33a948abc45560ed0867d95ad8ecbe66d",
+      "f2202e3df163da87d68a4f0f874d57f8819c36aa4ba3d70b5e504180b78da6e1"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_chat_send",
+    "identity_arguments": "p_actor uuid, p_workspace uuid, p_request uuid, p_question text, p_answer text, p_context text, p_unanswered boolean",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "4bebb7f83b7459b8aded447f5aaac83ea09904931695fd7f94921178fbd51222",
+      "da46e3b41c908ce530ae4c80cf3997375319c3212055194658dce389ec9f5db1"
+    ],
+    "source": "supabase/controlled/support_centre.sql"
+  },
+  {
+    "name": "support_retention_health",
+    "identity_arguments": "p_actor uuid",
+    "result": "jsonb",
+    "owner": "postgres",
+    "config": [
+      "search_path=\"\""
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "2d430353a71df3206125b067530acbaeb55402fa7fcde6006ba53bb2c785f90e",
+      "4f1e6bdde960755b01761f12a63bf903bd98dd39ba423d47477f94dfdc435dc6"
+    ],
+    "source": "supabase/controlled/support_centre_operations.sql"
+  },
+  {
+    "name": "trim_conversation_messages_to_latest_50",
+    "identity_arguments": "",
+    "result": "trigger",
+    "owner": "postgres",
+    "config": [
+      "search_path=pg_catalog, pg_temp"
+    ],
+    "executors": [
+      "postgres",
+      "service_role"
+    ],
+    "language": "plpgsql",
+    "volatility": "v",
+    "strict": false,
+    "leakproof": false,
+    "parallel": "u",
+    "kind": "f",
+    "returns_set": false,
+    "default_count": 0,
+    "defaults": null,
+    "anon_execute": false,
+    "authenticated_execute": false,
+    "service_role_execute": true,
+    "body_sha256": [
+      "520de3e13a1c1007af5e4d8cf23da45505a47e4486aaafdd38b1d4032893270a",
+      "613fbef5ece4d464736356b5047ae9bac3e0f6d90ef457361a842b38c38f3c1c"
+    ],
+    "source": "supabase/migrations/20260614120000_conversation_message_retention.sql"
+  }
+].map((entry) => Object.freeze({
+  ...entry,
+  config: Object.freeze(entry.config),
+  executors: Object.freeze(entry.executors),
+  body_sha256: Object.freeze(entry.body_sha256),
+})));
+
 const SCHEMA_VERSION = 2;
 const CANONICALIZATION = "postgresql-17-acl-json-array-hex-v2";
 const SHA256 = /^[0-9a-f]{64}$/u;
@@ -27,7 +1213,7 @@ const MAX_PROCESS_OUTPUT_BYTES = 256 * 1024;
 const INITIAL_QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 10_000;
 const CORE_TABLE_APP_GRANT_TUPLE_COUNT = 120;
-const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13]);
+const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13, 29]);
 const MAX_RECEIPT_BYTES = 16 * 1024;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const FULL_BACKUP_BASENAME = /^fanmind-full-\d{13}\.tar\.gz\.age$/u;
@@ -2620,6 +3806,86 @@ public_security_definer_totals as (
   where namespace.nspname = 'public'
     and function_definition.prosecdef
 ),
+reviewed_security_definers as (
+  select * from pg_catalog.jsonb_to_recordset(
+    '${JSON.stringify(REVIEWED_SECURITY_DEFINER_PROFILE).replaceAll("'", "''")}'::jsonb
+  ) as expected(
+    name text, identity_arguments text, result text, owner text,
+    config text[], executors text[], language text, volatility text,
+    strict boolean, leakproof boolean, parallel text, kind text,
+    returns_set boolean, default_count integer, defaults text,
+    anon_execute boolean, authenticated_execute boolean,
+    service_role_execute boolean, body_sha256 text[], source text
+  )
+),
+reviewed_recovery_cohort as (
+  select count(*)::integer as present_count
+  from pg_catalog.pg_proc as p
+  where p.pronamespace = 'public'::pg_catalog.regnamespace
+    and p.proname in (
+      select name from reviewed_security_definers
+      where name like 'support_%' or name = 'chat_admin_media_writes_allowed'
+    )
+),
+reviewed_security_definer_checks as (
+  select expected.*, p.oid,
+    p.prosecdef,
+    pg_catalog.pg_get_userbyid(p.proowner) as actual_owner,
+    pg_catalog.pg_get_function_result(p.oid) as actual_result,
+    p.proconfig as actual_config, language.lanname as actual_language,
+    p.provolatile::text as actual_volatility,
+    p.proisstrict as actual_strict, p.proleakproof as actual_leakproof,
+    p.proparallel::text as actual_parallel, p.prokind::text as actual_kind,
+    p.proretset as actual_returns_set, p.pronargdefaults as actual_default_count,
+    pg_catalog.pg_get_expr(p.proargdefaults, 0) as actual_defaults,
+    p.prosupport, p.probin,
+    pg_catalog.encode(pg_catalog.sha256(pg_catalog.convert_to(p.prosrc, 'UTF8')), 'hex') as actual_body_sha256,
+    coalesce(pg_catalog.has_function_privilege('anon',p.oid,'EXECUTE'),false) as actual_anon_execute,
+    coalesce(pg_catalog.has_function_privilege('authenticated',p.oid,'EXECUTE'),false) as actual_authenticated_execute,
+    coalesce(pg_catalog.has_function_privilege('service_role',p.oid,'EXECUTE'),false) as actual_service_role_execute,
+    coalesce((
+      select pg_catalog.array_agg(
+        case when a.grantee=0 then 'PUBLIC' else pg_catalog.pg_get_userbyid(a.grantee)::text end
+        order by (case when a.grantee=0 then 'PUBLIC' else pg_catalog.pg_get_userbyid(a.grantee)::text end) collate "C"
+      ) from pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f'::"char",p.proowner))) a
+      where a.privilege_type='EXECUTE' and not a.is_grantable and a.grantor=p.proowner
+    ),'{}'::text[]) as actual_executors,
+    (select count(*) from pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f'::"char",p.proowner))) a
+      where a.privilege_type<>'EXECUTE' or a.is_grantable or a.grantor<>p.proowner
+    )::integer as invalid_acl_count
+  from reviewed_security_definers expected
+  left join pg_catalog.pg_proc p
+    on p.pronamespace='public'::pg_catalog.regnamespace
+   and p.proname=expected.name
+   and pg_catalog.pg_get_function_identity_arguments(p.oid)=expected.identity_arguments
+  left join pg_catalog.pg_language language on language.oid=p.prolang
+),
+reviewed_security_definer_contract as (
+  select count(oid)::integer as installed_count,
+    count(*) filter(where oid is null
+      or prosecdef is distinct from true
+      or actual_owner is distinct from owner
+      or actual_result is distinct from result
+      or actual_config is distinct from config
+      or actual_language is distinct from language
+      or actual_volatility is distinct from volatility
+      or actual_strict is distinct from strict
+      or actual_leakproof is distinct from leakproof
+      or actual_parallel is distinct from parallel
+      or actual_kind is distinct from kind
+      or actual_returns_set is distinct from returns_set
+      or actual_default_count is distinct from default_count
+      or actual_defaults is distinct from defaults
+      or prosupport <> 0 or probin is not null
+      or not (actual_body_sha256=any(body_sha256))
+      or actual_executors is distinct from executors
+      or invalid_acl_count <> 0
+      or actual_anon_execute is distinct from anon_execute
+      or actual_authenticated_execute is distinct from authenticated_execute
+      or actual_service_role_execute is distinct from service_role_execute
+    )::integer as violation_count
+  from reviewed_security_definer_checks
+),
 approved_additional_security_definers as (
   select *
   from (values
@@ -2952,6 +4218,9 @@ authorization_result as (
       container_invariants.violation_count,
     'extension_recovery_invariant_violation_count',
       extension_invariants.violation_count,
+    'reviewed_recovery_cohort_count', reviewed_cohort.present_count,
+    'reviewed_security_definer_function_count', reviewed_functions.installed_count,
+    'reviewed_security_definer_contract_violation_count', reviewed_functions.violation_count,
     'public_security_definer_function_count',
       security_definer_totals.function_count,
     'restricted_security_definer_function_count',
@@ -2978,6 +4247,8 @@ authorization_result as (
   cross join core_table_app_grant_stats as core_grant_stats
   cross join container_recovery_invariants as container_invariants
   cross join extension_recovery_invariants as extension_invariants
+  cross join reviewed_recovery_cohort as reviewed_cohort
+  cross join reviewed_security_definer_contract as reviewed_functions
   cross join public_security_definer_totals as security_definer_totals
   cross join restricted_security_definers as restricted_functions
   cross join additional_security_definer_contract as additional_security_definers
@@ -3609,16 +4880,28 @@ function contractFromDatabasePayload(value) {
     throw fixedError("authorization_extension_contract_invariant_invalid");
   }
   const legacySecurityDefinerContract =
+    value.reviewed_recovery_cohort_count === 0 &&
     value.public_security_definer_function_count === 13 &&
     value.restricted_security_definer_function_count === 12 &&
     value.approved_additional_security_definer_function_count === 0;
   const currentSecurityDefinerContract =
+    value.reviewed_recovery_cohort_count === 0 &&
     value.public_security_definer_function_count === 20 &&
     value.restricted_security_definer_function_count === 13 &&
     value.approved_additional_security_definer_function_count === 7 &&
     value.additional_security_definer_contract_violation_count === 0;
+  const reviewedSecurityDefinerContract =
+    value.public_security_definer_function_count === 39 &&
+    value.restricted_security_definer_function_count === 29 &&
+    value.approved_additional_security_definer_function_count === 7 &&
+    value.additional_security_definer_contract_violation_count === 0 &&
+    value.reviewed_recovery_cohort_count === 19 &&
+    value.reviewed_security_definer_function_count === 39 &&
+    value.reviewed_security_definer_contract_violation_count === 0 &&
+    value.exposed_security_definer_exception_count === 0 &&
+    value.hardened_security_definer_exception_count === 1;
   if (
-    !(legacySecurityDefinerContract || currentSecurityDefinerContract) ||
+    !(legacySecurityDefinerContract || currentSecurityDefinerContract || reviewedSecurityDefinerContract) ||
     !(
       (value.exposed_security_definer_exception_count === 1 &&
         value.hardened_security_definer_exception_count === 0) ||

@@ -1564,10 +1564,7 @@ function buildFacebookPagesFetchResult(
 
 export type FacebookPageWebhookFieldStatus = "active" | "missing" | "unknown";
 
-export const FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS = [
-  "messages",
-  "message_echoes",
-] as const;
+export const FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS = ["messages"] as const;
 export const FACEBOOK_PAGE_COMMENT_WEBHOOK_FIELDS = ["feed"] as const;
 export type FacebookPageWebhookField =
   | "feed"
@@ -1724,8 +1721,7 @@ function buildWebhookStatus(
   return {
     ok:
       subscribedAppsStatus === "active" &&
-      fieldSet.has("messages") &&
-      fieldSet.has("message_echoes"),
+      fieldSet.has("messages"),
     pageId,
     hasPageAccessToken,
     subscribedAppsStatus,

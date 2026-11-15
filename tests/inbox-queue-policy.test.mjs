@@ -148,7 +148,7 @@ function webhookHarness() {
   return { webhook, writes, diagnostics };
 }
 const commentEntry = (page, sender = "500") => ({ id: page, changes: [{ field: "feed", value: {
-  item: "comment", post_id: `${page}_202`, comment_id: "303", from: { id: sender, name: "Synthetic" }, message: "Synthetic comment",
+  item: "comment", verb: "add", post_id: `${page}_202`, comment_id: "303", from: { id: sender, name: "Synthetic" }, message: "Synthetic comment",
 } }] });
 
 test("actual webhook parser gives posts distinct fan threads and comment targets", () => {

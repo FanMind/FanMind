@@ -19,6 +19,26 @@ PREVIOUS_LINK_TARGET=""
 AVAILABILITY_LOG=""
 AVAILABILITY_PID=""
 
+monthly_boundary() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    node "$FANMIND_MONTHLY_CONTROL" checkpoint "${1:-boundary}"
+  fi
+}
+
+# Only read/build/test npm children are cancellable. PM2 reload/rollback,
+# privileged host updates and all SQL remain outside this timeout wrapper.
+npm() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    monthly_boundary
+    local remaining
+    remaining="$(node "$FANMIND_MONTHLY_CONTROL" remaining)"
+    (( remaining > 0 )) || return 124
+    timeout --foreground --signal=TERM --kill-after=10s "$remaining" "$(type -P npm)" "$@"
+  else
+    command npm "$@"
+  fi
+}
+
 log() {
   printf '[fanmind-release] %s\n' "$*"
 }
@@ -328,6 +348,7 @@ PREVIOUS_COMMIT="$(read_live_commit || true)"
 PREVIOUS_EXEC_MODE="$(read_previous_pm2_exec_mode || true)"
 PREVIOUS_LINK_TARGET="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
 
+monthly_boundary
 log "building isolated release $RELEASE_COMMIT"
 log "previous cwd: ${PREVIOUS_CWD:-unknown}"
 log "previous commit: ${PREVIOUS_COMMIT:-unknown}"
@@ -360,6 +381,16 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   ln -s "$SOURCE_DIR/.env.production" "$TEMP_RELEASE/.env.production"
 
   cd "$TEMP_RELEASE"
+  SUPPORT_HELP_BUILD_REQUEST="${FANMIND_SUPPORT_HELP_BUILD_ENABLE:-false}"
+  case "$SUPPORT_HELP_BUILD_REQUEST" in true|false) ;; *) fail "Invalid Support help build request" ;; esac
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" != true ]] \
+      || fail "Support help UI conflicts with required disabled Support"
+    node -e '
+      const { readSupportSetting } = require("./ops/pm2/support-runtime-setting.cjs");
+      process.exit(readSupportSetting(process.cwd()) === "true" ? 0 : 1);
+    ' || fail "Support help UI requires already enabled Support"
+  fi
   npm ci --no-audit --no-fund
   npm run verify:truth
   npm run lint
@@ -378,7 +409,11 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   rm -rf -- "$OPERATIONS_CHECKOUT"
   OPERATIONS_CHECKOUT=""
   npm run test:release-integrations
-  NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  else
+    NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  fi
   [[ -f ".next/required-server-files.json" ]] || fail "required Next.js build metadata missing"
   [[ -f "$PM2_CONFIG_RELATIVE_PATH" ]] || fail "PM2 production configuration missing"
 
@@ -386,6 +421,7 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   TEMP_RELEASE=""
 fi
 
+monthly_boundary switch
 verify_built_deployment_id "$RELEASE_DIR" "$RELEASE_COMMIT" \
   || fail "Next.js deployment ID is not bound to the release commit"
 
@@ -480,6 +516,7 @@ if ! verify_availability_probe; then
 fi
 
 cd "$SOURCE_DIR"
+monthly_boundary
 if ! git reset --hard "$RELEASE_COMMIT"; then
   rollback "source checkout synchronization failed" || true
   fail "source checkout could not be synchronized"
@@ -487,6 +524,7 @@ fi
 
 pm2 save
 SWITCHED=0
+monthly_boundary
 
 mapfile -t RELEASE_PATHS < <(
   find "$RELEASE_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |

@@ -1,0 +1,137 @@
+// Synthetic audit fixture derived from the existing canonical audit tests.
+import { BOOT_ROLES, bootReadinessLines } from '../../scripts/operations/production-boot-readiness.mjs';
+const expectedCommit = 'a'.repeat(40);
+function validBootLines() {
+  return bootReadinessLines({
+    units: Object.fromEntries(BOOT_ROLES.map(role => [role, {
+      LoadState: "loaded", UnitFileState: "enabled", ActiveState: "active", NeedDaemonReload: "no",
+    }])),
+    checks: { PM2_STARTUP: true, PM2_SAVED_APP: true, BOOT_NODE: true, RUNNER_BOUND: true, RELEASE_TARGET: true, REFERENCE_BOUND: true, UNIT_CONTRACTS: true },
+    diagnostics: { PM2_STARTUP: "ok", PM2_SAVED_APP: "ok", BOOT_NODE: "ok" },
+  });
+}
+
+function validAuditOutput(overrides = {}) {
+  const values = {
+    NODE_VERSION: "v22.13.1",
+    PM2_NODE_VERSION: "24.19.0",
+    HOST_UPTIME_SECONDS: "9000",
+    HOST_BOOT_ID: "01234567-89ab-cdef-0123-456789abcdef",
+    SERVER_HEAD: expectedCommit,
+    ORIGIN_MAIN: expectedCommit,
+    LIVE_RELEASE: expectedCommit,
+    LIVE_ENVIRONMENT: "production",
+    LIVE_RUNTIME_ENVIRONMENT: "production",
+    LIVE_HEALTH: "healthy",
+    PM2_STATUS: "online",
+    PM2_EXEC_MODE: "cluster_mode",
+    PM2_CWD: "/var/www/fanmind-current",
+    PM2_RESTARTS: "12",
+    PM2_UNSTABLE_RESTARTS: "0",
+    PM2_UPTIME_SECONDS: "7200",
+    SERVER_ERROR_TRACKING_ENABLED: "true",
+    SERVER_ERROR_EMAIL_ENABLED: "false",
+    NGINX_CONFIG: "ok",
+    NGINX_ACTIVE: "active",
+    LOCAL_LOGIN_HTTP: "200",
+    PUBLIC_LOGIN_HTTP: "200",
+    ROOT_DISK_USED_PERCENT: "41",
+    MEMORY_AVAILABLE_KIB: "2048000",
+    REBOOT_REQUIRED: "false",
+    FANMIND_SYSTEMD_UNIT_COUNT: "17",
+    BACKUP_ROOT: "available",
+    BACKUP_COMPLETE_PAIR_COUNT: "7",
+    BACKUP_ORPHAN_PAIR_COUNT: "0",
+    BACKUP_VERIFY_OK: "true",
+    BACKUP_VERIFY_MODE: "checksum_only",
+    BACKUP_VERIFY_TYPE: "full",
+    BACKUP_VERIFY_SIZE_BYTES: "5000000",
+    OFFSITE_ENABLED: "true",
+    OFFSITE_STATUS: "reachable",
+    OFFSITE_COMPLETE_PAIR_COUNT: "38",
+    OFFSITE_ORPHAN_PAIR_COUNT: "0",
+    OFFSITE_LATEST_FULL: "fanmind-full-redacted.tar.gz.age",
+    BACKUP_WORKER_STRUCTURED_EVENT_COUNT: "40",
+    BACKUP_WORKER_1H_FAILURE_EVENT_COUNT: "0",
+    BACKUP_WORKER_1H_FAILURE_FREE: "true",
+    AUDIT_RESULT: "success",
+    ...overrides,
+  };
+  const health = [
+    "application",
+    "supabase_config",
+    "supabase_database",
+    "supabase_storage",
+    "stripe_config",
+    "openai_config",
+    "shared_rate_limit_config",
+    "email_config",
+  ].map((component) => `HEALTH_COMPONENT=${component}:healthy`);
+  const backups = [
+    ["database", "12.50"],
+    ["storage", "11.25"],
+    ["server_config", "10.75"],
+    ["full", "120.00"],
+  ].map(
+    ([type, age]) =>
+      `BACKUP_LATEST=${type}|file=fanmind-${type}-redacted.age|age_hours=${age}|size_bytes=1000|pair=complete`,
+  );
+  return [
+    ...validBootLines(),
+    "AUDIT_UTC=2026-07-30T12:00:00Z",
+    `NODE_VERSION=${values.NODE_VERSION}`,
+    `PM2_NODE_VERSION=${values.PM2_NODE_VERSION}`,
+    `HOST_UPTIME_SECONDS=${values.HOST_UPTIME_SECONDS}`,
+    `HOST_BOOT_ID=${values.HOST_BOOT_ID}`,
+    `SERVER_HEAD=${values.SERVER_HEAD}`,
+    `ORIGIN_MAIN=${values.ORIGIN_MAIN}`,
+    `LIVE_RELEASE=${values.LIVE_RELEASE}`,
+    `LIVE_ENVIRONMENT=${values.LIVE_ENVIRONMENT}`,
+    `LIVE_RUNTIME_ENVIRONMENT=${values.LIVE_RUNTIME_ENVIRONMENT}`,
+    `LIVE_HEALTH=${values.LIVE_HEALTH}`,
+    ...health,
+    `PM2_STATUS=${values.PM2_STATUS}`,
+    `PM2_RESTARTS=${values.PM2_RESTARTS}`,
+    `PM2_UNSTABLE_RESTARTS=${values.PM2_UNSTABLE_RESTARTS}`,
+    `PM2_UPTIME_SECONDS=${values.PM2_UPTIME_SECONDS}`,
+    `PM2_CWD=${values.PM2_CWD}`,
+    `PM2_EXEC_MODE=${values.PM2_EXEC_MODE}`,
+    "PM2_MEMORY_BYTES=100000000",
+    `SERVER_ERROR_TRACKING_ENABLED=${values.SERVER_ERROR_TRACKING_ENABLED}`,
+    `SERVER_ERROR_EMAIL_ENABLED=${values.SERVER_ERROR_EMAIL_ENABLED}`,
+    `NGINX_CONFIG=${values.NGINX_CONFIG}`,
+    `NGINX_ACTIVE=${values.NGINX_ACTIVE}`,
+    `LOCAL_LOGIN_HTTP=${values.LOCAL_LOGIN_HTTP}`,
+    `PUBLIC_LOGIN_HTTP=${values.PUBLIC_LOGIN_HTTP}`,
+    `ROOT_DISK_USED_PERCENT=${values.ROOT_DISK_USED_PERCENT}`,
+    `MEMORY_AVAILABLE_KIB=${values.MEMORY_AVAILABLE_KIB}`,
+    `REBOOT_REQUIRED=${values.REBOOT_REQUIRED}`,
+    `FANMIND_SYSTEMD_UNIT_COUNT=${values.FANMIND_SYSTEMD_UNIT_COUNT}`,
+    `BACKUP_ROOT=${values.BACKUP_ROOT}`,
+    `BACKUP_COMPLETE_PAIR_COUNT=${values.BACKUP_COMPLETE_PAIR_COUNT}`,
+    `BACKUP_ORPHAN_PAIR_COUNT=${values.BACKUP_ORPHAN_PAIR_COUNT}`,
+    ...backups,
+    "LATEST_FULL_BACKUP=fanmind-full-redacted.tar.gz.age",
+    `BACKUP_VERIFY_OK=${values.BACKUP_VERIFY_OK}`,
+    `BACKUP_VERIFY_MODE=${values.BACKUP_VERIFY_MODE}`,
+    `BACKUP_VERIFY_TYPE=${values.BACKUP_VERIFY_TYPE}`,
+    "BACKUP_VERIFY_ARTIFACT=fanmind-full-redacted.tar.gz.age",
+    `BACKUP_VERIFY_SIZE_BYTES=${values.BACKUP_VERIFY_SIZE_BYTES}`,
+    `OFFSITE_ENABLED=${values.OFFSITE_ENABLED}`,
+    `OFFSITE_STATUS=${values.OFFSITE_STATUS}`,
+    "OFFSITE_RELEVANT_OBJECT_COUNT=76",
+    `OFFSITE_COMPLETE_PAIR_COUNT=${values.OFFSITE_COMPLETE_PAIR_COUNT}`,
+    `OFFSITE_ORPHAN_PAIR_COUNT=${values.OFFSITE_ORPHAN_PAIR_COUNT}`,
+    `OFFSITE_LATEST_FULL=${values.OFFSITE_LATEST_FULL}`,
+    `BACKUP_WORKER_STRUCTURED_EVENT_COUNT=${values.BACKUP_WORKER_STRUCTURED_EVENT_COUNT}`,
+    `BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=${values.BACKUP_WORKER_1H_FAILURE_EVENT_COUNT}`,
+    `BACKUP_WORKER_1H_FAILURE_FREE=${values.BACKUP_WORKER_1H_FAILURE_FREE}`,
+    `AUDIT_RESULT=${values.AUDIT_RESULT}`,
+    "",
+  ].join("\n");
+}
+
+export function monthlyAuditFixture(live, candidate, healthy = true) {
+  return validAuditOutput({SERVER_HEAD:live,ORIGIN_MAIN:candidate,LIVE_RELEASE:live,BACKUP_VERIFY_OK:healthy?'true':'false'})
+    .replace('AUDIT_UTC=2026-07-30T12:00:00Z','AUDIT_UTC='+new Date().toISOString().replace(/\.\d{3}Z$/u,'Z'));
+}

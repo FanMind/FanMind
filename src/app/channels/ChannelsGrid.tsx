@@ -1,5 +1,8 @@
 "use client";
 
+import { StagingInstagramIngressControls } from "./StagingInstagramIngressControls";
+import { StagingFacebookIngressControls } from "./StagingFacebookIngressControls";
+
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -54,6 +57,7 @@ type FacebookConnection = {
 };
 
 type InstagramConnection = {
+  unified?: boolean;
   account_name: string | null;
   account_id: string | null;
   has_access_token: boolean;
@@ -83,6 +87,7 @@ type FacebookLiveSetupStatus = {
   metaBusinessIdConfigured: boolean;
   tokenEncryptionConfigured: boolean;
   oauthCallbackUrl: string | null;
+  stagingIngressEnabled?: boolean;
 };
 
 type TelegramMessage = {
@@ -939,6 +944,7 @@ export function ChannelsGrid({
                               </li>
                             ) : null}
                           </ul>
+                          {facebookLiveSetupStatus.stagingIngressEnabled && facebookConnection.page_id === "1208778912321696" ? <StagingFacebookIngressControls /> : null}
                           <div className={styles.connectionCardActions}>
                             <form action={syncFacebookMessengerHistoryFromChannelPage}>
                               <button type="submit" disabled={demoConnectionsDisabled}>
@@ -1029,6 +1035,7 @@ export function ChannelsGrid({
                             ) : null}
                             <li>Persönliche fremde Posts: keine dauerhafte Kopie</li>
                           </ul>
+                          {instagramConnection.unified ? <StagingInstagramIngressControls /> : null}
                           <div className={styles.connectionCardActions}>
                             <form action={syncInstagramMessengerHistoryFromChannelPage}>
                               <button type="submit" disabled={demoConnectionsDisabled}>

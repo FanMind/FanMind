@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "target": "vshyhvgcmrlagvfnvomc",
+  "production": "drqkpdvtbbrrdwmtrodz",
+  "sha256": {
+    "supabase/controlled/ai_capacity_billing_v2.sql": "495c55c868efe0df9f6222b6a873385e138d6867713be52a1831b6231339ab0f",
+    "supabase/controlled/ai_capacity_billing_v2_activation_gates.sql": "1fab72b11dc9a87c454542cd7861a27148346a5f02fc2c2943144992c0e2f0c7",
+    "supabase/controlled/ai_capacity_reserve_settle.sql": "f9d59b2e85aac51cc09782f8a7eab63120beff5668c63aeeff1d949e5d2dea99",
+    "supabase/controlled/ai_capacity_entitlement_writer.sql": "536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc",
+    "scripts/operations/ai-capacity-staging-preflight.sql": "fce31e80a350a976e61c455814337a7a4096ee8bab3a95f02576019c53100fbe",
+    "docs/operations/ai-capacity-installed-reference.json": "24a2ea1304c34157de50afe12ba92c451f2590e7dbcdc17b35ef1fd4c2620ac9",
+    "scripts/operations/ai-capacity-install-contract.mjs": "5c6d43ac504e9c91071ffcb702272d11cd92d3384375348e5646e3224ad34818",
+    "scripts/operations/ai-capacity-staging-install.mjs": "418c3ed12adb8f1a1d4f49cc96ac93f97358f1b0ec010721fe68b2ba200984c1",
+    "scripts/operations/ai-capacity-synthetic-acceptance.mjs": "b42a4c46fb4066bc8a2b528f624887bdb0965b617bbc2b02be79d442e25d77dd",
+    "src/lib/aiCapacityEntitlementWriter.mjs": "dc94196d912dd703d984968d0c248f7ffb77e0a92353bf810269b3c9fe72cc78",
+    "src/lib/supportCapacityConfiguration.mjs": "8535f981ba34148d17eebc9e2f3742f12e94e56b0414d08eaa6f76ce5a8b4495",
+    "scripts/operations/ai-capacity-install-source.mjs": "3f336a616f49b01e7a46e8b500c5237dd30ec2939ae6489b67f88735965444da",
+    "src/lib/aiCapacityLedger.ts": "fc1b71963628d6305003ca14eb78a07f8435d17834657d257247b0c210a23811",
+    "src/lib/aiCapacityEntitlementWriter.d.mts": "de24cb840888374f3acee467eb5f1327d26dbf2f943af85baf648b4b8b1b8256",
+    ".github/workflows/ai-capacity-staging-install.yml": "71d4ad05d2c4bd185bfbbc1301210a15c414ef6f8e07f2e024d94615a844fe9d",
+    "config/certificates/supabase-root-2021-ca.crt": "700723581420dd1ac98fd7e9ac529f0ef210eadcaf87fc868a3ad7d114c2f3b7"
+  }
+}

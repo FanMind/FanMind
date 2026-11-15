@@ -1,3 +1,9 @@
+## FM-FACEBOOK-PRODUCTION-1464-20261113
+- Risk: R4; Status: SOURCE_REVIEW_AND_REQUIRED_CI; current Owner-authorized Issue1464 / PR1482.
+- Existing Staging acceptance consumed from issuecomment6860293997. Production has missing/invalid Facebook config; dedicated existing app2214477125984114 has Production callback but remains unpublished.
+- New Production-bound controller prepared; independent Guardian findings are being resolved and rechecked. Source/runtime/Meta state are recorded separately in receipts/facebook-production-1464-20261113.md.
+- No Production mutation or genuine receipt claim yet; normal Creator OAuth and publication remain required.
+
 ## FM-FACEBOOK-PAGE-DISCOVERY-20261109 — authorized continuation
 - Risk: R4; Status: SOURCE_VERIFIED on Draft PR1463; repository worker complete and lock released, protected operator acceptance remains open.
 - Scope/authorization/recovery: see same task in TASK_LEDGER.md. Independent Guardian PASS; final CI and exact Staging branch deployment pending. Main merge held for later Owner approval.

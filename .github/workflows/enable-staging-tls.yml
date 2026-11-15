@@ -8,6 +8,13 @@ on:
         required: true
         type: string
 
+      reviewed_commit:
+        description: 'Upload proxy only: exact reviewed Main already deployed on Staging'
+        type: string
+      expected_staging_commit:
+        description: 'Upload proxy only: independently read current Staging SHA'
+        type: string
+
 concurrency:
   group: fanmind-staging-tls
   cancel-in-progress: false
@@ -82,3 +89,48 @@ jobs:
               fi
             }
           echo "STAGING_HTTPS_CERTIFICATE=trusted"
+
+  media-upload-proxy:
+    name: Verify or repair only the Staging media upload proxy
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor == 'Bernds-tech' &&
+      inputs.reviewed_commit == github.sha &&
+      inputs.expected_staging_commit == github.sha &&
+      (inputs.confirmation == 'staging-media-upload-proxy-verify' ||
+       inputs.confirmation == 'staging-media-upload-proxy-apply')
+    environment: staging
+    concurrency:
+      group: fanmind-staging-deploy
+      cancel-in-progress: false
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact reviewed Main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.reviewed_commit }}
+      - name: Run fixed media-only proxy control without provisioning or secrets
+        env:
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_STAGING_COMMIT: ${{ inputs.expected_staging_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+          STAGING_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$RUNNER_NAME" = fanmind-prod-01-exoscale
+          test "$REVIEWED_COMMIT" = "$GITHUB_SHA"
+          test "$EXPECTED_STAGING_COMMIT" = "$GITHUB_SHA"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          ACTION="${CONFIRMATION##*-}"
+          case "$ACTION" in verify|apply) ;; *) exit 1 ;; esac
+          sudo /usr/bin/env \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_ACTOR="$GITHUB_ACTOR" \
+            RUNNER_NAME="$RUNNER_NAME" GITHUB_SHA="$GITHUB_SHA" \
+            REVIEWED_COMMIT="$REVIEWED_COMMIT" EXPECTED_STAGING_COMMIT="$EXPECTED_STAGING_COMMIT" \
+            CONFIRMATION="$CONFIRMATION" STAGING_APP_URL="$STAGING_APP_URL" \
+            /usr/bin/flock --nonblock /etc/nginx/.fanmind-staging-media.lock \
+            /usr/bin/node "$GITHUB_WORKSPACE/scripts/operations/staging-media-upload-proxy.mjs" "$ACTION"

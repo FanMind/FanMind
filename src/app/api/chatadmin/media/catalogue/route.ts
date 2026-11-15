@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireChatAdminCapability } from "@/lib/chatAdmin";
-import { assertMediaCharacter, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
-import { ChatAdminMediaError, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId } from "@/lib/chatAdminMediaPolicy.mjs";
-import { MEDIA_VIDEO_MAX_BYTES, mediaKind, mediaPriceRules, normalizeMediaFolder, validateMediaFolders, withMediaPrice } from "@/lib/chatAdminMediaCatalogue.mjs";
+import { assertMediaCharacter, cleanupFailedMediaUpload, getMediaAsset, loadCharacterMedia, mediaObject, mediaRest, mediaPricingV2Enabled, mediaVideoEnabled, requireMediaCatalogue, updateMediaAsset, type MediaAsset } from "@/lib/chatAdminMedia";
+import { ChatAdminMediaError, isMediaBase64, MEDIA_MAX_BYTES, MEDIA_MAX_ITEMS, mediaId, mediaText } from "@/lib/chatAdminMediaPolicy.mjs";
+import { MEDIA_VIDEO_MAX_BYTES, mediaKind, mediaPriceRules, normalizeMediaFolder, validateMediaFolders, withMediaPrice, withMediaProductPrice } from "@/lib/chatAdminMediaCatalogue.mjs";
 import { normalizeMediaImage } from "@/lib/chatAdminMediaImage";
 import { normalizeMediaVideo } from "@/lib/chatAdminMediaVideo";
 import { isTrustedFanMindMutationRequest, readBoundedJsonRequest } from "@/lib/httpMutationPolicy.mjs";
@@ -35,8 +35,8 @@ async function change(request:NextRequest,upload:boolean){
    const folderId=body.folder_id===null?null:mediaId(body.folder_id);
    if(folderId&&folders.get(folderId)?.kind!==kind)throw new ChatAdminMediaError("media_folder_binding_invalid");
    const max=kind==="image"?MEDIA_MAX_BYTES:MEDIA_VIDEO_MAX_BYTES;
-   if(typeof body.data!=="string"||!body.data.length||body.data.length>Math.ceil(max/3)*4||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/u.test(body.data))throw new ChatAdminMediaError("invalid_media_file");
-   const input=Buffer.from(body.data,"base64");
+   if(!isMediaBase64(body.data,max))throw new ChatAdminMediaError("invalid_media_file");
+   const input=Buffer.from(body.data as string,"base64");
    if(kind==="video"){
     const budget=await consumeSharedRateLimit({scope:"chat_admin_media_video_processing",subject:workspace.id,maxRequests:2,windowMs:60_000});
     if(!budget.allowed)return NextResponse.json({error:"rate_limited"},{status:429,headers});
@@ -45,16 +45,28 @@ async function change(request:NextRequest,upload:boolean){
    const authority=await requireChatAdminCapability();
    if(authority.workspace.id!==workspace.id||authority.user.id!==user.id)throw new WorkspaceAuthorizationError("Kontext geändert.","resource_forbidden");
    await assertMediaCharacter(workspace.id,characterId,character.revision);
-   const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),workspace_id:workspace.id,character_id:characterId,media_type:kind,folder_id:folderId,byte_size:normalized.bytes.length,duration_ms:normalized.duration_ms})});
+   const rows=await mediaRest<MediaAsset[]>("chat_character_media",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({id:crypto.randomUUID(),workspace_id:workspace.id,character_id:characterId,media_type:kind,folder_id:folderId,original_filename:mediaText(body.original_name??"",255),byte_size:normalized.bytes.length,duration_ms:normalized.duration_ms})});
    if(rows.length!==1)throw new ChatAdminMediaError("media_store_unavailable");
-   try{await mediaObject(workspace.id,characterId,rows[0].id,"POST",normalized.bytes,kind);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
-   catch{await updateMediaAsset(workspace.id,characterId,rows[0],{deleted:true,available:false,reviewed:false});throw new ChatAdminMediaError("media_upload_incomplete");}
+   try{await mediaObject(workspace.id,characterId,rows[0].id,"POST",normalized.bytes,kind);await mediaObject(workspace.id,characterId,rows[0].id,"PROBE",undefined,kind);await updateMediaAsset(workspace.id,characterId,rows[0],{available:true});}
+   catch{try{await cleanupFailedMediaUpload(workspace.id,characterId,rows[0]);}catch{throw new ChatAdminMediaError("media_cleanup_unverified");}throw new ChatAdminMediaError("media_upload_incomplete");}
   }else{
    let payload:Record<string,unknown>,playbook=character.sales_playbook;
+   if(body.action==="save_product_price"){
+    if(!mediaPricingV2Enabled())throw new ChatAdminMediaError("media_pricing_v2_not_enabled");
+    playbook=withMediaProductPrice(character,library.folders,body);
+    const saved=await mediaRest("rpc/chat_admin_price_write",{method:"POST",body:JSON.stringify({p_workspace:workspace.id,p_character:characterId,p_character_revision:character.revision,p_playbook:playbook})});
+    if(saved!==true)throw new ChatAdminMediaError("stale_media_context");
+    return NextResponse.json({...await loadCharacterMedia(workspace.id,characterId),character:await assertMediaCharacter(workspace.id,characterId)},{headers});
+   }
+   const termsFor=(scope:"folder"|"file",id:string,kind:string)=>{
+    if(!body.terms)return null;
+    if(!mediaPricingV2Enabled())throw new ChatAdminMediaError("media_pricing_v2_not_enabled");
+    return {...body.terms as Record<string,unknown>,scope,target_id:id,kind,quantity:1};
+   };
    if(body.action==="save_folder"){
     if(!body.folder||typeof body.folder!=="object"||Array.isArray(body.folder))throw new ChatAdminMediaError("invalid_media_folder");
     const supplied=body.folder as Record<string,unknown>,id=mediaId(supplied.id),previous=folders.get(id);
-    const price=withMediaPrice(character,id,body.price,previous?.offer_id??"");playbook=price.playbook;
+    const price=withMediaPrice(character,id,body.price,previous?.offer_id??"",termsFor("folder",id,String(supplied.kind)));playbook=price.playbook;
     const rules=body.price===null?mediaPriceRules():mediaPriceRules({negotiation_allowed:(body.price as Record<string,unknown>)?.negotiation_allowed,special_discounts_allowed:(body.price as Record<string,unknown>)?.special_discounts_allowed});
     payload=normalizeMediaFolder({...supplied,offer_id:price.offer_id,price_rules:rules},character,library.folders);
    }else if(body.action==="delete_folder"){
@@ -70,7 +82,7 @@ async function change(request:NextRequest,upload:boolean){
      const folderId=body.folder_id===null?null:mediaId(body.folder_id);
      if(folderId&&folders.get(folderId)?.kind!==(asset.media_type??"image"))throw new ChatAdminMediaError("media_folder_binding_invalid");payload.folder_id=folderId;
     }else{
-     const price=withMediaPrice(character,asset.id,body.price,asset.offer_id);playbook=price.playbook;
+     const price=withMediaPrice(character,asset.id,body.price,asset.offer_id,termsFor("file",asset.id,asset.media_type??"image"));playbook=price.playbook;
      payload.offer_id=price.offer_id;payload.price_rules=body.price===null?mediaPriceRules():mediaPriceRules({negotiation_allowed:(body.price as Record<string,unknown>)?.negotiation_allowed,special_discounts_allowed:(body.price as Record<string,unknown>)?.special_discounts_allowed});
     }
    }else throw new ChatAdminMediaError("invalid_media_action");

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import * as instagramUnifiedPolicy from "../src/lib/instagramUnifiedPolicy.mjs";
 
 function load(path, dependencies) {
   const exports = {};
@@ -111,12 +112,13 @@ test("actual Facebook flow waits for page selection and successful save before t
 test("actual Instagram callback imports only after verified user/state/workspace and save", async () => {
   let valid = true, saveError = false; const calls = [];
   const route = load("src/app/api/integrations/instagram/callback/route.ts", {
+    "@/lib/instagramUnifiedPolicy.mjs": instagramUnifiedPolicy,
     "next/cache": { revalidatePath() {} }, "next/navigation": { redirect() { throw new Error("redirect"); } },
     "@/lib/demoMode": { areDemoConnectionsDisabled: () => false }, "@/lib/metaIntegrationPolicy.mjs": { canManageMetaConnections: () => true },
     "@/lib/facebookIntegration": { encryptToken: () => "encrypted", isTokenEncryptionConfigured: () => true, tokenLastFour: () => "fake" },
     "@/lib/instagramIntegration": { verifyInstagramOAuthState: () => valid ? { userId: "user-1", workspaceId: "workspace-1", connectionType: "instagram_messages" } : null,
       exchangeInstagramCode: async () => { calls.push("exchange"); return {}; }, exchangeInstagramLongLivedToken: async () => ({ accessToken: "synthetic" }),
-      fetchInstagramProfile: async () => ({ userId: "account-1", username: "Synthetic" }), getInstagramOAuthScopes: () => [], subscribeInstagramAccount: async () => true },
+      instagramStoredToken: token => token.accessToken, fetchInstagramProfile: async () => ({ userId: "account-1", username: "Synthetic" }), getInstagramOAuthScopes: () => [], subscribeInstagramAccount: async () => true },
     "@/lib/workspaceAuthorization": { requireActiveAuthorizedWorkspace: async () => ({ user: { id: "user-1" }, workspace: { id: "workspace-1", role: "owner" } }) },
     "@/lib/supabase/server": { getSupabaseServerUser: async () => ({ data: { user: { id: "user-1" } } }), updateInstagramWebhookSubscribed: async () => ({}),
       upsertInstagramSocialConnection: async () => { calls.push("save"); return { connection: { ...connection, platform: "instagram" }, error: saveError }; } },

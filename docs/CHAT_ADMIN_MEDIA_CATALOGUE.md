@@ -1,7 +1,49 @@
+# Current source continuation — 14 November 2026
+
+The historical checkpoints below remain historical. Current work continues
+#1487 on Main including Support #1488, for Staging only.
+
+- Real synthetic PNG upload reaches the application and metadata insert, then
+  fails in Storage with a missing EXECUTE privilege on
+  `chat_admin_media_writes_allowed(uuid)` under internal finalization.
+- Source adds precisely that predicate privilege for `service_role`, keeping
+  authorization, private bucket, exact object guard, RLS and deletion freeze.
+  Exact prior extended state is recognized only for the bounded transactional
+  delta; arbitrary drift still blocks. Normal Web deploy does not apply SQL.
+- Original filename and upload timestamp use the existing media table; legacy
+  timestamps stay NULL, rather than fabricating a historical date.
+- Folder open/counts/breadcrumbs, filters, gallery/list, price/date/name and
+  private enlarged previews reuse existing endpoints. Batch progress reports
+  completed files and the current read/process/store phase. Failure reloads
+  committed metadata/revision before a bounded retry; no false success.
+- Independent versioned mixer strengths live in existing Character playbook;
+  legacy free text and prices are preserved. Humor and directness share values
+  across personality/text-style views. Custom traits are bounded untrusted
+  labels; hard price/media/safety rules retain priority.
+- Setup panels keep legacy expert inputs mounted for lossless saves. Preview
+  compares saved settings/current draft mixer using the same actual reply
+  pipeline, Owner/Character checks, rate limit, usage and price/media guards.
+  It does not select a real Fan or persist a conversation/learning/settings.
+- Observed Character name is Aurela Foss, containing a synthetic test bio.
+  Owner confirmed the intended persona in this session. Preserve current prices
+  and visibly mark newly proposed strengths; do not invent biography.
+
+Current source/native/hosted/target results are tracked separately in
+`docs/operations/CHAT_ADMIN_CRM_MIXER_QA_20261114.md`. Issue #1425 stays open
+until actual Staging acceptance and synthetic cleanup.
+
+---
+
 # Character media catalogue continuation — #1425
 
-Source work only, 13 November 2026. Extends the existing #1427 library; it does
-not establish deployed acceptance. #1440 remains unmerged; its authenticated
+Merged source, 13 November 2026: PR #1469 is on Main at
+`3912461e1f88eb5cf2e621f23e4d6079409c20cc`. This does not establish deployed
+acceptance. The exact initial/extended schema profile and protected host diagnostic are
+prepared in PR #1471, not yet merged/executed. Its current continuation integrates
+Main33e6569602e8fe910058e268b4f33c1879799869 after the regular #1470 merge.
+Fresh Staging preparation is recorded in
+`docs/operations/CHAT_ADMIN_MEDIA_STAGING_PREPARATION_20261113.md`.
+Extends the existing #1427 library. #1440 remains unmerged; its authenticated
 post-delete absence check is retained in this continuation without merging that PR.
 
 ## Existing implementation versus extension

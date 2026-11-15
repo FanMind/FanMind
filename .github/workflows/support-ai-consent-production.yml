@@ -1,0 +1,107 @@
+name: FanMind Support AI Consent Production Schema
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [verify, apply]
+        default: verify
+        required: true
+      reviewed_commit:
+        description: Exact reviewed current Main source
+        type: string
+        required: true
+      expected_live_commit:
+        description: Exact independently observed Production release
+        type: string
+        required: true
+      sql_sha256:
+        description: Exact reviewed consent SQL SHA256
+        type: string
+        required: true
+      confirmation:
+        description: support-ai-consent-production-verify or separately Owner-approved support-ai-consent-production-apply
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-production-deploy
+  cancel-in-progress: false
+jobs:
+  source-checks:
+    if: github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.action == 'apply' && inputs.reviewed_commit == github.sha
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+      - name: Reuse completed exact PR and Main checks; never ignore failing shared gates
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+        run: node scripts/operations/support-ai-consent-source-preflight.mjs
+  schema:
+    needs: source-checks
+    if: always() && (inputs.action == 'verify' || needs.source-checks.result == 'success') && github.ref == 'refs/heads/main' && github.actor_id == '270165082' && inputs.reviewed_commit == github.sha
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: production
+    timeout-minutes: 10
+    env:
+      ACTION: ${{ inputs.action }}
+      REVIEWED: ${{ inputs.reviewed_commit }}
+      EXPECTED_LIVE: ${{ inputs.expected_live_commit }}
+      SQL_SHA: ${{ inputs.sql_sha256 }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - name: Inspect or separately approve only the exact additive schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$REVIEWED" =~ ^[a-f0-9]{40}$ && "$EXPECTED_LIVE" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$REVIEWED" == "$GITHUB_SHA" ]]
+          case "$ACTION" in verify|apply) ;; *) exit 1 ;; esac
+          [[ "$CONFIRMATION" == "support-ai-consent-production-$ACTION" ]]
+          cd /var/www/fanmind
+          case "$(git remote get-url origin)" in
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            *) exit 1 ;;
+          esac
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$REVIEWED" ]]
+          git merge-base --is-ancestor "$EXPECTED_LIVE" "$REVIEWED"
+          ROOT_SOURCE="$(sudo -n mktemp -d /tmp/fanmind-consent-source.XXXXXXXX)"
+          trap 'sudo -n rm -rf -- "$ROOT_SOURCE"' EXIT
+          git archive "$REVIEWED" \
+            scripts/operations/support-ai-consent-production.mjs \
+            scripts/operations/support-ai-consent-contract.mjs \
+            scripts/operations/support-production-control.mjs \
+            scripts/operations/support-centre-schema.mjs \
+            docs/operations/support-ai-consent-reference.json \
+            docs/operations/support-centre-reference.json \
+            supabase/controlled/support_ai_consent.sql \
+            supabase/controlled/support_centre.sql \
+            supabase/controlled/support_centre_operations.sql \
+            config/certificates/supabase-root-2021-ca.crt \
+            | sudo -n tar -xf - -C "$ROOT_SOURCE"
+          printf '%s\n' "$REVIEWED" | sudo -n tee "$ROOT_SOURCE/.support-reviewed-source" >/dev/null
+          sudo -n chmod 0600 "$ROOT_SOURCE/.support-reviewed-source"
+          sudo -n /usr/bin/env \
+            FANMIND_RUNTIME_ENVIRONMENT=production \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REF="$GITHUB_REF" \
+            GITHUB_SHA="$GITHUB_SHA" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" \
+            GITHUB_ACTOR_ID="$GITHUB_ACTOR_ID" \
+            FANMIND_SUPPORT_REVIEWED_COMMIT="$REVIEWED" \
+            FANMIND_SUPPORT_CONFIRM="$CONFIRMATION" \
+            CONSENT_EXPECTED_LIVE="$EXPECTED_LIVE" CONSENT_SQL_SHA256="$SQL_SHA" \
+            /bin/bash -c 'cd "$1"; exec /usr/bin/node --env-file=/var/www/fanmind/.env.production --env-file=/etc/fanmind-backup/worker.env scripts/operations/support-ai-consent-production.mjs "$2"' \
+            consent-control "$ROOT_SOURCE" "$ACTION"

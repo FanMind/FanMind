@@ -63,23 +63,35 @@ test('service startup waits for reachability but never accepts wrong source or e
 });
 
 test('daily retention proof reuse requires an ancestor with unchanged executable contract',async()=>{
- const {mkdtempSync,mkdirSync,writeFileSync,rmSync}=await import('node:fs');
+ const {mkdtempSync,mkdirSync,writeFileSync,readFileSync,rmSync}=await import('node:fs');
  const {tmpdir}=await import('node:os');const {join,dirname}=await import('node:path');const {execFileSync}=await import('node:child_process');
- const {RETENTION_PROOF_PATHS,assertRetentionSourceEquivalent}=await import('../scripts/operations/staging-support-media-preflight.mjs');
+ const {RETENTION_PROOF_PATHS,RETENTION_INDEPENDENT_ADDITIONS,assertRetentionSourceEquivalent}=await import('../scripts/operations/staging-support-media-preflight.mjs');
  const root=mkdtempSync(join(tmpdir(),'fanmind-retention-proof-'));
  const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
  const write=(path,value)=>{mkdirSync(dirname(join(root,path)),{recursive:true});writeFileSync(join(root,path),value);};
  try{
   git('init','-q');git('config','user.name','Synthetic QA');git('config','user.email','qa@example.test');
   for(const path of RETENTION_PROOF_PATHS)write(['supabase/controlled','src/lib'].includes(path)?path+'/contract.probe':path,'retention-v1');
+  for(const path of ['supabase/controlled/support_centre.sql','supabase/controlled/support_centre_operations.sql','supabase/controlled/20260904170000_website_chat_retention.sql'])write(path,'retention-sql-v1');
   write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{}}));
   git('add','.');git('commit','-qm','approved retention contract');const source=git('rev-parse','HEAD');
-  write('src/components/synthetic-ui.ts','presentation only');write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{'test:unrelated':'node unrelated-test.mjs'}}));git('add','.');git('commit','-qm','unrelated presentation and npm test script');const current=git('rev-parse','HEAD');
+  for(const path of Object.keys(RETENTION_INDEPENDENT_ADDITIONS))write(path,readFileSync(new URL('../'+path,import.meta.url),'utf8'));
+  write('src/components/synthetic-ui.ts','presentation only');write('package.json',JSON.stringify({type:'module',dependencies:{},scripts:{'test:unrelated':'node unrelated-test.mjs'}}));git('add','.');git('commit','-qm','independent pinned media addition, presentation and npm test script');const current=git('rev-parse','HEAD');
   assert.doesNotThrow(()=>assertRetentionSourceEquivalent(source,current,root));
   assert.throws(()=>assertRetentionSourceEquivalent('not-a-sha',current,root));
-  for(const path of ['scripts/operations/support-centre-staging.mjs','supabase/controlled/contract.probe','src/lib/environmentBoundaryPolicy.mjs','docs/operations/support-centre-reference.json','.github/workflows/website-chat-retention-staging.yml','package-lock.json']){
+  for(const path of [...RETENTION_PROOF_PATHS.filter(p=>p!=='supabase/controlled'),'supabase/controlled/contract.probe','supabase/controlled/support_centre.sql','supabase/controlled/support_centre_operations.sql','supabase/controlled/20260904170000_website_chat_retention.sql',...Object.keys(RETENTION_INDEPENDENT_ADDITIONS),'supabase/controlled/unreviewed.sql']){
    git('reset','--hard',current);write(path,'changed retention contract');git('add','.');git('commit','-qm','contract drift');
    assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
+  }
+  for(const path of Object.keys(RETENTION_INDEPENDENT_ADDITIONS)){
+   git('reset','--hard',current);git('rm',path);git('commit','-qm','remove pinned source');
+   assert.throws(()=>assertRetentionSourceEquivalent(current,git('rev-parse','HEAD'),root),/not_equivalent/);
+   git('reset','--hard',current);git('mv',path,path+'.renamed');git('commit','-qm','rename pinned source');
+   assert.throws(()=>assertRetentionSourceEquivalent(current,git('rev-parse','HEAD'),root),/not_equivalent/);
+   git('reset','--hard',current);git('update-index','--chmod=+x',path);git('commit','-qm','unsafe added-file mode');
+   assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);
+   git('reset','--hard',current);write(path,'changed after receipt');git('add','.');git('commit','-qm','existing pinned file drift');
+   assert.throws(()=>assertRetentionSourceEquivalent(current,git('rev-parse','HEAD'),root),/not_equivalent/);
   }
   git('reset','--hard',current);write('package.json',JSON.stringify({type:'commonjs',dependencies:{}}));git('add','.');git('commit','-qm','runtime manifest drift');
   assert.throws(()=>assertRetentionSourceEquivalent(source,git('rev-parse','HEAD'),root),/not_equivalent/);

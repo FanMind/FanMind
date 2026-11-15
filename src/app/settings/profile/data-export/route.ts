@@ -246,6 +246,8 @@ const SECTION_LABELS: Record<
   DisclosureMetaDataset["key"],
   { de: string; en: string }
 > = {
+  support_conversations: { de: "Eigene gespeicherte Supportgespräche", en: "Own stored Support conversations" },
+  support_ai_consent: { de: "Aktueller Support-KI-Einwilligungsnachweis", en: "Current Support AI consent evidence" },
   profile_record: { de: "Gespeichertes Nutzerprofil", en: "Stored user profile" },
   membership_record: { de: "Eigene Workspace-Mitgliedschaft", en: "Own Workspace membership" },
   workspace_record: { de: "Workspace-, Vertrags- und Abrechnungsdaten", en: "Workspace, contract and billing data" },

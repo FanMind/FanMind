@@ -1,0 +1,53 @@
+name: FanMind Staging Media Toolchain
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        options: [inspect, prepare]
+        default: inspect
+        required: true
+      reviewed_commit:
+        type: string
+        required: true
+      expected_live_commit:
+        type: string
+        required: true
+      confirmation:
+        description: inspect-staging-media-toolchain or prepare-staging-media-toolchain
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: fanmind-staging-deploy
+  cancel-in-progress: false
+jobs:
+  prepare-staging-only:
+    if: >-
+      github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/main' &&
+      github.actor_id == '270165082' && inputs.reviewed_commit == github.sha &&
+      inputs.confirmation == format('{0}-staging-media-toolchain', inputs.action)
+    # Existing shared-host bootstrap authority; writes only fixed Staging paths.
+    runs-on: [self-hosted, fanmind-prod, exoscale, linux, x64]
+    environment: staging
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Inspect or prepare only the fixed Staging video toolchain
+        env:
+          ACTION: ${{ inputs.action }}
+          REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+          EXPECTED_LIVE_COMMIT: ${{ inputs.expected_live_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          sudo -n /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_REPOSITORY_ID="$GITHUB_REPOSITORY_ID" \
+            GITHUB_REF="$GITHUB_REF" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" \
+            GITHUB_ACTOR_ID="$GITHUB_ACTOR_ID" RUNNER_NAME="$RUNNER_NAME" \
+            GITHUB_SHA="$GITHUB_SHA" REVIEWED_COMMIT="$REVIEWED_COMMIT" \
+            EXPECTED_LIVE_COMMIT="$EXPECTED_LIVE_COMMIT" CONFIRMATION="$CONFIRMATION" \
+            /usr/bin/node scripts/operations/prepare-staging-media-host.mjs "$ACTION"

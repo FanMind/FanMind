@@ -12,12 +12,17 @@ import type {
   DisclosureMetaRow,
 } from "@/lib/dataDisclosureMetaExport";
 
+import { collectSupportExport } from "@/lib/supportPrivacy.mjs";
+import { safeSupportTurns } from "@/lib/supportContinuityServer";
+import { consentState, persistentSupportConsentEnabled, SUPPORT_AI_CONSENT_VERSION } from "@/lib/supportAIConsentPolicy";
+
 const PAGE_SIZE = 500;
 const MAX_ROWS = 50_000;
 
 type PrivateDefinition = {
   key: Extract<
     DisclosureMetaDataset["key"],
+    | "connections"
     | "pilot_inquiries"
     | "referral_membership"
     | "referrals_given"
@@ -75,7 +80,16 @@ function publicReferralRow(
   return { ...rest, relationship_role: relationshipRole };
 }
 
+// Explicit metadata projection: never SELECT * from credential-bearing storage.
+const CONNECTION_FIELDS = "id,workspace_id,platform,provider,status,external_account_id,external_account_name,page_id,page_name,scopes,webhook_subscribed,connected_by,connected_at,disconnected_at,last_event_at,created_at,updated_at,last_comment_fetch_at,last_comment_fetch_count,last_messenger_sync_at,last_messenger_sync_checked_count,last_messenger_sync_imported_inbound_count,last_messenger_sync_imported_outbound_count,last_messenger_sync_skipped_count,last_messenger_sync_outbound_at,last_messenger_sync_imported_media_count,oauth_login_type,external_account_type,token_expires_at,permissions_verified_at,analytics_enabled";
+
 const DEFINITIONS: PrivateDefinition[] = [
+  {
+    key: "connections", table: "social_connections", select: CONNECTION_FIELDS,
+    order: "created_at.asc.nullsfirst,id.asc",
+    filters: ({ workspaceId }) => [["workspace_id", `eq.${workspaceId}`]],
+    validate: (row, { workspaceId }) => row.workspace_id === workspaceId,
+  },
   {
     key: "pilot_inquiries",
     table: "pilot_inquiries",
@@ -198,9 +212,11 @@ async function readDefinition(input: {
       );
     }
     rows.push(
-      ...page.map((row) =>
-        input.definition.transform ? input.definition.transform(row) : row,
-      ),
+      ...page.map((row) => {
+        const projected = Object.fromEntries(input.definition.select.split(",")
+          .filter(key => Object.hasOwn(row, key)).map(key => [key, row[key]]));
+        return input.definition.transform ? input.definition.transform(projected) : projected;
+      }),
     );
     if (page.length < PAGE_SIZE) break;
   }
@@ -245,6 +261,29 @@ export async function getPrivateAccountDataForDisclosure(
     DEFINITIONS.map((definition) =>
       readDefinition({ definition, identity, serviceKey, fetchImpl }),
     ),
+  );
+  // Read the existing own-actor/workspace RPCs, independent of the Help UI flag.
+  // Turning Help off must never hide retained personal data from disclosure.
+  const rpc = async (name: string, body: Record<string, unknown>) => {
+    const response = await fetchImpl(new URL(getSupabaseRestUrl(`rpc/${name}`)), {
+      method: "POST", headers: { ...getSupabaseApiKeyHeaders(serviceKey), "Content-Type": "application/json" },
+      body: JSON.stringify(body), cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
+    });
+    const value: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new DataDisclosureExportError("Eigene Supportdaten konnten nicht vollständig geladen werden.");
+    }
+    if (value === null) throw new DataDisclosureExportError("Ungültige Support-Datenauskunft.");
+    return value;
+  };
+  const turns = await collectSupportExport(async before => safeSupportTurns(await rpc(
+    before ? "support_chat_page" : "support_chat_read",
+    { p_actor: identity.userId, p_workspace: identity.workspaceId, ...(before ? { p_before: before } : {}) },
+  )));
+  const consent = await rpc("support_ai_consent_state", { p_actor: identity.userId, p_version: SUPPORT_AI_CONSENT_VERSION });
+  datasets.push(
+    { key: "support_conversations", rows: turns.map(turn => ({ ...turn })) },
+    { key: "support_ai_consent", rows: [{ ...consentState(consent), persistent_activation: persistentSupportConsentEnabled() }] },
   );
   await assertOwner();
   return datasets;
