@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { isChatAdminStorageObjectAbsent } from "./chatAdminStorageAbsence.mjs";
+import { waitForChatAdminStorageObjectAbsent } from "./chatAdminStorageAbsence.mjs";
 import { getSupabaseHeaders, getSupabaseRestUrl, requireSupabasePublicConfig, SUPABASE_ACCESS_TOKEN_COOKIE } from "./supabase/config";
 import { getChatCharacter } from "./chatAdmin";
 import { WorkspaceAuthorizationError } from "./workspaceAuthorization";
@@ -48,16 +48,19 @@ export async function mediaObject(workspaceId:string,characterId:string,id:strin
   const token=(await cookies()).get(SUPABASE_ACCESS_TOKEN_COOKIE)?.value;
   if(!token)throw new WorkspaceAuthorizationError("Keine aktive Session.","unauthenticated");
   const path=mediaObjectPath(workspaceId,characterId,id,kind),probe=method==="PROBE";
+  const objectTimeout=kind==="video"?30_000:15_000,started=performance.now();
   const url=`${requireSupabasePublicConfig().url}/storage/v1/object/${method==="GET"||probe?"authenticated/":""}${MEDIA_BUCKET}${method==="DELETE"?"":`/${path}`}`;
-  const response=await fetch(url,{method:probe?"GET":method,headers:{...getSupabaseHeaders(token),...(method==="DELETE"?{"Content-Type":"application/json"}:bytes?{"Content-Type":kind==="image"?"image/webp":mediaMime(kind),"x-upsert":"false"}:{}),...(probe?{Range:"bytes=0-0"}:{})},body:method==="DELETE"?JSON.stringify({prefixes:[path]}):bytes?new Uint8Array(bytes):undefined,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(kind==="video"?30_000:15_000)});
+  const response=await fetch(url,{method:probe?"GET":method,headers:{...getSupabaseHeaders(token),...(method==="DELETE"?{"Content-Type":"application/json"}:bytes?{"Content-Type":kind==="image"?"image/webp":mediaMime(kind),"x-upsert":"false"}:{}),...(probe?{Range:"bytes=0-0"}:{})},body:method==="DELETE"?JSON.stringify({prefixes:[path]}):bytes?new Uint8Array(bytes):undefined,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(objectTimeout)});
   if(!response.ok)throw new ChatAdminMediaError("media_object_unavailable");
   if(method==="DELETE"){
     const result=await response.json();
     // Reuse the independently reviewed #1440 correction without merging that PR:
     // both normal acknowledgment and retry require an independent absence probe.
     if(!Array.isArray(result)||result.length>1||result.length===1&&result[0]?.name!==path)throw new ChatAdminMediaError("media_cleanup_unverified");
-    const check=await fetch(`${requireSupabasePublicConfig().url}/storage/v1/object/authenticated/${MEDIA_BUCKET}/${path}`,{headers:getSupabaseHeaders(token),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
-    if(!await isChatAdminStorageObjectAbsent(check))throw new ChatAdminMediaError("media_cleanup_unverified");
+    // Keep the original combined DELETE + absence upper bound (25s/40s).
+    const budgetMs=Math.min(20_000,objectTimeout+10_000-(performance.now()-started));
+    const absent=await waitForChatAdminStorageObjectAbsent(signal=>fetch(`${requireSupabasePublicConfig().url}/storage/v1/object/authenticated/${MEDIA_BUCKET}/${path}`,{headers:getSupabaseHeaders(token),cache:"no-store",redirect:"error",signal}),{budgetMs});
+    if(!absent)throw new ChatAdminMediaError("media_cleanup_unverified");
     return Buffer.alloc(0);
   }
   if(probe){await response.body?.cancel();if(response.headers.get("content-type")?.split(";")[0]!==mediaMime(kind))throw new ChatAdminMediaError("media_object_unavailable");return Buffer.alloc(0);}

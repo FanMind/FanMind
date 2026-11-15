@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
-import { isChatAdminStorageObjectAbsent } from "../src/lib/chatAdminStorageAbsence.mjs";
+import { isChatAdminStorageObjectAbsent, waitForChatAdminStorageObjectAbsent } from "../src/lib/chatAdminStorageAbsence.mjs";
 
 const workspace = "11111111-1111-4111-8111-111111111111";
 const character = "22222222-2222-4222-8222-222222222222";
@@ -12,9 +12,10 @@ const objectPath = `${workspace}/${character}/${asset}.webp`;
 const bucketUrl = "https://storage.invalid/storage/v1/object/chat-character-media";
 const probeUrl = `https://storage.invalid/storage/v1/object/authenticated/chat-character-media/${objectPath}`;
 
-function storageHarness({ deletion = [{ name: objectPath }], status = 404, probeError = false, malformed = false, revoked=false,metadataMissing=false,probeBody={statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"} } = {}) {
+function storageHarness({ deletion = [{ name: objectPath }], status = 404, probeError = false, malformed = false, revoked=false,metadataMissing=false,probeSequence=[],cacheStatus,deleteDuration=0,kind="image",probeBody={statusCode:"404",error:"not_found",message:"Object not found",code:"NoSuchKey"} } = {}) {
   const calls = [];
-  let cancelled = false;
+  let cancelled = false,clock=0,probeIndex=0;
+  const waits=[],budgets=[];
   class MediaError extends Error { constructor(code) { super(code); this.code = code; } }
   const source = stripTypeScriptTypes(readFileSync("src/lib/chatAdminMedia.ts", "utf8"));
   // Execute the real storage helper with only its imports replaced. No provider,
@@ -22,7 +23,7 @@ function storageHarness({ deletion = [{ name: objectPath }], status = 404, probe
   const code = source.replace(/^import[^\n]*;\s*$/gmu, "").replace(/^export /gmu, "");
   assert.doesNotMatch(code, /^import /mu);
   const context = {
-    Buffer, AbortSignal,
+    Buffer, AbortSignal,performance:{now:()=>clock},
     process: { env: {} },
     cookies: async () => ({ get: () => ({ value: "synthetic-owner-jwt" }) }),
     SUPABASE_ACCESS_TOKEN_COOKIE: "synthetic-session",
@@ -36,18 +37,22 @@ function storageHarness({ deletion = [{ name: objectPath }], status = 404, probe
     MEDIA_MAX_BYTES: 5 * 1024 * 1024,
     MEDIA_MAX_ITEMS: 100,
     isChatAdminStorageObjectAbsent,
+    mediaExtension:()=>kind==='video'?'mp4':'webp',
+    waitForChatAdminStorageObjectAbsent:(probe,options)=>{budgets.push(options.budgetMs);return waitForChatAdminStorageObjectAbsent(probe,{...options,now:()=>clock,sleep:async ms=>{waits.push(ms);clock+=ms;}});},
     mediaId: value => value,
     fetch: async (url, init) => {
       calls.push({ url, init });
       if(url.startsWith('https://rest.invalid/'))return Response.json(metadataMissing&&init.method==='DELETE'?[]:[{id:asset,workspace_id:workspace,character_id:character,revision:2}]);
-      if (init.method === "DELETE") return malformed ? new Response("not-json") : Response.json(deletion);
-      if (probeError) throw new Error("synthetic_transport_failure");
-      const response=Response.json(probeBody,{status}),reader=response.body.getReader();
-      return {status,headers:response.headers,body:{getReader:()=>({read:()=>reader.read(),cancel:async()=>{cancelled=true;await reader.cancel();}})}};
+      if (init.method === "DELETE") {clock+=deleteDuration;return malformed ? new Response("not-json") : Response.json(deletion);}
+      const next=probeSequence[probeIndex++]??{};clock+=next.elapsed??0;
+      if (probeError||next.error) throw new Error("synthetic_transport_failure");
+      const currentStatus=next.status??status,cache=next.cacheStatus??cacheStatus;
+      const response=Response.json(next.body??probeBody,{status:currentStatus,headers:cache?{"cf-cache-status":cache}:{}}),reader=response.body.getReader();
+      return {status:currentStatus,headers:response.headers,body:{getReader:()=>({read:()=>reader.read(),cancel:async()=>{cancelled=true;await reader.cancel();}})}};
     },
   };
   runInNewContext(`${code}\nglobalThis.mediaObjectUnderTest = mediaObject;globalThis.cleanupUnderTest = cleanupFailedMediaUpload;`, context);
-  return { calls, cancelled: () => cancelled, cleanup: () => context.cleanupUnderTest(workspace,character,{id:asset,workspace_id:workspace,character_id:character,revision:1,media_type:'image'}), remove: () => context.mediaObjectUnderTest(workspace, character, asset, "DELETE") };
+  return { calls, waits,budgets,time:()=>clock,cancelled: () => cancelled, cleanup: () => context.cleanupUnderTest(workspace,character,{id:asset,workspace_id:workspace,character_id:character,revision:1,media_type:'image'}), remove: () => context.mediaObjectUnderTest(workspace, character, asset, "DELETE",undefined,kind) };
 }
 
 test("Storage deletion acknowledgment and retry both require the same authenticated absence probe", async () => {
@@ -128,4 +133,64 @@ test('failed upload cleanup tombstones first, verifies physical absence, reautho
   assert.ok(!h.calls.some(x=>x.url.startsWith('https://rest.invalid/')&&x.init.method==='DELETE'),'uncertain absence or revoked authority must retain the tracked tombstone');
  }
  await assert.rejects(storageHarness({metadataMissing:true}).cleanup(),/media_cleanup_unverified/);
+});
+
+test('acknowledged DELETE waits for cached positives to become strict absence using only the same authenticated GET',async()=>{
+ for(const deletion of [[{name:objectPath}],[]]){
+  const h=storageHarness({deletion,status:400,probeSequence:Array.from({length:5},()=>({status:200,cacheStatus:'HIT',elapsed:200}))});
+  assert.equal((await h.remove()).length,0);
+  assert.equal(h.calls.filter(c=>c.init.method==='DELETE').length,1);
+  assert.equal(h.calls.length,7);
+  for(const call of h.calls.slice(1)){
+   assert.equal(call.url,probeUrl);assert.equal(call.init.method,undefined);
+   assert.equal(call.init.headers.Authorization,h.calls[0].init.headers.Authorization);
+   assert.equal(call.init.cache,'no-store');assert.equal(call.init.redirect,'error');
+   assert.ok(call.init.signal instanceof AbortSignal);
+  }
+  assert.equal(h.time(),19_000); // Network elapsed time is included in absolute offsets.
+  assert.deepEqual(h.waits,[800,1_800,3_800,7_800,3_800]);
+ }
+});
+
+test('a persistent CDN HIT never proves absence and stops after six reads without metadata deletion',async()=>{
+ const h=storageHarness({status:200,cacheStatus:'HIT'});
+ await assert.rejects(h.cleanup(),/media_cleanup_unverified/);
+ assert.equal(h.calls.filter(c=>c.url===bucketUrl&&c.init.method==='DELETE').length,1);
+ assert.equal(h.calls.filter(c=>c.url===probeUrl).length,6);
+ assert.ok(!h.calls.some(c=>c.url.startsWith('https://rest.invalid/')&&c.init.method==='DELETE'));
+ assert.equal(h.time(),19_000);assert.equal(h.cancelled(),true);
+});
+
+test('cache rechecks stop on readable origin, uncertain absence, authorization and transport errors',async()=>{
+ for(const next of [
+  {status:200,cacheStatus:'BYPASS'},{status:200,cacheStatus:'MISS'},
+  {status:401},{status:403},{status:429},{status:500},
+  {status:404,body:{code:'AccessDenied',message:'Object not found'}},{error:true},
+ ]){
+  const h=storageHarness({probeSequence:[{status:200,cacheStatus:'HIT'},next]});
+  await assert.rejects(h.remove(),next.error?/synthetic_transport_failure/:/media_cleanup_unverified/);
+  assert.equal(h.calls.length,3);assert.equal(h.time(),1_000);
+ }
+});
+
+test('absence budget includes DELETE latency and retains the original image/video upper bounds',async()=>{
+ for(const [kind,deleteDuration,limit] of [['image',14_500,25_000],['video',29_000,40_000]]){
+  const path=kind==='video'?objectPath.replace('.webp','.mp4'):objectPath;
+  const h=storageHarness({kind,deletion:[{name:path}],deleteDuration,status:200,cacheStatus:'HIT'});
+  await assert.rejects(h.remove(),/media_cleanup_unverified/);
+  assert.equal(h.budgets[0],limit-deleteDuration);
+  assert.equal(h.calls.length,5);assert.ok(h.time()<limit);
+ }
+});
+
+test('expired or invalid budgets and late absence cannot produce success',async()=>{
+ for(const budgetMs of [0,-1,NaN,Infinity,20_001]){
+  let calls=0;
+  assert.equal(await waitForChatAdminStorageObjectAbsent(async()=>{calls++;return Response.json({});},{budgetMs}),false);
+  assert.equal(calls,0);
+ }
+ let clock=0,calls=0;
+ const absent=()=>Response.json({code:'NoSuchKey',message:'Object not found'},{status:404});
+ assert.equal(await waitForChatAdminStorageObjectAbsent(async()=>{calls++;clock=20_001;return absent();},{now:()=>clock}),false);
+ assert.equal(calls,1);
 });
