@@ -178,7 +178,7 @@ async function main() {
       // release.env is deliberately never written: App truth is not Worker source.
     },
     postflight:async()=>{await live();await stableRelease();await contract();
-      await service();await queueEmpty();},
+      await service();},
   };
     const result = await transition(input,io);
     console.log(`BACKUP_WORKER_CONTROL=${result}`);

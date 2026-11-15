@@ -37,7 +37,9 @@ receipt, changed retained bytes and unknown partial files fail closed.
 After installation only this worker is started again; app/PM2/nginx, SQL,
 timers, credentials, retention and archives are not changed. Read-only
 postflight checks exact installed bytes, retained files, unit/process, app,
-release, current39/29 catalog and queue. Existing automatic rollback uses only
+release and current39/29 catalog. Queue emptiness is required before and after
+the service stop, not after successful restart: normal newly claimed work
+is allowed. Existing automatic rollback uses only
 the exact saved module; it does not restore shared DB data. A successful worker
 restart is not itself backup/Restore success.
 
