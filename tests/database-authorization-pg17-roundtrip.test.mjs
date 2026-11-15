@@ -2257,8 +2257,8 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         `drop function public.unapproved_core_replacement(); ${definitionFor('cleanup_shared_rate_limit_buckets')} revoke all on function public.cleanup_shared_rate_limit_buckets(integer) from public,anon,authenticated; grant execute on function public.cleanup_shared_rate_limit_buckets(integer) to service_role;`,
       ],
       [
-        `grant service_role to authenticated; alter role authenticated inherit;`,
-        `alter role authenticated noinherit; revoke service_role from authenticated;`,
+        `grant service_role to authenticated with inherit true;`,
+        `revoke service_role from authenticated;`,
       ],
 
       [coreBadBody,definitionFor('claim_admin_backup_job')],
@@ -2285,9 +2285,9 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         `drop function public.support_centre_purge();`,
       ],
     ];
-    for(const [bad,repair] of reviewedMutations){
+    for(const [mutationIndex,[bad,repair]] of reviewedMutations.entries()){
       await metadataOnlySql(bad);
-      try {await assert.rejects(captureContract(sourcePsql,pgpassFile),/authorization_security_definer_boundary_invalid/u);}
+      try {await assert.rejects(captureContract(sourcePsql,pgpassFile),/authorization_security_definer_boundary_invalid/u,`reviewed mutation ${mutationIndex}: ${bad.slice(0,100)}`);}
       finally {await metadataOnlySql(repair);}
       assert.deepEqual(await captureContract(sourcePsql,pgpassFile),reviewedContract);
     }

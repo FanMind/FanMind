@@ -8,4 +8,4 @@
 - Separate Guardian: backup_guardian. Final verdict and native CI must be recorded against the eventual head.
 - Protected installation, worker restart, backup execution, IAM, boot and Restore require separate exact approval.
 - Source work evidence and remaining blockers: docs/operations/SUPPORT_1350_BACKUP_CONTRACT_REVIEW.md.
-- Status: source correction and adversarial checks in progress; no operational completion asserted.
+- Status: source correction prepared in PR1515; independent source review PASS at2ce421c1; nativeCI identified and corrected an ineffective inheritance-test mutation. Final CI/Guardian evidence belongs to PR1515 and the private Support report. No operational completion asserted.
