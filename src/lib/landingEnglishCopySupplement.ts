@@ -151,6 +151,8 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   "Phase 7b · jetzt in Arbeit": "Phase 7b · work started now",
   "Ein Creator · ein eigener Account und Workspace": "One creator · one dedicated account and workspace",
   "Strukturierte Profile · Umsetzung begonnen": "Structured profiles · implementation started",
+  "Creator-Entwicklung aktiv · externe Freigaben zurückgestellt": "Creator development active · external approvals deferred",
+  "Angebote und Verkaufspausen vorhanden · gemeinsamer Preisschutz synthetisch geprüft · Zielabnahme offen": "Offers and sales holds implemented · shared price guard tested synthetically · target acceptance pending",
   "Angebotsregeln und Gesprächszustände in Arbeit": "Offer rules and conversation states in development",
   "Datenmodell begonnen · Lernschleife folgt": "Data model started · learning loop follows",
   "Anbindung und Abnahme in Arbeit": "Connection and acceptance in progress",
@@ -195,9 +197,12 @@ export const landingEnglishCopySupplement: Record<string, string> = {
   Vorbereitet: "Prepared",
   Listenlogik: "List logic",
   "Filter & Tags": "Filters & tags",
-  "Exakter Tag-Filter für Fans in Arbeit; weitere Filter und Segmente bleiben offen":
-    "Exact fan tag filter in progress; additional filters and segments remain open",
   "Analytics & Reichweitenerkennung": "Analytics & reach detection",
+  "Später geplant": "Planned for later",
+  "Read-only KI-Analyse und Dashboard-Erklärungen":
+    "Read-only AI analysis and dashboard explanations",
+  "Später · abhängig von kanonischen Analytics-Daten, Tenant/AuthZ, Datenminimierung, Audit, Capacity/Kosten und Providerfreigaben":
+    "Later · dependent on canonical analytics data, tenant isolation and authorization, data minimization, auditability, capacity and cost controls, and provider approvals",
   "Performance-Signale": "Performance signals",
   "Fan-/Kanal-Reichweite erkennen": "Detect fan/channel reach",
   Ehrlich: "Transparent",

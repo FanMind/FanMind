@@ -95,16 +95,16 @@ test("English inbox navigation preserves locale and renders localized workspace 
   assert.match(page, /Never send replies automatically/u);
   assert.match(page, /"Ø Antwortzeit": "Average response time"/u);
   assert.match(page, /formatInboxWaitingTime\(item\.waitingMinutes, locale\)/u);
-  assert.match(page, /getInboxKpis\(queueItems, locale\)/u);
+  assert.match(page, /getInboxKpis\(viewItems, locale\)/u);
   assert.doesNotMatch(page, /<span>\{item\.waitingSince\}<\/span>/u);
   assert.match(page, /const fanListHref = localizedWorkspaceHref\("\/fans#fans-list", locale\)/u);
   assert.equal(
     page.match(/(?:primaryActionHref: fanListHref|href=\{fanListHref\})/gu)?.length,
     2,
   );
-  assert.match(page, /localizedWorkspaceHref\(`\/fans\/\$\{item\.contactId\}`, locale\)/u);
-  assert.match(page, /localizedWorkspaceHref\(`\/fans\/\$\{item\.contactId\}\?focus=reply`, locale\)/u);
-  assert.match(page, /localizedWorkspaceHref\(`\/fans\/\$\{item\.contactId\}\?focus=followup`, locale\)/u);
+  assert.match(page, /getFanQueueHref\(item, locale\)/u);
+  assert.match(page, /getFanQueueHref\(item, locale, "reply"\)/u);
+  assert.match(page, /getFanQueueHref\(item, locale, "followup"\)/u);
   assert.doesNotMatch(page, /(?:href|primaryActionHref)=[{]?["`]\/fans#fans-list/u);
   assert.doesNotMatch(page, /href=\{`\/fans\/\$\{item\.contactId\}(?:\?focus=(?:reply|followup))?`\}/u);
   assert.match(searchForm, /if \(locale === "en"\) params\.set\("lang", "en"\)/u);

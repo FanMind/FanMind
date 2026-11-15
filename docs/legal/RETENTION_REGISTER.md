@@ -27,6 +27,7 @@ identifizierbar zu halten. Maßgebliche Prüfeinstiege sind insbesondere
 
 | Datenbereich | Technische Grenze oder Kriterium | Status | Quelle |
 | --- | --- | --- | --- |
+| Support-KI-Kontoentscheidung | Ein minimierter aktueller Nachweis pro Auth-Nutzer bis Kontolöschung, dann FK-Kaskade; eigenständig vom 30-Tage-Supportverlauf. Rechtsfreigabe dieser Frist offen | kontrolliert vorbereitet, Production nicht aktiviert | `supabase/controlled/support_ai_consent.sql`, `docs/legal/SUPPORT_AI_REVIEW_DRAFT.md` |
 | Marketing-Einwilligung | Consent-Cookie höchstens 180 Tage; jederzeit änderbar | umgesetzt | `src/lib/metaPixelPolicy.mjs` |
 | Meta-Pixel-Ereignisse | nur nach Einwilligung; ausschließlich parameterloses `PageView`; vorbereitete Conversion-Events unverdrahtet; keine FanMind-seitige Event-Payload-Retention | umgesetzt | `src/lib/metaPixelPolicy.mjs`, `src/lib/metaPixel.ts` |
 | Auth-Session | Access-Cookie höchstens Provider-Ablauf beziehungsweise 1 Stunde; Refresh-Cookie 30 Tage | umgesetzt | `src/app/api/auth/session/route.ts` |
@@ -98,3 +99,31 @@ muss zusätzlich `npm run legal:evidence:require-complete` erfolgreich sein.
 Bis diese Punkte bestätigt sind, darf weder dieses Register noch die
 öffentliche Datenschutzerklärung als pauschale DSGVO-Konformitätsgarantie
 ausgegeben werden.
+
+## Support centre / authenticated support conversation (#1350 / #1416)
+
+Source-only controlled tables `support_chat_threads`, `support_chat_turns`,
+`support_centre_notifications`, `support_centre_cases`, `support_centre_events`.
+Chat text is private to actor+Workspace; support review is bound to an explicit
+monotonic consent snapshot. Chat and notification retention: 30 days; terminal
+case/event retention: 30 days; unresolved expired/running metadata reconciliation:
+31 days. Controlled purge is app-denied and not scheduled/applied by this source.
+Activation requires an approved daily cleanup operator, monitoring/deletion proof,
+processing/privacy information and subject-access/export coverage of support text.
+Account and Workspace deletion cascade. Source tests are not a runtime retention
+or legal acceptance certificate. See `docs/operations/SUPPORT_CENTRE.md`.
+
+
+### Private ChatAdmin-Medien — vorbereitet, nicht aktiviert
+
+Private Bilddateien, manuell geprüfte Beschreibungen/Schlagwörter, Verfügbarkeit und Anfertigungsregeln bleiben Workspace-/Character-gebunden. Die KI-Beschreibung wird nur ausdrücklich ausgelöst und bleibt bis zur manuellen Prüfung unfreigegeben. Einzelbildlöschung entzieht zuerst Freigabe/Verfügbarkeit, bestätigt dann die physische Datei-Löschung und entfernt erst danach Metadaten. Der bestehende geschützte Account-Löschprozessor bereinigt Bilder vor Auth-Löschung; Disclosure enthält Metadaten/Regeln. Keine neue allgemeine Aufbewahrungsfrist, automatische Bildübertragung oder Produktivaktivierung wird behauptet. Siehe `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`; Provider-/Datenschutz- und Zielabnahme bleiben offen.
+
+## ChatAdmin catalogue extension (#1425, source only, 13 November 2026)
+
+Private image/video objects keep the existing explicit-delete/account-erasure
+lifecycle. Folder metadata cascades with its Character and is included in export
+and the optional-schema erasure absence check. Object deletion requires exact
+scoped metadata, tombstoning, physical deletion and independent authenticated404
+before metadata removal. No automatic legal retention duration is invented.
+New catalogue SQL is unapplied; native SQL and actual target cleanup remain
+acceptance requirements. See `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`.

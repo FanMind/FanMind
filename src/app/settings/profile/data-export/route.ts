@@ -246,6 +246,8 @@ const SECTION_LABELS: Record<
   DisclosureMetaDataset["key"],
   { de: string; en: string }
 > = {
+  support_conversations: { de: "Eigene gespeicherte Supportgespräche", en: "Own stored Support conversations" },
+  support_ai_consent: { de: "Aktueller Support-KI-Einwilligungsnachweis", en: "Current Support AI consent evidence" },
   profile_record: { de: "Gespeichertes Nutzerprofil", en: "Stored user profile" },
   membership_record: { de: "Eigene Workspace-Mitgliedschaft", en: "Own Workspace membership" },
   workspace_record: { de: "Workspace-, Vertrags- und Abrechnungsdaten", en: "Workspace, contract and billing data" },
@@ -272,9 +274,13 @@ const SECTION_LABELS: Record<
   creator_commercial_events: { de: "Bestätigte Angebots- und Kaufbelege", en: "Confirmed offer and purchase evidence" },
   creator_confirmed_chat_learning: { de: "Bestätigte Chat-Lernevidenz", en: "Confirmed chat learning evidence" },
   chat_admin_capability: { de: "ChatAdmin-Workspace-Capability", en: "ChatAdmin Workspace capability" },
+  chat_character_media: { de: "Private Character-Bildangaben", en: "Private Character image metadata" },
+  chat_character_media_policies: { de: "Character-Anfertigungsregeln", en: "Character custom creation rules" },
+  chat_character_media_folders: { de: "Private Character-Medienordner und Preisbindungen", en: "Private Character media folders and price bindings" },
   chat_characters: { de: "ChatAdmin-Charaktere", en: "ChatAdmin characters" },
   chat_character_fans: { de: "ChatAdmin-Fans und Fanwissen", en: "ChatAdmin fans and fan knowledge" },
   chat_character_conversations: { de: "Character-gebundene manuelle Chats", en: "Character-bound manual chats" },
+  chat_character_current_facts: { de: "Aktuell gültiges ChatAdmin-Fanwissen", en: "Current ChatAdmin fan knowledge" },
   chat_character_messages: { de: "Character-gebundene Nachrichten und Entwürfe", en: "Character-bound messages and drafts" },
   pilot_inquiries: { de: "Eigene frühere Pilot-/Kontaktanfragen", en: "Own earlier pilot/contact inquiries" },
   referral_membership: { de: "Eigenes Referral-Programmprofil", en: "Own referral program profile" },

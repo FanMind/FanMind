@@ -1,3 +1,65 @@
+## FM1425 CRM first hosted browser pass — 14 November 2026
+Two browser assertions failed after the layout revision: the compact two-column
+Fan profile now fits the old 520px viewport, and exact label text on a select
+includes its options in the test selector. Exercise profile scrolling at 380px
+and use the combobox accessible name for Zielordner; keep the overflow, save,
+isolation and mobile width assertions. Other 50 component/boundary tests passed.
+
+## FM1425 Owner rejected the previous presentation — 14 November 2026
+Prior technical layout checks did not establish an understandable CRM for the
+Owner. The Owner explicitly requests Models on the left, Fans next, conversation
+on the right, with media/prices inside Model settings and a quiet dark interface
+like the supplied reference. Replace the chat/media toggle; preserve selected
+fan and unsent inbound text when merely visiting settings. Abort pending AI
+generation at that boundary and retain revision/authority checks. Upload trials
+are paused by Owner until this graphical revision is reviewable. Historical
+media/desktop PASS must not be reused as acceptance of the new navigation.
+
+## FM1425 first custom-policy save reports failure after commit — 14 November 2026
+The first policy INSERT omitted return=representation; PostgREST committed but
+returned an empty201 body, and mediaRest JSON parsing failed. Actual reload
+confirmed the stored rules. Request representation for this one existing INSERT;
+keep all authorization/revision checks. A faithful route regression reproduces
+503 before repair and200 afterward. Actual custom-dialogue acceptance is still
+open after a fail-closed reply_price_not_permitted result; no guard bypass.
+
+
+## FM1425 long Character sidebar overflow — 14 November 2026
+Actual authenticated Staging acceptance on f8a3737f measured a 205px Character
+list with 265px scrollWidth for the reserved long synthetic names. The implicit
+grid track used the card minimum width, clipping its management menu. Allow the
+card to shrink with min-width:0; existing name ellipsis and mobile 178px card
+minimum remain. No access/schema/provider/runtime flag change. Verify desktop
+geometry and retained mobile horizontal navigation independently; this is not
+a complete media or mobile Staging acceptance.
+
+## FM1425 real media-tab layout failure — 13 November 2026
+Actual authenticated Staging media UI on610566fa showed Gespräch/Bilder as
+full-height side columns: workspaceMain remained the default horizontal flex
+container after the media tab/library siblings were added. Set only its flex
+direction to column; tabs stay above the remaining scrollable media panel.
+Existing narrow-screen display:block remains unchanged. No second library,
+provider, schema, resource, access or flag change. Core Retention correction1483
+and active base/catalogue/video gates are preserved; upload acceptance is still
+blocked by Chrome extension file-URL access. Desktop/mobile PASS remains pending.
+
+## FM1425 additive-media retention prerequisite — 13 November 2026
+Actual activation43484135999 stopped before control although the target schema
+was exactly extended. Recursive SQL comparison rejected the independent media
+addition against the fresh daily30a2da24 receipt. Retention43484424494 returned
+already_completed; no receipt was rewritten. Small Owner-approved correction
+admits only the addition with existing pinned SHA256, preserving every other
+dependency and target/schema/status/freshness gate. Actual source equivalence,
+positive addition and all dependency/body/deletion/rename negatives pass.
+Disposable PG17 executes real retention before/after media apply with identical
+Support catalogue, expired-row deletion and recent-row preservation; native CI
+runs the same case. Common Mainebae223a includes Instagram1481. No schema
+reapply, host installation, direct flag bypass, provider analysis or Production
+change. Protected activation and practical acceptance remain pending.
+
+## FM1425 proc identity parser regression — 13 November 2026
+The installed probe identity matcher was independently reproduced as overescaped: valid proc Uid/Gid rows could not match. Replace only that matcher with literal exact four-ID patterns, validate real proc rows and malformed negatives. No identity check removed; target proof remains mandatory.
+
 ## FM-FAIL-CHATADMIN-FAN-POSTFLIGHT-20260927
 - Date: 2026-09-27
 - Status: OPEN_RECONCILIATION
@@ -434,3 +496,124 @@ Record failed, unsafe, superseded or misleading approaches here. Do not store se
 - Offline migration checksum/contract/foundation-source checks passed; reviewed Staging source state installed. Actual query failed at16:07:56.0581882Z with verify_query_failed. Dedicated private passfile cleanup succeeded; no APPLY, fixture or runtime activation was requested.
 - Independent exact full SQL reproduction fails P0001 creator_learning_foundation_missing, inline_code_block line61. At16:09:35.118261Z public.creator_workspace_access_allowed(uuid) is absent, while the other five presence-checked foundation objects exist. Source verifier SHA2567e798de615d0d9a2c290deae26950cec154ec51e655a02555f24293b2d4d416c; generated query SHA25632079c5863e01295d380491ba6e332952f04a6219875d5d9caf3ef82a2f0f174.
 - No ABSENT/INSTALLED learning-schema result is established. Diagnose all remaining exact foundation contracts and the helper's source/rollout history before defining any separate corrective package. Do not weaken the verifier, retry unchanged, apply learning SQL or repeat consumed historical Creator installation.
+
+## FM-FAIL-CHATADMIN-STRUCTURED-OFFERS-ROW-COUNT-20261009
+- Date: 2026-10-09
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: FM-CHATADMIN-003 structured Character offers Staging activation.
+- Attempt: controlled Staging APPLY run 37945920397 on exact main `7a2fe438748b6940220d03562213548011c5bec5`; the pinned SQL contract passed at SHA-256 `01104f6e1e2a4edfda8ec2c50af784fad89f234ed3f0a9bfaf827eacb9803421`.
+- Failure/cause: the pre-APPLY read-only `select count(*) from public.chat_characters` parser used a double-escaped regular expression and could not match normal psql count output, producing `row_count_invalid`. The failure occurred before the migration subprocess and its transaction/COMMIT; prior VERIFY 37945577760 established schema state `ABSENT`.
+- Correction boundary: PR #1292 makes only the count output deterministic and adds fail-closed regression coverage. No Staging retry, Production access, SQL contract change or product behavior change is included.
+- Exact next step: complete exact-head CI and independent R3 countercheck, merge only under the applicable authorization, then run a fresh read-only VERIFY bound to the new current main before any separately authorized APPLY.
+- Do not repeat: never rerun the failed APPLY or infer a numeric Character count from the discarded pre-fix stdout.
+
+
+## FM-FAIL-STAGING-DEMO-DISABLED-DIAGNOSTIC-20261010
+- Date: 2026-10-10
+- Status: READ_ONLY_DIAGNOSTIC_PENDING
+- Task: Staging-only authenticated ChatAdmin acceptance prerequisite.
+- Evidence: deployed Staging release `61cf98f29f48d88b7112c06461b94cd255428b4f` has public Demo start disabled by configuration; the bounded diagnostic is intentionally read-only and expects `POST /api/demo/start` to fail closed with HTTP 503 / `public_demo_disabled`.
+- Change boundary: add only a manually dispatchable GitHub Actions diagnostic bound to that exact Staging release. No deploy, DB/schema write, Billing action, secret access, Production change, or enabling of public Demo.
+- Next action: after required CI, merge the bounded diagnostic workflow, run it manually on main, and use its evidence to decide the separate controlled Staging-only prerequisite verification. Do not enable Demo or bypass the fail-closed guard from this task.
+
+
+## FM-FAIL-CHATADMIN-CURRENT-SCHEMA-POSTFLIGHT-20261012
+- Date: 2026-10-12
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: continuation of FM-ADMINCHAT-STAGING-HARNESS-20261011-01; source correction FM-CHATADMIN-CURRENT-SCHEMA-VERIFY-20261012-01 (R2 repository-only repair).
+- Owner authorized the existing merges and isolated Staging testing in this conversation. PRs #1298 and #1296 merged; exact Staging deployment run 38294472772 succeeded for main `159d24020787683d6982dd5ba1326df44f13900d`. Production deploy remains sealed by source and Actions policy; no runner was disabled.
+- Acceptance run 38294695807 passed authentication/probe, then failed before fixture reservation at schema validation with database_operation. Cleanup reported NOT_NEEDED; no acceptance fixtures or AI generations were created.
+- Read-only diagnosis on isolated Staging `vshyhvgcmrlagvfnvomc`: pinned full fan and offers postflights pass, while the legacy base verifier rejects the current extensions as PARTIAL. The composed parent/base SQL also passes read-only. This is verifier composition drift, not a missing migration.
+- PR #1303 retains strict capability/Character comparisons while delegating current conversations/messages to the unchanged pinned fan verifier and only the exact sales_playbook addition to the unchanged offers verifier. Standalone legacy checks, migration files/hashes and protected target boundaries remain unchanged.
+- Regression coverage: valid current schema, legacy false rejection, Character nullability, unexpected Character column and unauthorized capability mutation grant in native PostgreSQL 17. Required CI and fresh exact-release Staging acceptance are still pending; this record does not claim runtime acceptance.
+- Do not repeat the unchanged failed workflow or apply SQL to resolve this verifier failure. Next: required exact-head CI/countercheck, protected PR merge, exact new-release Staging deploy, then fresh authorized acceptance with bound recovery/cleanup.
+
+- Merge-readiness follow-up for PR #1303: exact-head manual Supply Chain run 38298081519 passed, but the required check on the PR merge candidate stayed expected because the workflow filters PR paths. Remove only the PR path filter so the existing mandatory job runs on every main PR; retain all pins, permissions, audit/SBOM gates and push filtering. Add a regression for unconditional main PR registration. Do not bypass or weaken the required check.
+
+
+## FM-FAIL-CHATADMIN-OFFER-EDITOR-ACCEPTANCE-20261012
+- Date: 2026-10-12
+- Status: DIAGNOSTIC_REFINEMENT_IN_REVIEW
+- Task: continuation of FM-ADMINCHAT-STAGING-HARNESS-20261011-01.
+- Exact Staging release: `b8f1433c0fef62efbb6a2f4b3aadce1101289237`, deployment 38299156783 succeeded with 14 public routes and seven mandatory health components. PR #1303 merged after all required exact-head checks, including actual native PG17 regression.
+- Fresh acceptance 38299348100 / attempt 1 / job 114978210963 passed probe, schema, reservation and prepare, then failed at offers_save with HTTP 2xx, no network violation and successful session logout. The coarse stage includes edit/save/reload, so the exact assertion is not yet known; do not infer a product defect or runtime acceptance.
+- Recovery artifact 11769802609, digest sha256:28c68997284667a723dae1162053dbccbd15eda6c8f2bdd4407c5959ee99ac29, remains available. Cleanup SQL executed but correctly withheld final PASS because the receipt retained inFlightUncertain. No unchanged retry or receipt deletion.
+- Independent read-only Staging reconciliation using the exact downloaded/hash-verified run receipt: capability, reserved Characters, run Fans, reserved conversations, descendant messages, run-scoped AI usage and owner sessions all count zero; no active ChatAdmin writer. No additional DML/schema change was needed. This is a bounded absence snapshot, not a fabricated successful workflow or erasure of uncertainty.
+- Next repair: add allowlisted offer editor/field/submit/payload/reload checkpoints and assert exact persisted save-response prices before reload; retain output redaction, all browser negatives and fail-closed recovery. Fresh exact-head CI, merge, Staging deploy and acceptance are required.
+
+
+## FM-FAIL-CHATADMIN-CHARACTER-MENU-INTERCEPTION-20261012
+- Date: 2026-10-12
+- Status: ROOT_CAUSE_IDENTIFIED_FIX_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion (R2 UI repair).
+- Diagnose run 38301161119 on deployed/reviewed `cbcb726a261a98d844a3259840fb0e4edc7219bf`: probe/schema/reservation/prepare passed. Exact four-offer response prices and persisted reload prices/active flags passed. Failure at offers_reload_close precedes reopening Character B, without HTTP failure or network violation; logout passed.
+- Source cause: native Character details menus stay open after Bearbeiten. The positioned dropdown has z-index 5 and overlaps the next Character card. The first menu is reopened for the reload check and remains open when selection moves to B, explaining the click timeout. Close the native menu before edit/deactivate/remove; add explicit live-browser assertions that edit/deactivate leave it closed. No price, AI, data, authorization or scroll-layout changes.
+- Recovery artifact 11770675534 / sha256:84982144a9034f580c8d770e901f27b6fd5961bccdd6558a66f3042dae374750 downloaded and digest verified. Independent read-only exact-receipt reconciliation again showed zero capability, Character, Fan, conversation, message, AI-usage and owner-session residue and zero active ChatAdmin writers. The artifact is retained; do not turn the failed workflow into PASS or delete its uncertainty receipt.
+- Next: exact-head required CI and reviewed UI diff, protected merge, exact Staging deployment and fresh full acceptance with cleanup. Production remains sealed; runners remain enabled.
+
+
+## FM-FAIL-CHATADMIN-EDITOR-CLOSE-DIAGNOSTIC-20261012
+- Date: 2026-10-12
+- Status: SOURCE_DIAGNOSTIC_AND_LOCATOR_REPAIR_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion.
+- Run 38302707934 on exact deployed `c397bf012a982ad4104512f4761c802fd2043d37` confirms native Character menus now close after Bearbeiten; prices again save/reload correctly. It still fails at offers_reload_close, so the open-menu defect was real but did not fully explain the acceptance failure. Retain that distinction; do not claim full root-cause closure or successful acceptance.
+- Repair: scope Abbrechen to the Character editor form and require the editor to disappear. Mark Character-B selection separately. Classify private child-process failure output into a fixed allowlist of locator/action/assertion kinds; never print raw Playwright output, error text, payloads or credentials. Redaction regressions remain mandatory.
+- Recovery artifact 11771247320 / sha256:03fe4feaa19aaf1515b90ada02cf1282e8b8faf2ee40bbf03f5f37719dbc08a7 was downloaded and hash/target/release/run verified. Read-only exact-receipt reconciliation again found all eight residue/active-writer counts zero. Keep the artifact and failed-run status; no additional DML was performed.
+- Next: exact-head CI, merge, exact Staging deployment and fresh diagnostic acceptance. Production remains sealed and runner availability unchanged.
+
+
+## FM-FAIL-CHATADMIN-SCOPED-EDITOR-CLOSE-ASSERTION-20261012
+- Date: 2026-10-12
+- Status: SCOPED_ASSERTION_REPAIR_IN_REVIEW
+- Task: continued authorized ChatAdmin Staging completion.
+- Run 38304590869 on exact deployed `a07dea5e34719154afb898b2f1d1b2f1967de2c8` passes setup and offer persistence again, then reports offers_reload_close / failure kind assertion. The global heading-count assertion cannot yet distinguish the named editor from another matching heading; do not infer a new data/price problem.
+- Use the same named form for both Abbrechen and disappearance proof; retain the requirement that it closes before B selection and every original persisted-price/AI/negative/cleanup assertion. Add fixed assertion-method subtypes to distinguish count/value/checkbox/menu failures without exposing private output.
+- Recovery artifact 11771714965 / sha256:f3078c8ba8484eac699f0eae7016bc259f1e9cabd589cb6290196d414dfdad45 downloaded and digest/run/release/target verified. Independent read-only exact-receipt reconciliation showed zero residue/active-writer counts again; preserve artifact and failed-run status.
+- Next: exact-head CI, merge, exact Staging deployment and fresh full acceptance. No product, schema or protected Production change.
+
+
+## FM-FAIL-CHATADMIN-INTEREST-REGISTRATION-20261018
+- Existing PR1342 cb01c2ee registered its standalone test by changing checksum-pinned package.json. Both current Required Truth and PG17 jobs fail capacity_checksum_invalid (117653064810 /117653065071), not a need to loosen the controls.
+- Correction: consolidate the executed revocation regressions into existing registered tests/chat-admin-knowledge.test.mjs and restore package.json from live GitHub main f36e630c (SHA25608ebfb3daacdda0be46b6db1a73a93cfbd94eaa52b6b4559c43e4cfcf0e03991). No control/pin/workflow edits. Local origin/main was older d739797; it was not used as current truth. Fresh GitHub main content and final registration test verified.
+- Independent failures: fourth-clause withdrawal lost, same-source later correction ignored, eviction+old replay resurrected interest, overflow reported unchanged. Regressions now cover the repairs; overflow is honest not_saved, with remaining functional persistence gap. Do not claim full acceptance from green tests.
+- Local environment: Node child-process spawnSync returns EPERM/empty output. Build compiles then TypeScript --showConfig fails; manual-flow child CLI assertions similarly unavailable. Use final exact-head GitHub CI, never label those local checks passed.
+
+
+## FM-FAIL-CHATADMIN-CURRENT-FACTS-20261018
+- Initial1345helper167green tests missed duplicate-topic stale overwrite, first-clause contradiction, tenant mismatch, malformed current facts and multi-line quoted/hypothetical statements. Observed test-first4/94 failures plus quoted-source negative before repair; this is not DB evidence.
+- Native new SQL first accepted a positive prefix of a negative because its regex end anchor was missing. Corrected anchor/dollar quoting, then native tests passed; JavaScript grammar green had not proved SQL semantics.
+- Separate Guardian natively reproduced source race: FOR KEY SHARE admitted concurrent content update before fact commit. FOR SHARE fixes it; bounded mutation back to KEY SHARE recreates corruption. Keep regression; identity-only FK is insufficient for literal provenance.
+- Guardian found equal opaque legacy order could be overwritten during first cutover. Existing legacy cutoff now includes equality; native regression preserves the negative legacy state with no invented FK/positive.
+- Whole-message validation must still allow already supported boundary/communication companions. Dual-read must retain valid independent legacy topics; never concatenate contradictory topic states or drop all unrelated legacy interests silently.
+- No target apply/runtime activation. Old strict parent verifier/backup topology and old-binary rollback need separate protected rollout reconciliation; a green local/CI SQL test is not target approval.
+
+
+## FM-BLOCK-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Fresh read-only empty Staging tables/capabilities do not prove installation safety: configured Staging preview can automatically recreate a capability on authenticated access. Appflagoff is not a direct-RPC gate; protected deployed-release/preview exclusion proof is missing.
+- Existing strict Fan profile rejects new source objects; do not patch counts or bypass the locked composed harness. Backup captures private schema generally, but explicit definer safety checks filter public, leaving new private functions without a dedicated topology admission proof. No native full backup/restore contract roundtrip or verified target backup is claimed.
+- Source and isolated tests remain green; status BLOCKED for install preparation. Stop at the unknown protected prerequisites, preserve active historical locks and original SQL; no target write or unchanged failed workflow retry.
+
+## FM-FAIL-CHATADMIN-OFFLINE-PROFILE-BLIND-SPOTS-20261018
+- Task FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018; Risk R3, synthetic only. No target connection or protected action.
+- Independent native mutations exposed false greens in early catalog candidates: neutral-name dependent views, incoming service_role grantees, public schema CREATE and effective pg_database_owner ownership, and the omitted chat_characters parent caused by a singular-prefix seed. Closure: dependency/rule bridges, bidirectional transitive membership, exact public/private ACL/effective privileges and database owner, plus explicit canonical Character seed. Native regression probes now reject each case; no original Base/Fan/Offers/Tier checker was weakened.
+- Full dump/reparse changes one named quote CHECK rendering. Admit only its two exact observed equivalent strings; 239-limit and OR mutations fail. Do not broadly normalize expressions or update the reference from observed target state. Initial diagnostics guessed dropped-column numbering; subsequent source/restore diff established the actual CHECK cause.
+- Test plumbing corrections: replacement callbacks preserve SQL dollar quoting; failed child counters must fail the parent before PASS output; no-op nullability mutation revealed the omitted parent and was replaced by an actual NOT NULL change. Failures were not accepted as database-security evidence. Early runs are superseded only by complete final native and independent runs in the receipt.
+
+- Same-task architecture correction: the first successful disposable runs used image-default libc. Existing FanMind PG17 CI initializes ICU/en-US; final synthetic source/target/reference now use those exact unchanged initialization arguments and bind ICU locale/rules/collation version. Earlier libc proofs are superseded for architecture binding; no claim of real hosted locale inspection.
+
+
+## FM-FAIL-CAPACITY-V2-STAGING-BASELINE-20261026
+2026-10-26 — Blocker: Capacity-v2 Staging run 40329502489 remains read-only blocked after confirming the three historical budget defaults; table structure otherwise matches, while aggregate function-security, RLS/ACL and migration-marker attribution is still insufficient to distinguish expected Supabase provider defaults plus one historical name-only marker from independent drift. Evidence: exact-main run 40329502489, repository-pinned provider initial-schema defaults, and Draft PR #1369 add bounded source-normalized/negative diagnostics; no Staging or Production write, migration, baseline change or dispatch occurred. Exact-head CI and independent countercheck are required before any later separately authorized read-only rerun.
+
+## FM-FAIL-CAPACITY-V2-STAGING-MARKER-CARDINALITY-20261026
+2026-10-26 — Blocker: Read-only Capacity run 40358308608 proves the three historical budget defaults and exact repository-pinned Supabase provider ACLs account for their aggregate profile mismatches, but the exact-single unknown name-only marker-with-statements predicate remains false while all four protected marker counters differ. The marker population cardinality or uniformity is therefore still unknown and must be split by bounded booleans before any correction plan; provider ACL provenance does not authorize accepting broader target grants as the baseline. No database, marker, baseline, workflow, Staging or Production mutation occurred.
+
+## FM-FAIL-CHATADMIN-MEDIA-HOST-1425-20261113
+- Real Staging run43448723976 failed closed with missing video binaries, unbounded CPU/memory and runner outside actual application context. Same-UID runner never counted as proof. Required fixed service-context helper and resource drop-in developed under explicit Owner completion approval; target proof remains pending.
+- First follow-up #1475 head1f180567 CI correctly rejected missing project-memory update and CodeQL filesystem-check/read race in the new root diagnostic reader. Corrected with NOFOLLOW descriptor-open, fstat and descriptor-read plus change check; no security dismissal or rule exception. New full-head CI required.
+- Follow-up permission regression initially used stat(path) then read(path); CodeQL correctly rejected this test pattern at61ac4ef3. Both checks now use the same NOFOLLOW-open descriptor. Production protections and all required contexts remain enabled.
+
+## FM-FAIL-CHATADMIN-MEDIA-PROBE-SYMLINK-20261113
+- Real run43466444949 returned job success with NO readiness/cleanup/root-receipt markers and therefore is NOT a host/conversion acceptance. Installed current/control.mjs is a symlink; Node resolves import.meta.url to the release file but argv[1] retains the symlink. The CLI comparison skipped execution and exited0.
+- Local direct-vs-symlink reproduction confirms direct invalid arguments BLOCK/1 versus symlink empty/0. Correct CLI comparison uses realpath. The protected workflow now independently requires readiness, cleanup and root-receipt PASS markers, as well as exit0. Dedicated actual subprocess regression covers both entry forms. No rule bypass or success inference from job colour.
+- Current Staging d00ebd6e is deployed, host tools/drop-in prepared, but actual service-context conversion proof, SQL/bucket/flags and full practical acceptance remain pending. No media flag/schema mutation from this failed proof.

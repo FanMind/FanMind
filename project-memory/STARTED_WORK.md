@@ -1,3 +1,38 @@
+## FM-FACEBOOK-PRODUCTION-1464-20261113
+- Risk: R4; Status: SOURCE_REVIEW_AND_REQUIRED_CI; current Owner-authorized Issue1464 / PR1482.
+- Existing Staging acceptance consumed from issuecomment6860293997. Production has missing/invalid Facebook config; dedicated existing app2214477125984114 has Production callback but remains unpublished.
+- New Production-bound controller prepared; independent Guardian findings are being resolved and rechecked. Source/runtime/Meta state are recorded separately in receipts/facebook-production-1464-20261113.md.
+- No Production mutation or genuine receipt claim yet; normal Creator OAuth and publication remain required.
+
+## FM-FACEBOOK-PAGE-DISCOVERY-20261109 — authorized continuation
+- Risk: R4; Status: SOURCE_VERIFIED on Draft PR1463; repository worker complete and lock released, protected operator acceptance remains open.
+- Scope/authorization/recovery: see same task in TASK_LEDGER.md. Independent Guardian PASS; final CI and exact Staging branch deployment pending. Main merge held for later Owner approval.
+- No other roadmap task or protected data migration selected.
+
+## FM-WEB-001 — public support launcher and default-off Website AI — 2026-11-01
+- Task/Issue: bounded first implementation slice of #1350.
+- Risk: R3
+- Status: COUNTERCHECKED on PR #1398; repository worker complete and lock released.
+- Baseline: current main `f4ec4c1dc6af695cd99c572d5b64ceac39a602db`; stale PR #1250 inspected and reused selectively.
+- Verification: implementation head `0217473cf29ba0361bec0338646c1da14b44587b` passed all nine required workflows, including the complete Truth/Lint/Test/Build job and native PostgreSQL 17 authorization, Capacity and Creator isolation/rollback.
+- Scope: public landing launcher, safe fallback to `/support`, default-off AI route, exact installation/origin/session/inbound-receipt binding, bounded prompt/provider request, CRM idempotency and human handoff fallback.
+- Boundary: repository-only. No public installation creation, environment value, Staging/Production activation, database apply, provider credential/read, authenticated In-App assistant or autonomous external send.
+- Countercheck: independent PASS on head `0217473cf29ba0361bec0338646c1da14b44587b`; Escape dismissal, focus return, default-off boundary and complete R3 scope rechecked.
+- Recovery: revert source commit; absent installation configuration and the false AI flag preserve the prior public behavior.
+
+## FM-CREATOR-001 — bounded drift section evidence — 2026-11-01
+- Task/Action: FM-CREATOR-001 / creator-target-drift-section-evidence.
+- Risk/Status: R3 / SOURCE_VERIFIED on PR #1397; repository worker complete and lock released.
+- Baseline: exact main `ba981e50c2c18da2cae7afd11cd2bc9f20572f53`; read-only run `41300503008` proved DRIFT in `authUidFunctions,functions,memberships,policies,roles` with APPLY not requested and runtime inactive.
+- Verification: implementation head `c030c7218027ff9a0bb47f373485066b7e7d15c0` passed FanMind CI `41301541119`, including native PostgreSQL 17 Creator isolation/rollback; Browser, CodeQL, Supply Chain, Landing, Project Memory Guard and Status also passed. Final-head CI and independent R3 re-review remain merge gates.
+- Scope: emit only deterministic per-section Legacy/Current/Shared/Drift states and SHA-256 fingerprints for differing sections, with strict seven-line workflow validation and regression tests. This does not trust target values or change the accepted provider profile.
+- Boundary: repository-only. No Staging/Production write, SQL APPLY, deployment, runtime activation, role/auth grant, provider/customer/Billing/Restore/Mobile mutation or secret publication.
+- Recovery: revert the repository change. The paused R4 transition lock and consumed transition authorization remain unchanged; a later read-only diagnosis requires a fresh exact-main one-shot command.
+
+## 2026-10-31 started-work reconciliation
+- Historical implementation records with verified merged successors are closed or superseded below. Aggregate product/runtime gates remain unchanged and must not be inferred from source acceptance.
+- Remaining active records were rechecked against current main, current PR state and issue #1048; their refreshed date records review only.
+
 ## FM-GOV-ORCHESTRATOR-METHOD-20261005 — executable admission and closeout method
 - Task: FM-GOV-ORCHESTRATOR-METHOD-20261005
 - Orchestrator handoff: owner-fanmind-orchestrator-method-20261005-01
@@ -25,6 +60,7 @@
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R4
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Work lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (PAUSED)
 - Exact source correction: PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, normal merge/current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.
 - Remaining result: obtain the separately authorized read-only drift diagnosis, consume its bounded differing-section evidence, implement/review the proven remediation, then require a distinct fresh transition/runtime authorization before any later APPLY/runtime execution.
@@ -200,7 +236,9 @@
 - Historical checkpoints below are superseded for already-published #1102-#1108 source and installed Social/Creator foundations. Social Apply 34591339718 and deploy 34591566257 completed #1104. Do not repeat those source/installations or treat old locks/next-step text as active. Mutable current-target evidence must be revalidated after listed triggers/TTL; historical successful runs are retained.
 
 ## FM-SOC7-001 — Connection return and initial preview
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source is consumed by merged PR #1103; real provider/account acceptance remains open only on the aggregate Social gate.
 - Task: FM-SOC7-001 / FM-CR-032 / FM-DEC-018
 - Risk: R4
 - Work lock: LOCK-FM-SOCIAL-CONNECT-FLOW-20260911
@@ -211,7 +249,9 @@
 - Retained work: Creator draft cd5cac7c remains separately preserved; #1102 source publication is not repeated. Historical Backup failure at 00:30 UTC remains tracked under FM-OPS-001.
 
 ## FM-SOC7-001 — TikTok / X connection engineering
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source is consumed by merged PR #1102; actual apps, consent, budget and provider E2E remain open.
 - Task: FM-SOC7-001 / FM-CR-031
 - Risk: R4
 - Work lock: LOCK-FM-SOCIAL-OAUTH-20260911
@@ -238,7 +278,9 @@
 
 ## FM-CREATOR-001 — Creator and Social continuation
 - Date: 2026-09-10
-- Status: PARTIAL
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Bounded source work is consumed by merged PRs #1175 and #1184; protected target/runtime acceptance remains separate.
 - Risk: R4
 - Work lock: LOCK-FM-CREATOR-SOCIAL-20260910 RELEASED for first source package.
 - Completed so far: PR #1099 merged as 0e5ec0a2e8bfa3cb0c7e46248cdbbda83dedc16c; exact tree cb4a979ed9aa4daf8e49740c9ae222024bbcbde4 matches all 14 successful checks on d0798960374bc69811db0c21c922a405818c1f1a. Deploy 34529647457, independent Production audit 34529903547 and public readiness 34529903536 all passed for that release.
@@ -251,6 +293,7 @@
 ## FM-BILL-003 — paid activation engineering
 - Date: 2026-09-10
 - Status: PARTIAL
+- Updated: 2026-10-31
 - Risk: R4
 - Work lock: LOCK-FM-BILL-003-20260910
 - Completed so far: exact revision submission implemented for both entry points/all three offers; nine executable behavior tests and 1,252 Operations tests pass, along with truth/lint/type/build checks. Production read confirms the retained rollout prerequisites.
@@ -382,7 +425,9 @@
 - Exact next step: complete the existing quality controls, publish to PR #1088 and verify fresh CI/review.
 
 ## FM-RST-001 — owner SSH access repair 2026-09-10
-- Status: PARTIAL
+- Status: SUPERSEDED
+- Updated: 2026-10-31
+- Reconciliation: The database phase later reached accepted DB_POSTCHECKED; this historical SSH attempt must not be resumed. Real isolated Storage remains separately deferred.
 - Risk: R4
 - Work lock: LOCK-FM-RST-SSH-20260910
 - Authorization: owner explicitly confirmed saving the reviewed single-IPv4 TCP/22 ingress rule for the existing isolated Restore VM.
@@ -414,7 +459,9 @@
 - Owner action needed: only the exact remaining boundaries after available work is complete; never ask to recreate accepted prices, database Restore or signed builds.
 
 ## FM-AI-001 / FM-MOB-001 / FM-RST-001 — owner resumed finishline 2026-09-06
-- Status: PARTIAL
+- Status: SUPERSEDED
+- Updated: 2026-10-31
+- Reconciliation: Superseded by later independent AI, Mobile and Restore evidence; use their current aggregate records only.
 - Risk: R4
 - Owner explicitly requests Android/Push, Google Play, isolated Restore and Staging Billing completion today. Prior deferrals for these scopes are resumed, subject to actual target/readiness and external evidence.
 - Work lock: LOCK-FINISHLINE-RESUME-20260906 remains ACTIVE only for FM-AI-001/FM-MOB-001; FM-RST-001 was removed after the database phase closed. Repository-only postcheck and Storage-preparation locks are released after their bounded counterchecks.
@@ -475,6 +522,20 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## Active work
 
+## FM-MOBILE-SDK58-20261028
+- Started: 2026-10-28
+- Status: RELEASED_MERGED_VERIFIED
+- Risk: R3 repository-only Expo platform upgrade.
+- Scope: migrate FanMind Mobile from Expo SDK 57 / React Native 0.86 to the current official Expo SDK 58 bundle, consolidate the compatible requests from #1363-#1366, refresh the npm lockfile through vendor-authenticated CI, update only SDK-bound tests/docs, and require complete exact-head Mobile/native plus repository CI.
+- Base/branch: main `a1437c394eac1b6204b30ebfbad14cbb124a2825`; `deps/mobile-sdk58-20261028`.
+- Source evidence: official Expo SDK 58 bundle and upgrade guide; open Dependabot PRs #1363-#1366; the prior SDK-57 isolation receipt.
+- Safety: no forced peer resolution, Doctor suppression, signing, Store action, provider/account mutation, database/migration, Staging/Production activation or deployment.
+- Recovery: reviewed repository revert of the SDK-bound manifest, lockfile, tests, docs and evidence. No external cleanup is required.
+- Completed so far: official contract generation run `40750215688` passed npm install, `expo install --fix`, deterministic `npm ci` and Expo Doctor; its artifact digest is `sha256:f43a63089d8aaee96703e9e18ab9e34562767d3518f2a4d5226e75fffa51ab6f`. The first run `40750063764` failed before artifact publication because dependencies were not installed before invoking Expo CLI; the corrected approach installed them first.
+- Final repository result: PR #1378 head `89e7f3b737b2dd10ef28e9b913dbf9982772595d` passed all 11 exact-head workflows, including Project Memory Guard `40754966645`, Project Memory Quality `40754966683`, FanMind God Mode Gate `40754966781`, Mobile CI `40754966689` and Mobile Native CI `40754966698`, then squash-merged on 2026-10-28T20:10:37Z as `37b64e1672260a8bf886af5ea07a220dbd9dec74`. No separate workflow run exists for the squash merge SHA.
+- Closed: 2026-10-29 repository source reconciliation only. Signed Android/device acceptance, real Recovery, Push/Store and iOS/TestFlight remain unverified external work under FM-MOB-001; no protected or external action is implied.
+
+
 ## FM-GOV-BUILDER-MANAGER-002 — non-running slot accounting — 2026-09-24
 - Status: ACCEPTED
 - Risk: R2
@@ -532,7 +593,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-004
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-017; continues FM-WEB-003.
@@ -546,7 +607,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-003
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-016; continues FM-WEB-001/FM-WEB-002.
@@ -562,7 +623,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-002
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-015; continues FM-WEB-001/FM-CR-014.
@@ -579,7 +640,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-WEB-001
 - Started: 2026-09-04 Europe/Vienna
-- Updated: 2026-09-04
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Change request: FM-CR-014; extends accepted roadmap decision FM-CR-012.
@@ -671,7 +732,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-RST-001
 - Started: 2026-08-17
-- Updated: 2026-09-07
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R4
 - Scope: Complete the isolated real FanMind Restore drill without touching Production or Supabase Staging; preserve the accepted read-only chain and the now receipt-bound five-extension baseline while keeping every later Restore transition separately protected.
@@ -689,7 +750,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: none for the local-only repository proof. A later real isolated Storage mutation requires a new owner decision because the 2026-09-07 choice explicitly declined an additional Supabase project/Preview branch.
 ## FM-MOB-001
 - Started: before 2026-08-19
-- Updated: 2026-09-04 (one exact handler-containing Android Preview finished; device acceptance pending)
+- Updated: 2026-10-31
 - Status: IMPLEMENTED_NOT_VERIFIED
 - Risk: R3
 - Scope: Signed Android/iOS Mobile release and real-device/store acceptance; the merged repository implementation now binds both read-only resource readiness and the separately protected signed-build path to the exact remote EAS project record.
@@ -712,7 +773,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-AI-001
 - Started: before 2026-08-19
-- Updated: 2026-09-06
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: KI Standard/Plus/Ultra product, quality, cost, Stripe lifecycle and activation readiness.
@@ -729,7 +790,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-META-001
 - Started: before 2026-08-19
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Meta Events Manager/external Meta acceptance and final non-Social security proof.
@@ -745,6 +806,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC3-001 / FM-CR-044 — Facebook/Instagram inbound continuation — 2026-09-19
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R3
 - Work lock: LOCK-FM-SOCIAL-INBOUND-20260919
 - Baseline: current Production/main `a5fb5e133d3ef49f745bed6d3e599d24d73bb493`; owner-confirmed Admin-CRM login works; read-only Production countercheck found zero Facebook/Instagram social connections for Admin-CRM workspaces.
@@ -758,7 +820,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC3-001
 - Started: foundation work before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Phase 3 real Facebook, Instagram and WhatsApp connectors.
@@ -774,7 +836,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SOC7-001
 - Started: feasibility assessment before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: Phase 7 TikTok, X/Twitter, Discord and conditional OnlyFans.
@@ -790,7 +852,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SALES-001
 - Started: sales materials prepared before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Risk: R2
 - Scope: final technical sales handoff to Gerhard.
@@ -806,7 +868,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-LEGAL-001
 - Started: before 2026-08-19
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Status: BLOCKED
 - Risk: R3
 - Scope: final external law/tax/AVV/provider evidence.
@@ -822,7 +884,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-SEC-001
 - Started: 2026-08-20
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Status: PARTIAL
 - Risk: R3
 - Scope: reconcile fresh live Supabase Production/Staging security advisors with the controlled hardening design before any database/Auth mutation.
@@ -907,6 +969,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Second review follow-through #1112: the prior d57bef906fe21f83c1c752894e874428536b3445 passed all 13 remote checks; the completed review found three further reboot gaps. PM2 now requires its exact kill stop command and no post-stop hook; runner registration requires safe GitHub service endpoints; persisted native runner executables must match the kernel-held images of the running service by inode, stable metadata, ELF format and SHA-256. Local focused result: 22 passed, one native-kernel proof skipped because this workspace denies or hides /proc process images. That proof is mandatory and cannot skip in GitHub Actions. Current-head CI/review and installed target evidence remain pending; no service mutation or reboot.
 - Review follow-through #1112 (09:41 UTC): five blocking startup gaps were corrected before merge: NeedDaemonReload=no for every unit; rejected PM2 Node/loader overrides and service launch hooks; actual runner command/registration/artifact binding with official v2.337.0 script fingerprints; resolved release symlink plus Next deployment ID. Twenty-one focused tests pass, including the corresponding failing paths and secret redaction. Current-head remote CI/review and installed target evidence remain pending; no service mutation or reboot.
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; Work lock: LOCK-FM-OPS-REBOOT-20260912.
 - Baseline: clean exact main c2342d66ff0fa9f9656360f326cc9ec60f1aaa80 / tree 4509e2931478c0af046def29760ca139ac51b45f; independently verified Production audit and exact authenticated Exoscale instance. Drift/freshness preflights passed; prior backup closure reconciled from its final durable receipt.
@@ -915,6 +978,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: readout failure leaves running services unchanged; source revert uses the existing isolated release path. Reboot recovery requires working autostarts and the existing provider console/authorized host access; portal console currently reaches Linux login only. Do not reset credentials or reinstall the instance.
 ## FM-OPS-001 — official runner update layout — 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
 - Prior source: #1116 final receipt 5653464231 confirms reviewed/deployed main 89c804c6e595d7eaa18b1e9d15a9f6e2e2d52fa6, tree 5d3c20b288b3e2efc91e572d302f886c43e953b0, Deploy 34758542991 and installed audit 34758613627. Its earlier source-pending notes are historical.
@@ -927,6 +991,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-OPS-001 — runner registration compatibility — 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; retain LOCK-FM-OPS-REBOOT-20260912.
 - Authorization: the owner's explicit continuation covers demonstrated boot prerequisites, reviewed source publication and normal rollout; the controlled restart remains conditional on actual boot/recovery evidence.
@@ -941,6 +1006,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Related source finding: actions/runner v2.337.0 IOUtil.SaveObject writes settings with Encoding.UTF8; its optional leading UTF-8 BOM currently makes the collector's JSON.parse fail. Accept exactly one leading BOM for parsing after hashing the complete original source. Reproduce it in the existing runner fixture; do not claim this is the cause of the owner's unavailable read until host metadata is inspected.
 - Date: 2026-09-13
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-036; existing LOCK-FM-OPS-REBOOT-20260912 retained.
 - Exact next step: verify the bounded source correction, complete current-head review/CI and normal rollout, then resume demonstrated host prerequisites and installed boot proof.
@@ -952,6 +1018,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: reviewed source revert through the existing isolated release deployment. No unit rewrite, permissions change, credential access, database action or extra backup in this package.
 ## FM-REG-003 — Admin access for confirmed registrations — 2026-09-15
 - Status: IN_PROGRESS
+- Updated: 2026-10-31
 - Risk: R4
 - Change: FM-CR-041
 - Lock: LOCK-FM-REG-003-ADMIN-CRM-ACCESS-20260915
@@ -1010,7 +1077,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: revert this bounded source/UI/test/memory patch; no external data or target was mutated.
 - Owner action needed: none for source review. A maintainer with GitHub write access may close #1141 as superseded by #1142.
 ## FM-CREATOR-001 — PR #1143 Review-Hotfix
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: PR #1143 merged as 027d5a21ac41daae0331a0af2f9685d3729b2039.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-PRIVACY-HOTFIX-20260920
 - Owner: Codex Cloud
@@ -1029,7 +1098,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 ## FM-CREATOR-001 — crash-safe account deletion Workspace inventory
 - Date: 2026-09-22
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The bounded deletion/privacy source shipped through merged PR #1143; runtime acceptance remains governed separately.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-DELETION-INVENTORY-20260922
 - Owner: ChatGPT / connected GitHub
@@ -1082,7 +1153,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 
 
 ## FM-CREATOR-001 — post-merge authenticator service-role hotfix — 2026-09-24
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: PR #1171 merged as 98a69f26b09c5c5a4f5a24b1d2b134e0371a1279.
 - Risk: R3
 - Lock: LOCK-FM-CREATOR-AUTHENTICATOR-SERVICE-ROLE-20260924
 - Baseline: exact main a034d5517f1ad4846680b293a6b53645aa6bab69 after owner merge of PR #1168.
@@ -1092,18 +1165,59 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Acceptance: focused regression, full current-head CI/CodeQL/Browser/God Mode, exactly one independent review cycle, P1/P2=0, no blocking threads, then normal PR merge and post-merge verify.
 - Exact next step: consume current-head CI and exactly one independent review of PR #1171; if all required checks are green, P1/P2=0, no blocking threads remain and GitHub reports mergeable, merge normally, verify exact main, record success and release this lock.
 
-## FM-CHATADMIN-003 — persistente Fans je Character
-- Date: 2026-09-27
-- Status: IMPLEMENTED_NOT_VERIFIED
+## FM-CHATADMIN-003 — strukturierte Offers je ChatAdmin Character
+- Date: 2026-10-07
+- Status: ACCEPTED; source merged, prior Structured-Offers Staging prerequisites completed.
 - Risk: R3
 - Lock: LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927
-- Owner: Codex Cloud
-- Baseline: erreichbarer lokaler Checkout `c534564e1892e8af12f16660103beffc5bac8e40`; kein Git-Remote vorhanden. Der Owner-Head `248c923232c8a55356bf601d11d475372568039a` ist lokal nicht erreichbar, daher bleiben GitHub-Konflikte/Threads/Checks/Review unbestätigt.
-- Scope: additiver kontrollierter ChatAdmin-Fan-/Conversation-/Message-Vertrag, Owner-only API, sichtbare Character→Fan→Wissen/Verlauf UI, exakt servergebundener KI-Kontext und negative Isolationstests. Keine normale Creator-Semantik, kein Auto-Send, kein Provider-/Production-/Staging-Write.
-- Completed locally: fokussierte Policy/API/Disclosure/Delete/Roadmap-Tests und Lint. Browser-Harness ist angepasst, seine Ausführung bleibt nach fehlendem Binary und HTTP-403-Download blockiert. Offen: Build/weitere lokale Gates, bestehendes-PR-Publishing, genau ein vollständiger GitHub-Gate-Lauf und exakte unabhängige Review. Ein nötiger Staging APPLY bleibt eine getrennte Owner-Aktion.
-- Exact next step: bestehenden PR #1216 korrigieren, auf dem finalen aktuellen Head FanMind CI, CodeQL, Browser E2E, God Mode und Project Memory grün nachweisen, danach die unabhängige Review ohne P1/P2 und ohne blockierende Threads abschließen und erst dann normal mergen. Ein kontrollierter Staging-Apply bleibt bis nach dem Source-Merge getrennt und nicht autorisiert.
-- Recovery: Repository-Revert; das kontrollierte SQL wird in diesem Auftrag nicht angewendet.
+- Owner: FanMind Builder
+- Baseline: exact main `72d4fcf855c93587d1d1371bf2332795b546e9b6`.
+- Branch/PR: `fix/chatadmin-structured-character-offers` / #1290; initial implementation head `9cc5b59ec5aecad068b1276656796492858597b6`.
+- Scope: repair the regression between #1099 structured Creator offers and the later multi-Character ChatAdmin without creating a price table or replacing `sales_rules`; add Foto, Video, privates Foto and privates Video, persistence/reload, bound AI context and price-hallucination rejection.
+- Root cause: #1099 binds one `creator_sales_playbooks` row to the single `creators` row per Workspace. #1145 introduced independent multi-Character rows and copied only free-text sales rules. Directly sharing the one Creator playbook would mix Character prices.
+- Implementation: controlled unapplied `chat_characters.sales_playbook` column using the exact canonical #1099 JSON shape and validator, fail-closed schema readiness, existing Character GET/POST/PATCH persistence, and server-side requested-offer resolution.
+- Current evidence: focused structured-offer suite 10/10, offline migration check and JavaScript syntax checks passed locally. Package installation was blocked by registry HTTP 403, so exact-head TypeScript/lint/build/Browser/native-PG17 evidence is delegated to required GitHub CI.
+- Boundary: repository-only. No SQL apply, Production/Staging mutation, capability/runtime activation, provider call, external message or customer data action is authorized.
+- Completion: PR #1290 final head `48ae5ded06e18a466a5844d3d807db3a723a59f6` merged as `7a2fe438748b6940220d03562213548011c5bec5`; #1292 merged as `61cf98f29f48d88b7112c06461b94cd255428b4f`. Structured-Offers VERIFY `37972471467`, APPLY `37972797299` and Staging deploy `37977099722` succeeded on that exact release. The later four-offer authenticated browser acceptance remains distinct and unexecuted.
+- Exact next step: do not reopen this writer. Continue only through the separate `FM-ADMINCHAT-STAGING-HARNESS-20261011-01` preparation and its later independently authorized exact-head Staging action.
+- Recovery: reviewed source revert; any later target rollback must be separately authorized and target-bound.
 
+## FM-ADMINCHAT-STAGING-HARNESS-20261011-01 — four-offer end-acceptance preparation
+- Date: 2026-10-11
+- Status: PARTIAL
+- Updated: 2026-10-31
+- Risk: R3
+- Lock: LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011
+- Owner: direct Owner/Secretary assignment; FanMind Builder implementation.
+- Baseline: exact current main `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`; no open PR overlaps this ChatAdmin harness scope.
+- Scope: repository-only upgrade of the existing authenticated manual-flow harness for two Characters, two isolated Fans, all four structured offer categories, distinct prices, actual server persistence/reload, seven persisted three-suggestion generations, Copy-and-use persistence, invented/inactive/cross-Character offer negatives, retained stale-revision/inactive-Character/untrusted-Origin/secondary-authority negatives and exact bounded recovery/cleanup/absence.
+- Gates retained: probe/acceptance mode, exact current-main reviewed commit, `run-chat-admin-manual-flow`, protected `staging`, target/Production separation, TLS, network boundary and `fanmind-chat-admin-staging-write` serialization.
+- Boundary: no merge, dispatch, deploy, live test, database/Production/provider/customer write, credential/secret/permission change or external send. The completed runs on `61cf98f...` are prerequisites, not evidence of this new browser acceptance.
+- Authorization state: Owner instruction at 2026-10-11T13:26:00Z explicitly consumed every earlier Staging acceptance permission. This repository-only Draft-PR work remains authorized; any later probe, acceptance, deploy, database or live action requires a new exact bounded authorization after all source prerequisites pass.
+- Evidence plan: focused static/behavioral negatives, exact SQL predicates for foreign-data preservation and interrupted runs, full exact-head CI/typecheck/lint/build/browser gates, diff inspection and independent R3 countercheck. Local dependency-backed Playwright/typecheck may remain unavailable under `CONNECT/registry 403`; CI must provide that evidence before handoff is considered countercheck-ready.
+- Recovery: reviewed repository revert only for this source task. Any later Staging run uses its pre-mutation recovery artifact and cannot claim absence while `inFlightUncertain=true`.
+- Exact next step: publish one Draft PR and await final-head CI plus independent R3 countercheck. Do not merge or dispatch the workflow in this run.
+- Continuation 2026-10-13: Owner resumed Staging completion at 05:25 UTC. Fresh target evidence identifies the missing customer_tier column, while listChatFans selects it; old offers_reload_close also covered unmarked subsequent Fan assertions. Original recovery receipt remains immutable; independent prior receipt-bound observation found zero data/usage/session residue.
+- Proposed correction: strict original-or-pinned-tier Fan postflight, new independent exact-main VERIFY/APPLY with in-transaction postflight, mandatory tier preflight before new fixtures, real classification reload, isolated stored-color memory probes, one bounded compliment probe and existing offer/authority negatives. Ten successful generations yield 41 messages plus two negative usage rows. No Production action is part of this continuation.
+- Local Chromium download failed in this execution environment; existing GitHub Browser CI remains the independent native browser test path. Full native PostgreSQL 17 composition/rollback/mixed-state proofs are required before target APPLY. Runtime acceptance is still pending.
+- Continuation 2026-10-13 13:54 UTC: Owner explicitly requests full Adminchat testing after exact Staging deploy `38408088300` on merged `0ed90fb28e9650e160897cceb63f070daf4a1baa`. Prior tier VERIFY `38355738374` / APPLY `38355971354` and full read-only tier contract are VERIFIED.
+- Actual run `38408918183` passed auth/authority and fixture preparation, then failed `customer_tier_save/action_timeout`. Cleanup removed fixtures but both recovery phases correctly retained `inflight_reconciliation_required`; the failed result and immutable receipt remain failed/uncertain. Receipt-bound read-only counts at 13:59:44 and 14:02:16 UTC found zero capabilities, Characters, Fans, conversations, messages, usage events, sessions and active fixture requests; full tier contract remained VERIFIED. These are bounded current observations, not a rewrite of that run.
+- Harness correction: exact Playwright label text included SELECT options, so the scoped named customer-tier select replaces the impossible exact label. Wait for the correct Fan GET before editing, scope menu/form and bind PATCH to its Fan; add fixed menu/editor/fields/submit/response diagnostic stages. Independent Guardian source PASS. No product or database change; exact-head CI and a fresh separately bound Staging run remain required.
+- Follow-up 2026-10-13 14:23 UTC: PR #1310 passed all14 exact-head checks and Guardian PASS, merged as `efaa80e93bfd9597d052db756f5a4b96acb3f72e`, deployed successfully by `38411876441`, then independently returned HTTP200/staging/exact release. Fresh run `38412192655` passed probe/prepare and customer-tier menu/editor/field selection, then failed `customer_tier_submit/network=write`: the browser allowlist omitted the required same-app Fan PATCH. Both failed runs and uncertain receipts remain immutable. Receipt-bound observations at14:22:29 and14:23:32UTC show all data/usage/session/active-request counts zero; full tier contract is VERIFIED.
+- Narrow network correction: allow only exact same-app `PATCH /api/chatadmin/fans` in acceptance, retain probe/other-method/other-path/other-origin/direct-Supabase/teardown write denials. Actual installed-boundary tests pass (23), including positive transport and negative zero-transport assertions; an isolated probe-mode bypass mutation makes its negative assertion fail as required. Independent source Guardian PASS; exact-head CI and new reviewed-release Staging acceptance remain pending.
+
+- Reconciliation 2026-10-30: the source correction sequence merged through PR #1311 (`54dc73a50fefdf54f2dbccd1ec5059af72ddc926` -> `1c991782526cbfba973a9e601e1f90cb22c80866`) and the subsequent PR #1312 (`e11be1b59f9be157fff61cecf33357866a77c32f` -> `eb4e89845fb749432d655214b27b1b038d9f93a5`). Source work is no longer running and the linked lock is `PAUSED`. The protected four-offer Staging runtime/product acceptance remains `BLOCKED`/`PAUSED`; no historical failed or uncertain run is promoted to PASS or acceptance, and no Builder slot remains reserved.
+
+## FM-CHATADMIN-LIVE-REPAIR-20261014 — source merged; product acceptance paused
+- Date: 2026-10-14; reconciled 2026-10-30
+- Status: PARTIAL
+- Updated: 2026-10-31
+- Risk: R3
+- Work lock: LOCK-FM-CHATADMIN-LIVE-REPAIR-20261014 (`PAUSED`)
+- Source completion: PR #1322 head `779b36dead7554cdb1c8e542314654c95748fb20` merged as `b745fba58ab731bfe0111a4e637825d6a5441d2e` on 2026-10-14. No source writer remains.
+- Remaining product boundary: actual price save/reload and fresh multi-turn AI/memory acceptance remain `BLOCKED`/`PAUSED` pending a separately authorized, exact-current-main task with required runtime evidence. The source merge and prior schema observation do not prove product acceptance.
+- Coordination: do not reserve a Builder slot, reopen source repair, dispatch a workflow, deploy or perform a runtime write from this record.
+- Exact next step: keep the source writer closed and the acceptance boundary paused. Resume only through a separately authorized, exact-current-main runtime/product-acceptance task with fresh target evidence; this record itself authorizes no action.
 
 ## FM-AI-001 / FM-CR-046 — AI Capacity Billing v2 contract reconciliation — 2026-09-30
 - Task: FM-AI-001
@@ -1150,7 +1264,9 @@ Canonical register for FanMind work that has started but is not yet fully comple
 ## FM-AI-001 / FM-CR-052 — AI Capacity reserve/settle runtime foundation — 2026-09-30
 - Task: FM-AI-001
 - Change request: FM-CR-052
-- Status: IN_PROGRESS
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: Repository source was accepted through merged PR #1331; Staging/Production activation remains outside this source record.
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930`.
 - Baseline: exact main `83d1191e534684c32229aaf35ac56e1bd4c927d3` after merged PR #1242.
@@ -1160,6 +1276,16 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Boundaries: no Production/Staging schema APPLY, no productive AI route switch, no provider call, no customer migration, no package AI-budget decision, no Stripe/top-up activation.
 - Recovery: source revert only; existing Production AI and billing remain unchanged.
 - Exact next step: converge one source PR; Staging APPLY and productive route wiring remain separate protected increments.
+
+- 2026-10-15 continuation: explicit Owner repair request; isolated worktree on dc269fd8; original SQL compilation error independently reproduced on PostgreSQL 17.11. Repair includes atomic DB policy and server-owned entitlement revision binding, immutable lifecycle replay, real PG17 tests and Required CI registration. D3 Top-up/Refund, productive projection writer/Stripe mapping, target APPLY and route activation remain separate. Existing lock resumed; no competing open PR; audit #1330 remains independent.
+
+- Source verification: receipts/capacity-v2-lifecycle-repair-20261015.md binds the SQL hash, 48/48 focused/native tests, independent 22/22 PG17 execution, review and exact next protected action. Source is handed off for PR CI; aggregate FM-AI-001 remains IN_PROGRESS and no target acceptance is inferred.
+
+- 2026-10-16 Owner-requested source continuation: reuse preparation38c15520 and integrate Capacity in the existing staging-database-rollout-state workflow/transport. PR1331 is still open at e9df302f; current main dc269fd8. Explicit Capacity scope is read-only and returns only READONLY_BASELINE_MATCH or BLOCK. No merge, target request, dispatch, SQL apply or old authorization is used. Existing task/lock only; independent countercheck and Required CI are required for the dependent development PR.
+
+- Source handoff: receipts/capacity-v2-staging-readonly-integration-20261016.md records unchanged prepared SQL/original28 tests,31/31 new integration tests,20/20 generic regressions,28/28 native PG17 preparation tests and independent source review. Existing lock is RELEASED_FOR_PR; exact-head GitHub CI and merge remain separately observable. Aggregate AI/Billing remains PARTIAL; no protected target acceptance is inferred.
+
+- 2026-10-17 reconciliation: #1331 merged as fe1ef98e6dc70c0a4a27bcce81c8970002f3bade. Existing #1332 is updated by normal merge c1ad6f53, whose full tree equals old head b9b03319; no rebase/force-push or reimplementation. Current runbook status is reconciled, historical receipts preserved, and new-head Required CI remains mandatory. Separate #1332 Owner merge authorization and later exact protected read-only authorization are still absent; no target action or new task queue.
 
 ## FM-AI-001 / FM-CR-053 — Capacity-v2 catalog cutover — 2026-09-30
 - Status: ACCEPTED
@@ -1172,7 +1298,7 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Recovery: reactivate retired legacy Products if catalog rollback is required; source revert remains available. Existing subscriptions were not migrated by this task.
 
 ## FM-AI-001 / FM-CR-056 — Capacity-v2 approved budgets — 2026-09-30
-- Status: IN_PROGRESS
+- Status: ACCEPTED
 - Risk: R4
 - Work lock: `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`.
 - Baseline: exact main `8045d1e06c4f98234fdbc0e86db11e4b9d82610c` after merged PR #1245.
@@ -1183,6 +1309,8 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Owner action needed: none for repository implementation; Production activation remains separately protected.
 - Recovery: Staging budget values can be restored to NULL while activation remains off; source changes are revertible.
 
+
+- 2026-10-15 reconciliation: the formerly pending source/merge is completed by PR #1248 / f0ec2518. Budget source and seed are consumed; only the separately resumed FM-CR-052 SQL lifecycle repair remains open.
 
 ## FM-AI-001 / FM-CR-057 — Staging Capacity-v2 budget seed and fail-closed countercheck — 2026-09-30
 - Status: COUNTERCHECKED
@@ -1227,21 +1355,257 @@ Canonical register for FanMind work that has started but is not yet fully comple
 - Postflight observation: exact release `01b27631d394025db6b2204cf96aa1b62f2453f8` passed Deploy `37346036758` / job `111884709317` (14 smoke routes, six switch samples, `non_200=0`) and Readiness `37346205856` / job `111885279544` (18 checks). Read-only Audit `37346205878` / job `111885280518` confirmed the exact release and eight healthy components; only the pre-existing `production_audit_backup_latest_stale_or_empty` finding remains. No manual live action occurred.
 - Closeout: this final post-merge record consumes the task and requires no further receipt PR merely to record this closeout's SHA. The Parent owns any later, separately admitted roadmap selection.
 - Recovery: normal reviewed repository revert only; no external state is changed.
+## FM-CHATADMIN-NATURAL-CONTEXT-20261012-01
+- Date: 2026-10-12; Risk: R3 repository-only under FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001.
+- Status: COUNTERCHECKED_SOURCE_ONLY; lock `LOCK-FM-CHATADMIN-NATURAL-CONTEXT-20261012`.
+- Owner: Codex, direct Owner request to implement the discussed natural Character conversation and inspect current ChatAdmin completion.
+- Baseline: `613e452ced0105da4c718b3d4aafb30f77c88ff4`; no open PR overlaps the reply-policy/offer/context-test scope. The existing Staging harness lock remains separately held.
+- Change: omit unused AI alternatives from model dialogue, preserve full atomic history IDs and Fan knowledge, answer compliments without obligatory questions/sales, retain Character-specific writing fields and prevent pure media compliments from releasing prices.
+- Verification so far: 46 focused policy/offer/actual-route tests, 30 layout/manual-harness regressions, targeted lint and production build including TypeScript passed. Product truth and God Mode registry/release-policy validation passed; the existing global release verdict stays BLOCK and is not an activation permission. The full Operations suite then passed on a clean committed checkout: 1,732 passed, 6 environment-dependent skips. All 162 God Mode adversarial tests passed. Independent Guardian PASS followed a corrected German/English polite-request regression; All 14 observed exact-head GitHub checks on `c55e372859d673e4ba63ea61fe989077b0e7060e` then passed; no pending/failing checks or review threads. PR #1308 records the final Git merge status. Source work is complete and its lock is released; runtime remains unverified.
+- Observations: direct version probes show Staging on `613e452ced0105da4c718b3d4aafb30f77c88ff4` and Production on `707d22702a784e3b9999d1c9ae9c1e11c096a1bc`. Read-only Staging catalog confirms sales_playbook jsonb, fan table and generation RPC presence, not full RLS acceptance. No synthetic Character rows were found in the failed run's time window; this bounded count does not establish complete receipt/session cleanup.
+- Existing blocker: run `38306814508` failed at `offers_reload_close` and its Recovery step also failed. Do not convert that result to PASS or repeat the run from this source task. A phase marker alone does not identify the exact assertion; subsequent unmarked UI operations also require inspection.
+- Boundary: no live Persona overwrite, workflow dispatch, deployment, SQL apply, capability grant, provider call, message send or protected activation. Reviewable source completion is distinct from live acceptance.
+- Negative proof: removing the draft filter in an isolated in-memory module made the new context assertion fail as expected; no checkout or target was mutated.
+- Additional target evidence: full Structured-Offers read-only postflight on `vshyhvgcmrlagvfnvomc` returned VERIFIED. This proves its schema/privilege contract only, not Browser or conversation-quality acceptance.
 
-## FM-FANS-EXACT-TAG-FILTER-20261005 — exact tag filter for the normal Fans list
-- Task: FM-FANS-EXACT-TAG-FILTER-20261005
-- Orchestrator handoff: owner-fanmind-fans-exact-tag-filter-20261005-01
-- Orchestrator task_id: fanmind-fans-exact-tag-filter-20261005-01
-- Action: NBA-FANS-EXACT-TAG-FILTER
-- Source: one-time direct authenticated Chat authorization for this exact tag-filter scope, explicitly approved by the Owner at 2026-10-05T19:08:00Z. This is not `github_issue_comment_v1`, PREPARED_ONLY, automatic admission, workflow reservation or a schema-valid canonical accepted_handoff; the earlier #1280 exception is not reused.
-- Risk: R2
-- Status: IN_PROGRESS
-- Work lock: LOCK-FM-FANS-EXACT-TAG-FILTER-20261005
-- Baseline: exact main `0522dda1f67946a5e1860f654ad10687c3ad0d31`; #1281 is merged and its #1280 continuity receipt is the actual serial predecessor.
-- Scope: normal `/fans` list only; exact normalized active-contact tag options/filtering, composition with existing search/channel/locale URL state, focused pure behavior and synthetic browser tests, and the minimum Phase 15 catalog/truth/coordination reconciliation.
-- Parallel safety: repository-only Fans page/helper/test and bounded Project Memory paths. No overlap or authority over `LOCK-FM-CHATADMIN-CHARACTER-FANS-20260927`, `LOCK-FM-AI-CAPACITY-RESERVE-SETTLE-20260930` or `LOCK-FM-AI-CAPACITY-BUDGETS-20260930`, their source/runtime scopes or protected targets.
-- Acceptance: exact trim/case-insensitive tag equality without substring/name/note matches; grouped active contacts contribute all tags; archived contacts contribute none; tag/search/channel/locale compose through URL navigation and reset behavior; unknown tags fail closed to no results; authorization and data access remain unchanged.
-- Required checks: focused Node behavior tests, synthetic Playwright desktop/mobile coverage, lint/build/truth/memory controls, and every applicable exact-head PR workflow.
-- Boundaries: no merge/auto-merge, workflow/API dispatch, deployment, live/SQL/database/backup/restore/host/provider/Billing/Capacity/secret/permission action, contact mutation, import redevelopment, new dependency, helper/schema/transport change, second task or aggregate Phase 15 completion.
-- Exact next step: implement and test this bounded slice, publish one Draft PR from exact main, wait for applicable exact-head CI and hand the exact head to the Parent for independent countercheck; stop before merge.
-- Recovery: normal reviewed repository revert only; no external state is changed.
+
+## FM-AI-001 / FM-CR-052 — safe Capacity BLOCK diagnostics — 2026-10-17
+
+Explicit Owner source-only continuation on main3fcf7c31. No competing open PR
+for this scope. Existing lock/task retained. Add fixed, internally authenticated
+checkpoint diagnostics and allowlisted baseline field identifiers to the existing
+read-only runner, with synthetic secret/negative/recovery tests. No baseline,
+SQL, workflow, target, TLS, passfile or timeout change; required existing
+integration pins follow only reviewed changed sources. Run39022404980 proves
+BLOCK, not its actual Staging cause. Independent review and exact-head Required
+CI remain mandatory; Draft PR only, no merge or protected target action.
+
+Source handoff: implementation9b301a15 independently checked PASS,43/43 diagnostic
+tests and21 shared/inventory checks pass. Builder complete; no active source lock
+reservation remains. Draft PR final head/Required CI tracked in its metadata; no
+new queue or target authorization. Receipt:
+receipts/capacity-v2-safe-block-diagnostics-20261017.md.
+
+
+## FM-AI-001 / FM-CR-052 — Capacity Staging baseline classification — 2026-10-25
+
+- Status: IMPLEMENTED_NOT_VERIFIED
+- Updated: 2026-10-31
+- Risk: R3
+- Context: repository diagnostic under the existing R4 Capacity lock.
+- Baseline: exact main `7368305db778165d6a6dd8f83265445a6863a25b`; failed read-only run `40224444403` reported only `schema_md5` and `capacity_generic_migration_marker_absent`.
+- Scope: add boolean-only checks for the three approved budget defaults and separate known foundation, activation-gate and lifecycle markers from unknown Capacity markers. Preserve the aggregate schema fingerprint, generic marker and all fail-closed boundaries.
+- Evidence: local preparation tests 2/2 pass with PostgreSQL 17 cases deferred to CI; transport, redaction and negative harness 44/44 passes. Exact-head CI and independent countercheck remain required.
+- Boundary: no database read/write, migration, baseline-value change, workflow dispatch, merge, deployment, provider or Production action. A later Staging read-only retry requires a new Owner decision.
+- Exact next step: complete exact-head CI and the independent countercheck, then return the Draft PR to the Owner without dispatch or merge.
+- Receipt: `project-memory/receipts/capacity-v2-baseline-diagnostics-20261025.md`.
+
+2026-10-26 — Capacity-v2-Diagnose: Die additive Read-only-Attribution fuer historische Budget-Defaults, getrennte Sicherheitsklassen und ausschliesslich aggregierte unbekannte Marker ist als R3-Quellpaket vorbereitet; Baseline, Datenbanken, Marker und geschuetzte Ziele bleiben unveraendert. Evidence: Draft-PR #1367, lokaler Transport-/Redaktionslauf gruen; Exact-Head-CI und unabhaengiger Countercheck bleiben Abschlussgates.
+
+
+## FM-CREATOR-001 — existing Sales Playbook price boundary completion — 2026-10-17
+- Baseline: main174eaa44; explicit Owner repository-only Phase7b continuation, company-dependent external work deferred by FM-DEC-031.
+- Finding: Creator free-text validation accepted normal forms such as20 Euro,twenty dollars,25.– and100 JPY while the existing ChatAdmin validator already rejected them without an allowed offer. Finish that integration without new sales logic, regex rules, schema or provider access.
+- Scope: shared unchanged monetary guard, strict Creator no-price contract, unchanged ChatAdmin authorized-price contract, synthetic policy/real-route tests, source-only roadmap/Admin status from existing central data. Existing task/lock only; Capacity docsPR1334 remains separate.
+- Gates: workspace/style/manual-send, revision/sales hold/aftercare and rollout remain unchanged. Independent review/Required CI pending; no target activation or live quality claim.
+
+- Source handoff:107/107 focused tests, local build/TypeScript/lint/truth and independent107/107 plus4/4 mutation negatives PASS; no open source findings. Existing bounded lock RELEASED_FOR_PR. Receipt receipts/creator-shared-price-guard-20261017.md; final head/Required CI recorded on the development PR. No aggregate completion, live quality or protected action claimed.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — named offer ambiguity completion — 2026-10-17
+- Owner: explicit pasted Roadmap Continuation packagesA/B/C; base main1dac77ae. A updates existing1334 independently; B is a separate bounded source branch.
+- Finding: 'Was kostet Foto oder Privates Foto?' picked private_photo after the private filter removed another already matched active offer. Distinct named IDs are now counted before that filter; contained generic/repeated same-ID names remain unambiguous. No schema/API/error/price contract change.
+- Evidence:114 local policy/context/actual-route/Creator regressions pass,55 independently affected tests pass. One in-memory mutation is caught by5 negative cases. Final head/Required CI and independent live-CI confirmation recorded on the Draft PR; no aggregate completion/target claim.
+- C selection (not started, no new queue): immediate negation of a current single-offer request. 'Ich möchte kein Foto, nur reden' still resolves photo on source; separate reviewer reproduced it. Next bounded engineering should suppress offer release for explicit scoped denial without changing confirmed persistent holds or inventing purchases. No extra implementation in B.
+- External dependencies remain documented/open/deferred; no live data, provider call, DB/migration/dispatch/deploy/payment/store/registration/merge. Existing source lock released for PR handoff.
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — explicit current offer refusal — 2026-10-17
+- Owner-selected next bounded scope, Risk R3 under existing ChatAdmin AI contract/gate. Serial start after PR1336 final20415954 independently passed all12 required contexts (14runs) on maincb6; no merge inferred.
+- Separate source branch from maincb6, not stacked on or duplicating unmerged1336. Preserve existing confirmed refusal cooldown, sales holds, price guard, one Creator style, tenant boundary and manual send.
+- Evidence plan: reproduce current negation false selections, focused resolver/context/actual-route regressions, build/lint/Required CI and independent mutation/source/CI review. No live data, target query, provider, SQL, deploy or activation.
+
+- Source handoff:114 local focused cases and55 independent resolver/actual-route cases PASS,0 failures/skips; one veto-removal mutation caught by7 sensitive cases. Build/TypeScript/lint/truth/drift/quality PASS. Existing lock released for PR handoff. Receipt receipts/chatadmin-explicit-offer-refusal-20261017.md; final commit/Required CI and independent completion review recorded in Draft metadata. Source implemented/tested, not merged/Staging-accepted/productively activated; Phase7b remains open. No next independent implementation started.
+
+- Reconciliation after Owner-accepted1336 merge: fresh maincab4; PR1337 regular main merge preserves ambiguity+negation and every existing test. Resolve appended docs/fixtures/lock conflicts by retaining both; bind combined Source-of-Truth hash. Combined regression only, no new feature. Fresh final-head local/Required CI and independent review tracked on1337. Phase7b/target gates/FM-DEC-031 remain open; no merge or external action.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — contextual offer negation — 2026-10-17
+- Owner-selected bounded Phase7b source increment; R3; lock LOCK-FM-CHATADMIN-CONTEXTUAL-NEGATION-20261017, baseline2bfbeb049f9cd5b49ba39a1b30410fec859216a1.
+- First change was synthetic tests only (3276ff30):100 cases,91 pass/9 expected failures establish unnecessary vetoes for whole-message Nicht schlecht/Not bad + explicit price questions. Existing explicit/mixed refusal tests pass.
+- Minimal whole-message exception under FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; Creator shared-price consumer retained. No new queue, NLP/quality architecture, target work or persistent inferred sales events. Existing1335-1337 merged guards remain.
+- Source validation, independent Guardian/CI countercheck and canonical receipt pending; Draft only. Company-dependent measures deferred by FM-DEC-031. Recovery: reviewed source revert.
+
+- Contextual-negation corrected source handoff:185/185 focused tests, independent208/208 +216 refusal/535 name-span probes/6 final-source mutations, production build/TypeScript/lint/truth/memory/God Mode PASS. No active source reservation remains; final exact-head Required CI/independent CI recorded in Draft metadata. Receipt receipts/chatadmin-contextual-offer-negation-20261017.md. Source only; Phase7b/target gates/FM-DEC-031 remain open.
+
+- Same bounded contextual-negation scope reopened after concrete countercheck found prefix-name and modifier-only article collisions; initial4edc PASS revoked. Test-only03e3ea7f/e32fdc88 reproduce12/71 and4/75 red before repair. Terminal-media span and noun-end bounds fix both. Independent final source208/208 +216 refusals/535 name probes/6 mutants PASS; source lock released for new exact-head CI/Draft handoff. No old-head CI carryover or external action.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — confirmed preference under topic pressure — 2026-10-17
+- Owner-selected Phase7b bounded source task; baseline main2be45e2602d65e9c670c25975245f3fd406f2f9e confirms1338 merged. Risk R3; lock LOCK-FM-CHATADMIN-CONFIRMED-PREFERENCE-20261017.
+- Test-first d654c961 adds only synthetic tests:103 cases/86 pass/17 expected failures. Eight newer interests evict a prior communication fact, absent from bounded actual-route context and permitting an older-generation communication replay. Truncation alone is already safe; existing boundaries/isolation/no inferred purchase controls remain green.
+- Reuse existing eight-fact notes/knowledge, source order, context builder and shared reply quality; no second memory/output architecture or learning vocabulary expansion. Small retention-priority correction only; actual model-quality behavior is not proven by provider stubs.
+- Source verification, independent countercheck, exact-head Required CI and canonical receipt pending. No target/deploy/merge/provider/SQL actions; FM-DEC-031 company-dependent tasks deferred. Recovery: reviewed source revert.
+
+- Confirmed-preference source handoff:214/214 focused, independent237/237 +108 pressure/4 invalid-source probes/6 killed mutations PASS; build/TypeScript/lint/truth/memory/God Mode162 PASS. Source lock released; exact Draft/head/fresh Required CI and independent CI readback tracked in PR metadata. Receipt receipts/chatadmin-confirmed-preference-context-20261017.md. No new format/quality path/provider/target action; global release/FM-DEC-031 unchanged.
+
+
+## FM-CREATOR-001 / FM-CHATADMIN-003 — communication dimensions — 2026-10-17
+- Explicit Owner bounded Phase7b assignment; main cb57239b confirms PR1339 merged. Risk R3 under ChatAdmin AI contract/gate; lock LOCK-FM-CHATADMIN-COMMUNICATION-DIMENSIONS-20261017.
+- Test-first independent/conflicting dimensions, composite residual provenance, source order/replay, capacity/priority/isolation; no second memory/quality architecture. Source-only, no protected action or aggregate acceptance.
+- Implementation/independent Source+CI evidence and receipt pending. Recovery: reviewed source revert. Company-dependent steps remain deferred.
+
+- Communication-dimensions source handoff:268 focused/269 with registration PASS; separate Guardian291 +1296pair/replay matrix/8mutations PASS; no source blocker. Source lock RELEASED_FOR_PR; canonical receipt receipts/chatadmin-communication-dimensions-20261017.md. Exact final Draft/head/CI bound in PR metadata, no target/merge/aggregate acceptance.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+## FM-SUPPORT-1350-CONFIRMED-SYNC-REPAIR — confirmed automatic sync repair
+- Date: 2026-10-25
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The source chain was integrated by merged PR #1355 as 7368305db778165d6a6dd8f83265445a6863a25b; protected Staging/runtime acceptance remains separate.
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-CONFIRMED-SYNC-REPAIR-20261025
+- Scope: continue Issue #1350 from PR #1351 with one repository-only, default-off automatic repair: after explicit customer consent, retry an existing Facebook/Instagram message sync under durable audit, replay protection, rate limiting and exact postcheck.
+- Boundary: no database APPLY, runtime flag activation, provider execution, Production/Staging mutation, credentials, permissions, disconnect, WhatsApp repair or automatic external message.
+- Source evidence: PR #1352 head `a78282257d6b8a11aba7be7675716db340c9eb49`; Project Memory Quality run 40184228818 PASS; God Mode Gate run 40184228898 PASS; independent R3 countercheck PASS with P0/P1/P2 = 0/0/0.
+- Remaining verification: the SQL draft is unapplied and runtime/provider behavior is not accepted. Isolated Staging schema/runtime acceptance requires a later separately authorized protected preflight.
+- Exact next step: prepare a separate protected-boundary preflight for isolated synthetic Staging schema/runtime acceptance; do not apply schema, activate flags or execute provider work under this source authorization.
+
+## FM-SUPPORT-1350-STAGING-PREFLIGHT — synthetic repair acceptance preparation
+- Date: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Updated: 2026-10-31
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-STAGING-PREFLIGHT-20261025
+- Scope: verify current PR #1351/#1352 source and prepare reproducible repository-only synthetic authorization, audit, repair-flow and UI acceptance evidence plus an exact isolated-Staging runbook.
+- Boundary: no SQL APPLY, migration execution, feature-flag activation, Staging/Production/provider mutation, OAuth/credential/permission change, customer connection access, external message or secret read.
+- Result: reproducible source/mock matrix, fail-closed read-only schema classifier and target/commit-bound Staging acceptance runbook prepared in PR #1352. Local Node 24 harness passed 16/16 on source head `44a9cd9e2a1313df0c5a90be8ceafe831dc0684e`; both emitted exact-source-head governance workflows passed; independent R3 countercheck found P0/P1/P2/P3 = 0/0/0.
+- Negative evidence: registered repository test was not run locally because dependencies were not installed; this stacked PR emitted no full FanMind CI workflow. PostgreSQL, browser, Staging and provider tests remain NOT_RUN. No schema, flag, target, provider or customer state was changed.
+- Exact next step: do not merge #1351 through #1354 base-first. Complete exact-head CI, independent R3 countercheck and the human Mobile-risk decision on cumulative PR #1355; any merge remains a separate explicit authorization. Only after an authorized #1355 merge and post-merge tree verification may deployment of that exact main to isolated Staging be considered under distinct target/commit/checksum-bound approvals. Schema APPLY, flag activation and provider-positive acceptance remain separate protected actions.
+
+## FM-SUPPORT-1350-COMBINED-CI-20261025 — combined support merge-candidate verification
+- Date: 2026-10-25
+- Status: ACCEPTED
+- Updated: 2026-10-31
+- Reconciliation: The combined chain and its Capacity/supply-chain blockers were resolved by merged PR #1355; this verification record is consumed.
+- Risk: R3
+- Lock: LOCK-FM-SUPPORT-COMBINED-CI-20261025
+- Scope: verify the exact combined PR #1351/#1352 source, add missing local synthetic Browser E2E for the authenticated help/diagnosis/consent/result flow, run the complete applicable merge-candidate CI against main, restore the stacked PR chain and prepare the executable Staging acceptance plan.
+- Boundary: no merge, deployment, database execution, feature activation outside isolated CI, provider/customer action, secret or permission change. A temporary PR-base change may be used only to obtain exact-head combined CI and must be restored to #1351 before closeout.
+- Completion gate: full applicable exact-head CI, focused negative tests, restored #1351 -> #1352 dependency, independent R3 countercheck, exact checksums/rollback/approval boundaries and honest NOT_RUN classification.
+- Result: PR #1352 support source head `9b6508f0787d0d1d434fb916244e777121298914`; synthetic authenticated Browser E2E, support mock/integration tests, build, lint, CodeQL, Landing and all governance gates pass. The two CodeQL review comments on the Browser-test URL matcher were corrected with exact start/host/path anchors. No provider, schema, flag, Staging or customer action occurred.
+- Negative evidence: full combined CI exposed two independent current-baseline blockers outside this support scope: Capacity source checksum drift causes 37 fail-closed Operations follow-on failures, and Supply Chain reports a new root `next` critical plus an expired Mobile review with unrelated packages. The support PRs change no lockfile/framework/Mobile or Capacity source/pin.
+- Merge recommendation: NOT_READY until both independent blockers are repaired under their own tasks and this exact support chain receives fresh full CI. Staging runtime and provider tests remain NOT_RUN.
+- Exact next step: restore #1352 base to `feature/website-support-1350-foundation`; repair the Capacity checksum and dependency audit separately, then rerun complete combined main-target CI without changing support semantics.
+
+- 2026-10-25 — Blocker: Der Capacity-Source-/Schema-CI-Blocker der Support-PR-Kette ist behoben; die kombinierte Kette bleibt ausschließlich wegen des separat zu bearbeitenden Supply-Chain-Blockers nicht mergebereit. Evidence: PR #1353 Source-Head `107c5cc68f5f76684f976e86e1f5d4f53d80fbab`, FanMind CI `40192860638` PASS einschließlich Operations, Test-Coverage und PostgreSQL-17-Capacity-Lifecycle.
+
+- 2026-10-25 — Blocker: Der separate Supply-Chain-Blocker der Support-PR-Kette ist durch echte Root-/Mobile-Dependency-Patches und eine neue auditgebundene Mobile-Sicherheitsprüfung behoben; die Kette #1351 → #1352 → #1353 → #1354 ist technisch verifiziert und wartet auf reguläre Review-/Mergefreigabe. Evidence: PR #1354 Functional Head `da1bbb5f3495db553b407ba29f76dc4296b3c290`; Supply Chain `40195165377`, FanMind CI `40195165393`, Browser E2E `40195165361`, CodeQL `40195165397` und Mobile CI `40195165373` PASS; kein Merge, Deployment oder geschützter Zustand wurde verändert.
+- 2026-10-25 — Integrationsstatus: Draft-PR #1355 bündelt die vollständig geprüfte Support-Kette #1351–#1354 aus dem kumulativen Baseline-Head `fcb2d6cf455e2f28056a25dff8c9302f3adb87cc` direkt gegen `main`; vor jeder Mergefreigabe bleiben vollständige Exact-Head-CI, unabhängiger R3-Gegencheck und eine explizite menschliche Entscheidung zur bis `2026-11-08T12:40:47Z` befristeten Mobile-Ausnahme erforderlich. Kein Merge, Deployment oder geschützter Zustandswechsel wurde autorisiert.
+
+## FM-CHATADMIN-INTEREST-REVOCATION-20261018 — PR1342 continuation
+- Owner-selected existing Draft only; R3 source; lock LOCK-FM-CHATADMIN-INTEREST-REVOCATION-20261018. Current GitHub main/head verified, five blobs and complete tree reconstructed identically through Connector after shell proxy failed.
+- Baseline174/174 focused tests PASS. New independently reproduced overflow, extraction-cap and eviction/replay failures require narrow correction. Separate Guardian active. Capacity checksum failure caused by package.json registration; use the already registered Knowledge suite without modifying protected controls.
+- No external/runtime/model-quality acceptance or activation; reviewed revert is recovery.
+
+- Source handoff:306/306 focused, independent204/204 +7/7 own probes and killed in-memory sequence mutation. Lock released for existing Draft PARTIAL handoff. Storage-overflow stale-positive and max3/8 limitations remain; final exact-head CI tracked in PR1342. No protected action.
+
+## FM-CHATADMIN-CURRENT-FACTS-20261018
+- Explicit Owner durable-storage task on existing1345branch. Canonical main and allfourPRheads unchanged as freshly read; stacked dependencies preserved. Preflight baseline167/167 Knowledge+API testsPASS.
+- Independent Helper review finds duplicate-topic replay, missing full-source ordinal/tenantbinding and incompletecurrent validation; tests first. Additive storage requires nativePG17,RLS/grants,atomic provenance/order and fan cascade/export. No live target authorization.
+
+- Durable source handoff: dedicated default-off current facts; nativePG17 2/2 and full build/TypeScript PASS; independent Guardian source review and native mutation probes PASS. Receipt receipts/chatadmin-current-facts-20261018.md; exact-head required CI remains mandatory on existing Draft1345. No target action; protected rollout gates stay open.
+
+## FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018
+- Owner requests preparation only, no install or activation. Fresh main/1342–1345 unchanged; final1345 source checksum and14 terminal success records confirmed. Read-only Staging identity/catalog/count assessment plus isolated tests and independent review; exact prerequisites may block installation preparation.
+
+- Terminal install-prep handoff: BLOCKED on unknown sustained capability/preview exclusion and missing exact install/private-topology/backup-restore evidence. Read-only parent profile/count observations and fresh185+2 isolated tests recorded in existing current-facts receipt. Historical Harness/Live-Repair locks untouched; no target mutation or executable install profile claimed.
+
+
+## FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018
+- Explicit Owner bounded offline continuation on1345; coordination recorded in matching work lock. New strict profile and full synthetic dump/restore plus mutations, preserving all previous verifier source files and pinned SQL. Host/autogrant/real-backup blockers remain separate; no remote database connection authorized.
+
+- Offline handoff: OFFLINE_PROFILE_READY, native44/44 registered under canonical ICU and independent full recovery recorded in receipt. Profile328/413 exactly bound; old four checkers and canonical SQL unchanged. Matching source lock RELEASED_FOR_PR; final head/CI in Draft1345 metadata. Host/real-backup/installation remains BLOCKED.
+
+## FM-CHATADMIN-CONSOLIDATION-20261026
+- Owner-selected bounded R3 repository integration of the linear #1342 -> #1343 -> #1344 -> #1345 source chain onto exact main 9d1937ab3895e3a18a34fdafce4f693d8eae9726. PR #1341 remains a separate diagnostic and is not silently promoted into the product correction.
+- The integration preserves default-off behavior and performs no deployment, SQL APPLY, feature activation, provider access or customer-data mutation. Exact-head full CI, native PostgreSQL 17 and independent R3 countercheck are required before merge.
+- Source handoff: merge-tree construction preserves every #1345 source blob; only the three append-only Project-Memory files are reconciled with later main history. Status RELEASED_FOR_PR; protected installation/runtime blockers remain open.
+
+## FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026
+- Owner-selected bounded R3 repository diagnosis handoff for PR #1341 on exact main fead9f756a88c59baab6f5d4b1c6d5af5cc00e87; lock LOCK-FM-CHATADMIN-KNOWN-FACTS-QUALITY-20261026.
+- Scope: port only still-relevant known-fact/currentness/false-question/detail-question diagnostics to the integrated default-off Current-Facts implementation; no duplicate storage or revocation implementation.
+- Required: focused negative/regression tests, exact-head CI, independent R3 countercheck and honest separation between current-state correctness and model/quality-gate semantics.
+- Boundary: repository tests/docs only; no SQL APPLY, migration, flag/capability activation, provider call, Staging/Production/customer-data action or deployment. Recovery is reviewed repository revert.
+- Source handoff: current-main route and shared-quality characterization tests plus #1341 historical receipt/docs integrated; no runtime implementation duplicated. Lock released for Draft PR; exact-head CI and independent R3 countercheck required.
+
+## FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026
+- Owner-selected bounded R3 repository reconciliation for PR #1357 on exact main `99fb8b1420758fa2a77c01d76b960feffde90da8`; lock `LOCK-FM-SUPPORT-POSTMERGE-RECONCILIATION-20261026`.
+- Scope: preserve the still-required Support post-merge security and Staging-preflight evidence, reconcile #1352-#1354 supersession, and remove the stale assumption that historical merge `7368305db778165d6a6dd8f83265445a6863a25b` is automatically the later deployment SHA.
+- Boundary: documentation and Project Memory only. No source, dependency, workflow, schema/RLS/ACL, SQL APPLY, flag activation, target/provider/customer access, Staging/Production action or deployment.
+- Required: exact-head full applicable CI, Security/Governance gates, independent R3 countercheck, reviewed repository revert recovery, and unchanged main/head immediately before any merge.
+- Reconciliation result: #1357 is partially necessary, not directly mergeable. Its Support merge/security evidence is retained; its stale hard-coded deployment SHA is replaced by `<EXACT_AUTHORIZED_DEPLOYMENT_SHA>`, which must be bound only in a later protected preflight. Support source plus root/Mobile package manifests and lockfiles are byte-identical from merge `7368305db778165d6a6dd8f83265445a6863a25b` through base `99fb8b1420758fa2a77c01d76b960feffde90da8`.
+- Source handoff: documentation/Project-Memory reconciliation complete; status `RELEASED_FOR_PR`. #1352-#1354 are already closed as `SUPERSEDED`; Staging remains `BLOCKED_PENDING_AUTHORIZATION_AND_TARGET_EVIDENCE`. Exact-head CI and independent R3 countercheck remain required in PR metadata.
+
+## FM-WEB-PRODUCTION-PATCHES-1359-20261026
+- Owner-selected bounded R3 controlled-source reconciliation of PR #1374 on main `b5a95069b4036d0c250bc4641bc1317f097cc7f3`; branch `deps/web-production-patches-1359-20261026`; lock `LOCK-FM-WEB-PRODUCTION-PATCHES-1359-20261026`.
+- Scope: update only root React and React DOM from 19.3.0 to 19.3.1 with the corresponding minimal npm lockfile resolutions, then rebind the unchanged full-file Capacity SHA-256 control to the exactly reviewed new `package.json`. No verifier, workflow, SQL, baseline or other controlled source changes.
+- Owner authorization: 2026-10-26 explicit approval for this exact React/React-DOM source rebaseline only. Removing or weakening the full `package.json` binding, additional dependencies, migrations, Staging/Production activation and deployment remain forbidden.
+- Dependency coordination: #1360 (Playwright), #1361 (Node types) and #1300 (pdfnative) remain independent open tasks; their versions are intentionally unchanged.
+- Verified source delta: `package.json` changes only `react` and `react-dom` 19.3.0 -> 19.3.1. The lockfile changes only root declarations, exact React/React-DOM package versions/resolutions/integrities and React DOM's matching React peer range. Old controlled package SHA-256 `12c48c3273402eb18dae36ad67a097c56267ffc6f4f78e9a9e619a51e170b654`; approved new SHA-256 `a8b75fb01a5435e328c51e7d173c4abb97d7fecf4f9f47312ae5b74dea43442e`.
+- Required: all 18 controlled source hashes consistent on exact head; PostgreSQL 17/Capacity, Truth, lint, build, Browser E2E, CodeQL, Supply Chain and Project Memory gates green; independent R3 countercheck; unchanged main/head immediately before merge.
+- Boundary and recovery: repository source only. No database/target/provider/customer action, migration, activation or deployment. Recovery is a separately reviewed repository revert of the dependency and manifest binding together.
+- Handoff: source correction prepared for PR #1374; exact-head CI, independent R3 countercheck and merge eligibility remain required. After verified merge, #1359 may be closed as superseded only in a later bounded task.
+
+## FM-WEB-DEPENDENCY-CONSOLIDATION-20261026
+- Owner-selected single bounded R3 controlled-source consolidation on exact main `fcaf7bd85801c35332d0725a833defafac23f23b`; branch `deps/web-consolidation-1360-1361-1300-20261026`; lock `LOCK-FM-WEB-DEPENDENCY-CONSOLIDATION-20261026`.
+- Source PRs: #1360 Playwright 1.62.1 -> 1.64.1 at `a44327e4927767e89733edd528ae5b6dcfa77386`; #1361 @types/node 26.2.0 -> 26.6.5 at `97063b40c657236f0b55db9ec7c8fbf8b143b4ed`; #1300 pdfnative 1.6.0 -> 1.8.0 at `7dd3e7cd3c6c4a30f305cc9fd168661b4def95ce`.
+- Policy fit: one atomic root web-manifest/lockfile state, one full-file Capacity source binding, one shared verification matrix and one repository-revert recovery unit. No Mobile, Actions, Stripe or other dependency is included.
+- Exact dependency delta: two root manifest values and the 25 disjoint structural lockfile changes supplied by the three rebased source PRs. Dependabot's unrelated Sharp `optional` key-order churn is excluded.
+- Compatibility: root Node `>=22.13.0` satisfies Playwright `>=20` and pdfnative `>=22`; Next 16.4.3 accepts @playwright/test `^1.51.1`; @types/node remains within root range `^26`.
+- Owner authorization: exact controlled `package.json` SHA-256 rebaseline for only these verified dependency changes. Full-file source verification remains unchanged; old hash `a8b75fb01a5435e328c51e7d173c4abb97d7fecf4f9f47312ae5b74dea43442e`, new hash `1bb80fae820419cfda6f8f748b4bfd1d40253e07e9e706f3858f4f8e598f824c`.
+- Required: 18/18 controlled hashes, deterministic install/lock integrity, pdfnative disclosure regressions, Playwright Browser E2E, TypeScript/lint/Truth/Operations/build, PostgreSQL 17/Capacity, CodeQL, Supply Chain, Project Memory/God Mode and independent R3 countercheck on one exact head.
+- Boundary/recovery: repository source only; no database/migration, target/provider/customer action, activation or deployment. Recovery is one separately reviewed revert of the three dependency updates, lockfile and matching manifest hash.
+## FM-MOBILE-DEPENDENCY-CONSOLIDATION-20261026
+- Status: RELEASED_FOR_PR
+- Risk: R3 repository-only dependency reconciliation.
+- Base: main `ab7b9dd0a3d8061b771740bc202892f2c225cc61`; branch `deps/mobile-consolidation-1362-1366-20261026`; source PRs #1362-#1366.
+- Integrated scope: only the SDK-57-compatible `react-native-web` lock resolution 0.21.2 -> 0.21.4 from #1362. The existing `~0.21.0` manifest declaration remains unchanged.
+- Isolated scope: #1363-#1366 are not integrated because their requested Worklets, Notifications, Safe Area and Screens versions are the Expo SDK 58 bundle while FanMind remains on Expo 57 / React Native 0.86.3. Existing CI independently reproduces peer, Doctor and native build failures.
+- Controlled source: root `package.json` and all 18 Capacity-bound sources remain byte-identical; no Capacity hash rebaseline is necessary or authorized by this diff.
+- Recovery: reviewed repository revert of the single Mobile lockfile resolution and task evidence. No database, provider, signing, Store, Staging/Production or deployment cleanup is required.
+- Handoff: exact-head full CI, Mobile/native Android+iOS, Browser, Security, PostgreSQL 17/Governance and independent R3 countercheck decide merge eligibility. Fully covered #1362 may close only after verified merge; #1363-#1366 remain isolated.
+
+## FM-ADMINCHAT-STAGING-HARNESS-20261104
+- Owner-requested completion of the existing Admin-Chat; reuse LOCK-FM-ADMINCHAT-STAGING-HARNESS-20261011, no duplicate writer or lock.
+- Exact main `b9693fb5a14ace4cd6ade8f753868d878aed3d30`; actual Staging release remains `f353f3e1c853c6104797d4db9ab578b8695b14bd` as observed 2026-11-04T07:12:14.663Z.
+- R3 source-only test maintenance: existing acceptance must create four named synthetic offers through the current custom-offer editor before filling prices. Existing product, pinned SQL, runner, write boundaries and acceptance counts remain unchanged.
+- Independent historical audit confirms actual acceptance run 38432481036 with all required PASS markers. Original #1219 CLI block is superseded by successful deploy 36686671173; historical success does not prove current-main runtime.
+- Focused browser/contract tests and independent final-diff QA required. No protected action is executed or authorized by this record.
+- Source handoff: focused contracts 23/23, ESLint and generated-route TypeScript PASS; browser launch blocked locally by missing Chromium. Exact-head CI and independent QA remain required; source lock released for PR handoff. Receipt `receipts/chatadmin-staging-offer-fixture-20261104.md`. No target action.
+- 2026-11-05 authorized continuation: existing Owner approval covers current-main Staging deployment and synthetic end acceptance. Sole source writer repairs deploy run `42023184088` on `0a965fd49d9552326c2ff96952b37282b7dac63a`: three Operations checks require Git source while runtime deliberately excludes `.git`. Scope is only existing deploy workflow and focused regression; independent countercheck PASS, 8/8 focused tests PASS. No competing deploy writer; historical paused target record is retained. Receipt `receipts/chatadmin-staging-checkout-validation-20261105.md`. Current-main target acceptance remains OPEN.
+- 2026-11-05 response-budget continuation: deploy `42030274284` PASS on exact current main `0abf48a96a80be00d17edfa880e5492bee0a07a9`; acceptance `42030668018` FAILED at first generation with action_timeout. Original receipt preserved; independent read-only all-zero residue/session/active-transaction observation and drained browser transports reconciled the failed run. Sole bounded source writer adjusts only harness response/flow budgets around unchanged 55s model deadline, with focused24/24 PASS and independent source QA PASS. Existing parent paused record retained; no new target run or schema apply. Receipt `receipts/chatadmin-staging-response-budget-20261105.md`; source handoff after publication, current-main end acceptance OPEN.
+
+
+## FM-CHATADMIN-MEDIA-1425-20261105
+- Status: READY_FOR_PUBLICATION
+- Risk: R3
+- Holder: Codex
+- Exact next step: explicit GitHub publication authorization, then final-head nativePG17/browser CI.
+- Owner explicitly requested completion of ChatAdmin media library, grounded image search/analysis and configurable paid custom work, plus existing #1424 UI corrections and #1219 acceptance.
+- Source base: PR #1424 head 4619b8f59586c82c122f14a09a3be7c0005969d4; separate source branch feat/chatadmin-media-1425. No duplicate media writer found.
+- Contracts: FM-CONTRACT-CHATADMIN-AI-001; FM-IGATE-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-STORAGE-001.
+- Boundary: controlled private media schema/storage and image analysis remain default-off; no target APPLY, provider activation, real media processing or Production action. Existing Staging acceptance authorization remains separate; failed run 42041782472 requires reconciliation before new target writes.
+- Recovery: source revert before activation; media deletion revokes availability before object removal; existing Character revision serializes media invalidation against generation and confirmation. Independent Guardian required.
+
+- Source handoff: implemented locally, targeted308/308 + embedded SQL cases/build/lint/truth PASS; no publication or target activation. Receipt: receipts/chatadmin-media-1425-20261105.md.
+
+
+## FM-STAGING-META-RUNTIME-20261109
+- Risk/status: R4; source implementation under independent review, target configure not yet executed.
+- Owner authorization: explicit approval in this thread for the existing Meta app Staging callback, protected Staging app credentials and encryption; password reauthentication completed directly at Meta. No password or secret enters Git/chat.
+- Existing app: 2214477125984114; callback https://staging.fanmind.ch/api/integrations/facebook/callback saved alongside the original Production callback. Protected app-secret and webhook-token entries now exist only in the GitHub staging environment.
+- Scope: main/reviewed-live-commit/repository/event-bound isolated Staging controller; pinned checkout and exact root:fanmind-staging:640 override. Modify only FACEBOOK_APP_ID, FACEBOOK_APP_SECRET, FACEBOOK_REDIRECT_URI, FANMIND_TOKEN_ENCRYPTION_KEY and FACEBOOK_WEBHOOK_VERIFY_TOKEN.
+- Preservation: reject disk/runtime encryption or unrelated-field drift before mutation; reject existing other app identity. Preserve valid keys; new key only after bounded read-only empty encrypted-token inventory. No database write, Production deploy, automatic sending or general Meta publication.
+- Recovery: private mode600 fsynced original-config snapshot retained on the Staging host with run ID, no artifact upload; same-process failure restores original configuration, restarts and verifies old effective values. Interrupted-job recovery requires reviewed restoration of the private snapshot; no automatic crash-recovery claim.
+- Validation: 22 focused synthetic tests PASS; full Operations and final-head CI pending. Independent Guardian reproduced prewrite drift risks; added fail-closed regressions. Provider consent, real Page ownership/import/webhooks/two-tenant isolation and App Review/Advanced Access remain separately unproved.

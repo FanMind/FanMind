@@ -443,8 +443,13 @@ async function restoreRunnerEnvironment(root, dumpPath, overrides = {}) {
       required_extensions: SYNTHETIC_AUTHORIZATION_REQUIRED_EXTENSIONS,
       extension_contract_invariant_violation_count: 0,
       extension_contract_unsupported_class_count: 0,
+      reviewed_recovery_cohort_count: 0,
+      reviewed_security_definer_function_count: 0,
+      reviewed_security_definer_contract_violation_count: 39,
       public_security_definer_function_count: 13,
       restricted_security_definer_function_count: 12,
+      approved_additional_security_definer_function_count: 0,
+      additional_security_definer_contract_violation_count: 7,
       exposed_security_definer_exception_count: 1,
       hardened_security_definer_exception_count: 0,
       unsupported_default_acl_type_count: 0,
@@ -2546,7 +2551,7 @@ test("runbook and package scripts require the gated runner for pg_restore", asyn
   assert.match(runner, /snapshot-target/u);
   assert.match(
     runner,
-    /authorization\\\|\[0-9a-f\]\{64\}[\s\S]+?120\\\|12\\\|\[0-9a-f\]\{64\}[\s\S]+?\[0-9a-f\]\{64\}/u,
+    /authorization\\\|\[0-9a-f\]\{64\}[\s\S]+?120\\\|\(12\|13\)\\\|\[0-9a-f\]\{64\}[\s\S]+?\[0-9a-f\]\{64\}/u,
   );
   assert.match(runner, /fanmind_required_restore_tables/u);
   assert.match(runner, /pg_catalog\.pg_policy/u);

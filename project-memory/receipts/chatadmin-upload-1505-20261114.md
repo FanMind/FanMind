@@ -1,0 +1,34 @@
+# ChatAdmin #1425 upload repair continuation — 14 November 2026
+
+Owner instruction: finish existing #1505, regular checked merge, protected Staging deployment and Verify before any bounded nginx Apply. Preserve Production, Support, Social, Billing, Aurela and other nginx routes. Synthetic media/Characters only; reuse successful schema/retention/folder/price evidence.
+
+- #1505 exact head e16cfd201f53d026d60862cd4b871ed9e1c9e7d6: all 16 checks successful, including native media/video, both required PostgreSQL authorization roundtrips, browser, build and security. No unresolved review threads. Regular merge: ee3be9fb8d5ca52bae52d907bbba37b10d26a498.
+- Protected Staging deployment 43639380591/job132583260332 SUCCESS. Independently observed HTTPS /api/version confirms that exact merge with runtimeEnvironment=staging. Existing Operator opt-in preserved; Billing freeze resolved false; RELEASE_ACCEPTED_SNAPSHOT_RETAINED.
+- Protected read-only media-proxy Verify 43639626450/job132584052013 BLOCKED with proxy_tls_boundary before configuration mutation or nginx reload. No Apply dispatched. Do not infer complete repair from the deployed Base64 correction.
+- Necessary follow-up #1507 adds only fixed numeric TLS/route counters to the rejected existing parser path. Validation decisions, exact release/target checks, mutation and rollback stay unchanged. Seven focused tests pass, including privacy-negative and unchanged-validity checks. Hosted exact-head required checks still required before merge and repeat Verify. No guessed parser relaxation.
+- Existing authenticated Staging Operator successfully continued to Creator CRM and selected synthetic FM1425-20261114-1945-A. Aurela untouched. No media uploaded or price/folder retest performed in this continuation.
+- Browser download event and image-download path each timed out for the existing neutral PNG fixture. This is a separate tool file-transfer limitation. No current PNG/MP4 Storage lifecycle, preview, inherited-media negotiation, move/delete or independent absence PASS is claimed. Do not ask for another personal upload before both application and proxy repairs are demonstrably deployed.
+
+Affected contracts/gates: FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-IGATE-CHATADMIN-STORAGE-001. Target evidence remains incomplete; conservative release status BLOCK remains honest. No DB/schema/grant/provider/flag/Production mutation and no second upload implementation.
+
+## Confirmed diagnostic continuation
+
+- #1507 head11325b08: all required checks successful; regular merge116233d7259e1c87bc1c3351b9c190c36061dc20. Protected Staging deployment43641358808/job132589437054 SUCCESS; independent HTTPS version exact.
+- Read-only Verify43641577524/job132590094272 confirms one complete canonical TLS server, expected server name, exact certificate/key, secure IPv4/IPv6 listeners, no malformed/unclosed config and no server-level request-flow overrides. Its sole rejection is absent unrelated WhatsApp location: global_whatsapp=0, global_whatsapp_paths=0, whatsapp=0, valid_whatsapp=0, invalid_whatsapp=0. No Apply, config change or reload occurred.
+- Necessary repair is limited to media_end_line/media_diagnostic modes of the existing parser: accept the truly absent WhatsApp route only when both global path counters and all server WhatsApp counters are zero. Default WhatsApp validation still rejects absence; a present, aliased, duplicated, insecure, mislogged or wrong-upstream WhatsApp route retains the original exact checks. TLS/name/certificate/proxy/target and byte-preserving apply/rollback are unchanged. No WhatsApp route is created or edited.
+- Eight focused local proxy/rollback/privacy/default-versus-media tests pass. Hosted exact-head checks, regular merge, protected deployment, repeat Verify and only then the existing bounded Apply remain necessary. This is a concrete cause correction, not another diagnostic implementation or new upload path.
+
+## Exact boundary repair and safe Apply rollback
+
+- #1508 final headc3ffe10f: all required checks successful; regular merge33ae42918ac95bada01ca898be8317f4650500ec. Protected Staging deployment43643452215/job132595844589 SUCCESS; independent HTTPS version exact; Billing false preserved and accepted snapshot retained.
+- Read-only Verify43643668691/job132596512127 SUCCESS: STAGING_MEDIA_UPLOAD_PROXY=ABSENT. Existing config/target/TLS/certificate/generic proxy/syntax guards passed; exact upload locations not yet installed.
+- Owner-authorized bounded Apply43643787484/job132596896530 passed config checks but postflight failed proxy_transport. STAGING_MEDIA_UPLOAD_PROXY_ROLLBACK=PASS proves exact prior bytes restored and prior config reloaded. No Apply PASS or infrastructure readiness claimed. Small unauthenticated POST controls on both media routes return exact401 JSON.
+- Existing transport proof did not report its failing HTTP status. The next necessary source delta adds only fixed route label, request-byte count, HTTP status and json/auth booleans before the unchanged strict auth assertion. No response body/headers/URL/token/private data is logged. No limits, auth condition, TLS gate or rollback change. Ten focused local proxy/TLS/rollback/privacy tests and product-truth validation pass. No speculative Next.js configuration change.
+- Actual PNG/MP4 lifecycle remains blocked until the protected transport proof succeeds. Existing target media/retention/price evidence stays separate; no personal repeat upload requested and no real Character touched.
+
+## Graceful reload transport continuation
+
+- #1510 head dd55acff passed all 16 required checks; regular merge bbe29a0924448330159996de8591f6654d493b3a. Protected Staging deploy43645449548/job132602064924 SUCCESS; independent HTTPS version exact.
+- Verify43645643600/job132602683477 SUCCESS, ABSENT. Apply43646443242/job132605219228 reports image bytes7100000 status413 json0 auth0 immediately after reload; automatic exact-byte rollback PASS. No completed infrastructure or media lifecycle acceptance claimed.
+- Existing postflight uses pooled HTTPS immediately after graceful nginx reload. New bounded readiness uses fresh Connection:close probes and permits only up to five 413 attempts separated by250ms after this operation's own reload. Both full request limits must still return exact401 unauthenticated JSON. Ordinary Verify has no retry; all other HTTP failures and exhausted readiness still block and trigger unchanged rollback. No TLS, WhatsApp, limit, target or auth rule is relaxed. This addresses the observed reload transition; hosted evidence must establish whether it resolves actual transport rejection.
+- Ten focused local tests PASS including permanent413, wrong status, both-limit success, per-route exhaustion and preserved rollback/privacy. No new media, real data, schema, grant, provider or Production mutation. Final required checks, regular merge, protected deployment and independent post-Apply Verify remain required.

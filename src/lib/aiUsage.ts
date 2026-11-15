@@ -1,10 +1,13 @@
 import { getSupabaseHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
+import { calculateOpenAiProviderCostMicros } from "./aiCostEngine.mjs";
+import { getChatAdminModelProfile } from "./chatAdminModelPolicy.mjs";
 import { normalizeOpenAiResponseUsage } from "@/lib/aiUsageProviderMetrics.mjs";
 
-export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
+export type AiUsageFeature = "reply_suggestions" | "chat_admin_reply" | "website_chat_reply" | "fan_analysis" | "conversation_summary" | "memory_suggestion" | "followup_suggestion" | "campaign_draft_preview";
 export type AiUsageStatus = "ok" | "error" | "skipped";
 
 export type RecordAiUsageEventInput = {
+  eventId?: string;
   workspaceId: string;
   userId?: string | null;
   contactId?: string | null;
@@ -47,6 +50,7 @@ export function estimateAiCostCents(inputTokens: number, outputTokens: number, m
 export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promise<void> {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) return;
+  if (input.eventId !== undefined && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(input.eventId)) return;
 
   const inputChars = Math.max(0, Math.round(input.inputChars));
   const outputChars = Math.max(0, Math.round(input.outputChars ?? 0));
@@ -58,7 +62,15 @@ export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promis
   const recordedTotalTokens =
     providerUsage?.totalTokens ?? recordedInputTokens + recordedOutputTokens;
 
+  const catalogCost = input.feature === "chat_admin_reply" && input.model === getChatAdminModelProfile().model
+    ? calculateOpenAiProviderCostMicros({
+      model: input.model, occurredAt: new Date().toISOString(),
+      usage: providerUsage ?? { inputTokens: recordedInputTokens, outputTokens: recordedOutputTokens, cachedInputTokens: 0, cacheWriteTokens: 0 },
+    }).costMicros / 10_000
+    : null;
+
   const body = {
+    ...(input.eventId === undefined ? {} : { id: input.eventId }),
     workspace_id: input.workspaceId,
     user_id: input.userId ?? null,
     contact_id: input.contactId ?? null,
@@ -70,12 +82,12 @@ export async function recordAiUsageEvent(input: RecordAiUsageEventInput): Promis
     estimated_input_tokens: recordedInputTokens,
     estimated_output_tokens: recordedOutputTokens,
     estimated_total_tokens: recordedTotalTokens,
-    estimated_cost_cents: estimateAiCostCents(
+    estimated_cost_cents: catalogCost ?? estimateAiCostCents(
       recordedInputTokens,
       recordedOutputTokens,
       input.model,
     ),
-    currency: process.env.FANMIND_AI_USAGE_CURRENCY?.trim() || DEFAULT_CURRENCY,
+    currency: catalogCost === null ? process.env.FANMIND_AI_USAGE_CURRENCY?.trim() || DEFAULT_CURRENCY : "USD",
     status: input.status,
     error_code: input.errorCode ?? null,
     latency_ms: input.latencyMs == null ? null : Math.max(0, Math.round(input.latencyMs)),

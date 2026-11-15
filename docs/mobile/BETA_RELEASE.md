@@ -1,5 +1,14 @@
 # FanMind Mobile Beta – Recovery, EAS und externe Freigaben
 
+## Expo-SDK-58-Quellstand - 28. Oktober 2026
+
+Der Mobile-Quellkandidat ist auf die offizielle Expo-SDK-58-Matrix mit React
+Native 0.88 und React 19.3 angehoben. Diese Repository-Aenderung erzeugt oder
+veroeffentlicht keine signierte App. Bestehende Preview- und Production-
+Artefakte bleiben auf ihren belegten aelteren Commits; ein spaeterer
+Development-/Preview-Build und eine reale Geraeteabnahme sind getrennte,
+geschuetzte Folgeaktionen.
+
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
 
 Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
@@ -202,7 +211,7 @@ Die mobile Antwortvorschlagsfunktion übernimmt serverseitig den aktiven Workspa
 
 Der noch unsignierte App-Kern kann bereits auf einem Android-Telefon geprüft werden:
 
-1. die [offizielle Expo-Go-Version 57.0.2](https://github.com/expo/expo-go-releases/releases/tag/Expo-Go-57.0.2) für SDK 57 installieren;
+1. auf Android die [offizielle Expo-Go-Version 58.0.0](https://github.com/expo/expo-go-releases/releases/tag/Expo-Go-58.0.0) für SDK 58 installieren; Push-Funktionen weiterhin nur in einem eigenen Development-Build prüfen;
 2. auf dem Rechner Node.js `>=22.13.0` und Git bereitstellen;
 3. Repository klonen, in `apps/mobile` wechseln und `npm ci` ausführen;
 4. `.env.example` nach `.env.local` kopieren und ausschließlich die öffentlichen Supabase-URL, den öffentlichen Anon-/Publishable-Key und `https://fanmind.ch` als API-URL eintragen;

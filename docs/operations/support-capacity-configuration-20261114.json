@@ -1,0 +1,4 @@
+{
+  "FANMIND_SUPPORT_AI_QUALITY_MODE": "balanced",
+  "FANMIND_AI_CAPACITY_FX_SNAPSHOT": "{\"eurPerUsdNanos\":904813608,\"version\":\"ecb-usd-eur-2026-11-13-4185371ddfed\",\"validFrom\":\"2026-11-13T14:00:00.000Z\",\"validUntil\":\"2026-11-16T14:00:00.000Z\",\"source\":\"https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml\",\"usdPerEur\":\"1.1052\",\"observedAt\":\"2026-11-14T19:12:46.311Z\"}"
+}

@@ -75,10 +75,10 @@ test("go-live and deploy smoke gates share live truth and blocking-only health p
   assert.match(healthPolicy, /email_config/u);
 
   for (const required of [
-    "Starter Flex",
-    "990 € Setup + 312 €/Monat",
-    "Starter 12 Monate",
-    "0 € Setup + 312 €/Monat",
+    "99 €/Monat",
+    "199 €/Monat",
+    "312 €/Monat",
+    "0 € Einrichtung",
     "Kontaktwissen",
   ]) {
     assert.match(truthPolicy, new RegExp(required.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "u"));
@@ -175,7 +175,7 @@ test("phase 4 stays technically complete while sales handoff waits for phase 7",
   assert.doesNotMatch(roadmap, /Verkaufsstart freigegeben/u);
   assert.match(
     roadmap,
-    /number: "07"[\s\S]*status: "Creator und Social jetzt · Android danach"[\s\S]*availability: "upcoming"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 \+ 7"/u,
+    /number: "07"[\s\S]*status: "Creator-Entwicklung aktiv · externe Freigaben zurückgestellt"[\s\S]*availability: "upcoming"[\s\S]*label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 \+ 7"/u,
   );
   assert.match(
     roadmap,

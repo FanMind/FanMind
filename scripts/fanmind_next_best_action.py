@@ -2283,6 +2283,9 @@ export const roadmapPhases: RoadmapPhase[] = [
 export const translations = { Alpha: "Translated Alpha" };
 '''
     parsed = product_roadmap_open_items(source)
+    parsed_labels = {item["label"] for item in parsed}
+    assert "Gamma" in parsed_labels
+    assert "Later phase" not in parsed_labels
     assert parsed == [
         {
             "phase": 1,
@@ -2297,16 +2300,16 @@ export const translations = { Alpha: "Translated Alpha" };
 
     canonical_source = PRODUCT_ROADMAP_PATH.read_text(encoding="utf-8")
     canonical = product_roadmap_open_items(canonical_source)
-    assert len(canonical) == 26
+    assert len(canonical) == 22
     assert {item["label"] for item in canonical} >= {
         "Facebook",
         "Vollständiger Restore-Test",
         "Google-Play-Test & Geräteabnahme",
         "Creator Intelligence & Sales Assistance",
-        "Geprüfte Kampagnen-Entwürfe",
         "CSV-Import für Segmente nutzen",
     }
     assert "Einbettbarer Website-KI-Assistent" not in {item["label"] for item in canonical}
+    assert "Geprüfte Kampagnen-Entwürfe" not in {item["label"] for item in canonical}
     commented_canonical = canonical_source.replace(
         '      { label: "Facebook", state: "progress", status: "Anbindung und Abnahme in Arbeit" },',
         '      // { label: "not a real task", state: "progress" }\n'
@@ -2317,7 +2320,7 @@ export const translations = { Alpha: "Translated Alpha" };
         1,
     )
     commented = product_roadmap_open_items(commented_canonical)
-    assert len(commented) == 26
+    assert len(commented) == 22
     assert commented[0]["label"] == "Facebook"
     assert commented[0]["status"] == "Anbindung {extern} und Abnahme in Arbeit"
 
@@ -2335,7 +2338,8 @@ export const translations = { Alpha: "Translated Alpha" };
     canonical_gaps = {item["label"] for item in canonical_reconciliation["planning_gaps"]}
     assert canonical_mapped["Vollständiger Restore-Test"]["actions"][0]["status"] == "OWNER_ACTION_REQUIRED"
     assert canonical_mapped["Creator-Profile & getrenntes Fanwissen"]["actions"][0]["action_id"] == "NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME"
-    assert {"Geprüfte Kampagnen-Entwürfe", "Segment-Ansichten"} <= canonical_gaps
+    assert "Segment-Ansichten" in canonical_gaps
+    assert "Geprüfte Kampagnen-Entwürfe" not in canonical_gaps
 
     owner = _action("ROADMAP-OWNER", 0, requires_owner=True)
     owner["deferred_owner_id"] = "ROADMAP-OWNER-DEFERRED"
@@ -2682,3 +2686,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

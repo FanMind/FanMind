@@ -27,7 +27,7 @@ export function FooterInquiryForm({ language = "de" }: FooterInquiryFormProps) {
           note: "A personal inquiry instead of an automated newsletter.",
           success: "Thank you. We will contact you shortly.",
           error:
-            "The inquiry could not be sent right now. Please email kontakt@fanmind.ch directly.",
+            "The inquiry could not be sent right now. Please email fanmind@fanmind.ch directly.",
         }
       : {
           emailLabel: "E-Mail-Adresse",
@@ -42,7 +42,7 @@ export function FooterInquiryForm({ language = "de" }: FooterInquiryFormProps) {
           note: "Persönliche Anfrage statt automatischem Newsletter.",
           success: "Danke, wir melden uns bei dir.",
           error:
-            "Anfrage konnte gerade nicht gesendet werden. Bitte schreibe direkt an kontakt@fanmind.ch.",
+            "Anfrage konnte gerade nicht gesendet werden. Bitte schreibe direkt an fanmind@fanmind.ch.",
         };
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {

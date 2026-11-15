@@ -1127,6 +1127,37 @@ function createRequestHandler(state) {
           return;
         }
         resetFixtureState(state);
+        if (url.searchParams.get("scenario") === "meta-inbox") {
+          const base = state.tables.conversations[0];
+          for (const [suffix, post, comment] of [["002", "202", "303"], ["003", "203", "304"]]) {
+            state.tables.conversations.push({
+              ...base,
+              id: `40000000-0000-4000-8000-000000000${suffix}`,
+              source_platform: "facebook", source_type: "facebook_comments",
+              external_thread_id: `101_${post}:500`, external_post_id: `101_${post}`,
+              external_comment_id: comment,
+              last_message_preview: `Synthetic post comment ${post}`,
+              original_text_excerpt: `Synthetic post comment ${post}`,
+            });
+          }
+          for (const [suffix, post, comment] of [["002", "202", "303"], ["003", "203", "304"]]) {
+            state.tables.conversation_messages.push({
+              ...state.tables.conversation_messages[0],
+              id: `50000000-0000-4000-8000-000000000${suffix}`,
+              conversation_id: `40000000-0000-4000-8000-000000000${suffix}`,
+              source_platform: "facebook", source_type: "facebook_comments", message_type: "comment",
+              external_thread_id: `101_${post}:500`, external_post_id: `101_${post}`,
+              external_comment_id: comment, external_message_id: `comment-${comment}`,
+              content: `Synthetic post comment ${post}`, original_text_excerpt: `Synthetic post comment ${post}`,
+              source_url: null, reply_target_url: null,
+            });
+          }
+          state.tables.conversations.push({
+            ...base, id: "40000000-0000-4000-8000-000000000999",
+            workspace_id: "10000000-0000-4000-8000-000000000999",
+            last_message_preview: "Foreign workspace comment must stay hidden",
+          });
+        }
         sendJson(request, response, 200, {
           ok: true,
           state: redactedState(state),

@@ -1,3 +1,4 @@
+import { instagramUnifiedEnabled, assertUnifiedOperator, instagramUnifiedContinuation } from "@/lib/instagramUnifiedPolicy.mjs";
 import { runMetaInitialImport } from "@/lib/metaInitialImport";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -11,6 +12,7 @@ import {
   exchangeInstagramCode,
   exchangeInstagramLongLivedToken,
   fetchInstagramProfile,
+  instagramStoredToken,
   getInstagramOAuthScopes,
   subscribeInstagramAccount,
   verifyInstagramOAuthState,
@@ -32,7 +34,11 @@ export async function GET(request: Request) {
   const state = verifyInstagramOAuthState(url.searchParams.get("state"));
 
   const { data } = await getSupabaseServerUser();
-  if (!data.user) redirect("/login");
+  if (!data.user) {
+    const continuation = instagramUnifiedContinuation(request,process.env,state);
+    if (continuation) return continuation;
+    redirect("/login");
+  }
   if (!code || !state || state.userId !== data.user.id) {
     return redirectToChannels(appOrigin, "instagram_error=oauth");
   }
@@ -58,13 +64,14 @@ export async function GET(request: Request) {
   }
 
   try {
+    if (process.env.INSTAGRAM_LOGIN_MODE === "unified") assertUnifiedOperator(process.env,data.user.id,workspace.id);
     const shortLivedToken = await exchangeInstagramCode(code);
     const token = await exchangeInstagramLongLivedToken(shortLivedToken);
     const profile = await fetchInstagramProfile(token);
     if (!isTokenEncryptionConfigured()) {
       return redirectToChannels(appOrigin, "instagram_error=encryption");
     }
-    const encryptedToken = encryptToken(token.accessToken);
+    const encryptedToken = encryptToken(instagramStoredToken(token));
     if (!encryptedToken) {
       return redirectToChannels(appOrigin, "instagram_error=encryption");
     }
@@ -82,12 +89,12 @@ export async function GET(request: Request) {
       pageName: profile.username,
       pageAccessTokenEncrypted: encryptedToken,
       tokenLastFour: tokenLastFour(token.accessToken),
-      scopes: [...getInstagramOAuthScopes(state.connectionType)],
+      scopes: token.scopes ?? [...getInstagramOAuthScopes(state.connectionType)],
       webhookSubscribed: false,
-      oauthLoginType: "instagram_login",
+      oauthLoginType: instagramUnifiedEnabled(process.env) ? "instagram_unified_login" : "instagram_login",
       externalAccountType: "professional",
       tokenExpiresAt,
-      permissionsVerifiedAt: null,
+      permissionsVerifiedAt: token.scopes ? connectedAt.toISOString() : null,
     });
     if (result.error || !result.connection) {
       console.error("Instagram social connection save failed", {
@@ -108,7 +115,7 @@ export async function GET(request: Request) {
       );
       const webhookResult = await updateInstagramWebhookSubscribed(
         result.connection.id,
-        Boolean(result.connection.webhook_subscribed || subscribed),
+        Boolean(subscribed),
       );
       if (webhookResult.error) {
         console.error("Instagram webhook status save failed", {

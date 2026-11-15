@@ -491,10 +491,10 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
   });
 
   test("Kontoregistrierung bleibt vor kostenpflichtiger Aktivierung erreichbar", async ({ page }) => {
-    await page.goto("/register?plan=starter&option=starter_no_setup_commitment&lang=en");
+    await page.goto("/register?plan=capacity_199&lang=en");
     await expect(page.getByRole("heading", { name: "Create your FanMind account" })).toBeVisible();
-    await expect(page.getByText(/Paid package activation is still being prepared/u)).toHaveCount(0);
-    await expect(page.locator('input[value="starter_no_setup_commitment"]')).toBeChecked();
+    await expect(page.getByText(/Paid package activation is still being prepared/u)).toBeVisible();
+    await expect(page.locator('input[value="capacity_199"]')).toBeChecked();
     await expect(page.locator('input[name="paymentTermsAccepted"]')).toHaveCount(0);
     await expect(page.getByText("payment_terms_version_unresolved", { exact: true })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);
@@ -562,7 +562,7 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
       }
       await fulfillCorsJson(route, 200, { id: "synthetic-signup-user", email: "signup@example.com" });
     });
-    await page.goto("/register?option=starter_no_setup_commitment&ref=REF-SYNTHETIC");
+    await page.goto("/register?plan=capacity_199&ref=REF-SYNTHETIC");
     await page.locator('input[name="name"]').fill("Synthetic Signup");
     await page.locator('input[name="email"]').fill("signup@example.com");
     await page.locator('input[name="password"]').fill("Synthetic-Password-2026!");
@@ -573,7 +573,8 @@ test.describe("öffentliche kritische FanMind-Flows", () => {
     expect(signupRedirect).toBe(`${E2E_BASE_URL}/register/confirm`);
     expect(signupBody).not.toBeNull();
     const metadata = (signupBody as unknown as { data: Record<string, unknown> }).data;
-    expect(metadata.registration_option_preference).toBe("starter_no_setup_commitment");
+    expect(metadata.registration_option_preference).toBe("capacity_v2");
+    expect(metadata.registration_plan_preference).toBe("capacity_199");
     expect(metadata.referral_code).toBe("REF-SYNTHETIC");
     for (const field of ["plan_id", "commercial_option", "payment_terms_accepted", "payment_terms_version", "billing_status", "billing_provider"]) expect(metadata).not.toHaveProperty(field);
     let resendRequests = 0;

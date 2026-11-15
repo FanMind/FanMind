@@ -1,5 +1,16 @@
 # FanMind Mobile
 
+## Expo-SDK-58-Quellstand - 28. Oktober 2026
+
+Der aktuelle Mobile-Kandidat verwendet Expo 58.0.21, React Native 0.88.0,
+React 19.3.0 und die offizielle SDK-58-Modulmatrix. Dazu gehoeren insbesondere
+Notifications 58.1.7, Reanimated 4.7.1, Worklets 0.13.0, Safe Area 5.10.1
+und Screens 4.30.0. Dieser Quellstand ersetzt SDK 57 erst nach den
+vollstaendigen exakten PR-Checks; die vorhandenen signierten Android-Artefakte
+bleiben unveraenderte Belege ihrer aelteren Revision und enthalten das Upgrade
+nicht. Der Task fuehrt weder Signing noch Store-, Provider-, Datenbank-,
+Staging- oder Production-Aktionen aus.
+
 ## Mobile-Paketstand und signierte Artefakte — 10. September 2026
 
 Die Paketkorrekturen aus PR #1089 sind im Repository samt vollständiger CI
@@ -139,7 +150,7 @@ npm run check
 npm run start:go
 ```
 
-Für den aktuellen Expo-SDK-57-Stand muss auf Android die [offizielle Expo-Go-Version 57.0.2](https://github.com/expo/expo-go-releases/releases/tag/Expo-Go-57.0.2) installiert sein. Rechner und Telefon müssen im selben WLAN sein; anschließend wird der QR-Code aus dem Terminal mit Expo Go gescannt. Falls das lokale Netzwerk die Verbindung blockiert, kann nach Installation von `@expo/ngrok` mit `npx expo start --go --tunnel` gestartet werden. Ohne separates Staging darf dafür ausschließlich ein Testkonto verwendet werden.
+Für den Expo-SDK-58-Quellstand muss auf Android die [offizielle Expo-Go-Version 58.0.0](https://github.com/expo/expo-go-releases/releases/tag/Expo-Go-58.0.0) installiert sein. Rechner und Telefon müssen im selben WLAN sein; anschließend wird der QR-Code aus dem Terminal mit Expo Go gescannt. Falls das lokale Netzwerk die Verbindung blockiert, kann nach Installation von `@expo/ngrok` mit `npx expo start --go --tunnel` gestartet werden. Ohne separates Staging darf dafür ausschließlich ein Testkonto verwendet werden.
 
 Expo Go bleibt nur der begrenzte Vorabtest. Der normale Startbefehl zielt auf
 den eigenen Development-Client:
@@ -406,3 +417,15 @@ Die Produkt- und Release-Checkliste für diese Schritte steht in
 `docs/mobile/STORE_LISTING.md`, die portalnahe Datenschutzvorlage in
 `docs/mobile/STORE_PRIVACY_DECLARATIONS.md`; das Apple-Handoff steht in
 `docs/mobile/APP_STORE_HANDOFF.md`.
+
+## SDK-57-Patchabgleich — 15. Oktober 2026
+
+Der Mobile-Pflichtcheck des globalen Antwortqualitäts-PRs erkannte sieben
+veraltete Expo-Patchstände. Aktualisiert sind Expo 57.0.29, Constants 57.0.22,
+Dev Client 57.0.20, Linking 57.0.13, Notifications 57.0.23, Router 57.0.27
+und Splash Screen 57.0.10 einschließlich der npm-aufgelösten transitiven
+Abhängigkeiten. SDK 57, React 19.2.3, React Native 0.86.3, App-Identitäten,
+EAS-Profile und Berechtigungen bleiben unverändert. Die strikten Versionschecks
+für Dev Client/Splash wurden auf diese Stände abgeglichen, nicht abgeschaltet.
+Typecheck, Doctor, Store-/FCM-/Boundary-Checks und lokale Plattform-Bundles sind
+technische Vorbereitung; keine signierte App oder Store-Veröffentlichung.

@@ -1,4 +1,362 @@
+## Adminchat #1425: private Storage finalization — 15 November 2026
+
+Prepared source repair for the proven media_object_binding_invalid at Storage
+finalization. Reuse the existing library, private bucket and caller JWT upload.
+The trigger revalidates Storage's assigned object Owner only in its internal
+finalization context, with exact live Workspace/Character/capability/deletion
+checks. Caller RLS, all grants and bucket settings remain unchanged. Failed
+uploads use authenticated deletion, independent absence and revision-bound
+metadata cleanup; uncertain cleanup retains a tracked, unavailable tombstone.
+
+The separately pinned Staging-only guard replacement is **unapplied** pending
+review and explicit database-function approval. No nginx action, Production
+change or target media acceptance is implied. Details and approval scope:
+docs/operations/CHAT_ADMIN_MEDIA_STORAGE_FINALIZATION_20261115.md.
+
+## Meta App Review #1480: Behördenprozesse und Nachweise — 14 November 2026
+
+Documentation preparation only: the Owner authorized introducing the required
+procedures; exact legal/operator release and practical adoption remain pending.
+[Authority-request procedure](docs/legal/AUTHORITY_REQUEST_PROCESS.md) reuses the
+existing legal/retention/evidence structure and includes a confidential register
+template. [Meta review readiness](docs/operations/META_APP_REVIEW_READINESS_20261114.md)
+separates actual evidence from draft declarations, the historical disclosure
+question, API proof and screencasts. No questionnaire submission, provider call,
+permission, credential, runtime or Production change. Error100/33 remains open.
+
+## Adminchat #1425: folder actions and upload failures — 14 November 2026
+
+Source correction retains the confirmed empty-only folder deletion and shows
+direct files, child folders and ancestor/back navigation. Bounded upload encoding
+validation avoids regexp stack overflow at permitted file sizes; safe HTTP
+failure details and retry state are retained. The Staging nginx source keeps its
+2-MB generic limit and adds bounded exact media-route limits. Its existing TLS
+maintenance workflow gains separate reviewed-Main/Owner/protected-Staging proxy
+verify/apply actions with exact live binding, byte-preserving rollback and no
+certificate provisioning. A normal Web deploy never applies this host repair.
+No schema, grants, provider, Billing or Production change. Actual Staging media
+lifecycle acceptance remains distinct and pending.
+
+## Support1350: Capacity installation prerequisite — source preparation
+
+The Owner-authorized prerequisite prepares the missing canonical entitlement writer
+and protected Staging-only install/rollback-only synthetic acceptance controller.
+It reuses the pinned Capacity lifecycle; no real entitlements, monetary writes,
+Runtime/Sales activation, host configuration, Web rollout or Production action
+has occurred. Support PR1500 remains Draft until actual target prerequisites.
+A separate prerequisite PR is necessary to put the controller on Main without
+prematurely deploying1500's authenticated route. Details and exact approval
+sequence: docs/operations/CAPACITY_STAGING_INSTALL_1350_20261114.md.
+
+## Adminchat #1425: catalogue prices and negotiation — 14 November 2026
+
+Source preparation extends the existing Character sales_playbook offers with
+validated mediaTerms (scope/file binding, quantity, inheritance, upward limits,
+video unit and confirmed tax display). Monetary values remain in those offers.
+Explicit packages override file prices for that exact quantity; otherwise file,
+nearest applicable folder, then explicitly configured Model standard applies.
+Missing/inactive explicit rules never invent a replacement price. No sample
+35/70 EUR values are installed and existing individual prices remain unchanged.
+Server arithmetic enforces a single discount floor and validates exact approved,
+available media. Higher counteroffers require explicitly enabled negotiation.
+An optional new tax classification defaults to unconfirmed and withholds a firm
+price; no tax rate, exemption or legal approval is inferred.
+
+New behavior is default-off under FANMIND_CHAT_ADMIN_MEDIA_PRICING_V2_ENABLED.
+The separate controlled chat_admin_media_prices.sql adds append-only evidence
+for playbook revisions and atomically persisted generation/offer snapshots tied
+to exact files/revisions. Snapshots cascade with inbound message retention;
+price history cascades with Character erase. No Checkout, payment, automatic
+send or Production activation is added. Native SQL, protected Staging install,
+runtime activation and actual Desktop acceptance remain separate requirements.
+Existing PNG/MP4 upload and verified-deletion work continues under #1425.
+Details: docs/operations/CHAT_ADMIN_MEDIA_PRICES_20261114.md.
+
+## Central profile data disclosure — Owner correction 14 November 2026
+
+Support1350: the only Creator data download is the existing PDF button at
+Profile & account → GDPR → Data disclosure (/settings/profile/data-export).
+Help explains this location and links to the profile section; its former JSON
+export now redirects to that profile section. Own Support history uses the
+existing paginated RPCs and collector; current AI consent uses the existing
+read-only consent RPC and parser. Private collection rechecks the authenticated
+Creator/Workspace Owner before and after all privileged reads. Help activation
+is not required to export retained own data. Consent activation and withdrawal
+remain separately accessible. Conversation erasure remains its existing flow;
+account deletion remains in Profile & account.
+
+The PDF already includes account/preferences, authorized Workspace, CRM, Meta,
+Creator/ChatAdmin data and private inquiry/referral/deletion records. It now also
+includes own Support questions/answers and current consent status, revision,
+text version and grant/revocation timestamps. No foreign Workspace, credential,
+token, schema install, consent mutation or Production activation is added.
+
+## Support Web: persistent optional AI choice — 14 November 2026
+
+Owner decision1350/1425 moves actual mobile acceptance to **VERSCHOBEN – APP-ABNAHME**.
+It is no Web blocker; automated mobile/responsive regression and actual Desktop
+acceptance remain mandatory. No App feature is added.
+
+Platform Support remains separate from Character administration. Compact KI &
+Datenschutz controls and /settings/support replace the permanently visible block.
+A separately installed RPC-only consent record stores the authenticated user's
+fixed text version, server timestamps and revision. Missing/old consent stays off;
+no AGB or historic session opt-in becomes a durable grant. First activation is
+optional for both new and existing users, with local Help available without it.
+Later sessions reuse verified consent; server gates stop stale-client requests
+following revocation and suppress changed-consent provider results. Own Support
+export includes current consent evidence. Registration terms are unchanged.
+
+Separate exact-Main/protected-Staging schema control, target acceptance and legal
+review remain distinct. New Production persistence is default-off and requires
+an explicitly approved exact version flag after schema/provider/legal signoff.
+Current approved Production Support is preserved. No automatic schema install,
+private Fan context, Model tool, Billing/Meta/media activation or new credential.
+Technical plan: docs/operations/SUPPORT_CONSENT_WEB_20261114.md. Legal draft:
+docs/legal/SUPPORT_AI_REVIEW_DRAFT.md, not newly published binding terms.
+
+## FanMind platform Support scope correction — 14 November 2026
+
+Owner correction for Issue1350 supersedes the Creator Support pilot from PR1488.
+Support explains FanMind, login/registration, dashboard, current catalogue prices,
+channel connection/sync and technical processing problems. Existing authorized
+technical diagnostics, safe repairs and explicit unresolved-case handoff remain.
+Support does not select or administer Models/Fans, inspect private conversations,
+Personas, media or individual offers, change Character styles, or generate style
+comparisons. Those capabilities belong to the existing Creator-Chat /chatadmin
+under Issue1425; no new ChatAdmin implementation or tool migration is introduced.
+
+The Creator UI and its unused server/tool policy are removed after dependency
+inspection. The old /api/support/creator-context returns410 before identity,
+CRM, database or provider access, including stale-client GET/POST attempts.
+Retained pilot history stays subject to the same own-data export/erase/retention;
+a read-only compatibility label identifies it and excludes all four pilot record
+types from future platform AI history. Public Support and authenticated optional
+AI, persistence, consent/withdrawal, privacy, responsive shell, tenant authorization,
+Origin checks and rate/cost limits remain. No SQL, key, flag, role, Billing, Meta,
+media or Operator configuration changes. Production stays unchanged.
+
+New checked merge, protected Staging rollout, actual platform desktop/mobile
+acceptance, remaining tenant negatives and exact synthetic cleanup are required;
+source checks alone do not establish target acceptance. Historical Creator-tool
+mobile and second-identity tests are retired with the tools, not declared passed.
+See docs/operations/SUPPORT_CREATOR_ASSISTANT_20261114.md for scope and cleanup.
+
+## Authenticated Dashboard Support correction — 14 November 2026
+
+Issue1350 / PR1485 repairs the existing in-app Help with shell-token styling,
+bounded responsive scrolling, a separately fixed composer, accessible controls
+and diagnostic disabled/failure distinctions with retry. Authenticated AI is
+optional and initially unchecked: only explicit consent permits reuse of the
+existing public Support server pipeline, its configured provider/model, bounded
+public knowledge/output rules, rate/cost controls and store:false. Only the
+current question and last two own Support turns are supplied; no automatic CRM
+context, external identifiers or additional credentials are introduced. Without
+consent the approved local knowledge response remains available. Withdrawal
+aborts pending work and clears future AI retry consent; account/focus/panel
+lifecycle requires fresh consent. Saved messages retain existing own-scope
+persist/export/erase/handoff and Retention contracts. No schema or runtime flag
+changes. Source preparation is not live acceptance; protected rollout and actual
+authenticated model-response checks remain required.
+
+## Facebook Staging reception continuation — 13 November 2026
+
+Shared Main/Staging release a8a74f67d92180f2c7a2fa9bb4f4a98486527dbf was
+independently read after protected deployment43461158590. Protected inspect
+43463154880, dedicated-app rebind43463354662 and exact messages/feed App
+subscription43463518222 passed. The separately protected new secret was already
+provisioned; its personal password step must not be requested again.
+
+A real OAuth return exposed the Strict Operator-cookie boundary: the first
+external callback has no access cookie even though same-origin continuation
+still works. The bounded Staging-only callback interstitial now preserves
+Strict cookies: only a valid signed state for the pinned Operator, exact
+standalone app and fixed callback may render one escaped, no-store, no-referrer,
+script-free same-origin continuation form. A second unauthenticated attempt
+requires login; the authenticated retry reruns the existing user/Workspace,
+role, state and Page selection checks before any token exchange/save.
+
+Existing Page subscription helpers are reused behind explicit Staging-only
+controls, exact dedicated app/Operator Workspace/FanMind Page checks and verified
+new-app Page token/required scopes. Check and activation separately read the
+exact current app in subscribed_apps; activation requests messages/feed only.
+The local flag is true only when both are read active and storage succeeds.
+Production and WellFit are rejected before provider mutation. No history sync,
+outbound sending, extra app/schema/database or analysis activation is added.
+Provider setup and a successful source test still do not prove genuine receipt.
+Fresh real DM plus comments on two posts and duplicate/isolation acceptance
+remain OPEN until performed after the new token and Page subscription are saved.
+
+## Facebook automatic ingress preparation — 13 November 2026
+
+The successor to merged PR1465 hardens the existing signed Meta webhook and
+Facebook CRM mapping: exact envelope/Page identity, new fan-comments only,
+unique enabled connection, bounded body, retry-safe duplicate summary recovery,
+and convergence of webhook/manual DM threads with verified Page provenance.
+This remains source preparation, not real automatic-arrival acceptance.
+Owner authorization now covers the regular checked merge, isolated Staging
+app publication/configuration/deployment and real reception tests. The created
+standalone **FanMind Staging Empfang1547928503809961** is published; its
+personal app-secret confirmation and protected host/Page setup remain pending.
+The earlier child test app1637976007865045 stays in Development and is not the
+reception target. The existing Production app/callback remains unchanged.
+PR1470 Expo/Operator preservation and Main's merged PR1471 Adminchat work are
+retained. No duplicate Mobile/media implementation or outbound sending is added.
+Protected rebind and exact-app webhook subscription are prepared, including a
+separate new-app secret and server-only verification token. Real automatic
+arrival, Page authorization/subscription and Staging rollout are still unproven.
+Runbook and concrete approval boundary:
+`docs/operations/FACEBOOK_AUTOMATIC_INGRESS_20261113.md`.
+
+## Facebook Staging acceptance — 13 November 2026
+
+The Owner-approved exact runtime commit `d34834979cef30c9c6af567d61b3df448901bfda`
+was deployed only to Staging in protected run 43417498761 and independently
+version-checked. Temporary feature-branch admission was removed afterward.
+Real manual Graph import/persistence, separate private chat and two posting
+histories, exact original targets, duplicate prevention, selected-conversation
+reply handling and independent Workspace/RLS negatives passed on the bounded
+FanMind Operator test dataset (2 DM messages, 4 comments on 2 posts).
+
+Actual Supabase continuation succeeded twice without a new login. Independent
+metadata confirms two provider refresh rotations with the preceding credentials
+revoked, unchanged session count and unchanged last sign-in. Actual Logout then
+removed all Operator provider sessions/refresh records; a protected request
+redirected to login and continuation returned sign-in-required. No token value
+was exported. Secure Owner-assisted re-login restored the Operator access. Natural
+access expiry was observed earlier in this same acceptance.
+
+This is Staging acceptance for manual synchronization and user/agent-triggered
+passwordless continuation. Background automatic refresh, automatic Webhook
+arrival, general Meta/App Review/legal activation, Production readiness and
+immediate universal invalidation of previously issued JWTs are not established.
+No Facebook reply was sent. Main integration remains separately Owner-gated.
+The later closeout is documentation only; it does not redeploy or change the
+accepted runtime. Details: `docs/operations/FACEBOOK_STAGING_ACCEPTANCE_20261113.md`.
+
+## Facebook-Kundenseiten, Chats und Beitragskommentare — 9. November 2026
+
+Repository-Umsetzung: Jeder Anbieter autorisiert seine eigene Facebook-Seite
+über Facebook und bestätigt die Auswahl ausdrücklich, auch bei nur einer
+verfügbaren Seite. Keine Plattformpasswörter in FanMind und keine automatische
+Übernahme einer Betreiberseite. Die bestehende Nutzer-/Workspace-Bindung,
+verschlüsselte Tokens und exklusive aktive Seitenzuordnung bleiben erhalten.
+
+Der Posteingang trennt Chats/Direktnachrichten und Nachrichten/Beitragskommentare
+über eigene Ansichten. Verschiedene Gespräche oder Beiträge desselben Fans
+bleiben einzeln sichtbar; offene Follow-ups ergänzen weiterhin unbedeckte Fans.
+„Antworten“ öffnet den Originalkanal zur manuellen Antwort. Facebook-Kommentare
+verwenden ihren bereinigten Permalink oder einen aus validierten Beitrags- und
+Kommentar-IDs aufgebauten Link. Fehlende Herkunft erzeugt keinen Betreiberlink.
+Webhook-Kommentare und manueller Kommentar-Sync verwenden denselben
+Beitrags-/Fan-Threadschlüssel für Facebook.
+
+Die Seitenerkennung ergänzt auch nichtleere `/me/accounts`-Ergebnisse durch
+`/me?fields=accounts` und gültige granular autorisierte Seitenziele. Beide
+Listen werden begrenzt paginiert und nach Seiten-ID zusammengeführt. Fehlende
+Tokens bleiben nicht auswählbar; vor dem Speichern werden die konkrete
+Seitentoken-Identität, App-Zugehörigkeit und seitenbezogene Scopes verifiziert.
+Die Meta-Auswahl allein ist kein Nachweis für technischen Seitenzugriff.
+Staging-Abnahme des offenen PR erfolgt vor einer gesonderten Main-Mergefreigabe;
+echte Provider-Abnahme und Webhook-Empfang sind damit noch nicht bestätigt.
+
+Das ist keine Meta-Aktivierung: reale App-/Callback-Konfiguration, passende
+Berechtigungen und Webhooks, unabhängige Zwei-Anbieter-Staging-Abnahme,
+Meta App Review/Advanced Access und externe Rechtsfreigaben bleiben separat
+nachzuweisen. Keine neue Migration, kein automatischer Versand und keine
+Änderung an Analyse-, Billing- oder Production-Schaltern. Details:
+`docs/integrations/META_CUSTOMER_INBOX_20261109.md`.
+
+<!-- Capacity-v2 registration update: 2026-11-08 -->
+Neue öffentliche Registrierung: FanMind 99 / 199 / 312 zu 99 / 199 / 312 EUR
+monatlich, jeweils 0 EUR Einrichtung (netto). Zentrale Preisquelle:
+`src/config/aiCapacityPackages.mjs`; Datenpakete übernehmen die vier Einmalpreise
+aus `stripeAiTopupPolicy.mjs`. Auswahl und Auth-Metadaten sind ausschließlich
+Präferenzen. Kein Workspace, Zahlungsmandat oder Abo durch Registrierung.
+Legacy-Neuaufnahme im öffentlichen Provisionierungsweg ist geschlossen;
+Bestandsverträge, individuelle Freigaben und bestehende Checkouts bleiben erhalten.
+Capacity-v2-Aktivierung/Checkout/Upgrade und Datenpaketverkauf bleiben gesperrt,
+bis Entitlement-, Tax-, Vertrags- und Lifecycle-Abnahme abgeschlossen sind.
+Historische Starter-/Plus-/Ultra-Angaben weiter unten betreffen ausschließlich
+Bestandsverträge und historische Implementierungsnachweise, keine Neugeschäfte.
+Nachweise und offene Abnahme: `docs/operations/CAPACITY_REGISTRATION_20261108.md`.
+
 # FanMind
+
+ChatAdmin aktuelles Fanwissen (18.10.2026, vorbereitete Source-Erweiterung): Ein
+separater, standardmäßig deaktivierter Speicher hält je Fan/Thema genau eine
+aktuelle, wörtlich belegte Interessenaussage. Native isolierte PostgreSQL-17-Tests
+belegen Ersetzung neben unveränderten 4.000 Zeichen manueller Notizen, Quellen- und
+Revisionsbindung sowie Race-/Replay-Schutz. Bestehende unabhängige Legacy-Themen
+bleiben im Reader ausdrücklich als Legacy-Provenienz erhalten; neuere Themenzeilen
+ersetzen nur ihr Thema. Keine automatische Konvertierung alter Quellen.
+Kontrolliertes SQL ist nicht auf Staging/Production installiert. Aktivierung,
+Legacy-/Rollback-Freigabe und reale Ziel-/Modellabnahme bleiben getrennt offen.
+Details: docs/operations/CHAT_ADMIN_CURRENT_FACTS.md.
+
+
+ChatAdmin-Interessenwiderruf (18.10.2026, Draft/PARTIAL): Explizite deutsche/englische
+Widerrufe werden im vorhandenen v1-Fanwissen quellengeordnet gespeichert und nach
+History-Kürzung an den Modellkontext übergeben. Ältere Interessen-Generationen werden
+konservativ gegenüber der höchsten erhaltenen Faktensequenz verworfen, auch bei
+unabhängigen Themen. Spätere ausdrückliche Neubestätigung bleibt möglich.
+Schutzgrenzen haben im begrenzten Extractor Vorrang, danach Widerrufe; höchstens drei
+Fakten je Nachricht und acht gespeicherte Fakten. Reicht der 4.000-Zeichen-Speicher
+nicht, meldet die Route `not_saved`; der alte Stand bleibt bestehen. Das ist eine
+offene funktionale Grenze, keine vollständige Persistenzabnahme. Keine Aktivierung,
+keine neue Speicherarchitektur; echte Modellqualität und Zielabnahme bleiben offen.
+
+
+ChatAdmin-Fanpräferenzen (17.10.2026): Beim bestehenden Acht-Fakten-Limit
+bleiben Schutzgrenzen zuerst und bestätigte Kommunikationspräferenzen vor
+weiteren Interessen erhalten. Länge, Stil und Emojis werden getrennt
+zusammengeführt; neuere Aussagen ersetzen nur betroffene Dimensionen. Wörtliche
+Restzitate behalten Quelle/Sequenz. Format und Limits bleiben gleich.
+Synthetisch geprüfte Sourcekorrektur; reale Antwortqualität und Zielabnahme
+bleiben offen. Keine neue Memory- oder Qualitätsarchitektur.
+
+
+ChatAdmin-Gesprächssteuerung (17.10.2026): Mehrere ausdrücklich benannte aktive
+Artikel bleiben ohne Angebots-/Preisfreigabe, auch wenn ein späterer Filter
+nur einen übrigließe. Begrenzte synthetisch geprüfte Sourcehärtung; kein Kauf-
+oder Versandnachweis und keine vollständige Absichts-/Negationserkennung.
+Phase7b und reale Ziel-/Qualitätsabnahme bleiben offen.
+
+
+Phase 7b (17.10.2026): Creator-Antworten verwenden den bestehenden ChatAdmin-
+Preisschutz mit ihrem strengeren Vertrag ohne Freitextpreise. Synthetische
+Policy-/Route-Prüfungen schließen diese Source-Lücke; reale Qualität und
+Zielabnahme bleiben offen. Firmenabhängige externe Freigaben bleiben bis zu
+vollständigen Firmendaten/Registrierungen zurückgestellt. Details:
+[Creator Intelligence](docs/CREATOR_INTELLIGENCE.md).
+
+
+ChatAdmin-Angebotsablehnung (17.10.2026): #1335–#1337 sind gemergt.
+Die neue Source-Ergänzung lässt nur vollständig begrenzte Preisfragen wie
+„Nicht schlecht, was kostet das Foto?“ bzw. „Not bad. How much is the photo?“
+durch das bestehende Negationsveto zur normalen Artikelprüfung. Erkannte Namen
+müssen zur abschließenden Medienbezeichnung gehören. Weitere Sätze,
+Ablehnungen und gemischte Wünsche bleiben gesperrt. Kein allgemeines NLP,
+keine persistente Verkaufspause; Phase7b und reale Zielabnahme bleiben offen.
+
+
+Capacity-v2-Lifecycle-Reparatur (15.10.2026): Der getrennte Sourceumfang behebt
+Grant-/Reserve-Policy und revisionsgebundene Workspace-/Periodenberechtigung.
+Echte PostgreSQL-17-Lifecycletests laufen im erforderlichen CI-Pfad. Das ist keine
+Staging-/Production-Installation oder Billingfreigabe; kanonische Entitlement-
+Projektion/Befüllung, Zielabnahme, Routeverdrahtung und Top-up-/Refund-Folgeumfang
+bleiben getrennt. Vertrag: `docs/operations/AI_CAPACITY_RESERVE_SETTLE.md`.
+
+
+Antwortqualität für ganz FanMind (15.10.2026): Allgemeines CRM, Creator,
+Copilot, Mobile-Backend und ChatAdmin teilen eine stilgebundene Grundlage mit
+originalen Beispielen und konservativem Wiederholungsschutz. Bei auffällig
+ähnlichen Vorschlägen ist höchstens eine kontrollierte Korrektur innerhalb
+desselben Zeitbudgets möglich; beide Aufrufe zählen zu Kosten und Ratenlimit.
+Freigegebene Creator-Stimme, Artikelregeln und manueller Versand bleiben
+maßgeblich. Technische Prüfungen sind keine Garantie für menschliche Sprache
+und keine Production-Abnahme. [Vertrag und Abnahme](docs/AI_REPLY_QUALITY.md).
+
 > **Billing-Zielmodell (30.09.2026):** FM-DEC-026 akzeptiert drei FanMind-Grundpakete zu **99 / 199 / 312 EUR pro Monat** mit monatlicher AI-Kapazität sowie **Schnell / Ausgewogen / Premium**. **Alle drei neuen Pakete haben 0 EUR Einrichtungs-/Setupgebühr.** Der Stripe-Live-Katalog für 99/199/312 wurde vorbereitet; historische 990-EUR-Setup-/Pilot-Produkte und der alte Starter-312-Katalogeintrag sind für Neugeschäft deaktiviert. Das frühere kundenbezogene KI-Plus/Ultra-Modell ist als Zielmodell superseded. **Noch nicht Production-aktiviert:** bestehende Legacy-Verträge bleiben bis zur kontrollierten Migration erhalten. Die Startbudgets sind festgelegt: **15 / 30 / 50 EUR** AI-Kostenbudget für die Pakete 99 / 199 / 312. Siehe `docs/operations/AI_CAPACITY_BILLING_V2.md`.
 
 
@@ -113,7 +471,7 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
   Abschlussantwort darf nicht automatisch wiederholt werden, sondern muss
   zuerst direkt im geschützten EAS-Projekt geprüft werden; Gerätetest und
   Store-Verteilung bleiben externe Nachweise.
-- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Zwei dauerhafte öffentliche Zahlungsmodelle: Starter Flex (990 € Setup + 312 €/Monat) und Starter 12 Monate (0 € Setup + 312 €/Monat). Die manuell gesteuerte interne Daily-Beta (0 € Setup + 1 €/Tag) ist nur während der Admin-Freigabe sichtbar. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
+- Öffentliche Registrierung: kostenloses Anmeldekonto mit E-Mail-Bestätigung und erneutem Versand; Paket/Referral werden nur vorgemerkt, ohne Workspace, Zahlungszustimmung oder Abo. Neue öffentliche Monatspakete: FanMind 99, 199 und 312 ohne Setupgebühr; kostenpflichtige Aktivierung noch gesperrt. Die manuell gesteuerte interne Daily-Beta (0 € Setup + 1 €/Tag) ist nur während der Admin-Freigabe sichtbar. Nach der Anmeldung folgt die geschützte Einrichtung mit frischer Paketwahl und Zustimmung (`docs/operations/WEB_REGISTRATION.md`). Kostenpflichtige Aktivierung benötigt weiterhin die bestätigte Vertragsversion, passende Datenbankfunktionen, Tax- und Billing-Freigabe.
 - Kostenlose Demo: temporärer, geschützter Demo-Workspace; kein entgeltliches Pilot-Paket.
 - Daily: manuell vom Platform-Admin gesteuerte interne Beta, täglich kündbar und von Referral ausgeschlossen. Der bestehende technische Bezeichner `internal_daily_test`, der 1-€/Tag-Stripe-Preis und die Billing-Engine werden wiederverwendet. Es gibt keinen automatischen Countdown. Bei ausgeschalteter Beta ist Daily öffentlich unsichtbar und für neue Provisionierung/Checkouts gesperrt; bestehende Daily-Abos laufen unverändert weiter. Sichere Workspace-Provisionierung, Browser-INSERT-Verbot, Stripe/Webhook/Tax und aktuelle Zahlungszustimmung bleiben Pflicht. `docs/operations/INTERNAL_DAILY_TEST_WORKSPACE_PROVISIONING.md` beschreibt den weiter erforderlichen kontrollierten Datenbankvertrag.
 - Billing-Steuermodus: veröffentlichte Beträge sind Nettopreise. `FANMIND_TAX_MODE=stripe_tax` plus die getrennte Registrierungsbestätigung sind Pflicht; ohne beides bleibt Checkout fail-closed. Für steuerpflichtige Österreich-Umsätze gelten 20 %, international bestimmt Stripe Tax den anwendbaren Satz oder Reverse Charge. Die externe steuerliche Prüfung bleibt im Freigaberegister offen.
@@ -373,12 +731,12 @@ Dieser Reader folgt der aktuellen Source of Truth in `docs/SOURCE_OF_TRUTH.md`.
 
 ## Betreiber
 
-Vertragspartner ist **Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind**.
+Vertragspartnerin ist **Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind**.
 
-- Geschäftsanschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
 - Zuständige Gewerbebehörde: Bezirkshauptmannschaft Mödling
-- Kontakt: `kontakt@fanmind.ch`
+- Kontakt: `fanmind@fanmind.ch`
 - Telefon: `+43 676 5367236`
 
 Der Zusatz `e.U.` wird erst nach bestätigter Firmenbucheintragung samt Firmenbuchnummer und Firmenbuchgericht verwendet.
@@ -424,7 +782,7 @@ deshalb nicht als abgeschlossene Staging-Abnahme.
 - Sprache: TypeScript
 - Auth und Daten: Supabase Auth / Supabase PostgREST
 - KI: serverseitige OpenAI Responses API
-- Deployment: Exoscale + PM2 + nginx über `.github/workflows/deploy-fanmind.yml`
+- Deployment: Exoscale + PM2 + nginx; `.github/workflows/deploy-fanmind.yml` ist als Übergang gesperrt und wird nicht durch `main` ausgelöst
 - Produktionsdomain: `https://fanmind.ch`
 
 Installieren und lokal starten:
@@ -704,9 +1062,13 @@ Nicht als aktiv bauen oder verkaufen, sofern nicht ausdrücklich freigegeben und
 
 ## Deployment
 
-Deployments auf `main` laufen über `.github/workflows/deploy-fanmind.yml` auf dem Self-Hosted Runner:
+Merges und Pushes auf `main` lösen kein Production-Deployment aus.
+`.github/workflows/deploy-fanmind.yml` ist nur manuell startbar, führt dabei
+jedoch ausschließlich einen fehlschlagenden GitHub-hosted Sperrjob aus. Der
+bisherige Production-Job bleibt mit literal `if: false` unerreichbar. Ein
+kontrollierter Release- oder Rollbackweg ist noch nicht aktiviert.
 
-Der auf Production aktive isolierte Release-Pfad:
+Der im gesperrten Job nur als Quellcode erhaltene isolierte Release-Pfad:
 
 1. löst den exakten 40-stelligen Commit von `origin/main` auf;
 2. führt `scripts/operations/deploy-isolated-release.sh` commitgebunden in
@@ -774,3 +1136,237 @@ Ein getrenntes Staging wird ausschließlich manuell über `.github/workflows/dep
 ## Dokumentations-Synchronisierung
 
 Wenn Preise, Pakete, Referral-Logik, aktiver Scope, Demo-Pfad, Billing, KI-Leistungsstufen, Datenbank, Security, Mobile-Verträge oder öffentliche Versprechen geändert werden, müssen `docs/SOURCE_OF_TRUTH.md`, `README.md`, `AGENTS.md`, `apps/mobile/README.md`, `docs/mobile/ARCHITECTURE.md`, `docs/mobile/BETA_RELEASE.md` und die betroffenen Legal-/Pricing-Dateien im selben PR geprüft und synchronisiert werden.
+
+## ChatAdmin: Gesprächsstil und Kontext
+
+Der Character-Schreibstil, Satzstil, Emoji-Stil, Beispiele und No-Gos steuern
+alle drei Antwortalternativen. Kurze Komplimente sollen zunächst kurz beantwortet
+werden; eine Rückfrage oder ein Verkauf ist keine Pflicht. Im persönlichen
+Kennenlernen sind passende Neugier, eigene kontextbezogene Gedanken und höchstens
+eine Anschlussfrage je Vorschlag erwünscht, ohne Fragepflicht oder Nachhaken bei
+einer noch offenen Frage. Bekannte Angaben und Grenzen bleiben maßgeblich.
+Reine Komplimente zu
+Fotos/Videos geben keinen Angebotspreis frei. Der KI-Gesprächskontext enthält nur
+Fan-Nachrichten und manuell verwendete Antworten, keine unbenutzten KI-Entwürfe.
+Vorschläge lassen sich vor dem Kopieren bearbeiten oder vollständig umschreiben;
+als verwendet gespeichert wird nur die endgültige manuell bestätigte Fassung.
+Gespeichertes Fanwissen bleibt Character-/Fan-gebunden. Details und Grenzen:
+`docs/CHAT_ADMIN_REPLY_STYLE.md`. Diese Source-Änderung belegt keine Live-Abnahme.
+
+## ChatAdmin: Kundenstatus und Staging-Abnahme — 13. Oktober 2026
+
+Die vorbereitete Kundenstatus-Erweiterung hat einen eigenen checksum-, exact-main-,
+TLS- und Staging-gebundenen Verify/Apply-Pfad. Der vollständige Fan-Postflight prüft
+entweder den originalen Vertrag oder genau die genehmigte Erweiterung; Mischzustände
+bleiben gesperrt. Die echte ChatAdmin-Abnahme verlangt den erweiterten Vertrag und
+prüft neben Preisen/Speicherung auch Kundenstatus, getrenntes Fanwissen und eine
+begrenzte Kompliment-Qualitätsprobe. Source und CI allein belegen keine Runtime-
+oder Production-Aktivierung. Runbook: `docs/operations/CHAT_ADMIN_CUSTOMER_TIER_STAGING.md`.
+
+
+## ChatAdmin-Korrektur nach manuellem Production-Test — 14. Oktober 2026
+
+Der Character-Editor zeigt den Preisbereich auch bei fehlgeschlagener
+Serverprüfung an. In diesem Fall sind die Preise gesperrt und eine Meldung nennt
+die ausstehende Speicherverfügbarkeit; die Prüfung wird nicht umgangen.
+Bestehende Angebote werden beim Speichern anderer Character-Felder erhalten.
+Es werden keine neuen Verkaufskategorien oder automatisch erfundene Preise angelegt.
+Die Antwortanweisungen bevorzugen kurze Alltagssprache, erhalten passendes
+spielerisches Necken und verbieten routinemäßige Bewertungen der Fan-Formulierung
+sowie erfundene aktuelle Tageszeit-/Tätigkeitsbezüge. Historische Zeitstempel
+belegen keine aktuelle lokale Zeit. Automatisches Fanwissen bleibt auf explizite
+ausgewählte Interessen, Antwortvorlieben und Grenzen begrenzt; freie Angaben
+können manuell in Notizen gepflegt werden.
+Diese Quellkorrektur ist kein Nachweis funktionierender Production-Preisspeicherung
+oder natürlicher Modellantworten; dafür sind ein authentifizierter
+Server-/Schemaabgleich und anschließende echte manuelle Gesprächstests erforderlich.
+
+
+## ChatAdmin: eigene Angebote — 14. Oktober 2026
+
+Im Character-Editor kann der berechtigte Nutzer mit „+ Angebot“ bis zu 20 eigene
+Angebote anlegen, Namen bearbeiten und Angebote entfernen. Name und empfohlener
+Preis werden selbst gepflegt; leere Mindest-/Höchstpreise übernehmen den empfohlenen
+Preis. Währungen bleiben EUR/CHF/USD/GBP. Erst „Speichern“ übernimmt die Änderungen.
+Bestehende IDs, Flags und ergänzende Angebotsdaten bleiben erhalten. Umbenannte
+Standardangebote werden als eigene Kategorie geführt, damit der alte Medienname
+nicht versehentlich auf einen anderen Inhalt verweist. Leere Preiszeilen bleiben
+unveröffentlicht. Die vorhandene Character-gebundene JSON-Speicherung wird verwendet;
+keine neue Migration oder Zahlungs-/Upload-/Versandfunktion ist enthalten.
+
+Die KI erkennt wörtliche Angebotsnamen in ausdrücklichen Anfragen oder einer kurzen
+reinen Namensanfrage. Mehrere Treffer, doppelte Namen, bestätigungspflichtige oder
+inaktive Angebote geben keinen Preis frei. Standard-Medienkategorien bleiben
+kompatibel, aber ein öffentliches Video ersetzt keine private Videoanfrage. Bei
+fehlender Eindeutigkeit bleibt eine Rückfrage möglich. Preiswächter, Character-/Fan-
+Trennung und Speicherverfügbarkeit bleiben wirksam. Diese Erweiterung aktiviert
+kein stärkeres Modell und erweitert nicht das automatische Fan-Gedächtnis.
+
+Source-/CI-Nachweise ersetzen keine echte Production-Abnahme mit vom Nutzer
+gepflegten Preisen oder eine manuelle Bewertung der Antwortqualität.
+
+
+## ChatAdmin: stärkeres Modell — 14. Oktober 2026
+
+Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
+Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
+„Premium“ aus dem versionierten Provider-Katalog, einschließlich dessen
+Standard-Verarbeitungswerten. Für kurze Chatantworten verwendet ChatAdmin
+Reasoning „medium“, während das allgemeine Premium-Profil unverändert bleibt. Dies aktiviert keine allgemeinen
+bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
+Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
+
+Das gemeinsame Tokenlimit beträgt 8192 einschließlich Reasoning; die bestehenden
+kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
+auf 55 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
+Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
+Pfad. Fehlende Provider-Usage bleibt als Schätzung erkennbar.
+
+Vor dem Live-Wechsel prüft der geschützte isolierte Release-Weg den bestehenden
+Serverzugang durch genau eine begrenzte synthetische Responses-Anfrage mit
+store=false und vollständigem synthetischem Fan-/Character-Kontext sowie 20
+Gesprächseinträgen über denselben Kontextbuilder wie die Route. Modellbindung, vollständiges Ergebnis, drei Antworten und Preiswächter
+müssen bestehen; sonst bleibt der bisherige Release aktiv. Es gibt keinen stillen
+Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
+geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
+Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
+Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.
+
+
+## ChatAdmin: Beschreibung je Artikel — 14. Oktober 2026
+
+Jedes Character-Angebot hat direkt unter seinem eigenen Namen ein optionales
+Feld „Beschreibung / enthaltene Leistung“ (maximal 400 Zeichen). Es gehört zum
+konkreten Artikel, etwa Foto, Fotoset oder Video, und wird mit dessen Preis und
+ID im bestehenden sales_playbook gespeichert. Speichern, erneutes Bearbeiten
+und Leeren verwenden dieselbe Character-Revision; keine Migration ist nötig.
+
+Die serverseitig ausgewählte requested_offer enthält diese Beschreibung und die
+bereits vorhandenen Liefer-/Exklusivitätsangaben. Die KI darf daraus enthaltene
+Leistungen erklären, aber keine fehlenden Mengen, Motive oder Lieferzeiten
+erfinden. Beschreibungen sind Daten, keine privilegierten Anweisungen.
+
+Eine kurze Inhaltsnachfrage wie „Was bekomme ich da?“ kann auf den letzten
+Fan-Eintrag und die letzte manuell verwendete Antwort Bezug nehmen, wenn beide
+dasselbe eindeutige, aktuell aktive und nicht bestätigungspflichtige Angebot
+benennen. Nur die letzten 20 gebundenen Dialogeinträge werden betrachtet; beide
+Quelleneinträge müssen im tatsächlich übergebenen Kontext bleiben. Ungenutzte
+Entwürfe, neue Themen, Mehrdeutigkeit, andere Characters/Fans und Verkaufspausen
+geben kein Angebot frei. Preis und Inhalt stammen immer aus dem aktuellen
+Artikel, niemals aus früheren KI-Zusagen. Bei fehlender Zuordnung bleibt eine
+Rückfrage nötig. Keine Änderung an Astra, Fan-Gedächtnisgrenzen oder Versand.
+
+Automatisierte Formular-/Route-/Kontextprüfungen belegen Speicherung und Bindung;
+die Formulierung einer echten Antwort bleibt manuell zu beurteilen.
+
+
+## ChatAdmin: Verkauf und Ende ohne Antwortschleife — 14. Oktober 2026
+
+Bei einer eindeutigen aktiven Artikelanfrage führt die KI vom belegten Inhalt und
+Nutzen über den aktuellen Artikelpreis zu einer kurzen Kaufentscheidung. Kein
+Vertrösten durch eine spätere Beziehung, keinen Druck und keine erfundenen
+Leistungen. Aufgezeichnete Videos ersetzen niemals Videoanrufe; ein Anruf wird
+nur über ein eigenes eindeutig angefragtes aktives Angebot freigegeben.
+
+Eine klare, manuell verwendete Abschlussantwort pausiert weitere KI-Antworten.
+Die Route lädt dafür die letzte bestätigte Antwort mit exakter Workspace-,
+Character-, Fan- und Conversation-Bindung unabhängig vom 20-Zeilen-Verlauf.
+Fan-Nachrichten, ungenutzte Entwürfe, zitierte Beispiele und bedingte Warnungen
+lösen keine Pause aus. Die Oberfläche zeigt den Zustand; der Server prüft ihn
+vor dem Provideraufruf, vor der Rückgabe und vor weiteren Bestätigungen. Im
+pausierten Zustand werden keine neuen Vorschläge, Fan-Fakten oder KI-Aufrufe
+erzeugt. Eine während des Provideraufrufs verwendete Abschlussantwort sperrt die
+Rückgabe und Speicherung; tatsächlich verbrauchte Usage bleibt erfasst.
+
+Der Owner kann mit „Gespräch bewusst fortsetzen“ gezielt wieder freigeben. Die
+Freigabe ist an die bestätigte Antwort-ID gebunden, wird innerhalb des vorhandenen
+Fan-Notizformats mit Revision gespeichert und hebt bestehende Verkaufspausen
+oder Fan-Grenzen nicht auf. Notizen und gelerntes Fanwissen bleiben erhalten.
+Keine automatische Nachricht, kein Blockieren auf OnlyFans und keine Migration.
+Astra medium und das begrenzte Provider-Zeitbudget bleiben unverändert.
+
+Erkannt werden explizite Abschlussformulierungen wie „Das Gespräch ist beendet“
+oder „Ich antworte nicht weiter“, keine allgemeine Modellklassifizierung jeder
+möglichen Formulierung. Allgemeine Natürlichkeit, Verkaufswirkung und semantische
+Abwechslung bleiben manuell zu prüfen; ein stärkerer Prompt allein beweist sie
+nicht. Historische Testdialoge mit echten Fan-Inhalten werden nicht committed.
+
+Die KI-Support-Zentrale unter `/admin/support` ergänzt Owner-Freigaben,
+workspaceübergreifende technische Meldungen, Diagnose-/Reparaturhistorie und
+sichere Wiederaufnahme interner Supportzustände. Die angemeldete Hilfe bewahrt
+Gespräche getrennt nach Nutzer und Workspace mit idempotenter Wiederholung und
+ausdrücklich freigegebenen Übergaben. SQL und Runtime bleiben bis zum getrennten
+Staging-/Datenschutz-/Retentionbetrieb deaktiviert.
+[Umfang und Aktivierungsgrenzen](docs/operations/SUPPORT_CENTRE.md).
+
+
+## ChatAdmin: private Bilderbibliothek — Source-Erweiterung 5. November 2026
+
+Die private Bibliothek je Character mit Upload, geprüften Bildbeschreibungen, konservativer Motivsuche und konfigurierbaren kostenpflichtigen Anfertigungen ist im Repository vorbereitet. Preise bleiben an bestehende Character-Angebote gebunden; Lieferfristen werden ausdrücklich konfiguriert. Beide neuen Schalter bleiben aus; kontrolliertes Schema/Storage, tatsächliche Bildanalyse und Zielabnahme sind nicht als installiert oder aktiv bestätigt. Details: `docs/CHAT_ADMIN_MEDIA_LIBRARY.md`. Die Erkennung konkreter Verfügbarkeitsfragen zu eigenen Angeboten korrigiert den reproduzierten Preis-Kontextfehler; die abschließende Staging-Abnahme bleibt offen.
+
+## Stripe-Sandbox-Katalogprüfung — 8. November 2026
+
+Repositoryseitig prüft `capacity_v2_full` jetzt die acht konfigurierten
+Sandbox-Preise: 99/199/312 EUR monatlich, die vier einmaligen Datenpakete
+und den weiterhin beibehaltenen internen 1-EUR/Tag-Test. Preis-/Produkt-
+Metadaten und Providerwerte der Datenpakete werden read-only validiert.
+Dies aktiviert weder Verkauf noch Steuerregistrierung, Checkout oder Guthaben.
+Steuernummer ist geliefert und in Stripe gespeichert; UID amtlich abgeglichen.
+Steuerregistrierung, Konfigurationsbindung und echte Zahlungs-/
+Webhook-Abnahme sind offen. Nachweisgrenzen und Sandbox-Zuordnung:
+`docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.
+
+
+## Datenpaket-Lifecycle — technische Fortsetzung 8. November 2026
+
+Die Source-Erweiterung verbindet die vier vorhandenen Sandbox-Preise mit einem
+Owner-autorisierten einmaligen Checkout und einem getrennten Webhook-Handler.
+Session und PaymentIntent erhalten explizite Workspace-/Top-up-Metadaten.
+Completed und async_payment_succeeded verwenden dieselbe PaymentIntent-Grant-ID;
+unbezahlte/fehlgeschlagene Käufe buchen nichts. Die Prüfung verwendet Nettopreis
+plus tatsächlich ausgewiesene Steuer und schreibt nur den Providerwert gut.
+Der zuvor um Faktor 100 falsche Top-up-Wert ist an die vorhandene Ledger-Einheit
+1 EUR = 100.000.000 EUR-Microcents angepasst. Käufe ändern keine Basisabo-,
+Rechnungs- oder Referral-Projektion. Details: `docs/operations/STRIPE_TOPUP_LIFECYCLE.md`.
+
+Dies ist keine abgeschlossene Staging-Zahlungsabnahme: Read-only-Prüfung am
+8. November bestätigt fehlende Grant-/Reversal-RPCs und fehlende Entitlement-
+Projektion. Der bestehende Capacity-Preflight blockiert bei abweichender Basis
+und zwei unbekannten Migrationseinträgen. Alle Capacity-/Verkaufs-/Readiness-
+Schalter bleiben aus, Emergency Freeze bleibt an. Keine Migration, keine
+Produktsteuercode-Entscheidung, keine Steuerregistrierung, kein Live-/Production-
+Zugriff mit Schreibwirkung und kein echter Zahlungs-/Guthabennachweis durch
+synthetische Tests. Steuerliche Freigabe/Registrierung bleiben offen; Steuernummer
+ist gespeichert und UID amtlich abgeglichen.
+
+
+UID-Abgleich (08.11.2026): ATU66320126 ist über EU-VIES gültig und der Betreiberin Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet. Das vorbereitete Impressum enthält die UID; Steuernummer und GISA bleiben getrennt. Die Bestätigung aktiviert weder Billing noch Stripe Tax, ersetzt keine Rechts-/Steuerfreigabe und ist kein Production-Deploy. Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+
+Öffentlicher Support, 09.11.2026: Preis-/Paket-/Einrichtungsfragen nutzen dieselbe öffentliche Paket- und Datenpaketquelle wie die Landingpage, mit deutscher/englischer Antwort. Kostenlose Registrierung und noch ausstehende bezahlte Aktivierung bleiben ausdrücklich getrennt. Consent-, Origin-, Ratenlimit- und Owner-/Workspace-Prüfungen gelten auch vor diesen providerfreien Antworten. Keine neue Preisquelle oder Billing-Aktivierung. Details: `docs/operations/PUBLIC_LANDING_SUPPORT.md`.
+
+
+Support-Erklärung zum Antworten (Owner-Feedback 09.11.2026): Der öffentliche KI-Support und die angemeldete Hilfe nennen den direkten Antwort-/Original-Link ausdrücklich zwischen Kopieren und manuellem Senden. Er öffnet das gespeicherte Ziel im Originalkanal (Chat, Beitrag oder Kommentar); ein gültiger hinterlegter Link ist erforderlich. Kein automatisches Einfügen oder Senden und keine erfundene allgemeine Kanal-/Deep-Link-Verfügbarkeit.
+
+
+Staging-Meta-Konfiguration (09.11.2026): Die bestehende FanMind-App erhält die
+zusätzliche Staging-Rücksprungadresse. Geschützte Zugangsdaten werden ausschließlich
+über das GitHub-Environment staging und einen manuell gestarteten, exakt an Main
+und den bereits bereitgestellten Staging-Commit gebundenen Controller eingerichtet.
+Dieser bewahrt vorhandene Verschlüsselungsschlüssel, blockiert Konfigurationsdrift
+vor einem Neustart und verändert ausschließlich fünf Meta-Konfigurationsfelder.
+Eine neue Verschlüsselung setzt den nachgewiesenen leeren Tokenbestand voraus.
+Quelle: `docs/integrations/META_CUSTOMER_INBOX_20261109.md`. Laufzeitprüfung und
+echte Seiten-/Nachrichtenabnahme bleiben bis zu ihren eigenen Nachweisen offen.
+
+Internal ChatAdmin #1425 catalogue continuation (folders, inherited prices and
+private video source; not activated) is documented in
+[CHAT_ADMIN_MEDIA_CATALOGUE](docs/CHAT_ADMIN_MEDIA_CATALOGUE.md).
+
+### Internal Character configuration continuation (#1425, 14 November 2026)
+
+The existing internal CRM has a source continuation for private media upload
+repair, folder/gallery navigation, an independent personality/behavior mixer
+and a non-persisting AI comparison. It reuses existing Character settings and
+reply controls. This source change is not target acceptance or Production
+activation; see `docs/CHAT_ADMIN_MEDIA_CATALOGUE.md`.

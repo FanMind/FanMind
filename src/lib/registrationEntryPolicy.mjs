@@ -1,3 +1,5 @@
+import { capacityRegistrationHref } from "./capacityRegistrationPolicy.mjs";
+
 const STARTER_OFFER_OPTIONS = new Set([
   "starter_paid_setup",
   "starter_no_setup_commitment",
@@ -28,17 +30,15 @@ export function isProductiveRegistrationEntry(input) {
 export function buildRegistrationHref({
   language = "de",
   planId,
-  starterOption,
+  capacityPackage,
   referralCode,
   testPlan,
 }) {
+  if (planId === "starter") return capacityRegistrationHref({ packageId: capacityPackage, language, referralCode });
   const query = new URLSearchParams();
   const isDaily = planId === "pilot" && testPlan === "daily";
   query.set("plan", isDaily ? "daily" : String(planId));
 
-  if (planId === "starter") {
-    query.set("option", normalizeStarterOfferOption(starterOption));
-  }
   if (language === "en") query.set("lang", "en");
   if (String(referralCode ?? "").trim()) {
     query.set("ref", String(referralCode).trim());

@@ -73,3 +73,13 @@ Workspace-Prompts; die Einstellungsseite meldet die Promptverwaltung als
 nicht verfügbar. Prüfung, kontrollierte Anwendung und Postflight sind unter
 `docs/operations/AI_PROMPT_MIGRATION.md` beschrieben; ein Web-Deploy wendet
 die Migration niemals automatisch an.
+
+## Gemeinsame Antwortqualität — 15. Oktober 2026
+
+Alle produktiven Antwortpfade nutzen den gemeinsamen Vertrag
+[AI_REPLY_QUALITY.md](AI_REPLY_QUALITY.md). Workspace-Hinweise bleiben im
+allgemeinen Pfad erhalten; bei freigegebenem Creator bestimmt dessen eine
+Stimme sämtliche Varianten. Der Wiederholungsschutz darf keine neue Persona,
+Preise oder Zusagen erfinden. Eine optionale Korrektur benötigt einen weiteren
+Slot des bestehenden Ratenlimits und wird als eigener Provideraufruf erfasst.
+Die Profilverwaltung und ihre Berechtigungen ändern sich dadurch nicht.

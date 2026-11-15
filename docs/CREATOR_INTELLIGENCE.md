@@ -7,6 +7,40 @@ der Verkaufsübergabe (FM-DEC-013), ohne eine offene Abnahme abzuhaken.
 `FM-CREATOR-001` ist IN_PROGRESS; Phase 7b bleibt kein zusätzlicher Verkaufs-Gate.
 Weitere nicht beauftragte Phase-8-Arbeit bleibt zurückgestellt.
 
+## Repository-Abschluss: gemeinsamer Preisschutz — 17. Oktober 2026
+
+Der vorhandene ChatAdmin-Preisvalidator wird unverändert als gemeinsame reine
+Policy wiederverwendet. Die Creator-Validierung wendet ihn ohne freigegebenen
+Freitextpreis an: Auch „20 Euro“, ausgeschriebene Beträge, „25.–“ und „100 JPY“
+werden nun in jeder Variante verworfen. Ein eventuell zulässiger strukturierter
+Creator-Angebotspreis bleibt ausschließlich im serverseitigen UI-Datensatz.
+ChatAdmin behält dagegen seinen vorhandenen Vertrag: Nur der eindeutig
+angefragte aktuelle Artikel darf seinen exakt bestätigten Preis im Text nennen.
+Creator-Fehlercode und ChatAdmin-Kompatibilitätsexport bleiben erhalten.
+
+Lokale synthetische Policy- und echte Route-Harness-Tests prüfen auch den
+Korrekturversuch: Kein ungültiger Entwurf wird zurückgegeben oder als Kauf/
+Versand gespeichert; bereits entstandene Usage bleibt erfasst. Keine Änderung
+an Workspace-/Fan-/Character-Auflösung, Stil, Revision, Sales Hold, Aftercare,
+Versand oder Freigabeschaltern. Kein Provideraufruf, keine Migration/Installation.
+Das ist ein abgeschlossener Source-Teilumfang des bestehenden FM-CREATOR-001,
+keine vollständige semantische Preis-/Verkaufsprüfung oder reale Qualitätsabnahme.
+Die bestehende Heuristik erkennt nicht jede ungewöhnliche/verklebte Schreibweise
+(z.B. „kostet25.–“ oder „kostet100JPY“). Menschliche Prüfung bleibt erforderlich.
+
+Aktueller Entwicklungsstand: Persona-/Stil-/Playbook- und kommerzielle
+Grundlagen, deterministische Verkaufspausen/Aftercare, bestätigter Chat-Kontext,
+ChatAdmin-Artikelbindung und Antwortqualitätskontrolle liegen als Code/Tests vor.
+Aktuelle Ziel-/Lern-/Modellqualitätsabnahmen bleiben getrennt und offen; historische
+Staging-Nachweise sind keine aktuelle allgemeine Aktivierung.
+
+Owner-Klarstellung vom 17. Oktober: Bis vollständige Firmendaten einschließlich
+ATU/UID und notwendige externe Registrierungen vorliegen, bleiben davon
+abhängige Mobile-/Store-Freigaben, Stripe-/Billing-Aktivierung, externe
+Social-App-Registrierungen sowie Steuer-/Unternehmensverifikation zurückgestellt.
+Bestehende Aufgaben und Nachweise bleiben erhalten und unerledigte Gates offen.
+Repositorybasierte Creator-/ChatAdmin-Arbeit wird unabhängig fortgesetzt.
+
 ## Ein Creator = ein Account = ein Workspace
 
 Klarstellung FM-DEC-016 vom 11. September 2026: Ein normaler Nutzer ist der
@@ -301,3 +335,112 @@ rollback-only Staging-Acceptance, Runtime-Gate-Abnahme sowie Disclosure- und
 Löschabnahme auf genau diesem Ziel erforderlich. Normale Deploys wenden das SQL
 nicht an. Bis dahin bleibt die Fan-UI fail-closed und der akzeptierte V1-
 Character-only-Flow funktionsfähig.
+
+## Strukturierte Angebote im Creator-Building
+
+PR #1099 führte `creator_sales_playbooks.rules` mit strukturierten `offers` für
+genau einen `creators`-Datensatz pro Workspace ein. Der spätere ChatAdmin-Umbau
+aus #1145 führte dagegen mehrere `chat_characters` pro Workspace ein und
+übernahm nur `sales_rules` als Freitext. Eine direkte Wiederverwendung derselben
+Tabellenzeile ist deshalb nicht zulässig: `creators` besitzt `unique
+(workspace_id)` und `creator_sales_playbooks` ist per zusammengesetztem
+Fremdschlüssel an diesen einzelnen Creator gebunden. Mehrere ChatAdmin-
+Characters würden sonst Preise teilen oder gegenseitig überschreiben.
+
+Der kontrollierte Vertrag
+`supabase/controlled/20261007190000_chat_admin_structured_offers.sql` ergänzt
+daher genau den bestehenden Character-Datensatz um `sales_playbook`. Inhalt,
+Grenzen und serverseitige Normalisierung verwenden unverändert das kanonische
+`CreatorPlaybook`-/`CreatorOffer`-Modell aus #1099; es entsteht keine zweite
+Preis-Tabelle. `sales_rules` bleibt ausschließlich ergänzender Regeltext.
+
+Der Reply-Kontext lädt das Playbook nur zusammen mit dem bereits Workspace- und
+Character-gebundenen `chat_characters`-Datensatz. Eine erkannte Anfrage wird
+serverseitig auf Foto, Video, privates Foto oder privates Video abgebildet; nur
+dieses aktive, nicht bestätigungspflichtige Angebot wird mit seinem Preis an die
+KI übermittelt. Andere Character-Preise bleiben außerhalb des Prompts. Ein
+bestätigungspflichtiges, inaktives oder fehlendes Angebot liefert weder Offer-
+Preiswerte noch ein freigegebenes `requested_offer`. Providertexte
+mit einem Preis werden nach der Generierung verworfen, wenn Betrag oder Währung
+nicht exakt dem empfohlenen Preis dieses freigegebenen Offers entsprechen.
+
+Die Schemaerkennung ist fail-closed: Vor dem kontrollierten Apply bleibt die
+bisherige Character-Oberfläche ohne strukturierte Preisfelder funktionsfähig.
+Nach dem Apply werden dieselben Felder automatisch über den bestehenden
+Character-GET/POST/PATCH-Pfad gespeichert und erneut geladen. Ein normaler
+Deploy wendet das kontrollierte SQL niemals an.
+
+## Stilgebundene Antwortqualität — 15. Oktober 2026
+
+Der Owner-Auftrag gilt jetzt für ganz FanMind. Der produktive allgemeine Handler
+und ChatAdmin verwenden denselben Vertrag in [AI_REPLY_QUALITY.md](AI_REPLY_QUALITY.md).
+Alle Creator-Varianten bleiben in der jeweils freigegebenen Stimme. Beispiele
+und Korrekturfeedback ersetzen weder bestätigte Persona noch Memory, Artikel-
+Freigaben oder Strategie. Auch beim einzigen erlaubten Korrekturversuch gelten
+der bestehende Creator-Preisvertrag und die erneute Profilprüfung. Kein
+stilübergreifender Chat-Pool und kein automatisches Lernen aus Modell-Entwürfen.
+Diese Erweiterung aktiviert nicht den separat geschützten Creator-Rollout.
+
+
+## Gesprächssteuerung: mehrdeutige ChatAdmin-Artikelanfragen — 17.10.2026
+
+Der vorhandene Character-Playbook-Resolver behält mehrere getrennt benannte
+aktive Artikel als Mehrdeutigkeit bei, statt nach dem Privat-/Kategoriefilter
+einen auszuwählen. Kein Angebot/Preis im Modellkontext; sichere Rückfrage möglich.
+Die normale Creator-Pipeline mit manuell geprüftem requestedOfferId und der
+bereits integrierte gemeinsame Preisvalidator aus #1335 bleiben unverändert.
+Synthetische Policy-/Kontext-/Route-Tests belegen diese begrenzte Sourcehärtung,
+keine globale Kaufabsichtserkennung oder Live-Qualitätsabnahme. Details und
+separater Negationsvertrag: CHAT_ADMIN_REPLY_STYLE.md (#1335–#1337 gemergt). FM-CREATOR-001 und
+Phase7b bleiben in Arbeit; Firmenabhängigkeiten bleiben nach FM-DEC-031 pausiert.
+
+## Aktuelle Angebotsablehnung im ChatAdmin — 17. Oktober 2026
+
+Repository-Source und synthetische Tests ergänzen den vorhandenen
+ChatAdmin-Angebotsresolver um ein konservatives DE/EN-Negationsveto, auch bei
+widersprüchlichen positiven Wünschen. Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#explizite-aktuelle-angebotsablehnung--sourceumfang-17-oktober-2026).
+Keine Ablehnungs-/Kaufereignisse oder Verkaufspausen werden aus Freitext
+persistiert. Creator `deriveCreatorStrategy` verarbeitet weiterhin bestätigte
+manuelle Reviews/Ereignisse und freigegebene Artikel-IDs; sein Verkaufspausen-,
+Cooldown- und Aftercare-Vertrag wird nicht durch Textklassifizierung ersetzt.
+
+Source-/Testnachweis ist keine Merge-, Staging- oder produktive Abnahme.
+Phase 7b, reale Gesprächsqualität und alle bestehenden Target-Gates bleiben
+offen. Firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.
+
+
+## Kontextbewusste Angebotsnegation — 17. Oktober 2026
+
+Ein enger ganzer Nachrichtentyp („Nicht schlecht“ / „Not bad“ plus eindeutige
+Preisfrage nach Foto/Video) darf die bisherige Artikelprüfung erreichen.
+Erkannte Artikelnamen müssen zur abschließenden Medienbezeichnung gehören;
+Namenskollisionen im Präfix, zusätzliche Ablehnungen/Sätze und unklare Negation
+bleiben gesperrt; der
+Kategorienwortschatz wird nicht erweitert. Präziser Vertrag und Grenzen:
+[ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#kontextbewusste-angebotsnegation--begrenzter-sourceumfang-17-oktober-2026).
+Keine Änderung an Creator-Reviews, Hold/Aftercare/Cooldown, gemeinsamem Preis-
+oder Antwortqualitätspfad, Isolation oder manuellem Versand. Source-/Testnachweis
+ist keine Modellqualitäts- oder Zielabnahme; Phase7b und FM-DEC-031 bleiben offen.
+
+
+## Fanwissen im bestehenden ChatAdmin-Kontext — 17. Oktober 2026
+
+Beim vorhandenen Acht-Fakten-Limit bleibt nach Schutzgrenzen die aktuelle
+Kommunikationspräferenz vor weiteren Interessen erhalten. Synthetisch belegter
+Fix für verlorenes Fanwissen und dadurch wieder mögliche ältere Generation-Replays;
+keine Änderung der Creator-Pipeline, Notizstruktur, Quellenordnung oder Freigaben.
+Kontextkürzung und gemeinsame Antwortqualität bleiben bestehende Pfade.
+Details: [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#bestätigte-kommunikationspräferenzen-bei-themenwechseln--17-oktober-2026).
+Source-Tests sind keine reale Modell-/Zielabnahme. Phase7b bleibt offen und
+firmenabhängige Arbeiten bleiben gemäß FM-DEC-031 zurückgestellt.
+
+
+## Bestätigte Kommunikationsdimensionen — 17. Oktober 2026
+
+ChatAdmin führt im vorhandenen Acht-Fakten-Speicher unabhängige Längen-, Stil- und
+Emoji-Präferenzen zusammen. Neue Bestätigungen ersetzen nur betroffene Dimensionen;
+wörtliche Restklauseln behalten die alte Quelle/Sequenz. Schutzgrenzen bleiben vor
+Kommunikation und Interessen priorisiert. Keine zweite Memory/Qualitätsarchitektur,
+kein zusätzliches Providerbudget und keine Creator-/Target-Aktivierung. Details und
+Speichergrenzen: [ChatAdmin Reply Style](CHAT_ADMIN_REPLY_STYLE.md#kommunikationspräferenzen-zusammenführen--17-oktober-2026).

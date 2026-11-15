@@ -4,6 +4,7 @@ import test from "node:test";
 import { readFile, mkdtemp, mkdir, writeFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import './staging-release-recovery.cases.mjs';
 
 const workflowPath = ".github/workflows/deploy-staging.yml";
 const provisioningWorkflowPath = ".github/workflows/provision-staging-host.yml";
@@ -68,6 +69,35 @@ test("actual Staging source copy preserves live release metadata and build after
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test("actual Operations validation uses committed checkout source and returns to the gitless runtime", async () => {
+  const workflow = await read(workflowPath);
+  const block = workflow.match(/^          \(\n            cd "\$GITHUB_WORKSPACE"\n            npm ci --no-audit --no-fund\n            npm run test:operations\n          \)/mu)?.[0];
+  assert.ok(block, "complete Operations validation must run in the reviewed checkout");
+  assert.equal((workflow.match(/npm run test:operations/gu) ?? []).length, 1);
+  assert.ok(workflow.indexOf(block) > workflow.indexOf("rsync --archive --delete"));
+  assert.ok(workflow.indexOf(block) < workflow.indexOf("npm run test:release-integrations"));
+  const root = await mkdtemp(join(tmpdir(), "fanmind-staging-operations-"));
+  const source = join(root, "reviewed checkout"), runtime = join(root, "gitless runtime"), bin = join(root, "bin");
+  const trace = join(root, "npm-trace"), returned = join(root, "returned-cwd");
+  try {
+    for (const path of [source, runtime, bin]) await mkdir(path);
+    await writeFile(join(source, "package.json"), '{"name":"synthetic-reviewed-source"}');
+    for (const args of [["init", "--quiet"], ["add", "package.json"], ["-c", "user.name=Synthetic", "-c", "user.email=synthetic@example.invalid", "commit", "--quiet", "-m", "synthetic fixture"]]) {
+      const result = spawnSync("git", args, { cwd: source, encoding: "utf8" });
+      assert.equal(result.status, 0, result.stderr);
+    }
+    await writeFile(join(bin, "npm"), '#!/bin/sh\nset -eu\nprintf "%s:%s\\n" "$PWD" "$*" >> "$TEST_NPM_TRACE"\ngit rev-parse --show-toplevel >/dev/null\ngit show HEAD:package.json >/dev/null\n', { mode: 0o700 });
+    const options = { cwd: runtime, env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, GITHUB_WORKSPACE: source, TEST_NPM_TRACE: trace, RETURNED_CWD: returned }, encoding: "utf8", timeout: 10_000 };
+    const result = spawnSync("bash", ["-euo", "pipefail", "-c", `${block}\nprintf '%s' "$PWD" > "$RETURNED_CWD"`], options);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual((await read(trace)).trim().split("\n"), [`${source}:ci --no-audit --no-fund`, `${source}:run test:operations`]);
+    assert.equal(await read(returned), runtime, "release integration and build must retain runtime cwd");
+    await assert.rejects(stat(join(runtime, ".git")), { code: "ENOENT" });
+    const wrongDirectory = spawnSync("bash", ["-euo", "pipefail", "-c", block.replace('cd "$GITHUB_WORKSPACE"', ":")], options);
+    assert.notEqual(wrongDirectory.status, 0, "gitless execution must not produce a false PASS");
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("staging deploy is manual, isolated and fail-closed", async () => {
   const workflow = await read(workflowPath);
 
@@ -106,6 +136,7 @@ test("staging deploy is manual, isolated and fail-closed", async () => {
     workflow,
     /payload\?\.config\?\.deploymentId[\s\S]*FANMIND_REQUIRED_DEPLOYMENT_ID/u,
   );
+  assert.match(workflow, /NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID=/);
   assert.match(workflow, /npm run staging:preflight/);
   assert.match(workflow, /npm run verify:truth/);
   assert.match(workflow, /npm run test:operations/);
@@ -581,3 +612,5 @@ test("staging TLS is manual, DNS-bound and reuses the existing certbot account",
   assert.doesNotMatch(workflow, /--agree-tos|register-unsafely-without-email/);
   assert.doesNotMatch(workflow, /https:\/\/fanmind\.ch\//);
 });
+
+import './staging-media-upload-proxy.cases.mjs';

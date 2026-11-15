@@ -1,3 +1,4 @@
+import { resolveCapacityRegistrationPackage } from "./capacityRegistrationPolicy.mjs";
 import { buildWebPasswordResetRedirect } from "./webRecoveryPolicy.mjs";
 
 export function buildWebRegistrationRedirect(origin, language = "de") {
@@ -17,9 +18,8 @@ export function buildRegistrationAccountMetadata(input) {
     message: bounded(input.message, 2000),
     fanmind_locale: input.language === "en" ? "en" : "de",
     // Preferences only: never plan_id, commercial_option, billing or consent.
-    registration_plan_preference: input.planId === "pilot" ? "pilot" : "starter",
-    registration_option_preference: ["starter_paid_setup", "starter_no_setup_commitment", "internal_daily_test"].includes(input.commercialOption)
-      ? input.commercialOption : "starter_paid_setup",
+    registration_plan_preference: input.commercialOption === "internal_daily_test" ? "pilot" : resolveCapacityRegistrationPackage(input.commercialOption),
+    registration_option_preference: input.commercialOption === "internal_daily_test" ? "internal_daily_test" : "capacity_v2",
     referral_code: bounded(input.referralCode, 80),
   };
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   closeSync,
   constants,
@@ -44,6 +45,11 @@ import {
   evaluateStagingDatabaseRolloutStateEnvironment,
 } from "../../src/lib/stagingDatabaseRolloutStatePolicy.mjs";
 import {
+  emitReadOnlySql as emitCapacityReadOnlySql,
+  evaluateObservation as evaluateCapacityObservation,
+  verifyPreparation as verifyCapacityPreparation,
+} from "./ai-capacity-staging-preflight-preparation.mjs";
+import {
   CONTROL_PATH as WORKSPACE_MEMBER_BOUNDARY_CONTROL_PATH,
   PROTECTED_MEMBER_WRITABLE_TABLES,
   materializeWorkspaceMemberDataBoundaryPostflight,
@@ -55,6 +61,157 @@ import {
 } from "./whatsapp-cloud-inbound-migration-runner.mjs";
 
 const MAX_PASSFILE_BYTES = 64 * 1024;
+const CAPACITY_CONTROL_PATH = "docs/operations/ai-capacity-staging-integration.json";
+const CAPACITY_TIMEOUT_MS = 45_000;
+const CAPACITY_MAX_OUTPUT_BYTES = 64 * 1024;
+
+// Only errors created at known control points carry diagnostic authority.
+// Never render exception text, child output, arbitrary object fields or SQLSTATEs.
+const capacityDiagnostics = new WeakMap();
+const CAPACITY_BASELINE_FIELDS = Object.freeze([
+  "version", "read_only", "schema_md5", "grants_empty", "ledger_empty",
+  "function_count", "postgres_major", "policy_row_count", "allocations_empty",
+  "projection_absent", "reservations_empty", "browser_role_boundary",
+  "foundation_table_count", "lifecycle_index_absent", "rls_filtering_disabled",
+  "workspace_parent_valid", "lifecycle_columns_absent", "lifecycle_functions_absent",
+  "browser_schema_create_denied", "unexpected_capacity_relations_absent",
+  "capacity_generic_migration_marker_absent", "capacity_foundation_migration_marker_absent",
+  "capacity_activation_gate_migration_marker_absent", "capacity_lifecycle_migration_marker_absent",
+  "capacity_unknown_migration_marker_absent", "policy_package_99_budget_default_matches",
+  "policy_package_199_budget_default_matches", "policy_package_312_budget_default_matches",
+  "schema_matches_after_budget_default_normalization", "table_structure_safety_matches",
+  "function_security_matches", "function_security_matches_after_supabase_default_acl_normalization",
+  "rls_acl_security_matches", "rls_acl_security_matches_after_supabase_default_acl_normalization",
+  "other_security_matches",
+  "capacity_migration_marker_count", "capacity_known_migration_marker_count",
+  "capacity_unknown_migration_marker_count", "capacity_unknown_marker_name_only_count",
+  "capacity_unknown_marker_version_only_count", "capacity_unknown_marker_name_and_version_count",
+  "capacity_unknown_marker_with_statements_count",
+  "capacity_migration_marker_count_equals_one", "capacity_all_markers_unknown",
+  "capacity_all_markers_unknown_name_only", "capacity_all_markers_have_statements",
+  "capacity_single_unknown_name_only_marker_with_statements_present",
+  "policy_revision", "policy_fast_enabled",
+  "policy_singleton_id", "policy_premium_enabled", "policy_balanced_enabled",
+  "policy_top_up_sales_enabled", "policy_emergency_spend_freeze",
+  "policy_global_capacity_enabled", "policy_top_up_activation_ready",
+  "policy_package_99_sales_enabled", "policy_runtime_activation_ready",
+  "policy_package_199_sales_enabled", "policy_package_312_sales_enabled",
+  "policy_package_sales_activation_ready", "policy_package_99_budget_eur_microcents",
+  "policy_package_199_budget_eur_microcents", "policy_package_312_budget_eur_microcents",
+]);
+
+function capacityBlock(stage, reason, fields = []) {
+  const error = new Error("Capacity preflight blocked");
+  capacityDiagnostics.set(error, Object.freeze({ stage, reason,
+    fields: Object.freeze(CAPACITY_BASELINE_FIELDS.filter(field => fields.includes(field))) }));
+  throw error;
+}
+
+function capacityBlockDiagnostic(error) {
+  return capacityDiagnostics.get(error) ?? Object.freeze({
+    stage: "UNKNOWN_BLOCK", reason: "UNCLASSIFIED", fields: Object.freeze([]),
+  });
+}
+
+function writeCapacityBlock(error, log = console.log) {
+  const diagnostic = capacityBlockDiagnostic(error);
+  log("STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK");
+  log(`STAGING_DATABASE_ROLLOUT_CAPACITY_DIAGNOSTIC=${diagnostic.stage}:${diagnostic.reason}`);
+  if (diagnostic.fields.length) {
+    log(`STAGING_DATABASE_ROLLOUT_CAPACITY_FIELDS=${diagnostic.fields.join(",")}`);
+  }
+}
+
+function capacityKnownFailure(operation, stage, reason, messages) {
+  try { return operation(); } catch (error) {
+    if (error instanceof Error && messages.includes(error.message)) capacityBlock(stage, reason);
+    throw error;
+  }
+}
+
+function capacityProbeFailure(result) {
+  if (result.error?.code === "ETIMEDOUT") capacityBlock("QUERY_EXECUTION", "CLIENT_DEADLINE");
+  if (result.error?.code === "ENOBUFS") capacityBlock("QUERY_EXECUTION", "OUTPUT_LIMIT");
+  if (result.error?.code === "ENOENT") capacityBlock("CLIENT_PASSFILE", "CLIENT_UNAVAILABLE");
+  // psql exit 2 means a failed/lost connection; it does not prove a TLS or password cause.
+  if (!result.error && !result.signal && result.status === 2) capacityBlock("CONNECTION_TLS", "CONNECTION_FAILED");
+  // psql exit 3 with ON_ERROR_STOP is an SQL script error. No stderr is interpreted.
+  if (!result.error && !result.signal && result.status === 3) capacityBlock("QUERY_EXECUTION", "SQL_SCRIPT_FAILED");
+  capacityBlock("UNKNOWN_BLOCK", "UNCLASSIFIED");
+}
+
+function gitSource(root, args) {
+  const result = spawnSync("git", ["-C", root, ...args], {
+    encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 10_000,
+    killSignal: "SIGKILL", maxBuffer: 1024 * 1024,
+  });
+  if (result.error || result.status !== 0) fail("capacity_source_invalid");
+  return result.stdout;
+}
+
+function verifyCapacityIntegration(root = process.cwd(), committed = false) {
+  const preparation = verifyCapacityPreparation(root);
+  const raw = readFileSync(resolve(root, CAPACITY_CONTROL_PATH), "utf8");
+  const control = JSON.parse(raw);
+  const originalManifestSha256="f81fd4e0f4bb1f3f0539805d9b90a9b54c6bf4ba63db07cf4251cc0439ba8725";
+  // Preserve the reviewed package exactly except for its necessary emitter
+  // source-binding interface fix; expected policy/catalog/query/tests stay pinned.
+  const originalPreparation=structuredClone(preparation);
+  for (const key of [
+    "policy_package_99_budget_default_matches",
+    "policy_package_199_budget_default_matches",
+    "policy_package_312_budget_default_matches",
+    "capacity_foundation_migration_marker_absent",
+    "capacity_activation_gate_migration_marker_absent",
+    "capacity_lifecycle_migration_marker_absent",
+    "capacity_unknown_migration_marker_absent",
+    "schema_matches_after_budget_default_normalization",
+    "table_structure_safety_matches",
+    "function_security_matches",
+    "function_security_matches_after_supabase_default_acl_normalization",
+    "rls_acl_security_matches",
+    "rls_acl_security_matches_after_supabase_default_acl_normalization",
+    "other_security_matches",
+    "capacity_migration_marker_count",
+    "capacity_known_migration_marker_count",
+    "capacity_unknown_migration_marker_count",
+    "capacity_unknown_marker_name_only_count",
+    "capacity_unknown_marker_version_only_count",
+    "capacity_unknown_marker_name_and_version_count",
+    "capacity_unknown_marker_with_statements_count",
+    "capacity_migration_marker_count_equals_one",
+    "capacity_all_markers_unknown",
+    "capacity_all_markers_unknown_name_only",
+    "capacity_all_markers_have_statements",
+    "capacity_single_unknown_name_only_marker_with_statements_present",
+  ]) delete originalPreparation.expectedObservation[key];
+  originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight.sql"]="4f7dc3970dff241f9f2f09b4f797990a72b77002dc429f4842825db005c53e2b";
+  originalPreparation.sha256["tests/ai-capacity-staging-preflight.test.mjs"]="54405080b83f97b816c1f996c96d171fa3c3c64523536d2ac43892556eec34f2";
+  originalPreparation.sha256["scripts/operations/ai-capacity-staging-preflight-preparation.mjs"]="fe1621d789b78c982fc4af45375478133e9e3e28eb76682c0f5c15029b4cfb82";
+  delete originalPreparation.sha256["docs/operations/AI_CAPACITY_STAGING_READONLY_INTEGRATION.md"];
+  delete originalPreparation.sha256["docs/operations/AI_CAPACITY_STAGING_PREFLIGHT_PREPARATION.md"];
+  if (control.originalPreparationManifestSha256!==originalManifestSha256
+    || createHash("sha256").update(JSON.stringify(originalPreparation,null,2)+"\n").digest("hex")!==originalManifestSha256) fail("capacity_reviewed_package_changed");
+  if (control.version !== 1 || control.preparationCommit !== "38c15520376c35d3fedf8fd547b322221def755b"
+    || control.transport !== "scripts/operations/staging-database-rollout-state.mjs"
+    || control.workflow !== ".github/workflows/staging-database-rollout-state.yml"
+    || control.apply !== "disabled" || control.timeoutMs !== CAPACITY_TIMEOUT_MS
+    || control.maxOutputBytes !== CAPACITY_MAX_OUTPUT_BYTES) fail("capacity_control_invalid");
+  const requiredPaths = [control.transport, control.workflow, "package.json",
+    "docs/operations/ai-capacity-staging-preparation.json", ...Object.keys(preparation.sha256)];
+  for (const path of new Set([...requiredPaths,...Object.keys(control.sha256)])) {
+    const expected = control.sha256[path];
+    if (!/^[0-9a-f]{64}$/u.test(expected ?? "")
+      || createHash("sha256").update(readFileSync(resolve(root,path))).digest("hex") !== expected) {
+      fail("capacity_checksum_invalid");
+    }
+    if (committed && createHash("sha256").update(gitSource(root,["show",`HEAD:${path}`])).digest("hex") !== expected) {
+      fail("capacity_committed_source_invalid");
+    }
+  }
+  if (committed && gitSource(root,["show",`HEAD:${CAPACITY_CONTROL_PATH}`]) !== raw) fail("capacity_committed_control_invalid");
+  return preparation;
+}
 const OPTIONAL_TRIGGER_RUNNER = resolve(
   process.cwd(),
   "scripts/operations/trigger-function-hardening-migration-runner.mjs",
@@ -459,7 +616,7 @@ select 'STAGING_DATABASE_WORKSPACE_MEMBER_BOUNDARY_OBJECT=' ||
 rollback;
 `;
 
-function privatePassfileSnapshot(environment) {
+function privatePassfileSnapshot(environment, capacity = false) {
   const sourcePath = environment.PGPASSFILE?.trim();
   if (!sourcePath || !isAbsolute(sourcePath)) fail("passfile_missing");
 
@@ -505,6 +662,17 @@ function privatePassfileSnapshot(environment) {
     ) {
       fail("passfile_changed");
     }
+    if (capacity) {
+      const prefix = Buffer.from(`${environment.PGHOST}:${environment.PGPORT}:${environment.PGDATABASE}:${environment.PGUSER}:`);
+      if (!content.subarray(0,prefix.length).equals(prefix)) fail("passfile_identity_invalid");
+      const end = content.at(-1) === 10 ? content.length-1 : content.length;
+      if (end <= prefix.length) fail("passfile_identity_invalid");
+      for (let i=prefix.length;i<end;i++) {
+        const value=content[i];
+        if (value===0 || value===10 || value===13 || value===58) fail("passfile_identity_invalid");
+        if (value===92 && ![58,92].includes(content[++i])) fail("passfile_identity_invalid");
+      }
+    }
 
     snapshotDirectory = mkdtempSync(
       join(tmpdir(), "fanmind-staging-rollout-state-"),
@@ -529,8 +697,12 @@ function privatePassfileSnapshot(environment) {
   }
 }
 
-function psqlEnvironment(environment, passfilePath) {
-  const safeEnvironment = { ...environment, PGPASSFILE: passfilePath };
+function psqlEnvironment(environment, passfilePath, capacity = false) {
+  const safeEnvironment = capacity ? Object.fromEntries(
+    ["PATH","LANG","LC_ALL","TZ","TMPDIR","PGHOST","PGPORT","PGDATABASE","PGUSER","PGSSLROOTCERT"]
+      .filter(key => typeof environment[key] === "string").map(key => [key,environment[key]]),
+  ) : { ...environment };
+  safeEnvironment.PGPASSFILE = passfilePath;
   for (const key of [
     "DATABASE_URL",
     "POSTGRES_URL",
@@ -550,10 +722,15 @@ function psqlEnvironment(environment, passfilePath) {
   }
   safeEnvironment.PGCONNECT_TIMEOUT = "10";
   safeEnvironment.PGSSLMODE = "verify-full";
+  if (capacity) {
+    safeEnvironment.PGAPPNAME = "fanmind-capacity-readonly-preflight";
+    safeEnvironment.PGOPTIONS = "-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000 -c idle_in_transaction_session_timeout=15000";
+  }
   return safeEnvironment;
 }
 
-function runPsql(sql, environment, passfilePath) {
+function runPsql(sql, environment, passfilePath, { capacity = false, timeoutMs = CAPACITY_TIMEOUT_MS } = {}) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs<1 || timeoutMs>CAPACITY_TIMEOUT_MS) fail("client_timeout_invalid");
   return spawnSync(
     "psql",
     [
@@ -567,10 +744,13 @@ function runPsql(sql, environment, passfilePath) {
       "--set=SHOW_CONTEXT=never",
     ],
     {
-      env: psqlEnvironment(environment, passfilePath),
+      env: psqlEnvironment(environment, passfilePath, capacity),
       input: sql,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"],
+      timeout: timeoutMs,
+      killSignal: "SIGKILL",
+      maxBuffer: capacity ? CAPACITY_MAX_OUTPUT_BYTES : 1024 * 1024,
     },
   );
 }
@@ -608,12 +788,68 @@ function psqlFailureCategory(result) {
   return sqlState ? `sqlstate_${sqlState}` : "unclassified";
 }
 
-function ensurePsqlAvailable() {
+function ensurePsqlAvailable(environment) {
   const result = spawnSync("psql", ["--version"], {
     encoding: "utf8",
     stdio: ["ignore", "ignore", "ignore"],
+    env: environment ? psqlEnvironment(environment,"/dev/null",true) : undefined,
+    timeout: 5000,
+    killSignal: "SIGKILL",
   });
   if (result.error || result.status !== 0) fail("psql_unavailable");
+}
+
+function inspectCapacityDatabase(environment, root = process.cwd(), { timeoutMs = CAPACITY_TIMEOUT_MS } = {}) {
+  if (environment.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE !== "capacity") capacityBlock("ENVIRONMENT_MAIN", "ENVIRONMENT_REJECTED");
+  const preparation = capacityKnownFailure(() => verifyCapacityIntegration(root, true),
+    "SOURCE_CHECK", "SOURCE_REJECTED", [
+      ...["capacity_source_invalid", "capacity_reviewed_package_changed", "capacity_control_invalid",
+        "capacity_checksum_invalid", "capacity_committed_source_invalid", "capacity_committed_control_invalid"]
+        .map(code => `STAGING_DATABASE_ROLLOUT_STATE_ERROR=${code}`),
+      ...["control_binding", "checksum", "required_checksum", "reviewed_source", "reference_profile"]
+        .map(code => `CAPACITY_PREFLIGHT_PREPARATION_ERROR=${code}`),
+    ]);
+  // Fetch the live main ref before opening a password file or starting psql.
+  // The emitter then binds HEAD, that freshly fetched ref and the dispatch SHA.
+  if (!evaluateStagingDatabaseRolloutStateEnvironment(environment).ok) capacityBlock("ENVIRONMENT_MAIN", "ENVIRONMENT_REJECTED");
+  if (resolve(environment.PGSSLROOTCERT ?? "") !== resolve(root,"config/certificates/supabase-root-2021-ca.crt")) capacityBlock("ENVIRONMENT_MAIN", "CA_BINDING_REJECTED");
+  capacityKnownFailure(() => gitSource(root,["fetch","--no-tags","origin","+refs/heads/main:refs/remotes/origin/main"]),
+    "ENVIRONMENT_MAIN", "MAIN_FETCH_FAILED", ["STAGING_DATABASE_ROLLOUT_STATE_ERROR=capacity_source_invalid"]);
+  const query = capacityKnownFailure(() => emitCapacityReadOnlySql(root, environment),
+    "ENVIRONMENT_MAIN", "MAIN_OR_CHECKOUT_REJECTED", [
+      "CAPACITY_PREFLIGHT_PREPARATION_ERROR=environment_binding", "CAPACITY_PREFLIGHT_PREPARATION_ERROR=dirty_checkout",
+    ]);
+  capacityKnownFailure(() => ensurePsqlAvailable(environment), "CLIENT_PASSFILE", "CLIENT_UNAVAILABLE",
+    ["STAGING_DATABASE_ROLLOUT_STATE_ERROR=psql_unavailable"]);
+  const {snapshotDirectory,snapshotPath} = capacityKnownFailure(() => privatePassfileSnapshot(environment,true),
+    "CLIENT_PASSFILE", "PASSFILE_REJECTED", ["passfile_missing", "passfile_invalid", "passfile_read_failed",
+      "passfile_changed", "passfile_identity_invalid"].map(code => `STAGING_DATABASE_ROLLOUT_STATE_ERROR=${code}`));
+  try {
+    const result = runPsql(query,environment,snapshotPath,{capacity:true,timeoutMs});
+    if (result.error || result.status!==0 || result.signal) capacityProbeFailure(result);
+    const lines=probeLines(result.stdout);
+    if (lines.length!==1) capacityBlock("RESPONSE_PARSING", "RESPONSE_CARDINALITY");
+    let observation;
+    try { observation=JSON.parse(lines[0]); } catch (error) {
+      if (error instanceof SyntaxError) capacityBlock("RESPONSE_PARSING", "INVALID_JSON");
+      throw error;
+    }
+    const expectedKeys=[...Object.keys(preparation.expectedObservation),"policy",
+      "requested_main_commit","requested_target_project","reviewed_lifecycle_commit","recovery_sha256"].sort();
+    if (JSON.stringify(Object.keys(observation ?? {}).sort()) !== JSON.stringify(expectedKeys)
+      || JSON.stringify(Object.keys(observation?.policy ?? {}).sort()) !== JSON.stringify(Object.keys(preparation.expectedPolicy).sort())) {
+      capacityBlock("RESPONSE_PARSING", "RESPONSE_SHAPE");
+    }
+    if (observation?.requested_main_commit!==environment.GITHUB_SHA
+      || observation?.requested_target_project!==preparation.targetProject
+      || observation?.reviewed_lifecycle_commit!==preparation.reviewedLifecycleHead
+      || observation?.recovery_sha256!==preparation.sha256[preparation.recoveryPath]) capacityBlock("RESPONSE_BINDING", "LABEL_MISMATCH");
+    const comparison = evaluateCapacityObservation(observation,preparation);
+    if (comparison.state !== "READONLY_BASELINE_MATCH") capacityBlock("BASELINE_COMPARISON", "BASELINE_MISMATCH", comparison.failures);
+    return comparison.state;
+  } finally {
+    rmSync(snapshotDirectory,{recursive:true,force:true});
+  }
 }
 
 function probeLines(output) {
@@ -925,8 +1161,22 @@ async function inspectDatabase(environment) {
 
 async function main() {
   const mode = modeFromArguments(process.argv.slice(2));
+  const scope=process.env.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE ?? "rollout";
+  if (mode === "--run" && scope !== "rollout") {
+    let state;
+    try { state=inspectCapacityDatabase(process.env); } catch (error) {
+      writeCapacityBlock(error);
+      process.exitCode=1;
+      return;
+    }
+    console.log(`STAGING_DATABASE_ROLLOUT_CAPACITY=${state}`);
+    if (state!=="READONLY_BASELINE_MATCH") process.exitCode=1;
+    return;
+  }
+  if (!["rollout","capacity"].includes(scope)) fail("scope_invalid");
   verifyOfflineControls();
   if (mode === "--check") {
+    if (scope === "capacity") verifyCapacityIntegration();
     console.log("STAGING_DATABASE_ROLLOUT_STATE_MODE=check");
     console.log("STAGING_DATABASE_ROLLOUT_STATE_READY=YES");
     return;
@@ -975,6 +1225,11 @@ if (
   import.meta.url === pathToFileURL(resolve(process.argv[1])).href
 ) {
   main().catch((error) => {
+    if (process.env.FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE === "capacity") {
+      writeCapacityBlock(error);
+      process.exitCode=1;
+      return;
+    }
     if (
       error instanceof Error &&
       /^STAGING_DATABASE_ROLLOUT_STATE_ERROR=[a-z0-9_]+$/u.test(
@@ -1007,4 +1262,10 @@ export {
   ledgerManagedMetaMigrations,
   ledgerSql,
   psqlFailureCategory,
+  inspectCapacityDatabase,
+  verifyCapacityIntegration,
+  runPsql,
+  psqlEnvironment,
+  capacityBlockDiagnostic,
+  writeCapacityBlock,
 };

@@ -7,11 +7,12 @@ import styles from "./inbox.module.css";
 
 type InboxSearchFormProps = {
   activeFilter: string;
+  activeView: string;
   initialQuery: string;
   locale: FanMindLanguage;
 };
 
-export function InboxSearchForm({ activeFilter, initialQuery, locale }: InboxSearchFormProps) {
+export function InboxSearchForm({ activeFilter, activeView, initialQuery, locale }: InboxSearchFormProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
 
@@ -20,6 +21,7 @@ export function InboxSearchForm({ activeFilter, initialQuery, locale }: InboxSea
     const params = new URLSearchParams();
     if (locale === "en") params.set("lang", "en");
     if (activeFilter && activeFilter !== "all") params.set("filter", activeFilter);
+    if (activeView !== "all") params.set("view", activeView);
     if (query.trim()) params.set("q", query.trim());
     const nextUrl = params.toString() ? `/inbox?${params.toString()}` : "/inbox";
     router.push(nextUrl);

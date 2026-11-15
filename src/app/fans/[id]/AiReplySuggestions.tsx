@@ -53,6 +53,7 @@ type Props = {
     tags: string[] | null;
     summary: string | null;
     latestInboundMessage?: string;
+    conversationId?: string;
   };
   modes: ReplyMode[];
   locale?: FanMindLanguage;
@@ -139,11 +140,21 @@ export function AiReplySuggestions({
     setIsLoading(true);
 
     try {
+      await fetch("/api/ai/fan-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactId: contact.contactId,
+          analysisMode: "short",
+          analysisInstruction: "Aktualisiere die Kommunikationspräferenzen aus dem gespeicherten Gesprächsverlauf für die nächste Antwort.",
+        }),
+      }).catch(() => undefined);
       const response = await fetch("/api/ai/reply-suggestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contactId: contact.contactId,
+          conversationId: contact.conversationId,
           responseMode: `${mode.label}: ${mode.prompt}`,
           responseInstruction: replyInstruction.trim(),
           promptProfileId: selectedPromptProfileId || undefined,

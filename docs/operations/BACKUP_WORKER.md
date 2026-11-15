@@ -112,10 +112,31 @@ die bereits abgenommene Härtung von
 `public.trim_conversation_messages_to_latest_50()`: exakt diese parameterlose
 SECURITY-DEFINER-Triggerfunktion, ausschließlich
 `search_path=pg_catalog, pg_temp`, kein effektives EXECUTE für `anon` oder
-`authenticated`, EXECUTE für `service_role`. Gesamtzahl 13 und die zwölf
-geschützten Nicht-Triggerfunktionen bleiben verbindlich. Genau einer der
-beiden vollständigen Zustände muss vorliegen; Teilzustände, unklare Pfade oder
-abweichende Privilegien werden abgewiesen. Die Prüfung ändert selbst keine Rechte.
+`authenticated`, EXECUTE für `service_role`.
+
+Der historische Produktionsvertrag umfasst 13 öffentliche SECURITY-DEFINER-
+Funktionen, davon zwölf service-role-only Nicht-Trigger. Der aktuelle Vertrag
+umfasst 20 beziehungsweise 13. Die Differenz ist vollständig erklärt und wird
+nicht nur als Zahl akzeptiert:
+
+- Admin CRM ergänzt `admin_crm_read_allowed(uuid)` und
+  `current_admin_crm_access_state()` für `authenticated`/`service_role` sowie
+  die service-role-only Mutation
+  `admin_set_registered_user_crm_access(uuid,uuid,text,text,timestamptz)`.
+- Der ChatAdmin-Fan-Vertrag ergänzt den nicht direkt ausführbaren Trigger
+  `create_chat_admin_fan_conversation()` sowie die ausschließlich für
+  `authenticated` ausführbaren RPCs `create_chat_admin_fan(...)`,
+  `persist_chat_admin_generation(...)` und
+  `persist_chat_admin_confirmed_reply(...)`.
+
+Für alle sieben Funktionen prüft der Source-Guard exakte Signatur, Owner
+`postgres`, festen Funktions-`search_path`, die Admin-CRM-`row_security`-
+Konfiguration und die vollständige direkte EXECUTE-ACL einschließlich
+Grantor/Grant-Option. Genau der vollständige historische 13/12-Zustand oder
+der vollständige aktuelle 20/13-Zustand ist zulässig. Teilinstallationen,
+zusätzliche SECURITY-DEFINER-Funktionen, Overloads, Ownerwechsel,
+Grant-Options oder geänderte Browser-/Service-Role-Rechte werden abgewiesen.
+Die Prüfung ändert selbst keine Rechte.
 
 Der historische Legacy-Zustand bleibt für vorhandene Archive und ihre
 Restore-Prüfungen interpretierbar. Receipt-Schema 2, Kanonisierung und die
@@ -177,6 +198,16 @@ darf für sie jedoch keine privaten Restore-Ausgaben oder ein
 Full-Backup-Restore-Receipt erstellen. Ein neuer Full Backup nach Installation
 dieser Worker-Version ist deshalb Voraussetzung für den isolierten
 Restore-Drill.
+
+## Geschützte Installation von Worker 7
+
+Der eigenständige Worker-Installationsweg und dessen Freigabegrenzen stehen in
+[BACKUP_WORKER_PROTECTED_INSTALL.md](BACKUP_WORKER_PROTECTED_INSTALL.md).
+Worker-Quellcommit und laufender App-Commit sind getrennte Bindungen:
+PR #1314 wurde als `8e5dcbdca844972fb2f133c188ecfee5d5252273` gemergt;
+die Installation darf die App-Metadaten in `release.env` nicht auf diesen
+Worker-Commit umschreiben. Merge und CI autorisieren keine Installation.
+Backup-Aufträge und Restore-Tests sind getrennte nachgelagerte Freigaben.
 
 ## Scheduling
 

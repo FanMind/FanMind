@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { deleteOwnedChatAdminMedia } from "../../src/lib/chatAdminMediaDeletion.mjs";
 import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
@@ -471,7 +472,11 @@ const WORKSPACE_DELETION_TABLES = [
   "creator_commercial_events",
   "workspace_chat_admin_capabilities",
   "chat_characters",
+  "chat_character_media",
+  "chat_character_media_policies",
+  "chat_character_media_folders",
   "chat_character_fans",
+  "chat_character_current_facts",
   "chat_character_conversations",
   "chat_character_messages",
 ];
@@ -485,7 +490,11 @@ const OPTIONAL_WORKSPACE_DELETION_TABLES = new Set([
   "creator_commercial_events",
   "workspace_chat_admin_capabilities",
   "chat_characters",
+  "chat_character_media",
+  "chat_character_media_policies",
+  "chat_character_media_folders",
   "chat_character_fans",
+  "chat_character_current_facts",
   "chat_character_conversations",
   "chat_character_messages",
 ]);
@@ -852,6 +861,7 @@ export async function processAccountDeletion({
   const workspaceIds = processingRequest.owned_workspace_ids;
   log(`ACCOUNT_DELETION_ATOMIC_WORKSPACE_COUNT=${workspaceIds.length}`);
 
+  await deleteOwnedChatAdminMedia({fetchImpl,config,workspaceIds});
   await deleteAuthUser(fetchImpl, config, request.user_id);
   const finalStatus = await finalizeDeletedAccount({
     fetchImpl,

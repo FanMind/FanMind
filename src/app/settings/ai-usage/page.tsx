@@ -22,6 +22,10 @@ import {
 import { getWorkspaceNavigation } from "@/lib/workspaceNavigation";
 import { getAiCapacityBalanceSnapshot } from "@/lib/aiCapacityLedger";
 import { AccountTabs } from "../AccountTabs";
+import { TopupPackages } from "./TopupPackages";
+import { isWorkspaceTopupAdmitted } from "@/lib/stripeAiTopup";
+import { stripeTopupSandboxReady } from "@/lib/stripeAiTopupLifecycle.mjs";
+import { STRIPE_AI_TOPUP_OPTIONS } from "@/lib/stripeAiTopupPolicy.mjs";
 import { resolveWorkspaceLocale } from "@/lib/workspaceLocale";
 import { getWorkspaceKpiStatsFromContacts } from "@/lib/workspaceKpiStats";
 import type { FanMindLanguage } from "@/lib/fanmindCopy";
@@ -159,6 +163,8 @@ export default async function AiUsageSettingsPage() {
   const preActivationRedirect = getPreActivationRedirect(workspace, data.user.email);
   if (preActivationRedirect) redirect(preActivationRedirect);
   if (isWorkspaceBillingSuspended(workspace)) redirect("/billing/suspended");
+  const showTopups = stripeTopupSandboxReady() && workspace.owner_user_id === data.user.id;
+  const topupsEnabled = showTopups && await isWorkspaceTopupAdmitted(workspace);
 
   const [contactsResult, followupResult, usageResult, capacitySnapshot] = await Promise.all([
     getWorkspaceContacts(workspace.id),
@@ -274,6 +280,11 @@ export default async function AiUsageSettingsPage() {
               </p>
             </section>
           ) : null}
+
+          {showTopups && <TopupPackages enabled={topupsEnabled} locale={locale} options={
+            Object.entries(STRIPE_AI_TOPUP_OPTIONS).map(([key, option]) => ({ key,
+              label: `FanMind Datenpaket ${key.slice("topup_".length)}`, amountCents: option.saleAmountCents }))
+          } />}
 
           {usageResult.error || !summary || !indicator || !indicatorText ? (
             <section className={styles.noticeCard} aria-labelledby="ai-usage-unavailable-title">

@@ -252,7 +252,7 @@ This checkpoint did **not** activate Capacity-v2. Global capacity, all package-s
 
 Rollback-only negative checks proved that attempts to enable runtime, package sales or top-ups are rejected by the respective activation guards while readiness flags are false.
 
-The reserve/settle RPC lifecycle is still not installed on Staging. Current main `supabase/controlled/ai_capacity_reserve_settle.sql` was inspected before APPLY and found to reference policy variables inside `ai_capacity_grant_credit` that are not declared in that function. Therefore ledger APPLY is blocked until that source defect is fixed and reviewed; no unchanged APPLY is permitted.
+At this historical checkpoint the reserve/settle RPC lifecycle was not installed on Staging and its source had an undeclared-policy-variable compile defect. The 15 October repository repair and native PostgreSQL-17 evidence are documented in `AI_CAPACITY_RESERVE_SETTLE.md`. That source repair is not a target installation: new projection/entitlement-writer, target verification/acceptance and productive route gates remain separate. No unchanged or generic APPLY is permitted.
 
 ## Activation gates
 

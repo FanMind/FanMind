@@ -1,16 +1,19 @@
 # FanMind Legal Completion Status
 
-Stand: Juli 2026
+Stand: 8. November 2026
 
 Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch durch Bernd, Steuerberatung oder Rechtsberatung verbindlich freigegeben werden müssen. Es ist keine Rechtsberatung und ersetzt keine unterzeichneten Vertragsunterlagen.
 
 ## Öffentlich bestätigt
 
 - Marke/Produkt: FanMind
-- Betreiber und Vertragspartner: Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
-- Inhaber und vertretungsberechtigt: Bernd Guggenberger
-- Anschrift: Turnerstraße 18, 2345 Brunn am Gebirge, Österreich
-- Allgemeine Kontaktadresse: `kontakt@fanmind.ch`
+- Betreiberin und Vertragspartnerin: Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind
+- Gewerbeinhaberin: Brigitte Erika Guggenberger; operativer Ansprechpartner: Bernd Guggenberger
+- Gewerbestandort: Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich
+- GISA-Zahl: 40314440 (amtlicher Auszug vom 02.11.2026; Original privat geprüft und mit SHA-256-Beleg im externen Register bestätigt)
+- Gewerbebeginn: 29.10.2026
+- Gewerbewortlaut: Dienstleistungen in der automatischen Datenverarbeitung und Informationstechnik
+- Allgemeine Kontaktadresse: `fanmind@fanmind.ch`
 - Website: `https://fanmind.ch`
 - Produktgrenze: keine automatische Nachrichtenversendung; der Mensch prüft und sendet final selbst
 - Integrationen werden nur als aktiv bezeichnet, wenn sie technisch und rechtlich freigegeben sind
@@ -19,7 +22,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 ## Noch verbindlich zu entscheiden oder zu prüfen
 
 - [ ] etwaiger künftiger Rechtsformzusatz nach einer bestätigten Firmenbucheintragung
-- [ ] Zuordnung und Veröffentlichung der korrekten UID
+- [x] UID ATU66320126 amtlich über EU-VIES am 08.11.2026 gültig und Brigitte Erika Guggenberger an der Geschäftsanschrift zugeordnet; Veröffentlichung im vorbereiteten Impressum. Dies bestätigt keine Stripe-Identitäts- oder Steuerfreigabe.
 - [ ] etwaige Firmenbuchnummer und Firmenbuchgericht
 - [ ] finale AGB-Fassung für Pilot, Starter Flex und Starter 12 Monate
 - [ ] finale Zahlungs-, Kündigungs- und Referral-Bedingungen
@@ -58,7 +61,7 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
 - `npm run legal:evidence:hash` erzeugt aus einer privaten, nicht verlinkten
   Belegdatei ausschließlich die registrierbare SHA-256-Referenz. Der Befehl
   gibt weder Pfad noch Inhalt aus und verändert den Freigabestatus nicht.
-- `npm run legal:evidence:handoff` erzeugt die aktuell offene 27-Control-
+- `npm run legal:evidence:handoff` erzeugt die verbleibende 25-von-27-Control-
   Aufgabenliste nach Zuständigkeit. Sie gibt keine Werte, Pfade,
   Kontokennungen, Beleginhalte oder vorhandenen Hashes aus und verändert das
   Register nicht.
@@ -91,3 +94,32 @@ Dieses Dokument trennt bestätigte öffentliche Fakten von Angaben, die noch dur
       `/agb` und `/zahlungsbedingungen`.
 - [ ] Extern freigegebene UID-, Register-, Anbieter-, Transfer-, Steuer- und
       Rechtswerte werden nach Bestätigung zentral ergänzt.
+
+
+## Kommerzieller Start – Prüfung vom 06.11.2026
+
+Vorbereitung und konkrete Restarbeiten: `docs/legal/COMMERCIAL_LAUNCH_REVIEW_2026-11-06.md`. Das vorhandene Stripe-Konto ist technisch zahlungs- und auszahlungsfähig, aber auf Bernd statt auf die bestätigte Betreiberin registriert; alte Kontakt-/Adressdaten bleiben dort unverändert. Stripe Tax ist aktiv, jedoch ohne Steuerregistrierung. Es ist keine steuerliche Freigabe. Kein Merge, Deployment, Provider-/Kontoänderung oder echter Zahlungstest wurde damit autorisiert.
+
+
+## Stripe-Unternehmensdaten – 08.11.2026
+
+Steuernummer aus dem vorgelegten Nachweis im vorgesehenen Stripe-Steuerfeld gespeichert; nicht öffentlich im Impressum. UID amtlich bestätigt und separat gespeichert. Rechtsgültiger Unternehmensname, Supportadresse und Support-E-Mail korrigiert; Telefonnummer beibehalten. Der frühere Kontovertreter Bernd bleibt als verifizierte Einzelperson bestehen: vollständige rechtliche Identitätsberichtigung, Vollmacht und allfällige persönliche Prüfung sind noch offen. Stripe Tax hat weiterhin keine Registrierung; keine OSS- oder Steuerbefreiung abgeleitet. Aktuelle Nachweise: `docs/operations/STRIPE_COMPANY_REVIEW_20261108.md`.
+
+## Meta-Review und Behördenanfragen — Ergänzung14.11.2026
+
+Die Einführung ist vom Owner beauftragt. Die genaue Fassung des
+[Behördenanfrageverfahrens](legal/AUTHORITY_REQUEST_PROCESS.md) samt
+[vertraulicher Registervorlage](legal/templates/AUTHORITY_REQUEST_REGISTER_TEMPLATE.md)
+bleibt die unveränderte freigegebene Fassung. Die vom Owner übermittelte
+Betreiberzustimmung vom14.11.2026 ist unter Prüfvorbehalten dokumentiert.
+[Aktueller Teilfreigabestatus](legal/AUTHORITY_REQUEST_RELEASE_STATUS.md):
+qualifizierte Rechtsprüfung und betriebliche Einführung offen; Meta-Einreichung
+nicht freigegeben. Vertretung, Fallraum/Transfer und Einweisung bleiben zu
+belegen. Keine tatsächliche Prozessimplementierung daraus ableiten.
+Das bestehende externe Register bleibt maßgeblich; keine offene Freigabe wurde
+umgestellt. Ausschließlich der historische National-Security-Sachverhalt ist
+durch ausdrückliche Owner-Erklärung vom14.11.2026 für14.11.2025–einschließlich
+14.11.2026 bestätigt: keine entsprechende Meta-Datenweitergabe.
+[Begrenzter Tatsachennachweis](legal/META_NATIONAL_SECURITY_ATTESTATION_20261114.md).
+Keine sonstige Behörden-/Prozess- oder Rechtsfreigabe daraus ableiten.
+Reviewnachweise und Blocker: [Vorbereitung](operations/META_APP_REVIEW_READINESS_20261114.md).

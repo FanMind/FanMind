@@ -277,3 +277,6 @@ test("productive AI entry points enforce lifecycle guards, limits and output bud
     /Rollout-Blocker:[\s\S]*20260726120000_workspace_provisioning_rpc\.sql[\s\S]*20260726121000_workspace_server_owned_columns\.sql/u,
   );
 });
+
+// Execute selected-thread query/route regressions through the required AI suite.
+import "./reply-conversation-scope.cases.mjs";

@@ -117,7 +117,7 @@ test("profile offers one localized protected PDF download without legacy mail or
   assert.doesNotMatch(section, /DSGVO-Datenauskunft anfordern/u);
   assert.doesNotMatch(
     section,
-    /mailto:kontakt@fanmind\.ch\?subject=DSGVO-Datenauskunft/u,
+    /mailto:fanmind@fanmind\.ch\?subject=DSGVO-Datenauskunft/u,
   );
   assert.doesNotMatch(section, /<form action=\{logoutAction\}>/u);
   assert.doesNotMatch(section, /logoutAction:\s*\(\) => Promise<void>/u);

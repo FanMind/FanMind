@@ -73,7 +73,7 @@ test("native prebuild enforces store API, privacy and least-permission boundarie
   const appConfig = JSON.parse(appConfigSource);
 
   assert.match(source, /PrivacyInfo\.xcprivacy/u);
-  assert.match(source, /\^compileSdk = "36"\$/u);
+  assert.match(source, /\^compileSdk = "37"\$/u);
   assert.match(source, /\^targetSdk = "36"\$/u);
   assert.match(source, /NSPrivacyAccessedAPICategoryUserDefaults/u);
   assert.match(source, /NSPrivacyAccessedAPICategoryFileTimestamp/u);
@@ -148,7 +148,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(storeListing, /STORE_PRIVACY_DECLARATIONS\.md/u);
   assert.match(storeListing, /GOOGLE_PLAY_HANDOFF\.md/u);
   assert.match(storeListing, /https:\/\/fanmind\.ch\/support/u);
-  assert.match(storeListing, /Google-Play-Support-E-Mail \| `kontakt@fanmind\.ch`/u);
+  assert.match(storeListing, /Google-Play-Support-E-Mail \| `fanmind@fanmind\.ch`/u);
   assert.match(storeListing, /32-Bit-PNG mit Alpha-Kanal/u);
   assert.match(storeListing, /## Apple - Suchbegriffe DE/u);
   assert.match(storeListing, /## Apple - Keywords EN/u);
@@ -189,7 +189,7 @@ test("store privacy draft stays synchronized with the current mobile boundary", 
   assert.match(reviewAccess, /24\/7/u);
   assert.match(testerProgram, /12 Tester \/ 14 Tage/u);
   assert.match(testerProgram, /keinen neuen Build starten/iu);
-  assert.match(supportPage, /kontakt@fanmind\.ch/u);
+  assert.match(supportPage, /fanmind@fanmind\.ch/u);
   assert.match(supportPage, /Sende niemals dein Passwort/u);
 
   assert.doesNotMatch(pushSource, /requestPermissionsAsync/u);
@@ -298,8 +298,8 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     playFeatureGraphic,
   };
 
-  assert.equal(mobilePackage.devDependencies.sharp, "0.35.4");
-  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.4");
+  assert.equal(mobilePackage.devDependencies.sharp, "0.35.5");
+  assert.equal(mobileLock.packages["node_modules/sharp"].version, "0.35.5");
   assert.equal(playIcon[25], 6);
   assert.equal(playFeatureGraphic[25], 2);
 
@@ -432,7 +432,7 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     () =>
       evaluateStoreReadiness({
         ...validInput,
-        listing: listing.replace("kontakt@fanmind.ch", "help@example.com"),
+        listing: listing.replace("fanmind@fanmind.ch", "help@example.com"),
       }),
     /store_identity_document_mismatch/u,
   );
@@ -477,3 +477,4 @@ test("store metadata, confirmed branding and EAS submission stay release-safe", 
     /store_play_assets_not_confirmed/u,
   );
 });
+

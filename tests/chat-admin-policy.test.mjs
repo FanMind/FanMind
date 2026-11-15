@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { learnChatAdminKnowledge, writeChatAdminKnowledge } from "../src/lib/chatAdminKnowledge.mjs";
 
 import {
   CHAT_ADMIN_ACCEPTANCE_CONFIRMATION,
@@ -14,10 +15,12 @@ import {
 } from "../scripts/operations/chat-admin-staging-runner.mjs";
 import { CHAT_ADMIN_ACCEPTANCE_SQL } from "../scripts/operations/chat-admin-staging-acceptance.mjs";
 import {
+  assertChatAdminReplySemantics,
   assertChatAdminCharacterInput,
   buildChatAdminCharacterContext,
   assertChatAdminFanInput,
   buildChatAdminFanContext,
+  CHAT_ADMIN_REPLY_INSTRUCTIONS,
 } from "../src/lib/chatAdminPolicy.mjs";
 
 const fixture = {
@@ -38,6 +41,60 @@ const fixture = {
   example_messages: ["Hey du 😊"],
   status: "active",
 };
+
+function preferenceContextFixture(pressure,boundary){
+ const quote="Bitte kurze Antworten ohne Emojis.";
+ let notes=writeChatAdminKnowledge({manual:"Fan kauft bestimmt morgen.",facts:[{kind:"communication",quote,source:"confirmed-preference",source_sequence:10}]});
+ if(boundary)notes=learnChatAdminKnowledge(notes,[{kind:"boundary",quote:"Bitte keine Angebote.",source:"boundary"}],[{id:"boundary",sequence:11,direction:"fan_inbound",content:"Bitte keine Angebote."}]);
+ if(pressure)for(const [index,topic] of ["Katzen","Hunde","Sport","Reisen","Kochen","Musik","Fotos","Videos"].entries()){
+  const text=`Ich liebe ${topic}.`;notes=learnChatAdminKnowledge(notes,[{kind:"interest",quote:text,source:`topic-${index}`}],[{id:`topic-${index}`,sequence:20+index,direction:"fan_inbound",content:text}]);
+ }
+ const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+ const fan={id:"fan-a",workspace_id:character.workspace_id,character_id:character.id,status:"active",display_name:"Synthetic Fan",summary:"Unbestätigte Notiz: lange Antworten mit Emojis; kauft morgen.",notes};
+ const conversation={id:"conversation-a",workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id};
+ const row={workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id,conversation_id:conversation.id};
+ const history=[{...row,id:"preference-inbound",direction:"fan_inbound",content:quote},...Array.from({length:8},(_,index)=>({...row,id:`weekend-${index}`,direction:index%2?"confirmed_reply":"fan_inbound",content:`Neues Thema Wochenende ${index}: ${"x".repeat(350)}`})),{...row,id:"unused",direction:"suggested_reply",content:"UNUSED OPPOSITE PREFERENCE: lange Antworten mit Emojis"}];
+ return {character,fan,conversation,history,quote};
+}
+
+for(const pressure of [false,true])for(const boundary of [false,true])for(const allowance of [0,1200,10000])test(`confirmed preference reaches bounded context (topics=${pressure}, boundary=${boundary}, allowance=${allowance})`,()=>{
+ const f=preferenceContextFixture(pressure,boundary);const incoming="Wie geht es dir?";
+ const base=buildChatAdminFanContext(f.character,f.fan,f.conversation,[],incoming);
+ const maximum=base.length+allowance;
+ const raw=buildChatAdminFanContext(f.character,f.fan,f.conversation,f.history,incoming,maximum);const context=JSON.parse(raw);
+ assert.ok(raw.length<=maximum);
+ assert.deepEqual(context.fan.learned_preferences.filter(item=>item.kind==="communication"),[{kind:"communication",quote:f.quote,source:"confirmed-preference",source_sequence:10}]);
+ assert.equal(context.fan.notes,"Fan kauft bestimmt morgen.");assert.equal(context.fan.summary,f.fan.summary);
+ assert.equal(context.style.writing,f.character.writing_style);assert.equal(context.style.emoji,f.character.emoji_style);
+ assert.equal(context.sales_strategy.sellNow,false);assert.equal(context.sales_strategy.purchaseIntent,null);assert.equal(context.sales_strategy.relationship_stage,"new");
+ if(boundary)assert.ok(context.fan.learned_preferences.some(item=>item.quote==="Bitte keine Angebote."));
+ assert.doesNotMatch(JSON.stringify(context.conversation),/UNUSED OPPOSITE PREFERENCE/u);
+ if(allowance===0)assert.deepEqual(context.conversation.recent_messages,[]);
+});
+
+test("different bound Fans retain their own communication and Character style",()=>{
+ const f=preferenceContextFixture(true,false);
+ const otherCharacter={...f.character,id:"character-b",workspace_id:"workspace-b",writing_style:"förmlich"};
+ const otherFan={...f.fan,id:"fan-b",workspace_id:otherCharacter.workspace_id,character_id:otherCharacter.id,notes:writeChatAdminKnowledge({manual:"",facts:[{kind:"communication",quote:"I prefer long replies with emojis.",source:"other-confirmed"}]})};
+ const otherConversation={id:"conversation-b",workspace_id:otherCharacter.workspace_id,character_id:otherCharacter.id,fan_id:otherFan.id};
+ const first=JSON.parse(buildChatAdminFanContext(f.character,f.fan,f.conversation,[],"Wie geht es dir?"));
+ const second=JSON.parse(buildChatAdminFanContext(otherCharacter,otherFan,otherConversation,[],"How are you?"));
+ assert.equal(first.fan.learned_preferences.find(item=>item.kind==="communication")?.quote,f.quote);
+ assert.equal(second.fan.learned_preferences[0].quote,"I prefer long replies with emojis.");
+ assert.equal(first.style.writing,f.character.writing_style);assert.equal(second.style.writing,"förmlich");
+ assert.doesNotMatch(JSON.stringify(first.fan.learned_preferences),/other-confirmed/u);assert.doesNotMatch(JSON.stringify(second.fan.learned_preferences),/confirmed-preference/u);
+});
+
+test("foreign preference/history tuples fail before trimming, including unused drafts",()=>{
+ const f=preferenceContextFixture(true,true);
+ assert.throws(()=>buildChatAdminFanContext(f.character,{...f.fan,workspace_id:"foreign"},f.conversation,[],"Hallo",1),/fan_unavailable/u);
+ assert.throws(()=>buildChatAdminFanContext(f.character,{...f.fan,character_id:"foreign"},f.conversation,[],"Hallo",1),/fan_unavailable/u);
+ assert.throws(()=>buildChatAdminFanContext(f.character,f.fan,{...f.conversation,fan_id:"foreign"},[],"Hallo",1),/conversation_unavailable/u);
+ for(const field of ["workspace_id","character_id","fan_id","conversation_id"]){
+  const foreign={...f.history.at(-1),[field]:"foreign"};
+  assert.throws(()=>buildChatAdminFanContext(f.character,f.fan,f.conversation,[foreign],"Hallo",1),/message_context_mismatch/u);
+ }
+});
 
 test("persistent fan context is bound to the exact Character, conversation and message history", () => {
   const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
@@ -61,6 +118,47 @@ test("persistent fan context retains newest complete history within the canonica
   assert.ok(context.length<=1800);
   assert.match(parsed.conversation.recent_messages.at(-1).content,/message-19-/u);
   assert.doesNotMatch(JSON.stringify(parsed.conversation.recent_messages),/message-0-/u);
+});
+
+test("unused drafts never become dialogue or displace confirmed replies in bounded context", () => {
+  const character={...fixture,id:"character-a",workspace_id:"workspace-a",revision:2};
+  const fan={id:"fan-a",workspace_id:"workspace-a",character_id:"character-a",status:"active",summary:"mag Katzen",notes:"keine Kaufzusage"};
+  const conversation={id:"conversation-a",workspace_id:"workspace-a",character_id:"character-a",fan_id:"fan-a"};
+  const row={workspace_id:character.workspace_id,character_id:character.id,fan_id:fan.id,conversation_id:conversation.id,created_at:"2026-10-12T00:00:00Z"};
+  const messages=[{...row,direction:"fan_inbound",content:"Danke für die Bilder"},{...row,direction:"confirmed_reply",content:"freut mich 😊"},...Array.from({length:22},()=>({...row,direction:"suggested_reply",content:"UNUSED DRAFT "+"x".repeat(500)}))];
+  const context=JSON.parse(buildChatAdminFanContext(character,fan,conversation,messages,"hallo",1800));
+  assert.deepEqual(context.conversation.recent_messages.map(message=>message.content),["Danke für die Bilder","freut mich 😊"]);
+  assert.equal(context.fan.summary,"mag Katzen");
+  assert.doesNotMatch(JSON.stringify(context),/UNUSED DRAFT/u);
+  assert.equal(messages.length,24,"full history remains available for concurrency checks");
+  assert.throws(()=>buildChatAdminFanContext(character,fan,conversation,[{...row,character_id:"other",direction:"suggested_reply",content:"foreign draft"}],"hallo"),/message_context_mismatch/u);
+});
+
+test("reply strategy requires semantic intent, relationship context and three bounded variants", () => {
+  for (const expected of [
+    /Bedeutung, kommunikative Absicht und Ton/u,
+    /Fanprofil, gelernten Angaben und gespeichertem Gesprächsverlauf/u,
+    /empfohlen\/natürlich, weicher\/spielerischer, stärker\/direkter/u,
+    /Sexuelle Sprache erzwingt weder Eskalation noch eine pauschale Zurechtweisung/u,
+    /Angebote und Preise ausschließlich aus sales_playbook\.requested_offer/u,
+  ]) assert.match(CHAT_ADMIN_REPLY_INSTRUCTIONS, expected);
+});
+
+test("image-request regression rejects an etiquette-only deflection but keeps contextual boundaries", () => {
+  const incoming = "Du geile Sau, ich will Fotos/Bilder von dir haben.";
+  assert.throws(
+    () => assertChatAdminReplySemantics([
+      "So nett formuliert wäre schon charmanter.",
+      "Erzähl mir, was du suchst.",
+      "Welche Bilder meinst du?",
+    ], incoming),
+    /reply_ignores_message_intent/u,
+  );
+  assert.deepEqual(assertChatAdminReplySemantics([
+    "Fotos können wir gern besprechen – welches Set interessiert dich?",
+    "Heißer Einstieg. Sag mir spielerisch, welche Bilder du sehen möchtest.",
+    "Direkt verstanden: Bilder ja, aber nur innerhalb meiner Grenzen.",
+  ], incoming).length, 3);
 });
 
 const SHA = "a".repeat(40);
@@ -432,4 +530,31 @@ test("persistent fan runtime stays server-side default-off until controlled acti
   assert.match(store, /chat_character_messages\?workspace_id=eq\./u);
   for (const requiredColumn of ["fan_id", "generation_id", "sequence"]) assert.ok(store.includes(requiredColumn));
   for (const route of [fans, conversations, replies]) assert.match(route, /requireChatAdminFanRuntime\(\)/u);
+});
+
+
+test("manual customer tier is bounded to four classes and stays independent from technical Fan status", async () => {
+  for (const customer_tier of ["red", "blue", "yellow", "green"]) {
+    const active = assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",status:"active",customer_tier,summary:"",notes:""});
+    const inactive = assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",status:"inactive",customer_tier,summary:"",notes:""});
+    assert.equal(active.customer_tier, customer_tier);
+    assert.equal(inactive.customer_tier, customer_tier);
+    assert.equal(active.status, "active");
+    assert.equal(inactive.status, "inactive");
+  }
+  assert.equal(assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",summary:"",notes:""}).customer_tier, "red");
+  assert.throws(
+    () => assertChatAdminFanInput({display_name:"Sam",platform:"OnlyFans",customer_tier:"purple",summary:"",notes:""}),
+    /invalid_customer_tier/,
+  );
+
+  const sql = await readFile(
+    "supabase/controlled/20261007102000_chat_admin_customer_tier.sql",
+    "utf8",
+  );
+  assert.match(sql, /customer_tier text not null default 'red'/u);
+  assert.match(sql, /customer_tier in \('red','blue','yellow','green'\)/u);
+  assert.match(sql, /saved\.status <> coalesce\(fan_data->>'status','active'\)/u);
+  assert.match(sql, /saved\.customer_tier <> coalesce\(fan_data->>'customer_tier','red'\)/u);
+  assert.match(sql, /status,customer_tier,summary,notes/u);
 });

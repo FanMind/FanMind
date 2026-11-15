@@ -110,6 +110,25 @@ test("only an explicitly requested, active, preapproved offer gets its server-ow
   assert.equal(deriveCreatorStrategy({ playbook, commercial: { ...reviewed, requestedOfferId: "invented" }, now }).offer, null);
 });
 
+test("sales profile gives each reply variant bounded strategy guidance", () => {
+  const playbook = { ...bundle().playbook, offers: [offer()] };
+  const selling = deriveCreatorStrategy({ playbook, commercial: reviewed, now });
+  assert.equal(selling.objective, "present_confirmed_offer");
+  assert.match(selling.variantGuidance.recommended, /permitted offer/i);
+  assert.match(selling.variantGuidance.softer, /gently/i);
+  assert.match(selling.variantGuidance.stronger, /do not add urgency/i);
+
+  const fatigue = deriveCreatorStrategy({ playbook, commercial: { ...reviewed, offerFatigue: 80 }, now });
+  assert.equal(fatigue.objective, "reduce_sales_pressure");
+  assert.equal(fatigue.sellNow, false);
+  assert.match(fatigue.variantGuidance.recommended, /avoid steering toward a sale/i);
+  assert.match(fatigue.variantGuidance.stronger, /do not sell/i);
+
+  const aftercare = deriveCreatorStrategy({ playbook, commercial: reviewed, events: [event("purchase", { amount_minor: 25000 })], now });
+  assert.equal(aftercare.objective, "care_after_purchase");
+  assert.equal(aftercare.sellNow, false);
+});
+
 test("all three intensities retain the same voice and free text cannot supply prices", () => {
   const context = buildCreatorReplyContext(rows());
   const options = ["Hey, wie war dein Tag?", "Wenn du magst, erzähl mir davon.", "Was war heute dein Highlight?"].map((text) => ({ text }));
@@ -117,6 +136,25 @@ test("all three intensities retain the same voice and free text cannot supply pr
   for (const bad of ["Für dich nur 1 €", "Just CHF 2", "Hallo, geschätzter Kunde!"]) {
     assert.throws(() => validateCreatorReplyOptions([{ text: bad }, ...options.slice(1)], context));
   }
+});
+
+test("Creator free text reuses the established monetary guard in every reply variant", () => {
+  const input=rows();input.playbook.rules.offers=[offer()];
+  input.commercial={...reviewed};
+  const context=buildCreatorReplyContext(input);
+  assert.equal(context.strategy.offer.priceMinor,2000);
+  const options=["Hey, wie war dein Tag?","Wenn du magst, erzähl mir davon.","Was war heute dein Highlight?"].map(text=>({text}));
+  for(const bad of ["Das kostet 20 Euro.","That costs twenty dollars.","Das kostet fünfundzwanzig Euro.",
+    "Das kostet 25.–","Das kostet 100 JPY.","For 20 GBP.","Das kostet 20 Franken."]){
+    for(let index=0;index<3;index++){
+      const changed=options.map((value,i)=>i===index?{text:bad}:value);
+      assert.throws(()=>validateCreatorReplyOptions(changed,context),error=>error?.code==="creator_price_in_free_text");
+    }
+  }
+  assert.equal(context.strategy.offer.priceMinor,2000,"server-owned recommendation is unchanged");
+  assert.doesNotThrow(()=>validateCreatorReplyOptions([
+    {text:"Ich habe zwei Ideen für dein Foto."},{text:"Let us try a different picture."},{text:"Mad about the new look?"},
+  ],context));
 });
 
 test("total budget includes the complete Creator policy and never truncates boundaries", () => {

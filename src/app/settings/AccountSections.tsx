@@ -1,3 +1,4 @@
+import { CapacityPackageSelection } from "@/components/CapacityPackageSelection";
 import { BillingCheckoutButton } from "@/components/BillingCheckoutButton";
 import { ComingSoonMark } from "@/components/ComingSoonMark";
 import { AI_TIER_IDS, formatAiTierPrice, getAiTierConfig } from "@/config/aiTiers.mjs";
@@ -196,7 +197,7 @@ function getPackageRequestHref(
     ].join("\n"),
   );
 
-  return `mailto:kontakt@fanmind.ch?subject=${subject}&body=${body}`;
+  return `mailto:fanmind@fanmind.ch?subject=${subject}&body=${body}`;
 }
 
 function getAddOnRequestHref(
@@ -218,7 +219,7 @@ function getAddOnRequestHref(
     ].join("\n"),
   );
 
-  return `mailto:kontakt@fanmind.ch?subject=${subject}&body=${body}`;
+  return `mailto:fanmind@fanmind.ch?subject=${subject}&body=${body}`;
 }
 
 export function getSettingsAccountPageTitle(
@@ -453,7 +454,7 @@ export function ProfileSettingsSection({
           </div>
           <span className={profileStyles.warningChip}>Sicherer Flow</span>
         </div>
-        <p className={profileStyles.headerCopy}>{locale === "en" ? "The PDF contains the account, authorized workspace, contacts, stored Meta chats/comments, owned post caches, metric snapshots and analysis profiles. Secrets, tokens and data from other workspaces are excluded." : "Die PDF enthält Konto, autorisierten Workspace, Kontakte, gespeicherte Meta-Chats/Kommentare, eigene Post-Caches, Metrik-Snapshots und Analyseprofile. Secrets, Tokens und Daten anderer Workspaces sind ausgeschlossen."}</p>
+        <p className={profileStyles.headerCopy}>{locale === "en" ? "The PDF contains the account, authorized workspace, contacts, own stored Support conversations and current Support AI consent evidence (status, text version, grant/withdrawal times), stored Meta chats/comments, owned post caches, metric snapshots and analysis profiles. Secrets, tokens and data from other workspaces are excluded." : "Die PDF enthält Konto, autorisierten Workspace, Kontakte, eigene gespeicherte Supportgespräche und den aktuellen Support-KI-Einwilligungsnachweis (Status, Textversion, Erteilungs-/Widerrufszeitpunkt), gespeicherte Meta-Chats/Kommentare, eigene Post-Caches, Metrik-Snapshots und Analyseprofile. Secrets, Tokens und Daten anderer Workspaces sind ausgeschlossen."}</p>
         <div className={profileStyles.actionRowSplit}>
           <a className={profileStyles.mailButton} href={`/settings/profile/data-export?lang=${locale}`}>{locale === "en" ? "Download PDF data disclosure" : "PDF-Datenauskunft herunterladen"}</a>
           <a className={profileStyles.mailButton} href="/settings/account-deletion">{locale === "en" ? "Delete account and data" : "Account und Daten löschen"}</a>
@@ -477,7 +478,7 @@ export function PackageSettingsSection({
   cancelError?: string | null;
   cancelSaved?: string | null;
 }) {
-  const packageCards = getPackageCards(workspace);
+  const packageCards = getPackageCards(workspace).filter(card => card.badge === "Aktuell");
   const cancellation = resolveSubscriptionCancellation(workspace);
   const hasCancellation = Boolean(workspace.subscription_cancel_requested_at);
 
@@ -518,6 +519,8 @@ export function PackageSettingsSection({
         )}
       </div>
 
+      <CapacityPackageSelection />
+      <p>Dein bestehender Vertrag und seine Kündigungsbedingungen bleiben erhalten. Ein Upgrade oder Downgrade wird durch die Auswahl nicht ausgelöst.</p>
       <div className={profileStyles.packageCardGrid}>
         {packageCards.map((card) => {
           const isCurrent = card.badge === "Aktuell";
@@ -601,8 +604,7 @@ export function PackageSettingsSection({
         <div>
           <p className={profileStyles.invoiceLabel}>Zusatzpakete / Add-ons</p>
           <p className={profileStyles.invoiceValue}>
-            KI Standard ist im Basispaket enthalten. KI Plus und KI Ultra sind
-            separat berechnete Erweiterungen und bleiben bis zur Preis-,
+            Die folgenden Legacy-Erweiterungen gehören ausschließlich zum bisherigen Vertragsmodell. KI Plus und KI Ultra bleiben bis zur Preis-,
             Kontingent- und Billing-Freigabe als Coming Soon markiert.
           </p>
         </div>

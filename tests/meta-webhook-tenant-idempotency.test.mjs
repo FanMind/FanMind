@@ -143,7 +143,7 @@ test("Facebook top-level and nested comment paging apply the strict validator", 
   );
   assert.match(
     integration,
-    /validateFacebookGraphPagingUrl\(\s*post\.comments\?\.paging\?\.next \?\? null,?\s*\)/u,
+    /rawNestedNext = post\.comments\?\.paging\?\.next;[\s\S]*validateFacebookGraphPagingUrl\(rawNestedNext \?\? null\)/u,
   );
   assert.doesNotMatch(
     integration,
@@ -154,3 +154,6 @@ test("Facebook top-level and nested comment paging apply the strict validator", 
     /nextUrl\s*=\s*post\.comments\?\.paging\?\.next\s*\?\?/u,
   );
 });
+
+// Executable webhook, routing and recovery boundaries (synthetic providers).
+import "./facebook-webhook-ingress.cases.mjs";

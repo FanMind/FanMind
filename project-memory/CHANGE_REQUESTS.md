@@ -1,3 +1,12 @@
+## FM-CR-CHATADMIN-USABILITY-20261105 — Fan scrolling, contextual curiosity and editable replies
+- Source: Bernd confirmed natural interested follow-ups, requested editing one of three suggestions before use, and removal of the permanently reserved bottom status area.
+- Scope/status: R2 repository-only implementation in PR #1424; exact final CI/browser acceptance pending. No runtime acceptance claimed.
+- Behavior: Fan create/profile/knowledge form has independent desktop scroll; mobile page flow retained. Personal conversation may use a relevant interested question or grounded thought without question quotas, known-fact repetition or chasing unanswered questions. New/stored suggestions seed an editable draft; only the final copied/confirmed text enters the existing authorized, revision-bound persistence path. Drafts clear on discard/Fan/Character change. Status overlay is dismissible and reserves no lower row.
+- Evidence: focused API/policy/layout/quality tests 180/180; local ESLint/truth/build passed before the final UI expansion. Actual-client Chromium scroll/edit/keyboard/retry/isolation coverage runs in required CI; local browser download failed. Initial PR CI exposed a missing full-page wrapper in the new scroll fixture and stale Source-of-Truth fingerprint; corrected with the actual page container and this reviewed documentation/decision update. Existing checks were not weakened.
+- Contracts/consumers: FM-CONTRACT-CHATADMIN-AI-001 / FM-IGATE-CHATADMIN-AI-001; ChatAdmin UI and shared reply guidance (CRM/Creator/Copilot/Mobile consumers) retain schema, rate/quality/price, context-isolation and manual-send contracts. No new provider calls, model configuration, stored persona, schema, storage, secrets, billing, deployment or target changes.
+- Recovery: revert the bounded source change. Issue #1219 live acceptance remains separate/open.
+- Follow-up requested: private Character media inventory with image analysis/search and grounded existing-vs-custom availability. Separate controlled storage/provider scope; only configured/approved prices and delivery windows may support custom-order promises. No media uploaded/analyzed or storage/provider activated by this PR.
+
 ## FM-CR-034 — Harden the merged ChatAdmin fan postflight
 - Date: 2026-09-27
 - Status: IN_PROGRESS
@@ -482,7 +491,7 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 
 ## FM-CR-049 — Creator-Building collapsible AI suggestions
 - Date: 2026-09-30
-- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Status: IMPLEMENTED_PENDING_PR_CI
 - Risk: R2
 - Task: FM-CHATADMIN-002
 - Scope: rename the Owner-only ChatAdmin page heading to `Creator-Building`; group each stored suggestion sequence under its preceding inbound Fan message; place one accessible `▼`/`▲` control directly left of that message; keep stored suggestions collapsed when a Fan is opened and open the newest group once immediately after generation.
@@ -594,3 +603,24 @@ Capture new ideas before changing active scope. Classify each as ACCEPTED, DEFER
 - Risk: R2. Root Web requires exact `react`/`react-dom` 19.3.0 with matching `@types/react`/`@types/react-dom` 19.3.0 and `scheduler` 0.28.0; existing PR #1119 is the sole carrier, while #1120 remains open and unmodified pending separate disposition. Evidence: the coupled #1119 source removes the npm peer conflict and the split-version React 527 condition; exact-head CI remains the acceptance gate.
 
 2026-10-05 — Orchestrator authorization: New Owner-direct manual preparations bind an unchanged authenticated existing Owner-comment snapshot and the complete fresh-main task contract; the authorized Parent remains responsible for confirming that the original prose semantically covers that bounded contract, while the accepted historical COMPLETED receipt remains valid. Evidence: the first post-acceptance reuse exposed the circular new-task main-registration requirement; bounded correction PR #1278 final head `0bdb2e1de89307b47564da76d67e2b75c9c4111f` passed all eight applicable exact-head workflows and two independent counterchecks, then merged normally as `f7c1606c07006d95884fb81992c0a30f28b47904` at `2026-10-05T14:57:52Z`; automatic deploy, readiness and audit confirmed that live revision, with only the pre-existing stale database/full-backup evidence still open.
+
+
+## FM-CR-059 — ChatAdmin manual customer color tier
+- Date: 2026-10-06
+- Status: SOURCE_COMPLETE_PENDING_PR_CI
+- Risk: R2
+- Task: FM-CHATADMIN-002
+- Source: Owner requested a manual customer classification in ChatAdmin, visually represented by red/new customer, blue/regular customer, yellow/premium customer and green/VIP while keeping technical active/inactive status separate.
+- Scope: persist and validate the customer tier on ChatAdmin Fan records, expose the selector in Fan profile editing, render the corresponding color dot in the Fan list, and cover the contract with regression tests.
+- Boundary: ChatAdmin Fan classification only; no automatic tier inference, billing/entitlement change, external-platform send, provider action, Production activation or unrelated customer migration.
+- Acceptance: exact-head CI/security/governance pass, customer tier remains independent from technical active/inactive status, existing Fan behavior stays compatible, and the Project Memory guard recognizes this bounded change.
+
+## FM-CR-060 — Website support confirmed message-sync repair
+- Date: 2026-10-22; Updated: 2026-10-25
+- Status: IMPLEMENTED_NOT_VERIFIED; repository preflight complete, protected Staging runtime not executed
+- Risk: R3 (Auth/workspace/provider-read and audit-schema source)
+- Scope: Issue #1350 / stacked continuation of PR #1351 adds one default-off, explicitly confirmed Facebook/Instagram message-sync restart. The server binds actor, workspace and exact connection, writes durable audit state before execution, enforces shared rate limiting and replay protection, and requires a fresh postcheck before success.
+- Excluded: OAuth login, permission or credential changes, disconnects, WhatsApp repair, automatic sends, schema APPLY, feature activation, Staging/Production execution and provider configuration.
+- Evidence: PR #1351 exact head 556ec86488ccd9cc815804e23fb4c6761c792bfa passed all emitted workflows. PR #1352 source head 44a9cd9e2a1313df0c5a90be8ceafe831dc0684e passed its two emitted governance workflows, a 16/16 focused Node 24 harness and independent R3 countercheck with P0/P1/P2/P3 = 0/0/0. No full stacked-PR CI, PostgreSQL, browser, Staging or provider run was available; the audit schema remains unapplied and both flags remain off.
+- Acceptance: source preflight is complete but runtime acceptance remains open. Merge #1351 then #1352 normally, deploy the resulting exact main, classify the isolated Staging schema read-only, and obtain separate target/commit/checksum-bound approvals for schema APPLY, temporary no-provider runtime-negative acceptance and any later provider-positive test.
+

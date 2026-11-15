@@ -1,3 +1,62 @@
+## Current reconciled project state — 2026-10-31
+- Repository main is `890c9889f05fcc6aa3bb1f0562e54b582f252964`; the latest bounded ChatAdmin relationship/purchase guard is merged. Its triggered main checks (God Mode, Browser E2E and CodeQL) completed successfully.
+- GitHub ruleset `24945113` actively protects `main` with pull-request flow, conversation resolution and twelve strict status contexts; deletion/non-fast-forward updates are blocked and the connected actor has no bypass.
+- The 2026-10-31 read-only Production audit passed and reported release `dc269fd80407bfa2a3e1885e19e432b0ebaed68e`, eight healthy components, PM2/nginx/login healthy, 11 local complete backup pairs and 331 offsite pairs. Main is 231 commits ahead of that release. The same audit reported `PRODUCTION_REBOOT_REQUIRED=true`, `PRODUCTION_BOOT_READINESS_VERIFIED=false`, `PRODUCTION_BOOT_RUNNER_BOUND=false` and a 151.92-hour Full backup; these are open Operations/pilot-readiness facts, not authorization to deploy, reboot or mutate Production.
+- Thirteen pull requests were open during reconciliation. #1379 and stacked #1381 are the only current mergeable non-superseded Draft candidates; #1045 is superseded by merged #1046. The remaining open PRs are stale, parked, blocked or conflict with current main and require separate bounded disposition.
+- Issue #1048 active records were reviewed. Completed source increments are closed/superseded in Started Work; aggregate Restore, Mobile, AI/Billing, Meta/Security, Social, Sales, Legal, Registration and Website-runtime gates remain open exactly where external or protected acceptance is missing.
+- `sales_ready=false` remains correct. The generated next action remains the owner-gated read-only Creator target drift diagnosis; this reconciliation performs no Staging/Production/provider/database action and grants no protected authority.
+
+## Known-fact question diagnosis reconciled on Current Facts — 2026-10-26
+- PR #1341's unique finding is revalidated against merged Current Facts: source currentness and explicit withdrawal are distinguishable when the default-off store is enabled, but the shared reply-quality gate remains fact-context-free and can accept a redundant broad question. Legitimate detail questions remain allowed; manual/unconfirmed notes remain non-authoritative.
+- This is a repository diagnostic baseline, not model-frequency evidence or runtime acceptance. No production source, schema/RLS/ACL, feature flag, provider, database or deployment change. Exact-head CI and independent R3 countercheck belong to the integration PR metadata.
+
+## Current facts offline profile — OFFLINE_PROFILE_READY — 2026-10-18
+- Task FM-CHATADMIN-CURRENT-FACTS-OFFLINE-PROFILE-20261018, existing Draft1345 only; continuation base3471b1d6e80fc38679e0914d572a9de6976f417a, mainf36e630c73d3820a61aef593a705d241600e7f47. SQL unchanged SHA256 a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947.
+- Fixed offline PG17 catalog328baseline/413current binds query/reference/SQL/parent-verifier hashes; exact scoped object/ACL/private-function/role/default/owner comparison. Four old Base/Fan/Offers/Tier checkers unchanged; full original exports pass baseline and separately restored inverse copy. No backup-worker, workflow, package or runtime changes.
+- Full synthetic unfiltered custom dump/restore between two isolated networkless disposable PG17 containers passes; complete row/sequence/catalog comparison plus actual RPC, marker/provenance, replay/late,4000manualnotes and Fan/Character/Workspace cascades. Registered native44/44,0skip under existing ICU initialization; independent45/45,43mutations,0skip and independently regenerated exact golden PASS. Three independent profile blind spots and neutral view/incoming-role issues corrected with native regressions.
+- Live installation remains BLOCKED: sustained host/preview/autogrant/capability exclusion, actual hosted owner/role/default binding, installed backup-worker private topology, real backup artifacts/recovery and retained target-lock coordination remain open. No Staging/Production connection, target SQL apply, real data/capability/flag write, dispatch, merge or deploy in this continuation. Global release BLOCK/Phase7b/FM-DEC-031 unchanged.
+- Profile/run instructions: docs/operations/CHAT_ADMIN_CURRENT_FACTS_OFFLINE_PROFILE.md; full receipt receipts/chatadmin-current-facts-20261018.md. Exact final commit and Required CI bound in existing Draft1345 metadata; offline status grants no installation/activation permission.
+
+## Current facts Staging installation preparation — BLOCKED — 2026-10-18
+- Task FM-CHATADMIN-CURRENT-FACTS-INSTALL-PREP-20261018. Owner authorizes read-only preparation only. Main f36e630c73d3820a61aef593a705d241600e7f47 and reviewed1345 source a7db84654b422262bee4fd81f68e432c7b34851c verified;12 Required/14 Checkrecords successful before documentation-only continuation. SQL a980ccc6268e4515f71d2be2ce486d6fd3f7a38745d819b8cd83245505701947 unchanged.
+- Canonical Staging vshyhvgcmrlagvfnvomc observed read-only: five parent tables/RLS and composed base/Fan/Offers/Tier postflights valid; all ChatAdmin rows/capabilities/active RPC sessions zero; new facts/marker/schema/RPC absent. No Fan contents or Production DB read. Snapshot is not sustained capability exclusion: preview can automatically upsert capability; exact deployed release/preview/host isolation cannot be verified from current managed credentials.
+- BLOCKED prerequisites: exact opt-in strict extension profile; private six-function/public-wrapper authorization topology and native backup/restore roundtrip; actual fresh backup evidence (Staging ledger0, external artifacts unexamined); runtime preview/autogrant exclusion; coordination of retained Harness/Live-Repair locks. No executable ready profile or protected authorization inferred.
+- Fresh local Knowledge/API185/185 and native PG17 2/2 PASS,0skip; independent adversarial review identifies these admission gaps. Receipt continuation: receipts/chatadmin-current-facts-20261018.md. Existing source implementation remains verified/unapplied; no new architecture/implementation PR, target write, capability/flag change, model call, dispatch, merge or deploy. Next is prerequisite evidence/reconciliation, not APPLY. Global release BLOCK/Phase7b/FM-DEC-031 unchanged.
+
+## Durable current Fan facts — PR1345 source handoff — 2026-10-18
+- Owner rule: one Fan/topic/current state. Existing1345 branch continues1342–1344, with main f36e630c73d3820a61aef593a705d241600e7f47 verified. Retarget same Draft to main for full required CI; no parallel implementation/PR.
+- Dedicated scoped current-facts table and atomic persisted-generation RPC prepared; exact source, sequence/ordinal, current revision and owner capability validated. Native PostgreSQL17 proves updates with4000 unchanged manual characters, RLS/grants, idempotence, late-message order, concurrency/source mutation protection and deletion cascade. JavaScript helper tests are separate evidence.
+- Default-off reader/writer; explicit DE/EN statements only,8 approved topics, full-message validation with supported communication/boundary companions. New current topics override same-topic legacy; independent safe legacy facts remain opaque. Equal/older opaque legacy sources cannot establish new authority. Export/delete consumers included.
+- SOURCE_ONLY_UNAPPLIED: no live SQL/install/activation, deployment, merge or provider action. Protected rollout needs reviewed install-profile/backup/topology reconciliation, exact-target Staging acceptance and independent postflight; old-binary rollback first requires disabling capability. Notes capacity remains for communication/protective/commercial facts; no universal interpretation/model-quality claim.
+- Receipt: receipts/chatadmin-current-facts-20261018.md. Local checks and independent review recorded there; exact final head/required CI belong to Draft1345 metadata. Global BLOCK, Phase7b and FM-DEC-031 remain unchanged.
+
+## Explicit interest withdrawal — PR1342 PARTIAL — 2026-10-18
+- Existing branch only; baseline cb01c2ee8923b94829a010baf5448625bd8b9899, current GitHub main f36e630c73d3820a61aef593a705d241600e7f47. Separate1341 remains diagnostic, not merged or duplicated.
+- Narrow existing v1 path repaired with observed RED/GREEN tests and separate Guardian: extraction priority, same-source corrections, DE/EN negation, literal provenance, conservative stale-interest cutoff after eviction, honest overflow not_saved. Exact persisted negative reaches next actual-route model context without history.
+- PARTIAL: 4000-char capacity may leave old positive knowledge unchanged; maximum3 learned facts per message and8 stored facts remain. No universal persistence or real model-quality acceptance. Global BLOCK, Phase7b and FM-DEC-031 boundaries retained.
+- Receipt: receipts/chatadmin-interest-revocation-draft-20261018.md. Final exact head/Required CI belongs to existing Draft1342 metadata; no merge/deploy/provider/SQL/target action.
+
+## Communication dimensions — source handoff — 2026-10-17
+- Base main cb57239b confirms1339 merged. Existing ChatAdmin v1 knowledge now merges independent length/style/emoji dimensions; partial conflicts retain only literal source clauses with original sequence. Cross-kind dedup cannot demote a protective boundary.
+- 54 new tests;268 focused/269 with required-suite coverage PASS. Independent291/291 +1296 pair/stale/current retry probes/9 pressure/7 negatives/8 mutations PASS. Build/TypeScript/lint/truth PASS. Same8facts/4000chars, boundaries first, commercial/quality/isolation/manual-send gates unchanged.
+- Receipt: receipts/chatadmin-communication-dimensions-20261017.md; source lock released for Draft handoff. Final exact head/Required CI/independent CI in PR metadata. No target/model-quality/merge acceptance. Phase7b/FM-DEC-031 company-dependent work remains open/deferred; global BLOCK unchanged.
+
+## Confirmed Fan preference retention — bounded source handoff — 2026-10-17
+- Tasks FM-CREATOR-001 / FM-CHATADMIN-003, Risk R3; baseline main2be45e2602d65e9c670c25975245f3fd406f2f9e confirms1338 merged. No competing current source writer.
+- Proven old eight-fact eviction lost communication/source age after interest accumulation. One retention expression keeps protective boundaries first, communication before newer interests, same format/limits/source/quality/offer/price/isolation/manual-send contracts.
+- Test-first d654c961:103 cases/86 pass/17 expected failures. Final214/214 focused; independent237/237 +108 pressure/4 negative probes/6 mutations PASS. Build/TypeScript/lint(4 existing warnings)/truth/memory/God Mode162 PASS; global release BLOCK unchanged.
+- Receipt: receipts/chatadmin-confirmed-preference-context-20261017.md. Exact Draft/head/Required CI and final independent CI binding recorded in PR metadata; no target/model-quality/merge acceptance. Phase7b and FM-DEC-031 company-dependent gates remain open/deferred.
+
+## Contextual offer negation — bounded source handoff — 2026-10-17
+- Tasks FM-CREATOR-001 / FM-CHATADMIN-003, Risk R3; baseline main2bfbeb049f9cd5b49ba39a1b30410fec859216a1 confirms1335–1337 merged.
+- Whole-message “Nicht schlecht”/“Not bad” + single explicit media-price question may reach existing article resolution; literal names must belong to the terminal media phrase and reach its noun; all other negation/ambiguity/price/commercial/isolation/manual-send rules retained.
+- Test-first3276ff30:100 cases,91 pass/9 expected failures; after fix185/185 focused tests pass. Independent Guardian208/208 plus216 refusal probes,535 name-span probes and6 final-source mutations PASS. Build/TypeScript/lint/truth/memory/God Mode checks PASS; existing release baseline stays BLOCK.
+- Canonical receipt: receipts/chatadmin-contextual-offer-negation-20261017.md. Exact Draft/head/Required CI and independent CI binding live in PR metadata; no target/runtime/merge claim. Phase7b overall open; FM-DEC-031 company-dependent steps remain deferred.
+
+2026-10-13 — Blocker / Next Best Action: Production database backups remain blocked because the installed worker rejects the now-explained 20/13 SECURITY-DEFINER topology; the repository candidate binds the exact seven-function Admin-CRM/ChatAdmin expansion and keeps permission drift fail-closed. Production is unchanged. Next is green CI plus independent review, then merge and a separately authorized exact-commit worker installation with read-only pre/postflight and rollback. Evidence: the canonical migrations account exactly for +7 public and +1 restricted function, and PR #1314 carries the guarded contract and regression tests.
+
+2026-10-09 — Durable dependency: PR #1291 head `00127ed33dd048c27639cefbce8eac9f2e619d7f` removes the Root/Web supply-chain blocker by resolving `sharp` 0.35.5 and `source-map-js` 1.2.2; current `main` remains unchanged until merge, while FM-DEC-021 Mobile findings stay reported under `deferred-owner` and out of this Web fix. Evidence: FanMind Supply Chain Security run `37939640159` passed with Root total/high/critical `0/0/0` and separately reported Mobile `35` total (`1` critical, `23` high, `11` moderate).
+
 ## AI capacity consumption-order acceptance — repository test — 2026-10-02
 - Status: IN_PROGRESS under existing AI billing lifecycle reconciliation; PR #1254 adds one repository-only regression test for the canonical Capacity-v2 invariant that active included-period capacity is consumed before separately purchased top-up capacity.
 - Scope: test-only evidence against the existing controlled reserve/settle SQL; no Staging, Production, Stripe, Supabase, provider, customer-data or runtime mutation.
@@ -634,7 +693,7 @@ These live facts can drift. Revalidate runner group/workflow allowlist/JIT state
 
 ## Governance posture
 
-GitHub `main` is currently **not branch-protected**. This is known and remains a deferred owner/governance action; do not falsely report enforced PR/status-check protection.
+GitHub `main` is protected by active ruleset `24945113`. The verified contract requires pull requests, conversation resolution and twelve strict checks; deletion/non-fast-forward updates are blocked and the connected actor has no bypass. Do not weaken this enforcement or infer runtime/protected authorization from it.
 
 ## Do not repeat by default
 
@@ -665,8 +724,7 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 
 ## Exact next safe sequence
 
-1. **FM-FANS-EXACT-TAG-FILTER-20261005:** implement only the Owner-approved exact tag filter on the normal `/fans` list from existing active-contact tags. Preserve grouping, workspace authorization and combined search/channel/locale URL state; exact-head CI and independent review are required before merge. This bounded Phase 15 slice does not complete Segments & Lists and grants no send or protected authority.
-1. **FM-CREATOR-001:** the merged transition source remains fail-closed because target state is known `DRIFT`. The next action is owner-gated and read-only: after the current reconciliation merges, post `run-creator-target-drift-diagnosis <then-current-main-sha>` on issue #874 using that then-current main SHA. Consume the bounded differing-section/blocker result, implement and review only the proven remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation. Production remains forbidden.
+1. **FM-CREATOR-001:** the merged transition source remains fail-closed because target state is known `DRIFT`. The next action is owner-gated and read-only: post `run-creator-target-drift-diagnosis <then-current-main-sha>` once on the then-current protected `main` on issue #874 using that then-current main SHA. Consume the bounded differing-section/blocker result, implement and review only the proven remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation. Production remains forbidden.
 2. **FM-REG-003:** preserve the accepted existing real 0-EUR account. Its distinct synthetic permanent -> future temporary -> blocked -> login/direct-read lifecycle remains the next owner/platform action after the Creator target/runtime action; do not re-register or re-grant the real account.
 3. **FM-CHATADMIN-002:** manual application flow and independent cleanup are accepted. VERIFY/APPLY/DB ACCEPT/manual acceptance are consumed; do not repeat them solely because main advances. The next real admin test is a distinct post-runtime product-flow acceptance, not a repeat of the consumed synthetic ChatAdmin gate.
 4. **FM-SOC3-001:** FM-CR-045 is PRODUCTION_CONFIRMED by #1138. Do not repeat its placeholder/OAuth fail-closed work. The owner must securely bind the real central Meta app/server values before the bounded Facebook connection/inbound proof; real provider consent/App Review/permissions/webhook evidence remains external.
@@ -706,3 +764,23 @@ PR #1014 passed all seven triggered exact-head checks at `12a479f00cce95d0031970
 - PR #1143 wurde als `027d5a21ac41daae0331a0af2f9685d3729b2039` gemergt. Seine Codex-Review enthielt danach noch ein P1 (Account Delete nach Ownership-Transfer) und zwei P2 (Auth-Felder im vollständigen Disclosure; Meta-Catch-up-Queue vor Contact Delete).
 - Der neue kleine Hotfix ist die einzige kanonische Follow-up-Korrektur. Er behandelt `request.workspace_id` als historischen, weiterhin exakt an den Nutzer gebundenen Kontext, exportiert nur eine bounded credential-freie Auth-Projektion und bereitet die atomare service-role-only Queue-/Contact-Delete-RPC checksum-gebunden vor. Kein Staging-/Production-Apply.
 - Creator Delete/Privacy/Disclosure bleibt bis zu Hotfix-Review, grünen Current-Head-Checks und Merge nicht vollständig akzeptiert/geschlossen. `FM-CREATOR-001` bleibt `IN_PROGRESS`.
+
+
+## Adminchat sales reply strategy - 2026-10-07
+- PR #1286 extends the existing reviewed Creator commercial strategy with bounded objectives and separate guidance for Recommended, Softer and Stronger reply suggestions.
+- Sales hold, recent-purchase aftercare, offer fatigue and offer cooldown remain fail-closed. When sellNow is false, no variant may sell, negotiate, add urgency or invent an offer.
+- Sales-forward guidance remains limited to an explicitly requested, active, preapproved server-owned offer. Prices remain outside model free text and sending remains manual.
+- Focused policy tests cover permitted-offer guidance, fatigue suppression and aftercare suppression. Repository policy/tests only; no database, provider or Production mutation.
+
+- Same-task CI registration reconciliation: first406c82d5 push failed Capacity checksum because package.json is pinned. Restore package.json unchanged and place the same45 dimension tests inside the already registered Knowledge suite. No Capacity source/pin/workflow change; final fresh exact-head CI required.
+
+
+## Stripe verified-state reconciliation — 2026-11-08 / PR1452
+- Documentation only, continuing the existing Stripe/Capacity work; no new queue or runtime implementation. Corrected obsolete missing-tax-number/UID and invoice-default statements after #1448.
+- Live readback confirms company Brigitte, individual still Bernd, tax/VAT fields present, default invoice UID set and charges/payouts enabled. Existing contacts/admin access retained; no new identity or registration mutation.
+- Existing Staging read-only preflight still BLOCK: missing lifecycle/projection, empty monetary tables, policy revision2, 15/30/50 budgets, all flags off/freeze on. Historical stored SQL compared: activation source identical; foundation differs only in budget defaults/initial seed. Supabase default-ACL differences remain. No marker deletion, schema repair or apply.
+- 54 existing legal/evidence/catalog/topup tests PASS, no skips. Exact-current-head CI remains required. These are synthetic/source checks, not hosted Checkout/subscription/invoice acceptance.
+- Prepared but did not send the precise Stripe support request for correcting the verified individual identity in the existing account. Tax scheme/actual registration and SaaS classification still require genuine confirmation; administrative roles alone create no representation authority.
+- Independent Staging version baf0be3 at21:16:23UTC; Production a798d793 unchanged at21:16:29UTC. No deploy, real payment, real subscription change, new account/database or Support implementation change in this follow-up.
+
+- Owner clarification during PR1452: actual technical/organizational/content leadership is Bernd's. Do not infer economic ownership/control solely from trade/tax documents or a mandatory representative replacement. Existing legal/company fields retained pending accurate Stripe KYC/authority review; support draft amended, not sent; private background stays outside Git. No account or legal-page mutation.

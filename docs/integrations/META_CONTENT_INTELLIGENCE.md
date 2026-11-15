@@ -39,8 +39,8 @@ Freigabe und aktiviert keine externe Verbindung.
   Workspace zugeordnet sein. Ein fremdes Konto oder fremde Nachrichten dürfen
   niemals durch bloße Workspace-Auswahl sichtbar werden.
 - Verbindungen dürfen nur Owner oder Admins anlegen, ändern oder trennen.
-- Bei mehreren verwalteten Seiten oder Konten ist eine ausdrückliche Auswahl
-  erforderlich. FanMind darf niemals automatisch die erste Seite wählen.
+- Für Facebook ist die ausdrückliche Seitenauswahl auch bei nur einer Seite
+  erforderlich; bei mehreren anderen verwalteten Konten ebenfalls. FanMind darf niemals automatisch die erste Seite wählen.
 - FanMind erstellt Antwortvorschläge. Der Mensch prüft und sendet selbst; es
   gibt keine automatische Nachrichtenversendung.
 - Facebook Messenger und Facebook Page-Kommentare sind getrennte Berechtigungswege. Nach erfolgreicher Messenger-Verbindung läuft der bestehende begrenzte DM-Erstimport; Kommentare werden erst nach der separaten Kommentar-Berechtigung eingelesen und können danach über den FanMind-Kommentar-Sync aktualisiert werden.
@@ -314,3 +314,14 @@ Offizielle Prüfeinstiege:
 - [Meta Platform Terms](https://developers.facebook.com/terms/dfc_platform_terms/)
 - [DSGVO-Grundsätze](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en)
 - [DSGVO-Volltext](https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng)
+
+## Kunden-Posteingang — 9. November 2026
+
+Chats/Direktnachrichten und Nachrichten/Beitragskommentare erhalten getrennte
+Inbox-Ansichten. Verschiedene Conversations eines Fans werden nicht mehr zu
+einem Eintrag reduziert. „Antworten“ öffnet den gespeicherten Originalkanal;
+Facebook-Kommentare verwenden einen bereinigten Kommentar-Permalink oder
+validierte Post-/Kommentar-IDs. Kein globaler Betreiberlink als Ersatz.
+Explizite Facebook-Seitenauswahl gilt jetzt auch für eine einzige verfügbare
+Seite. Stand, Prüfungen und offene Aktivierung siehe
+[META_CUSTOMER_INBOX_20261109.md](META_CUSTOMER_INBOX_20261109.md).

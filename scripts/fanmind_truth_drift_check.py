@@ -113,7 +113,7 @@ for token in [
     'title: "Produktions- & Billing-Basis"',
     'status: "Technisch abgeschlossen"',
     'title: "Social-Kanäle & Creator Intelligence"',
-    'status: "Creator und Social jetzt · Android danach"',
+    'status: "Creator-Entwicklung aktiv · externe Freigaben zurückgestellt"',
     'label: "Verkaufsübergabe", state: "later", status: "Nach Abnahme der Kanäle in Phase 3 + 7"',
     'label: "Creator Intelligence & Sales Assistance", state: "progress", status: "Phase 7b · jetzt in Arbeit"',
     'title: "Website-KI, iOS & weitere Kanäle"',

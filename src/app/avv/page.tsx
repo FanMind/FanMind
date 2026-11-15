@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const avvMailto =
-  "mailto:kontakt@fanmind.ch?subject=AVV%20f%C3%BCr%20FanMind%20anfordern&body=Bitte%20sendet%20mir%20die%20aktuelle%20Auftragsverarbeitungsvereinbarung%20f%C3%BCr%20meinen%20FanMind-Workspace.%0A%0AUnternehmen%20%2F%20Organisation%3A%0AAnsprechperson%3A%0AWorkspace%20oder%20Pilot%3A%0AGew%C3%BCnschter%20Starttermin%3A";
+  "mailto:fanmind@fanmind.ch?subject=AVV%20f%C3%BCr%20FanMind%20anfordern&body=Bitte%20sendet%20mir%20die%20aktuelle%20Auftragsverarbeitungsvereinbarung%20f%C3%BCr%20meinen%20FanMind-Workspace.%0A%0AUnternehmen%20%2F%20Organisation%3A%0AAnsprechperson%3A%0AWorkspace%20oder%20Pilot%3A%0AGew%C3%BCnschter%20Starttermin%3A";
 
 export default function AvvPage() {
   return (

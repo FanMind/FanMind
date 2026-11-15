@@ -1,7 +1,11 @@
+import * as mixerPolicy from "../src/lib/chatAdminMixer.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+import * as mediaPolicy from "../src/lib/chatAdminMediaPolicy.mjs";
+import * as mediaCatalogue from "../src/lib/chatAdminMediaCatalogue.mjs";
+import * as knowledgePolicy from "../src/lib/chatAdminKnowledge.mjs";
 import ts from "typescript";
 
 const require = createRequire(import.meta.url);
@@ -19,6 +23,16 @@ const compiled = ts.transpileModule(source, {
 function loadClient() {
   const clientModule = { exports: {} };
   const localRequire = (name) => {
+    if (name === "./CharacterMediaLibrary") {
+      const mediaModule={exports:{}};const mediaCode=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaLibrary.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;
+      new Function("module","exports","require",mediaCode)(mediaModule,mediaModule.exports,localRequire);return mediaModule.exports;
+    }
+    if(name === "@/lib/chatAdminMixer.mjs")return mixerPolicy;
+    if(name === "./CharacterMixer"){const m={exports:{}};const c=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMixer.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",c)(m,m.exports,localRequire);return m.exports;}
+    if(name === "@/lib/chatAdminMediaPolicy.mjs") return mediaPolicy;
+    if(name === "@/lib/chatAdminMediaCatalogue.mjs") return mediaCatalogue;
+    if(name === "./CharacterMediaCatalogueControls"){const controls={exports:{}};const code=ts.transpileModule(readFileSync("src/app/chatadmin/CharacterMediaCatalogueControls.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText;new Function("module","exports","require",code)(controls,controls.exports,localRequire);return controls.exports;}
+    if (name === "@/lib/chatAdminKnowledge.mjs") return knowledgePolicy;
     if (name === "./chatadmin.module.css") return new Proxy({}, { get: (_, key) => String(key) });
     return require(name);
   };
@@ -56,7 +70,7 @@ test("ChatAdmin renders the compact CRM workspace contract", () => {
   const { ChatAdminClient } = loadClient();
   const html = renderToStaticMarkup(React.createElement(ChatAdminClient, { initialCharacters: [arela] }));
 
-  assert.match(html, /aria-label="Charaktere"/);
+  assert.match(html, /aria-label="Models"/);
   assert.match(html, /aria-label="Fans von Arela Voss"/);
   assert.match(html, /aria-label="Gespräch"/);
   assert.doesNotMatch(html, /Revision 7/);
@@ -68,8 +82,24 @@ test("Creator-Building keeps the desktop shell fixed with three independent scro
   assert.match(styles, /\.conversationPane\{min-width:0;min-height:0;overflow:hidden/u);
   assert.match(styles, /\.conversationScroll\{min-height:0;flex:1 1 auto;overflow-y:auto/u);
   assert.match(styles, /\.messageComposer\{flex:0 0 auto/u);
+  assert.match(styles, /\.characterEditor\{min-height:0;max-height:calc\(100% - 32px\);overflow-y:auto;overscroll-behavior:contain/u);
+  assert.match(styles, /\.characterEditor\{max-height:none;overflow:visible/u);
   assert.match(styles, /@media\(max-width:760px\)\{\.page\{height:auto;min-height:100vh;overflow:visible/u);
   assert.match(source, /ref=\{conversationPaneRef\}/u);
+  assert.match(source, /Kommunikation und Verkaufsregeln/u);
+  assert.match(source, /Character-Angebote und Preise/u);
+  assert.match(source, /Angebotsname/u);
+  assert.match(source, /\+ Angebot/u);
+  assert.match(source, /Angebot entfernen/u);
+});
+
+test("extended learning refreshes the canonical fan analysis before CRM reply generation", () => {
+  const suggestions = readFileSync("src/app/fans/[id]/AiReplySuggestions.tsx", "utf8");
+  const analysis = suggestions.indexOf('fetch("/api/ai/fan-analysis"');
+  const reply = suggestions.indexOf('fetch("/api/ai/reply-suggestions"');
+  assert.ok(analysis > 0 && reply > analysis);
+  assert.match(suggestions.slice(analysis, reply), /contactId: contact\.contactId/u);
+  assert.match(suggestions.slice(analysis, reply), /\.catch\(\(\) => undefined\)/u);
 });
 
 test("ChatAdmin groups stored AI suggestions under their inbound fan message", () => {
@@ -89,6 +119,20 @@ test("ChatAdmin groups stored AI suggestions under their inbound fan message", (
       { id: "suggestion-3", direction: "suggested_reply", content: "Bestens", created_at: "2026-09-30T10:01:03Z" },
     ] },
   ]);
+});
+
+test("the combined action keeps confirmed suggestions marked as used", () => {
+  const { usedSuggestionIds } = loadClient();
+  const used = usedSuggestionIds([
+    { id: "inbound", direction: "fan_inbound", content: "Fotos?", created_at: "2026-10-07T10:00:00Z" },
+    { id: "suggestion-1", direction: "suggested_reply", content: "Antwort A", created_at: "2026-10-07T10:00:01Z" },
+    { id: "suggestion-2", direction: "suggested_reply", content: "Antwort B", created_at: "2026-10-07T10:00:02Z" },
+    { id: "confirmed", direction: "confirmed_reply", content: "Antwort B", created_at: "2026-10-07T10:01:00Z" },
+  ]);
+  assert.deepEqual([...used], ["suggestion-2"]);
+  assert.match(source, /Kopieren und verwenden/u);
+  assert.doesNotMatch(source, /Als manuell gesendet bestätigen/u);
+  assert.match(source, /Verwendeter KI-Vorschlag/u);
 });
 
 

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import * as instagramUnifiedPolicy from "../src/lib/instagramUnifiedPolicy.mjs";
 
 function load(path, dependencies) {
   const exports = {};
@@ -71,7 +72,7 @@ test("actual Facebook flow waits for page selection and successful save before t
   const calls = [];
   const integration = {
     fetchFacebookGrantedPermissions: async () => [], fetchFacebookTokenDiagnostics: async () => ({}), getGrantedFacebookPermissionNames: () => [],
-    getFacebookGrantedScopeNames: () => [], hasRequiredFacebookPagePermissions: () => true, hasFacebookCommentFeedScopes: () => true, hasFacebookInsightsScopes: () => true,
+    getFacebookGrantedScopeNames: () => [], hasRequiredFacebookPagePermissions: () => true, hasFacebookPageAuthorization: () => true, verifyFacebookPageTokenIdentity: async () => true, hasFacebookCommentFeedScopes: () => true, hasFacebookInsightsScopes: () => true,
     fetchFacebookPages: async () => [{ id: "page-1", name: "One", accessToken: "synthetic-1" }, { id: "page-2", name: "Two", accessToken: "synthetic-2" }],
     isTokenEncryptionConfigured: () => true, encryptToken: () => "synthetic-encrypted", tokenLastFour: () => "fake",
     FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS: ["messages"], FACEBOOK_PAGE_COMMENT_WEBHOOK_FIELDS: ["feed"],
@@ -80,11 +81,27 @@ test("actual Facebook flow waits for page selection and successful save before t
   let saveError = false;
   const flow = load("src/lib/facebookConnectionFlow.ts", {
     "@/lib/facebookIntegration": integration,
+    "@/lib/facebookScopes": { FACEBOOK_MESSAGES_OAUTH_SCOPES: [], FACEBOOK_COMMENT_FEED_SCOPES: [], FACEBOOK_INSIGHTS_OAUTH_SCOPES: [] },
     "@/lib/metaInitialImport": { runMetaInitialImport: async (row, type) => { calls.push(["import", row.page_id, type]); return "partial"; } },
     "@/lib/supabase/server": { upsertFacebookSocialConnection: async input => { calls.push(["save", input.pageId]); return { connection, error: saveError }; }, updateFacebookWebhookSubscribed: async () => ({}) },
   });
   const input = { workspaceId: "workspace-1", connectedBy: "user-1", connectionType: "facebook_messages", userAccessToken: "synthetic" };
   assert.equal((await flow.completeFacebookOAuthConnection(input)).errorCode, "page_selection_required"); assert.equal(calls.length, 0);
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "operator-page" })).errorCode, "page_selection_invalid");
+  assert.equal(calls.length, 0);
+  const originalPages = integration.fetchFacebookPages;
+  integration.fetchFacebookPages = async () => (await originalPages()).slice(0, 1);
+  assert.equal((await flow.completeFacebookOAuthConnection(input)).errorCode, "page_selection_required");
+  assert.equal(calls.length, 0);
+  integration.fetchFacebookPages = originalPages;
+  integration.hasFacebookPageAuthorization = () => false;
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" })).errorCode, "page_permissions");
+  assert.equal(calls.length, 0);
+  integration.hasFacebookPageAuthorization = () => true;
+  integration.verifyFacebookPageTokenIdentity = async () => false;
+  assert.equal((await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" })).errorCode, "page_permissions");
+  assert.equal(calls.length, 0);
+  integration.verifyFacebookPageTokenIdentity = async () => true;
   const success = await flow.completeFacebookOAuthConnection({ ...input, selectedPageId: "page-2" });
   assert.equal(success.ok, true); assert.equal(success.initialImport, "partial");
   assert.deepEqual(calls, [["save", "page-2"], ["import", "page-2", "facebook_messages"]]);
@@ -95,12 +112,13 @@ test("actual Facebook flow waits for page selection and successful save before t
 test("actual Instagram callback imports only after verified user/state/workspace and save", async () => {
   let valid = true, saveError = false; const calls = [];
   const route = load("src/app/api/integrations/instagram/callback/route.ts", {
+    "@/lib/instagramUnifiedPolicy.mjs": instagramUnifiedPolicy,
     "next/cache": { revalidatePath() {} }, "next/navigation": { redirect() { throw new Error("redirect"); } },
     "@/lib/demoMode": { areDemoConnectionsDisabled: () => false }, "@/lib/metaIntegrationPolicy.mjs": { canManageMetaConnections: () => true },
     "@/lib/facebookIntegration": { encryptToken: () => "encrypted", isTokenEncryptionConfigured: () => true, tokenLastFour: () => "fake" },
     "@/lib/instagramIntegration": { verifyInstagramOAuthState: () => valid ? { userId: "user-1", workspaceId: "workspace-1", connectionType: "instagram_messages" } : null,
       exchangeInstagramCode: async () => { calls.push("exchange"); return {}; }, exchangeInstagramLongLivedToken: async () => ({ accessToken: "synthetic" }),
-      fetchInstagramProfile: async () => ({ userId: "account-1", username: "Synthetic" }), getInstagramOAuthScopes: () => [], subscribeInstagramAccount: async () => true },
+      instagramStoredToken: token => token.accessToken, fetchInstagramProfile: async () => ({ userId: "account-1", username: "Synthetic" }), getInstagramOAuthScopes: () => [], subscribeInstagramAccount: async () => true },
     "@/lib/workspaceAuthorization": { requireActiveAuthorizedWorkspace: async () => ({ user: { id: "user-1" }, workspace: { id: "workspace-1", role: "owner" } }) },
     "@/lib/supabase/server": { getSupabaseServerUser: async () => ({ data: { user: { id: "user-1" } } }), updateInstagramWebhookSubscribed: async () => ({}),
       upsertInstagramSocialConnection: async () => { calls.push("save"); return { connection: { ...connection, platform: "instagram" }, error: saveError }; } },

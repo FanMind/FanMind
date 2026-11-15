@@ -9,7 +9,7 @@ async function read(path) {
 test("Playwright stays exactly pinned and exposes separate public and staging commands", async () => {
   const manifest = JSON.parse(await read("package.json"));
 
-  assert.equal(manifest.devDependencies?.["@playwright/test"], "1.62.1");
+  assert.equal(manifest.devDependencies?.["@playwright/test"], "1.64.1");
   assert.equal(
     manifest.scripts?.["test:e2e"],
     "playwright test --config=playwright.config.mts",
@@ -79,7 +79,7 @@ test("local provider fixture is loopback-only, acknowledged and fail-closed", as
   assert.doesNotMatch(source, /0\.0\.0\.0|https:\/\//u);
 });
 
-test("regular-user browser proof exercises real routes and permits only a synthetic AI response", async () => {
+test("regular-user browser proof exercises real routes and permits only bounded synthetic AI responses", async () => {
   const source = await read("e2e-core-flow/regular-user-core-flow.spec.ts");
 
   for (const route of [
@@ -90,11 +90,13 @@ test("regular-user browser proof exercises real routes and permits only a synthe
   ]) {
     assert.match(source, new RegExp(`page\\.goto\\("${route}"\\)`, "u"));
   }
-  assert.equal(source.match(/route\.fulfill\(/gu)?.length, 1);
-  assert.match(
-    source,
-    /requestUrl\.pathname === "\/api\/ai\/reply-suggestions"/u,
-  );
+  assert.equal(source.match(/route\.fulfill\(/gu)?.length, 2);
+  for (const path of ["fan-analysis", "reply-suggestions"]) {
+    assert.match(
+      source,
+      new RegExp(`requestUrl\\.pathname === "\\/api\\/ai\\/${path}"`, "u"),
+    );
+  }
   assert.match(source, /ancestor::article\[1\]/u);
   assert.match(
     source,
@@ -254,7 +256,11 @@ test("authenticated staging spec allows only auth session operations and exact-o
     source,
     /\/api\/demo\/start|\/api\/ai|signUp|\.insert\(|\.update\(|\.delete\(/u,
   );
-  assert.doesNotMatch(source, /console\.(?:log|warn|error)/u);
+  const withoutFixedRoleMarkers = source.replace(
+    /console\.log\("STAGING_SUPPORT_ADMIN_ROLE=(?:BOUND_OWNER_READ_ONLY|NON_OWNER_ADMIN_READ_ONLY)"\);/gu,
+    "",
+  );
+  assert.doesNotMatch(withoutFixedRoleMarkers, /console\.(?:log|warn|error)/u);
 });
 
 test("authenticated staging spec proves bidirectional contact RLS, admin denial and logout", async () => {
@@ -349,6 +355,11 @@ test("authenticated Staging spec separates admin credentials and proves both adm
   assert.match(source, /page\.goto\("\/admin\/billing"\)/u);
   assert.match(source, /page\.goto\("\/admin\/operations"\)/u);
   assert.match(source, /Admin Operations Center/u);
+  assert.match(source, /javaScriptEnabled: false/u);
+  assert.match(source, /STAGING_SUPPORT_ADMIN_ROLE=BOUND_OWNER_READ_ONLY/u);
+  assert.match(source, /STAGING_SUPPORT_ADMIN_ROLE=NON_OWNER_ADMIN_READ_ONLY/u);
+  assert.match(source, /supportBlockedWrites/u);
+  assert.match(source, /Support-Zentrale/u);
   assert.match(source, /closeAndClearBrowserSession\(page, session\)/u);
   assert.match(
     source,

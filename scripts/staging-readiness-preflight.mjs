@@ -102,6 +102,10 @@ if (value("FANMIND_NON_PRODUCTION_WRITE_ACK")) {
 }
 
 console.log("STAGING_RUNTIME=staging");
+console.log(`STAGING_SUPPORT_CENTRE_RUNTIME=${env.FANMIND_SUPPORT_CENTRE_ENABLED === "true" ? "enabled" : "disabled"}`);
+console.log(`STAGING_CHAT_ADMIN_MEDIA_RUNTIME=${env.FANMIND_CHAT_ADMIN_MEDIA_ENABLED === "true" ? "enabled" : "disabled"}`);
+console.log(`STAGING_CHAT_ADMIN_MEDIA_ANALYSIS_RUNTIME=${env.FANMIND_CHAT_ADMIN_MEDIA_ANALYSIS_ENABLED === "true" ? "enabled" : "disabled"}`);
+
 console.log(`STAGING_APP_TARGET=${boundary.appConfigured && !boundary.appProduction ? "separate" : "invalid"}`);
 console.log(`STAGING_SUPABASE_TARGET=${boundary.supabaseProjectIdentified && !boundary.supabaseProductionMatch ? "separate" : "invalid"}`);
 console.log(

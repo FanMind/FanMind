@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { request as httpsRequest } from "node:https";
 import { createHash, randomBytes } from "node:crypto";
 import { closeSync, constants, fstatSync, fsyncSync, mkdtempSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -7,16 +8,50 @@ import { isAbsolute, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAdminStagingControlPolicy.mjs";
 import { CHAT_ADMIN_POSTFLIGHT_SQL, SQL_PATH, SQL_SHA256 } from "./chat-admin-staging-runner.mjs";
+import { POSTFLIGHT_SQL as FAN_POSTFLIGHT_SQL, SQL_PATH as FAN_SQL_PATH, SQL_SHA256 as FAN_SQL_SHA256 } from "./chat-admin-fan-staging-runner.mjs";
+import { POSTFLIGHT_SQL as OFFERS_POSTFLIGHT_SQL, SQL_PATH as OFFERS_SQL_PATH, SQL_SHA256 as OFFERS_SQL_SHA256 } from "./chat-admin-structured-offers-staging-runner.mjs";
 import { STAGING_SYNTHETIC_PRIMARY_WORKSPACE_NAME, STAGING_SYNTHETIC_SECONDARY_WORKSPACE_NAME } from "../../src/lib/stagingSyntheticFixturePolicy.mjs";
+import { POSTFLIGHT_SQL as TIER_POSTFLIGHT_SQL, SQL_PATH as TIER_SQL_PATH, SQL_SHA256 as TIER_SQL_SHA256 } from "./chat-admin-customer-tier-staging-runner.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, formatBrowserDiagnostic, requireSuccessfulProbe } from "../../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../../e2e-chatadmin-staging/fixture-identity.mjs";
+import { validateChatAdminUsageWitness } from "../../src/lib/chatAdminUsageWitness.mjs";
 
 export const MANUAL_FLOW_CONFIRMATION = "run-chat-admin-manual-flow";
+export const MANUAL_FLOW_TASK_ID = "FM-ADMINCHAT-STAGING-HARNESS-20261011-01";
+export { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../../e2e-chatadmin-staging/response-budget.mjs";
+import { CHAT_ADMIN_RUNNER_TIMEOUT_MS as MANUAL_BROWSER_TIMEOUT_MS } from "../../e2e-chatadmin-staging/response-budget.mjs";
 const ID_KEYS = ["STAGING_WORKSPACE_ID", "SECOND_WORKSPACE_ID", "OWNER_ID", "MEMBER_ID", "FOREIGN_OWNER_ID", "PLATFORM_ADMIN_ID", "CHARACTER_A_ID", "CHARACTER_B_ID", "CONVERSATION_A_ID", "CONVERSATION_B_ID"];
-const TABLES = ["workspace_chat_admin_capabilities", "chat_characters", "chat_character_conversations", "chat_character_messages"];
+const DATA_ID_KEYS = ["FAN_A_ID","FAN_B_ID","FAN_A_CREATION_ID","FAN_B_CREATION_ID","FOREIGN_CHARACTER_ID"];
 const fail = (code) => { throw new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`); };
+export const MANUAL_FLOW_EXPECTED_COUNTS = Object.freeze({characters:3,fans:2,conversations:2,messages:41,usage_ok:10});
+export function expectedManualFlowCounts(witness) {
+  const attempts=validateChatAdminUsageWitness(witness,true);
+  return {...MANUAL_FLOW_EXPECTED_COUNTS,usage_error:attempts.filter(value=>value.status==='error').length};
+}
+// Only these bounded numeric fields may cross the private psql boundary.
+export function manualFlowCountDiagnostics(stdout = '', stderr = '') {
+  const lines = `${stdout}\n${stderr}`.split(/\r?\n/u);
+  const prefix = 'CHAT_ADMIN_MANUAL_COUNTS=';
+  const found = [];
+  for (const line of lines) {
+    const index = line.indexOf(prefix);
+    if (index < 0 || line.length > 1024) continue;
+    try {
+      const value = JSON.parse(line.slice(index + prefix.length));
+      const keys = [...Object.keys(MANUAL_FLOW_EXPECTED_COUNTS),'usage_error'];
+      const validCounts = counts => counts && !Array.isArray(counts) && Object.keys(counts).length===keys.length && keys.every(key=>Object.hasOwn(counts,key)&&Number.isSafeInteger(counts[key])&&counts[key]>=0&&counts[key]<=1000000);
+      if (!value || Array.isArray(value) || Object.keys(value).length!==2 || !validCounts(value.expected) || !validCounts(value.actual) ||
+          Object.entries(MANUAL_FLOW_EXPECTED_COUNTS).some(([key,count])=>value.expected[key]!==count) || value.expected.usage_error>10) continue;
+      found.push(`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:Object.fromEntries(keys.map(key=>[key,value.expected[key]])),actual:Object.fromEntries(keys.map(key=>[key,value.actual[key]]))})}`);
+    } catch { /* Never expose raw SQL, exception details, identifiers or text. */ }
+  }
+  return [...new Set(found)];
+}
 const literal = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const identities = (env) => Object.fromEntries(ID_KEYS.map(key => [key, canonicalChatAdminFixtureId(env[`FANMIND_CHAT_ADMIN_${key}`])]));
+const uuidFromMarker = (marker,label) => { const value=createHash("sha256").update(`${marker}:${label}`).digest("hex").slice(0,32).split("");value[12]="4";value[16]="8";return `${value.slice(0,8).join("")}-${value.slice(8,12).join("")}-${value.slice(12,16).join("")}-${value.slice(16,20).join("")}-${value.slice(20).join("")}`; };
+export const createManualFlowReceiptDataIds = marker => Object.fromEntries(DATA_ID_KEYS.map(key=>[key,uuidFromMarker(marker,key)]));
+const dataIdsFor = createManualFlowReceiptDataIds;
 
 export function validateManualFlowEnvironment(env) {
   // Reuse the read-only target contract, with a NEW independent write confirmation.
@@ -28,7 +63,8 @@ export function validateManualFlowEnvironment(env) {
   if (!policy.ok || env.NEXT_PUBLIC_APP_URL !== "https://staging.fanmind.ch" ||
       env.FANMIND_ENABLE_NON_PRODUCTION_WRITES !== "true" ||
       env.FANMIND_NON_PRODUCTION_WRITE_ACK !== "I_UNDERSTAND_NON_PRODUCTION_ONLY" ||
-      env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM !== MANUAL_FLOW_CONFIRMATION) fail("boundary");
+      env.FANMIND_CHAT_ADMIN_MANUAL_CONFIRM !== MANUAL_FLOW_CONFIRMATION ||
+      env.FANMIND_CHAT_ADMIN_TASK_ID !== MANUAL_FLOW_TASK_ID) fail("boundary");
   const ids = identities(env);
   if (new Set(Object.values(ids)).size !== ID_KEYS.length) fail("fixture_identity");
   const emails = [env.FANMIND_STAGING_E2E_EMAIL,env.FANMIND_STAGING_E2E_SECONDARY_EMAIL];
@@ -46,14 +82,68 @@ export function validateManualFlowEnvironment(env) {
   return ids;
 }
 
-export async function verifyManualFlowRelease(env, fetchImpl = fetch) {
+const MANUAL_FLOW_RELEASE_URL = 'https://staging.fanmind.ch/api/version';
+
+// A release check must not reuse a connection left idle while the synchronous
+// browser child ran. Each read gets a fresh TLS connection, with no retries.
+export function fetchManualFlowRelease(url, options, requestImpl = httpsRequest) {
+  if (url !== MANUAL_FLOW_RELEASE_URL || options?.redirect !== 'error' || options?.cache !== 'no-store' || !options.signal) fail('release_transport_config');
+  return new Promise((resolveResponse, reject) => {
+    let request; let settled=false;
+    const rejectCode = code => {
+      if (settled) return;
+      settled=true;
+      reject(new Error(`CHAT_ADMIN_MANUAL_FLOW_ERROR=${code}`));
+      request?.destroy();
+    };
+    const transportError = error => {
+      const code=error?.code;
+      if (options.signal.aborted || code === 'ETIMEDOUT') return rejectCode('release_transport_timeout');
+      if (['CERT_HAS_EXPIRED','DEPTH_ZERO_SELF_SIGNED_CERT','SELF_SIGNED_CERT_IN_CHAIN','UNABLE_TO_VERIFY_LEAF_SIGNATURE','ERR_TLS_CERT_ALTNAME_INVALID','UNABLE_TO_GET_ISSUER_CERT_LOCALLY'].includes(code)) return rejectCode('release_transport_tls');
+      if (['ENOTFOUND','EAI_AGAIN'].includes(code)) return rejectCode('release_transport_dns');
+      if (['ECONNRESET','EPIPE','ECONNREFUSED'].includes(code)) return rejectCode('release_transport_connection');
+      rejectCode('release_transport');
+    };
+    try {
+      request=requestImpl(MANUAL_FLOW_RELEASE_URL,{
+        method:'GET',agent:false,signal:options.signal,
+        headers:{accept:'application/json','accept-encoding':'identity','cache-control':'no-cache'},
+      },response=>{
+        const status=response.statusCode;
+        if (!Number.isInteger(status) || status<200 || status>=300 || (response.headers['content-encoding'] && response.headers['content-encoding'] !== 'identity')) {
+          rejectCode('release');response.destroy();return;
+        }
+        let size=0;const chunks=[];
+        response.on('data',chunk=>{
+          size+=chunk.length;
+          if(size>8192){rejectCode('release');response.destroy();return;}
+          chunks.push(chunk);
+        });
+        response.on('aborted',()=>rejectCode('release_transport_truncated'));
+        response.on('error',transportError);
+        response.on('end',()=>{
+          if(settled)return;
+          if(size===0){rejectCode('release');return;}
+          settled=true;
+          resolveResponse(new Response(Buffer.concat(chunks),{status:200}));
+        });
+      });
+      request.on('error',transportError);
+      request.end();
+    } catch(error) {transportError(error);}
+  });
+}
+
+export async function verifyManualFlowRelease(env, fetchImpl = fetchManualFlowRelease) {
   validateManualFlowEnvironment(env);
   const response = await fetchImpl("https://staging.fanmind.ch/api/version", {redirect:"error",cache:"no-store",signal:AbortSignal.timeout(15_000)});
   if (!response.ok || !response.body) fail("release");
   const reader=response.body.getReader(); let size=0; const chunks=[];
   try { for (;;) { const {done,value}=await reader.read(); if(done)break; size+=value.length;if(size>8192)fail("release");chunks.push(value); } }
   finally { await reader.cancel().catch(()=>{}); }
-  const payload=JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  let payload;
+  try {payload=JSON.parse(Buffer.concat(chunks).toString("utf8"));}
+  catch {fail('release_json');}
   if (payload.application !== "fanmind" || payload.runtimeEnvironment !== "staging" || payload.releaseCommit !== env.GITHUB_SHA) fail("release");
 }
 
@@ -78,62 +168,94 @@ function fixtureContract(env, ids) {
 
 export function buildManualFlowSql(mode, env, receipt) {
   const ids=validateManualFlowEnvironment(env);
-  if (!['prepare','verify','cleanup','absence'].includes(mode) || !/^[0-9a-f]{32}$/u.test(receipt.marker ?? '') || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt ?? '')) fail('receipt');
+  if (!['prepare','verify','cleanup','absence'].includes(mode) || !/^[0-9a-f]{32}$/u.test(receipt.marker ?? '') || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt ?? '') || JSON.stringify(receipt.dataIds)!==JSON.stringify(dataIdsFor(receipt.marker))) fail('receipt');
   const ws=literal(ids.STAGING_WORKSPACE_ID), owner=literal(ids.OWNER_ID);
   const a=literal(ids.CHARACTER_A_ID), b=literal(ids.CHARACTER_B_ID), started=literal(receipt.startedAt);
-  // This manual flow creates no conversations. Reuse its reserved second UUID
-  // for a real foreign Character without adding or rotating fixture identities.
-  const foreignCharacter=literal(ids.CONVERSATION_B_ID), second=literal(ids.SECOND_WORKSPACE_ID), foreignOwner=literal(ids.FOREIGN_OWNER_ID);
+  const fanA=literal(receipt.dataIds.FAN_A_ID), fanB=literal(receipt.dataIds.FAN_B_ID);
+  const creationA=literal(receipt.dataIds.FAN_A_CREATION_ID), creationB=literal(receipt.dataIds.FAN_B_CREATION_ID);
+  const conversationA=literal(ids.CONVERSATION_A_ID), conversationB=literal(ids.CONVERSATION_B_ID);
+  const foreignCharacter=literal(receipt.dataIds.FOREIGN_CHARACTER_ID), second=literal(ids.SECOND_WORKSPACE_ID), foreignOwner=literal(ids.FOREIGN_OWNER_ID);
   const marker=literal(`FanMind synthetic manual acceptance ${receipt.marker}`);
   const ownedCharacters=`((id in (${a}::uuid,${b}::uuid) and workspace_id=${ws}::uuid and created_by_user_id=${owner}::uuid) or (id=${foreignCharacter}::uuid and workspace_id=${second}::uuid and created_by_user_id=${foreignOwner}::uuid)) and bio=${marker} and created_at = ${started}::timestamptz and profile_image_path is null`;
+  const ownedFans=`((id=${fanA}::uuid and character_id=${a}::uuid and creation_id=${creationA}::uuid and display_name='FM Synthetic Fan A') or (id=${fanB}::uuid and character_id=${b}::uuid and creation_id=${creationB}::uuid and display_name='FM Synthetic Fan B')) and workspace_id=${ws}::uuid and platform='OnlyFans' and notes=${marker} and created_at=${started}::timestamptz`;
+  const ownedConversations=`((id=${conversationA}::uuid and character_id=${a}::uuid and fan_id=${fanA}::uuid) or (id=${conversationB}::uuid and character_id=${b}::uuid and fan_id=${fanB}::uuid)) and workspace_id=${ws}::uuid and created_at=${started}::timestamptz`;
+  const ownedMessages=`workspace_id=${ws}::uuid and ((character_id=${a}::uuid and fan_id=${fanA}::uuid and conversation_id=${conversationA}::uuid) or (character_id=${b}::uuid and fan_id=${fanB}::uuid and conversation_id=${conversationB}::uuid)) and created_at>=${started}::timestamptz`;
+  const reservedCharacters=`${a}::uuid,${b}::uuid,${foreignCharacter}::uuid`;
+  const childFans=`character_id in (${reservedCharacters})`;
+  const childConversations=`character_id in (${reservedCharacters}) or fan_id in (${fanA}::uuid,${fanB}::uuid)`;
+  const childMessages=`character_id in (${reservedCharacters}) or fan_id in (${fanA}::uuid,${fanB}::uuid) or conversation_id in (${conversationA}::uuid,${conversationB}::uuid)`;
   const usage=`workspace_id=${ws}::uuid and user_id=${owner}::uuid and feature = 'chat_admin_reply' and source_route='/api/chatadmin/reply-suggestions'`;
-  const empty=TABLES.map(table=>`exists(select 1 from public.${table})`).join(' or ');
+  const sessions=`user_id in (${owner}::uuid,${foreignOwner}::uuid,${literal(ids.PLATFORM_ADMIN_ID)}::uuid) and created_at>=${started}::timestamptz`;
+  const occupied=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${reservedCharacters})) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) or exists(select 1 from public.chat_character_messages where ${childMessages})`;
+  const dataResidue=`exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) or exists(select 1 from public.chat_characters where id in (${reservedCharacters})) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) or exists(select 1 from public.chat_character_conversations where id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) or exists(select 1 from public.chat_character_messages where ${childMessages}) or exists(select 1 from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz)`;
+  const residue=`${dataResidue} or exists(select 1 from auth.sessions where ${sessions})`;
   const common=`\\set ON_ERROR_STOP on\nbegin;\nset local lock_timeout='5s';\nset local statement_timeout='30s';\n`;
   const contract=fixtureContract(env,ids);
   const owned=`
-  if exists(select 1 from public.workspace_chat_admin_capabilities where not(workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at = ${started}::timestamptz)) or
-     exists(select 1 from public.chat_characters where not(${ownedCharacters})) or
-     exists(select 1 from public.chat_character_conversations) or exists(select 1 from public.chat_character_messages) or
-     exists(select 1 from public.ai_usage_events where ${usage} and created_at < ${started}::timestamptz)
+  if exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and not(granted_to_user_id=${owner}::uuid and chat_admin_multi_character and created_at=${started}::timestamptz)) or
+     exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid) and not(${ownedCharacters})) or
+     exists(select 1 from public.chat_character_fans where (id in (${fanA}::uuid,${fanB}::uuid) or creation_id in (${creationA}::uuid,${creationB}::uuid) or ${childFans}) and not(${ownedFans})) or
+     exists(select 1 from public.chat_character_conversations where (id in (${conversationA}::uuid,${conversationB}::uuid) or ${childConversations}) and not(${ownedConversations})) or
+     exists(select 1 from public.chat_character_messages where (${childMessages}) and not(${ownedMessages}))
      then raise exception 'cleanup_identity_drift'; end if;`;
   if(mode==='prepare')return `${common}
-lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
+lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_fans, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
 do $guard$ begin ${contract}
-  if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'fixture_not_empty'; end if;
+  if ${occupied} then raise exception 'fixture_identity_occupied'; end if;
 end $guard$;
 insert into public.workspace_chat_admin_capabilities(workspace_id,granted_to_user_id,chat_admin_multi_character,created_at,updated_at) values(${ws}::uuid,${owner}::uuid,true,${started}::timestamptz,${started}::timestamptz);
 insert into public.chat_characters(id,workspace_id,created_by_user_id,display_name,public_age,bio,languages,personality,writing_style,emoji_style,sentence_style,flirt_style,sales_rules,status,created_at,updated_at) values
-(${a}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character A',24,${marker},array['Deutsch'],'ruhig und freundlich','kurze ruhige Sätze','keine','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz),
-(${b}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character B',28,${marker},array['Deutsch'],'fröhlich und freundlich','fröhliche natürliche Sätze','sparsam','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz),
+(${a}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character A',24,${marker},array['Deutsch'],'ruhig und freundlich','kurze ruhige Sätze','keine','kurz','respektvoll','nur gespeicherte Angebote und Preise','active',${started}::timestamptz,${started}::timestamptz),
+(${b}::uuid,${ws}::uuid,${owner}::uuid,'FM Synthetic Character B',28,${marker},array['Deutsch'],'fröhlich und freundlich','fröhliche natürliche Sätze','sparsam','kurz','respektvoll','nur gespeicherte Angebote und Preise','active',${started}::timestamptz,${started}::timestamptz),
 (${foreignCharacter}::uuid,${second}::uuid,${foreignOwner}::uuid,'FM Synthetic Foreign Character',26,${marker},array['Deutsch'],'sachlich und freundlich','kurze sachliche Sätze','keine','kurz','respektvoll','kein Verkauf und kein Druck','active',${started}::timestamptz,${started}::timestamptz);
+insert into public.chat_character_fans(id,workspace_id,character_id,display_name,handle,platform,language,status,summary,notes,creation_id,revision,created_at,updated_at) values
+(${fanA}::uuid,${ws}::uuid,${a}::uuid,'FM Synthetic Fan A','@fm-synthetic-a','OnlyFans','Deutsch','active','Lieblingsfarbe: türkis',${marker},${creationA}::uuid,1,${started}::timestamptz,${started}::timestamptz),
+(${fanB}::uuid,${ws}::uuid,${b}::uuid,'FM Synthetic Fan B','@fm-synthetic-b','OnlyFans','Deutsch','active','Lieblingsfarbe: orange',${marker},${creationB}::uuid,1,${started}::timestamptz,${started}::timestamptz);
+update public.chat_character_conversations set id=case fan_id when ${fanA}::uuid then ${conversationA}::uuid else ${conversationB}::uuid end,created_at=${started}::timestamptz,updated_at=${started}::timestamptz where workspace_id=${ws}::uuid and fan_id in (${fanA}::uuid,${fanB}::uuid);
 commit;
 select 'CHAT_ADMIN_MANUAL_PREPARE=PASS';`;
   if(mode==='cleanup')return `${common}
-lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
+lock table public.workspace_chat_admin_capabilities, public.chat_characters, public.chat_character_fans, public.chat_character_conversations, public.chat_character_messages in share row exclusive mode;
 do $guard$ begin ${contract} ${owned} end $guard$;
 delete from public.ai_usage_events where ${usage} and created_at >= ${started}::timestamptz;
+delete from public.chat_character_messages where ${ownedMessages};
+delete from public.chat_character_conversations where ${ownedConversations};
+delete from public.chat_character_fans where ${ownedFans};
 delete from public.chat_characters where ${ownedCharacters};
 delete from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid and granted_to_user_id=${owner}::uuid and created_at = ${started}::timestamptz;
-do $empty$ begin if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'cleanup_incomplete'; end if; end $empty$;
+do $empty$ begin if ${dataResidue} then raise exception 'cleanup_incomplete'; end if; end $empty$;
 commit;
 select 'CHAT_ADMIN_MANUAL_CLEANUP=PASS';`;
   if(mode==='absence')return `${common}set transaction read only;
-do $empty$ begin if ${empty} or exists(select 1 from public.ai_usage_events where ${usage}) then raise exception 'cleanup_incomplete'; end if; end $empty$;
+do $empty$ begin if ${residue} then raise exception 'cleanup_incomplete'; end if; end $empty$;
 rollback;
 select 'CHAT_ADMIN_MANUAL_ABSENCE=PASS';`;
+  const attempts=validateChatAdminUsageWitness(receipt.usageWitness,true);
+  const expected=expectedManualFlowCounts(receipt.usageWitness);
+  const witnessRows=attempts.map(value=>`(${literal(value.id)}::uuid,${literal(value.status)})`).join(',');
   return `${common}set transaction read only;
 do $guard$ begin ${contract} ${owned}
-  if (select count(*) from public.chat_characters) <> 3 or (select count(*) from public.workspace_chat_admin_capabilities) <> 1 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz) <> 2 then raise exception 'runtime_effect_missing'; end if;
+  raise notice 'CHAT_ADMIN_MANUAL_COUNTS=%',jsonb_build_object('expected',${literal(JSON.stringify(expected))}::jsonb,'actual',jsonb_build_object(
+    'characters',(select count(*) from public.chat_characters where ${ownedCharacters}),
+    'fans',(select count(*) from public.chat_character_fans where ${ownedFans}),
+    'conversations',(select count(*) from public.chat_character_conversations where ${ownedConversations}),
+    'messages',(select count(*) from public.chat_character_messages where ${ownedMessages}),
+    'usage_ok',(select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz),
+    'usage_error',(select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)));
+  if (select count(*) from public.chat_characters where ${ownedCharacters})<>3 or (select count(*) from public.chat_character_fans where ${ownedFans})<>2 or (select count(*) from public.chat_character_conversations where ${ownedConversations})<>2 or (select count(*) from public.chat_character_messages where ${ownedMessages})<>41 or (select count(*) from public.ai_usage_events where ${usage} and status='ok' and created_at>=${started}::timestamptz)<>10 or (select count(*) from public.ai_usage_events where ${usage} and status='error' and created_at>=${started}::timestamptz)<>${expected.usage_error} then raise exception 'runtime_effect_missing'; end if;
+  if (select count(*) from public.ai_usage_events where ${usage} and created_at>=${started}::timestamptz)<>${attempts.length} or exists(select 1 from (values ${witnessRows}) expected_attempt(id,status) where not exists(select 1 from public.ai_usage_events actual_attempt where actual_attempt.id=expected_attempt.id and actual_attempt.status=expected_attempt.status and ${usage} and created_at>=${started}::timestamptz)) then raise exception 'runtime_usage_witness_mismatch'; end if;
+  if not exists(select 1 from public.chat_character_fans where id=${fanA}::uuid and customer_tier='blue') or not exists(select 1 from public.chat_character_fans where id=${fanB}::uuid and customer_tier='green') then raise exception 'customer_tier_persistence_missing'; end if;
+  if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid) and jsonb_array_length(sales_playbook->'offers')=4)<>2 or not exists(select 1 from public.chat_character_messages confirmed where ${ownedMessages} and confirmed.direction='confirmed_reply' and exists(select 1 from public.chat_character_messages suggested where suggested.workspace_id=confirmed.workspace_id and suggested.character_id=confirmed.character_id and suggested.fan_id=confirmed.fan_id and suggested.conversation_id=confirmed.conversation_id and suggested.direction='suggested_reply' and suggested.content=confirmed.content)) then raise exception 'persisted_offer_or_confirmation_missing'; end if;
 end $guard$;
 set local role authenticated;
 select set_config('request.jwt.claim.sub',${owner},true);
-do $owner$ begin if (select count(*) from public.chat_characters) <> 2 or exists(select 1 from public.chat_characters where id=${foreignCharacter}::uuid) then raise exception 'owner_character_isolation'; end if; end $owner$;
+do $owner$ begin if (select count(*) from public.chat_characters where id in (${a}::uuid,${b}::uuid))<>2 or (select count(*) from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid))<>2 or exists(select 1 from public.chat_characters where id=${foreignCharacter}::uuid) then raise exception 'owner_character_isolation'; end if; end $owner$;
 select set_config('request.jwt.claim.sub',${literal(ids.MEMBER_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'member_read_allowed'; end if; end $denied$;
+do $denied$ begin if exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid)) or exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) then raise exception 'member_read_allowed'; end if; end $denied$;
 select set_config('request.jwt.claim.sub',${literal(ids.FOREIGN_OWNER_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'foreign_read_allowed'; end if; end $denied$;
+do $denied$ begin if exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid)) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid)) or exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) then raise exception 'foreign_read_allowed'; end if; end $denied$;
 select set_config('request.jwt.claim.sub',${literal(ids.PLATFORM_ADMIN_ID)},true);
-do $denied$ begin if exists(select 1 from public.chat_characters) or exists(select 1 from public.workspace_chat_admin_capabilities) then raise exception 'admin_read_allowed'; end if; end $denied$;
+do $denied$ begin if exists(select 1 from public.chat_characters where id in (${a}::uuid,${b}::uuid,${foreignCharacter}::uuid)) or exists(select 1 from public.chat_character_fans where id in (${fanA}::uuid,${fanB}::uuid)) or exists(select 1 from public.workspace_chat_admin_capabilities where workspace_id=${ws}::uuid) then raise exception 'admin_read_allowed'; end if; end $denied$;
 rollback;
 select 'CHAT_ADMIN_MANUAL_VERIFY=PASS';`;
 }
@@ -156,6 +278,7 @@ function database(sql, env) {
     bytes=privateRead(env.PGPASSFILE);const path=join(directory,'pgpass');writeFileSync(path,bytes,{mode:0o600,flag:'wx'});
     const safe=Object.fromEntries(['PATH','HOME','LANG','PGHOST','PGPORT','PGDATABASE','PGUSER','PGSSLMODE','PGSSLROOTCERT'].filter(key=>env[key]!==undefined).map(key=>[key,env[key]]));
     const result=spawnSync('psql',['--no-password','--no-psqlrc','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1'],{env:{...safe,PGPASSFILE:path,PGCONNECT_TIMEOUT:'10',PGOPTIONS:'-c lock_timeout=5000 -c statement_timeout=120000'},input:sql,encoding:'utf8',timeout:150_000,maxBuffer:1024*1024});
+    for (const line of manualFlowCountDiagnostics(result.stdout,result.stderr)) console.log(line);
     if(result.error||result.status!==0)fail('database_operation');
     return `${result.stdout}\n${result.stderr}`;
   } finally {bytes?.fill(0);rmSync(directory,{recursive:true,force:true});}
@@ -166,23 +289,115 @@ function sqlMode(mode,env,receipt,emit=true) {
   if(!output.split(/\r?\n/u).some(line=>line.trim()===`CHAT_ADMIN_MANUAL_${mode.toUpperCase()}=PASS`))fail('database_result');
   if(emit)console.log(`CHAT_ADMIN_MANUAL_${mode.toUpperCase()}=PASS`);
 }
+
+/**
+ * Fan persistence replaces the legacy conversation/message columns, constraints
+ * and grants. Its pinned postflight verifies that complete contract separately.
+ * Retain the strict legacy comparisons for capabilities and Character fields;
+ * delegate only the checksum-pinned sales_playbook addition to the offers check.
+ * Standalone legacy rollout verification remains unchanged.
+ */
+export function buildCurrentChatAdminBasePostflight(base = CHAT_ADMIN_POSTFLIGHT_SQL) {
+  const parents = "table_name in ('workspace_chat_admin_capabilities','chat_characters')";
+  for (const [counter, actualScope] of [
+    ["schema_mismatch", parents + " and column_name <> 'sales_playbook'"],
+    ["constraint_valid", parents + " and not (table_name = 'chat_characters' and definition = 'checkjsonb_typeofsales_playbook=''object''andoctet_lengthsales_playbook<=18000')"],
+    ["privilege_mismatch", parents],
+  ]) {
+    const original = [
+      "  ), mismatch as (",
+      "    (select * from expected except select * from actual)",
+      "    union all",
+      "    (select * from actual except select * from expected)",
+      "  )",
+      `  select count(*) into ${counter} from mismatch;`,
+    ].join("\n");
+    const replacement = [
+      "  ), mismatch as (",
+      `    (select * from expected where ${parents} except select * from actual where ${actualScope})`,
+      "    union all",
+      `    (select * from actual where ${actualScope} except select * from expected where ${parents})`,
+      "  )",
+      `  select count(*) into ${counter} from mismatch;`,
+    ].join("\n");
+    if (base.split(original).length !== 2) fail('schema_contract');
+    base = base.replace(original, replacement);
+  }
+  const substitutions = [
+    [
+    "  where roles = '{authenticated}'::name[]\n    and (",
+    "  where roles = '{authenticated}'::name[]\n    and tablename in ('workspace_chat_admin_capabilities','chat_characters')\n    and ("
+  ],
+  [
+    "  select count(*) into policy_count\n  from pg_policies\n  where schemaname = 'public'\n    and tablename in (\n      'workspace_chat_admin_capabilities',\n      'chat_characters',\n      'chat_character_conversations',\n      'chat_character_messages'\n    );",
+    "  select count(*) into policy_count\n  from pg_policies\n  where schemaname = 'public'\n    and tablename in ('workspace_chat_admin_capabilities','chat_characters');"
+  ],
+  [
+    "or policy_count <> 4",
+    "or policy_count <> 2"
+  ],
+  [
+    "or policy_valid <> 4",
+    "or policy_valid <> 2"
+  ]
+  ];
+  for (const [original, replacement] of substitutions) {
+    if (base.split(original).length !== 2) fail('schema_contract');
+    base = base.replace(original, replacement);
+  }
+  return base;
+}
+export const CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL = buildCurrentChatAdminBasePostflight();
+
 function schema(env) {
-  if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');
-  const output=database(CHAT_ADMIN_POSTFLIGHT_SQL,env);
-  if(!/(?:^|\n)(?:NOTICE:\s*)?CHAT_ADMIN_SCHEMA_STATE=VERIFIED(?:\r?\n|$)/u.test(output)||output.includes('CHAT_ADMIN_SCHEMA_STATE=ABSENT'))fail('schema');
+  for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256],[TIER_SQL_PATH,TIER_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');
+  for(const [sql,marker,absent] of [[FAN_POSTFLIGHT_SQL,'CHAT_ADMIN_FAN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_FAN_SCHEMA_STATE=ABSENT'],[CURRENT_CHAT_ADMIN_BASE_POSTFLIGHT_SQL,'CHAT_ADMIN_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_SCHEMA_STATE=ABSENT'],[OFFERS_POSTFLIGHT_SQL,'CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_STRUCTURED_OFFERS_SCHEMA_STATE=ABSENT'],[TIER_POSTFLIGHT_SQL,'CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=VERIFIED','CHAT_ADMIN_CUSTOMER_TIER_SCHEMA_STATE=ABSENT']]){
+    const output=database(sql,env);if(!output.includes(marker)||output.includes(absent))fail('schema');
+  }
+}
+
+export async function runManualFlowPostBrowserPhase(phase, action, emit = console.log) {
+  if (!['receipt','release','persistence'].includes(phase)) fail('post_browser_phase');
+  emit(`CHAT_ADMIN_MANUAL_POST_BROWSER_PHASE=${phase}`);
+  try { return await action(); }
+  catch (error) {
+    if (/^CHAT_ADMIN_MANUAL_FLOW_ERROR=[a-z_]+$/u.test(error?.message ?? '')) throw error;
+    // Never print raw fetch, filesystem or database exceptions.
+    fail(`post_browser_${phase}`);
+  }
 }
 
 export async function runWithGuaranteedCleanup({prepare,run,verify,cleanup}) {
   try {await prepare();await run();await verify();} finally {await cleanup();}
 }
 
+export function classifyManualBrowserFailure(result = {}) {
+  if (result.error?.code === 'ETIMEDOUT') return 'process_timeout';
+  const output = [result.stdout,result.stderr].filter(value=>typeof value==='string').join('\n');
+  for (const [kind,pattern] of [
+    ['ambiguous_locator',/strict mode violation/iu],
+    ['pointer_interception',/intercepts pointer events/iu],
+    ['outside_viewport',/outside (?:of )?the viewport/iu],
+    ['disabled_element',/element is not enabled/iu],
+    ['hidden_element',/element is not visible/iu],
+    ['action_timeout',/timeout [0-9]+ms exceeded/iu],
+    ['count_assertion',/expect\(locator\)\.toHaveCount\(/iu],
+    ['value_assertion',/expect\(locator\)\.toHaveValue\(/iu],
+    ['checked_assertion',/expect\(locator\)\.toBeChecked\(/iu],
+    ['menu_assertion',/expect\(locator\)\.toHaveJSProperty\(/iu],
+    ['assertion',/expect\(received\)|expect\(locator\)/iu],
+  ]) if(pattern.test(output)) return kind;
+  return 'unclassified';
+}
+
 export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) {
   initializeBrowserDiagnostic(env,mode);
   const browserEnv={...env,FANMIND_CHAT_ADMIN_BROWSER_MODE:mode};for(const key of Object.keys(browserEnv))if(key.startsWith('PG')||key.includes('DB_PASSWORD')||key.includes('SERVICE_ROLE'))delete browserEnv[key];
-  let passed=false;
+  let passed=false,failureKind="unclassified";
   try {
-    const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:240_000,maxBuffer:1024*1024});
+    const result=spawnImpl('npx',['--no-install','playwright','test','--config=playwright.chatadmin-staging.config.mts'],{env:browserEnv,encoding:'utf8',timeout:MANUAL_BROWSER_TIMEOUT_MS,maxBuffer:1024*1024});
     const diagnostic=readBrowserDiagnostic(env,mode);
+    failureKind=classifyManualBrowserFailure(result);
     passed=!result.error&&result.status===0&&diagnostic.stage==='complete'&&diagnostic.outcome==='passed'&&diagnostic.network==='none'&&diagnostic.sessionCleanup==='passed';
   } catch {
     passed=false;
@@ -192,7 +407,7 @@ export function runManualBrowser(env,mode,spawnImpl=spawnSync,emit=console.log) 
     try {if(!passed)updateBrowserDiagnostic(env,mode,{outcome:'failed'});for(const line of formatBrowserDiagnostic(env,mode))emit(line);}
     catch {passed=false;emit('CHAT_ADMIN_MANUAL_DIAGNOSTIC=INVALID');}
   }
-  if(!passed)fail('browser');
+  if(!passed){emit(`CHAT_ADMIN_MANUAL_FAILURE_KIND=${failureKind}`);fail('browser');}
   emit(mode==='probe'?'CHAT_ADMIN_MANUAL_PROBE=PASS':'CHAT_ADMIN_MANUAL_BROWSER=PASS');
 }
 export async function runManualFlowProbe(env,{verifyRelease=verifyManualFlowRelease,runBrowser=runManualBrowser}={}) {
@@ -205,12 +420,13 @@ function recoveryBinding(receipt) {
   // Explicit allowlist: never archive environment, credentials, emails or responses.
   // The immutable snapshot cannot know how an interrupted future request finished.
   const ids=Object.fromEntries(ID_KEYS.filter(key=>key!=='PLATFORM_ADMIN_ID').map(key=>[key,receipt.ids[key]]));
-  return {schemaVersion:1,sha:receipt.sha,target:receipt.target,run:receipt.run,attempt:receipt.attempt,ids,marker:receipt.marker,startedAt:receipt.startedAt,inFlightUncertain:true};
+  return {schemaVersion:2,taskId:receipt.taskId,sha:receipt.sha,target:receipt.target,run:receipt.run,attempt:receipt.attempt,ids,dataIds:receipt.dataIds,marker:receipt.marker,startedAt:receipt.startedAt,inFlightUncertain:true};
 }
 export function reserveManualFlowReceipt(env) {
   validateManualFlowEnvironment(env);
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID??'')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT??''))fail('run_identity');
-  const receipt={sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),marker:randomBytes(16).toString('hex'),startedAt:new Date().toISOString(),inFlightUncertain:false,mutationAttempted:false};
+  const marker=randomBytes(16).toString('hex');
+  const receipt={taskId:MANUAL_FLOW_TASK_ID,sha:env.GITHUB_SHA,target:env.FANMIND_TARGET_SUPABASE_PROJECT_REF,run:env.GITHUB_RUN_ID,attempt:env.GITHUB_RUN_ATTEMPT,ids:identities(env),dataIds:dataIdsFor(marker),marker,startedAt:new Date().toISOString(),inFlightUncertain:false,mutationAttempted:false};
   // Reservation is local only. No prepare/cleanup SQL may run before durable upload.
   for(const [path,value] of [[receiptPath(env),receipt],[recoveryPath(env),recoveryBinding(receipt)]]) {
     const fd=openSync(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,0o600);
@@ -221,7 +437,7 @@ export function reserveManualFlowReceipt(env) {
 function loadReceipt(env) {
   const bytes=privateRead(receiptPath(env));let receipt;
   try {receipt=JSON.parse(bytes.toString('utf8'));} finally {bytes.fill(0);}
-  if(receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||typeof receipt.inFlightUncertain!=='boolean'||typeof receipt.mutationAttempted!=='boolean'||! /^[0-9a-f]{32}$/u.test(receipt.marker??'')||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt??''))fail('receipt_binding');
+  if(receipt.taskId!==MANUAL_FLOW_TASK_ID||receipt.sha!==env.GITHUB_SHA||receipt.target!==env.FANMIND_TARGET_SUPABASE_PROJECT_REF||receipt.run!==env.GITHUB_RUN_ID||receipt.attempt!==env.GITHUB_RUN_ATTEMPT||JSON.stringify(receipt.ids)!==JSON.stringify(identities(env))||JSON.stringify(receipt.dataIds)!==JSON.stringify(dataIdsFor(receipt.marker))||typeof receipt.inFlightUncertain!=='boolean'||typeof receipt.mutationAttempted!=='boolean'||! /^[0-9a-f]{32}$/u.test(receipt.marker??'')||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(receipt.startedAt??''))fail('receipt_binding');
   return receipt;
 }
 export function authorizeReservedManualFlow(env) {
@@ -264,7 +480,7 @@ function cleanup(env) {
 
 async function main() {
   const mode=process.argv[2];if(process.argv.length!==3||!['--check','--probe','--reserve','--run','--cleanup'].includes(mode))fail('mode');
-  if(mode==='--check'){if(createHash('sha256').update(readFileSync(SQL_PATH)).digest('hex')!==SQL_SHA256)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
+  if(mode==='--check'){for(const [path,sha] of [[SQL_PATH,SQL_SHA256],[FAN_SQL_PATH,FAN_SQL_SHA256],[OFFERS_SQL_PATH,OFFERS_SQL_SHA256],[TIER_SQL_PATH,TIER_SQL_SHA256]])if(createHash('sha256').update(readFileSync(path)).digest('hex')!==sha)fail('schema_checksum');console.log('CHAT_ADMIN_MANUAL_CONTRACT=PASS');return;}
   const env=process.env;validateManualFlowEnvironment(env);
   if(mode==='--cleanup'){cleanup(env);return;}
   if(!/^\d+$/u.test(env.GITHUB_RUN_ID ?? '')||!/^\d+$/u.test(env.GITHUB_RUN_ATTEMPT ?? ''))fail('run_identity');
@@ -279,10 +495,14 @@ async function main() {
     prepare:async()=>{await verifyManualFlowRelease(env);sqlMode('prepare',env,receipt);},
     run:async()=>{
       receipt.inFlightUncertain=true;updateReceipt(env,receipt);
-      runManualBrowser(env,'acceptance');
-      receipt.inFlightUncertain=false;updateReceipt(env,receipt);
+      runManualBrowser({...env,...Object.fromEntries(Object.entries(receipt.dataIds).map(([key,value])=>[`FANMIND_CHAT_ADMIN_RUN_${key}`,value]))},'acceptance');
+      await runManualFlowPostBrowserPhase('receipt',async()=>{
+        receipt.inFlightUncertain=false;updateReceipt(env,receipt);
+        receipt.usageWitness=readBrowserDiagnostic(env,'acceptance').usageWitness;
+        validateChatAdminUsageWitness(receipt.usageWitness,true);updateReceipt(env,receipt);
+      });
     },
-    verify:async()=>{await verifyManualFlowRelease(env);sqlMode('verify',env,receipt);},
+    verify:async()=>{await runManualFlowPostBrowserPhase('release',()=>verifyManualFlowRelease(env));await runManualFlowPostBrowserPhase('persistence',async()=>sqlMode('verify',env,receipt));},
     cleanup:async()=>cleanup(env),
   });
   console.log('CHAT_ADMIN_ACCEPTANCE_MANUAL_FLOW=PASS');

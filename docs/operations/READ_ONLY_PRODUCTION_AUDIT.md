@@ -24,7 +24,7 @@ Der Audit gibt ausschließlich die folgenden Kategorien aus:
 - Anzahl und Aktualität verschlüsselter Backup-/Prüfsummen-Paare;
 - checksum-only-Verifikation des neuesten verschlüsselten Vollbackups;
 - bei aktivierter Offsite-Konfiguration nur Erreichbarkeit, Objekt-/Paaranzahlen und der neueste Vollbackup-Dateiname;
-- ausschließlich erlaubte strukturierte Backup-Worker-Ereignisnamen und deren Anzahl, getrennt für die letzten 24 Stunden und 14 Tage.
+- ausschließlich erlaubte strukturierte Backup-Worker-Ereignisnamen und deren Anzahl, getrennt für die letzte Stunde, letzten 24 Stunden und 14 Tage.
 
 ## Harte Sicherheitsgrenzen
 
@@ -94,18 +94,22 @@ Die Timer-Ausgabe wird nicht aus lokalisierten Spalten von `systemctl list-timer
 SYSTEMD_TIMER=<unit>|next_realtime=<timestamp-or-unknown>|next_monotonic=<value-or-unknown>|last=<timestamp-or-unknown>
 ```
 
-Die Backup-Worker-Ausgabe verwendet eine feste Ereignis-Whitelist und zwei Zeitfenster:
+Die Backup-Worker-Ausgabe verwendet eine feste Ereignis-Whitelist und drei Zeitfenster:
 
 ```text
+BACKUP_WORKER_WINDOW=1h
+BACKUP_WORKER_EVENT=1h|job_failed:0
 BACKUP_WORKER_WINDOW=24h
 BACKUP_WORKER_EVENT=24h|job_failed:0
 BACKUP_WORKER_WINDOW=14d
 BACKUP_WORKER_EVENT=14d|job_failed:<count>
-BACKUP_WORKER_24H_FAILURE_EVENT_COUNT=0
-BACKUP_WORKER_24H_FAILURE_FREE=true
+BACKUP_WORKER_1H_FAILURE_EVENT_COUNT=0
+BACKUP_WORKER_1H_FAILURE_FREE=true
 ```
 
-Ältere, bereits behobene Fehler bleiben im 14-Tage-Fenster sichtbar, ohne den aktuellen 24-Stunden-Zustand zu verschleiern. Ausgegeben werden nur Zähler für `worker_start`, `worker_stop`, `sigterm_received`, `claim_failed`, `job_claimed`, `job_failed`, `job_rejected` und `fatal`.
+Owner-Entscheidung vom 14. Oktober 2026: Der Freigabe-Verifier verlangt eine fehlerfreie letzte Stunde statt 24 Stunden. Fehlende oder widersprüchliche Ein-Stunden-Messwerte bleiben blockierend. Frische verschlüsselte Backups, checksum-only-Prüfung und Offsite-Nachweise bleiben Pflicht. Die Änderung wird erst durch die gemeinsame geschützte Installation von Collector und Verifier wirksam; ein Repository-Merge allein aktualisiert den installierten Production-Audit nicht.
+
+Ältere, bereits behobene Fehler bleiben im 14-Tage-Fenster sichtbar, ohne den aktuellen Ein-Stunden-Zustand zu verschleiern. Ausgegeben werden nur Zähler für `worker_start`, `worker_stop`, `sigterm_received`, `claim_failed`, `job_claimed`, `job_failed`, `job_rejected` und `fatal`.
 
 ## Backup-Prüfung
 
@@ -145,7 +149,7 @@ AUDIT_RESULT=success
 
 Für einen belastbaren Operations-Pass müssen zusätzlich gelten:
 
-- Server-HEAD, `origin/main` und `LIVE_RELEASE` sind identisch;
+- Server-HEAD und `LIVE_RELEASE` sind exakt der unabhängig bestätigte erwartete Production-Commit; eine abweichende lokale `origin/main`-Referenz benötigt den unten beschriebenen unabhängigen Herkunftsnachweis (vorbereiteter Quellvertrag, noch nicht installiert);
 - `LIVE_ENVIRONMENT=production`;
 - `LIVE_HEALTH=healthy` und alle Pflichtkomponenten sind gesund;
 - `PM2_STATUS=online` und `PM2_UNSTABLE_RESTARTS=0`;
@@ -156,7 +160,7 @@ Für einen belastbaren Operations-Pass müssen zusätzlich gelten:
 - keine verwaisten lokalen Backup-Paare;
 - das neueste Vollbackup besteht die checksum-only-Prüfung;
 - bei aktivierter Offsite-Sicherung ist das Remote erreichbar und enthält keine verwaisten Paare;
-- `BACKUP_WORKER_24H_FAILURE_FREE=true`.
+- `BACKUP_WORKER_1H_FAILURE_FREE=true`.
 
 Ein `REBOOT_REQUIRED=true` ist kein automatischer Neustartauftrag. Der Neustart benötigt einen eigenen kontrollierten Plan mit Backup-, Rollback- und anschließendem Smoke-Test.
 
@@ -182,8 +186,9 @@ der zweiten Variante:
   diese installierte Version aus;
 - nach einem erfolgreichen `Deploy FanMind` wird der exakt deployte Commit
   automatisch geprüft;
-- ein täglicher Lauf um 04:17 UTC vergleicht Production mit dem dann aktuellen
-  `main`-Commit und schafft ein weiteres stabiles Zeitfenster;
+- ein täglicher Lauf um 04:17 UTC liest den tatsächlich laufenden
+  Production-Commit aus `/api/version` und schafft ein weiteres stabiles
+  Zeitfenster, auch wenn `main` bereits weitergelaufen ist;
 - ein manueller Lauf ist ausschließlich auf `main` mit
   `run-read-only-production-audit` und einem exakten 40-stelligen erwarteten
   Commit möglich;
@@ -203,9 +208,122 @@ npm run production:audit:verify -- \
 
 Er lehnt unter anderem Commit- oder Runtime-Drift, ungesunde Pflichtkomponenten,
 PM2-/nginx-Fehler, veraltete oder verwaiste Backup-Paare, Offsite-Abweichungen
-und Backup-Worker-Fehler im 24-Stunden-Fenster ab.
+und Backup-Worker-Fehler im Ein-Stunden-Fenster ab.
 
 ## Diagnose bei Abbruch
+
+### Vorbereitete Tracking-Provenienzkorrektur — 15. November 2026
+
+**Source-only; nicht installiert und keine Productionfreigabe.** Im tatsächlichen
+Read-only-Lauf43721201037 stimmten EXPECTED_COMMIT, SERVER_HEAD und LIVE_RELEASE
+mit bb799466d2c235195fedcb4d80568f9f0bd56969 überein. Nur die lokale Trackingreferenz
+war30e8ddc52557d39f7da1b69ac303106d4bf3040e. Die vier installierten Auditdateien
+entsprachen vor/nach dem Lauf ihren kanonischen Repositorybytes. Dies erklärt
+diesen Lauf; die nicht aufbewahrten Rohwerte des älteren43711512421 bleiben unbekannt.
+
+Der neue Validator hält SERVER_HEAD und LIVE_RELEASE strikt auf der erwarteten
+Productionversion. ORIGIN_MAIN muss genau einmal als vollständiger SHA40 vorliegen.
+Ist er exakt gleich der Productionbasis, bleibt der bisherige strikte
+Identitätsnachweis bestehen (LIVE_EXACT). Eine abweichende Referenz kann niemals
+nach fehlgeschlagener Prüfung auf diesen Pfad zurückfallen.
+
+Für die abweichende Referenz führt der Validator selbst zusätzliche **lesende**
+Prüfungen durch; rohe TRACKING_OK-/Ancestry-Behauptungen autorisieren nichts:
+
+1. Fester realer /var/www/fanmind-Checkout mit eigenem .git-Verzeichnis,
+   nicht bare/shallow. Absolutes /usr/bin/git mit minimaler Umgebung; keine
+   Replacementobjekte, Grafts, Alternates, Include-/URL-Rewrites oder Promisor-
+   beziehungsweise Partial-Clone-Abkürzungen. Kein Lazy-Fetch, optionaler Lock,
+   Checkout, Reset oder Git-Write.
+2. Genau eine allowlistete FanMind/FanMind-Origin-URL, direkte nichtsymbolische
+   refs/remotes/origin/main, exakte HEAD-/Ref-Bindung. Live/Origin müssen echte
+   Commitobjekte mit erneut berechneter Objekt-ID sein; lokal Live<=Origin.
+3. Ausschließlich feste GitHub-HTTPS-GET-Endpunkte für FanMind/FanMind,
+   Repository-ID1259448985/default_branchmain, kanonischen Main-Commitanker
+   und die zwei exakten Vergleiche Live...Origin und Origin...Mainanker.
+   Base/merge-base, ahead/behind/status/total müssen konsistent sein.
+   Keine Abhängigkeit vom paginierten Commitarray. HTTP200, kein Redirect,
+   maximal256KiB JSON, je Request10Sekunden/5Sekunden Verbindungsaufbau;
+   insgesamt fünf Requests ohne automatische Wiederholung oder API-Token.
+4. Mainanker, lokaler Ref/HEAD, Konfiguration und Verzeichnisidentität werden
+   danach erneut gleich gebunden. Unbekannte/fehlende Objekte, API-Ausfall,
+   Rate-Limit, Timeout oder geänderte Evidenz bedeuten tracking_provenance_invalid.
+
+Erfolgreiche historische Quellen werden als MAIN_EXACT beziehungsweise
+MAIN_ANCESTOR mit SHA und beobachtetem Mainanker ausgewiesen. Der Mainanker ist
+**ausschließlich Audit-Herkunftsnachweis, niemals Deploymentkandidat**. Der
+Monatscontroller bleibt unverändert: ORIGIN_MAIN darf nur die Livebasis oder
+den exakt freigegebenen Kandidaten enthalten. Keine dritte historische SHA wird
+dort zusätzlich zugelassen; completeChecks, Backup, Restore, SQL, Owner- und
+Environment-Gates bleiben unverändert. Eine separate Runtimebestätigung ist
+weiterhin kein voller Backup-/Operations-PASS.
+
+#### Tatsächlicher Installationsumfang und Rückfall
+
+| Installierte Datei | Aktuell gemessener SHA-256 | Vorbereiteter SHA-256 / Modus |
+| --- | --- | --- |
+| /usr/local/lib/fanmind-audit/read-only-production-audit.sh |664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27|unverändert,0755,Root0:0|
+| /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs |e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218|4422b2410502ec51cd03031c967ba7b0a3b6c7a4fb601b673bfc91635c81c882,0755,Root0:0|
+
+Bootreadiness und Public-Health-Policy bleiben bytegleich; neue Imports sind nur
+Node-Builtins. Kein neuer Rootpfad, Helper, Server, Runner, Dienst, Secret oder
+kostenpflichtiger Anbieter. Der fest installierte Git-/curl-Lesepfad und die
+erreichbare öffentliche GitHub-API sind spätere tatsächliche Vorbedingungen.
+Der private Monatsrelease-Verifierclosure muss seinen geänderten Validatorhash
+ebenfalls exakt übernehmen; dessen bisheriger Nachweis ist dadurch nicht aktuell.
+
+Der historische One-Hour-Installer unten bleibt absichtlich unverändert auf
+935d1d8/707d2270 und seine alten Datei-/Workerpins gebunden. Er lehnt die neuen
+Validatorbytes ab. Die Tests verwenden deshalb eine komprimierte, SHA-geprüfte
+historische Bytefixture; sie führen diese nicht als zweite Auditimplementierung
+aus. Keine Pins/Approvalvariablen werden zur Installation umgedeutet.
+
+**Vor jeder späteren Installation fehlen** ein separat geprüfter, konkret
+freigegebener Übergang im bestehenden geschützten Installationsverfahren,
+frische tatsächliche Host-/Datei-/Controllerbindungen und exakte Quellcommit-
+und Hashfreigaben. Vorher alten Collector und Validator als sichere Root-
+Rückfallkopien einfrieren; bestehenden exklusiven Hostlock verwenden. Gemischte
+oder unbekannte Bytes sperren. Nach Austausch exakte Hashes und unabhängige
+Version bestätigen und den vollständigen Audit ausführen. Bei technischem
+Installations-/Versions-/Provenienz-/Postflightfehler beide eingefrorenen
+Originale wiederherstellen und ihre Hashes unabhängig kontrollieren. Kein
+Checkout-Reset, Dienstneustart, Datenbankrollback oder Backupworkerwechsel.
+Bleibt ein echtes Sicherheitsgate rot, bleibt der Übergang unvollständig;
+kein alleiniger Runtime-PASS ersetzt den vollständigen Audit.
+
+Dieser Auftrag führt keine Installation und keinen neuen Productionaudit mit
+ungeprüften Quellbytes aus. Mergeentscheidung und geschützte Installation sind
+getrennt. Die bereits rote Production-/Monatsrelease-Zulassung bleibt bestehen.
+
+### Geschützte Installation der Ein-Stunden-Regel
+
+`FanMind Protected One-Hour Audit Policy Install` installiert ausschließlich die
+beiden per SHA-256 gebundenen Audit-Dateien aus dem geprüften Commit
+`935d1d806d09bd7291e89bcffb2250864dcf6739`. Es ersetzt nur das ebenfalls gepinnte
+alte Paar oder prüft ein bereits installiertes neues Paar. Ein gemischter oder
+unbekannter Stand bleibt blockiert. Keine Dienste werden neu gestartet und kein
+Anwendungsrelease wird geändert.
+
+Der Ablauf ist Owner-, current-main-, Host- und `backup-production-recovery`-
+gebunden. Die vorhandene Reviewer-/Branch-/Bypass-Policy wird vorab geprüft;
+nach dem Environment-Warten wird current main erneut gelesen. Die zusätzliche
+Environment-Variable `FANMIND_AUDIT_POLICY_INSTALL_APPROVAL` muss exakt enthalten:
+
+```text
+<reviewed-main>:install-audit-one-hour:935d1d806d09bd7291e89bcffb2250864dcf6739:707d22702a784e3b9999d1c9ae9c1e11c096a1bc:admin-bypass-disabled
+```
+
+Branch `main`, vollständigen `reviewed_main_commit` und Bestätigung
+`install-audit-one-hour` verwenden. Der fest gepinnte Root-Installer friert alle
+Eingabebytes ein, nutzt den bestehenden exklusiven Backup-Installationslock und
+prüft unveränderten Live-Commit vor/nach der Installation. Danach läuft der
+vollständige installierte Audit als `ubuntu`, einschließlich Backup-/Offsite-
+Prüfungen. Nur `PRODUCTION_AUDIT_POLICY=INSTALLED_AND_VERIFIED` gilt als Erfolg.
+Scheitert die Installation oder dieser Postcheck, werden beide alten Dateien
+wiederhergestellt. Private Audit-Rohdaten und stderr werden nicht veröffentlicht.
+
+Dieser einmalige Übergang ist an den bestehenden Release `707d2270...` gebunden.
+Ein neuer oder unbekannter Runtime-Stand verlangt einen separat geprüften Weg.
 
 Der Workflow ruft den Verifier auch nach einem fehlgeschlagenen Audit-Skript auf
 und übergibt dessen tatsächlichen Exit-Code als optionales drittes Argument.
@@ -488,7 +606,79 @@ In #524 und #644 werden nur die redigierten Felder dokumentiert:
 - systemd-/Timer-Gesamtbild;
 - Backup-Paaranzahlen, Alter und checksum-only-Ergebnis;
 - Offsite-Erreichbarkeit/Paarstatus;
-- Backup-Worker-Zähler im 24-Stunden- und 14-Tage-Fenster;
+- Backup-Worker-Zähler im Ein-Stunden-, 24-Stunden- und 14-Tage-Fenster;
 - verbleibende Maßnahmen.
 
 Keine Rohkonfiguration, kein vollständiges Journal und keine Secret-bearing Artefakte werden an Issues angehängt.
+
+## Bounded release-contract diagnostics — 15 November 2026
+
+Historical PR1519 diagnosis record, retained for evidence. Its then-current
+canonical equality rule is superseded in prepared source by the tracking
+provenance contract above; the installed Production validator remains unchanged.
+PR1519 has since merged and observation43721201037 supplied the current tuple.
+The next-step text below records the earlier decision boundary, not a new task.
+
+Audit43711512421 completed its collector with exit0, then its installed validator
+reported production_audit_release_drift. The official log contains no actual
+SERVER_HEAD/ORIGIN_MAIN/LIVE_RELEASE tuple and no installed-file fingerprints;
+there is no artifact. The existing EXIT trap deleted the private temporary raw
+output. Therefore the historical mismatching field and installed contract version
+cannot be inferred from that log. No policy correction or Production PASS is
+claimed before fresh protected observation.
+
+| Value | Existing contract meaning |
+| --- | --- |
+| expectedCommit | Manual/deploy-bound expected Production commit; scheduled runs resolve it independently through Production HTTPS |
+| SERVER_HEAD | HEAD of the operational /var/www/fanmind Git checkout, not the release symlink or a public live-version proof |
+| ORIGIN_MAIN | Local refs/remotes/origin/main; a staleable tracking ref, not an independently fetched current remote Main |
+| LIVE_RELEASE | releaseCommit from the collector's Production HTTPS request |
+| GITHUB_SHA | Source/workflow commit of this observation, distinct from deployed Production |
+
+The canonical validator still requires all three observed values equal expected.
+The existing monthly adapter already separately admits an exactly bound candidate
+in ORIGIN_MAIN and preserves all other runtime/backup checks. The source-package
+completeChecks still rejects a failed audit; no audit exemption is added.
+Repository collector/validator/boot/health files are byte-identical between the
+last observed Production sourcebb799466 and Main4577f4c. This is repository
+source equality only, not proof of installed byte equality or a unique installed
+commit. Current independent HTTPS15Nov12:11:53UTC confirms FanMind/production/
+bb799466d2c235195fedcb4d80568f9f0bd56969. The existing Exoscale Production
+console is connected but shows only an OS login prompt. No console input,
+password reveal, new key/SSH channel or host operation was performed.
+
+The smallest necessary follow-up extends ONLY the existing audit workflow's
+observation. It does not install repository code on the host or replace the
+installed validator. The inline diagnostic runs as the existing runner, without
+new sudo permissions or checkout. Before/after collection it reports SHA256,
+UID/GID and mode only for four fixed existing root-owned files: collector,
+validator, boot dependency and public-health dependency. Symlink, writable,
+non-root-owned, missing, unreadable or changing files report unavailable without
+contents. The protected Operations directory is not opened or made readable.
+Per-file equality establishes byte equality, not a unique installed commit.
+
+After the unchanged installed validator runs, a bounded private-output reader
+emits only single well-formed expected/workflow SHA40, AUDIT_UTC and the three
+SHA40 observations, plus actual probe/validator exit codes. Missing, duplicate,
+malformed, NUL-containing or oversized evidence is unavailable, never guessed.
+There is no raw audit/stderr/ENV/PM2/journal/artifact upload. Existing private
+files are still removed by the unchanged trap. Diagnostic output has no PASS
+or admission authority; installed validator failure remains failure. A failed
+collector cannot become green even if an old validator returns0.
+
+Tests execute the actual workflow step in an isolated synthetic harness:
+historical Production base, advanced Main (still red), real live/server drift,
+missing/duplicate/malformed evidence, canary redaction and old-validator/process
+failure. Existing monthly base/candidate and resume paths retain exact bindings;
+foreign origins/server/live values, bad backups, duplicate evidence and failed
+Main audit checks remain blocked. No database query, apply, worker or Root
+installation and no Production deployment occurs in these tests.
+
+Next protected step: review/merge the diagnostic source, then obtain fresh
+read-only evidence through this same protected Production workflow. Keep the
+real audit red until a separately evidenced complete PASS. Only after the tuple,
+installed before/after hashes and corresponding reviewed Git source are known
+may a focused contract correction be proposed. Do not fetch/reset the Production
+checkout to conceal drift, discard ORIGIN_MAIN, exempt failed checks or install
+new Root code as part of this diagnosis. Preserve the existing Backup/Recovery,
+Owner, protected-environment and monthly SQL gates. PR1517 remains merged.

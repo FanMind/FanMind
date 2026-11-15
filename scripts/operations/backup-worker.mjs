@@ -14,7 +14,7 @@ import {
   validateAuthorizationContract,
 } from './database-authorization-contract.mjs';
 
-const VERSION = 'phase5-backup-worker-6';
+const VERSION = 'phase5-backup-worker-7';
 const JOBS = new Set(['backup_server_config','backup_database','backup_storage','backup_full','verify_backup']);
 const SAFE_BACKUP_WORKER_ERROR_CODES = new Set([
   'archive_entry_escape_after_extract',

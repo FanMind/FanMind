@@ -1,10 +1,13 @@
 import "server-only";
+import { instagramUnifiedEnabled, assertUnifiedOperator } from "@/lib/instagramUnifiedPolicy.mjs";
 
 import { revalidatePath } from "next/cache";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import { decryptToken } from "@/lib/facebookIntegration";
 import {
   fetchInstagramConversationMessages,
+  unwrapInstagramCredential,
+  verifyUnifiedInstagramCredential, fetchInstagramSubscribedFields, subscribeInstagramAccount, fetchInstagramOwnComments,
   fetchInstagramConversationPage,
 } from "@/lib/instagramIntegration";
 import {
@@ -33,6 +36,7 @@ import {
   markContactInboundMessagesSeen,
   type SocialConnectionRow,
   updateInstagramMessengerSyncStatus,
+  updateInstagramWebhookSubscribed,
 } from "@/lib/supabase/server";
 
 const INSTAGRAM_INCREMENTAL_CONVERSATION_LIMIT = 10;
@@ -49,11 +53,14 @@ export type InstagramMessengerSyncResult = SocialSyncResult & {
 
 export async function syncInstagramMessengerHistory(input?: {
   contactId?: string;
+  expectedConnectionId?: string;
   markInboundSeen?: boolean;
   revalidate?: boolean;
 }): Promise<InstagramMessengerSyncResult> {
   const syncedAt = new Date().toISOString();
-  const { connection, error } = await getCurrentInstagramConnection();
+  const { connection, error } = await getCurrentInstagramConnection(
+    input?.expectedConnectionId,
+  );
   if (error || !connection)
     return syncError(syncedAt, error ?? "Instagram-Verbindung fehlt.");
   return syncInstagramMessengerHistoryForConnection(connection, {
@@ -94,11 +101,11 @@ async function syncInstagramMessengerHistoryForConnection(
     Date.now() + META_CONVERSATION_SYNC_EXECUTION_BUDGET_MS;
   const shouldPersistConnectionStatus =
     shouldPersistMetaConnectionSyncStatus(input);
-  const token = connection.page_access_token_encrypted
+  const storedToken = connection.page_access_token_encrypted
     ? decryptToken(connection.page_access_token_encrypted)
     : null;
 
-  if (!connection.page_id || !token) {
+  if (!connection.page_id || !storedToken) {
     const message =
       "Instagram-Zugriffstoken fehlt oder konnte nicht entschlüsselt werden.";
     if (shouldPersistConnectionStatus) {
@@ -109,6 +116,7 @@ async function syncInstagramMessengerHistoryForConnection(
   }
 
   try {
+    const token = unwrapInstagramCredential(storedToken,connection.page_id);
     const continuation = shouldPersistConnectionStatus
       ? await getMetaMessengerSyncContinuation(connection.id, "instagram")
       : null;
@@ -217,7 +225,7 @@ async function syncInstagramMessengerHistoryForConnection(
           messageType: "dm",
           sourceType: "instagram_messages",
           externalMessageId: message.id,
-          externalThreadId: conversation.id,
+          externalThreadId: `${connection.page_id}:${fanSenderId}`,
           sourceConversationId: conversation.id,
           originalTextExcerpt: content,
           direction,
@@ -344,12 +352,16 @@ function syncError(
   };
 }
 
-async function getCurrentInstagramConnection() {
+async function getCurrentInstagramConnection(expectedConnectionId?: string) {
   const { data } = await getSupabaseServerUser();
   if (!data.user) return { connection: null, error: "Nicht angemeldet." };
   const workspaceResult = await getUserWorkspaceDashboard(data.user);
   if (!workspaceResult.workspace)
     return { connection: null, error: "Kein Workspace gefunden." };
+  if (process.env.INSTAGRAM_LOGIN_MODE === "unified") {
+    try { assertUnifiedOperator(process.env,data.user.id,workspaceResult.workspace.id); }
+    catch { return {connection:null,error:"Instagram-Ziel nicht freigegeben."}; }
+  }
   if (areDemoConnectionsDisabled(data.user, workspaceResult.workspace)) {
     return {
       connection: null,
@@ -385,8 +397,45 @@ async function getCurrentInstagramConnection() {
     connection:
       connectionsResult.connections.find(
         (entry) =>
-          entry.platform === "instagram" && entry.status === "connected",
+          entry.platform === "instagram" &&
+          entry.status === "connected" &&
+          (!expectedConnectionId || entry.id === expectedConnectionId),
       ) ?? null,
     error: null,
   };
+}
+
+export async function inspectUnifiedInstagramIngress(activate = false) {
+  try {
+    const {connection,error} = await getCurrentInstagramConnection();
+    if (error || !connection?.page_id || !connection.page_access_token_encrypted || !instagramUnifiedEnabled(process.env) || connection.external_account_name !== "fanmind.crm" || connection.oauth_login_type !== "instagram_unified_login") throw Error("target");
+    const token = unwrapInstagramCredential(decryptToken(connection.page_access_token_encrypted)!,connection.page_id);
+    const diagnostics = await verifyUnifiedInstagramCredential(token,connection.page_id);
+    if (activate) await subscribeInstagramAccount(connection.page_id,token,"instagram_messages");
+    const fields = await fetchInstagramSubscribedFields(connection.page_id,token);
+    const messages = fields.includes("messages"), comments = fields.includes("comments");
+    const saved = await updateInstagramWebhookSubscribed(connection.id,messages && comments);
+    revalidatePath("/channels");
+    const ok = messages && comments && !saved.error;
+    return {ok,messages,comments,diagnostics,failureCode:ok?null:"instagram_subscription_readback_missing"};
+  } catch (error) {
+    const code = error instanceof Error && /^instagram_subscription_(get|post)_http_[1-5][0-9]{2}_code_(none|[0-9]{1,6})_subcode_(none|[0-9]{1,9})_reason_(field_unavailable|object_unavailable|permission_denied|other)$/u.test(error.message)
+      ? error.message : "instagram_subscription_check_failed";
+    return {ok:false,messages:false,comments:false,diagnostics:null,failureCode:code};
+  }
+}
+export async function syncUnifiedInstagramComments() {
+  try {
+    const {connection,error} = await getCurrentInstagramConnection();
+    if (error || !connection?.page_id || !connection.page_access_token_encrypted || !instagramUnifiedEnabled(process.env) || connection.external_account_name !== "fanmind.crm" || connection.oauth_login_type !== "instagram_unified_login") throw Error("target");
+    const token = unwrapInstagramCredential(decryptToken(connection.page_access_token_encrypted)!,connection.page_id);
+    await verifyUnifiedInstagramCredential(token,connection.page_id);
+    const result = await fetchInstagramOwnComments(connection.page_id,token);
+    for (const c of result.comments) {
+      const stored = await createMetaWebhookConversationMessage({workspaceId:connection.workspace_id,sourcePlatform:"instagram",senderId:c.senderId,pageId:connection.page_id,recipientId:connection.page_id,authorLabel:c.username,content:c.text,messageType:"comment",sourceType:"instagram_comments",externalMessageId:c.id,externalCommentId:c.id,externalPostId:c.postId,externalThreadId:`${c.postId}:${c.senderId}`,sourceUrl:c.url,replyTargetUrl:c.url,receivedAt:c.timestamp});
+      if (stored.error) throw stored.error;
+    }
+    revalidatePath("/channels");
+    return {ok:true,posts:result.posts,comments:result.comments.length,mediaEvidence:result.mediaEvidence};
+  } catch { return {ok:false,posts:0,comments:0,mediaEvidence:[]}; }
 }

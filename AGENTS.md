@@ -6,6 +6,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # FanMind production, product truth and Codex guardrails
 
+## Product boundaries: FanMind vs. ChatAdmin (Owner decision 2026-10-21)
+
+- **Planning and presentation are separate, not code or access.** FanMind is the public product; its public Landing/roadmap must show only FanMind product features. ChatAdmin is tracked in a separate **internal** development roadmap; do not surface its feature progress or completion checks on the public FanMind roadmap.
+- **Preserve shared technical access and contracts.** Both workstreams remain in this repository and may reuse existing backend, CRM data contracts, utilities and authorized integrations. Do not split repositories, move source files, alter permissions, duplicate shared code, or break integrations merely because roadmaps are separate.
+- **Agent routing:** For FanMind changes consult `docs/SOURCE_OF_TRUTH.md`, `src/config/roadmap.ts`, and the relevant feature contracts. For ChatAdmin changes consult `src/lib/chatAdmin.ts`, `src/app/chatadmin/`, and the ChatAdmin contracts and acceptance evidence. For cross-cutting changes, inspect both consumers and test regression in both; identify any real technical dependency explicitly.
+- **Completion evidence:** Track implemented, tested, deployed/activated and sales-ready separately. Do not infer Production readiness from merged code or CI. Mark public FanMind items done only with FanMind-specific evidence. ChatAdmin evidence never creates public FanMind checkmarks.
+- **Reference:** `docs/roadmaps/PRODUCT_ROADMAP_SEPARATION_2026-10-21.md`. This is a documentation/work-allocation rule, not a migration or Production activation approval.
+
+
 ## Current production environment
 
 - Production domain: `https://fanmind.ch`
@@ -17,12 +26,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Environment file on server: `/var/www/fanmind/.env.production`
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
+- Pushes and merges to `main` do not trigger Production deployment.
+- The remaining manual workflow is intentionally sealed: its only reachable GitHub-hosted job fails, while the preserved Production job has a literal `if: false`.
+- No usable Production release or rollback controller exists in this transition.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-The deployment workflow deploys `main` on the Exoscale server with:
+The preserved, currently unreachable Production job contains the prior Exoscale deployment sequence:
 
 ```bash
 cd /var/www/fanmind
@@ -455,3 +467,13 @@ For substantive R2+ work:
 - run the God Mode preflight/release-decision/adversarial tests before merge when the gate applies.
 
 `RELEASE_DECISION` is limited to `ALLOW`, `BLOCK`, `OWNER_REQUIRED`. A passing God Mode CI gate does not authorize Staging/Production mutation. Owner/environment-protected actions remain distinct even when technical evidence is otherwise clean.
+
+## Stripe sandbox full-catalog preparation — 2026-11-08
+
+The read-only catalog workflow defaults to `capacity_v2_full` (eight configured
+prices including four one-time topups and retained internal Daily). Preserve
+`capacity_v2` and `legacy_v1` regression choices. Catalog PASS is not a global
+inventory check, tax approval, runtime binding, Checkout or webhook acceptance.
+Owner tax number is supplied and UID ATU66320126 was officially matched on
+2026-11-08; this does not establish tax approval or a Stripe Tax registration.
+Never set registration confirmation from catalog or UID success. See `docs/operations/STAGING_STRIPE_CATALOG_READINESS.md`.

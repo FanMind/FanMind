@@ -1,3 +1,6 @@
+## 2026-10-31 open-loop reconciliation
+- The active loops below were rechecked against current GitHub, current finishline state and the 2026-10-31 read-only Production audit. Their protected, external or product-acceptance gaps remain open; no status is closed by age alone.
+
 ## FM-LOOP-BACKUP-AUDIT-DIAGNOSTICS-20261005
 - Task: `backup-audit-failure-diagnostics-20261005T0758Z`; Status: IMPLEMENTED_FOR_PR; Risk: R2.
 - Evidence: Production Audit run `37278363646`, job `111660398229`, failed at 2026-10-05T07:33:06Z with collector exit 0 and `production_audit_backup_latest_stale_or_empty`; the separately verified runtime/release subset passed on exact main `27d78f3c45b9f17e29c5222f47402007bea2ec37`.
@@ -67,7 +70,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-001
 - Related: FM-RST-001
 - Status: OPEN
-- Updated: 2026-09-08
+- Updated: 2026-10-31
 - Gap: the database Restore and `DB_POSTCHECKED` reconciliation are complete. PR #1081 accepted the private Storage artifact/receipt preparation; PR #1085 accepted the repository-only fail-closed Storage controller after final head `7d32f5a0c29b8ab581a736b0744bfdcf41f5eddb` passed seven workflows, zero unresolved threads and exact-head review, then merged as `0ccf38e5f1afdd0b5f3495a137a5d360dd214ae7`. Actual isolated Storage upload/postcheck, server-config, disposable-target cleanup, countercheck and final aggregate acceptance remain separate and unproven.
 - Close when: every still-applicable post-database state-machine transition has current R4 quorum and independent countercheck.
 - Next check: do not repeat workflow `33178878764`, job `98874745740`, consumed controllers or the accepted repository controller implementation. Real isolated Storage remains `DEFERRED_BY_OWNER` under `FM-RST-OWNER-007`; before any upload, require a new action-time owner decision, distinct isolated non-Production target and exact R4 authorization for the accepted controller.
@@ -83,7 +86,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-003
 - Related: FM-MOB-001 / FM-MOB-003 / FM-MOB-004
 - Status: OPEN
-- Updated: 2026-09-03
+- Updated: 2026-10-31
 - Gap: the owner accepted the bounded FM-MOB-003/FM-MOB-004 UI/runtime result, one exact Production AAB is verified for `e96415035ffbe12f16dd3b81e13a5e62b2c4ac00`, and the exact Production Supabase Recovery redirect is saved. That AAB is now published in the closed Google Play Alpha track for Germany, Austria and Switzerland. The broader receipt-bound 19-check Android runbook, real Recovery flow, the deliberately deferred cohort of at least 12 opted-in testers for at least 14 days, the later Production-access request and applicable Push/Store acceptance remain open for FM-MOB-001. iOS/TestFlight has been moved to Phase 8 by FM-DEC-009 and is not a current blocker.
 - Close when: the private validator passes a complete 19-check Android record bound to the exact signed build/commit, Recovery/Purge is evidence-bound, and the applicable Google Play/internal-test/store controls are accepted.
 - Next check: do not queue another Store build. FM-DEC-021 blocks this entire remaining Mobile sequence until company registration is complete and the owner explicitly resumes Mobile. Only then, with at least 12 approved testers, begin the closed-test period, complete the private 19-check/Recovery record and later consider Production access. Do not start iOS/TestFlight before that explicit resume.
@@ -92,7 +95,7 @@ This register contains started, partially completed or follow-up work that could
 - Current reconciliation 2026-09-10: PR #1087 is merged as 7f681d26; Production release checks and Staging deploy 34273614070 passed. FM-FAIL-022 is resolved as a workflow-origin defect. Run 34273836166 / job 102221843980 on deployed 7f681d26fa0e3c30e743c6a8ef1cd4fef6004e59 technically passed the shared rollout, three ledger verifies, Test catalog, lifecycle, browser boundary and service-role ledger, with full rollback/cleanup and unchanged read-only counters. Its separately required action-time protected-Staging authorization has not been verified in the available record. Publication authorization FM-AUTH-FINISHLINE-PUBLISH-20260908 does not establish that separate scope. Keep this protected acceptance RECONCILIATION_REQUIRED under CTR-FM-AI-AUTH-20260910; retain the observed result, do not invent approval or rerun automatically. Overall FM-AI-001 remains PARTIAL; prices stay complete.
 - Related: FM-AI-001
 - Status: OPEN
-- Updated: 2026-09-10
+- Updated: 2026-10-31
 - Gap: The general Billing ledger is installed on isolated Staging and the bounded canonical Billing rollback-only sub-gate is now counterchecked: exact deploy `34058028839` and acceptance `34058118450` / job `101553652111` passed on `62e6a11858e85996af03f6740819b0fc6194b4a4` with ledger state `verify`, overall rollout `PASS`, cutover pending `0`, uninventoried `0`, full transaction rollback and cleanup `PASS`. The independent read-only postcheck stayed unchanged. Final product decisions, private quality/cost proof, provider-side inbound webhook/current lifecycle evidence, Legal/Tax, Production runtime integration and explicit activation remain incomplete.
 - Close when: tier-specific risk quorum is satisfied and any Production activation is explicit and current.
 - Next check: do not repeat the completed Staging deploy/canonical rollback acceptance. Resume only from `FM-AI-OWNER-001`/the narrowed `FM-AI-OWNER-002`; keep Plus/Ultra and canonical Production projection fail-closed until all remaining gates are current.
@@ -102,7 +105,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-005
 - Related: FM-META-001
 - Status: OPEN
-- Updated: 2026-08-26
+- Updated: 2026-10-31
 - Gap: Pixel technical path is Production-confirmed and the 2026-08-26 Meta Staging content/continuation/catch-up foundation is read-only counterchecked in FM-EV-023, with freshness tracked by `EV-META-STAGING-FOUNDATION-20260826`; external Events Manager/browser reception, provider-side no-PII/no-unexpected-conversion evidence, App Review/permissions, real Meta account E2E and legal acceptance remain incomplete.
 - Close when: all applicable Meta external/security/legal acceptance evidence is current.
 - Next check: owner-controlled normal-browser Events Manager acceptance under #714. Do not rerun `33007156552`, `33007311870` or `33007481167` merely for this closeout, repeat Production activation/deploy, apply SQL or activate Meta workers/providers. If the Staging observation is later relied upon after expiry/invalidation, acquire a new lock and run a fresh shared rollout-state-first read-only verification.
@@ -110,7 +113,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-006
 - Related: FM-SOC3-001
 - Status: OPEN
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Gap: Phase 3 foundations exist but Facebook, Instagram and WhatsApp have not all passed real external E2E acceptance.
 - Close when: all three required channels pass tenant/idempotency/auth/revocation/reconnect/no-auto-send acceptance.
 - Next check: do not start until earlier non-Social gates are sufficiently closed per #874.
@@ -119,7 +122,7 @@ This register contains started, partially completed or follow-up work that could
 - Update 2026-09-11: FM-DEC-017 resumes TikTok/X now. Source OAuth/profile/X-DM-preview package is in review; controlled target rollout, real app/access/budget/legal and future persistent CRM ingestion remain open. Do not infer an accepted integration from fixtures or profile login. Discord remains later.
 - Related: FM-SOC7-001
 - Status: OPEN
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Gap: Phase 7 real connectors are not accepted; OnlyFans remains conditional feasibility.
 - Close when: TikTok/X/Discord have approved official connector scope and E2E evidence, and OnlyFans is either officially/contractually implemented+accepted or explicitly documented unavailable without bypass.
 - Next check: current official API/platform capability immediately before implementation.
@@ -127,7 +130,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-008
 - Related: FM-SALES-001
 - Status: BLOCKED
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Gap: sales material exists, but technical sales handoff is blocked by required Phase-3/Phase-7 acceptance and final Production demo truth.
 - Close when: #874 Sales Handoff criteria pass on the exact final release.
 - Next check: after Social finishline.
@@ -135,7 +138,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-009
 - Related: FM-LEGAL-001
 - Status: BLOCKED
-- Updated: 2026-08-19
+- Updated: 2026-10-31
 - Gap: external tax/legal/register/AVV/provider evidence is incomplete.
 - Close when: only genuine external evidence/approvals have been recorded; no technical self-approval.
 - Next check: when advisor/register/provider evidence arrives.
@@ -176,7 +179,7 @@ This register contains started, partially completed or follow-up work that could
 ## FM-LOOP-SEC-RPC-EXCEPTION-20260920
 - Related: FM-SEC-001 / FM-SEC-OWNER-002 / issue #982
 - Status: OPEN
-- Updated: 2026-09-20
+- Updated: 2026-10-31
 - Gap: explicit policy acceptance/rejection of the constrained authenticated RPC exceptions is still missing. `ensure_current_user_workspace(...)` and `get_current_workspace_member_safe_dashboard()` have different verified protection details and must not be conflated.
 - Close when: the owner explicitly accepts or rejects the documented RPC exception after reviewing the exact role/identity/search-path/row-security/return-shape evidence; record that decision without inventing browser policies or changing grants merely to close the loop.
 - Next check: owner decision only when ready. No Production Apply, leaked-password setting change, blind RPC revoke/grant or other protected mutation is standing-authorized.

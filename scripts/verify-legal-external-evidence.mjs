@@ -94,7 +94,7 @@ export function validateExternalEvidence(evidence) {
     "asOf must be YYYY-MM-DD",
   );
   assert(
-    evidence.operator?.legalName === "Bernd Guggenberger",
+    evidence.operator?.legalName === "Brigitte Erika Guggenberger",
     "canonical operator name changed",
   );
   assert(

@@ -1,3 +1,4 @@
+import { waitForChatAdminReplyResponse } from "../e2e-chatadmin-staging/response-budget.mjs";
 import assert from "node:assert/strict";
 import {createServer} from "node:http";
 import test from "node:test";
@@ -118,5 +119,33 @@ test("browser boundary retains a genuine delayed transport failure while drainin
     const cleanup=await Promise.allSettled([browser?.close(),close(app)]);
     const failures=cleanup.filter(result=>result.status==="rejected").map(result=>result.reason);
     if(failures.length)throw new AggregateError(failures,"Browser boundary fixture cleanup failed");
+  }
+});
+
+
+test("reply response wait outlives the page action timeout and drains the actual allowed transport", {timeout:15_000}, async()=>{
+  const started=deferred(); let reply;
+  const app=createServer((request,response)=>{
+    if(request.url==="/api/chatadmin/reply-suggestions"&&request.method==="POST") {reply=response;started.resolve();return;}
+    response.writeHead(200,{"Content-Type":"text/html"});response.end("<!doctype html><title>Synthetic reply timing</title>");
+  });
+  let browser;
+  try {
+    const appOrigin=await listen(app);
+    browser=await chromium.launch({headless:true,executablePath:process.env.CHATADMIN_TEST_BROWSER||undefined});
+    const context=await browser.newContext({serviceWorkers:"block"});
+    const violations=await installChatAdminNetworkBoundary(context,{appOrigin,supabaseOrigin:appOrigin});
+    const page=await context.newPage();await page.goto(appOrigin);page.setDefaultTimeout(100);
+    const bounded=waitForChatAdminReplyResponse(page,appOrigin);
+    const legacy=assert.rejects(page.waitForResponse(response=>new URL(response.url()).pathname==="/api/chatadmin/reply-suggestions"),/Timeout/u);
+    const request=page.evaluate(async()=>{const response=await fetch("/api/chatadmin/reply-suggestions",{method:"POST",body:"synthetic"});return response.json();});
+    await started.promise;await legacy;
+    reply.writeHead(200,{"Content-Type":"application/json"});reply.end(JSON.stringify({replies:["synthetic A","synthetic B","synthetic C"]}));
+    assert.equal((await bounded).status(),200);assert.equal((await request).replies.length,3);
+    await violations.stop();assert.equal(violations(),0);await context.close();
+  } finally {
+    const cleanup=await Promise.allSettled([browser?.close(),close(app)]);
+    const failures=cleanup.filter(result=>result.status==="rejected").map(result=>result.reason);
+    if(failures.length)throw new AggregateError(failures,"Reply timing fixture cleanup failed");
   }
 });

@@ -29,25 +29,25 @@ const sections: PrivacySection[] = [
         <address className={styles.addressBlock}>
           <strong>FanMind</strong>
           <span>
-            Bernd Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind
+            Brigitte Erika Guggenberger, Einzelunternehmen – Geschäftsbezeichnung FanMind
           </span>
-          <span>Turnerstraße 18</span>
-          <span>2345 Brunn am Gebirge</span>
+          <span>Bahnstraße 11, Stiege 2, Tür 1</span>
+          <span>2351 Wiener Neudorf</span>
           <span>Österreich</span>
           <span>
-            E-Mail: <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>
+            E-Mail: <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           </span>
           <span>
             Website: <a href="https://fanmind.ch">https://fanmind.ch</a>
           </span>
         </address>
         <p>
-          Inhaber und vertretungsberechtigt ist Bernd Guggenberger. Die
+          Inhaberin und rechtliche Betreiberin ist Brigitte Erika Guggenberger. Operativer Ansprechpartner ist Bernd Guggenberger. Die
           vollständigen Anbieter- und Betreiberangaben ergeben sich ergänzend
           aus dem <Link href="/impressum">Impressum</Link>.
         </p>
         <p>
-          Datenschutzanfragen können an <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a>
+          Datenschutzanfragen können an <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a>
           gerichtet werden.
         </p>
       </>
@@ -339,6 +339,29 @@ const sections: PrivacySection[] = [
           ein generierter Analysebericht verarbeitet werden. Es wird keine Bildanalyse behauptet.
         </p>
         <p>
+          Der öffentliche Informationschat auf der Landingpage ist ohne Anmeldung nutzbar.
+          Erst nach deiner ausdrücklichen Zustimmung werden deine Frage und höchstens vier
+          vorangegangene Beiträge zur Beantwortung an OpenAI übermittelt. Der sichtbare Verlauf
+          bleibt im Arbeitsspeicher dieses Browserfensters und wird nicht als Kontakt oder
+          Kundengespräch gespeichert. Ein neues Gespräch oder das Neuladen der Seite entfernt
+          diesen sichtbaren Verlauf. Es werden keine privaten Workspace-Daten als Kontext geladen.
+          Technische Nutzungs- und Kostenzähler ohne Nachrichtentext sowie die bestehenden
+          missbrauchsbegrenzenden, gehashten Anfragezähler werden serverseitig verarbeitet.
+          Ohne Zustimmung wird keine Chat-Anfrage ausgelöst. Du kannst die weitere Verarbeitung
+          jederzeit beenden, indem du keine neue Frage sendest oder ein neues Gespräch beginnst.
+        </p>
+        <p>
+          Im angemeldeten Dashboard ist die KI-Beantwortung im Support zunächst ausgeschaltet.
+          Nur nach deiner gesonderten Zustimmung werden die aktuelle Supportfrage und die letzten
+          zwei eigenen Supportfragen mit Antworten an OpenAI übermittelt. Dafür werden keine
+          CRM-Daten automatisch abgefragt und keine Konto- oder Workspace-Kennungen an das
+          KI-Modell übermittelt. Ohne diese Zustimmung bleibt die freigegebene lokale Wissensbasis
+          nutzbar. Die Einwilligung lässt sich im Hilfe-Panel widerrufen und wird nach Neuladen,
+          Kontowechsel oder Schließen des Panels erneut abgefragt. Bereits gespeicherte
+          Supportnachrichten unterliegen weiterhin den unten beschriebenen Export- und Löschregeln.
+          Technische Nutzungs- und Kostenzähler enthalten keine Nachrichtentexte.
+        </p>
+        <p>
           Der OpenAI API-Key wird nur serverseitig verwendet und darf niemals im Browser erscheinen.
           Produktive KI-Anfragen verwenden <code>store: false</code>. Eingabelängen werden
           begrenzt. KI-Funktionen liefern Vorschläge, Entwürfe,
@@ -427,14 +450,40 @@ const sections: PrivacySection[] = [
     icon: "?",
     title: "Kontakt, Support und Pilot-/Demo-Anfragen",
     content: (
-      <p>
-        Bei Kontakt-, Support-, Pilot- oder Demo-Anfragen können Name, E-Mail-Adresse,
-        Unternehmen, Organisation, Rolle, Nachricht, Kommunikationsverlauf, technische Metadaten
-        und Supportanliegen verarbeitet werden. Zwecke sind Beantwortung der Anfrage, Vorbereitung
-        von Demo oder Pilot, Vertragsanbahnung, Support und Nachweisführung. Rechtsgrundlagen sind
-        Art. 6 Abs. 1 lit. b DSGVO bei Vertrags- oder Pilotbezug und Art. 6 Abs. 1 lit. f DSGVO
-        bei allgemeiner Kommunikation.
-      </p>
+      <>
+        <p>
+          Bei Kontakt-, Support-, Pilot- oder Demo-Anfragen können Name, E-Mail-Adresse,
+          Unternehmen, Organisation, Rolle, Nachricht, Kommunikationsverlauf, technische Metadaten
+          und Supportanliegen verarbeitet werden. Zwecke sind Beantwortung der Anfrage, Vorbereitung
+          von Demo oder Pilot, Vertragsanbahnung, Support und Nachweisführung. Rechtsgrundlagen sind
+          Art. 6 Abs. 1 lit. b DSGVO bei Vertrags- oder Pilotbezug und Art. 6 Abs. 1 lit. f DSGVO
+          bei allgemeiner Kommunikation.
+        </p>
+        <p>
+          Bei aktiviertem Supportverlauf werden eigene Fragen, Antworten, Zeitpunkte und
+          ausgewählter Hilfekontext dem angemeldeten Konto und aktuellen Workspace zugeordnet,
+          damit das Gespräch später fortgesetzt werden kann. Eine Übergabe des Gesprächs an
+          den Plattform-Owner erfolgt nur nach gesonderter Freigabe des ausgewählten Verlaufs.
+          Spätere Nachrichten werden dadurch nicht automatisch mit freigegeben. Bitte keine
+          Passwörter, Zugangsschlüssel oder unnötigen sensiblen Daten in den Supportchat eingeben.
+        </p>
+        <p>
+          Eigene gespeicherte Supportnachrichten und Übergabehinweise werden im eingerichteten
+          Löschbetrieb nach 30 Tagen entfernt. Abgeschlossene Fälle der Support-Zentrale werden
+          nach 30 Tagen ab Abschluss entfernt; abgelaufene offene Prüfungen nach 31 Tagen ab
+          ihrem Ablauf. Abgeschlossene technische Löschlaufprotokolle werden nach 90 Tagen
+          entfernt. Diese Regeln betreffen den Supportbestand und sind keine Zusage zur
+          sofortigen Entfernung sämtlicher Konto-, Provider- oder Backup-Daten.
+        </p>
+        <p>
+          Der eigene aufbewahrte Supportverlauf kann bei aktivierter Funktion im angemeldeten
+          Hilfebereich als JSON heruntergeladen und ausdrücklich gelöscht werden. Dies ersetzt
+          keine vollständige Konto- oder Workspace-Auskunft beziehungsweise Löschung.
+          Weitere Datenschutzanfragen und Fragen zum Umfang können an
+          <a href="mailto:fanmind@fanmind.ch"> fanmind@fanmind.ch</a> gerichtet werden.
+          Die Zuordnung und Identität werden vor der Bereitstellung geprüft.
+        </p>
+      </>
     ),
   },
   {
@@ -595,7 +644,7 @@ const sections: PrivacySection[] = [
           Betroffene Personen haben nach Maßgabe der DSGVO Rechte auf Auskunft, Berichtigung,
           Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerspruch, Widerruf von
           Einwilligungen und Beschwerde bei einer Aufsichtsbehörde. Anfragen können an
-          <a href="mailto:kontakt@fanmind.ch"> kontakt@fanmind.ch</a> gerichtet werden.
+          <a href="mailto:fanmind@fanmind.ch"> fanmind@fanmind.ch</a> gerichtet werden.
         </p>
         <p>
           Zuständige Aufsichtsbehörde in Österreich ist die Österreichische Datenschutzbehörde,
@@ -641,7 +690,7 @@ export default function DatenschutzPage() {
         <section className={styles.hero} aria-labelledby="privacy-title">
           <h1 id="privacy-title">Datenschutzerklärung</h1>
           <p>Transparenz zur Verarbeitung personenbezogener Daten bei FanMind</p>
-          <span className={styles.statusPill}>▣ Stand: Juli 2026</span>
+          <span className={styles.statusPill}>▣ Stand: 6. November 2026</span>
         </section>
 
         <article className={styles.timeline} aria-label="Datenschutzerklärung Inhalt">
@@ -660,3 +709,4 @@ export default function DatenschutzPage() {
     </main>
   );
 }
+

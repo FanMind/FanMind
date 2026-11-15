@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 
 import {
   isTrustedFanMindMutationRequest,
@@ -14,6 +16,72 @@ import {
   evaluateCurrentPaymentTermsUserEvidence,
   isPaymentTermsActivationEnabled,
 } from "../src/lib/paymentTermsActivationPolicy.mjs";
+
+const supportOwnerId="10000000-0000-4000-8000-000000000001";
+const supportNotificationId="10000000-0000-4000-8000-000000000002";
+async function ownerOverviewFixture({ackResult=true,reopened=false,legacyOrigin=false}={}) {
+  const state={owner:true,authenticated:true,enabled:true,allowed:true,acknowledged:false,calls:[],failure:false,readbackFailure:false};
+  const load=(source,bindings)=>{const exports={};runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,TextDecoder,Date,require:name=>{assert.ok(Object.hasOwn(bindings,name),name);return bindings[name];}});return exports;};
+  const notification={id:supportNotificationId,workspace_id:null,reference_id:supportNotificationId,code:"security_boundary",created_at:"2026-11-13T00:00:00Z",acknowledged_at:null,occurrences:1};
+  let source=await readFile("src/app/api/admin/support/overview/route.ts","utf8");
+  if(legacyOrigin)source=source.replace('if(!isTrustedFanMindMutationRequest(request))return fail(403);','if(request.headers.get("origin")!==request.nextUrl.origin)return fail(403);');
+  const route=load(source,{
+    "next/server":{NextResponse:{json:(body,options)=>Response.json(body,options)}},
+    "@/lib/httpMutationPolicy.mjs":{isTrustedFanMindMutationRequest:r=>isTrustedFanMindMutationRequest(r,{NEXT_PUBLIC_APP_URL:"https://fanmind.ch"})},
+    "@/lib/supportCentreRequest":load(await readFile("src/lib/supportCentreRequest.ts","utf8"),{}),
+    "@/lib/supportCentrePolicy":load(await readFile("src/lib/supportCentrePolicy.ts","utf8"),{}),
+    "@/lib/supportContinuityServer":{safeSupportTurns:v=>v},
+    "@/lib/sharedRateLimit":{consumeSharedRateLimit:async()=>({allowed:state.allowed})},
+    "@/lib/supportCentreServer":{
+      supportCentreEnabled:()=>state.enabled,
+      supportCentreActor:async()=>state.authenticated?{user:{id:supportOwnerId},owner:state.owner}:null,
+      listOwnerSupportNotifications:async()=>{if(state.readbackFailure)throw Error("private readback diagnostic");return state.acknowledged&&!reopened?[]:[notification];},
+      supportCentreDatabase:async(path,body)=>{
+        state.calls.push(path);assert.equal(body.p_actor,supportOwnerId);
+        if(state.failure)throw Error("private database diagnostic");
+        if(path==="rpc/support_retention_health")return {healthy:true};
+        if(path==="rpc/support_centre_recover")return 0;
+        assert.equal(path,"rpc/support_centre_ack");assert.equal(body.p_notification,supportNotificationId);
+        if(ackResult===true)state.acknowledged=true;
+        return ackResult;
+      },
+    },
+  });
+  const request=(body={action:"ack",id:supportNotificationId},origin="https://fanmind.ch",site="same-origin")=>{
+    const r=new Request("http://127.0.0.1:3000/api/admin/support/overview",{method:"POST",headers:{"content-type":"application/json",...(origin?{origin}:{}),"sec-fetch-site":site},body:JSON.stringify(body)});r.nextUrl=new URL(r.url);return r;
+  };
+  const read=()=>{const r=new Request("http://127.0.0.1:3000/api/admin/support/overview");r.nextUrl=new URL(r.url);return route.GET(r);};
+  return {route,state,request,read};
+}
+
+test("Owner alarm acknowledgment persists across fresh reads behind the configured HTTPS proxy",async()=>{
+  const f=await ownerOverviewFixture();assert.equal((await (await f.read()).json()).items.length,1);
+  for(let attempt=0;attempt<2;attempt++){
+    const response=await f.route.POST(f.request());assert.equal(response.status,200);assert.deepEqual(await response.json(),{ok:true});assert.equal(response.headers.get("cache-control"),"no-store");
+    assert.deepEqual((await (await f.read()).json()).items,[]);
+  }
+});
+
+test("the old Production origin comparison blocks the same Owner acknowledgment before any database mutation",async()=>{
+  const f=await ownerOverviewFixture({legacyOrigin:true});assert.equal((await f.route.POST(f.request())).status,403);assert.deepEqual(f.state.calls,[]);
+});
+
+test("Owner acknowledgment never reports success for an unconfirmed RPC or a reopened notification",async()=>{
+  for(const ackResult of [false,null,{},[],0,"true"]){const f=await ownerOverviewFixture({ackResult});assert.equal((await f.route.POST(f.request())).status,409);assert.equal((await (await f.read()).json()).items.length,1);}
+  const reopened=await ownerOverviewFixture({reopened:true});assert.equal((await reopened.route.POST(reopened.request())).status,409);
+  const failed=await ownerOverviewFixture();failed.state.failure=true;const result=await failed.route.POST(failed.request());assert.equal(result.status,503);assert.doesNotMatch(await result.text(),/private database/);
+  const ambiguous=await ownerOverviewFixture();ambiguous.state.readbackFailure=true;
+  const unconfirmed=await ambiguous.route.POST(ambiguous.request());assert.equal(unconfirmed.status,503);assert.doesNotMatch(await unconfirmed.text(),/private readback/);
+  assert.equal(ambiguous.state.acknowledged,true);ambiguous.state.readbackFailure=false;
+  assert.equal((await ambiguous.route.POST(ambiguous.request())).status,200);assert.deepEqual((await (await ambiguous.read()).json()).items,[]);
+});
+
+test("Owner acknowledgment retains origin, authority, rate, feature and exact-body boundaries",async()=>{
+  for(const [origin,site] of [[null,"same-origin"],["https://foreign.invalid","same-origin"],["https://fanmind.ch","cross-site"]]){const f=await ownerOverviewFixture();assert.equal((await f.route.POST(f.request(undefined,origin,site))).status,403);assert.deepEqual(f.state.calls,[]);}
+  for(const [key,status] of [["owner",403],["authenticated",403],["enabled",404],["allowed",429]]){const f=await ownerOverviewFixture();f.state[key]=false;assert.equal((await f.route.POST(f.request())).status,status);assert.deepEqual(f.state.calls,[]);}
+  for(const body of [{action:"ack",id:"invalid"},{action:"ack",id:supportNotificationId,p_actor:supportOwnerId},{action:"ack",id:supportNotificationId,workspace_id:supportOwnerId}]){const f=await ownerOverviewFixture();assert.equal((await f.route.POST(f.request(body))).status,400);assert.deepEqual(f.state.calls,[]);}
+  const recovery=await ownerOverviewFixture();const response=await recovery.route.POST(recovery.request({action:"recover"}));assert.equal(response.status,200);assert.deepEqual(await response.json(),{repaired:0});assert.deepEqual(recovery.state.calls,["rpc/support_centre_recover"]);
+});
 
 function mutationRequest({
   url = "https://fanmind.ch/api/test",

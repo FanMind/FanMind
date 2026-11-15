@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "asOf": "2026-07-30",
+  "asOf": "2026-11-08",
   "operator": {
-    "legalName": "Bernd Guggenberger",
+    "legalName": "Brigitte Erika Guggenberger",
     "legalForm": "Einzelunternehmen",
     "businessName": "FanMind",
-    "address": "Turnerstraße 18, 2345 Brunn am Gebirge, Österreich",
+    "address": "Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich",
     "tradeAuthority": "Bezirkshauptmannschaft Mödling",
     "vatId": {
-      "status": "pending",
-      "value": null,
-      "confirmedAt": null,
-      "evidenceRef": null
+      "status": "confirmed",
+      "value": "ATU66320126",
+      "confirmedAt": "2026-11-08",
+      "evidenceRef": "sha256:2edf2c8a98f835f2c8b6c087e7347141cf0c6a560e2283f63d90aa4f70e5ca04"
     },
     "companyRegisterNumber": {
       "status": "pending",
@@ -26,10 +26,10 @@
       "evidenceRef": null
     },
     "gisaNumber": {
-      "status": "pending",
-      "value": null,
-      "confirmedAt": null,
-      "evidenceRef": null
+      "status": "confirmed",
+      "value": "40314440",
+      "confirmedAt": "2026-11-06",
+      "evidenceRef": "sha256:b652865a5c5d15399e898684aea055428403f8850258dc1f30380703d343b4f8"
     },
     "taxMode": {
       "status": "pending",

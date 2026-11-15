@@ -1,5 +1,35 @@
 begin;
 
+-- Dormant authoritative projection. No runtime/Stripe writer is installed here.
+-- Missing/inactive rows deny admission. Only a separately reviewed billing
+-- projection may populate this table; browsers and service_role cannot write it.
+create table public.ai_capacity_workspace_entitlements (
+  workspace_id uuid primary key references public.workspaces(id) on delete restrict,
+  billing_contract_version text not null check (billing_contract_version = 'capacity_v2'),
+  package_id text not null check (package_id in ('capacity_99','capacity_199','capacity_312')),
+  billing_period_key text not null check (btrim(billing_period_key) <> ''),
+  period_start timestamptz not null,
+  period_end timestamptz not null check (period_end > period_start),
+  revision bigint not null check (revision > 0),
+  active boolean not null default false,
+  source_fingerprint text not null check (source_fingerprint ~ '^[0-9a-f]{64}$')
+);
+alter table public.ai_capacity_workspace_entitlements enable row level security;
+revoke all on table public.ai_capacity_workspace_entitlements from public, anon, authenticated, service_role;
+grant select on table public.ai_capacity_workspace_entitlements to service_role;
+
+-- This unapplied lifecycle requires an empty first-install reservation table.
+-- No invented provenance/backfill for historical reservations.
+alter table public.ai_capacity_reservations
+  add column policy_revision bigint not null check (policy_revision > 0),
+  add column entitlement_revision bigint not null check (entitlement_revision > 0),
+  add column provider text not null,
+  add column model text not null,
+  add column pricing_version text not null,
+  add column fx_version text not null,
+  add column settlement_evidence jsonb;
+
+
 alter table public.ai_capacity_ledger_events
   drop constraint if exists ai_capacity_ledger_events_event_type_check;
 
@@ -41,12 +71,15 @@ set row_security = off
 as $function$
 declare
   v_id uuid;
+  v_entitlement public.ai_capacity_workspace_entitlements%rowtype;
+  v_budget bigint;
   v_existing public.ai_capacity_grants%rowtype;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
   end if;
   if p_workspace_id is null
+     or p_grant_kind is null
      or p_grant_kind not in ('included_period','purchased')
      or p_grant_key is null
      or btrim(p_grant_key) = ''
@@ -55,7 +88,8 @@ begin
     raise exception using errcode = '22023', message = 'ai_capacity_grant_invalid';
   end if;
   if p_grant_kind = 'included_period' then
-    if p_package_id not in ('capacity_99','capacity_199','capacity_312')
+    if p_package_id is null
+       or p_package_id not in ('capacity_99','capacity_199','capacity_312')
        or p_billing_period_key is null
        or btrim(p_billing_period_key) = ''
        or p_period_start is null
@@ -66,27 +100,6 @@ begin
   end if;
 
   perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));
-
-  select *
-    into v_policy
-    from public.ai_capacity_admin_policy
-   where singleton_id = 1
-   for share;
-
-  if not found then
-    raise exception using errcode = '23514', message = 'ai_capacity_policy_missing';
-  end if;
-  if v_policy.revision is distinct from p_expected_policy_revision then
-    raise exception using errcode = '40001', message = 'ai_capacity_policy_revision_conflict';
-  end if;
-  if not v_policy.global_capacity_enabled or v_policy.emergency_spend_freeze then
-    raise exception using errcode = '23514', message = 'ai_capacity_admission_closed';
-  end if;
-  if (p_quality_mode = 'fast' and not v_policy.fast_enabled)
-     or (p_quality_mode = 'balanced' and not v_policy.balanced_enabled)
-     or (p_quality_mode = 'premium' and not v_policy.premium_enabled) then
-    raise exception using errcode = '23514', message = 'ai_capacity_quality_mode_disabled';
-  end if;
 
   select *
     into v_existing
@@ -117,6 +130,36 @@ begin
     if found then
       raise exception using errcode = '23505', message = 'ai_capacity_included_period_idempotency_conflict';
     end if;
+  end if;
+
+  -- A service grant must name an existing Workspace even for purchased credit.
+  perform 1 from public.workspaces where id = p_workspace_id for key share;
+  if not found then
+    raise exception using errcode = '23514', message = 'ai_capacity_workspace_missing';
+  end if;
+  if p_grant_kind = 'included_period' then
+    select * into v_entitlement from public.ai_capacity_workspace_entitlements
+     where workspace_id = p_workspace_id for share;
+    if not found or not v_entitlement.active
+       or v_entitlement.billing_contract_version <> 'capacity_v2'
+       or v_entitlement.package_id is distinct from p_package_id
+       or v_entitlement.billing_period_key is distinct from p_billing_period_key
+       or v_entitlement.period_start is distinct from p_period_start
+       or v_entitlement.period_end is distinct from p_period_end
+       or p_expires_at is not null then
+      raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';
+    end if;
+    select case p_package_id
+      when 'capacity_99' then package_99_budget_eur_microcents
+      when 'capacity_199' then package_199_budget_eur_microcents
+      when 'capacity_312' then package_312_budget_eur_microcents end
+      into v_budget from public.ai_capacity_admin_policy where singleton_id = 1 for share;
+    if v_budget is null or v_budget is distinct from p_granted_eur_microcents then
+      raise exception using errcode = '23514', message = 'ai_capacity_grant_budget_mismatch';
+    end if;
+  elsif p_package_id is not null or p_billing_period_key is not null
+     or p_period_start is not null or p_period_end is not null then
+    raise exception using errcode = '22023', message = 'ai_capacity_grant_invalid';
   end if;
 
   insert into public.ai_capacity_grants (
@@ -159,6 +202,7 @@ create or replace function public.ai_capacity_reserve(
   p_quality_mode text,
   p_reserved_eur_microcents bigint,
   p_expected_policy_revision bigint,
+  p_expected_entitlement_revision bigint,
   p_provider text,
   p_model text,
   p_pricing_version text,
@@ -184,6 +228,7 @@ declare
   v_take bigint;
   v_grant record;
   v_policy public.ai_capacity_admin_policy%rowtype;
+  v_entitlement public.ai_capacity_workspace_entitlements%rowtype;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
@@ -191,12 +236,15 @@ begin
   if p_workspace_id is null
      or p_generation_key is null or btrim(p_generation_key) = ''
      or p_billing_period_key is null or btrim(p_billing_period_key) = ''
+     or p_package_id is null
      or p_package_id not in ('capacity_99','capacity_199','capacity_312')
+     or p_quality_mode is null
      or p_quality_mode not in ('fast','balanced','premium')
      or p_reserved_eur_microcents is null
      or p_reserved_eur_microcents <= 0
      or p_expected_policy_revision is null
      or p_expected_policy_revision < 1
+     or p_expected_entitlement_revision is null or p_expected_entitlement_revision < 1
      or p_provider is null or btrim(p_provider) = ''
      or p_model is null or btrim(p_model) = ''
      or p_pricing_version is null or btrim(p_pricing_version) = ''
@@ -205,6 +253,59 @@ begin
   end if;
 
   perform pg_advisory_xact_lock(hashtextextended(p_workspace_id::text, 41001));
+
+  -- Lock the authoritative entitlement and policy until transaction end.
+  -- No sales switch: disabling new package sales does not revoke existing usage.
+  select * into v_entitlement from public.ai_capacity_workspace_entitlements
+   where workspace_id = p_workspace_id for share;
+  if not found or not v_entitlement.active
+     or v_entitlement.billing_contract_version <> 'capacity_v2'
+     or v_entitlement.package_id is distinct from p_package_id
+     or v_entitlement.billing_period_key is distinct from p_billing_period_key
+ then
+    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';
+  end if;
+  if exists (
+    select 1 from public.ai_capacity_grants g
+     where g.workspace_id = p_workspace_id and g.grant_kind = 'included_period'
+       and g.billing_period_key = p_billing_period_key
+       and (g.package_id is distinct from v_entitlement.package_id
+         or g.period_start is distinct from v_entitlement.period_start
+         or g.period_end is distinct from v_entitlement.period_end)
+  ) then
+    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';
+  end if;
+  if v_entitlement.revision is distinct from p_expected_entitlement_revision then
+    raise exception using errcode = '40001', message = 'ai_capacity_entitlement_revision_conflict';
+  end if;
+
+  select *
+    into v_policy
+    from public.ai_capacity_admin_policy
+   where singleton_id = 1
+   for share;
+
+  if not found then
+    raise exception using errcode = '23514', message = 'ai_capacity_policy_missing';
+  end if;
+  if v_policy.revision is distinct from p_expected_policy_revision then
+    raise exception using errcode = '40001', message = 'ai_capacity_policy_revision_conflict';
+  end if;
+  if not v_policy.global_capacity_enabled or v_policy.emergency_spend_freeze then
+    raise exception using errcode = '23514', message = 'ai_capacity_admission_closed';
+  end if;
+  if (p_quality_mode = 'fast' and not v_policy.fast_enabled)
+     or (p_quality_mode = 'balanced' and not v_policy.balanced_enabled)
+     or (p_quality_mode = 'premium' and not v_policy.premium_enabled) then
+    raise exception using errcode = '23514', message = 'ai_capacity_quality_mode_disabled';
+  end if;
+
+  -- Time can advance while either SHARE lock waits. Check only after both
+  -- authoritative rows are locked, immediately before replay/new reservation.
+  if v_entitlement.period_start > clock_timestamp()
+     or v_entitlement.period_end <= clock_timestamp() then
+    raise exception using errcode = '23514', message = 'ai_capacity_entitlement_invalid';
+  end if;
 
   select *
     into v_existing
@@ -216,7 +317,13 @@ begin
     if v_existing.billing_period_key is distinct from p_billing_period_key
        or v_existing.package_id is distinct from p_package_id
        or v_existing.quality_mode is distinct from p_quality_mode
-       or v_existing.reserved_eur_microcents is distinct from p_reserved_eur_microcents then
+       or v_existing.reserved_eur_microcents is distinct from p_reserved_eur_microcents
+       or v_existing.policy_revision is distinct from p_expected_policy_revision
+       or v_existing.entitlement_revision is distinct from p_expected_entitlement_revision
+       or v_existing.provider is distinct from p_provider
+       or v_existing.model is distinct from p_model
+       or v_existing.pricing_version is distinct from p_pricing_version
+       or v_existing.fx_version is distinct from p_fx_version then
       raise exception using errcode = '23505', message = 'ai_capacity_reservation_idempotency_conflict';
     end if;
     if v_existing.state <> 'reserved' then
@@ -228,10 +335,12 @@ begin
 
   insert into public.ai_capacity_reservations (
     workspace_id, generation_key, billing_period_key, package_id, quality_mode,
-    reserved_eur_microcents, state
+    reserved_eur_microcents, state, policy_revision, entitlement_revision,
+    provider, model, pricing_version, fx_version
   ) values (
     p_workspace_id, p_generation_key, p_billing_period_key, p_package_id, p_quality_mode,
-    p_reserved_eur_microcents, 'reserved'
+    p_reserved_eur_microcents, 'reserved', p_expected_policy_revision, p_expected_entitlement_revision,
+    p_provider, p_model, p_pricing_version, p_fx_version
   )
   returning id into v_reservation_id;
 
@@ -267,11 +376,14 @@ begin
           g.grant_kind = 'included_period'
           and g.billing_period_key = p_billing_period_key
           and g.package_id = p_package_id
-          and g.period_end > statement_timestamp()
+          and g.period_start = v_entitlement.period_start
+          and g.period_end = v_entitlement.period_end
+          and g.period_start <= clock_timestamp()
+          and g.period_end > clock_timestamp()
         )
         or (
           g.grant_kind = 'purchased'
-          and (g.expires_at is null or g.expires_at > statement_timestamp())
+          and (g.expires_at is null or g.expires_at > clock_timestamp())
         )
       )
     order by
@@ -313,9 +425,9 @@ begin
 end
 $function$;
 
-revoke all on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)
+revoke all on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,bigint,text,text,text,text,jsonb)
   from public, anon, authenticated;
-grant execute on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,text,text,text,text,jsonb)
+grant execute on function public.ai_capacity_reserve(uuid,text,text,text,text,bigint,bigint,bigint,text,text,text,text,jsonb)
   to service_role;
 
 create or replace function public.ai_capacity_settle(
@@ -350,6 +462,7 @@ declare
   v_release bigint;
   v_allocation record;
   v_reconciliation public.ai_capacity_ledger_events%rowtype;
+  v_evidence jsonb;
 begin
   if auth.role() is distinct from 'service_role' then
     raise exception using errcode = '42501', message = 'ai_capacity_service_role_required';
@@ -365,14 +478,18 @@ begin
      or p_cache_write_tokens is null or p_cache_write_tokens < 0
      or p_output_tokens is null or p_output_tokens < 0
      or p_reasoning_tokens is null or p_reasoning_tokens < 0
-     or p_cached_input_tokens > p_input_tokens then
+     or p_cached_input_tokens + p_cache_write_tokens > p_input_tokens
+     or p_reasoning_tokens > p_output_tokens then
     raise exception using errcode = '22023', message = 'ai_capacity_settlement_invalid';
   end if;
 
-  select * into v_reservation
-    from public.ai_capacity_reservations
-   where id = p_reservation_id
-   for update;
+  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));
+  select * into v_reservation from public.ai_capacity_reservations
+   where id = p_reservation_id for update;
 
   if not found then
     raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
@@ -380,8 +497,18 @@ begin
 
   perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));
 
+  if v_reservation.provider is distinct from p_provider
+     or v_reservation.model is distinct from p_model
+     or v_reservation.pricing_version is distinct from p_pricing_version
+     or v_reservation.fx_version is distinct from p_fx_version then
+    raise exception using errcode = '23505', message = 'ai_capacity_settlement_idempotency_conflict';
+  end if;
+  v_evidence := jsonb_build_array(p_actual_eur_microcents,p_provider,p_model,
+    p_input_tokens,p_cached_input_tokens,p_cache_write_tokens,p_output_tokens,
+    p_reasoning_tokens,p_pricing_version,p_fx_version);
+
   if v_reservation.state = 'settled' then
-    if v_reservation.settled_eur_microcents is distinct from p_actual_eur_microcents then
+    if v_reservation.settlement_evidence is distinct from v_evidence then
       raise exception using errcode = '23505', message = 'ai_capacity_settlement_idempotency_conflict';
     end if;
     return query
@@ -393,9 +520,9 @@ begin
   if v_reservation.state = 'reconciliation_required' then
     select *
       into v_reconciliation
-      from public.ai_capacity_ledger_events
-     where reservation_id = v_reservation.id
-       and event_type = 'reservation_reconciliation_required'
+      from public.ai_capacity_ledger_events e
+     where e.reservation_id = v_reservation.id
+       and e.event_type = 'reservation_reconciliation_required'
      order by occurred_at, id
      limit 1;
 
@@ -469,10 +596,10 @@ begin
     v_settle := least(v_remaining, v_allocation.reserved_eur_microcents);
     v_release := v_allocation.reserved_eur_microcents - v_settle;
 
-    update public.ai_capacity_reservation_allocations
+    update public.ai_capacity_reservation_allocations as allocation
        set settled_eur_microcents = v_settle
-     where reservation_id = v_reservation.id
-       and grant_id = v_allocation.grant_id;
+     where allocation.reservation_id = v_reservation.id
+       and allocation.grant_id = v_allocation.grant_id;
 
     if v_settle > 0 then
       insert into public.ai_capacity_ledger_events (
@@ -509,6 +636,7 @@ begin
 
   update public.ai_capacity_reservations
      set state = 'settled',
+         settlement_evidence = v_evidence,
          settled_eur_microcents = p_actual_eur_microcents,
          updated_at = statement_timestamp()
    where id = v_reservation.id;
@@ -551,10 +679,13 @@ begin
     raise exception using errcode = '22023', message = 'ai_capacity_release_invalid';
   end if;
 
-  select * into v_reservation
-    from public.ai_capacity_reservations
-   where id = p_reservation_id
-   for update;
+  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));
+  select * into v_reservation from public.ai_capacity_reservations
+   where id = p_reservation_id for update;
 
   if not found then
     raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
@@ -626,10 +757,13 @@ begin
     raise exception using errcode = '22023', message = 'ai_capacity_indeterminate_invalid';
   end if;
 
-  select * into v_reservation
-    from public.ai_capacity_reservations
-   where id = p_reservation_id
-   for update;
+  select * into v_reservation from public.ai_capacity_reservations where id = p_reservation_id;
+  if not found then
+    raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended(v_reservation.workspace_id::text, 41001));
+  select * into v_reservation from public.ai_capacity_reservations
+   where id = p_reservation_id for update;
 
   if not found then
     raise exception using errcode = 'P0002', message = 'ai_capacity_reservation_missing';
@@ -793,9 +927,10 @@ as $function$
     where g.workspace_id = p_workspace_id
       and g.reversed_eur_microcents < g.granted_eur_microcents
       and (
-        (g.grant_kind = 'included_period' and g.period_end > statement_timestamp())
+        (g.grant_kind = 'included_period' and g.period_start <= clock_timestamp()
+          and g.period_end > clock_timestamp())
         or
-        (g.grant_kind = 'purchased' and (g.expires_at is null or g.expires_at > statement_timestamp()))
+        (g.grant_kind = 'purchased' and (g.expires_at is null or g.expires_at > clock_timestamp()))
       )
   ),
   usage_by_grant as (

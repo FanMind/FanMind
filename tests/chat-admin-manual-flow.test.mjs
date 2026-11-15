@@ -1,4 +1,10 @@
+import "./chat-admin-media-acceptance.cases.mjs";
+import "./staging-support-media-runtime.cases.mjs";
+import { CHAT_ADMIN_RESPONSE_TIMEOUT_MS, CHAT_ADMIN_FLOW_TIMEOUT_MS, CHAT_ADMIN_RUNNER_TIMEOUT_MS } from "../e2e-chatadmin-staging/response-budget.mjs";
+import { CHAT_ADMIN_MODEL_TIMEOUT_MS } from "../src/lib/chatAdminModelPolicy.mjs";
+import { classifyManualBrowserFailure } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import test from "node:test";
+import { EventEmitter } from "node:events";
 import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -6,15 +12,29 @@ import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
-  validateManualFlowEnvironment, verifyManualFlowRelease,
+  validateManualFlowEnvironment, verifyManualFlowRelease, fetchManualFlowRelease, runManualFlowPostBrowserPhase,
   buildManualFlowSql, runWithGuaranteedCleanup,
   completeManualFlowCleanup,
   reserveManualFlowReceipt, authorizeReservedManualFlow,
   runManualBrowser, runManualFlowProbe,
+  createManualFlowReceiptDataIds,
+  MANUAL_BROWSER_TIMEOUT_MS,
 } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
 import { initializeBrowserDiagnostic, readBrowserDiagnostic, updateBrowserDiagnostic, requireSuccessfulProbe, formatBrowserDiagnostic } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
 import { canonicalChatAdminFixtureId } from "../e2e-chatadmin-staging/fixture-identity.mjs";
 import { installChatAdminNetworkBoundary, chatAdminRequestAllowed } from "../e2e-chatadmin-staging/network-boundary.mjs";
+import { assertReplyPriceEvidence, monetaryEvidence } from "../e2e-chatadmin-staging/offer-evidence.mjs";
+import { parseChatAdminUsageHeader, validateChatAdminUsageWitness, CHAT_ADMIN_USAGE_HEADER } from "../src/lib/chatAdminUsageWitness.mjs";
+import { expectedManualFlowCounts } from "../scripts/operations/chat-admin-manual-flow-staging.mjs";
+import { recordBrowserUsageWitness } from "../e2e-chatadmin-staging/browser-diagnostic.mjs";
+
+function witnessFixture(errors=0) {
+  const uuid=(prefix,index)=>`${(prefix+index).toString(16)}-1111-4111-8111-111111111111`;
+  return Array.from({length:10},(_,index)=>({generationId:uuid(0xca000000,index),attempts:[
+    ...(index<errors?[{id:uuid(0xcb000000,index),status:'error'}]:[]),
+    {id:uuid(0xcc000000,index),status:'ok'},
+  ]}));
+}
 
 const ids = Array.from({length:10}, (_, index) => `${String(index+1).repeat(8)}-1111-4111-8111-${String(index+1).repeat(12)}`);
 const keys = ["STAGING_WORKSPACE_ID","SECOND_WORKSPACE_ID","OWNER_ID","MEMBER_ID","FOREIGN_OWNER_ID","PLATFORM_ADMIN_ID","CHARACTER_A_ID","CHARACTER_B_ID","CONVERSATION_A_ID","CONVERSATION_B_ID"];
@@ -31,6 +51,7 @@ const env = {
   PGSSLROOTCERT:"/repo/config/certificates/supabase-root-2021-ca.crt",
   FANMIND_ENABLE_NON_PRODUCTION_WRITES:"true", FANMIND_NON_PRODUCTION_WRITE_ACK:"I_UNDERSTAND_NON_PRODUCTION_ONLY",
   FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-manual-flow",
+  FANMIND_CHAT_ADMIN_TASK_ID:"FM-ADMINCHAT-STAGING-HARNESS-20261011-01",
   FANMIND_STAGING_E2E_EMAIL:"primary-staging@example.invalid", FANMIND_STAGING_E2E_PASSWORD:"synthetic-pass-primary",
   FANMIND_STAGING_E2E_SECONDARY_EMAIL:"secondary-staging@example.invalid", FANMIND_STAGING_E2E_SECONDARY_PASSWORD:"synthetic-pass-secondary",
   FANMIND_ADMIN_EMAILS:"admin-staging@example.invalid", FANMIND_STAGING_ADMIN_E2E_EMAIL:"admin-staging@example.invalid", FANMIND_STAGING_ADMIN_E2E_PASSWORD:"synthetic-pass-admin",
@@ -50,6 +71,50 @@ test("actual Playwright CLI collects the protected probe and imports its ESM dia
   assert.match(result.stdout,/Total: 1 test in 1 file/u);
 });
 
+test("the browser entry assertion matches the rendered page source",()=>{
+  const page=readFileSync(new URL("../src/app/chatadmin/page.tsx",import.meta.url),"utf8");
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  assert.match(page,/<h1>Creator CRM<\/h1>/u);
+  assert.match(browser,/getByRole\("heading",\{name:"Creator CRM",exact:true\}\)/u);
+  assert.doesNotMatch(browser,/getByRole\("heading",\{name:"ChatAdmin",exact:true\}\)/u);
+});
+
+test("all three browser suggestions require exact numeric offer evidence",()=>{
+  assert.deepEqual(monetaryEvidence("EUR 10,00 statt 110 EUR"),[{currency:"EUR",minor:1000},{currency:"EUR",minor:11000}]);
+  assert.deepEqual(monetaryEvidence("EUR 999"),[{currency:"EUR",minor:99900}]);
+  assert.doesNotThrow(()=>assertReplyPriceEvidence(["Foto für 10 EUR","EUR 10,00 für das Foto","Das Foto kostet €10"],{currency:"EUR",minor:1000}));
+  assert.throws(()=>assertReplyPriceEvidence(["Foto für 10 EUR","Foto für 110 EUR","Foto für 10 EUR"],{currency:"EUR",minor:1000}),/offer_price_mismatch/u);
+  assert.throws(()=>assertReplyPriceEvidence(["Video für 20 EUR","Character B Video für 61 EUR","Video für 20 EUR"],{currency:"EUR",minor:2000}),/offer_price_mismatch/u);
+  assert.throws(()=>assertReplyPriceEvidence(["Privates Foto für 25 EUR","Privates Foto für 999 EUR","Privates Foto für 25 EUR"],{currency:"EUR",minor:2500}),/offer_price_mismatch/u);
+  assert.doesNotThrow(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Dieses Angebot ist nicht verfügbar","Dazu kann ich nichts anbieten"],null));
+  assert.throws(()=>assertReplyPriceEvidence(["Kein aktives Angebot","Doch für 71 EUR","Dazu kann ich nichts anbieten"],null),/unavailable_offer_price/u);
+});
+
+test("the authenticated browser keeps state authority, UI deactivation and origin negatives",()=>{
+  const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  for(const evidence of ["stale_character_revision","character_unavailable","untrusted_origin","secondaryReply","resource_forbidden"])assert.ok(source.includes(evidence),`missing browser negative: ${evidence}`);
+  for(const evidence of [
+    'getByRole("button",{name:"Deaktivieren",exact:true}).click()',
+    'getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(3)',
+    'getByRole("button",{name:"3 KI-Vorschläge anzeigen",exact:true})).toHaveCount(4)',
+    'getByLabel("Neue eingehende Fan-Nachricht").fill("Synthetische Nachricht an deaktivierten Character B")',
+    'getByRole("button",{name:"3 KI-Antworten erzeugen",exact:true})).toBeDisabled()',
+    'getByText("Vorschlag 1",{exact:true})).toHaveCount(0)',
+    'getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(0)',
+  ])assert.ok(source.includes(evidence),`missing browser UI deactivation evidence: ${evidence}`);
+  assert.ok(source.includes('id:id("CHARACTER_B_ID"),status:"inactive",revision:revisionB+1'));
+  assert.ok(source.includes('character_id:id("CHARACTER_B_ID"),character_revision:inactiveCharacter.revision,fan_id:runId("FAN_B_ID")'));
+  const deactivated=source.indexOf('const inactiveCharacter=await deactivateCharacter(page,"FM Synthetic Character B")');
+  const remounted=source.indexOf('toContainText("Inaktiv")',deactivated);
+  const fanReady=source.indexOf('getByRole("button",{name:"FM Synthetic Fan B öffnen",exact:true})).toBeVisible()',deactivated);
+  const cleared=source.indexOf('getByRole("button",{name:"Kopieren und verwenden",exact:true})).toHaveCount(0)',remounted);
+  const reopened=source.indexOf('await openFan(page,"FM Synthetic Fan B")',deactivated);
+  const changedInput=source.indexOf('getByLabel("Neue eingehende Fan-Nachricht").fill("Synthetische Nachricht an deaktivierten Character B")',deactivated);
+  assert.ok(deactivated>=0&&deactivated<remounted&&remounted<fanReady&&fanReady<cleared&&cleared<reopened&&reopened<changedInput,"current actions must clear on the ready inactive remount before openFan or input invalidation");
+  assert.ok(!source.includes('patchCharacter(page,characterA,"inactive")'));
+  assert.ok(source.includes('patchCharacter(page,inactiveCharacter,"active")'));
+});
+
 test("browser and SQL share strict fixture UUID normalization for the observed trailing carriage return",()=>{
   const rawOwner=`${env.FANMIND_CHAT_ADMIN_OWNER_ID}\r`;
   const validated=validateManualFlowEnvironment({...env,FANMIND_CHAT_ADMIN_OWNER_ID:rawOwner});
@@ -65,6 +130,9 @@ test("browser diagnostics reject private payloads and the parent never forwards 
   try {
     initializeBrowserDiagnostic(current,"probe");
     assert.throws(()=>requireSuccessfulProbe(current));
+    for(const stage of ["semantic_isolation","inactive_offer"]){updateBrowserDiagnostic(current,"probe",{stage});assert.equal(readBrowserDiagnostic(current,"probe").stage,stage);}
+    const diagnosticSource=readFileSync(new URL("../e2e-chatadmin-staging/browser-diagnostic.mjs",import.meta.url),"utf8");
+    assert.match(diagnosticSource,/"\.\/offer-evidence\.mjs"/u);
     for(const patch of [{stage:"private-password"},{url:"https://private.invalid"},{status:"private-token"},{sessionCleanup:"private-response"}])assert.throws(()=>updateBrowserDiagnostic(current,"probe",patch));
     updateBrowserDiagnostic(current,"probe",{stage:"admin_token",status:"4xx"});
     assert.deepEqual(formatBrowserDiagnostic(current,"probe"),["CHAT_ADMIN_MANUAL_MODE=probe","CHAT_ADMIN_MANUAL_STAGE=admin_token","CHAT_ADMIN_MANUAL_OUTCOME=running","CHAT_ADMIN_MANUAL_HTTP=4xx","CHAT_ADMIN_MANUAL_NETWORK=none","CHAT_ADMIN_MANUAL_SESSION_CLEANUP=not_started"]);
@@ -75,10 +143,14 @@ test("browser diagnostics reject private payloads and the parent never forwards 
     writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),source:"d".repeat(64)}));assert.throws(()=>requireSuccessfulProbe(current));
     writeFileSync(probePath,JSON.stringify({...JSON.parse(saved),response:"private-token"}));assert.throws(()=>formatBrowserDiagnostic(current,"probe"));writeFileSync(probePath,saved);
     const output=[];
-    assert.throws(()=>runManualBrowser(current,"acceptance",()=>{
+    let browserOptions;
+    assert.throws(()=>runManualBrowser(current,"acceptance",(_command,_args,options)=>{
+      browserOptions=options;
       updateBrowserDiagnostic(current,"acceptance",{stage:"owner_token",status:"4xx",outcome:"failed",sessionCleanup:"passed"});
       return {status:1,stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token private-response",stderr:"private-password",error:undefined};
     },line=>output.push(line)),/browser/u);
+    assert.equal(browserOptions.timeout,MANUAL_BROWSER_TIMEOUT_MS);
+    assert.ok(MANUAL_BROWSER_TIMEOUT_MS>360_000,"outer runner must outlive the bounded Playwright test timeout");
     assert.ok(output.includes("CHAT_ADMIN_MANUAL_STAGE=owner_token"));
     assert.doesNotMatch(output.join("\n"),/private-token|private-response|private-password/u);
     assert.equal(readBrowserDiagnostic(current,"acceptance").outcome,"failed");
@@ -89,13 +161,36 @@ test("probe network policy blocks fixture and provider writes before route trans
   const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"probe"};
   let handler,transport=0,aborted=0;const reasons=[];
   await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
-  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/characters","POST"]]) {
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/conversations","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/fans","PATCH"],["/api/chatadmin/characters","POST"]]) {
     const url=new URL(path,targets.appOrigin);assert.equal(chatAdminRequestAllowed(url,method,targets),false);
     await handler({request:()=>({url:()=>url.href,method:()=>method}),abort:async()=>{aborted++;},fetch:async()=>{transport++;}});
   }
-  assert.equal(transport,0);assert.equal(aborted,3);assert.deepEqual(reasons,["write","write","write"]);
+  assert.equal(transport,0);assert.equal(aborted,5);assert.deepEqual(reasons,["write","write","write","write","write"]);
   assert.equal(chatAdminRequestAllowed(new URL("/auth/v1/logout",targets.supabaseOrigin),"POST",targets),true);
   assert.equal(chatAdminRequestAllowed(new URL("/api/auth/session",targets.appOrigin),"POST",targets),true);
+  assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/conversations",targets.appOrigin),"POST",{...targets,mode:"acceptance"}),true);
+  assert.equal(chatAdminRequestAllowed(new URL("/api/chatadmin/fans",targets.appOrigin),"POST",{...targets,mode:"acceptance"}),false);
+});
+
+test("Fan tier PATCH transports only in acceptance while other Fan and provider writes stay blocked",async()=>{
+ const targets={appOrigin:"https://staging.fanmind.ch",supabaseOrigin:"https://synthetic.supabase.co",mode:"acceptance"};
+ let handler,fetches=0,fulfills=0,aborts=0;const reasons=[];
+ const boundary=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
+ const request=(url,method)=>({request:()=>({url:()=>url,method:()=>method}),abort:async()=>{aborts++;},fetch:async options=>{assert.equal(options.maxRedirects,0);fetches++;return {status:()=>200,dispose:async()=>{}};},fulfill:async()=>{fulfills++;}});
+ const fanUrl=new URL("/api/chatadmin/fans",targets.appOrigin);
+ assert.equal(chatAdminRequestAllowed(fanUrl,"PATCH",targets),true);
+ await handler(request(fanUrl.href,"PATCH"));assert.equal(fetches,1);assert.equal(fulfills,1);
+ for(const [url,method] of [[fanUrl.href,"POST"],[fanUrl.href,"DELETE"],[new URL("/api/chatadmin/fans/other",targets.appOrigin).href,"PATCH"],[new URL("/rest/v1/chat_character_fans",targets.supabaseOrigin).href,"PATCH"],["https://fanmind.ch/api/chatadmin/fans","PATCH"]]){
+  assert.equal(chatAdminRequestAllowed(new URL(url),method,targets),false);await handler(request(url,method));
+ }
+ assert.equal(chatAdminRequestAllowed(fanUrl,"PATCH",{...targets,mode:"probe"}),false);
+ assert.equal(fetches,1,"denied requests must never reach transport");assert.equal(aborts,5);assert.equal(boundary(),5);assert.deepEqual(reasons,["write","write","write","write","origin"]);await boundary.stop();
+});
+
+test("direct Playwright requests retain the same acceptance write allowlist",()=>{
+  const source=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  assert.ok(source.includes('if(!chatAdminRequestAllowed(new URL(url),options.method??"GET",{appOrigin:APP,supabaseOrigin:SUPABASE,mode:MODE}))throw Error("chat_admin_manual_direct_write")'));
+  assert.doesNotMatch(source,/MODE==="probe"&&!chatAdminRequestAllowed/u);
 });
 
 test("teardown never hides writes that acceptance mode would normally allow",async()=>{
@@ -103,14 +198,14 @@ test("teardown never hides writes that acceptance mode would normally allow",asy
   let handler,fetches=0,aborts=0;const reasons=[];
   const boundary=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{...targets,onViolation:reason=>reasons.push(reason)});
   await boundary.stop();
-  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/characters","PATCH"]])await handler({
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/conversations","POST"],["/api/chatadmin/characters","PATCH"],["/api/chatadmin/fans","PATCH"]])await handler({
     request:()=>({url:()=>`${targets.appOrigin}${path}`,method:()=>method}),
     fetch:async()=>{fetches++;},abort:async()=>{aborts++;},
   });
   assert.equal(fetches,0,"teardown must never forward a write");
-  assert.equal(aborts,2);
-  assert.equal(boundary(),2,"acceptance-authorized writes remain violations once teardown starts");
-  assert.deepEqual(reasons,["write","write"]);
+  assert.equal(aborts,4);
+  assert.equal(boundary(),4,"acceptance-authorized writes remain violations once teardown starts");
+  assert.deepEqual(reasons,["write","write","write","write"]);
 });
 
 test("probe dispatch calls only release verification and the browser probe without preparing fixtures",async()=>{
@@ -131,6 +226,7 @@ test("manual flow accepts only its exact protected Staging request", () => {
     {FANMIND_TARGET_SUPABASE_PROJECT_REF:"productionref123"},
     {FANMIND_ENABLE_NON_PRODUCTION_WRITES:"false"}, {FANMIND_NON_PRODUCTION_WRITE_ACK:""},
     {FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:"run-chat-admin-acceptance"},
+    {FANMIND_CHAT_ADMIN_TASK_ID:"FM-OTHER-TASK"},
     {FANMIND_CHAT_ADMIN_CHARACTER_B_ID:ids[6]}, {PGSSLMODE:"require"}, {PGPASSWORD:"secret"},
     {FANMIND_ADMIN_EMAILS:"stale-admin@example.invalid"}, {FANMIND_STAGING_ADMIN_E2E_EMAIL:env.FANMIND_STAGING_E2E_EMAIL},
     {FANMIND_STAGING_ADMIN_E2E_PASSWORD:""},
@@ -156,7 +252,9 @@ test("reservation is sanitized and cannot authorize mutation without the uploade
   try {
     reserveManualFlowReceipt(current);
     const archived=JSON.parse(readFileSync(recovery,"utf8"));
-    assert.deepEqual(Object.keys(archived),["schemaVersion","sha","target","run","attempt","ids","marker","startedAt","inFlightUncertain"]);
+    assert.deepEqual(Object.keys(archived),["schemaVersion","taskId","sha","target","run","attempt","ids","dataIds","marker","startedAt","inFlightUncertain"]);
+    assert.equal(archived.schemaVersion,2);
+    assert.equal(archived.taskId,"FM-ADMINCHAT-STAGING-HARNESS-20261011-01");
     assert.equal(archived.inFlightUncertain,true,"durable snapshot must require independent reconciliation after interruption");
     assert.deepEqual(Object.keys(archived.ids),keys.filter(key=>key!=="PLATFORM_ADMIN_ID"));
     assert.doesNotMatch(JSON.stringify(archived),new RegExp(ids[5],"u"));
@@ -206,24 +304,48 @@ test("interrupted server requests cannot produce absence proof or retire the rec
 });
 
 test("committed fixtures and cleanup are marker/actor/target bound without upsert or schema changes", () => {
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32))};
   const prepare=buildManualFlowSql("prepare",env,receipt);
   const cleanup=buildManualFlowSql("cleanup",env,receipt);
   assert.match(prepare,/fanmind_staging_fixture_version/u);
   assert.match(prepare,/staging_synthetic_fixture/u);
-  assert.match(prepare,/fixture_not_empty/u);
+  assert.match(prepare,/fixture_identity_occupied/u);
+  assert.match(prepare,/chat_character_fans/u);
+  assert.match(prepare,/FM Synthetic Fan A/u);
   assert.match(prepare,/lock table/u);
   assert.doesNotMatch(prepare,/\b(upsert|on conflict|create table|alter table|truncate)\b/iu);
   assert.match(cleanup,/cleanup_identity_drift/u);
   assert.match(cleanup,/cleanup_incomplete/u);
   assert.match(cleanup,/created_at = '2026-09-26T10:00:00.000Z'/u);
   assert.match(cleanup,/feature = 'chat_admin_reply'/u);
+  assert.match(cleanup,/delete from public.chat_character_messages where/u);
+  assert.match(cleanup,/delete from public.chat_character_conversations where/u);
+  assert.match(cleanup,/delete from public.chat_character_fans where/u);
+  assert.match(cleanup,/chat_character_fans where \(id in \([^\n]+ or character_id in \(/u,"cleanup must reject every unowned fan attached to a reserved Character");
+  assert.match(cleanup,/chat_character_conversations where \(id in \([^\n]+ or character_id in \(/u,"cleanup must reject every unowned conversation below a reserved Character");
+  assert.match(cleanup,/chat_character_messages where \(character_id in \(/u,"cleanup must reject every unowned message below a reserved Character");
+  assert.match(buildManualFlowSql("absence",env,receipt),/auth\.sessions/u);
+  assert.doesNotMatch(cleanup,/auth\.sessions/u,"session residue must fail the independent absence proof without rolling back bounded data cleanup");
+  assert.doesNotMatch(prepare,/exists\(select 1 from public\.chat_characters\)(?:\s|\)|or)/u,"unrelated rows must not block a run");
+  assert.doesNotMatch(cleanup,/delete from public\.chat_(?:characters|character_fans|character_conversations|character_messages);/u,"cleanup must always carry an exact predicate");
   assert.throws(()=>buildManualFlowSql("cleanup",env,{...receipt,marker:"'; delete"}));
 });
 
+test("foreign rows are preserved while exact fixture collisions and interrupted cleanup fail closed",()=>{
+  const marker="e".repeat(32),receipt={marker,startedAt:"2026-10-11T12:00:00.000Z",dataIds:createManualFlowReceiptDataIds(marker)};
+  const prepare=buildManualFlowSql("prepare",env,receipt),cleanup=buildManualFlowSql("cleanup",env,receipt),absence=buildManualFlowSql("absence",env,receipt);
+  assert.doesNotMatch(prepare,/from public\.chat_character_fans\)/u);
+  assert.match(prepare,/id in \('[0-9a-f-]+'::uuid,'[0-9a-f-]+'::uuid\)/u);
+  assert.match(cleanup,/cleanup_identity_drift/u);
+  assert.match(absence,/created_at>='2026-10-11T12:00:00.000Z'::timestamptz/u);
+  const calls=[];
+  assert.throws(()=>completeManualFlowCleanup({receipt:{inFlightUncertain:true},remove:emit=>calls.push(emit),verify:()=>assert.fail("absence must not be claimed"),forget:()=>assert.fail("receipt must survive")}),/inflight_reconciliation_required/u);
+  assert.deepEqual(calls,[false]);
+});
+
 test("foreign denial uses an existing character with exact second-workspace cleanup ownership", () => {
-  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z"};
-  const foreignId=env.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID;
+  const receipt={marker:"f".repeat(32),startedAt:"2026-09-26T10:00:00.000Z",dataIds:createManualFlowReceiptDataIds("f".repeat(32)),usageWitness:witnessFixture()};
+  const foreignId=receipt.dataIds.FOREIGN_CHARACTER_ID;
   const second=env.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID;
   const foreignOwner=env.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID;
   const prepare=buildManualFlowSql("prepare",env,receipt);
@@ -234,7 +356,7 @@ test("foreign denial uses an existing character with exact second-workspace clea
   assert.ok(deletion?.includes(`id='${foreignId}'::uuid and workspace_id='${second}'::uuid and created_by_user_id='${foreignOwner}'::uuid`));
   assert.match(deletion,/bio='FanMind synthetic manual acceptance f{32}' and created_at = '2026-09-26T10:00:00.000Z'/u);
   const verify=buildManualFlowSql("verify",env,receipt);
-  assert.match(verify,/count\(\*\) from public.chat_characters\) <> 3/u);
+  assert.match(verify,/count\(\*\) from public.chat_characters where/u);
   assert.match(verify,/owner_character_isolation/u);
 });
 
@@ -252,4 +374,201 @@ test("workflow uploads only the bounded recovery receipt before writes and alway
   assert.match(workflow,/FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_ID: \$\{\{ steps.recovery.outputs.artifact-id \}\}/u);
   assert.match(workflow,/FANMIND_CHAT_ADMIN_RECOVERY_ARTIFACT_DIGEST: \$\{\{ steps.recovery.outputs.artifact-digest \}\}/u);
   assert.doesNotMatch(workflow,/SERVICE_ROLE|--apply|db push|member-credential/u);
+});
+
+
+test("offer diagnostics distinguish editor, submit, response and persisted reload without logging payloads",()=>{
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  const diagnostic=readFileSync(new URL("../e2e-chatadmin-staging/browser-diagnostic.mjs",import.meta.url),"utf8");
+  for(const stage of ["offers_editor","offers_fields","offers_submit","offers_saved_payload","offers_reload_editor","offers_reload_prices","offers_reload_active","offers_reload_close"]){
+    assert.ok(browser.includes(`mark("${stage}")`));
+    assert.ok(diagnostic.includes(`"${stage}"`));
+  }
+  assert.match(browser,/mark\("offers_saved_payload"\)[\s\S]*recommendedPriceMinor/);
+});
+
+
+test("browser failure classification emits only fixed kinds and cannot forward private error text",()=>{
+  for(const [text,kind] of [
+    ["strict mode violation: private-email@example.invalid","ambiguous_locator"],
+    ["private-value intercepts pointer events","pointer_interception"],
+    ["element is outside of the viewport: private-path","outside_viewport"],
+    ["element is not enabled private-token","disabled_element"],
+    ["element is not visible private-token","hidden_element"],
+    ["Timeout 15000ms exceeded private-response","action_timeout"],
+    ["Error: expect(locator) private-message","assertion"],
+    ["Error: expect(locator).toHaveCount(expected) failed private-path","count_assertion"],
+    ["Error: expect(locator).toHaveValue(expected) failed private-value","value_assertion"],
+    ["Error: expect(locator).toBeChecked() failed private-value","checked_assertion"],
+    ["Error: expect(locator).toHaveJSProperty() failed private-value","menu_assertion"],
+    ["private-password private-token","unclassified"],
+  ]) assert.equal(classifyManualBrowserFailure({status:1,stderr:text}),kind);
+  assert.equal(classifyManualBrowserFailure({error:{code:"ETIMEDOUT",message:"private-secret"}}),"process_timeout");
+  assert.equal(classifyManualBrowserFailure({stdout:"CHAT_ADMIN_MANUAL_BROWSER=PASS\nprivate-token"}),"unclassified");
+});
+
+
+test("manual response, transport, full flow and parent deadlines nest around the unchanged provider deadline",async()=>{
+  assert.ok(CHAT_ADMIN_RESPONSE_TIMEOUT_MS>CHAT_ADMIN_MODEL_TIMEOUT_MS);
+  assert.ok(CHAT_ADMIN_FLOW_TIMEOUT_MS>=10*CHAT_ADMIN_RESPONSE_TIMEOUT_MS+120_000);
+  assert.ok(CHAT_ADMIN_RUNNER_TIMEOUT_MS>CHAT_ADMIN_FLOW_TIMEOUT_MS);
+  assert.equal(MANUAL_BROWSER_TIMEOUT_MS,CHAT_ADMIN_RUNNER_TIMEOUT_MS);
+  assert.ok(CHAT_ADMIN_RUNNER_TIMEOUT_MS<25*60_000,"leave room for install, probe and mandatory cleanup inside the 30-minute job");
+  const browser=readFileSync(new URL("../e2e-chatadmin-staging/manual-flow.spec.mts",import.meta.url),"utf8");
+  const config=readFileSync(new URL("../playwright.chatadmin-staging.config.mts",import.meta.url),"utf8");
+  assert.ok(browser.includes("const pending=waitForChatAdminReplyResponse(page,APP);"));
+  assert.ok(config.includes("timeout:CHAT_ADMIN_FLOW_TIMEOUT_MS"));
+  assert.ok(config.includes("actionTimeout:15_000"),"ordinary UI action deadlines remain bounded");
+  let handler;const seen=[];
+  const appOrigin="https://staging.fanmind.ch",supabaseOrigin="https://synthetic.supabase.co";
+  const violations=await installChatAdminNetworkBoundary({route:async(_pattern,callback)=>{handler=callback;}},{appOrigin,supabaseOrigin});
+  for(const [path,method] of [["/api/chatadmin/reply-suggestions","POST"],["/api/chatadmin/reply-suggestions","GET"],["/api/chatadmin/fans","PATCH"]])await handler({
+    request:()=>({url:()=>appOrigin+path,method:()=>method}),abort:async()=>assert.fail("allowed fixture transport"),
+    fetch:async options=>{seen.push(options);return {status:()=>200,dispose:async()=>{}};},fulfill:async()=>{},
+  });
+  assert.deepEqual(seen.map(item=>item.timeout),[CHAT_ADMIN_RESPONSE_TIMEOUT_MS,45_000,45_000]);
+  assert.ok(seen.every(item=>item.maxRedirects===0&&item.maxRetries===0));
+  await violations.stop();assert.equal(violations(),0);
+});
+
+test("post-browser phases preserve successful release and persistence checks",async()=>{
+ const emitted=[],calls=[];
+ for(const phase of ['receipt','release','persistence']){
+  assert.equal(await runManualFlowPostBrowserPhase(phase,async()=>{calls.push(phase);return phase;},line=>emitted.push(line)),phase);
+ }
+ assert.deepEqual(calls,['receipt','release','persistence']);
+ assert.deepEqual(emitted,calls.map(phase=>`CHAT_ADMIN_MANUAL_POST_BROWSER_PHASE=${phase}`));
+});
+test("post-browser phases redact unexpected exceptions and preserve existing fail-closed errors",async()=>{
+ for(const phase of ['receipt','release','persistence']){
+  const emitted=[];
+  await assert.rejects(()=>runManualFlowPostBrowserPhase(phase,async()=>{throw new TypeError('private transport detail');},line=>emitted.push(line)),{message:`CHAT_ADMIN_MANUAL_FLOW_ERROR=post_browser_${phase}`});
+  assert.equal(emitted.length,1);assert.doesNotMatch(emitted.join('\n'),/private transport detail/);
+ }
+ const known=new Error('CHAT_ADMIN_MANUAL_FLOW_ERROR=database_operation');
+ await assert.rejects(()=>runManualFlowPostBrowserPhase('persistence',async()=>{throw known;},()=>{}),error=>error===known);
+});
+test("post-browser phases reject unknown phase before executing an operation",async()=>{
+ let called=false;
+ await assert.rejects(()=>runManualFlowPostBrowserPhase('private detail',async()=>{called=true;},()=>{throw Error('must not emit')}),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=post_browser_phase'});
+ assert.equal(called,false);
+});
+
+function releaseTransportFixture({status=200,encoding,body='{"application":"fanmind","runtimeEnvironment":"staging","releaseCommit":"'+env.GITHUB_SHA+'"}',error,truncated=false,stall=false}={}) {
+  const calls=[];
+  const requestImpl=(url,options,callback)=>{
+    const request=new EventEmitter();request.destroy=()=>{};
+    request.end=()=>queueMicrotask(()=>{
+      if(error){request.emit('error',error);return;}
+      if(stall){options.signal.addEventListener('abort',()=>request.emit('error',{code:'ABORT_ERR'}),{once:true});return;}
+      const response=new EventEmitter();response.statusCode=status;response.headers=encoding?{'content-encoding':encoding}:{};response.destroy=()=>{};
+      callback(response);
+      if(truncated){response.emit('aborted');return;}
+      response.emit('data',Buffer.from(body));response.emit('end');
+    });
+    calls.push({url,options});return request;
+  };
+  return {calls,requestImpl};
+}
+const releaseOptions=()=>({redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15_000)});
+
+test('release transport uses one fresh TLS connection and preserves exact release binding',async()=>{
+  const fixture=releaseTransportFixture();
+  await verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,fixture.requestImpl));
+  assert.equal(fixture.calls.length,1);
+  const {url,options}=fixture.calls[0];
+  assert.equal(url,'https://staging.fanmind.ch/api/version');assert.equal(options.agent,false);
+  assert.equal(options.method,'GET');assert.equal(options.headers['accept-encoding'],'identity');
+  assert.ok(options.signal instanceof AbortSignal);
+  assert.equal(options.rejectUnauthorized,undefined); // Node's TLS verification remains enabled.
+  const wrong=releaseTransportFixture({body:JSON.stringify({application:'fanmind',runtimeEnvironment:'staging',releaseCommit:'b'.repeat(40)})});
+  await assert.rejects(verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,wrong.requestImpl)),/FLOW_ERROR=release$/u);
+});
+
+test('release transport refuses redirects, non-success, compression, empty and oversized bodies without retry',async()=>{
+  for(const input of [{status:302},{status:503},{encoding:'gzip'},{body:''},{body:'x'.repeat(8193)}]){
+    const fixture=releaseTransportFixture(input);
+    await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),/FLOW_ERROR=release$/u);
+    assert.equal(fixture.calls.length,1);
+  }
+  const fixture=releaseTransportFixture();
+  assert.throws(()=>fetchManualFlowRelease('https://fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),/release_transport_config/u);
+  assert.equal(fixture.calls.length,0);
+});
+
+test('release transport rejects TLS, DNS and connection errors with fixed redacted codes',async()=>{
+  for(const [code,expected] of [['CERT_HAS_EXPIRED','tls'],['ERR_TLS_CERT_ALTNAME_INVALID','tls'],['ENOTFOUND','dns'],['ECONNRESET','connection'],['UNKNOWN_PRIVATE_SOCKET','']]){
+    const fixture=releaseTransportFixture({error:Object.assign(new Error('private-secret-content'),{code})});
+    await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),fixture.requestImpl),{message:`CHAT_ADMIN_MANUAL_FLOW_ERROR=release_transport${expected?'_'+expected:''}`});
+    assert.equal(fixture.calls.length,1);
+  }
+});
+
+test('release transport enforces a total abort deadline and rejects truncated or invalid JSON',async()=>{
+  const fixture=releaseTransportFixture({stall:true});
+  const controller=new AbortController();
+  const pending=fetchManualFlowRelease('https://staging.fanmind.ch/api/version',{...releaseOptions(),signal:controller.signal},fixture.requestImpl);
+  await Promise.resolve();controller.abort();
+  await assert.rejects(pending,/release_transport_timeout$/u);
+  assert.equal(fixture.calls.length,1);
+  const truncated=releaseTransportFixture({truncated:true});
+  await assert.rejects(fetchManualFlowRelease('https://staging.fanmind.ch/api/version',releaseOptions(),truncated.requestImpl),/release_transport_truncated$/u);
+  const invalid=releaseTransportFixture({body:'<html>private</html>'});
+  await assert.rejects(verifyManualFlowRelease(env,(url,options)=>fetchManualFlowRelease(url,options,invalid.requestImpl)),{message:'CHAT_ADMIN_MANUAL_FLOW_ERROR=release_json'});
+});
+
+test('SQL diagnostics admit only fixed bounded numeric counts, including on verifier failure',async()=>{
+ const {manualFlowCountDiagnostics}=await import('../scripts/operations/chat-admin-manual-flow-staging.mjs');
+ const actual={characters:3,fans:2,conversations:2,messages:41,usage_ok:10,usage_error:0};
+ const expected=expectedManualFlowCounts(witnessFixture(2));
+ const value={expected,actual};
+ const lines=manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(value)}\nERROR: private credentials and SQL must never escape`);
+ assert.deepEqual(lines,[`CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify(value)}`]);
+ for(const invalid of [{...actual,secret:'private'},{...actual,messages:'private'},{...actual,messages:-1},{...actual,messages:1000001},{...actual,messages:1.1},null,[]])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected,actual:invalid})}`),[]);
+ for(const invalid of [{...expected,usage_error:11},{...expected,messages:40},{...expected,secret:'private'}])assert.deepEqual(manualFlowCountDiagnostics('',`NOTICE: CHAT_ADMIN_MANUAL_COUNTS=${JSON.stringify({expected:invalid,actual})}`),[]);
+ assert.deepEqual(manualFlowCountDiagnostics('', 'ERROR: private details\nNOTICE: CHAT_ADMIN_MANUAL_COUNTS=invalid-json'),[]);
+});
+
+test('usage witness requires ten unique generations and exact independent event IDs',()=>{
+ for(const errors of [0,2,10]){
+  const witness=witnessFixture(errors),attempts=validateChatAdminUsageWitness(witness,true);
+  assert.equal(attempts.length,10+errors);assert.equal(expectedManualFlowCounts(witness).usage_error,errors);
+  const receipt={marker:'f'.repeat(32),startedAt:'2026-11-06T10:00:00.000Z',dataIds:createManualFlowReceiptDataIds('f'.repeat(32)),usageWitness:witness};
+  const sql=buildManualFlowSql('verify',env,receipt);
+  assert.match(sql,/runtime_usage_witness_mismatch/);assert.match(sql,/actual_attempt\.id=expected_attempt\.id/);assert.match(sql,/actual_attempt\.status=expected_attempt\.status/);
+  for(const attempt of attempts)assert.ok(sql.includes(`'${attempt.id}'::uuid,'${attempt.status}'`));
+ }
+ const valid=witnessFixture(),duplicateGeneration=structuredClone(valid),duplicateEvent=structuredClone(valid);
+ duplicateGeneration[1].generationId=valid[0].generationId;
+ duplicateEvent[1].attempts[0].id=valid[0].attempts[0].id;
+ for(const invalid of [undefined,[],valid.slice(0,9),[...valid,valid[0]],duplicateGeneration,duplicateEvent])assert.throws(()=>validateChatAdminUsageWitness(invalid,true),/usage_witness/);
+ for(const header of [undefined,'','ok',`error:${valid[0].attempts[0].id}`,`ok:${valid[0].attempts[0].id},ok:${valid[1].attempts[0].id}`,`ok:${valid[0].attempts[0].id}\nprivate`,"ok:'; delete"] )assert.throws(()=>parseChatAdminUsageHeader(header),/usage_witness/);
+});
+
+test('browser witness is private, bound to the run and never appears in diagnostic logs',()=>{
+ const root=mkdtempSync(join(tmpdir(),'chatadmin-witness-'));
+ const bound={...env,RUNNER_TEMP:root,GITHUB_RUN_ID:'12345',GITHUB_RUN_ATTEMPT:'1'};
+ try{
+  initializeBrowserDiagnostic(bound,'acceptance');
+  const row=witnessFixture(1)[0],header=row.attempts.map(value=>`${value.status}:${value.id}`).join(',');
+  recordBrowserUsageWitness(bound,row.generationId,header);
+  assert.deepEqual(readBrowserDiagnostic(bound,'acceptance').usageWitness,[row]);
+  assert.throws(()=>recordBrowserUsageWitness(bound,row.generationId,header),/usage_witness/);
+  assert.throws(()=>recordBrowserUsageWitness({...bound,GITHUB_RUN_ATTEMPT:'2'},witnessFixture()[1].generationId,header),/browser_diagnostic/);
+  assert.ok(formatBrowserDiagnostic(bound,'acceptance').every(line=>!line.includes(row.generationId)&&!line.includes(row.attempts[0].id)));
+  assert.equal(CHAT_ADMIN_USAGE_HEADER,'x-fanmind-chatadmin-usage');
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('ten successful generations do not imply exactly two rejected provider attempts',async()=>{
+ const {runReplyQualityGate}=await import('../src/lib/replyQualityPolicy.mjs');
+ const accepted=['Heute klingt das nach einem entspannten Tag.','Bei mir gibt es gerade einen kleinen Moment Ruhe.','Was hat dir an dem Foto besonders gefallen?'];
+ for(const rewrites of [0,2,10]){
+  const observed={ok:0,error:0};
+  for(let index=0;index<10;index++)await runReplyQualityGate({
+   generate:async feedback=>({replies:index<rewrites&&!feedback?['Ich freue mich sehr.','Ich freue mich sehr.','Ich freue mich sehr.']:accepted}),
+   readReplies:value=>value.replies,onAttempt:async({error})=>{observed[error?'error':'ok']++;},inputChars:10,inputLimit:10000,
+  });
+  assert.deepEqual(observed,{ok:10,error:rewrites});
+ }
 });

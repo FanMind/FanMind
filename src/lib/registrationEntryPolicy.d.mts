@@ -22,6 +22,7 @@ export function isProductiveRegistrationEntry(input: {
 export function buildRegistrationHref(input: {
   language?: "de" | "en";
   planId: RegistrationPlanId;
+  capacityPackage?: unknown;
   starterOption?: unknown;
   referralCode?: unknown;
   testPlan?: unknown;

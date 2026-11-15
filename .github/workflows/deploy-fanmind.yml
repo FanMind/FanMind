@@ -1,10 +1,33 @@
 name: Deploy FanMind
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      reviewed_main_commit:
+        type: string
+        required: true
+      confirmation:
+        type: string
+        required: true
+        description: deploy-reviewed-chatadmin
+      expected_current_release:
+        type: string
+        required: true
+      monthly_release_sha256:
+        description: Approved monthly source package SHA256 (empty retains separately approved existing releases)
+        type: string
+        required: false
+        default: ''
+      support_must_remain_disabled:
+        description: Verify Support stays off before and after this deployment
+        type: boolean
+        default: false
+        required: true
+      support_help_ui:
+        description: Build the existing in-app Help UI only when Support is already enabled
+        type: boolean
+        default: false
+        required: true
 
 concurrency:
   group: fanmind-production-deploy
@@ -14,8 +37,42 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    name: Validate Owner-authorized exact main release
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Verify Owner, protected current main and completed checks
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REVIEWED_MAIN_COMMIT: ${{ inputs.reviewed_main_commit }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: node scripts/operations/production-release-preflight.mjs
+
   deploy:
     name: Deploy to Exoscale production
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    permissions:
+      contents: read
+      checks: read
+      actions: read
+      pull-requests: read
+    timeout-minutes: ${{ inputs.monthly_release_sha256 != '' && 90 || 45 }}
     runs-on:
       - self-hosted
       - fanmind-prod
@@ -26,10 +83,40 @@ jobs:
     steps:
       - name: Deploy on fanmind-prod-01
         env:
-          EXPECTED_RELEASE_COMMIT: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ inputs.monthly_release_sha256 != '' && github.token || '' }}
+          MONTHLY_RELEASE_SHA256: ${{ inputs.monthly_release_sha256 }}
+          EXPECTED_RELEASE_COMMIT: ${{ inputs.reviewed_main_commit }}
+          EXPECTED_CURRENT_RELEASE: ${{ inputs.expected_current_release }}
+          FANMIND_REQUIRE_SUPPORT_DISABLED: ${{ inputs.support_must_remain_disabled }}
+          FANMIND_SUPPORT_HELP_BUILD_ENABLE: ${{ inputs.support_help_ui && 'true' || 'false' }}
         run: |
           set -euo pipefail
+          unset FANMIND_MONTHLY_CONTROL FANMIND_MONTHLY_PHASE_DEADLINE
 
+          if [[ -n "$MONTHLY_RELEASE_SHA256" ]]; then
+            export MONTHLY_RELEASE_STARTED_MS="$(awk '{print int($1 * 1000)}' /proc/uptime)"
+            cd /var/www/fanmind
+            [[ "$EXPECTED_RELEASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+            [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$EXPECTED_RELEASE_COMMIT" ]]
+            case "$(git remote get-url origin)" in
+              git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+              *) exit 1 ;;
+            esac
+            git fetch --prune origin main
+            [[ "$(git rev-parse origin/main)" == "$EXPECTED_RELEASE_COMMIT" ]]
+            REVIEWED_TREE="$(mktemp -d)"
+            trap 'rm -rf "$REVIEWED_TREE"' EXIT
+            git archive "$EXPECTED_RELEASE_COMMIT" | tar -xf - -C "$REVIEWED_TREE"
+            flock -n /var/www/fanmind/.monthly-release.lock \
+              node "$REVIEWED_TREE/scripts/operations/monthly-release-control.mjs" run "$REVIEWED_TREE"
+            exit $?
+          fi
+          # BEGIN_REVIEWED_PRODUCTION_BODY
+          monthly_host_boundary() {
+            if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+              node "$FANMIND_MONTHLY_CONTROL" checkpoint
+            fi
+          }
           SOURCE_DIR="/var/www/fanmind"
           cd "$SOURCE_DIR"
 
@@ -38,15 +125,25 @@ jobs:
             exit 1
           fi
           case "$(git remote get-url origin)" in
-            git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
+            git@github.com:FanMind/FanMind.git|https://github.com/FanMind/FanMind.git|git@github.com:Bernds-tech/FanMind.git|https://github.com/Bernds-tech/FanMind.git) ;;
             *)
               echo "Unexpected Production repository origin." >&2
               exit 1
               ;;
           esac
 
+          [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$EXPECTED_RELEASE_COMMIT" ]]
+          [[ "$EXPECTED_CURRENT_RELEASE" =~ ^[0-9a-f]{40}$ ]]
+          LIVE_RELEASE="$(curl -fsSL --max-time 15 https://fanmind.ch/api/version | node -e 'let s="";process.stdin.on("data",b=>s+=b);process.stdin.on("end",()=>process.stdout.write(JSON.parse(s).releaseCommit||""))')"
+          [[ "$LIVE_RELEASE" == "$EXPECTED_CURRENT_RELEASE" ]]
+          git fetch --prune origin main
+          [[ "$(git rev-parse origin/main)" == "$EXPECTED_RELEASE_COMMIT" ]]
+          # Require the existing isolated build/switch/rollback path.
+          grep -Eq '^[[:space:]]*FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY[[:space:]]*=[[:space:]]*true[[:space:]]*$' .env.production
+
           # Seed fail-closed runtime settings once. A Platform Admin may later
           # enable the manual Daily beta; deploys never overwrite that choice.
+          monthly_host_boundary
           RUNTIME_SETTINGS_FILE="$SOURCE_DIR/.fanmind-runtime-settings.json"
           if [ ! -e "$RUNTIME_SETTINGS_FILE" ]; then
             RUNTIME_SETTINGS_TMP="$(mktemp "$SOURCE_DIR/.fanmind-runtime-settings.XXXXXX")"
@@ -86,7 +183,8 @@ jobs:
             rm -f "$DEPLOY_SCRIPT"
             trap - EXIT
           else
-            echo "Using legacy in-place deployment because isolated release deployment is disabled."
+            echo "In-place deployment is not permitted for this release." >&2
+            exit 1
             git reset --hard "$RELEASE_COMMIT"
 
             npm ci --no-audit --no-fund
@@ -103,6 +201,7 @@ jobs:
               pm2 start npm --name fanmind --cwd "$SOURCE_DIR" -- start
             pm2 save
 
+            monthly_host_boundary
             sudo nginx -t
 
             for attempt in 1 2 3 4 5 6 7 8 9 10; do
@@ -134,95 +233,171 @@ jobs:
             exit 1
           fi
 
+          if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+            node "$FANMIND_MONTHLY_CONTROL" checkpoint
+          fi
+          monthly_host_boundary
           sudo install -d -o root -g root -m 0700 /usr/local/lib/fanmind-ops
+          monthly_host_boundary
           sudo install -d -o root -g root -m 0755 /usr/local/lib/fanmind-audit
+          monthly_host_boundary
           sudo install -d -o root -g root -m 0755 /usr/local/lib/fanmind-monitor
+          monthly_host_boundary
           sudo install -d -o root -g root -m 0755 /usr/local/src/lib
           test -x /usr/bin/flock
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/write-backup-release-env.sh /usr/local/lib/fanmind-ops/write-backup-release-env.sh
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 config/certificates/supabase-root-2021-ca.crt /usr/local/lib/fanmind-ops/supabase-root-2021-ca.crt
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/database-authorization-contract.mjs /usr/local/lib/fanmind-ops/database-authorization-contract.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/backup-worker.mjs /usr/local/lib/fanmind-ops/backup-worker.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/enqueue-backup-job.mjs /usr/local/lib/fanmind-ops/enqueue-backup-job.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/backup-retention.mjs /usr/local/lib/fanmind-ops/backup-retention.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/offsite-backup-retention-plan.mjs /usr/local/lib/fanmind-ops/offsite-backup-retention-plan.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/verify-backup-artifact.mjs /usr/local/lib/fanmind-ops/verify-backup-artifact.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/read-only-production-audit.sh /usr/local/lib/fanmind-audit/read-only-production-audit.sh
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 scripts/operations/production-boot-readiness.mjs /usr/local/lib/fanmind-audit/production-boot-readiness.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-production-audit-output.mjs /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-operations-monitor-probe-log.mjs /usr/local/lib/fanmind-audit/verify-operations-monitor-probe-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-operations-monitor-lifecycle-log.mjs /usr/local/lib/fanmind-audit/verify-operations-monitor-lifecycle-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-operations-monitor-migration-log.mjs /usr/local/lib/fanmind-audit/verify-operations-monitor-migration-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-backup-verification-migration-log.mjs /usr/local/lib/fanmind-audit/verify-backup-verification-migration-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-server-error-migration-log.mjs /usr/local/lib/fanmind-audit/verify-server-error-migration-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-server-error-acceptance-log.mjs /usr/local/lib/fanmind-audit/verify-server-error-acceptance-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0755 scripts/operations/verify-trigger-function-hardening-production-log.mjs /usr/local/lib/fanmind-audit/verify-trigger-function-hardening-production-log.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 scripts/public-health-policy.mjs /usr/local/lib/public-health-policy.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 scripts/operations/operations-monitor.mjs /usr/local/lib/fanmind-monitor/operations-monitor.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 scripts/operations/operations-monitor-lifecycle.mjs /usr/local/lib/fanmind-monitor/operations-monitor-lifecycle.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/enable-operations-monitor.sh /usr/local/lib/fanmind-ops/enable-operations-monitor.sh
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/operations-monitor-migration-runner.mjs /usr/local/lib/fanmind-ops/operations-monitor-migration-runner.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0600 supabase/migrations/20260718190000_operations_monitor_components.sql /usr/local/lib/fanmind-ops/20260718190000_operations_monitor_components.sql
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/backup-verification-migration-runner.mjs /usr/local/lib/fanmind-ops/backup-verification-migration-runner.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0600 supabase/migrations/20260718173000_enable_safe_backup_verification.sql /usr/local/lib/fanmind-ops/20260718173000_enable_safe_backup_verification.sql
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/server-error-migration-runner.mjs /usr/local/lib/fanmind-ops/server-error-migration-runner.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/server-error-production-acceptance.mjs /usr/local/lib/fanmind-ops/server-error-production-acceptance.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/enable-server-error-tracking.sh /usr/local/lib/fanmind-ops/enable-server-error-tracking.sh
+          monthly_host_boundary
           sudo install -o root -g root -m 0600 supabase/migrations/20260718203000_privacy_server_error_tracking.sql /usr/local/lib/fanmind-ops/20260718203000_privacy_server_error_tracking.sql
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/trigger-function-hardening-production-runner.mjs /usr/local/lib/fanmind-ops/trigger-function-hardening-production-runner.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0600 supabase/controlled/20260806203023_harden_trigger_function_privileges.sql /usr/local/lib/fanmind-ops/20260806203023_harden_trigger_function_privileges.sql
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/run-demo-cleanup.mjs /usr/local/lib/fanmind-ops/run-demo-cleanup.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/webhook-diagnostic-retention.mjs /usr/local/lib/fanmind-ops/webhook-diagnostic-retention.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/process-account-deletion.mjs /usr/local/lib/fanmind-ops/process-account-deletion.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 src/lib/confirmedChatLearningDeletionVerification.mjs /usr/local/src/lib/confirmedChatLearningDeletionVerification.mjs
+          monthly_host_boundary
           sudo install -o root -g root -m 0750 scripts/operations/deploy-isolated-release.sh /usr/local/lib/fanmind-ops/deploy-isolated-release.sh
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-worker.service /etc/systemd/system/fanmind-backup-worker.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-enqueue@.service /etc/systemd/system/fanmind-backup-enqueue@.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-retention.service /etc/systemd/system/fanmind-backup-retention.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-database.timer /etc/systemd/system/fanmind-backup-database.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-storage.timer /etc/systemd/system/fanmind-backup-storage.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-server_config.timer /etc/systemd/system/fanmind-backup-server_config.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-full.timer /etc/systemd/system/fanmind-backup-full.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-retention.timer /etc/systemd/system/fanmind-backup-retention.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-operations-monitor.service /etc/systemd/system/fanmind-operations-monitor.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-operations-monitor-probe.service /etc/systemd/system/fanmind-operations-monitor-probe.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-operations-monitor-lifecycle.service /etc/systemd/system/fanmind-operations-monitor-lifecycle.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-operations-monitor.timer /etc/systemd/system/fanmind-operations-monitor.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-operations-monitor-migration@.service /etc/systemd/system/fanmind-operations-monitor-migration@.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-backup-verification-migration@.service /etc/systemd/system/fanmind-backup-verification-migration@.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-server-error-migration@.service /etc/systemd/system/fanmind-server-error-migration@.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-server-error-acceptance.service /etc/systemd/system/fanmind-server-error-acceptance.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-trigger-function-hardening@.service /etc/systemd/system/fanmind-trigger-function-hardening@.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-demo-cleanup.service /etc/systemd/system/fanmind-demo-cleanup.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-demo-cleanup.timer /etc/systemd/system/fanmind-demo-cleanup.timer
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-webhook-retention.service /etc/systemd/system/fanmind-webhook-retention.service
+          monthly_host_boundary
           sudo install -o root -g root -m 0644 ops/systemd/fanmind-webhook-retention.timer /etc/systemd/system/fanmind-webhook-retention.timer
+          if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+            node "$FANMIND_MONTHLY_CONTROL" checkpoint
+          fi
+          monthly_host_boundary
           sudo systemctl daemon-reload
 
+          monthly_host_boundary
           sudo /usr/local/lib/fanmind-ops/write-backup-release-env.sh "$RELEASE_COMMIT"
 
           if sudo systemctl is-active --quiet fanmind-backup-worker.service; then
+            monthly_host_boundary
             sudo systemctl restart fanmind-backup-worker.service
           else
             echo "Backup worker is not active; not starting it."
           fi
 
           if sudo systemctl is-enabled --quiet fanmind-operations-monitor.timer; then
+            monthly_host_boundary
             sudo systemctl restart fanmind-operations-monitor.timer
           else
             echo "Operations monitor installed but intentionally not enabled yet."
           fi
 
           if sudo systemctl is-enabled --quiet fanmind-demo-cleanup.timer; then
+            monthly_host_boundary
             sudo systemctl restart fanmind-demo-cleanup.timer
           else
             echo "Demo cleanup timer installed but intentionally not enabled yet."
           fi
 
           if sudo systemctl is-enabled --quiet fanmind-webhook-retention.timer; then
+            monthly_host_boundary
             sudo systemctl restart fanmind-webhook-retention.timer
           else
             echo "Webhook retention timer installed but intentionally not enabled before migration verification."
           fi
 
           echo "FanMind deployment finished successfully at $RELEASE_COMMIT."
+
+          # END_REVIEWED_PRODUCTION_BODY

@@ -164,7 +164,7 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   const result = {
     status: "INCOMPLETE", scope: "creator_foundation_catalog_only", targetAccepted: false,
     learningState: "UNDETERMINED", applyAllowed: false, runtimeActivated: false,
-    blockers, differingSections: [],
+    blockers, differingSections: [], sectionStates: {}, differingSectionSha256: {},
   };
   if (Array.isArray(snapshot?.catalog?.parentFunctions) && snapshot.catalog.parentFunctions.some(row => row?.schema !== "public" || !CREATOR_FOUNDATION_PARENT_HELPERS.some(([, identity]) => identity === row?.identity))) blockers.push("parent_helper_contract_unreviewed");
   if (snapshot?.catalog?.parentChecks?.adminCrmContractAbsent === false || (Array.isArray(snapshot?.catalog?.policies) && snapshot.catalog.policies.some(row => row?.name === "admin_crm_entitlement_boundary"))) {
@@ -195,12 +195,28 @@ export function classifyCreatorFoundationSnapshot(snapshot, {referenceJson, trus
   }
   if (blockers.length) return result;
   const common = {...provider, roles: profile.roles, memberships: profile.memberships};
-  const comparisons = Object.fromEntries(["legacy", "current"].map(variant => [variant, compareCreatorFoundationCatalogs(snapshot.catalog, {...reference.variants[variant], ...common})]));
+  const expectedCatalogs = Object.fromEntries(["legacy", "current"]
+    .map(variant => [variant, {...reference.variants[variant], ...common}]));
+  const comparisons = Object.fromEntries(["legacy", "current"]
+    .map(variant => [variant, compareCreatorFoundationCatalogs(snapshot.catalog, expectedCatalogs[variant])]));
+  result.sectionStates = Object.fromEntries(SECTIONS.map(key => {
+    const legacyExact = !comparisons.legacy.includes(key);
+    const currentExact = !comparisons.current.includes(key);
+    const state = legacyExact && currentExact ? "SHARED_EXACT"
+      : legacyExact ? "LEGACY_EXACT"
+        : currentExact ? "CURRENT_EXACT"
+          : "DRIFT";
+    return [key, state];
+  }));
   if (snapshot.catalog.parentChecks.allSatisfied && comparisons.legacy.length === 0) result.status = "LEGACY_EXACT";
   else if (snapshot.catalog.parentChecks.allSatisfied && comparisons.current.length === 0) result.status = "CURRENT_EXACT";
   else {
     result.status = "DRIFT";
     result.differingSections = [...new Set([...comparisons.legacy, ...comparisons.current])].sort();
+    result.differingSectionSha256 = Object.fromEntries(result.differingSections.map(key => [
+      key,
+      digest(JSON.stringify(canonical(unorderedRows(snapshot.catalog[key])))),
+    ]));
     result.blockers.push("catalog_differs_from_pinned_reference");
   }
   return result;

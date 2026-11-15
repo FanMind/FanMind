@@ -184,9 +184,9 @@ test("productive Responses paths forward provider usage and retain the estimate 
     usageRecorder,
     /providerUsage\?\.outputTokens \?\? estimateTokensFromChars\(outputChars\)/u,
   );
-  assert.ok(
-    (replyRoute.match(/providerUsage: responseBody\?\.usage/gu) ?? []).length >= 3,
-  );
+  // Every result now shares the per-attempt recorder, including quality rejects
+  // and retry failures; real-route tests assert its exact invocation counts.
+  assert.match(replyRoute, /onAttempt: async[\s\S]*providerUsage: responseBody\?\.usage/u);
   assert.ok(
     (analysisAction.match(/providerUsage: responseBody\?\.usage/gu) ?? [])
       .length >= 2,

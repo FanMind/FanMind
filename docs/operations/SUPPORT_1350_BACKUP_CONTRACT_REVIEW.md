@@ -1,0 +1,225 @@
+## Minimal current-host contract repair — 15 November 2026
+
+Owner task FM-1350-CONTRACT-REPAIR-20261115, Risk R4. Source preparation only;
+no host preparation, installation, service restart, backup or Restore executed.
+Reuse actual successful inspection43765059155 / job132968283412, not a second
+inventory. The fixed measured old module is b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de;
+the unchanged reviewed replacement from6bc209851b4a54609747099ec34264318dc7f4c4 is
+2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441.
+Actual application remains bb799466d2c235195fedcb4d80568f9f0bd56969. Unit and
+release.env hashes are fixed to the measured inventory in the existing policy.
+
+The existing protected bootstrap workflow gains only
+`prepare-contract-repair`. It uses the same Owner/main/environment gates,
+frozen-byte launcher, exact source hashes and existing nonblocking install lock.
+This separately approved preparation first saves and reads back the ACTUAL old
+module, controls, authorization and release binding in root-only
+`/var/lib/fanmind-backup-install/contract-repair/<reviewed-main>/`.
+It stages exactly the reviewed module and replaces only the two existing
+control/policy programs; unchanged wrapper is verified, not replaced. No worker,
+service, timer, app, DB or secret changes. It writes a two-hour exact
+module-only install/rollback authorization and a COMPLETED preparation receipt.
+The install controller refuses incomplete/failed preparation even if an
+authorization file exists. Known preparation failure restores only hash-matched
+saved control/authorization bytes, without touching the worker. Unknown bytes
+require reconciliation. A consumed preparation/bundle is never blindly retried.
+
+The existing install workflow is rebound to that same current reviewed Main,
+module source6bc20985 and actual appbb799466. Existing wrapper and host lock
+remain canonical; main is rechecked after the Environment wait. Only
+`database-authorization-contract.mjs` is in the replacement allowlist. The
+entry point and verifier are byte-pinned retained files. Install snapshots the
+actual old module and release binding again into the new source-bound rollback
+directory, fsyncs and verifies them BEFORE stopping the backupworker. The old
+historical8e5dcbd rollback directory is untouched. Queue races, expiry, partial
+receipt, changed retained bytes and unknown partial files fail closed.
+
+After installation only this worker is started again; app/PM2/nginx, SQL,
+timers, credentials, retention and archives are not changed. Read-only
+postflight checks exact installed bytes, retained files, unit/process, app,
+release and current39/29 catalog. Queue emptiness is required before and after
+the service stop, not after successful restart: normal newly claimed work
+is allowed. Existing automatic rollback uses only
+the exact saved module; it does not restore shared DB data. A successful worker
+restart is not itself backup/Restore success.
+
+### Concrete approval boundary through #1512
+
+No Production action is authorized by this PR. Required exact decisions:
+
+1. Regular protected source merge of the final checked PR head. This necessarily
+   changes GitHub Main; application source and runtime are byte-identical to
+   0df81627. Do not claim Main still0df81627 after merge. #1512 must bind the
+   resulting approved common commit for Staging then Production; no silent
+   candidate substitution or second implementation.
+2. Same resulting Main, backup-production-recovery: existing bootstrap workflow
+   action prepare-contract-repair, confirmation
+   backup-worker-prepare-contract-repair. BOOTSTRAP_APPROVAL must be exactly
+   `<main>:prepare-contract-repair:6bc209851b4a54609747099ec34264318dc7f4c4:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled`.
+   Bind the final source SHA and exact new control/launcher hashes, fresh bypass
+   observation, fixed measured old hashes, target and private rollback receipt.
+3. Same resulting Main, existing production-control workflow: action install,
+   reviewed_controller_commit=<main>, worker_source_commit=6bc209851b4a54609747099ec34264318dc7f4c4,
+   expected_application_commit=bb799466d2c235195fedcb4d80568f9f0bd56969,
+   confirmation=backup-worker-install; ACTION_APPROVAL is the exact four-field
+   binding. Owner approval includes only module exchange and this service
+   stop/start plus its bound automatic module rollback. Environment review
+   stays required. No historical bootstrap/install invocation is valid.
+4. After actual success, use existing read-only heartbeat and backup receipts;
+   authorize only necessary new database/full jobs with existing archive,
+   encryption, checksum and offsite procedures. Existing Storage/config and
+   accepted historical DB_POSTCHECKED evidence are retained. Bind the exact
+   actual artifacts and isolated targets to any further necessary Restore
+   completion; no blind repeat of the accepted database restore. No broad
+   restoration/test program or additional host/project is introduced.
+
+The source tests include measured-state mutations, actual module-only policy,
+protected preparation ordering and failure, existing transition rollback and
+queue/expiry negatives. Non-root filesystem case may remain a declared skip;
+no real-host installation/backup result is inferred from local or CI tests.
+Existing FM-CONTRACT boundaries and fail-closed release decision remain intact.
+
+The earlier sections below retain historical context; their old install pins
+are not executable approval for the current repair.
+
+---
+
+# Support #1350: reviewed backup authorization contract
+
+## Current-host inspection prerequisite — source preparation, 15 November 2026
+
+The existing protected bootstrap workflow's `inspect` action is adapted to the
+actual application `bb799466d2c235195fedcb4d80568f9f0bd56969` and the exact
+authorization module from merged PR1515, source
+`6bc209851b4a54609747099ec34264318dc7f4c4`, SHA256
+`2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441`.
+Its immutable contract still validates all reviewed definitions and privileges,
+not merely the 39/29 counts. The historical `bootstrap`, install and rollback
+bindings and their pinned three-file bundles remain unchanged; a current
+inspection request cannot authorize them.
+
+This is the existing main-/Owner-/protected-environment-bound workflow, runner
+and frozen-byte sudo launcher. It creates no new access, runner, service or
+infrastructure. Main is checked before and after the environment-review wait.
+The existing approval variable must bind the actual reviewed Main, action
+`inspect`, source `6bc209851b4a54609747099ec34264318dc7f4c4`, application above
+and `admin-bypass-disabled`. No approval variable is set by this source PR.
+The current independent environment/host-capability checks remain necessary.
+
+Inspection measures the installed three worker files, exact unit and process
+identity, release.env, optional controller/authorization/bootstrap-receipt
+hashes, bounded existing rollback directories and snapshot hashes, four timer
+states/schedule hashes, existing installation-lock identity and kernel-held
+state, and counts of the five fixed backup/restore tools. It does not read
+arbitrary process arguments, emit configuration contents, inspect private
+media, execute measured installed code, create a receipt or acquire/create a
+host lock. As in the old inspect path, database verification temporarily freezes
+the existing passfile/CA into a private `/run` directory and removes only those
+new temporary copies. It never provisions credentials.
+
+The worker source version is a disk observation, not proof of an in-memory
+import version. Tool-process counts are bounded diagnostics, not an exhaustive
+deployment detector. Host/queue/lock/timer observations are point-in-time facts,
+not a maintenance lock, a safe future installation or an automatic restart
+approval. Before/after unit, release, process and worker hashes must match;
+unsafe paths/permissions or an inconsistent observation block. Unknown timer
+formats fail closed. A failed database/queue verification may retain redacted
+host evidence with `databaseContractVerified=false`, but the job exits nonzero;
+it never hides the failure or grants installation authority.
+
+Actual Production execution is **NOT TESTED** until this source is separately
+reviewed, all final-head checks pass, a regular merge is approved, and the
+existing protected inspection is authorized. No Production installation,
+worker restart, backup, IAM, database apply or Restore is part of this change.
+Only after genuine host evidence can the smallest installation/rollback PR and
+the exact Production-installation approval be completed. No invented old
+hashes or promise of an already available root capability is permitted.
+
+## Scope and evidence boundary
+
+Source-only correction from Main `63e8b0d656c4d0f14eaaa500a16cac65116380ee`. PR #1500 is the unrelated Creator-balance Draft and is untouched. No worker installation, backup execution, database apply, Restore, IAM change, boot or runner registration is authorized by this change. Existing archive formats, encryption, retention, storage/config backup implementation and release implementation are unchanged.
+
+A read-only Production catalog query on 15 November 2026 returned: public definers **39**, restricted service-only non-trigger functions **29**, new-cohort functions **19**, exact reviewed definitions installed **39**, reviewed violations **0**. The seven previous additional definitions also returned zero violations. This establishes catalog admissibility only; it is not a backup or recovery success receipt. Private catalog rows, role fingerprints, dumps and function bodies captured from the database are not repository artifacts.
+
+## Exact security contract
+
+The existing 13/12 and 20/13 generations remain valid only when none of the 19 newly recognized functions is present. Presence is checked regardless of SECURITY DEFINER status, so conversion to INVOKER cannot silently downgrade a partial installation. The 39/29 generation requires every exact signature, return type, owner, search_path and configuration, language, volatility, strictness, leakproof/parallel flags, routine kind, set-returning flag, argument defaults, supported implementation fields, direct EXECUTE grants/grantor/grant-option and effective browser/service privileges to match. All 39 bodies are pinned, including the previous 20. Unknown functions, replacement slots, overloads and inherited privilege exposure fail closed.
+
+Every body hash is independently reproducible from the public SQL source listed below. Exact LF and CRLF forms are permitted, without whitespace normalization. The historical create_chat_admin_fan variant permutes the same eleven INSERT columns and values together; tests reconstruct that exact permutation and reject any extra opaque digest. The optional trigger-hardening ALTER remains required in the 39 generation.
+
+| Function | Direct EXECUTE in addition to owner postgres | Authoritative source |
+| --- | --- | --- |
+| `activate_public_demo_start` | `service_role` | `supabase/migrations/20260713180000_public_demo_abuse_protection.sql` |
+| `admin_crm_read_allowed` | `authenticated`, `service_role` | `supabase/migrations/20260915221500_admin_crm_access.sql` |
+| `admin_set_registered_user_crm_access` | `service_role` | `supabase/migrations/20260915221500_admin_crm_access.sql` |
+| `chat_admin_media_writes_allowed` | `authenticated` | `supabase/controlled/chat_admin_media.sql` |
+| `claim_admin_backup_job` | `service_role` | `supabase/migrations/20260718173000_enable_safe_backup_verification.sql` |
+| `claim_expired_demo_cleanup` | `service_role` | `supabase/migrations/20260713180000_public_demo_abuse_protection.sql` |
+| `claim_public_demo_start` | `service_role` | `supabase/migrations/20260713180000_public_demo_abuse_protection.sql` |
+| `cleanup_server_error_events` | `service_role` | `supabase/migrations/20260718203000_privacy_server_error_tracking.sql` |
+| `cleanup_shared_rate_limit_buckets` | `service_role` | `supabase/migrations/20260723102000_shared_rate_limits.sql` |
+| `complete_demo_cleanup` | `service_role` | `supabase/migrations/20260713180000_public_demo_abuse_protection.sql` |
+| `consume_shared_rate_limit` | `service_role` | `supabase/migrations/20260723102000_shared_rate_limits.sql` |
+| `create_chat_admin_fan` | `authenticated` | `supabase/controlled/20261007102000_chat_admin_customer_tier.sql` |
+| `create_chat_admin_fan_conversation` | owner only | `supabase/controlled/20260927200000_chat_admin_character_fans.sql` |
+| `current_admin_crm_access_state` | `authenticated`, `service_role` | `supabase/migrations/20260915221500_admin_crm_access.sql` |
+| `fail_public_demo_start` | `service_role` | `supabase/migrations/20260713180000_public_demo_abuse_protection.sql` |
+| `manage_meta_webhook_event_retention` | `service_role` | `supabase/migrations/20260723184500_webhook_diagnostic_retention.sql` |
+| `manage_server_error_event_retention` | `service_role` | `supabase/migrations/20260723184500_webhook_diagnostic_retention.sql` |
+| `persist_chat_admin_confirmed_reply` | `authenticated` | `supabase/controlled/20260927200000_chat_admin_character_fans.sql` |
+| `persist_chat_admin_generation` | `authenticated` | `supabase/controlled/20260927200000_chat_admin_character_fans.sql` |
+| `record_server_error_event` | `service_role` | `supabase/migrations/20260718203000_privacy_server_error_tracking.sql` |
+| `support_centre_ack` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_case_notification` | owner only | `supabase/controlled/support_centre.sql` |
+| `support_centre_check` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_decide` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_finish` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_inbox` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_notify` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_recover` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_centre_report` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_chat_delete_notification` | owner only | `supabase/controlled/support_centre.sql` |
+| `support_chat_erase` | `service_role` | `supabase/controlled/support_centre_operations.sql` |
+| `support_chat_handoff` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_chat_page` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_chat_privacy_state` | `service_role` | `supabase/controlled/support_centre_operations.sql` |
+| `support_chat_read` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_chat_review` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_chat_send` | `service_role` | `supabase/controlled/support_centre.sql` |
+| `support_retention_health` | `service_role` | `supabase/controlled/support_centre_operations.sql` |
+| `trim_conversation_messages_to_latest_50` | `service_role` | `supabase/migrations/20260614120000_conversation_message_retention.sql` |
+
+The 18 Support functions use an empty search_path and qualified application tables. Sixteen are service-role-only: their actor/workspace parameters are trusted server inputs, not browser capabilities. Owner operations validate support ownership; chat operations bind actor/workspace/thread and relevant consent/revision state. The two row-bound notification trigger helpers remain owner-only. The media helper is authenticated-only and derives its boolean from auth.uid(), canonical Workspace authority and deletion exclusion. It must not acquire service_role EXECUTE. Existing public-source functions with older public search_paths retain their exact reviewed configurations; this patch grants no new privileges.
+
+`support_centre_purge` is an INVOKER function and is deliberately excluded. Consent helper names outside the current 39 are not substitution slots. Function-body pinning is a bounded admissibility review, not a replacement for application functional security acceptance.
+
+## Regression proof
+
+- Unit tests exercise all three valid generations, partial cohorts, unsupported counts, unknown/replaced functions and invalid invariant metrics. Every allowed digest must be source-derived.
+- Full-backup, database, runner/postcheck and final-evidence readers preserve exact cross-receipt equality and accept restricted count 29 alongside historical 12/13. No receipt version or archive field is invented.
+- The existing native PostgreSQL 17 CI roundtrip is extended with the public-source 39 definitions, actual catalog/ACL mutations, dump and restoration to another empty database in the existing CI target container. No additional infrastructure or Supabase project is used.
+- The native fixture disables body checking only during definition creation against synthetic table stubs. It proves metadata/body/ACL boundaries and dump/restore, not Support execution behavior. Existing functional Support/media suites remain required. Local service-container skips are never reported as native passes.
+
+## Minimal worker installation and rollback plan — BLOCKED
+
+1. Resolve the reviewed source/merge commit and successful native CI. Independently inspect the installed authorization module SHA256, worker unit/entry point, current application/release.env identity, ownership/modes, queue and active backup processes under the shared Production host/resource lock. Missing old file hashes are a hard stop; none are fabricated in this plan.
+2. Preserve a root-only exact rollback copy and its hash before replacement. Stage only the reviewed `database-authorization-contract.mjs` into the existing operations bundle, retaining root ownership and mode. Worker entry point, worker.env, pgpass, rclone.conf, age recipients, archive directories, retention and application files must remain unchanged.
+3. The running Node process caches imports: a controlled restart of only the backupworker is necessary to load the corrected module. That service action and installation require a separately bound Owner approval. Prevent timer/queue races using the existing protected procedure; no automatic enqueue or backup execution is part of installation.
+4. Verify installed hashes, service identity, heartbeat, preserved release.env, queue and read-only catalog result. Any unexpected file/application/permission change stops the procedure. Roll back only the exact saved module bytes and restart only that worker, with a postflight hash/heartbeat check. Preserve failure evidence and archives.
+5. Actual database/full backup execution is a second explicitly approved operation. Require encrypted archive/checksum pair, validated dump/ACL receipt, offsite transfer proof and later isolated restore evidence before declaring recovery readiness.
+
+The existing protected worker workflow/controller is pinned to historical worker and application commits. It must not be dispatched with forged identities or relaxed checks to install this correction. A current, reviewed source binding plus installed-controller hash/availability must be established first. This PR does not alter that historical controller or bootstrap and cannot claim a fully executable Production approval until those facts are known.
+
+## Offsite, private media and recovery dependencies
+
+A fresh read-only Exoscale portal inventory on 15 November 2026 independently identified the existing offsite bucket in Exoscale Object Storage, de-muc-1: 734 objects, 367 complete age/checksum pairs and zero orphan checksums, below the 1000-object portal limit. The visible pairs comprise database95, storage126, server-config128 and full18. The latest artifact timestamps are 5 November for database, 1 November for full, and 15 November for storage/config. Presence and paired sidecars do not prove cryptographic byte integrity. The configured rclone remote name alone is not evidence of a storage provider. Existing worker uploaded receipts do not independently establish current remote bytes or delivery to the Restore host. Use the existing read-only remote retention/inventory path to confirm complete age/checksum pairs, then independently verify encrypted bytes with bounded checksum reads. Emit only redacted provider/endpoint/bucket metadata and counters; never raw rclone config, credentials, object names or private contents. No remote deletion/sync/overwrite is allowed.
+
+The current storage backup implementation enumerates only fanmind-assets. Before storing productive private media, extend the existing archive path with a versioned per-bucket manifest for chat-character-media: bucket privacy/config, object count/size/hash, collision-free bucket-prefixed archive paths, encrypted output and per-bucket authorization/restore checks. Retain historical manifest compatibility and test denied cross-bucket access, traversal, missing objects and hash mismatch. This is a prepared addition, not an enabled backup job or a claim that the private bucket is protected.
+
+Recovery IAM needs a separately reviewed renewal of the existing expired time condition, retaining default deny, exact existing Restore-instance/zone/template bindings, existing operation allowlist and short fixed expiry. No wildcard, group expansion, new key, actor or server is justified. An independent server-side Exoscale control channel and matching rescue profile must be proven before boot. Restore Ubuntu autostart protection, private/volatile evidence inventory and rollback-to-rescue remain prerequisites. No boot input or PostgreSQL start is allowed by this source PR.
+
+Native negative-fixture correction: PostgreSQL17 stores inheritance on the membership edge at GRANT time. The hostile inherited-service-role test uses explicit `WITH INHERIT TRUE`; altering the role after a NOINHERIT grant would not create the intended effective privilege and is not a valid negative proof.
+
+Integration: Main5fc2832b (#1514) was incorporated without conflicts. All upstream files are preserved; its Storage trigger is SECURITY INVOKER and none of the39 source definitions changes. Following a real600s native timeout, only the synthetic psql wrappers append jit=off while retaining all caller read-only/search_path options. SQL/assertions and600s test/15min job bounds remain intact. Both test helpers allow the exact third CI database name, without a wildcard.
+
+Dependent offline verifier: the Current-Facts profile source checksum for the shared database-authorization-contract.mjs must bind the reviewed new module SHA256. Only that one dependency pin changes; all Current-Facts SQL, reference/catalog hashes, application permissions and historical protected installer pins remain unchanged. Native CI exposed this stale checksum after the39/29 authorization roundtrip and Capacity proof had passed; no profile check was disabled.

@@ -1,4 +1,5 @@
 import "server-only";
+import {capacityEntitlementCommand} from "@/lib/aiCapacityEntitlementWriter.mjs";
 
 import { getSupabaseApiKeyHeaders, getSupabaseRestUrl } from "@/lib/supabase/config";
 
@@ -70,6 +71,10 @@ async function postRpc<T>(name: string, body: Record<string, unknown>): Promise<
       "ai_capacity_reservation_idempotency_conflict",
       "ai_capacity_generation_not_replayable",
       "ai_capacity_policy_missing",
+      "ai_capacity_workspace_missing",
+      "ai_capacity_entitlement_invalid",
+      "ai_capacity_entitlement_revision_conflict",
+      "ai_capacity_grant_budget_mismatch",
       "ai_capacity_policy_revision_conflict",
       "ai_capacity_admission_closed",
       "ai_capacity_quality_mode_disabled",
@@ -160,6 +165,7 @@ export async function reserveAiCapacity(input: {
   qualityMode: AiCapacityQualityMode;
   reservedEurMicrocents: number;
   expectedPolicyRevision: number;
+  expectedEntitlementRevision: number;
   provider: "openai";
   model: string;
   pricingVersion: string;
@@ -182,6 +188,7 @@ export async function reserveAiCapacity(input: {
     p_quality_mode: input.qualityMode,
     p_reserved_eur_microcents: input.reservedEurMicrocents,
     p_expected_policy_revision: input.expectedPolicyRevision,
+    p_expected_entitlement_revision: input.expectedEntitlementRevision,
     p_provider: input.provider,
     p_model: input.model,
     p_pricing_version: input.pricingVersion,
@@ -335,4 +342,16 @@ export async function getAiCapacityBalanceSnapshot(
       row.remaining_percent === null ? null : Number(row.remaining_percent),
     hasCapacityHistory: row.has_capacity_history,
   };
+}
+
+/** Explicit canonical Billing consumer; never invoked by a Web deploy or browser. */
+export async function syncCanonicalAiCapacityEntitlement(input: {
+  observation: unknown; command: unknown; expectedRevision: number;
+}): Promise<number> {
+  const body = capacityEntitlementCommand(input);
+  const revision = await postRpc<number>("sync_ai_capacity_entitlement", body);
+  if (!Number.isSafeInteger(revision) || revision !== input.expectedRevision + 1) {
+    throw Error("ai_capacity_entitlement_commit_unconfirmed");
+  }
+  return revision;
 }

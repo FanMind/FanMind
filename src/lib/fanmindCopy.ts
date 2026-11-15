@@ -479,6 +479,7 @@ const englishCopy: Record<string, string> = {
   "Agency anfragen": "Request Agency",
   "Der Pilot ist vom kostenlosen 1-Stunden-Demo-Zugang getrennt: 990 € einmalig für 1 Testmonat, ohne Abo und ohne automatische Verlängerung.": "The pilot is separate from the free 1-hour demo access: €990 one-time for 1 test month, without subscription or automatic renewal.",
 
+  "Paketpreise und die noch ausstehende kostenpflichtige Aktivierung werden transparent dargestellt.": "Package prices and the pending paid activation are shown transparently.",
   "312 €/Monat": "€312/month",
   "Zwei Starter-Optionen im Paket": "Two Starter options in one package",
   "Starter Flex": "Starter Flex",

@@ -12,9 +12,31 @@ export async function syncFacebookMessengerHistoryFromChannelPage(): Promise<voi
   await syncFacebookMessengerHistory({ revalidate: true });
 }
 
-export async function syncFacebookCommentsFromChannelPage(): Promise<void> {
+export type FacebookCommentSyncState = {
+  ok: boolean;
+  fetchedAt: string;
+  postsChecked: number;
+  commentsChecked: number;
+  importedCount: number;
+  continuationPending: boolean;
+};
+
+export async function syncFacebookCommentsFromChannelPage(
+  _previousState: FacebookCommentSyncState | null,
+): Promise<FacebookCommentSyncState> {
+  void _previousState;
   await requireActiveAuthorizedWorkspace();
-  await fetchFacebookCommentsNow();
+  const result = await fetchFacebookCommentsNow();
+  // Only this run's counters cross the browser boundary, never provider errors,
+  // scopes, tokens, connection rows or caller-supplied previous state.
+  return {
+    ok: result.ok,
+    fetchedAt: result.fetchedAt,
+    postsChecked: result.postsChecked,
+    commentsChecked: result.commentsChecked,
+    importedCount: result.importedCount,
+    continuationPending: result.continuationPending === true,
+  };
 }
 
 export async function syncInstagramMessengerHistoryFromChannelPage(): Promise<void> {

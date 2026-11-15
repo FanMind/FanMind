@@ -3,6 +3,14 @@ name: FanMind Staging Database Rollout State
 on:
   workflow_dispatch:
     inputs:
+      scope:
+        description: 'Read-only scope; Capacity returns baseline match or block only'
+        required: true
+        type: choice
+        default: rollout
+        options:
+          - rollout
+          - capacity
       reviewed_commit:
         description: 'Exact reviewed main commit to bind to this read-only database state check'
         required: true
@@ -10,6 +18,11 @@ on:
       confirmation:
         description: 'Type verify-staging-database-rollout-state to run the read-only check'
         required: true
+        type: string
+      capacity_confirmation:
+        description: 'For capacity only: type prepare-readonly-capacity-preflight; requires a new exact authorization'
+        required: false
+        default: ''
         type: string
 
 concurrency:
@@ -42,6 +55,8 @@ jobs:
       FANMIND_NON_PRODUCTION_WRITE_ACK: ''
       FANMIND_STAGING_DATABASE_ROLLOUT_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
       FANMIND_STAGING_DATABASE_ROLLOUT_STATE_CONFIRM: verify-staging-database-rollout-state
+      FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE: ${{ inputs.scope }}
+      FANMIND_CAPACITY_PREFLIGHT_CONFIRM: ${{ inputs.capacity_confirmation }}
       PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
       FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
@@ -54,11 +69,35 @@ jobs:
     steps:
       - name: Checkout reviewed main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.reviewed_commit }}
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '24'
+
+      - name: Validate requested read-only scope and current main before credentials
+        run: |
+          set -euo pipefail
+          case "$FANMIND_STAGING_DATABASE_ROLLOUT_SCOPE" in
+            rollout)
+              test -z "$FANMIND_CAPACITY_PREFLIGHT_CONFIRM"
+              ;;
+            capacity)
+              if [ "$FANMIND_CAPACITY_PREFLIGHT_CONFIRM" != 'prepare-readonly-capacity-preflight' ]; then
+                echo 'STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK'
+                exit 1
+              fi
+              ;;
+            *)
+              echo 'STAGING_DATABASE_ROLLOUT_CAPACITY=BLOCK'
+              exit 1
+              ;;
+          esac
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(git rev-parse refs/remotes/origin/main)" = "$GITHUB_SHA"
 
       - name: Verify every reused control offline
         run: npm run db:staging-rollout-state:check

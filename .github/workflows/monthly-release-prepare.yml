@@ -1,0 +1,62 @@
+name: Prepare FanMind monthly release (no deployment)
+
+on:
+  workflow_dispatch:
+    inputs:
+      production_base:
+        description: Exact previously verified Production commit (40 lowercase hex)
+        required: true
+        type: string
+      staging_deployment_run:
+        description: Successful deploy-staging run for this exact current Main
+        required: true
+        type: string
+      staging_acceptance_runs:
+        description: JSON array of successful subsequent Staging acceptance run IDs
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  pull-requests: read
+
+# Preparation has no environment, secrets or self-hosted runner. It cannot deploy.
+concurrency:
+  group: fanmind-monthly-release-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '24'
+      - name: Prepare exact source package and authoritative source/Staging references
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PRODUCTION_BASE: ${{ inputs.production_base }}
+          STAGING_DEPLOYMENT: ${{ inputs.staging_deployment_run }}
+          STAGING_ACCEPTANCES: ${{ inputs.staging_acceptance_runs }}
+        run: |
+          node scripts/operations/monthly-release-package.mjs prepare \
+            "$PRODUCTION_BASE" "$GITHUB_SHA" monthly-release.json \
+            "$STAGING_DEPLOYMENT" "$STAGING_ACCEPTANCES"
+          node scripts/operations/monthly-release-package.mjs verify monthly-release.json
+      - name: Retain immutable preparation artifact (never a deployment approval)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: monthly-release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: monthly-release.json
+          if-no-files-found: error
+          overwrite: false
+          retention-days: 35

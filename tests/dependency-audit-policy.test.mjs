@@ -20,10 +20,10 @@ import {
 import { validateCycloneDx } from "../scripts/security/generate-sbom.mjs";
 
 const patchedManifest = {
-  dependencies: { next: "16.3.8" },
+  dependencies: { next: "16.4.3" },
   devDependencies: {
     eslint: "9.39.5",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.3",
   },
 };
 
@@ -55,7 +55,7 @@ test("clean root audit passes without a review exception", () => {
   const result = evaluateDependencyAudit({
     rootPayload: auditPayload(),
     mobilePayload: auditPayload({
-      moderate: 10,
+      moderate: MOBILE_REVIEW_MODERATE_MAXIMUM,
       packages: [REVIEWED_MOBILE_PACKAGES[0]],
     }),
     rootManifest: patchedManifest,
@@ -80,6 +80,66 @@ test("clean root audit passes without a review exception", () => {
     MOBILE_REVIEW_MODERATE_MAXIMUM,
   );
   assert.equal(result.mobile.lowMaximum, MOBILE_REVIEW_LOW_MAXIMUM);
+});
+
+test("Mobile review contracts the exact residual set after supported remediations", async () => {
+  assert.equal(MOBILE_REVIEW_HIGH_MAXIMUM, 5);
+  assert.equal(MOBILE_REVIEW_MODERATE_MAXIMUM, 3);
+  assert.deepEqual(REVIEWED_MOBILE_PACKAGES, [
+    "@expo/cli",
+    "@expo/code-signing-certificates",
+    "decode-uri-component",
+    "expo",
+    "expo-router",
+    "node-forge",
+    "query-string",
+    "zod",
+  ]);
+
+  const lock = JSON.parse(
+    await readFile(
+      new URL("../apps/mobile/package-lock.json", import.meta.url),
+      "utf8",
+    ),
+  );
+  const expectedMetroVersions = {
+    metro: "0.87.1",
+    "metro-babel-transformer": "0.87.1",
+    "metro-cache": "0.87.1",
+    "metro-cache-key": "0.87.1",
+    "metro-config": "0.87.2",
+    "metro-core": "0.87.1",
+    "metro-file-map": "0.87.1",
+    "metro-minify-terser": "0.87.1",
+    "metro-resolver": "0.87.1",
+    "metro-runtime": "0.87.2",
+    "metro-source-map": "0.87.1",
+    "metro-symbolicate": "0.87.1",
+    "metro-transform-plugins": "0.87.1",
+    "metro-transform-worker": "0.87.1",
+    ob1: "0.87.1",
+  };
+  const expectedNestedMetroVersions = {
+    "metro-config": "0.87.1",
+    "metro-runtime": "0.87.1",
+  };
+  for (const [packageName, expectedVersion] of Object.entries(
+    expectedMetroVersions,
+  )) {
+    assert.equal(
+      lock.packages[`node_modules/${packageName}`].version,
+      expectedVersion,
+    );
+    assert.equal(
+      lock.packages[
+        `node_modules/@expo/metro/node_modules/${packageName}`
+      ]?.version,
+      expectedNestedMetroVersions[packageName],
+    );
+  }
+  assert.equal(lock.packages["node_modules/image-size"], undefined);
+  assert.equal(lock.packages["node_modules/queue"], undefined);
+  assert.equal(lock.packages["node_modules/uuid"], undefined);
 });
 
 test("every root high, moderate or unreviewed package fails closed", () => {
@@ -261,16 +321,18 @@ test("reviewed overrides stay narrow and resolve to the patched root tree", asyn
     "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
     "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
     "nanoid@<3.3.18": "3.3.18",
-    "next@16.3.8": {
+    "source-map-js@<1.2.2": "1.2.2",
+    "next@16.4.3": {
       postcss: "8.5.23",
-      sharp: "0.35.4",
+      sharp: "0.35.5",
     },
   });
   assert.equal(manifest.devDependencies.eslint, "9.39.5");
   assert.equal(lock.packages["node_modules/eslint"].version, "9.39.5");
-  assert.equal(lock.packages["node_modules/next"].version, "16.3.8");
+  assert.equal(lock.packages["node_modules/next"].version, "16.4.3");
   assert.equal(lock.packages["node_modules/postcss"].version, "8.5.23");
-  assert.equal(lock.packages["node_modules/sharp"].version, "0.35.4");
+  assert.equal(lock.packages["node_modules/sharp"].version, "0.35.5");
+  assert.equal(lock.packages["node_modules/source-map-js"].version, "1.2.2");
   assert.equal(lock.packages["node_modules/brace-expansion"].version, "5.0.9");
   for (const dependencyPath of [
     "node_modules/@eslint/config-array/node_modules/brace-expansion",
@@ -332,3 +394,4 @@ test("CycloneDX validation accepts only structured component inventories", () =>
     /cyclonedx_sbom_invalid/u,
   );
 });
+

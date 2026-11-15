@@ -1,3 +1,4 @@
+import { FACEBOOK_MESSAGES_OAUTH_SCOPES, FACEBOOK_COMMENT_FEED_SCOPES, FACEBOOK_INSIGHTS_OAUTH_SCOPES } from "@/lib/facebookScopes";
 import { runMetaInitialImport, type MetaInitialImportStatus } from "@/lib/metaInitialImport";
 import {
   encryptToken,
@@ -9,6 +10,8 @@ import {
   hasFacebookCommentFeedScopes,
   hasFacebookInsightsScopes,
   hasRequiredFacebookPagePermissions,
+  hasFacebookPageAuthorization,
+  verifyFacebookPageTokenIdentity,
   isTokenEncryptionConfigured,
   FACEBOOK_PAGE_COMMENT_WEBHOOK_FIELDS,
   FACEBOOK_PAGE_MESSENGER_WEBHOOK_FIELDS,
@@ -90,7 +93,7 @@ export async function completeFacebookOAuthConnection(input: {
   const pages = await fetchFacebookPages(input.userAccessToken);
   if (!pages.length) return { ok: false, errorCode: "no_page" };
 
-  if (pages.length > 1 && !input.selectedPageId) {
+  if (!input.selectedPageId) {
     return {
       ok: false,
       errorCode: "page_selection_required",
@@ -98,9 +101,7 @@ export async function completeFacebookOAuthConnection(input: {
     };
   }
 
-  const page = input.selectedPageId
-    ? pages.find((candidate) => candidate.id === input.selectedPageId)
-    : pages[0];
+  const page = pages.find((candidate) => candidate.id === input.selectedPageId);
   if (!page) return { ok: false, errorCode: "page_selection_invalid" };
   if (!page.accessToken)
     return { ok: false, errorCode: "no_page_token" };
@@ -114,6 +115,13 @@ export async function completeFacebookOAuthConnection(input: {
   const pageTokenDiagnostics = await fetchFacebookTokenDiagnostics(
     page.accessToken,
   );
+  const requiredScopes = isCommentConnection ? FACEBOOK_COMMENT_FEED_SCOPES
+    : isInsightsConnection ? FACEBOOK_INSIGHTS_OAUTH_SCOPES : FACEBOOK_MESSAGES_OAUTH_SCOPES;
+  if (!hasFacebookPageAuthorization(userTokenDiagnostics, page.id, requiredScopes) ||
+      !hasFacebookPageAuthorization(pageTokenDiagnostics, page.id, requiredScopes) ||
+      !await verifyFacebookPageTokenIdentity(page.accessToken, page.id)) {
+    return { ok: false, errorCode: "page_permissions" };
+  }
   const grantedScopes = mergeScopes(
     grantedPermissionNames,
     getFacebookGrantedScopeNames(userTokenDiagnostics),
@@ -153,7 +161,9 @@ export async function completeFacebookOAuthConnection(input: {
     return { ok: false, errorCode: "save" };
   }
 
-  if (desiredWebhookFields.length && result.connection) {
+  // Staging shares the Meta app whose Page callback still targets Production.
+  // Import through Graph only; never alter app-global Page subscriptions here.
+  if (desiredWebhookFields.length && result.connection && process.env.FANMIND_RUNTIME_ENVIRONMENT !== "staging") {
     const webhookStatus = await subscribeFacebookPage(
       page.id,
       page.accessToken,

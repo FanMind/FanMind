@@ -403,3 +403,30 @@ Der Legacy-Observability-Pfad in `aiUsage.ts` darf seine ENV-basierten
 Schätzwerte weiterhin für Anzeige/Monitoring verwenden. Diese Schätzwerte
 dürfen den Capacity-v2-Ledger niemals setteln. Capacity v2 verwendet den
 versionierten Preis, echte Provider-Usage und integerbasierte Geldwerte.
+
+
+## ChatAdmin: stärkeres Modell — 14. Oktober 2026
+
+Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
+Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
+„Premium“ aus dem versionierten Provider-Katalog, einschließlich dessen
+Standard-Verarbeitungswerten. Für kurze Chatantworten verwendet ChatAdmin
+Reasoning „medium“, während das allgemeine Premium-Profil unverändert bleibt. Dies aktiviert keine allgemeinen
+bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
+Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
+
+Das gemeinsame Tokenlimit beträgt 8192 einschließlich Reasoning; die bestehenden
+kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
+auf 55 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
+Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
+Pfad. Fehlende Provider-Usage bleibt als Schätzung erkennbar.
+
+Vor dem Live-Wechsel prüft der geschützte isolierte Release-Weg den bestehenden
+Serverzugang durch genau eine begrenzte synthetische Responses-Anfrage mit
+store=false und vollständigem synthetischem Fan-/Character-Kontext sowie 20
+Gesprächseinträgen über denselben Kontextbuilder wie die Route. Modellbindung, vollständiges Ergebnis, drei Antworten und Preiswächter
+müssen bestehen; sonst bleibt der bisherige Release aktiv. Es gibt keinen stillen
+Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
+geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
+Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
+Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.

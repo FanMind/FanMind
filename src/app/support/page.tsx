@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const SUPPORT_MAIL =
-  "mailto:kontakt@fanmind.ch?subject=FanMind%20App%20Support";
+  "mailto:fanmind@fanmind.ch?subject=FanMind%20App%20Support";
 
 export default function SupportPage() {
   return (
@@ -34,7 +34,7 @@ export default function SupportPage() {
           </p>
           <div className={styles.actions}>
             <a className={styles.primary} href={SUPPORT_MAIL}>
-              kontakt@fanmind.ch
+              fanmind@fanmind.ch
             </a>
             <a className={styles.secondary} href="/login">
               Zum Login

@@ -1,9 +1,11 @@
+import { stagingFacebookOAuthContinuation } from "@/lib/facebookStagingIngressPolicy.mjs";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { areDemoConnectionsDisabled } from "@/lib/demoMode";
 import {
   createPendingFacebookPageSelection,
+  FacebookPageDiscoveryError,
   exchangeFacebookCode,
   getFacebookRuntimeConfigurationStatus,
   verifyFacebookOAuthState,
@@ -28,7 +30,11 @@ export async function GET(request: Request) {
   const state = verifyFacebookOAuthState(url.searchParams.get("state"));
 
   const { data } = await getSupabaseServerUser();
-  if (!data.user) redirect("/login");
+  if (!data.user) {
+    const continuation = stagingFacebookOAuthContinuation(request, process.env, state);
+    if (continuation) return continuation;
+    redirect("/login");
+  }
   if (!code || !state || state.userId !== data.user.id) {
     return redirectToChannels(appOrigin, "facebook_error=oauth");
   }
@@ -104,7 +110,10 @@ export async function GET(request: Request) {
       appOrigin,
       `connected=${result.connectedType}&meta_import=${result.initialImport}`,
     );
-  } catch {
+  } catch (error) {
+    if (error instanceof FacebookPageDiscoveryError) {
+      return redirectToChannels(appOrigin, `facebook_error=${error.diagnostic}`);
+    }
     console.error("Facebook OAuth callback failed", {
       code: "facebook_oauth_callback_failed",
     });

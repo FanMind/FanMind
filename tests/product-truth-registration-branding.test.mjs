@@ -34,23 +34,23 @@ async function walkFiles(root) {
   return nested.flat();
 }
 
-test("Starter landing entries use valid plan IDs and preserve option, language and referral", () => {
+test("Capacity registration entries preserve package, language and referral", () => {
   assert.equal(
     buildRegistrationHref({
       language: "de",
       planId: "starter",
-      starterOption: "starter_paid_setup",
+      capacityPackage: "capacity_99",
     }),
-    "/register?plan=starter&option=starter_paid_setup",
+    "/register?plan=capacity_99",
   );
   assert.equal(
     buildRegistrationHref({
       language: "en",
       planId: "starter",
-      starterOption: "starter_no_setup_commitment",
+      capacityPackage: "capacity_199",
       referralCode: "FM-ABC123",
     }),
-    "/register?plan=starter&option=starter_no_setup_commitment&lang=en&ref=FM-ABC123",
+    "/register?plan=capacity_199&lang=en&ref=FM-ABC123",
   );
   assert.equal(normalizeStarterOfferOption("starter_no_setup_commitment"), "starter_no_setup_commitment");
   assert.equal(normalizeStarterOfferOption("starter-12"), "starter_paid_setup");
@@ -86,8 +86,8 @@ test("active product surfaces no longer route to retired Pilot registration", as
     source("src/app/admin/billing/page.tsx"),
   ]);
 
-  assert.match(landing, /plan=starter&option=starter_paid_setup/u);
-  assert.match(landing, /plan=starter&option=starter_no_setup_commitment/u);
+  assert.match(landing, /capacityLandingPlans\(language\)/u);
+  assert.doesNotMatch(landing, /plan=starter&option=/u);
   assert.doesNotMatch(landing, /plan=starter-(?:flex|12)/u);
   assert.match(register, /isRetiredPilotRequested \? "starter" : resolvedPlanId/u);
   assert.match(register, /selectedCommercialOption[^=]*= isDailyTestPlanSelected/u);
@@ -180,6 +180,8 @@ test("channel phases stay unique and selected handoff development retains extern
   const phase3 = roadmap.split('phase: "Phase 3"')[1]?.split('phase: "Phase 4"')[0] ?? "";
   const phase7 = roadmap.split('phase: "Phase 7"')[1]?.split('phase: "Phase 8"')[0] ?? "";
   const phase8 = roadmap.split('phase: "Phase 8"')[1]?.split('phase: "Phase 9"')[0] ?? "";
+  const phase9 = roadmap.split('phase: "Phase 9"')[1]?.split('phase: "Phase 10"')[0] ?? "";
+  const phase10 = roadmap.split('phase: "Phase 10"')[1]?.split('phase: "Phase 11"')[0] ?? "";
   const phase15 = roadmap.split('phase: "Phase 15"')[1] ?? "";
 
   assert.match(phase3, /Facebook[\s\S]*Instagram[\s\S]*WhatsApp/u);
@@ -199,7 +201,36 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.equal((phase8.match(/state: "progress"/gu) ?? []).length, 1);
   assert.match(phase8, /KI-Antworten und Übergabe an den Nutzer[\s\S]{0,160}Antwortentwürfe und manuelle Übergabe in Arbeit/u);
   assert.doesNotMatch(phase8, /Facebook|Instagram|WhatsApp|TikTok|X \/ Twitter|Discord|OnlyFans/u);
+  for (const laterPhase of [phase9, phase10]) {
+    assert.match(laterPhase, /status: "Später geplant"[\s\S]*availability: "later"/u);
+    assert.doesNotMatch(laterPhase, /status: "In Arbeit"|status: "In Kürze"|status: "Coming Soon"|availability: "upcoming"/u);
+  }
+  assert.match(
+    phase10,
+    /Read-only KI-Analyse und Dashboard-Erklärungen[\s\S]*state: "later"[\s\S]*kanonischen Analytics-Daten[\s\S]*Tenant\/AuthZ[\s\S]*Datenminimierung[\s\S]*Audit[\s\S]*Capacity\/Kosten[\s\S]*Providerfreigaben/u,
+  );
+  assert.doesNotMatch(roadmap, /ChatAdmin|Known-Interest-Guard/u);
+  assert.doesNotMatch(roadmap, /TagFilter-Snapshot[\s\S]{0,120}state: "done"/u);
   assert.match(phase15, /Segmente & Listen[\s\S]*Segment-Ansichten[\s\S]*Listenlogik[\s\S]*Filter & Tags[\s\S]*CSV-Import für Segmente nutzen/u);
+  assert.doesNotMatch(phase15, /Filter & Tags[\s\S]{0,120}state: "done"/u);
+  const websiteSupportTruth =
+    sourceOfTruth.split("Issue #1350")[1]?.split("- Meta-Content-Staging:")[0] ?? "";
+  assert.match(
+    websiteSupportTruth,
+    /WEBSITE_SUPPORT_ASSISTANT_PLAN\.md[\s\S]*nicht[\s\S]*neu gebaut[\s\S]*Web-\/Staging-Zielabnahme[\s\S]*Schema-Installation[\s\S]*Feature-Flag[\s\S]*Provider-[\s\S]*Rechts-[\s\S]*Datenschutzabnahme/u,
+  );
+  assert.match(
+    websiteSupportTruth,
+    /Support-Gates[\s\S]*Mobile-Geräte-[\s\S]*Store-Abnahmen getrennt[\s\S]*kein Mobile- oder Store-Gate blockiert Websupport/u,
+  );
+  assert.doesNotMatch(
+    sourceOfTruth,
+    /Support-Source ist integriert[\s\S]{0,180}(?:Geräte|Store)/u,
+  );
+  assert.match(
+    sourceOfTruth,
+    /Issue #1259[\s\S]*spätere read-only KI-Analyse[\s\S]*Tenant-Isolation und AuthZ[\s\S]*Datenminimierung[\s\S]*Auditierbarkeit[\s\S]*Capacity-\/Kostenkontrolle[\s\S]*Providerfreigaben[\s\S]*aktiviert aktuell keine Funktion/u,
+  );
   assert.match(publicRoadmap, /import \{ roadmapPhases, type RoadmapPhase \} from "@\/config\/roadmap"/u);
   assert.doesNotMatch(publicRoadmap, /const available:|const inProgress:|const comingSoon:/u);
   assert.match(adminRoadmap, /Alle Phasen sind fortlaufend nummeriert/u);
@@ -232,4 +263,30 @@ test("channel phases stay unique and selected handoff development retains extern
   assert.doesNotMatch(currentConversationFields, /assigned_user_id/u);
   assert.match(conversationsSchema, /assigned_user_id[\s\S]*noch nicht zum aktuellen Production-[\s\S]*Schema/u);
   assert.match(conversationsSchema, /RLS- und Spaltenrechte[\s\S]*Staging/u);
+});
+
+// Exercise the public projection and signup boundary for every accepted package.
+test("Capacity selections retain exact amounts without granting payment authority", async () => {
+  const { capacityRegistrationPackages, capacityDataPackages } = await import("../src/lib/capacityRegistrationPolicy.mjs");
+  const { buildRegistrationAccountMetadata } = await import("../src/lib/webRegistrationPolicy.mjs");
+  const { STAGING_CAPACITY_PRICE_CONTRACTS, STAGING_TOPUP_PRICE_CONTRACTS } = await import("../src/lib/stagingStripeCatalogPolicy.mjs");
+  const { AI_CAPACITY_PACKAGES } = await import("../src/lib/aiCapacityPolicy.mjs");
+  for (const [index, amount] of [99, 199, 312].entries()) {
+    const id = `capacity_${amount}`;
+    const plan = capacityRegistrationPackages()[index];
+    assert.equal(plan.id, id);
+    assert.equal(plan.price, `${amount} €/Monat`);
+    assert.equal(AI_CAPACITY_PACKAGES[id].monthlyPriceCents, amount * 100);
+    const catalog = STAGING_CAPACITY_PRICE_CONTRACTS[index];
+    assert.equal(catalog.slot, id);
+    assert.equal(catalog.unitAmount, amount * 100);
+    assert.equal(catalog.environmentName, `STRIPE_PRICE_CAPACITY_${amount}`);
+    const metadata = buildRegistrationAccountMetadata({ commercialOption: id, planId: id });
+    assert.equal(metadata.registration_plan_preference, id);
+    assert.equal(metadata.registration_option_preference, "capacity_v2");
+    for (const field of ["plan_id", "commercial_option", "billing_status", "payment_terms_accepted", "payment_terms_version"]) assert.equal(Object.hasOwn(metadata, field), false);
+  }
+  assert.deepEqual(STAGING_TOPUP_PRICE_CONTRACTS.map(p => p.unitAmount), [1499, 3749, 7499, 14900]);
+  assert.ok(STAGING_TOPUP_PRICE_CONTRACTS.every(p => p.type === "one_time" && p.interval === null));
+  assert.ok(capacityDataPackages().every(p => p.type === "one_time"));
 });

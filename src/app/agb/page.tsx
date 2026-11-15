@@ -1,3 +1,4 @@
+import { capacityRegistrationPackages, capacityDataPackages } from "@/lib/capacityRegistrationPolicy.mjs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import LegalTopHeader from "@/components/LegalTopHeader";
@@ -20,7 +21,7 @@ const sections: TermsSection[] = [
     content: (
       <>
         <p>
-          Vertragspartner ist Bernd Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Turnerstraße 18, 2345 Brunn am Gebirge, Österreich. Inhaber und vertretungsberechtigt ist Bernd Guggenberger.
+          Vertragspartnerin ist Brigitte Erika Guggenberger, Einzelunternehmen unter der Geschäftsbezeichnung FanMind, Bahnstraße 11, Stiege 2, Tür 1, 2351 Wiener Neudorf, Österreich (GISA 40314440). Bernd Guggenberger ist operativer Ansprechpartner.
         </p>
         <p>
           FanMind ist ein KI-gestützter Antwort- und Memory-Assistent für Fan-, Kunden- und
@@ -221,7 +222,8 @@ const sections: TermsSection[] = [
           Demo-Modus verwendet wird. FanMind kann Demo- oder Testzugänge zeitlich beschränken,
           ändern oder deaktivieren.
         </p>
-        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Öffentlich stehen Starter Flex und Starter 12 Monate zur Auswahl. Eine Kontoerstellung startet noch kein Abo. Bedingungen bestehender oder ausdrücklich intern zugelassener Daily-Verträge bleiben davon unberührt.</p>
+        <p>{capacityRegistrationPackages().map(plan => `${plan.name}: ${plan.price}, ${plan.setup}`).join("; ")}. Nettopreise. Registrierung kostenlos; Paket- und Vertragsbestätigung erfolgen gesondert vor kostenpflichtiger Aktivierung. Laufzeit und Kündigungsbedingungen werden nicht aus dem monatlichen Preis abgeleitet.</p><p>{capacityDataPackages().map(plan => `${plan.name}: ${plan.price} einmalig`).join("; ")}. Keine monatlichen Abonnements; Verkauf in Vorbereitung. Bestehende Vertrags- und Zahlungszustimmungen werden nicht umgeschrieben.</p>
+        <p>Der kostenlose Demo-Zugang löst keine Zahlung aus. Für neue Registrierungen werden die FanMind-Monatspakete vorgemerkt; die kostenpflichtige Aktivierung wird vorbereitet. Die nachfolgenden Starter-Konditionen gelten ausschließlich für Bestandsverträge oder ausdrücklich individuell vereinbarte Sonderbedingungen. Eine Kontoerstellung startet noch kein Abo. Bedingungen bestehender oder ausdrücklich intern zugelassener Daily-Verträge bleiben davon unberührt.</p>
       </>
     ),
   },
@@ -350,7 +352,7 @@ const sections: TermsSection[] = [
       <>
         <p>
           Support- und Vertragsanfragen können an{" "}
-          <a href="mailto:kontakt@fanmind.ch">kontakt@fanmind.ch</a> gerichtet werden.
+          <a href="mailto:fanmind@fanmind.ch">fanmind@fanmind.ch</a> gerichtet werden.
           Reaktionszeiten sind nicht garantiert, sofern keine Service-Level vereinbart sind.
         </p>
         <p>
@@ -432,7 +434,7 @@ export default function AgbPage() {
         <header className={styles.hero}>
           <h1>AGB / VERTRAGSBEDINGUNGEN</h1>
           <p className={styles.subtitle}>für die Nutzung von FanMind</p>
-          <p className={styles.stand}>Stand: Juli 2026</p>
+          <p className={styles.stand}>Stand: 6. November 2026</p>
           <p className={styles.intro}>
             Diese Vertragsbedingungen regeln das Vertragsverhältnis zwischen FanMind und Kundinnen
             und Kunden, Pilotkunden sowie registrierten Nutzerinnen und Nutzern, soweit keine
@@ -461,3 +463,4 @@ export default function AgbPage() {
     </main>
   );
 }
+

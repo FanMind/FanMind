@@ -9,12 +9,16 @@ import { evaluateChatAdminStagingControlEnvironment } from "../../src/lib/chatAd
 
 export const SQL_PATH = "supabase/controlled/20260927200000_chat_admin_character_fans.sql";
 export const SQL_SHA256 = "36990f58521e3986542f5b9b206af93f9fa4a6e6439352b4b11ead7685e4275a";
+export const CUSTOMER_TIER_SQL_PATH = "supabase/controlled/20261007102000_chat_admin_customer_tier.sql";
+export const CUSTOMER_TIER_SQL_SHA256 = "64919d2f74e5042d7d00014afae60f03fcd72e254ebcade5a7fcda9f2acd8797";
 
 // Bind expected routine bodies to the checksum-pinned SQL source.
 const controlledSql = readFileSync(SQL_PATH, "utf8");
-function expectedFunctionSource(name) {
-  const pattern = "create function public\\." + name + "\\([\\s\\S]*? as \\$\\$([\\s\\S]*?)\\$\\$;";
-  const match = controlledSql.match(new RegExp(pattern, "u"));
+const customerTierSql = readFileSync(CUSTOMER_TIER_SQL_PATH, "utf8");
+if (createHash("sha256").update(customerTierSql).digest("hex") !== CUSTOMER_TIER_SQL_SHA256) throw new Error("customer_tier_checksum_mismatch");
+function expectedFunctionSource(name, source = controlledSql) {
+  const pattern = "create (?:or replace )?function public\\." + name + "\\([\\s\\S]*? as \\$\\$([\\s\\S]*?)\\$\\$;";
+  const match = source.match(new RegExp(pattern, "u"));
   if (!match) throw new Error("missing controlled function: " + name);
   return "'" + match[1].replaceAll("'", "''") + "'";
 }
@@ -70,7 +74,16 @@ declare
   generated_column_mismatch integer;
   role_security_mismatch integer;
   rewrite_rule_mismatch integer;
+  customer_tier_expected boolean;
 begin
+  -- Accept only the complete original contract or the exact pinned extension.
+  -- Presence chooses expectations, never exempts a column or function from checks.
+  customer_tier_expected := exists(select 1 from pg_attribute
+    where attrelid=to_regclass('public.chat_character_fans') and attname='customer_tier' and attnum>0 and not attisdropped);
+  if customer_tier_expected and not exists(select 1 from pg_constraint
+    where conrelid=to_regclass('public.chat_character_fans') and conname='chat_character_fans_customer_tier_check' and contype='c'
+      and convalidated and not condeferrable and not condeferred)
+  then raise exception 'CHAT_ADMIN_FAN_SCHEMA_STATE=PARTIAL'; end if;
   select count(*) into base_present
   from (values
     (to_regclass('public.workspace_chat_admin_capabilities') is not null),
@@ -399,6 +412,7 @@ begin
       ('chat_character_messages','fan_id','uuid',false),
       ('chat_character_messages','sequence','bigint',true),
       ('chat_character_messages','generation_id','uuid',false)
+    union all select 'chat_character_fans','customer_tier','text',true where customer_tier_expected
   ), actual as (
     select
       c.relname::text as table_name,
@@ -423,6 +437,7 @@ begin
     ('display_name',''),('handle',''),('platform',''),('language',''),
     ('status',$expr$'active'::text$expr$),('summary',$expr$''::text$expr$),('notes',$expr$''::text$expr$),
     ('creation_id',''),('revision','1'),('created_at','now()'),('updated_at','now()')
+    union all select 'customer_tier',$expr$'red'::text$expr$ where customer_tier_expected
   ), actual as (
     select a.attname::text,
       coalesce(regexp_replace(lower(pg_get_expr(d.adbin,d.adrelid)), '[[:space:]()]', '', 'g'),'') as default_expression
@@ -441,7 +456,7 @@ begin
   ) select count(*) into column_default_mismatch from mismatch;
   column_default_mismatch := column_default_mismatch + abs(
     (select count(*) from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
-     where n.nspname='public' and c.relname='chat_character_fans' and a.attnum>0 and not a.attisdropped) - 14
+     where n.nspname='public' and c.relname='chat_character_fans' and a.attnum>0 and not a.attisdropped) - (14 + customer_tier_expected::integer)
   );
   select count(*) into generated_column_mismatch
   from pg_attribute a join pg_class c on c.oid=a.attrelid join pg_namespace n on n.oid=c.relnamespace
@@ -504,6 +519,7 @@ begin
       ('chat_character_fans','c','checkchar_lengthnotes<=4000'),
       ('chat_character_conversations','f','foreignkeyworkspace_id,character_id,fan_idreferenceschat_character_fansworkspace_id,character_id,idondeletecascade'),
       ('chat_character_messages','f','foreignkeyworkspace_id,character_id,fan_id,conversation_idreferenceschat_character_conversationsworkspace_id,character_id,fan_id,idondeletecascade')
+    union all select 'chat_character_fans','c','checkcustomer_tier=anyarray[''red'',''blue'',''yellow'',''green'']' where customer_tier_expected
   ), actual as (
     select
       c.relname::text as table_name,
@@ -534,13 +550,13 @@ begin
       and (not convalidated or condeferrable or condeferred)
   );
   constraint_mismatch := constraint_mismatch + case
-    when (select count(*) from pg_constraint where conrelid='public.chat_character_fans'::regclass and contype in ('p','u','f','c'))=12
+    when (select count(*) from pg_constraint where conrelid='public.chat_character_fans'::regclass and contype in ('p','u','f','c'))=(12 + customer_tier_expected::integer)
     then 0 else 1 end;
   constraint_mismatch := constraint_mismatch + case
     when (select count(*) from pg_constraint
       where conrelid='public.chat_character_fans'::regclass
         and contype in ('p','u','f','c')
-        and convalidated and not condeferrable and not condeferred)=12
+        and convalidated and not condeferrable and not condeferred)=(12 + customer_tier_expected::integer)
     then 0 else 1 end;
   with expected(table_name,constraint_name,contype,definition) as (values
     ('chat_character_conversations','chat_character_conversations_pkey','p','primarykeyid'),
@@ -856,7 +872,7 @@ begin
   with expected(name, body) as (values
     ('require_chat_admin_fan_binding', ${expectedFunctionSource("require_chat_admin_fan_binding")}),
     ('create_chat_admin_fan_conversation', ${expectedFunctionSource("create_chat_admin_fan_conversation")}),
-    ('create_chat_admin_fan', ${expectedFunctionSource("create_chat_admin_fan")}),
+    ('create_chat_admin_fan', case when customer_tier_expected then ${expectedFunctionSource("create_chat_admin_fan", customerTierSql)} else ${expectedFunctionSource("create_chat_admin_fan")} end),
     ('persist_chat_admin_generation', ${expectedFunctionSource("persist_chat_admin_generation")}),
     ('persist_chat_admin_confirmed_reply', ${expectedFunctionSource("persist_chat_admin_confirmed_reply")}),
     ('chat_admin_fan_schema_ready', ${expectedFunctionSource("chat_admin_fan_schema_ready")})

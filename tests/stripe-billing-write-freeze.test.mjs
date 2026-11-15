@@ -258,6 +258,7 @@ const compiledWebhook = ts.default.transpileModule(
 const eventPolicy = await import("../src/lib/stripeWebhookEventPolicy.mjs");
 const referralPolicy = await import("../src/lib/referralLifecyclePolicy.mjs");
 const ledgerPolicy = await import("../src/lib/stripeBillingEventLedger.mjs");
+const { handleStripeTopupEvent } = await import("../src/lib/stripeAiTopupLifecycle.mjs");
 const { buildSignedFreezeProbe, runSignedBillingFreezeProbe } = await import("../scripts/operations/staging-signed-billing-freeze-probe.mjs");
 
 function webhookHarness({ frozen = true, capture = false, signature = true } = {}) {
@@ -273,6 +274,7 @@ function webhookHarness({ frozen = true, capture = false, signature = true } = {
     "@/lib/stripeWorkspacePolicy.mjs": workspacePolicy,
     "@/lib/stripeBilling": { ...unused, verifyStripeSignature: () => signature, findWorkspaceIdByStripeReferences: () => { throw new Error("legacy_resumed"); } },
     "@/lib/stripeBillingEventSync.mjs": { syncStripeBillingEvent: async () => { ledgerCalls++; return { status: "unresolved" }; } },
+    "@/lib/stripeAiTopup": { processStripeTopupEvent: event => handleStripeTopupEvent(event, {}, {}) },
   };
   runInNewContext(compiledWebhook, { exports, console: { warn() {}, error() {} }, require: name => imports[name] ?? unused });
   return { post: exports.POST, ledgerCalls: () => ledgerCalls };

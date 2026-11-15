@@ -149,3 +149,37 @@ Do not guess a path. Confirm the directory contains `package.json` and `.next/re
 ## Retention
 
 Production retains four release directories. The active and previous working directories are protected even if this temporarily exceeds the requested count. Retention applies only after a successful release.
+
+
+## ChatAdmin: stärkeres Modell — 14. Oktober 2026
+
+Der Owner hat ein stärkeres Modell für bessere ChatAdmin-Antworten freigegeben.
+Die ChatAdmin-Route verwendet dafür das bestehende serverseitige Profil
+„Premium“ aus dem versionierten Provider-Katalog, einschließlich dessen
+Standard-Verarbeitungswerten. Für kurze Chatantworten verwendet ChatAdmin
+Reasoning „medium“, während das allgemeine Premium-Profil unverändert bleibt. Dies aktiviert keine allgemeinen
+bezahlten KI-Stufen, Entitlements oder andere CRM-KI-Pfade. Character-Stimme,
+Fanwissen, manuelle Versandgrenze und Preiswächter bleiben unverändert.
+
+Das gemeinsame Tokenlimit beträgt 8192 einschließlich Reasoning; die bestehenden
+kurzen Antwort- und Kontextgrenzen bleiben wirksam. Die Provider-Wartefrist ist
+auf 55 Sekunden begrenzt. Usage verwendet tatsächliche Provider-Tokens inklusive
+Reasoning und Cache sowie den vorhandenen USD-Preiskatalog für diesen ChatAdmin-
+Pfad. Fehlende Provider-Usage bleibt als Schätzung erkennbar.
+
+Vor dem Live-Wechsel prüft der geschützte isolierte Release-Weg den bestehenden
+Serverzugang durch genau eine begrenzte synthetische Responses-Anfrage mit
+store=false und vollständigem synthetischem Fan-/Character-Kontext sowie 20
+Gesprächseinträgen über denselben Kontextbuilder wie die Route. Modellbindung, vollständiges Ergebnis, drei Antworten und Preiswächter
+müssen bestehen; sonst bleibt der bisherige Release aktiv. Es gibt keinen stillen
+Modell-Fallback. Keine Fan-/Character-Daten werden für diese Probe gelesen oder
+geschrieben und keine Provider-Inhalte oder Schlüssel protokolliert. Ein erfolgreicher
+Probeaufruf belegt API-Zugang und Antwortvertrag, keine allgemeine Qualitätsabnahme.
+Echte Natürlichkeit und Gedächtniswirkung sind anschließend manuell zu beurteilen.
+
+# Support rollout continuation — 2026-11-05
+
+Production Operations tests require committed Git source (including unchanged Capacity source-binding tests). The release builder runs the complete suite in a disposable local clone detached at the exact release SHA, with its own dependency install. The runtime/build archive stays Git-free; the old source checkout remains untouched until the existing post-switch synchronization. A failed suite removes both temporary trees before any live switch.
+
+For a Support-disabled rollout, select `support_must_remain_disabled=true` in the reviewed Production workflow. The builder requires the shared Support setting to be strictly false or absent before the provider/switch stage, then verifies the effective PM2 value is false after reload; a failed postcheck invokes the existing rollback. Normal later deployments retain the existing persistent flag contract when this optional guard is false. This guard does not enable Support, set privacy/acceptance evidence, configure retention or apply schema.
+

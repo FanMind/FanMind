@@ -10,6 +10,7 @@ RETAIN_RELEASES="${FANMIND_RELEASE_RETENTION_COUNT:-4}"
 RELEASE_COMMIT="${1:-}"
 PM2_CONFIG_RELATIVE_PATH="ops/pm2/fanmind.production.config.cjs"
 TEMP_RELEASE=""
+OPERATIONS_CHECKOUT=""
 SWITCHED=0
 PREVIOUS_CWD=""
 PREVIOUS_COMMIT=""
@@ -17,6 +18,26 @@ PREVIOUS_EXEC_MODE=""
 PREVIOUS_LINK_TARGET=""
 AVAILABILITY_LOG=""
 AVAILABILITY_PID=""
+
+monthly_boundary() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    node "$FANMIND_MONTHLY_CONTROL" checkpoint "${1:-boundary}"
+  fi
+}
+
+# Only read/build/test npm children are cancellable. PM2 reload/rollback,
+# privileged host updates and all SQL remain outside this timeout wrapper.
+npm() {
+  if [[ -n "${FANMIND_MONTHLY_CONTROL:-}" ]]; then
+    monthly_boundary
+    local remaining
+    remaining="$(node "$FANMIND_MONTHLY_CONTROL" remaining)"
+    (( remaining > 0 )) || return 124
+    timeout --foreground --signal=TERM --kill-after=10s "$remaining" "$(type -P npm)" "$@"
+  else
+    command npm "$@"
+  fi
+}
 
 log() {
   printf '[fanmind-release] %s\n' "$*"
@@ -290,6 +311,9 @@ rollback() {
 
 cleanup() {
   stop_availability_probe
+  if [[ -n "$OPERATIONS_CHECKOUT" ]] && [[ -d "$OPERATIONS_CHECKOUT" ]]; then
+    rm -rf -- "$OPERATIONS_CHECKOUT"
+  fi
   if [[ -n "$AVAILABILITY_LOG" ]] && [[ -f "$AVAILABILITY_LOG" ]]; then
     rm -f -- "$AVAILABILITY_LOG"
   fi
@@ -324,6 +348,7 @@ PREVIOUS_COMMIT="$(read_live_commit || true)"
 PREVIOUS_EXEC_MODE="$(read_previous_pm2_exec_mode || true)"
 PREVIOUS_LINK_TARGET="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
 
+monthly_boundary
 log "building isolated release $RELEASE_COMMIT"
 log "previous cwd: ${PREVIOUS_CWD:-unknown}"
 log "previous commit: ${PREVIOUS_COMMIT:-unknown}"
@@ -356,12 +381,39 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   ln -s "$SOURCE_DIR/.env.production" "$TEMP_RELEASE/.env.production"
 
   cd "$TEMP_RELEASE"
+  SUPPORT_HELP_BUILD_REQUEST="${FANMIND_SUPPORT_HELP_BUILD_ENABLE:-false}"
+  case "$SUPPORT_HELP_BUILD_REQUEST" in true|false) ;; *) fail "Invalid Support help build request" ;; esac
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" != true ]] \
+      || fail "Support help UI conflicts with required disabled Support"
+    node -e '
+      const { readSupportSetting } = require("./ops/pm2/support-runtime-setting.cjs");
+      process.exit(readSupportSetting(process.cwd()) === "true" ? 0 : 1);
+    ' || fail "Support help UI requires already enabled Support"
+  fi
   npm ci --no-audit --no-fund
   npm run verify:truth
   npm run lint
-  npm run test:operations
+  # Operations verifies committed source. Keep Git out of the runtime archive
+  # and never test in SOURCE_DIR, which may still be the live rollback target.
+  OPERATIONS_CHECKOUT="$(mktemp -d "$RELEASE_ROOT/.${RELEASE_COMMIT}.tests.XXXXXXXX")"
+  git clone --shared --no-checkout --quiet "$SOURCE_DIR" "$OPERATIONS_CHECKOUT"
+  git -C "$OPERATIONS_CHECKOUT" checkout --quiet --detach "$RELEASE_COMMIT"
+  [[ "$(git -C "$OPERATIONS_CHECKOUT" rev-parse HEAD)" == "$RELEASE_COMMIT" ]] \
+    || fail "Operations checkout does not match the reviewed release"
+  (
+    cd "$OPERATIONS_CHECKOUT"
+    npm ci --no-audit --no-fund
+    npm run test:operations
+  )
+  rm -rf -- "$OPERATIONS_CHECKOUT"
+  OPERATIONS_CHECKOUT=""
   npm run test:release-integrations
-  NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  if [[ "$SUPPORT_HELP_BUILD_REQUEST" == true ]]; then
+    NEXT_PUBLIC_FANMIND_INAPP_HELP_ENABLED=true NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  else
+    NEXT_DEPLOYMENT_ID="$RELEASE_COMMIT" npm run build
+  fi
   [[ -f ".next/required-server-files.json" ]] || fail "required Next.js build metadata missing"
   [[ -f "$PM2_CONFIG_RELATIVE_PATH" ]] || fail "PM2 production configuration missing"
 
@@ -369,8 +421,24 @@ if [[ ! -d "$RELEASE_DIR" ]]; then
   TEMP_RELEASE=""
 fi
 
+monthly_boundary switch
 verify_built_deployment_id "$RELEASE_DIR" "$RELEASE_COMMIT" \
   || fail "Next.js deployment ID is not bound to the release commit"
+
+if [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" == "true" ]]; then
+  node -e '
+    const { readSupportSetting } = require(process.argv[1]);
+    process.exit(readSupportSetting(process.argv[2]) === "false" ? 0 : 1);
+  ' "$RELEASE_DIR/ops/pm2/support-runtime-setting.cjs" "$RELEASE_DIR" \
+    || fail "Support must remain disabled for this deployment"
+fi
+
+# Owner-authorized ChatAdmin model activation requires a real provider contract
+# probe before the live symlink or process changes. No automatic model downgrade.
+if [[ -f "$RELEASE_DIR/scripts/operations/chat-admin-model-preflight.mjs" ]] && [[ "$PREVIOUS_LINK_TARGET" != "$RELEASE_DIR" ]]; then
+  node --env-file="$RELEASE_DIR/.env.production" "$RELEASE_DIR/scripts/operations/chat-admin-model-preflight.mjs" \
+    || fail "ChatAdmin model provider preflight blocked the release"
+fi
 
 sudo nginx -t
 
@@ -399,6 +467,23 @@ fi
 if ! verify_pm2_release_contract "$RELEASE_COMMIT"; then
   rollback "PM2 release contract verification failed" || true
   fail "new release does not satisfy the PM2 rolling release contract"
+fi
+
+if [[ "${FANMIND_REQUIRE_SUPPORT_DISABLED:-false}" == "true" ]]; then
+  if ! pm2 jlist | node -e '
+    let body = "";
+    process.stdin.on("data", chunk => body += chunk);
+    process.stdin.on("end", () => {
+      try {
+        const list = JSON.parse(body).filter(item => item?.name === process.env.FANMIND_PM2_APP_NAME);
+        process.exit(list.length === 1 && list[0].pm2_env?.FANMIND_SUPPORT_CENTRE_ENABLED === "false" ? 0 : 1);
+      } catch { process.exit(1); }
+    });
+  '; then
+    rollback "Support disabled-state verification failed" || true
+    fail "Support was not confirmed disabled after deployment"
+  fi
+  log "SUPPORT_DEPLOY_DISABLED=PASS"
 fi
 
 HEALTH_OK=0
@@ -431,6 +516,7 @@ if ! verify_availability_probe; then
 fi
 
 cd "$SOURCE_DIR"
+monthly_boundary
 if ! git reset --hard "$RELEASE_COMMIT"; then
   rollback "source checkout synchronization failed" || true
   fail "source checkout could not be synchronized"
@@ -438,6 +524,7 @@ fi
 
 pm2 save
 SWITCHED=0
+monthly_boundary
 
 mapfile -t RELEASE_PATHS < <(
   find "$RELEASE_ROOT" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
@@ -463,3 +550,4 @@ for candidate in "${RELEASE_PATHS[@]}"; do
 done
 
 log "isolated release deployment completed at $RELEASE_COMMIT"
+
