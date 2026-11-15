@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {constants} from 'node:fs';
-import {open,lstat,realpath,mkdir,rename,unlink,rmdir,readFile} from 'node:fs/promises';
+import {open,lstat,realpath,mkdir,rename,unlink,rmdir,readFile,readdir} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
@@ -8,6 +8,9 @@ import {spawnSync} from 'node:child_process';
 export const SOURCE='e3cfbf73d2ed30b5a6ecd5ccfd3bff6aded0169f';
 export const WORKER='8e5dcbdca844972fb2f133c188ecfee5d5252273';
 export const APP='707d22702a784e3b9999d1c9ae9c1e11c096a1bc';
+export const INSPECT_SOURCE='6bc209851b4a54609747099ec34264318dc7f4c4';
+export const INSPECT_APP='bb799466d2c235195fedcb4d80568f9f0bd56969';
+export const INSPECT_CONTRACT_SHA256='2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441';
 const ROOT='/var/lib/fanmind-backup-install',OPS='/usr/local/lib/fanmind-ops';
 export const FILES=Object.freeze([
  ['scripts/operations/backup-worker-install-control.mjs',`${OPS}/backup-worker-install-control.mjs`,'db47a5bc6ccbba8bde7c6b9148596dbe4a33dfb58ff05545f749402f1a21021d',SOURCE],
@@ -37,22 +40,22 @@ async function flush(path){const f=await open(path,constants.O_RDONLY);try{await
 export async function create(path,data,mode,onCreated=()=>{}){await directory(dirname(path));const f=await open(path,constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,mode);try{onCreated(path);await f.writeFile(data);await f.chmod(mode);metadata(await f.stat(),mode);await f.sync();}finally{await f.close();}await flush(dirname(path));}
 async function make(path){try{await mkdir(path,{mode:0o700});await flush(dirname(path));}catch(e){if(e.code!=='EEXIST')throw e;}await directory(path);const s=await lstat(path);if((s.mode&0o777)!==0o700)fail('private_directory_invalid');}
 function command(bin,args,timeout=30000){const r=spawnSync(bin,args,{env:ENV,encoding:'utf8',timeout,maxBuffer:65536});if(r.error||r.status!==0)fail('host_command_failed');return r.stdout.trim();}
-async function version(){const r=await fetch('https://fanmind.ch/api/version',{redirect:'error',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('live_probe_failed');const text=await r.text();if(text.length>4096)fail('live_probe_failed');const j=JSON.parse(text);if(j.application!=='fanmind'||j.runtimeEnvironment!=='production'||j.releaseCommit!==APP)fail('live_app_changed');}
-async function inventory(request){
+async function version(expectedApp=APP){const r=await fetch('https://fanmind.ch/api/version',{redirect:'error',signal:AbortSignal.timeout(15000)});if(!r.ok)fail('live_probe_failed');const text=await r.text();if(text.length>4096)fail('live_probe_failed');const j=JSON.parse(text);if(j.application!=='fanmind'||j.runtimeEnvironment!=='production'||j.releaseCommit!==expectedApp)fail('live_app_changed');}
+async function inventory(request,expectedApp=APP){
  await directory(OPS);await directory('/usr/local/sbin');await directory('/etc/fanmind-backup');await directory('/var/lib');
  const previousHashes={};for(const name of OLD)previousHashes[name]=sha(await bytes(`${OPS}/${name}`,0o750));
- const release=await bytes(RELEASE,0o600);if(release.toString()!==`FANMIND_RELEASE_COMMIT=${APP}\n`)fail('release_binding_invalid');
+ const release=await bytes(RELEASE,0o600);if(release.toString()!==`FANMIND_RELEASE_COMMIT=${expectedApp}\n`)fail('release_binding_invalid');
  const unit=await bytes(UNIT,0o644);const configStat=await lstat('/etc/fanmind-backup/worker.env');metadata(configStat,0o600);if(configStat.isSymbolicLink())fail('file_untrusted');
  const props=command('/usr/bin/systemctl',['show','fanmind-backup-worker.service','--property=FragmentPath,DropInPaths,WorkingDirectory,ExecStart,ActiveState,MainPID']);
  const p=Object.fromEntries(props.split('\n').map(l=>{const i=l.indexOf('=');return[l.slice(0,i),l.slice(i+1)];}));
  if(p.FragmentPath!==UNIT||p.DropInPaths!==''||p.WorkingDirectory!==OPS||p.ActiveState!=='active'||!p.ExecStart?.startsWith('{ path=/usr/bin/node ;')||!p.ExecStart.includes(`argv[]=/usr/bin/node ${OPS}/backup-worker.mjs ;`))fail('unit_binding_invalid');
  if(!/^[1-9][0-9]*$/.test(p.MainPID))fail('unit_binding_invalid');
  const argv=await readFile(`/proc/${p.MainPID}/cmdline`);if(!argv.equals(Buffer.from(`/usr/bin/node\0${OPS}/backup-worker.mjs\0`)))fail('unit_binding_invalid');
- command('/usr/bin/systemd-analyze',['verify',UNIT]);await version();
+ command('/usr/bin/systemd-analyze',['verify',UNIT]);await version(expectedApp);
  return {schemaVersion:1,controllerCommit:request.controller,controllerProgramSource:SOURCE,workerCommit:WORKER,applicationCommit:APP,runnerUid:request.runnerUid,workerPid:Number(p.MainPID),workerArgvHash:sha(argv),unitHash:sha(unit),releaseHash:sha(release),previousHashes,observedAt:new Date().toISOString()};
 }
 async function download([path,,hash,commit]){const r=await fetch(`https://raw.githubusercontent.com/FanMind/FanMind/${commit}/${path}`,{redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)fail('source_fetch_failed');const b=Buffer.from(await r.arrayBuffer());if(!b.length||b.length>2*1024*1024||sha(b)!==hash)fail('source_hash_invalid');return b;}
-async function database(content){
+async function database(content,restrictedCount=13){
  const policy=await import('data:text/javascript;base64,'+content[1].toString('base64'));
  const contract=await import('data:text/javascript;base64,'+content[3].toString('base64'));
  const configBytes=await bytes('/etc/fanmind-backup/worker.env',0o600);
@@ -68,7 +71,7 @@ async function database(content){
   pass.fill(0);ca.fill(0);
   const env={...ENV,PGPASSFILE:`${privatePath}/pgpass`,PGSSLROOTCERT:`${privatePath}/ca.pem`,PGSSLMODE:'verify-full',PGGSSENCMODE:'disable',PGCONNECT_TIMEOUT:'10'};
   const c=await contract.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...connection,env});
-  if(c.restrictedSecurityDefinerFunctionCount!==13)fail('current_contract_required');
+  if(c.restrictedSecurityDefinerFunctionCount!==restrictedCount)fail('current_contract_required');
   const r=spawnSync('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--host',connection.host,'--port',connection.port,'--username',connection.username,'--dbname',connection.database],{env,input:policy.BACKUP_ACTIVE_JOBS_SQL,encoding:'utf8',timeout:30000,maxBuffer:4096});
   if(r.error||r.status!==0||r.stdout.trim()!=='0')fail('backup_jobs_active');
   const afterPass=await bytes(config.FANMIND_BACKUP_PGPASSFILE,0o600);try{if(sha(afterPass)!==passHash||sha(await bytes(config.FANMIND_BACKUP_DB_CA_CERT_PATH,0o644))!==caHash)fail('connection_changed');}finally{afterPass.fill(0);}
@@ -78,10 +81,111 @@ async function database(content){
  }
 
 }
+// Inspection never installs a controller, creates an authorization/receipt or
+// changes a service. Unknown bytes are measured, never executed or approved.
+async function optionalHash(path,mode){
+ try{return {state:'present',sha256:sha(await bytes(path,mode))};}
+ catch(e){if(e.code==='ENOENT')return {state:'absent'};throw e;}
+}
+export function lockHeld(text,dev,ino){
+ const major=((dev>>8n)&0xfffn)|((dev>>32n)&0xfffff000n);
+ const minor=(dev&0xffn)|((dev>>12n)&0xffffff00n);
+ return text.split('\n').some(line=>{
+  const match=line.match(/\s([a-f0-9]+):([a-f0-9]+):([0-9]+)\s/iu);
+  return match&&BigInt(`0x${match[1]}`)===major&&BigInt(`0x${match[2]}`)===minor&&BigInt(match[3])===ino;
+ });
+}
+export function lockDirectoryMetadata(s){
+ if(!s.isDirectory()||s.isSymbolicLink()||s.uid!==0||s.gid!==0||
+    ((s.mode&0o022)!==0&&(s.mode&0o7777)!==0o1777))fail('lock_directory_untrusted');
+}
+async function lockState(){
+ const path='/run/lock/fanmind-backup-worker-install.lock';await directory('/run');
+ lockDirectoryMetadata(await lstat(dirname(path)));if(await realpath(dirname(path))!==dirname(path))fail('lock_directory_untrusted');
+ let f;try{
+  f=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);const a=await f.stat({bigint:true});
+  if(!a.isFile()||a.uid!==0n||a.gid!==0n||a.nlink!==1n||(a.mode&0o022n))fail('lock_untrusted');
+  const locks=await readFile('/proc/locks','utf8');if(locks.length>1024*1024)fail('lock_inventory_invalid');
+  const b=await f.stat({bigint:true});if(a.ino!==b.ino||a.dev!==b.dev||a.ctimeNs!==b.ctimeNs)fail('inventory_changed');
+  return {state:'present',held:lockHeld(locks,a.dev,a.ino)};
+ }catch(e){if(e.code==='ENOENT')return {state:'absent'};throw e;}finally{await f?.close();}
+}
+const ACTIVE_TOOLS=Object.freeze(['pg_dump','pg_restore','rclone','age','tar']);
+async function processCounts(){
+ const names=await readdir('/proc');if(names.length>16384)fail('process_inventory_invalid');
+ const counts=Object.fromEntries(ACTIVE_TOOLS.map(name=>[name,0]));
+ for(const pid of names.filter(x=>/^[1-9][0-9]*$/u.test(x))){
+  try{const name=(await readFile(`/proc/${pid}/comm`,'utf8')).trim();if(Object.hasOwn(counts,name))counts[name]++;}
+  catch(e){if(e.code!=='ENOENT'&&e.code!=='ESRCH')throw e;}
+ }return counts;
+}
+export function timerState(raw){
+ const pairs=raw.split('\n').filter(Boolean).map(line=>{const i=line.indexOf('=');if(i<1)fail('timer_inventory_invalid');return [line.slice(0,i),line.slice(i+1)];});
+ if(new Set(pairs.map(([key])=>key)).size!==pairs.length||pairs.some(([key])=>!['ActiveState','UnitFileState','NextElapseUSecRealtime','NextElapseUSecMonotonic','LastTriggerUSec'].includes(key)))fail('timer_inventory_invalid');
+ const entries=Object.fromEntries(pairs);
+ if(!['active','inactive','failed','activating','deactivating'].includes(entries.ActiveState)||
+    !['enabled','disabled','static','masked','enabled-runtime','masked-runtime'].includes(entries.UnitFileState))fail('timer_inventory_invalid');
+ return {activeState:entries.ActiveState,unitFileState:entries.UnitFileState,
+  scheduleSha256:sha(Buffer.from(raw))};
+}
+async function extraInventory(){
+ const controllers={};for(const [name,path]of [
+  ['control',`${OPS}/backup-worker-install-control.mjs`],['policy',`${OPS}/backup-worker-install-policy.mjs`],
+  ['wrapper','/usr/local/sbin/fanmind-backup-worker-control']])controllers[name]=await optionalHash(path,0o750);
+ const authorization=await optionalHash(`${ROOT}/authorization.json`,0o600);
+ const bootstrapReceipt=await optionalHash(`${ROOT}/bootstrap-receipt.json`,0o600);
+ const rollback=[];
+ const root=`${ROOT}/rollback`;let rollbackPresent=true;
+ try{await directory(root);}catch(e){if(e.code!=='ENOENT')throw e;rollbackPresent=false;}
+ if(rollbackPresent){
+  const names=await readdir(root);
+  if(names.length>32||names.some(n=>!/^[a-f0-9]{40}$/u.test(n)))fail('rollback_inventory_invalid');
+  for(const commit of names.sort()){
+   const dir=`${root}/${commit}`;await directory(dir);const files={};
+   for(const name of [...OLD,'release.env','receipt.json'])files[name]=await optionalHash(`${dir}/${name}`,0o600);
+   rollback.push({commit,files});
+  }
+ }
+ const timers={};for(const kind of ['database','full','storage','server_config']){
+  const name=`fanmind-backup-${kind}.timer`;
+  timers[kind]=timerState(command('/usr/bin/systemctl',['show',name,'--property=ActiveState,UnitFileState,NextElapseUSecRealtime,NextElapseUSecMonotonic,LastTriggerUSec']));
+ }
+ const workerBytes=await bytes(`${OPS}/backup-worker.mjs`,0o750);
+ const workerVersion=workerBytes.toString().match(/const VERSION = '(phase5-backup-worker-[1-9][0-9]{0,2})';/u)?.[1]??'unverified';
+ return {controllers,authorization,bootstrapReceipt,rollbackDirectoryPresent:rollbackPresent,rollback,timers,installedWorkerVersion:workerVersion,lock:await lockState(),activeTools:await processCounts()};
+}
+export async function inspectCurrent(request,io){
+ // No historical install permission is inferred from a successful inspection.
+ input(request.action,request.controller,request.runnerUid);if(request.action!=='inspect')fail('invocation_invalid');
+ let databaseContractVerified=true;
+ try{await io.database();}catch{databaseContractVerified=false;}
+ const before=await io.inventory();const extra=await io.extra();const after=await io.inventory();const extraAfter=await io.extra();
+ if(before.unitHash!==after.unitHash||before.releaseHash!==after.releaseHash||before.workerPid!==after.workerPid||before.workerArgvHash!==after.workerArgvHash||
+    JSON.stringify(before.previousHashes)!==JSON.stringify(after.previousHashes))fail('inventory_changed');
+ for(const key of ['controllers','authorization','bootstrapReceipt','rollbackDirectoryPresent','rollback','installedWorkerVersion'])
+  if(JSON.stringify(extra[key])!==JSON.stringify(extraAfter[key]))fail('inventory_changed');
+ return {schemaVersion:1,operation:'inspection_only',controllerCommit:request.controller,
+  reviewedContractSource:INSPECT_SOURCE,reviewedContractSha256:INSPECT_CONTRACT_SHA256,
+  expectedApplicationCommit:INSPECT_APP,installedWorkerHashes:before.previousHashes,
+  unitHash:before.unitHash,releaseHash:before.releaseHash,workerPid:before.workerPid,
+  workerArgvHash:before.workerArgvHash,...extra,databaseContractVerified,
+  observedAt:new Date().toISOString(),hostWorkloadExclusivityVerified:false,installationAuthorized:false};
+}
+async function currentInspection(request){
+ // Reuse the existing verified policy, frozen private connection and exact
+ // source-backed 39/29 contract. No installed module is imported as root.
+ const content=[];content[1]=await download(FILES[1]);
+ content[3]=await download(['scripts/operations/database-authorization-contract.mjs','',INSPECT_CONTRACT_SHA256,INSPECT_SOURCE]);
+ const result=await inspectCurrent(request,{database:()=>database(content,29),
+  inventory:()=>inventory(request,INSPECT_APP),extra:extraInventory});
+ console.log(`BACKUP_CURRENT_HOST_INVENTORY=${JSON.stringify(result)}`);
+ if(!result.databaseContractVerified)process.exitCode=1;
+}
 async function main(){
  if(process.getuid?.()!==0||process.argv.length!==5)fail('invocation_invalid');
- const request=input(process.argv[2],process.argv[3],Number(process.argv[4]));const content=[];for(const item of FILES)content.push(await download(item));await database(content);const before=await inventory(request);
- if(request.action==='inspect'){console.log(`BACKUP_BOOTSTRAP_INVENTORY=${JSON.stringify(before)}`);return;}
+ const request=input(process.argv[2],process.argv[3],Number(process.argv[4]));
+ if(request.action==='inspect'){await currentInspection(request);return;}
+ const content=[];for(const item of FILES)content.push(await download(item));await database(content);const before=await inventory(request);
  // No existing authorization, controller, receipt or bundle is overwritten.
  for(const [,dest]of FILES)await absent(dest);await absent(`${ROOT}/authorization.json`);await absent(`${ROOT}/bootstrap-receipt.json`);
  try{await lstat(ROOT);await directory(ROOT);}catch(e){if(e.code!=='ENOENT')throw e;}
