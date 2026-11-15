@@ -26,3 +26,20 @@ export async function proveMediaRetentionIndependence(sql,expectedCatalogue){
  assert.equal((await sql('SELECT count(*) FROM public.support_chat_threads;')).trim(),'0');
  assert.equal((await sql('SELECT count(*) FROM public.support_retention_runs;')).trim(),'0');
 }
+
+// Countercheck the exact already-merged independent Capacity source. This only
+// runs in the disposable media PG17 fixture; never installs Capacity on Staging.
+export async function proveCapacityWriterRetentionIndependence(sql,expectedCatalogue){
+ await proveMediaRetentionIndependence(sql,expectedCatalogue);
+ await sql(`alter table public.workspaces add column billing_status text,add column workspace_access_mode text,
+  add column billing_suspended_at timestamptz,add column stripe_customer_id text,add column stripe_subscription_id text,add column billing_current_period_end_at timestamptz;
+ create table public.workspace_stripe_billing_streams(workspace_id uuid,event_stream text,projection_revision bigint,sync_state text,lifecycle_terminal boolean);
+ create table public.workspace_stripe_billing_reconciliations(workspace_id uuid);
+ `);
+ for(const name of ['ai_capacity_billing_v2.sql','ai_capacity_billing_v2_activation_gates.sql','ai_capacity_reserve_settle.sql','ai_capacity_entitlement_writer.sql']){
+  await sql(readFileSync(`supabase/controlled/${name}`,'utf8'));
+  await proveMediaRetentionIndependence(sql,expectedCatalogue);
+ }
+ assert.equal((await sql('select count(*) from public.ai_capacity_workspace_entitlements;')).trim(),'0');
+ assert.equal((await sql('select count(*) from fanmind_capacity_private.package_prices;')).trim(),'0');
+}
