@@ -87,8 +87,9 @@ test('Storage proof requires one exact owned object, never zero or duplicate ack
 });
 test('failed completion always cleans up and neither exercise nor cleanup failure becomes success',async()=>{
  for(const [exerciseFails,cleanupFails] of [[false,false],[true,false],[false,true],[true,true]]){
-  const calls=[];const run=mediaExerciseWithCleanup(async()=>{calls.push('exercise');if(exerciseFails)throw Error('exercise_failure');},async()=>{calls.push('cleanup');if(cleanupFails)throw Error('cleanup_failure');});
-  if(exerciseFails||cleanupFails)await assert.rejects(run);else await run;
+  const calls=[],exerciseError=Error('exercise_failure'),cleanupError=Error('cleanup_failure');const run=mediaExerciseWithCleanup(async()=>{calls.push('exercise');if(exerciseFails)throw exerciseError;},async()=>{calls.push('cleanup');if(cleanupFails)throw cleanupError;});
+  if(exerciseFails&&cleanupFails)await assert.rejects(run,error=>error instanceof AggregateError&&error.message==='MEDIA_ACCEPTANCE_BLOCKED=exercise_and_cleanup'&&error.errors[0]===exerciseError&&error.errors[1]===cleanupError);
+  else if(exerciseFails||cleanupFails)await assert.rejects(run,error=>error===(exerciseFails?exerciseError:cleanupError));else await run;
   assert.deepEqual(calls,['exercise','cleanup']);
  }
 });

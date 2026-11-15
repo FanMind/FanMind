@@ -200,3 +200,20 @@ is authorized by this source correction; the prior one-off write approval is
 consumed. Regular source review/merge and a fresh concrete test approval remain
 separate. Local scope: only the existing media-runner regression file plus
 syntax/lint; required GitHub checks belong to the new source head.
+
+## Run43748913408 cleanup diagnostic boundary
+
+The single approved c640afd0 acceptance reached the synthetic media path but
+ended with CHATADMIN_MEDIA_E2E=BLOCKED:media_cleanup. The workflow's separate
+receipt-bound cleanup completed successfully. Independent database readback
+proved zero synthetic media/objects, the original folder/playbook digests,
+unchanged Aurela inventory and both original Abendkleidung prices of2500minor.
+This is not an overall media-acceptance PASS.
+
+The previous finally could replace an exercise error with a cleanup error.
+Retain both failures and emit separate fixed exercise/initial-cleanup statuses.
+For a non-200 authenticated media DELETE, reuse the bounded status/error/duration
+diagnostic without logging IDs, bodies, headers or media. These source changes
+do not fix or classify the unrecorded original DELETE response; its status/code
+remain unknown. No automatic retry or weaker cleanup success rule is added.
+Local failure-path regression checks do not authorize another hosted media run.
