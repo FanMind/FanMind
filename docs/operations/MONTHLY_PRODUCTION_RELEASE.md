@@ -315,15 +315,20 @@ reviewed archive. No installation is authorized by this source preparation.
 
 ### Relationship to Support1350 / PR1515
 
-Reviewed parallel head `2d84e30deb2d7ce8b14123857bee9bd99eb2111e` changes the
-current Production SECURITY-DEFINER contract and the full-receipt/restore-drill
-verifiers. These three Root-closure files remain untouched by this PR. Do not
-cherry-pick them into an old candidate/package, raise counts or combine old
-Root code with new receipts. After relevant regular merges, bind the final
-combined source tree, full CI/native-PG17 evidence and successor package again.
-The old candidate63e8 is historical, not reapproved. Support owns backup repair,
-final-schema backup compatibility and independent Recovery. Adminchat owns
-actual guarded function installation and real media lifecycle acceptance.
+PR1515 was regularly merged as Main
+`6bc209851b4a54609747099ec34264318dc7f4c4` during this preparation;
+reviewed PR1515 head `1a952487644b3344fed9f272f8a4603b48c0c46d`.
+The merged Main is incorporated as a whole, preserving the39/29 contract,
+full-receipt/restore-drill verifiers and dependent Current-Facts checksum.
+These specialist files have no additional edits in this PR's diff against Main.
+The complete ten-module Root closure must bind this combined candidate; never
+combine an old installed Root bundle with newer receipts. Full exact-head
+CI/nativePG17 is required again because the verified code closure changed.
+The old candidate63e8 and earlier green adapter-only tree are historical,
+not substitute Production approvals. Source merge does not install the worker,
+create fresh backups, prove the independent Recovery route or approve the final
+expanded schema. Support still owns those operational prerequisites; Adminchat
+owns actual function installation and real media lifecycle acceptance.
 
 The adapters verify installed schema only. They neither provide missing
 Production apply controllers nor authorize those actions. Database action,
