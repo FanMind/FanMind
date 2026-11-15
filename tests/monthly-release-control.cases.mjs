@@ -13,6 +13,52 @@ import { sourcePlan, collectEvidence } from '../scripts/operations/monthly-relea
 import { validateAdmission, sha256, runRelease, extractProductionBody, createProductionAdapter, runMonthlyCommand, validatePrivateProof, validateSqlReceipt, verifySqlProvenance, VERIFIER_FILES } from '../scripts/operations/monthly-release-control.mjs';
 
 const candidate = 'b'.repeat(40), base = 'a'.repeat(40);
+// Test-only routing: a missing/restarting process must never select a default
+// HTTP port or crash the fixture server while PM2 changes its synthetic state.
+function monthlyFixtureCommit(state) {
+  const processes = Array.isArray(state?.processes)
+    ? state.processes.filter(process => process?.name === 'fanmind') : [];
+  const env = processes.length === 1 ? processes[0]?.pm2_env : null;
+  return env?.status === 'online' && /^[a-f0-9]{40}$/u.test(env.FANMIND_RELEASE_COMMIT ?? '')
+    ? env.FANMIND_RELEASE_COMMIT : null;
+}
+function monthlyFixtureProxy(readState, ports, unavailable = () => false) {
+  return createServer((req, res) => {
+    let port;
+    try { if (!unavailable()) port = ports.get(monthlyFixtureCommit(readState())); }
+    catch { /* Missing/unreadable synthetic PM2 state is unavailable. */ }
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      res.writeHead(503); res.end(); return;
+    }
+    const proxy = request({ host: '127.0.0.1', port, path: '/api/version' }, upstream => {
+      res.writeHead(upstream.statusCode, upstream.headers); upstream.pipe(res);
+    });
+    proxy.on('error', () => { res.writeHead(502); res.end(); }); req.pipe(proxy);
+  });
+}
+
+test('monthly HTTP fixture survives missing PM2 state and resumes only its registered application', async t => {
+  const app = createServer((req, res) => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify({ releaseCommit: base })); });
+  await new Promise(resolve => app.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => { app.closeAllConnections(); app.close(resolve); }));
+  const online = { name: 'fanmind', pm2_env: { status: 'online', FANMIND_RELEASE_COMMIT: base } };
+  let state = { processes: [online] }, readError = false, unavailable = false;
+  const proxy = monthlyFixtureProxy(() => { if (readError) throw new Error('synthetic_state_unreadable'); return state; }, new Map([[base, app.address().port]]), () => unavailable);
+  await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => { proxy.closeAllConnections(); proxy.close(resolve); }));
+  const get = () => fetch(`http://127.0.0.1:${proxy.address().port}/api/version`, { signal: AbortSignal.timeout(5000) });
+  for (state of [null, {}, { processes: null }, { processes: [] }, { processes: [null] },
+    { processes: [{ name: 'fanmind' }] }, { processes: [{ ...online, name: 'foreign' }] },
+    { processes: [online, online] }, { processes: [{ ...online, pm2_env: { ...online.pm2_env, status: 'stopped' } }] },
+    { processes: [{ ...online, pm2_env: { ...online.pm2_env, FANMIND_RELEASE_COMMIT: candidate } }] }]) {
+    assert.equal((await get()).status, 503);
+  }
+  state = { processes: [online] }; readError = true; assert.equal((await get()).status, 503);
+  readError = false; unavailable = true; assert.equal((await get()).status, 503);
+  unavailable = false;
+  const recovered = await get(); assert.equal(recovered.status, 200); assert.equal((await recovered.json()).releaseCommit, base);
+});
+
 function admission(source = { base, candidate, tree: 'c'.repeat(40), changes: [], sql: [], evidence: { acceptances: [] } }) {
   return { version: 1, source, target: 'production', controller: '.github/workflows/deploy-fanmind.yml', ownerId: '270165082',
     issuedAt: new Date(Date.now() - 10000).toISOString(), expiresAt: new Date(Date.now() + 7200000).toISOString(),
@@ -95,7 +141,11 @@ test('full integrated monthly adapter rehearsal with safe transport fixtures', {
   git(seed, 'add', '.'); git(seed, 'commit', '-qm', 'synthetic candidate'); const target = git(seed, 'rev-parse', 'HEAD');
   git(seed, 'push', 'origin', 'main'); git(source, 'fetch', 'origin');
   put(join(source, '.env.production'), 'FANMIND_ENABLE_ISOLATED_RELEASE_DEPLOY=true\nFANMIND_SUPPORT_CENTRE_ENABLED=true\n', 0o600);
-  const state0 = JSON.parse(readFileSync(pm2State)); state0.processes[0].pm2_env.FANMIND_RELEASE_COMMIT = old; put(pm2State, JSON.stringify(state0));
+  // Monthly releases start from the already installed cluster/current-link
+  // contract. The shared harness and its original legacy migration tests stay unchanged.
+  const state0 = JSON.parse(readFileSync(pm2State));
+  Object.assign(state0.processes[0].pm2_env, { FANMIND_RELEASE_COMMIT: old, exec_mode: 'cluster_mode', pm_cwd: ctx.currentLink });
+  put(pm2State, JSON.stringify(state0));
   const container = process.env.FANMIND_MONTHLY_PG17_CONTAINER_ID, schema = `monthly_fixture_${process.pid}_${Date.now()}`;
   assert.ok(!process.env.FANMIND_MONTHLY_PG17_REQUIRED || /^[a-f0-9]{12,64}$/u.test(container ?? ''), 'required PG17 service missing');
   const query = text => execFileSync('docker', ['exec', '-i', container, 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-U', 'postgres', '-d', 'postgres', '-At'], { input: text, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
@@ -121,12 +171,8 @@ test('full integrated monthly adapter rehearsal with safe transport fixtures', {
     children.push(child); ports.set(commit, await new Promise((yes,no) => { child.once('message',yes); child.once('error',no); }));
   }
   let failSmoke = false, healthyBackup = true, injectTimeout = false, injectSmoke = false;
-  const live = () => JSON.parse(readFileSync(pm2State)).processes[0].pm2_env.FANMIND_RELEASE_COMMIT;
-  const server = createServer((req,res) => {
-    if (failSmoke) { res.writeHead(503); res.end(); return; }
-    const proxy = request({ host:'127.0.0.1',port:ports.get(live()),path:'/api/version' }, r => { res.writeHead(r.statusCode,r.headers); r.pipe(res); });
-    proxy.on('error',()=>{res.writeHead(502);res.end();});req.pipe(proxy);
-  });
+  const live = () => monthlyFixtureCommit(JSON.parse(readFileSync(pm2State)));
+  const server = monthlyFixtureProxy(() => JSON.parse(readFileSync(pm2State)), ports, () => failSmoke);
   await new Promise(yes=>server.listen(0,'127.0.0.1',yes));t.after(()=>new Promise(yes=>{server.closeAllConnections();server.close(yes);}));
   const origin = `http://127.0.0.1:${server.address().port}`;
   mkdirSync(join(root,'host/etc/systemd/system'),{recursive:true});
@@ -207,6 +253,9 @@ raise SystemExit('unapproved fixture command: '+cmd)
   failSmoke=false;injectSmoke=false;a.resumeAfterAttempt=failed.attempt;a.issuedAt=failed.updatedAt;
   const recovered=await invoke(failed);assert.equal(recovered.state,'COMPLETE',JSON.stringify(recovered));assert.equal(live(),target);
   assert.equal(readFileSync(operationsHeads,'utf8').trim().split('\n').length,1,'resume must not repeat successful build/Operations');
+  const processActions = readFileSync(ctx.pm2Actions, 'utf8');
+  assert.match(processActions, /^reload$/mu, 'monthly rehearsal must exercise the installed rolling cluster');
+  assert.doesNotMatch(processActions, /^delete$/mu, 'monthly rehearsal must not migrate a legacy process');
   if(container){query(`DROP SCHEMA ${schema} CASCADE;`);schemaPresent=false;assert.equal(query(`SELECT count(*) FROM pg_namespace WHERE nspname='${schema}';`),'0');}
   // Offline proposal creation must never delete an existing operator directory.
   const proposal=join(root,'existing-proposal');mkdirSync(proposal);put(join(proposal,'preserve.txt'),'preserved');
