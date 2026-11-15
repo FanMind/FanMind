@@ -1,6 +1,14 @@
 import { createHash } from 'node:crypto';
 export const WORKER_COMMIT = '8e5dcbdca844972fb2f133c188ecfee5d5252273';
 export const APP_COMMIT = '707d22702a784e3b9999d1c9ae9c1e11c096a1bc';
+// Read-only inspection is separate from the historical installation approval.
+export const INSPECT_WORKER_COMMIT = '6bc209851b4a54609747099ec34264318dc7f4c4';
+export const INSPECT_APP_COMMIT = 'bb799466d2c235195fedcb4d80568f9f0bd56969';
+export function inspectionRequest(action, controller, worker, app) {
+  if (action !== 'inspect' || !/^[a-f0-9]{40}$/.test(controller ?? '') ||
+      worker !== INSPECT_WORKER_COMMIT || app !== INSPECT_APP_COMMIT) fail('inspection_binding_invalid');
+  return { action, controllerCommit: controller, workerCommit: worker, applicationCommit: app };
+}
 export const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 export const ENVIRONMENT = 'backup-production-recovery';
 export const OWNER_ID = 270165082;
