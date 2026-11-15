@@ -63,7 +63,7 @@ async function cleanup(actor,b,e,db,receipt){
  const ours=l.character.sales_playbook.offers.filter(o=>receipt.offerIds.includes(o.id));
  if(ours.some(o=>!o.name.startsWith(b.marker)))block('price_cleanup_binding');
  if(ours.length){assertMediaFixture(l,b);const body={...l.character,sales_playbook:{...l.character.sales_playbook,offers:l.character.sales_playbook.offers.filter(o=>!receipt.offerIds.includes(o.id))}};const r=await actor.context.request.patch(`${APP}/api/chatadmin/characters`,{headers:{Origin:APP},data:body,maxRedirects:0,timeout:30000});if(r.status()!==200)block('price_cleanup');l=await library(actor,b);}
- for(const a of l.assets.filter(a=>ownsMediaResource(a,b,'asset'))){l=await library(actor,b);const current=l.assets.find(x=>x.id===a.id);if(!current)continue;const r=await appRequest(actor,b,'/api/chatadmin/media','DELETE',{character_id:b.ids.MEDIA_CHARACTER_ID,character_revision:l.character.revision,id:a.id,revision:current.revision});if(r.status()!==200){console.error(`CHATADMIN_MEDIA_CLEANUP_FAILURE=${JSON.stringify(await mediaUploadFailureDiagnostic(r))}`);block('media_cleanup');}const gone=await appRequest(actor,b,`/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`);if(![400,403].includes(gone.status()))block('deleted_preview');}
+ for(const a of l.assets.filter(a=>ownsMediaResource(a,b,'asset'))){l=await library(actor,b);const current=l.assets.find(x=>x.id===a.id);if(!current)continue;const started=performance.now();const r=await appRequest(actor,b,'/api/chatadmin/media','DELETE',{character_id:b.ids.MEDIA_CHARACTER_ID,character_revision:l.character.revision,id:a.id,revision:current.revision});if(r.status()!==200){console.error(`CHATADMIN_MEDIA_CLEANUP_FAILURE=${JSON.stringify(await mediaUploadFailureDiagnostic(r,performance.now()-started))}`);block('media_cleanup');}const gone=await appRequest(actor,b,`/api/chatadmin/media?character_id=${b.ids.MEDIA_CHARACTER_ID}&id=${a.id}`);if(![400,403].includes(gone.status()))block('deleted_preview');}
  // Children first; a nonempty or foreign folder never reaches a delete request.
  for(const id of [...receipt.folderIds].reverse()){l=await library(actor,b);const folder=l.folders.find(f=>f.id===id);if(!folder)continue;if(!ownsMediaResource(folder,b,'folder')||l.assets.some(a=>a.folder_id===id)||l.folders.some(f=>f.parent_id===id))block('folder_cleanup_scope');await catalogue(actor,b,{action:'delete_folder',id,revision:folder.revision});}
  l=await library(actor,b);if(preserved(l,b)!==receipt.baseline||db.storage()!==receipt.storage)block('cleanup_postflight');
@@ -75,13 +75,13 @@ export function assertMediaUploadRevision(loaded,current,b){
  if(loaded.character.revision!==current.character.revision)block('upload_revision');
 }
 const uploadErrorCodes=new Set(['stale_media_context','unauthenticated','resource_forbidden','untrusted_origin','invalid_media_body','invalid_media_binding','invalid_media_file','invalid_media_kind','media_rights_required','media_library_limit','media_folder_binding_invalid','media_video_not_enabled','media_catalogue_not_enabled','media_not_enabled','invalid_video','invalid_video_size','invalid_image','invalid_image_size','media_processing_busy','rate_limited','media_store_unavailable','media_object_unavailable','media_catalogue_unavailable','media_upload_incomplete','media_cleanup_unverified']);
-export async function mediaUploadFailureDiagnostic(response){
+export async function mediaUploadFailureDiagnostic(response,measuredDuration=-1){
  const result={status:0,error:'unclassified',duration_ms:-1};
  if(!response)return result;
  try{
   const status=response.status();if(Number.isInteger(status)&&status>=100&&status<=599)result.status=status;
-  await response.finished();
-  const duration=response.request().timing().responseEnd;
+  if(typeof response.finished==='function')await response.finished();
+  const duration=typeof response.request==='function'?response.request().timing().responseEnd:measuredDuration;
   if(Number.isFinite(duration)&&duration>=0&&duration<=600000)result.duration_ms=Math.ceil(duration);
   const headers=response.headers();if(headers['content-type']?.split(';')[0].trim()!=='application/json')return result;
   if(headers['content-length']!==undefined&&(!/^\d+$/u.test(headers['content-length'])||Number(headers['content-length'])>1024))return result;

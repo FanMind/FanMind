@@ -217,3 +217,10 @@ diagnostic without logging IDs, bodies, headers or media. These source changes
 do not fix or classify the unrecorded original DELETE response; its status/code
 remain unknown. No automatic retry or weaker cleanup success rule is added.
 Local failure-path regression checks do not authorize another hosted media run.
+
+Publication review found one required interface correction: authenticated DELETE
+returns Playwright APIResponse, which has no finished()/request()/timing() API.
+Read its bounded response body directly and use a monotonic elapsed duration
+measured around the completed API call. Browser upload Response keeps its
+existing completed-request timing. Missing/invalid durations still become-1;
+the same allowlist and1024-byte body ceiling apply to both response types.

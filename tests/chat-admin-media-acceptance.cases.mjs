@@ -123,4 +123,13 @@ test('upload failure diagnostic emits only bounded status, allowlisted error and
  assert.equal((await mediaUploadFailureDiagnostic(response('{}',{'content-type':'application/json'},-1))).duration_ms,-1);
  assert.deepEqual(await mediaUploadFailureDiagnostic(),{status:0,error:'unclassified',duration_ms:-1});
  const broken=response('{}');broken.finished=async()=>{throw Error('PRIVATE_TOKEN');};assert.deepEqual(await mediaUploadFailureDiagnostic(broken),{status:409,error:'unclassified',duration_ms:-1});
+ // APIRequestContext.fetch returns APIResponse: no finished(), request() or timing().
+ const apiResponse={status:()=>503,headers:()=>({'content-type':'application/json'}),body:async()=>Buffer.from('{"error":"media_object_unavailable"}')};
+ assert.deepEqual(await mediaUploadFailureDiagnostic(apiResponse,37.2),{status:503,error:'media_object_unavailable',duration_ms:38});
+ for(const duration of [-1,Infinity,NaN,600001])assert.equal((await mediaUploadFailureDiagnostic(apiResponse,duration)).duration_ms,-1);
+ const privateApi={...apiResponse,body:async()=>Buffer.from('{"error":"PRIVATE_TOKEN","url":"https://private.invalid/media","id":"PRIVATE_ID"}')};
+ assert.deepEqual(await mediaUploadFailureDiagnostic(privateApi,20),{status:503,error:'unclassified',duration_ms:20});
+ const largeApi={...apiResponse,body:async()=>Buffer.from('PRIVATE_MEDIA'.repeat(1024))};
+ assert.deepEqual(await mediaUploadFailureDiagnostic(largeApi,20),{status:503,error:'unclassified',duration_ms:20});
+
 });

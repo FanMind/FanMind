@@ -73,3 +73,10 @@ separate fixed phase statuses and existing bounded diagnostic on failed DELETE.
 No authority/guard/schema/application/cleanup-order or success-policy changes.
 Existing14 focused runner cases and syntax/diff checks PASS; no broad test run.
 Local preparation only, not pushed/reviewed/merged/deployed or live accepted.
+
+Publication review: retain the existing correction and account for the actual
+DELETE APIResponse interface, using only monotonic completed-call duration and
+the same bounded allowlisted response filter. Existing runner diagnostic case
+now covers APIResponse without browser-only methods and rejects private or
+oversized data.14/14 focused cases rechecked only because this interface changed.
+No additional hosted run, deployment, application/guard change or cleanup retry.
