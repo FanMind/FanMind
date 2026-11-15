@@ -527,3 +527,69 @@ In #524 und #644 werden nur die redigierten Felder dokumentiert:
 - verbleibende Maßnahmen.
 
 Keine Rohkonfiguration, kein vollständiges Journal und keine Secret-bearing Artefakte werden an Issues angehängt.
+
+## Bounded release-contract diagnostics — 15 November 2026
+
+Audit43711512421 completed its collector with exit0, then its installed validator
+reported production_audit_release_drift. The official log contains no actual
+SERVER_HEAD/ORIGIN_MAIN/LIVE_RELEASE tuple and no installed-file fingerprints;
+there is no artifact. The existing EXIT trap deleted the private temporary raw
+output. Therefore the historical mismatching field and installed contract version
+cannot be inferred from that log. No policy correction or Production PASS is
+claimed before fresh protected observation.
+
+| Value | Existing contract meaning |
+| --- | --- |
+| expectedCommit | Manual/deploy-bound expected Production commit; scheduled runs resolve it independently through Production HTTPS |
+| SERVER_HEAD | HEAD of the operational /var/www/fanmind Git checkout, not the release symlink or a public live-version proof |
+| ORIGIN_MAIN | Local refs/remotes/origin/main; a staleable tracking ref, not an independently fetched current remote Main |
+| LIVE_RELEASE | releaseCommit from the collector's Production HTTPS request |
+| GITHUB_SHA | Source/workflow commit of this observation, distinct from deployed Production |
+
+The canonical validator still requires all three observed values equal expected.
+The existing monthly adapter already separately admits an exactly bound candidate
+in ORIGIN_MAIN and preserves all other runtime/backup checks. The source-package
+completeChecks still rejects a failed audit; no audit exemption is added.
+Repository collector/validator/boot/health files are byte-identical between the
+last observed Production sourcebb799466 and Main4577f4c. This is repository
+source equality only, not proof of installed byte equality or a unique installed
+commit. Current independent HTTPS15Nov12:11:53UTC confirms FanMind/production/
+bb799466d2c235195fedcb4d80568f9f0bd56969. The existing Exoscale Production
+console is connected but shows only an OS login prompt. No console input,
+password reveal, new key/SSH channel or host operation was performed.
+
+The smallest necessary follow-up extends ONLY the existing audit workflow's
+observation. It does not install repository code on the host or replace the
+installed validator. The inline diagnostic runs as the existing runner, without
+new sudo permissions or checkout. Before/after collection it reports SHA256,
+UID/GID and mode only for four fixed existing root-owned files: collector,
+validator, boot dependency and public-health dependency. Symlink, writable,
+non-root-owned, missing, unreadable or changing files report unavailable without
+contents. The protected Operations directory is not opened or made readable.
+Per-file equality establishes byte equality, not a unique installed commit.
+
+After the unchanged installed validator runs, a bounded private-output reader
+emits only single well-formed expected/workflow SHA40, AUDIT_UTC and the three
+SHA40 observations, plus actual probe/validator exit codes. Missing, duplicate,
+malformed, NUL-containing or oversized evidence is unavailable, never guessed.
+There is no raw audit/stderr/ENV/PM2/journal/artifact upload. Existing private
+files are still removed by the unchanged trap. Diagnostic output has no PASS
+or admission authority; installed validator failure remains failure. A failed
+collector cannot become green even if an old validator returns0.
+
+Tests execute the actual workflow step in an isolated synthetic harness:
+historical Production base, advanced Main (still red), real live/server drift,
+missing/duplicate/malformed evidence, canary redaction and old-validator/process
+failure. Existing monthly base/candidate and resume paths retain exact bindings;
+foreign origins/server/live values, bad backups, duplicate evidence and failed
+Main audit checks remain blocked. No database query, apply, worker or Root
+installation and no Production deployment occurs in these tests.
+
+Next protected step: review/merge the diagnostic source, then obtain fresh
+read-only evidence through this same protected Production workflow. Keep the
+real audit red until a separately evidenced complete PASS. Only after the tuple,
+installed before/after hashes and corresponding reviewed Git source are known
+may a focused contract correction be proposed. Do not fetch/reset the Production
+checkout to conceal drift, discard ORIGIN_MAIN, exempt failed checks or install
+new Root code as part of this diagnosis. Preserve the existing Backup/Recovery,
+Owner, protected-environment and monthly SQL gates. PR1517 remains merged.
