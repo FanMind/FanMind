@@ -22,3 +22,25 @@ export async function isChatAdminStorageObjectAbsent(response) {
   return response.status===404||((error.statusCode==='404'||error.statusCode===404)&&error.error==='not_found');
  }finally{await reader.cancel().catch(()=>{});}
 }
+
+// Recheck only the observed stale-positive CDN class. This never repeats a
+// DELETE and never changes the strict NoSuchKey predicate above.
+export async function waitForChatAdminStorageObjectAbsent(probe,{
+ budgetMs=20_000,now=()=>performance.now(),sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),
+}={}) {
+ if(!Number.isFinite(budgetMs)||budgetMs<1||budgetMs>20_000)return false;
+ const start=now(),budget=Math.floor(budgetMs),deadline=start+budget;
+ // Absolute offsets include network time rather than adding it to the budget.
+ for(const offset of [0,1_000,3_000,7_000,15_000,19_000]){
+  if(offset>=budget)return false;
+  const delay=start+offset-now();
+  if(delay>0)await sleep(delay);
+  const remaining=Math.floor(deadline-now());
+  if(remaining<=0)return false;
+  const response=await probe(AbortSignal.timeout(Math.min(10_000,remaining)));
+  const cachedPresent=response.status===200&&response.headers.get('cf-cache-status')?.toUpperCase()==='HIT';
+  if(await isChatAdminStorageObjectAbsent(response))return now()<=deadline;
+  if(!cachedPresent)return false;
+ }
+ return false;
+}

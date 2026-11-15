@@ -224,3 +224,34 @@ Read its bounded response body directly and use a monotonic elapsed duration
 measured around the completed API call. Browser upload Response keeps its
 existing completed-request timing. Missing/invalid durations still become-1;
 the same allowlist and1024-byte body ceiling apply to both response types.
+
+## Bounded absence verification after Run43758124849
+
+Exercise passed on e47dae57; initial DELETE returned400/media_cleanup_unverified
+in605ms. Correlated Storage logs proved DELETE200 followed by authenticated
+MP4 GET200/cf-cache-status HIT. The existing receipt-bound recovery later saw
+GET400/BYPASS, accepted strict NoSuchKey and restored the original inventory.
+This source change does not repeat those successful media or recovery checks.
+
+After one validated Storage DELETE acknowledgment, only authenticated GETs of
+the same exact object may be repeated. Only200 with an explicit CDN HIT permits
+another read; it never proves absence. Six absolute read offsets0/1/3/7/15/19s
+include network time inside a maximum20s window. Each GET retains a10s ceiling;
+elapsed DELETE time further caps the window to the original combined25s image
+or40s video boundary. The existing45s runner request ceiling is unchanged.
+
+Only the unchanged bounded strict NoSuchKey predicate permits success.
+Uncached readable objects, permission errors, uncertain/malformed absence,
+transport errors and exhausted budgets remain failures with the tombstone
+retained. Cache propagation longer than this budget still requires the existing
+guarded recovery; there is no promise to wait out every provider CDN delay.
+No repeated DELETE, cache purge, new query parameter, credential, provider flag,
+schema/policy change or weakened authorization is introduced. Current Character
+authority is still revalidated before final metadata removal. The separate
+account-deletion processor keeps its unchanged strict one-read contract.
+
+Local verification is limited to the existing Storage/cleanup regression file
+(11cases), targeted lint and diff checks. Required GitHub CI for the new source
+head is separate. Source review/merge does not authorize Staging deployment,
+another media write run or Production action. End-to-end validation of this
+cache-aware change has not been performed on Staging.

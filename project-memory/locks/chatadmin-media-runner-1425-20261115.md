@@ -80,3 +80,24 @@ the same bounded allowlisted response filter. Existing runner diagnostic case
 now covers APIResponse without browser-only methods and rejects private or
 oversized data.14/14 focused cases rechecked only because this interface changed.
 No additional hosted run, deployment, application/guard change or cleanup retry.
+
+## FM-1425-CACHE-ABSENCE — bounded source correction
+
+Existing Adminchat session; baseline Maine47dae57. Owner authorizes only the
+confirmed cached-positive absence defect, targeted regressions and one review
+PR. No matching cache correction among open PRs. Historical1440 adds the strict
+absence proof already incorporated in Main; its changes are not reimplemented.
+Contracts FM-CONTRACT-CHATADMIN-STORAGE-001 / FM-CONTRACT-DISCLOSURE-DELETE-001
+and corresponding IGATEs retained, R3. Actual43758124849 Exercise, Recovery and
+original inventory PASS are carried forward without another target run.
+
+One DELETE only; maximum six same-JWT/same-path GETs, maximum20s after ack within
+the existing combined25s/40s object boundary,10s per read. Retry only200/HIT;
+never accept it as absence. Existing strict NoSuchKey parsing, tombstone and
+final current-Character authority checks unchanged. No SQL/RLS/Storage grant,
+path, bucket, credential, Account Deletion, provider or deployment change.
+11targeted Storage/cleanup cases PASS; targeted ESLint and diff checks PASS.
+Remote mandatory CI pending on the published final head; no local broad suite.
+No source merge, Staging rollout, media write acceptance or Production action
+authorized by this source preparation. A later cache-aware live cleanup proof
+remains separate from these local and CI source checks.
