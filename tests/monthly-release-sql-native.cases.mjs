@@ -3,9 +3,9 @@ import {readFileSync} from 'node:fs';
 import {monthlySqlQueries} from '../scripts/operations/monthly-release-sql-verify.mjs';
 // Called only inside existing disposable native-PG17 specialist fixtures.
 export async function proveMonthlySqlNative(sql,id){
- for(const check of monthlySqlQueries(id)){
-  const result=(await sql(`BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;SET LOCAL search_path=pg_catalog,public;${check.query.trim().replace(/;$/u,'')};ROLLBACK;`)).trim().split('\n').filter(row=>! /^(?:BEGIN|SET|ROLLBACK|MONTHLY_MUTATION_APPLIED)$/u.test(row)).join('\n');
-  assert.equal(check.accept(result),true,`${id}: exact source-recreated schema must verify`);
+ for(const [index,check]of monthlySqlQueries(id).entries()){
+  const result=(await sql(`BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;SET LOCAL search_path=pg_catalog,public;${check.query.trim().replace(/;$/u,'')};ROLLBACK;`)).trim().split('\n').filter(row=>! /^(?:BEGIN|SET|ROLLBACK|MONTHLY_MUTATION_APPLIED|ALTER TABLE|CREATE (?:TYPE|FUNCTION|VIEW|INDEX)|DROP FUNCTION|GRANT|REVOKE)$/u.test(row)).join('\n');
+  assert.equal(check.accept(result),true,`${id}[${index}]: exact source-recreated schema must verify (${result.slice(0,80)})`);
  }
 }
 export async function proveMonthlyPriceDrift(sql){
@@ -26,7 +26,7 @@ export async function proveMonthlyPriceDrift(sql){
  for(const mutation of mutations){
   let rejected=false;
   for(const check of checks){
-   try{const result=(await sql(`BEGIN;${mutation}SELECT 'MONTHLY_MUTATION_APPLIED';SET LOCAL search_path=pg_catalog,public;${check.query.trim().replace(/;$/u,'')};ROLLBACK;`)).trim().split('\n').filter(row=>! /^(?:BEGIN|SET|ROLLBACK|MONTHLY_MUTATION_APPLIED)$/u.test(row)).join('\n');if(!check.accept(result))rejected=true;}
+   try{const result=(await sql(`BEGIN;${mutation}SELECT 'MONTHLY_MUTATION_APPLIED';SET LOCAL search_path=pg_catalog,public;${check.query.trim().replace(/;$/u,'')};ROLLBACK;`)).trim().split('\n').filter(row=>! /^(?:BEGIN|SET|ROLLBACK|MONTHLY_MUTATION_APPLIED|ALTER TABLE|CREATE (?:TYPE|FUNCTION|VIEW|INDEX)|DROP FUNCTION|GRANT|REVOKE)$/u.test(row)).join('\n');if(!check.accept(result))rejected=true;}
    catch(error){assert.match(error.stdout?.toString()??'',/MONTHLY_MUTATION_APPLIED/u,'the intended mutation must execute before the verifier rejects');rejected=true;}
   }
   assert.equal(rejected,true,mutation);
