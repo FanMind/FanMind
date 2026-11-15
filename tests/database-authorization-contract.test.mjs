@@ -8,6 +8,7 @@ import { after, before, test } from "node:test";
 
 import {
   DATABASE_AUTHORIZATION_CONTRACT_SQL,
+  REVIEWED_SECURITY_DEFINER_PROFILE,
   analyzeAuthorizationToc,
   assertDatabaseAuthorizationRoles,
   authorizationContractSqlExcludingTargetLogin,
@@ -70,6 +71,9 @@ const AUTHORIZATION_PAYLOAD = Object.freeze({
   core_table_app_grant_row_count: 120,
   container_recovery_invariant_violation_count: 0,
   extension_recovery_invariant_violation_count: 0,
+  reviewed_recovery_cohort_count: 0,
+  reviewed_security_definer_function_count: 0,
+  reviewed_security_definer_contract_violation_count: 39,
   public_security_definer_function_count: 13,
   restricted_security_definer_function_count: 12,
   approved_additional_security_definer_function_count: 0,
@@ -941,4 +945,61 @@ test("snapshot-target requires and binds the Full Receipt v2 contract", async ()
   assert.equal(fail.status, 1);
   assert.equal(fail.stdout, "");
   assert.equal(fail.stderr, "AUTHORIZATION=ERROR\n");
+});
+
+
+test("reviewed39 profile is source-backed and covers every privileged identity", async () => {
+  const {reviewedDefinitions}=await import('./helpers/reviewed-security-definer-fixture.mjs');
+  const definitions=await reviewedDefinitions();
+  assert.equal(definitions.length,39);
+  assert.equal(new Set(definitions.map(({expected})=>expected.name+'('+expected.identity_arguments+')')).size,39);
+  assert.equal(definitions.filter(({expected})=>expected.name.startsWith('support_')).length,18);
+  assert.equal(REVIEWED_SECURITY_DEFINER_PROFILE.filter(x=>x.service_role_execute&&x.result!=='trigger'&&!x.authenticated_execute&&!x.anon_execute).length,29);
+  assert.ok(REVIEWED_SECURITY_DEFINER_PROFILE.every(x=>Object.isFrozen(x)&&Object.isFrozen(x.body_sha256)));
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL,/p\.prosrc[\s\S]+actual_body_sha256/u);
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL,/p\.prosupport[\s\S]+invalid_acl_count/u);
+});
+
+const REVIEWED_39_PAYLOAD={
+  ...AUTHORIZATION_PAYLOAD,
+  public_security_definer_function_count:39,
+  restricted_security_definer_function_count:29,
+  approved_additional_security_definer_function_count:7,
+  additional_security_definer_contract_violation_count:0,
+  reviewed_recovery_cohort_count:19,
+  reviewed_security_definer_function_count:39,
+  reviewed_security_definer_contract_violation_count:0,
+  exposed_security_definer_exception_count:0,
+  hardened_security_definer_exception_count:1,
+};
+
+test("captures reviewed39/29 and preserves its exact Full Receipt contract", async()=>{
+  const options=connectionOptions();options.env.FAKE_AUTHORIZATION_PAYLOAD=JSON.stringify(REVIEWED_39_PAYLOAD);
+  const value=await captureDatabaseAuthorizationContract(options);
+  assert.equal(value.restrictedSecurityDefinerFunctionCount,29);
+  assert.equal(validateAuthorizationContract({...fullReceipt(),databaseRestrictedSecurityDefinerFunctionCount:29}).restrictedSecurityDefinerFunctionCount,29);
+});
+
+test("reviewed39 rejects partial/replaced cohorts, type tricks and legacy fallback", async()=>{
+  const mutations=[
+    {reviewed_security_definer_contract_violation_count:1},
+    {reviewed_security_definer_contract_violation_count:undefined},
+    {reviewed_security_definer_function_count:38},
+    {reviewed_security_definer_function_count:'39'},
+    {reviewed_recovery_cohort_count:18},
+    {reviewed_recovery_cohort_count:20},
+    {restricted_security_definer_function_count:13},
+    {public_security_definer_function_count:40},
+    {additional_security_definer_contract_violation_count:1},
+    {exposed_security_definer_exception_count:1,hardened_security_definer_exception_count:0},
+    {public_security_definer_function_count:20,restricted_security_definer_function_count:13},
+  ];
+  for(const change of mutations){
+    const options=connectionOptions();options.env.FAKE_AUTHORIZATION_PAYLOAD=JSON.stringify({...REVIEWED_39_PAYLOAD,...change});
+    await assert.rejects(captureDatabaseAuthorizationContract(options),/authorization_security_definer_boundary_invalid/u);
+  }
+  for(const legacy of [AUTHORIZATION_PAYLOAD,{...REVIEWED_39_PAYLOAD,public_security_definer_function_count:20,restricted_security_definer_function_count:13}]){
+    const options=connectionOptions();options.env.FAKE_AUTHORIZATION_PAYLOAD=JSON.stringify({...legacy,reviewed_recovery_cohort_count:1});
+    await assert.rejects(captureDatabaseAuthorizationContract(options),/authorization_security_definer_boundary_invalid/u);
+  }
 });
