@@ -105,3 +105,10 @@ Synthetic PM2 state writes became atomic and fixture teardown now removes its
 root only after callback cleanup, avoiding read/cleanup races. Post-correction
 local23/23 focused checks PASS, full adapter rehearsal12198ms. These are source
 regressions only; final exact-head native/full CI remains required.
+
+The bounded CodeQL diagnostic located the new alert exactly as
+js/file-system-race in the optional synthetic command-log debug reader. It now
+reads from the same already opened read/write descriptor with a bounded explicit
+offset, never reopens the filename. No alert is dismissed/suppressed. Existing
+unrelated baseline findings are outside this task. Final exact-head CodeQL and
+native CI are still required.

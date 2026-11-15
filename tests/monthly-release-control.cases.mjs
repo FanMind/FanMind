@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer, request } from 'node:http';
-import { writeFileSync, readFileSync, mkdirSync, openSync, closeSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdirSync, openSync, closeSync, fstatSync, readSync } from 'node:fs';
 import { join } from 'node:path';
 import { execFileSync, execFile, spawnSync, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -192,9 +192,9 @@ raise SystemExit('unapproved fixture command: '+cmd)
     if(file==='bash') options={...options,input:options.input.replaceAll('/var/www/fanmind',source)};
     if(file==='/usr/bin/timeout') {args=[...args];args[2]='10';if(injectSmoke)failSmoke=true;}
     if(process.env.MONTHLY_REHEARSAL_DEBUG)console.error('FIXTURE_PHASE_START',file);
-    const debugPath=join(root,'command.log'), fd=openSync(debugPath,'a',0o600);
+    const debugPath=join(root,'command.log'), fd=openSync(debugPath,'a+',0o600);
     try { const result=await runMonthlyCommand(file,args,injectTimeout&&file==='bash'?1:ms,source,{...options,stdio:['pipe',fd,fd],env:{...env,...options.env}},env);if(process.env.MONTHLY_REHEARSAL_DEBUG)console.error('FIXTURE_PHASE_END',file);return result; }
-    catch(e){ if(process.env.MONTHLY_REHEARSAL_DEBUG)console.error(readFileSync(debugPath,'utf8'));throw e; }
+    catch(e){ if(process.env.MONTHLY_REHEARSAL_DEBUG){const bytes=Buffer.alloc(Math.min(fstatSync(fd).size,131072));const count=readSync(fd,bytes,0,bytes.length,0);console.error(bytes.subarray(0,count).toString('utf8'));}throw e; }
     finally{closeSync(fd);}
   };
   let saved;const save=async value=>{saved=value;put(join(root,'monthly-state.json'),JSON.stringify(value),0o600);};
