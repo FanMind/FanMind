@@ -9,6 +9,10 @@ const packagePath = path.join(repoRoot, "package.json");
 const workflowPath = path.join(repoRoot, ".github/workflows/ci-fanmind.yml");
 const testsDirectory = path.join(repoRoot, "tests");
 
+const directlyOwnedCiTests = [
+  "tests/open-questions-reviewed-excerpt-pg17.test.mjs",
+];
+
 const requiredCiRoots = [
   "test:operations",
   "test:release-integrations",
@@ -17,6 +21,13 @@ const requiredCiRoots = [
   "test:database-authorization:pg17",
   "test:creator-foundation-transition",
   "test:ai-capacity",
+];
+
+const requiredDirectCiTests = [
+  {
+    testPath: "tests/open-questions-retention-pg17.test.mjs",
+    workflowPattern: /pg17_authorization_roundtrip:[\s\S]*?- name: Prove open-question retention rollback in PostgreSQL 17[\s\S]*?run: node --test --test-concurrency=1 tests\/open-questions-retention-pg17\.test\.mjs[\s\S]*?- name: Prove PostgreSQL 17 authorization backup and restore/u,
+  },
 ];
 
 function referencedScripts(command) {
@@ -56,7 +67,14 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
   ]);
   const scripts = JSON.parse(packageText).scripts;
 
-  const ciOwnedTests = new Set();
+  const ciOwnedTests = new Set(directlyOwnedCiTests);
+  for (const testPath of directlyOwnedCiTests) {
+    assert.match(
+      workflow,
+      new RegExp(`node\\s+--test(?:\\s+--test-concurrency=1)?\\s+${testPath.replaceAll(".", "\\.")}(?:\\s|$)`, "u"),
+      `${testPath} must run directly in ci-fanmind.yml`,
+    );
+  }
   for (const rootScript of requiredCiRoots) {
     assert.match(
       workflow,
@@ -68,6 +86,11 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
     }
   }
 
+  for (const { testPath, workflowPattern } of requiredDirectCiTests) {
+    assert.match(workflow, workflowPattern, `${testPath} must run as the first PostgreSQL 17 proof step`);
+    ciOwnedTests.add(testPath);
+  }
+
   const trackedTests = entries
     .filter((entry) => entry.isFile() && entry.name.endsWith(".test.mjs"))
     .map((entry) => `tests/${entry.name}`)
@@ -76,3 +99,4 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
 
   assert.deepEqual(orphaned, [], `Node policy tests missing from required CI: ${orphaned.join(", ")}`);
 });
+
