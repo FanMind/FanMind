@@ -13,7 +13,7 @@ on:
         required: true
         type: string
       expected_commit:
-        description: 'Exact 40-character main commit expected on Production'
+        description: 'Exact independently confirmed Production commit, including a historical Main release'
         required: true
         type: string
 
@@ -92,12 +92,80 @@ jobs:
           trap 'rm -f "$AUDIT_OUTPUT" "$AUDIT_STDERR"' EXIT
           AUDIT_STDERR="$(mktemp "$RUNNER_TEMP/fanmind-production-audit-stderr.XXXXXX")"
 
+          # Diagnostic observation only. These values do not authorize a release.
+          audit_contract_inventory() {
+            node --input-type=module - "$1" <<'NODE'
+          import {constants,openSync,closeSync,fstatSync,lstatSync,readFileSync} from 'node:fs';
+          import {dirname} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const phase=process.argv[2];
+          if(!['before','after'].includes(phase))process.exit(1);
+          const files=[
+            ['collector','/usr/local/lib/fanmind-audit/read-only-production-audit.sh'],
+            ['validator','/usr/local/lib/fanmind-audit/verify-production-audit-output.mjs'],
+            ['boot','/usr/local/lib/fanmind-audit/production-boot-readiness.mjs'],
+            ['health','/usr/local/lib/public-health-policy.mjs'],
+          ];
+          for(const [name,path]of files){
+            let fd;
+            try{
+              for(let p=dirname(path);;p=dirname(p)){
+                const s=lstatSync(p);
+                if(!s.isDirectory()||s.isSymbolicLink()||s.uid!==0||(s.mode&0o022))throw Error();
+                if(p==='/')break;
+              }
+              fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);
+              const a=fstatSync(fd,{bigint:true});
+              if(!a.isFile()||a.uid!==0n||a.nlink!==1n||(a.mode&0o022n)||a.size<1n||a.size>262144n)throw Error();
+              const bytes=readFileSync(fd),b=fstatSync(fd,{bigint:true}),c=lstatSync(path,{bigint:true});
+              if(!['ino','dev','size','mtimeNs','ctimeNs','mode','uid','gid','nlink'].every(k=>a[k]===b[k]&&a[k]===c[k]))throw Error();
+              const hash=createHash('sha256').update(bytes).digest('hex');
+              console.log(`AUDIT_DIAGNOSTIC_FILE=${phase}|${name}|status=read|sha256=${hash}|uid=${a.uid}|gid=${a.gid}|mode=${(a.mode&0o7777n).toString(8).padStart(4,'0')}`);
+            }catch{console.log(`AUDIT_DIAGNOSTIC_FILE=${phase}|${name}|status=unavailable`);}
+            finally{if(fd!==undefined)closeSync(fd);}
+          }
+          NODE
+          }
+          audit_contract_inventory before
+
           AUDIT_EXIT_CODE=0
           FANMIND_AUDIT_VERIFIER_PATH=/usr/local/lib/fanmind-ops/verify-backup-artifact.mjs \
           /usr/local/lib/fanmind-audit/read-only-production-audit.sh \
             > "$AUDIT_OUTPUT" 2> "$AUDIT_STDERR" || AUDIT_EXIT_CODE=$?
+          VERIFICATION_EXIT_CODE=0
           node \
             /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs \
             "$AUDIT_OUTPUT" \
             "$EXPECTED_COMMIT" \
-            "$AUDIT_EXIT_CODE"
+            "$AUDIT_EXIT_CODE" || VERIFICATION_EXIT_CODE=$?
+          audit_contract_inventory after
+          node --input-type=module - "$AUDIT_OUTPUT" "$EXPECTED_COMMIT" "${GITHUB_SHA:-}" "$AUDIT_EXIT_CODE" "$VERIFICATION_EXIT_CODE" <<'NODE'
+          import {openSync,closeSync,fstatSync,lstatSync,constants,readFileSync} from 'node:fs';
+          const [path,expected,workflow,probe,validation]=process.argv.slice(2);
+          const sha=/^[a-f0-9]{40}$/u,code=/^(?:0|[1-9][0-9]{0,2})$/u;
+          console.log('AUDIT_DIAGNOSTIC_ONLY=true');
+          for(const [key,value]of [['EXPECTED_COMMIT',expected],['WORKFLOW_COMMIT',workflow]])
+            console.log(`AUDIT_DIAGNOSTIC_${key}=${sha.test(value??'')?value:'unavailable'}`);
+          for(const [key,value]of [['PROBE_EXIT_CODE',probe],['VALIDATOR_EXIT_CODE',validation]])
+            console.log(`AUDIT_DIAGNOSTIC_${key}=${code.test(value??'')&&Number(value)<=255?value:'unavailable'}`);
+          let fd;
+          try{
+            fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);
+            const a=fstatSync(fd,{bigint:true});
+            if(!a.isFile()||a.uid!==BigInt(process.getuid())||a.nlink!==1n||(a.mode&0o7777n)!==0o600n||a.size<1n||a.size>2097152n)throw Error();
+            const text=readFileSync(fd,'utf8'),b=fstatSync(fd,{bigint:true}),c=lstatSync(path,{bigint:true});
+            if(!['ino','dev','size','mtimeNs','ctimeNs','mode','uid','nlink'].every(k=>a[k]===b[k]&&a[k]===c[k])||text.includes('\0'))throw Error();
+            const names=['AUDIT_UTC','SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'];
+            const patterns=[/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/u,sha,sha,sha];
+            for(const [i,key]of names.entries()){
+              const values=text.split(/\r?\n/u).filter(l=>l.startsWith(key+'=')).map(l=>l.slice(key.length+1));
+              const valid=values.length===1&&patterns[i].test(values[0])&&(i!==0||Number.isFinite(Date.parse(values[0])));
+              console.log(`AUDIT_DIAGNOSTIC_${key}=${valid?values[0]:'unavailable'}`);
+            }
+          }catch{
+            for(const key of ['AUDIT_UTC','SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'])console.log(`AUDIT_DIAGNOSTIC_${key}=unavailable`);
+          }finally{if(fd!==undefined)closeSync(fd);}
+          NODE
+          # Never turn failed collection or validation into green diagnostic CI.
+          if (( AUDIT_EXIT_CODE != 0 && VERIFICATION_EXIT_CODE == 0 )); then exit 1; fi
+          exit "$VERIFICATION_EXIT_CODE"
