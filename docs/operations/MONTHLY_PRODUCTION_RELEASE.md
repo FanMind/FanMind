@@ -1,5 +1,16 @@
 # FanMind Monatsrelease — bestehender geschützter Controller
 
+## Separate Billing-Abnahme — 15. November 2026
+
+Die fünfte Work-Sitzung liefert
+[Stripe-/Supabase-Abnahme](BILLING_SUPABASE_ACCEPTANCE_20261115.md) und
+`project-memory/receipts/billing-supabase-20261115.json`.
+Billing bleibt BLOCKED: Production-Column-ACL-Abweichung, Live-Webhook20/22,
+fehlende Ziel-Schemas/Capacity-RPCs, Paketcheckout-, Sandbox-/Steuer- und
+monetäre Lifecycle-Nachweise. Verbindungs-/Katalog-PASS ersetzt diese Gates
+nicht. Support/Recovery, Adminchat, Meta und SQL-Adapter bleiben bei ihren
+bestehenden Sitzungen. Keine Production-/Zahlungsfreigabe entsteht hieraus.
+
 PR1512, Source-Vorbereitung. Keine Production-Bereitstellung, kein Backup,
 Restore, SQL-Apply oder geschützter Installationsschritt wurde ausgeführt.
 Technische Abnahme erfordert die vollständige native CI-Generalprobe und
