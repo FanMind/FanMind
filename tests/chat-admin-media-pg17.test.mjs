@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
 import {mediaCatalogueEqualitySql} from "../scripts/operations/staging-support-media-preflight.mjs";
 import {runMediaSchemaNativeCases} from './chat-admin-media-schema.cases.mjs';
-import {installRetentionIndependenceFixture,proveMediaRetentionIndependence} from './media-retention-independence.cases.mjs';
+import {installRetentionIndependenceFixture,proveMediaRetentionIndependence,proveCapacityWriterRetentionIndependence} from './media-retention-independence.cases.mjs';
 import { execFileSync, spawn } from "node:child_process";
 import test from "node:test";
 const container=process.env.FANMIND_CREATOR_PG17_CONTAINER_ID??"";
@@ -56,6 +56,7 @@ test("native PG17 media RLS, object lifecycle, revision invalidation and deletio
   });await concurrentMediaLifecycle();await runMediaCatalogueSqlCases(async query=>sql(query),async()=>{
    await runMediaSchemaNativeCases(async query=>sql(query),'extended');
    await runStorageFinalizationSqlCases(async query=>sql(query));
+   await proveCapacityWriterRetentionIndependence(async query=>sql(query),supportCatalogue);
    await proveMediaRetentionIndependence(async query=>sql(query),supportCatalogue);
   });}
  finally{sql(`drop database if exists ${database} with (force);`,"postgres");}
