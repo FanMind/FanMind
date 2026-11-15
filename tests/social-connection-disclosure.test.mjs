@@ -312,3 +312,27 @@ test('support read failures, malformed consent, partial installation and foreign
   const missing=({table})=>table==='support_ai_consent_state'?jsonResponse({code:'PGRST202',message:'Could not find the function public.support_ai_consent_state(p_actor, p_version) in the schema cache'},404):undefined;
   for(const flags of [{},{runtime:'staging'},{persistent:true}])await assert.rejects(privateFixture({...flags,override:missing}).run());
 });
+
+
+test('audited Production content preinstall permits only a missing-table response, not a partial active export',async()=>{
+ const missing=({table})=>table==='content_sources'?jsonResponse({code:'PGRST205'},404):undefined;
+ const datasets=await collectorFixture(missing,'synthetic-user-jwt','production').run();
+ assert.equal(datasets.find(d=>d.key==='content_sources').rows.length,0);
+ const route=routeFixture({datasets});const response=await route.run();
+ assert.equal(response.status,200);assert.equal(response.headers.get('Content-Type'),'application/pdf');assert.equal(response.headers.get('X-FanMind-Disclosure-Status'),'complete');
+ for(const runtime of ['staging','unknown','development'])await assert.rejects(collectorFixture(missing,'synthetic-user-jwt',runtime).run(),DisclosureFailure);
+ for(const make of [()=>new Response('missing',{status:404}),()=>jsonResponse({code:'PGRST204',message:'Could not find column in schema cache'},400),()=>jsonResponse({code:'42501'},403),()=>jsonResponse({},401),()=>jsonResponse({code:'PGRST205'},500),()=>{throw Error('PRIVATE_NETWORK_DETAIL')}]){
+  await assert.rejects(collectorFixture(({table})=>table==='content_sources'?make():undefined).run(),DisclosureFailure);
+ }
+ const stored=[{id:'content-1',workspace_id:workspace,body:'PRESERVE_INSTALLED_DATA'}];
+ const data=await collectorFixture(({table})=>table==='content_sources'?jsonResponse(stored):undefined).run();assert.equal(data.find(d=>d.key==='content_sources').rows[0].body,'PRESERVE_INSTALLED_DATA');
+});
+test('an optional dataset never discards an earlier page or masks generic schema and permission errors',async()=>{
+ const rows=Array.from({length:500},(_,i)=>({id:'metric-'+i,workspace_id:workspace}));
+ await assert.rejects(collectorFixture(({table,offset})=>table==='content_metric_snapshots'?(offset?jsonResponse({code:'PGRST205'},404):jsonResponse(rows)):undefined).run(),DisclosureFailure);
+ for(const make of [()=>new Response('not found',{status:404}),()=>jsonResponse({code:'PGRST204',message:'schema cache column missing'},400),()=>jsonResponse({code:'42501',message:'does not exist'},403)])await assert.rejects(collectorFixture(({table})=>table==='content_metric_snapshots'?make():undefined).run(),DisclosureFailure);
+});
+test('workspace disclosure excludes operator-only notes and provider references alongside credentials',async()=>{
+ const rows=await collectorFixture(({table})=>table==='workspaces'?jsonResponse([{id:workspace,name:'OWN_WORKSPACE',billing_status:'active',billing_admin_note:'PRIVATE_ADMIN',billing_note:'PRIVATE_ADMIN',test_access_flags:{private:'PRIVATE_ADMIN'},last_invoice_id:'PRIVATE_PROVIDER',api_key:'PRIVATE_KEY'}]):undefined).run();
+ const row=rows.find(d=>d.key==='workspace_record').rows[0];assert.equal(row.name,'OWN_WORKSPACE');assert.equal(row.billing_status,'active');assert.doesNotMatch(JSON.stringify(row),/PRIVATE_ADMIN|PRIVATE_PROVIDER|PRIVATE_KEY/);
+});
