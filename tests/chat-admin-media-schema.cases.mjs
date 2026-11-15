@@ -1,3 +1,4 @@
+import {proveMonthlySqlNative} from './monthly-release-sql-native.cases.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
@@ -25,6 +26,7 @@ export async function runMediaSchemaNativeCases(sql,profile){
  const bundle=loadMediaSchemaProfile(profile);
  assert.equal((await sql(mediaSchemaStateSql(bundle))).trim(),profile);
  await sql(mediaSchemaProfileSql(bundle));
+ if(profile==='extended')await proveMonthlySqlNative(sql,'media_catalogue');
  const wrong=profile==='initial'?'extended':'initial';
  await assert.rejects(()=>sql(mediaSchemaProfileSql({...bundle,profile:wrong})),/division by zero/);
  const drifts=[

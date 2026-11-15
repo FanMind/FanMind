@@ -1,3 +1,4 @@
+import './monthly-release-sql-adapters.cases.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer, request } from 'node:http';

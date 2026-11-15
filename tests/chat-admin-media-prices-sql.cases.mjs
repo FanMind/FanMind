@@ -11,6 +11,8 @@ export async function runMediaPricesSqlCases(sql,beforePrices=async()=>{},afterP
  await sql(readFileSync('tests/fixtures/chat-admin-current-facts.sql','utf8'));
  await sql(readFileSync('supabase/controlled/20260920230000_chat_admin_multi_character.sql','utf8'));
  await sql(`alter table public.chat_characters add column sales_playbook jsonb not null default '{}';grant update(sales_playbook,updated_at) on public.chat_characters to authenticated;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create table public.account_deletion_requests(user_id uuid,status text);`);
+ // Same reviewed inherited public defaults as the canonical media fixture.
+ await sql('alter default privileges for role postgres in schema public grant all on tables to service_role;alter default privileges for role postgres in schema public grant execute on functions to service_role;');
  await sql(readFileSync('supabase/controlled/chat_admin_media.sql','utf8'));
  await sql(readFileSync('supabase/controlled/chat_admin_media_catalogue.sql','utf8'));
  await sql(readFileSync('supabase/controlled/20260927200000_chat_admin_character_fans.sql','utf8'));
