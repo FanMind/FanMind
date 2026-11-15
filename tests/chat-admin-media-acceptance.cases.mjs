@@ -1,18 +1,20 @@
 import test from 'node:test';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
-import {readFileSync,mkdtempSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
+import {readFileSync,mkdtempSync,rmSync,symlinkSync,writeFileSync,chmodSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {mediaAcceptanceBinding,assertMediaWriteApproval,assertMediaFixture,MEDIA_ACCEPTANCE_MODEL,mediaRequestAllowed,ownsMediaResource,originalState,digest} from '../scripts/operations/chat-admin-media-acceptance-policy.mjs';
+import {mediaAcceptanceBinding,assertMediaWriteApproval,assertMediaFixture,MEDIA_ACCEPTANCE_MODEL,mediaRequestAllowed,ownsMediaResource,originalState,digest,MEDIA_ACCEPTANCE_CHARACTER_ID,mediaOwnerMappingSql,assertMediaStoragePresent,singleMediaUpload,mediaExerciseWithCleanup} from '../scripts/operations/chat-admin-media-acceptance-policy.mjs';
 import {saveMediaRecovery,loadMediaRecovery} from '../scripts/operations/chat-admin-media-acceptance.mjs';
+import {OPERATOR_USER,OPERATOR_WORKSPACE} from '../src/lib/stagingOperatorIdentity.mjs';
 const ids=Array.from({length:6},(_,i)=>`${i+1}0000000-1111-4111-8111-111111111111`);
+ids[0]=MEDIA_ACCEPTANCE_CHARACTER_ID;ids[1]=OPERATOR_WORKSPACE;ids[3]=OPERATOR_USER;
 const env={GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REF:'refs/heads/main',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_SHA:'a'.repeat(40),GITHUB_RUN_ID:'123',GITHUB_RUN_ATTEMPT:'1',FANMIND_CHAT_ADMIN_REVIEWED_COMMIT:'a'.repeat(40),FANMIND_RUNTIME_ENVIRONMENT:'staging',NEXT_PUBLIC_APP_URL:'https://staging.fanmind.ch',FANMIND_TARGET_API_ORIGIN:'https://staging.fanmind.ch',FANMIND_PRODUCTION_API_ORIGIN:'https://fanmind.ch',FANMIND_TARGET_SUPABASE_PROJECT_REF:'vshyhvgcmrlagvfnvomc',FANMIND_PRODUCTION_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz',NEXT_PUBLIC_SUPABASE_URL:'https://vshyhvgcmrlagvfnvomc.supabase.co',FANMIND_ENABLE_NON_PRODUCTION_WRITES:'false',FANMIND_NON_PRODUCTION_WRITE_ACK:'',FANMIND_CHAT_ADMIN_MEDIA_MODE:'media-probe',FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:'run-chat-admin-media-probe',FANMIND_CHAT_ADMIN_MEDIA_CHARACTER_ID:ids[0],FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID:ids[1],FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID:ids[2],FANMIND_CHAT_ADMIN_OWNER_ID:ids[3],FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID:ids[4]};
 const b=mediaAcceptanceBinding(env),app='https://staging.fanmind.ch';
 const original={character:{id:ids[0],workspace_id:ids[1],display_name:MEDIA_ACCEPTANCE_MODEL,status:'active',revision:1,sales_playbook:{offers:[{id:'evening',name:'Abendkleidung',currency:'EUR',recommendedPriceMinor:2500}]}},assets:[],folders:[{id:ids[5],workspace_id:ids[1],character_id:ids[0],name:'Abendkleidung',offer_id:'evening',revision:1}],policy:{enabled:false},catalogue_enabled:true,video_enabled:true,pricing_v2_enabled:true};
 test('media dispatch rejects Production, stale sources, missing dedicated Model binding and duplicate identities',()=>{
  assert.equal(b.marker,'FM1425-E2E-123-1');
- for(const patch of [{GITHUB_REPOSITORY:'other/repo'},{GITHUB_REF:'refs/heads/feature'},{GITHUB_EVENT_NAME:'push'},{GITHUB_SHA:'b'.repeat(40)},{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{FANMIND_TARGET_API_ORIGIN:'https://fanmind.ch'},{FANMIND_TARGET_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz'},{FANMIND_RUNTIME_ENVIRONMENT:'production'},{FANMIND_CHAT_ADMIN_MEDIA_CHARACTER_ID:''},{FANMIND_CHAT_ADMIN_OWNER_ID:ids[4]},{FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:'run-chat-admin-manual-flow'},{GITHUB_RUN_ID:'../../private'}])assert.throws(()=>mediaAcceptanceBinding({...env,...patch}),/BLOCKED/);
+ for(const patch of [{GITHUB_REPOSITORY:'other/repo'},{GITHUB_REF:'refs/heads/feature'},{GITHUB_EVENT_NAME:'push'},{GITHUB_SHA:'b'.repeat(40)},{NEXT_PUBLIC_APP_URL:'https://fanmind.ch'},{FANMIND_TARGET_API_ORIGIN:'https://fanmind.ch'},{FANMIND_TARGET_SUPABASE_PROJECT_REF:'drqkpdvtbbrrdwmtrodz'},{FANMIND_RUNTIME_ENVIRONMENT:'production'},{FANMIND_CHAT_ADMIN_MEDIA_CHARACTER_ID:''},{FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID:ids[3]},{FANMIND_CHAT_ADMIN_MANUAL_CONFIRM:'run-chat-admin-manual-flow'},{GITHUB_RUN_ID:'../../private'}])assert.throws(()=>mediaAcceptanceBinding({...env,...patch}),/BLOCKED/);
 });
 test('probe never authorizes media writes; acceptance requires every independent acknowledgement',()=>{
  assert.throws(()=>assertMediaWriteApproval(env));
@@ -49,17 +51,44 @@ test('recovery reader rejects stale runs, changed source, symlinks and insecure 
  const dir=mkdtempSync(join(tmpdir(),'fm-media-receipt-test-'));try{
   const e={...env,RUNNER_TEMP:dir},file=join(dir,'fanmind-chatadmin-media-recovery.json');
   assert.throws(()=>loadMediaRecovery(e,b),/receipt_missing/);
-  const source=['scripts/operations/chat-admin-media-acceptance.mjs','scripts/operations/chat-admin-media-acceptance-policy.mjs','.github/workflows/chat-admin-manual-flow-staging.yml'];
+  const source=['scripts/operations/chat-admin-media-acceptance.mjs','scripts/operations/chat-admin-media-acceptance-policy.mjs','.github/workflows/chat-admin-manual-flow-staging.yml','src/lib/stagingOperatorIdentity.mjs'];
   // A foreign-source receipt must fail even with a matching target and run.
   const receipt={binding:b,source:'0'.repeat(64),baseline:'a'.repeat(64),storage:`0:${'a'.repeat(32)}`,folderIds:ids.slice(0,3),assetIds:[],offerIds:[]};
   saveMediaRecovery(e,receipt);assert.throws(()=>loadMediaRecovery(e,b),/receipt_binding/);rmSync(file);
   receipt.source=createHash('sha256').update(Buffer.concat(source.map(f=>readFileSync(f)))).digest('hex');
   saveMediaRecovery(e,receipt);assert.deepEqual(loadMediaRecovery(e,b),receipt);assert.throws(()=>loadMediaRecovery(e,{...b,run:'124'}),/receipt_binding/);rmSync(file);
   symlinkSync(join(process.cwd(),source[0]),file);assert.throws(()=>loadMediaRecovery(e,b),/receipt_file/);rmSync(file);
-  writeFileSync(file,'{}',{mode:0o644});assert.throws(()=>loadMediaRecovery(e,b),/receipt_file/);
+  writeFileSync(file,'{}',{mode:0o644});chmodSync(file,0o644);assert.throws(()=>loadMediaRecovery(e,b),/receipt_file/);
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 test('workflow keeps the old runner isolated, serializes media with deployment and persists recovery before mutation',()=>{
  const workflow=readFileSync('.github/workflows/chat-admin-manual-flow-staging.yml','utf8');const media=workflow.slice(workflow.indexOf('\n  media:\n'));
  assert.match(media,/group: fanmind-staging-deploy/);assert.match(media,/environment: staging/);assert.match(media,/runs-on: ubuntu-24.04/);assert.ok(media.indexOf(' --prepare')<media.indexOf('id: media_recovery'));assert.ok(media.indexOf('id: media_recovery')<media.indexOf(' --run'));assert.match(media,/always\(\).*media-acceptance.*media_recovery.outcome == 'success'/);assert.doesNotMatch(media,/--apply|SERVICE_ROLE|db push|ssh /);
+});
+
+test('media uses exact Operator identity independently of the unrelated manual-flow primary configuration',()=>{
+ const actual=mediaAcceptanceBinding({...env,FANMIND_CHAT_ADMIN_OWNER_ID:ids[4],FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID:ids[2]});
+ assert.equal(actual.ids.OWNER_ID,OPERATOR_USER);assert.equal(actual.ids.STAGING_WORKSPACE_ID,OPERATOR_WORKSPACE);
+ for(const key of ['OWNER_ID','STAGING_WORKSPACE_ID','MEDIA_CHARACTER_ID'])assert.throws(()=>mediaOwnerMappingSql({...b,ids:{...b.ids,[key]:ids[5]}}),/synthetic_owner_model_mapping/);
+ const sql=mediaOwnerMappingSql(b);assert.match(sql,/staging_operator_workspace/);assert.match(sql,/cap.granted_to_user_id=u.id/);assert.match(sql,/status='processing'/);
+ const media=readFileSync('.github/workflows/chat-admin-manual-flow-staging.yml','utf8').split('\n  media:\n')[1];
+ assert.match(media,/FANMIND_STAGING_ADMIN_E2E_EMAIL/);assert.doesNotMatch(media,/vars.FANMIND_CHAT_ADMIN_OWNER_ID|vars.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID|secrets.FANMIND_STAGING_E2E_PASSWORD/);
+});
+test('missing Model, duplicate upload events and incomplete uploads cannot be accepted',()=>{
+ assert.throws(()=>assertMediaFixture({...original,character:null},b));
+ const asset={id:ids[5],workspace_id:ids[1],character_id:ids[0],original_filename:`${b.marker}.png`,media_type:'image',folder_id:ids[5],available:true,deleted:false};
+ assert.equal(singleMediaUpload({assets:[asset]},b,'png','image',ids[5]),asset);
+ for(const assets of [[],[asset,asset],[{...asset,available:false}],[{...asset,deleted:true}],[{...asset,workspace_id:ids[2]}]])assert.throws(()=>singleMediaUpload({assets},b,'png','image',ids[5]),/upload_binding/);
+});
+test('Storage proof requires one exact owned object, never zero or duplicate acknowledgements',()=>{
+ const asset={id:ids[5],workspace_id:ids[1],character_id:ids[0],original_filename:`${b.marker}.png`,media_type:'image'};
+ assert.doesNotThrow(()=>assertMediaStoragePresent(sql=>{assert.ok(sql.includes(`${ids[1]}/${ids[0]}/${ids[5]}.webp`));assert.ok(sql.includes(`owner_id='${ids[3]}'`));return '1';},b,asset));
+ for(const result of ['0','2',''])assert.throws(()=>assertMediaStoragePresent(()=>result,b,asset),/storage_presence/);
+});
+test('failed completion always cleans up and neither exercise nor cleanup failure becomes success',async()=>{
+ for(const [exerciseFails,cleanupFails] of [[false,false],[true,false],[false,true],[true,true]]){
+  const calls=[];const run=mediaExerciseWithCleanup(async()=>{calls.push('exercise');if(exerciseFails)throw Error('exercise_failure');},async()=>{calls.push('cleanup');if(cleanupFails)throw Error('cleanup_failure');});
+  if(exerciseFails||cleanupFails)await assert.rejects(run);else await run;
+  assert.deepEqual(calls,['exercise','cleanup']);
+ }
 });

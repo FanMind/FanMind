@@ -82,3 +82,55 @@ test("native PG17 media prices: immutable audit, scoped quote, transactional rol
  });}
  finally{sql(`drop database if exists ${db} with (force);`,"postgres");}
 });
+
+import {mediaOwnerMappingSql,assertMediaStoragePresent,MEDIA_ACCEPTANCE_CHARACTER_ID,MEDIA_ACCEPTANCE_MODEL} from '../scripts/operations/chat-admin-media-acceptance-policy.mjs';
+import {OPERATOR_USER,OPERATOR_WORKSPACE,OPERATOR_NAME} from '../src/lib/stagingOperatorIdentity.mjs';
+test('native PG17 media runner exact Operator binding and Storage negatives',{skip:!enabled},()=>{
+ const db='fanmind_media_runner_binding_ci';
+ const binding={ids:{MEDIA_CHARACTER_ID:MEDIA_ACCEPTANCE_CHARACTER_ID,STAGING_WORKSPACE_ID:OPERATOR_WORKSPACE,OWNER_ID:OPERATOR_USER},marker:'FM1425-E2E-123-1'};
+ const read=query=>sql(query,db).trim();
+ sql(`create database ${db};`,'postgres');
+ try{
+  read(`create schema auth;create schema storage;
+   create table auth.users(id uuid primary key);
+   create table public.workspaces(id uuid primary key,owner_user_id uuid,name text,test_access_flags jsonb);
+   create table public.chat_characters(id uuid primary key,workspace_id uuid,display_name text,status text);
+   create table public.workspace_chat_admin_capabilities(workspace_id uuid,granted_to_user_id uuid,chat_admin_multi_character boolean);
+   create table public.account_deletion_requests(user_id uuid,status text);
+   create table storage.objects(bucket_id text,name text,owner_id text);
+   insert into auth.users values('${OPERATOR_USER}');
+   insert into public.workspaces values('${OPERATOR_WORKSPACE}','${OPERATOR_USER}','${OPERATOR_NAME}','{"staging_operator_workspace":true}');
+   insert into public.chat_characters values('${MEDIA_ACCEPTANCE_CHARACTER_ID}','${OPERATOR_WORKSPACE}','${MEDIA_ACCEPTANCE_MODEL}','active');
+   insert into public.workspace_chat_admin_capabilities values('${OPERATOR_WORKSPACE}','${OPERATOR_USER}',true);`);
+  const mapping=mediaOwnerMappingSql(binding),foreign='ffffffff-ffff-4fff-8fff-ffffffffffff';
+  assert.equal(read(mapping),'1');
+  for(const change of [
+   'delete from public.chat_characters;',
+   `update public.chat_characters set workspace_id='${foreign}';`,
+   `update public.chat_characters set id='${foreign}';`,
+   `update public.chat_characters set display_name='foreign Model';`,
+   `update public.chat_characters set status='inactive';`,
+   `update public.workspaces set owner_user_id='${foreign}';`,
+   `update public.workspaces set test_access_flags='{"staging_synthetic_fixture":true}';`,
+   `update public.workspaces set name='other';`,
+   `update public.workspace_chat_admin_capabilities set granted_to_user_id='${foreign}';`,
+   'update public.workspace_chat_admin_capabilities set chat_admin_multi_character=false;',
+   `insert into public.account_deletion_requests values('${OPERATOR_USER}','processing');`
+  ])assert.equal(read(`begin;${change}${mapping};rollback;`).split('\n').filter(x=>/^[01]$/u.test(x)).at(-1),'0',change);
+  const asset={id:foreign,workspace_id:OPERATOR_WORKSPACE,character_id:MEDIA_ACCEPTANCE_CHARACTER_ID,original_filename:`${binding.marker}.png`,media_type:'image'};
+  const path=`${OPERATOR_WORKSPACE}/${MEDIA_ACCEPTANCE_CHARACTER_ID}/${asset.id}.webp`;
+  assert.throws(()=>assertMediaStoragePresent(read,binding,asset),/storage_presence/);
+  read(`insert into storage.objects values('chat-character-media','${path}','${OPERATOR_USER}');`);
+  assert.doesNotThrow(()=>assertMediaStoragePresent(read,binding,asset));
+  for(const change of [
+   `update storage.objects set bucket_id='public-bucket';`,
+   `update storage.objects set owner_id='${foreign}';`,
+   `update storage.objects set name=replace(name,'.webp','.mp4');`,
+   `update storage.objects set name=replace(name,'${OPERATOR_WORKSPACE}','${foreign}');`,
+   'insert into storage.objects select * from storage.objects;'
+  ]){
+   const probe=query=>read(`begin;${change}${query};rollback;`).split('\n').filter(x=>/^\d+$/u.test(x)).at(-1);
+   assert.throws(()=>assertMediaStoragePresent(probe,binding,asset),/storage_presence/);
+  }
+ }finally{sql(`drop database if exists ${db} with (force);`,'postgres');}
+});
