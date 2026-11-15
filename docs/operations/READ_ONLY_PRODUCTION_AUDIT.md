@@ -149,7 +149,7 @@ AUDIT_RESULT=success
 
 Für einen belastbaren Operations-Pass müssen zusätzlich gelten:
 
-- Server-HEAD, `origin/main` und `LIVE_RELEASE` sind identisch;
+- Server-HEAD und `LIVE_RELEASE` sind exakt der unabhängig bestätigte erwartete Production-Commit; eine abweichende lokale `origin/main`-Referenz benötigt den unten beschriebenen unabhängigen Herkunftsnachweis (vorbereiteter Quellvertrag, noch nicht installiert);
 - `LIVE_ENVIRONMENT=production`;
 - `LIVE_HEALTH=healthy` und alle Pflichtkomponenten sind gesund;
 - `PM2_STATUS=online` und `PM2_UNSTABLE_RESTARTS=0`;
@@ -211,6 +211,89 @@ PM2-/nginx-Fehler, veraltete oder verwaiste Backup-Paare, Offsite-Abweichungen
 und Backup-Worker-Fehler im Ein-Stunden-Fenster ab.
 
 ## Diagnose bei Abbruch
+
+### Vorbereitete Tracking-Provenienzkorrektur — 15. November 2026
+
+**Source-only; nicht installiert und keine Productionfreigabe.** Im tatsächlichen
+Read-only-Lauf43721201037 stimmten EXPECTED_COMMIT, SERVER_HEAD und LIVE_RELEASE
+mit bb799466d2c235195fedcb4d80568f9f0bd56969 überein. Nur die lokale Trackingreferenz
+war30e8ddc52557d39f7da1b69ac303106d4bf3040e. Die vier installierten Auditdateien
+entsprachen vor/nach dem Lauf ihren kanonischen Repositorybytes. Dies erklärt
+diesen Lauf; die nicht aufbewahrten Rohwerte des älteren43711512421 bleiben unbekannt.
+
+Der neue Validator hält SERVER_HEAD und LIVE_RELEASE strikt auf der erwarteten
+Productionversion. ORIGIN_MAIN muss genau einmal als vollständiger SHA40 vorliegen.
+Ist er exakt gleich der Productionbasis, bleibt der bisherige strikte
+Identitätsnachweis bestehen (LIVE_EXACT). Eine abweichende Referenz kann niemals
+nach fehlgeschlagener Prüfung auf diesen Pfad zurückfallen.
+
+Für die abweichende Referenz führt der Validator selbst zusätzliche **lesende**
+Prüfungen durch; rohe TRACKING_OK-/Ancestry-Behauptungen autorisieren nichts:
+
+1. Fester realer /var/www/fanmind-Checkout mit eigenem .git-Verzeichnis,
+   nicht bare/shallow. Absolutes /usr/bin/git mit minimaler Umgebung; keine
+   Replacementobjekte, Grafts, Alternates, Include-/URL-Rewrites oder Promisor-
+   beziehungsweise Partial-Clone-Abkürzungen. Kein Lazy-Fetch, optionaler Lock,
+   Checkout, Reset oder Git-Write.
+2. Genau eine allowlistete FanMind/FanMind-Origin-URL, direkte nichtsymbolische
+   refs/remotes/origin/main, exakte HEAD-/Ref-Bindung. Live/Origin müssen echte
+   Commitobjekte mit erneut berechneter Objekt-ID sein; lokal Live<=Origin.
+3. Ausschließlich feste GitHub-HTTPS-GET-Endpunkte für FanMind/FanMind,
+   Repository-ID1259448985/default_branchmain, kanonischen Main-Commitanker
+   und die zwei exakten Vergleiche Live...Origin und Origin...Mainanker.
+   Base/merge-base, ahead/behind/status/total müssen konsistent sein.
+   Keine Abhängigkeit vom paginierten Commitarray. HTTP200, kein Redirect,
+   maximal256KiB JSON, je Request10Sekunden/5Sekunden Verbindungsaufbau;
+   insgesamt fünf Requests ohne automatische Wiederholung oder API-Token.
+4. Mainanker, lokaler Ref/HEAD, Konfiguration und Verzeichnisidentität werden
+   danach erneut gleich gebunden. Unbekannte/fehlende Objekte, API-Ausfall,
+   Rate-Limit, Timeout oder geänderte Evidenz bedeuten tracking_provenance_invalid.
+
+Erfolgreiche historische Quellen werden als MAIN_EXACT beziehungsweise
+MAIN_ANCESTOR mit SHA und beobachtetem Mainanker ausgewiesen. Der Mainanker ist
+**ausschließlich Audit-Herkunftsnachweis, niemals Deploymentkandidat**. Der
+Monatscontroller bleibt unverändert: ORIGIN_MAIN darf nur die Livebasis oder
+den exakt freigegebenen Kandidaten enthalten. Keine dritte historische SHA wird
+dort zusätzlich zugelassen; completeChecks, Backup, Restore, SQL, Owner- und
+Environment-Gates bleiben unverändert. Eine separate Runtimebestätigung ist
+weiterhin kein voller Backup-/Operations-PASS.
+
+#### Tatsächlicher Installationsumfang und Rückfall
+
+| Installierte Datei | Aktuell gemessener SHA-256 | Vorbereiteter SHA-256 / Modus |
+| --- | --- | --- |
+| /usr/local/lib/fanmind-audit/read-only-production-audit.sh |664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27|unverändert,0755,Root0:0|
+| /usr/local/lib/fanmind-audit/verify-production-audit-output.mjs |e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218|4422b2410502ec51cd03031c967ba7b0a3b6c7a4fb601b673bfc91635c81c882,0755,Root0:0|
+
+Bootreadiness und Public-Health-Policy bleiben bytegleich; neue Imports sind nur
+Node-Builtins. Kein neuer Rootpfad, Helper, Server, Runner, Dienst, Secret oder
+kostenpflichtiger Anbieter. Der fest installierte Git-/curl-Lesepfad und die
+erreichbare öffentliche GitHub-API sind spätere tatsächliche Vorbedingungen.
+Der private Monatsrelease-Verifierclosure muss seinen geänderten Validatorhash
+ebenfalls exakt übernehmen; dessen bisheriger Nachweis ist dadurch nicht aktuell.
+
+Der historische One-Hour-Installer unten bleibt absichtlich unverändert auf
+935d1d8/707d2270 und seine alten Datei-/Workerpins gebunden. Er lehnt die neuen
+Validatorbytes ab. Die Tests verwenden deshalb eine komprimierte, SHA-geprüfte
+historische Bytefixture; sie führen diese nicht als zweite Auditimplementierung
+aus. Keine Pins/Approvalvariablen werden zur Installation umgedeutet.
+
+**Vor jeder späteren Installation fehlen** ein separat geprüfter, konkret
+freigegebener Übergang im bestehenden geschützten Installationsverfahren,
+frische tatsächliche Host-/Datei-/Controllerbindungen und exakte Quellcommit-
+und Hashfreigaben. Vorher alten Collector und Validator als sichere Root-
+Rückfallkopien einfrieren; bestehenden exklusiven Hostlock verwenden. Gemischte
+oder unbekannte Bytes sperren. Nach Austausch exakte Hashes und unabhängige
+Version bestätigen und den vollständigen Audit ausführen. Bei technischem
+Installations-/Versions-/Provenienz-/Postflightfehler beide eingefrorenen
+Originale wiederherstellen und ihre Hashes unabhängig kontrollieren. Kein
+Checkout-Reset, Dienstneustart, Datenbankrollback oder Backupworkerwechsel.
+Bleibt ein echtes Sicherheitsgate rot, bleibt der Übergang unvollständig;
+kein alleiniger Runtime-PASS ersetzt den vollständigen Audit.
+
+Dieser Auftrag führt keine Installation und keinen neuen Productionaudit mit
+ungeprüften Quellbytes aus. Mergeentscheidung und geschützte Installation sind
+getrennt. Die bereits rote Production-/Monatsrelease-Zulassung bleibt bestehen.
 
 ### Geschützte Installation der Ein-Stunden-Regel
 
@@ -529,6 +612,12 @@ In #524 und #644 werden nur die redigierten Felder dokumentiert:
 Keine Rohkonfiguration, kein vollständiges Journal und keine Secret-bearing Artefakte werden an Issues angehängt.
 
 ## Bounded release-contract diagnostics — 15 November 2026
+
+Historical PR1519 diagnosis record, retained for evidence. Its then-current
+canonical equality rule is superseded in prepared source by the tracking
+provenance contract above; the installed Production validator remains unchanged.
+PR1519 has since merged and observation43721201037 supplied the current tuple.
+The next-step text below records the earlier decision boundary, not a new task.
 
 Audit43711512421 completed its collector with exit0, then its installed validator
 reported production_audit_release_drift. The official log contains no actual
