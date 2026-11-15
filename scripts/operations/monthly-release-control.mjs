@@ -213,6 +213,8 @@ export function createProductionAdapter({ admission, proof, packageHash, root, b
   };
   return {
     preflight: async () => {
+      if (proof.sqlReceipts?.some(r => r.version === 2 && r.live === candidate && r.live !== base))
+        assert(previous && previous.attempt === admission.resumeAfterAttempt, 'sql_resume_state_required');
       validateAdmission(admission, packageHash, base, candidate);
       verifySource(root, admission.source);
       const run = await get(`actions/runs/${env.GITHUB_RUN_ID}`);

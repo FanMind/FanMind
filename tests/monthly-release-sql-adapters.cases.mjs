@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
-import {SQL_PROOFS,sha256,validateSqlReceipt,verifySqlProvenance,validateAdmission,runRelease} from '../scripts/operations/monthly-release-control.mjs';
+import {SQL_PROOFS,sha256,validateSqlReceipt,verifySqlProvenance,validateAdmission,runRelease,createProductionAdapter} from '../scripts/operations/monthly-release-control.mjs';
 import {sqlAdapter,assertMonthlySqlRequest,monthlySqlQueries,collectMonthlySql} from '../scripts/operations/monthly-release-sql-verify.mjs';
 const base='a'.repeat(40),candidate='b'.repeat(40),tree='c'.repeat(40);
 const adapters=Object.entries(SQL_PROOFS).filter(([,a])=>a.evidenceVersion===2);
@@ -84,6 +84,9 @@ test('inspected release resume consumes renewed candidate-live SQL evidence with
  const deps={packageHash:packageSha256,save:async()=>{},preflight:async()=>verifySqlProvenance(p.a,[receipt],async url=>url.includes('/jobs?')?{total_count:1,jobs:[p.job]}:p.run,async()=>p.log),deploy:async()=>{deployments++;},tests:async()=>{},closeout:async()=>{}};
  p.a.resumeAfterAttempt='22345678-1234-4123-8123-123456789abc';
  assert.equal((await runRelease(p.a,deps,previous)).failure,'resume_inspection_approval_required');assert.equal(deployments,0);
- p.a.resumeAfterAttempt=attempt;const result=await runRelease(p.a,deps,previous);
+ p.a.resumeAfterAttempt=attempt;
+ const orphan=createProductionAdapter({admission:p.a,proof:{sqlReceipts:[receipt]},candidate,base,previous:null});
+ await assert.rejects(orphan.preflight(),/sql_resume_state_required/);assert.equal(deployments,0);
+ const result=await runRelease(p.a,deps,previous);
  assert.equal(result.state,'COMPLETE');assert.equal(result.base,base);assert.equal(result.candidate,candidate);assert.equal(deployments,1);
 });
