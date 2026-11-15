@@ -12,6 +12,7 @@ export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBo
 // catalogue and real retention results unchanged before/after each addition.
 // No existing-file change, unknown SQL, mode change or receipt rewrite is admitted.
 export const RETENTION_INDEPENDENT_ADDITIONS=Object.freeze({
+ 'supabase/controlled/ai_capacity_entitlement_writer.sql':'536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc',
  [STORAGE_FINALIZATION_PATH]:STORAGE_FINALIZATION_SHA,
  'supabase/controlled/chat_admin_media_catalogue.sql':CATALOGUE_MEDIA_SHA256,
  'supabase/controlled/chat_admin_media_prices.sql':'9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4',

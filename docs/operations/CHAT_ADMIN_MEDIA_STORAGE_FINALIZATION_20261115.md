@@ -95,3 +95,29 @@ protected guard-only verify/apply/readback; synthetic PNG and MP4 lifecycle at
 `FM1425-20261114-1945-A`, preserve `Abendkleidung` and 25 EUR. Prove actual
 storage/display/playback/assignment, rejection, move/delete and persistence
 before PASS. Synthetic testing must not wait on another personal image upload.
+
+## Actual protected read-only preflight after Web deployment
+
+PR1514 merged regularly as5fc2832b; protected Web rollout43704172145 succeeded
+and HTTPS independently confirmed that exact Staging SHA. No guard Apply and
+no nginx operation. Protected read-only guard verification43704593446 stopped
+before the guard step: Support EXACT/PASS, common media preflight FAIL.
+
+Independent complete live catalogue comparison is EXACT against the original
+extended reference (integrity_ok=true); guard remains the old pinned body.
+Fresh successful retention receipt15November09:38UTC still binds30a2da24.
+The original source-equivalence function reproduced the block offline with full
+Git history: the sole uncovered added file is the already-merged
+`ai_capacity_entitlement_writer.sql`, SHA256
+`536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc`.
+No rerun, receipt rewriting, SQL exception by directory or target mutation.
+
+A bounded follow-up adds only that exact ADD/mode/checksum source exception.
+The native PG17 countercheck installs its unchanged original SQL after its
+original dependencies inside the disposable fixture, verifies the full Support
+catalogue and actual retention results before/after each addition, and confirms
+zero entitlements and zero package mappings. Existing negatives still reject
+modified known SQL, unknown SQL, permission/reference/runner changes and bad
+source ancestry. This source equivalence never approves installing/activating
+Capacity, Billing or Support on any target. The original guard-only additional
+Owner approval remains required and its SQL checksum remains unchanged.

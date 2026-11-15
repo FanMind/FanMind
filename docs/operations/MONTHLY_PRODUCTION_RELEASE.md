@@ -315,7 +315,7 @@ reviewed archive. No installation is authorized by this source preparation.
 
 ### Relationship to Support1350 / PR1515
 
-Reviewed parallel head `4ee6ef40a98d3360c626a9899b60c2ac5d3d1293` changes the
+Reviewed parallel head `2d84e30deb2d7ce8b14123857bee9bd99eb2111e` changes the
 current Production SECURITY-DEFINER contract and the full-receipt/restore-drill
 verifiers. These three Root-closure files remain untouched by this PR. Do not
 cherry-pick them into an old candidate/package, raise counts or combine old
