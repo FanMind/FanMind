@@ -9,6 +9,10 @@ const packagePath = path.join(repoRoot, "package.json");
 const workflowPath = path.join(repoRoot, ".github/workflows/ci-fanmind.yml");
 const testsDirectory = path.join(repoRoot, "tests");
 
+const directlyOwnedCiTests = [
+  "tests/open-questions-reviewed-excerpt-pg17.test.mjs",
+];
+
 const requiredCiRoots = [
   "test:operations",
   "test:release-integrations",
@@ -56,7 +60,14 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
   ]);
   const scripts = JSON.parse(packageText).scripts;
 
-  const ciOwnedTests = new Set();
+  const ciOwnedTests = new Set(directlyOwnedCiTests);
+  for (const testPath of directlyOwnedCiTests) {
+    assert.match(
+      workflow,
+      new RegExp(`node\\s+--test(?:\\s+--test-concurrency=1)?\\s+${testPath.replaceAll(".", "\\.")}(?:\\s|$)`, "u"),
+      `${testPath} must run directly in ci-fanmind.yml`,
+    );
+  }
   for (const rootScript of requiredCiRoots) {
     assert.match(
       workflow,

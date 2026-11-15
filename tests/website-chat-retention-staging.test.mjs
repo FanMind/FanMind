@@ -23,6 +23,7 @@ import {
 } from "../scripts/operations/website-chat-retention-staging-acceptance.mjs";
 
 const REVIEWED_COMMIT = "a".repeat(40);
+const REVIEWED_BRANCH_REF = "refs/heads/feat/admin-open-questions-followup-20261103";
 const STAGING_REF = "stagingref0123456789";
 const PRODUCTION_REF = "prodref0123456789012";
 const WORKSPACE_ID = "11111111-1111-4111-8111-111111111111";
@@ -99,6 +100,43 @@ test("retention apply and acceptance use distinct confirmations", () => {
     "FANMIND_WEBSITE_CHAT_RETENTION_ACCEPTANCE_CONFIRM",
     WEBSITE_CHAT_RETENTION_MIGRATION_CONFIRMATION,
   ), { mode: "acceptance" }).ok, false);
+});
+
+test("open-question acceptance binds an unmerged head to the exact reviewed branch", () => {
+  const environment = {
+    ...writeEnvironment(
+      "FANMIND_WEBSITE_CHAT_RETENTION_ACCEPTANCE_CONFIRM",
+      WEBSITE_CHAT_RETENTION_ACCEPTANCE_CONFIRMATION,
+    ),
+    GITHUB_REF: REVIEWED_BRANCH_REF,
+    FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_REF: REVIEWED_BRANCH_REF,
+  };
+  assert.equal(evaluateWebsiteChatRetentionStagingEnvironment(
+    environment,
+    { mode: "acceptance", allowReviewedBranch: true },
+  ).ok, true);
+
+  for (const mutation of [
+    { GITHUB_REF: "refs/heads/main" },
+    { GITHUB_REF: "refs/heads/feat/other" },
+    { FANMIND_WEBSITE_CHAT_RETENTION_REVIEWED_REF: "refs/heads/feat/other" },
+    { GITHUB_SHA: "b".repeat(40) },
+  ]) {
+    const result = evaluateWebsiteChatRetentionStagingEnvironment(
+      { ...environment, ...mutation },
+      { mode: "acceptance", allowReviewedBranch: true },
+    );
+    assert.equal(result.ok, false, JSON.stringify(mutation));
+    assert.ok(
+      result.errors.includes("retention_reviewed_ref") ||
+      result.errors.includes("reviewed_commit"),
+    );
+  }
+
+  assert.equal(evaluateWebsiteChatRetentionStagingEnvironment(
+    environment,
+    { mode: "acceptance" },
+  ).ok, false);
 });
 
 test("retention acceptance rejects missing or malformed synthetic Workspaces", () => {
