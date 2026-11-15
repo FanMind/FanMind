@@ -20,6 +20,10 @@ import {
 } from "../scripts/operations/production-boot-readiness.mjs";
 import { parseProductionAuditOutput } from "../scripts/operations/verify-production-audit-output.mjs";
 
+import {verifyReleaseAudit} from '../scripts/operations/monthly-release-control.mjs';
+import {monthlyAuditFixture} from './fixtures/monthly-audit.mjs';
+import {completeChecks,REQUIRED_MAIN_CHECKS} from '../scripts/operations/production-release-preflight.mjs';
+
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
 const expectedCommit = "a".repeat(40);
@@ -1070,6 +1074,7 @@ async function runWithResult(command, args, options) {
 async function runAuditWorkflow(t, output, exitCode, {
   eventName = "workflow_dispatch",
   expected = expectedCommit,
+  verifierSource,
   versionPayload = JSON.stringify({
     application: "fanmind",
     runtimeEnvironment: "production",
@@ -1091,6 +1096,8 @@ async function runAuditWorkflow(t, output, exitCode, {
     { mode: 0o700 },
   );
   const workflow = yaml.load(await readFile(".github/workflows/production-readonly-audit.yml", "utf8"));
+  const verifier = verifierSource === undefined ? resolve("scripts/operations/verify-production-audit-output.mjs") : join(root,"legacy-verifier.mjs");
+  if(verifierSource !== undefined)await writeFile(verifier,verifierSource);
   // Execute the actual production step, substituting only its installed paths.
   const step = workflow.jobs.audit.steps[0].run
     .replaceAll("/usr/local/lib/fanmind-audit/read-only-production-audit.sh", '"$AUDIT_TEST_SCRIPT"')
@@ -1103,7 +1110,8 @@ async function runAuditWorkflow(t, output, exitCode, {
       RUNNER_TEMP: runnerTemp,
       EXPECTED_COMMIT: expected,
       AUDIT_TEST_SCRIPT: audit,
-      AUDIT_TEST_VERIFIER: resolve("scripts/operations/verify-production-audit-output.mjs"),
+      AUDIT_TEST_VERIFIER: verifier,
+      GITHUB_SHA: "d".repeat(40),
       AUDIT_TEST_OUTPUT: output,
       AUDIT_TEST_EXIT: String(exitCode),
       AUDIT_TEST_LIVE_LOOKUP_LOG: liveLookupLog,
@@ -1658,4 +1666,65 @@ test("production audit never logs backup configuration values or raw PM2 payload
   assert.doesNotMatch(source, /echo\s+.*\.env\.production/u);
   assert.doesNotMatch(source, /console\.log\([^\n]*JSON\.stringify\(rows/u);
   assert.doesNotMatch(source, /console\.log\([^\n]*processRow\.pm2_env/u);
+});
+
+
+test("release evidence diagnostics retain exact historical Production values and cannot authorize advanced Main", async t => {
+  const main='b'.repeat(40);
+  const stable=await runAuditWorkflow(t,validAuditOutput(),0);
+  assert.equal(stable.code,0);
+  assert.match(stable.stdout,new RegExp('^AUDIT_DIAGNOSTIC_EXPECTED_COMMIT='+expectedCommit+'$','mu'));
+  assert.match(stable.stdout,/^AUDIT_DIAGNOSTIC_ONLY=true$/mu);
+  for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'])assert.match(stable.stdout,new RegExp('^AUDIT_DIAGNOSTIC_'+key+'='+expectedCommit+'$','mu'));
+  const advanced=await runAuditWorkflow(t,validAuditOutput({ORIGIN_MAIN:main}),0,{eventName:'schedule',expected:''});
+  assert.equal(advanced.code,1);
+  assert.match(advanced.stdout,/PRODUCTION_AUDIT_FAILURE_CODE=production_audit_release_drift/u);
+  assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_SERVER_HEAD='+expectedCommit+'$','mu'));
+  assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_ORIGIN_MAIN='+main+'$','mu'));
+  assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_LIVE_RELEASE='+expectedCommit+'$','mu'));
+  assert.doesNotMatch(advanced.stdout,/^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+  assert.equal(advanced.stdout.match(/^AUDIT_DIAGNOSTIC_FILE=(?:before|after)\|(?:collector|validator|boot|health)\|status=(?:read|unavailable)(?:\|.*)?$/gmu)?.length,8);
+});
+
+test("release evidence diagnostics preserve real runtime/server drift and never guess missing commits", async t => {
+  const other='b'.repeat(40);
+  for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE']){
+    const drift=await runAuditWorkflow(t,validAuditOutput({[key]:other}),0);
+    assert.equal(drift.code,1);assert.match(drift.stdout,/production_audit_release_drift/u);
+    assert.match(drift.stdout,new RegExp('^AUDIT_DIAGNOSTIC_'+key+'='+other+'$','mu'));
+  }
+  for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'])for(const source of [
+    validAuditOutput({[key]:'RAW_SECRET_CANARY'}),
+    validAuditOutput().replace(new RegExp('^'+key+'=.*\\n','mu'),''),
+    validAuditOutput()+key+'='+expectedCommit+'\n',
+  ]){
+    const result=await runAuditWorkflow(t,source,0);assert.equal(result.code,1);
+    assert.match(result.stdout,new RegExp('^AUDIT_DIAGNOSTIC_'+key+'=unavailable$','mu'));
+    assert.doesNotMatch(result.stdout+result.stderr,/RAW_SECRET_CANARY/u);
+  }
+  const empty=await runAuditWorkflow(t,'RAW_SECRET_CANARY',0);assert.equal(empty.code,1);
+  assert.doesNotMatch(empty.stdout+empty.stderr,/RAW_SECRET_CANARY/u);
+});
+
+test("release evidence diagnostics retain process failures even with an older permissive validator",async t=>{
+  const failed=await runAuditWorkflow(t,validAuditOutput(),7,{verifierSource:'process.exitCode=0;'});
+  assert.equal(failed.code,1);
+  assert.match(failed.stdout,/^AUDIT_DIAGNOSTIC_PROBE_EXIT_CODE=7$/mu);
+  assert.match(failed.stdout,/^AUDIT_DIAGNOSTIC_VALIDATOR_EXIT_CODE=0$/mu);
+  assert.doesNotMatch(failed.stdout,/^PRODUCTION_AUDIT_VERIFIED=true$/mu);
+});
+
+test("monthly historical base and inspected candidate retain existing exact source/recovery and backup gates",()=>{
+  const base=expectedCommit,candidate='b'.repeat(40),foreign='c'.repeat(40);
+  assert.doesNotThrow(()=>verifyReleaseAudit(monthlyAuditFixture(base,candidate),base,candidate));
+  assert.doesNotThrow(()=>verifyReleaseAudit(monthlyAuditFixture(candidate,candidate),candidate,candidate));
+  for(const [key,value]of [['SERVER_HEAD',foreign],['LIVE_RELEASE',foreign],['ORIGIN_MAIN',foreign],['SERVER_HEAD','']]){
+    const raw=monthlyAuditFixture(base,candidate).replace(new RegExp('^'+key+'=.*$','mu'),key+'='+value);
+    assert.throws(()=>verifyReleaseAudit(raw,base,candidate));
+  }
+  assert.throws(()=>verifyReleaseAudit(monthlyAuditFixture(base,candidate,false),base,candidate));
+  assert.throws(()=>verifyReleaseAudit(monthlyAuditFixture(base,candidate)+'SERVER_HEAD='+base+'\n',base,candidate));
+  const checks=REQUIRED_MAIN_CHECKS.map((name,id)=>({id:id+1,name,app:{slug:'github-actions'},status:'completed',conclusion:'success'}));
+  const audit={id:99,name:'Verify installed Production runtime without writes',app:{slug:'github-actions'},status:'completed',conclusion:'failure'};
+  assert.equal(completeChecks({total_count:checks.length+1,check_runs:[...checks,audit]},REQUIRED_MAIN_CHECKS),false);
 });
