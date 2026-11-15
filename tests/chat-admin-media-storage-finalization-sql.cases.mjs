@@ -21,7 +21,7 @@ export async function runStorageFinalizationSqlCases(sql){
  await sql(storageGuardTransaction());
  assert.equal((await sql(storageGuardStateSql())).trim(),'ready');
  const bundle=loadMediaSchemaProfile('extended');
- assert.deepEqual(JSON.parse((await sql(bundle.catalogue)).trim()).catalogue,storageFinalizationCatalogue(bundle.extended.catalogue),'only the exact guard body changes; ACL/RLS/bucket/schema stay identical');
+ assert.deepEqual(JSON.parse((await sql(`select catalogue from (${bundle.catalogue.trim().replace(/;$/u,'')}) native_guard_state;`)).trim()),storageFinalizationCatalogue(bundle.extended.catalogue),'only the exact guard body changes; ACL/RLS/bucket/schema stay identical');
  for(const asset of [id,video])await internal(`begin;${insert(asset)}rollback;`);
  await assert.rejects(()=>caller(insert(id,foreign)),/media_object_binding_invalid/);
  for(const actor of [null,foreign])await assert.rejects(()=>internal(insert(id,actor)),/media_object_binding_invalid/);
