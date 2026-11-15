@@ -394,13 +394,15 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(mediaStorage.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.match(mediaStorage.source, /staging-media-storage-/u);
   assert.doesNotMatch(mediaStorage.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:|nginx|production:/u);
+  const mediaFlow = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-manual-flow-staging.yml');
+  assert.deepEqual(mediaFlow?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   assert.equal(hostedWorkflows.length, 81);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    91, // Includes monthly preparation and the protected media Storage guard workflow.
+    92, // Includes the second Hosted checkout in the existing Staging media job.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
