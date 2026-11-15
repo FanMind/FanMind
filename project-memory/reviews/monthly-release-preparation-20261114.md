@@ -112,3 +112,38 @@ reads from the same already opened read/write descriptor with a bounded explicit
 offset, never reopens the filename. No alert is dismissed/suppressed. Existing
 unrelated baseline findings are outside this task. Final exact-head CodeQL and
 native CI are still required.
+
+## Post-merge fixture correction — 15 November 2026
+
+Owner requests a narrow follow-up PR after merged1512/Main30e8ddc5, then
+explicit merge review before any corrected Staging candidate is deployed.
+This is test-only source repair; no runtime/controller/workflow/SQL change.
+
+The independent Staging precheck observed the monthly fixture proxy crashing
+while the synthetic PM2 process list was temporarily empty during its inherited
+legacy fork-to-cluster transition. That failed attempt remains historical
+INSPECTION_REQUIRED, not a successful rehearsal. Its cause is an unchecked empty
+array, not a proven Node-version incompatibility.
+
+The monthly-only proxy now returns503 for missing/unreadable, malformed,
+duplicate, foreign, offline or unregistered process state before making an
+upstream request. A real loopback HTTP regression explicitly proves these
+failures followed by recovery200 to the registered app. Monthly initialization
+uses the already installed cluster/current-link contract and asserts rolling
+reload without legacy deletion. The shared harness and original legacy tests
+are unchanged. Production deployment/recovery and all existing gates stay intact.
+
+Validation: focused existing preflight/isolated-deployment plus monthly suites
+37/37 PASS (18.427s); initial monthly/package8/8 PASS (18.058s, integrated17.724s,
+local pg17:false); focused ESLint/diff checks PASS. Independent Guardian source
+PASS and actual missing-process HTTP regression1/1 PASS. Final exact-head full
+CI/native PG17 remains required before marking the follow-up technically ready.
+
+GitHub browser login is now confirmed. Read-only HTTPS still reports
+Staging55a0df422641467067706e6cfee9f532d49f34e0 and
+Productionbb799466d2c235195fedcb4d80568f9f0bd56969. No Staging/Production run,
+backup, restore, schema, Billing, provider or configuration mutation occurred.
+Current Main remains30e8ddc5. Existing queued Restore/old Production runs were
+not altered. Protected backup/complete-Restore proof and verifier installation
+remain separate Production prerequisites. Next boundary is Owner merge review;
+never reuse the old Staging plan against a different Main or live SHA.
