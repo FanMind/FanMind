@@ -135,8 +135,8 @@ test('actual GitHub preflight keeps Owner, current-Main and protected-environmen
  const branches={total_count:1,branch_policies:[{name:'main',type:'branch'}]};
  const env={PATH:process.env.PATH,GITHUB_REPOSITORY:'FanMind/FanMind',GITHUB_REPOSITORY_ID:'1259448985',GITHUB_EVENT_NAME:'workflow_dispatch',GITHUB_REF:'refs/heads/main',GITHUB_SHA:SOURCE,GITHUB_ACTOR_ID:'270165082',CONFIRMATION:'backup-worker-inspect',REQUESTED_ACTION:'inspect',REVIEWED_CONTROLLER_COMMIT:SOURCE,WORKER_SOURCE_COMMIT:INSPECT_SOURCE,EXPECTED_APPLICATION_COMMIT:INSPECT_APP};
  function run(overrides={},api={branch,environment,branches}){
-  const code=`const api=${JSON.stringify(api)};globalThis.fetch=async u=>({ok:true,text:async()=>JSON.stringify(u.includes('deployment-branch-policies')?api.branches:u.endsWith('branches/main')?api.branch:api.environment)});await import(${JSON.stringify(new URL('../scripts/operations/backup-worker-install-github-preflight.mjs',import.meta.url).href)});`;
-  return spawnSync(process.execPath,['--input-type=module','-e',code],{env:{...env,...overrides},encoding:'utf8',timeout:10000});
+  const code="const api=JSON.parse(process.argv[1]);globalThis.fetch=async u=>({ok:true,text:async()=>JSON.stringify(u.includes('deployment-branch-policies')?api.branches:u.endsWith('branches/main')?api.branch:api.environment)});await import('./scripts/operations/backup-worker-install-github-preflight.mjs');";
+  return spawnSync(process.execPath,['--input-type=module','-e',code,JSON.stringify(api)],{env:{...env,...overrides},encoding:'utf8',timeout:10000});
  }
  assert.equal(run().status,0);
  for(const overrides of [{GITHUB_ACTOR_ID:'1'},{GITHUB_REF:'refs/heads/foreign'},{GITHUB_EVENT_NAME:'push'},{GITHUB_SHA:'0'.repeat(40)},{CONFIRMATION:'backup-worker-install'},{WORKER_SOURCE_COMMIT:WORKER},{EXPECTED_APPLICATION_COMMIT:APP}]){
