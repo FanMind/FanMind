@@ -4,7 +4,7 @@ on:
     inputs:
       action:
         type: choice
-        options: [inspect, bootstrap]
+        options: [inspect, bootstrap, prepare-contract-repair]
         default: inspect
         required: true
       reviewed_main_commit:
@@ -13,7 +13,7 @@ on:
       confirmation:
         type: string
         required: true
-        description: backup-worker-inspect or backup-worker-bootstrap
+        description: backup-worker-inspect, backup-worker-bootstrap or backup-worker-prepare-contract-repair
 permissions:
   contents: read
   actions: read
@@ -36,11 +36,11 @@ jobs:
       - name: Validate current main and existing protected environment
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          REQUESTED_ACTION: ${{ inputs.action == 'inspect' && 'inspect' || 'verify' }}
+          REQUESTED_ACTION: ${{ inputs.action != 'bootstrap' && 'inspect' || 'verify' }}
           REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_main_commit }}
-          WORKER_SOURCE_COMMIT: ${{ inputs.action == 'inspect' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
-          EXPECTED_APPLICATION_COMMIT: ${{ inputs.action == 'inspect' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
-          CONFIRMATION: ${{ inputs.action == 'inspect' && 'backup-worker-inspect' || 'backup-worker-verify' }}
+          WORKER_SOURCE_COMMIT: ${{ inputs.action != 'bootstrap' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+          EXPECTED_APPLICATION_COMMIT: ${{ inputs.action != 'bootstrap' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
+          CONFIRMATION: ${{ inputs.action != 'bootstrap' && 'backup-worker-inspect' || 'backup-worker-verify' }}
         run: node scripts/operations/backup-worker-install-github-preflight.mjs
   bootstrap:
     needs: validate
@@ -51,8 +51,8 @@ jobs:
       ACTION: ${{ inputs.action }}
       CURRENT_MAIN: ${{ inputs.reviewed_main_commit }}
       CONFIRMATION: ${{ inputs.confirmation }}
-      WORKER_BINDING: ${{ inputs.action == 'inspect' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
-      APP_BINDING: ${{ inputs.action == 'inspect' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
+      WORKER_BINDING: ${{ inputs.action != 'bootstrap' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+      APP_BINDING: ${{ inputs.action != 'bootstrap' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
       APPROVAL: ${{ vars.FANMIND_BACKUP_WORKER_BOOTSTRAP_APPROVAL }}
     steps:
       - name: Use existing sudo Node capability with frozen reviewed bootstrap bytes
@@ -64,7 +64,7 @@ jobs:
           [[ "$GITHUB_REPOSITORY" == FanMind/FanMind && "$GITHUB_REPOSITORY_ID" == 1259448985 ]]
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$CURRENT_MAIN" ]]
           [[ "$GITHUB_ACTOR_ID" == 270165082 && "$RUNNER_NAME" == fanmind-prod-01-exoscale ]]
-          [[ "$ACTION" == inspect || "$ACTION" == bootstrap ]]
+          [[ "$ACTION" == inspect || "$ACTION" == bootstrap || "$ACTION" == prepare-contract-repair ]]
           [[ "$CONFIRMATION" == "backup-worker-$ACTION" ]]
           [[ "$APPROVAL" == "$CURRENT_MAIN:$ACTION:$WORKER_BINDING:$APP_BINDING:admin-bypass-disabled" ]]
           # Recheck mutable main after the Environment review wait, before root.
@@ -77,7 +77,7 @@ jobs:
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/backup-worker-root-bootstrap.mjs" \
             --output "$SOURCE_FILE"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 993c1d1e77ae69bf3f7adfd65e3484ee6f96441ee0eb0c17e2df271ac2cd1ed8 "$ACTION" "$CURRENT_MAIN" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" bfb5d40e9511ae81d7233018ff0a51503eb855a2a487edd6562c440a41f0eddc "$ACTION" "$CURRENT_MAIN" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {
@@ -89,7 +89,7 @@ jobs:
             const env={PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C'};
             const args=['--input-type=module','-',process.argv[4],process.argv[5],process.env.SUDO_UID];
             let bin='/usr/bin/node',argv=args;
-            if(process.argv[4]==='bootstrap'){
+            if(process.argv[4]!=='inspect'){
               const lock='/run/lock/fanmind-backup-worker-install.lock';
               const lf=fs.openSync(lock,fs.constants.O_CREAT|fs.constants.O_RDWR|fs.constants.O_NOFOLLOW,0o600);
               const st=fs.fstatSync(lf);fs.closeSync(lf);
