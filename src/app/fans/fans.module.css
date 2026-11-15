@@ -1059,6 +1059,68 @@
   line-height: 1.25;
 }
 
+.filterControls {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.tagFilterWrap {
+  display: flex;
+  flex: 1 1 320px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  min-width: 0;
+}
+
+.tagFilter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tagFilter label {
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.tagFilter select {
+  min-width: 160px;
+  max-width: min(260px, 100%);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 6px;
+  padding: 8px 30px 8px 10px;
+  color: #f8fafc;
+  background: rgba(2, 6, 23, 0.78);
+}
+
+.tagFilter select:focus-visible {
+  border-color: rgba(103, 232, 249, 0.72);
+  outline: 2px solid rgba(103, 232, 249, 0.22);
+  outline-offset: 2px;
+}
+
+.filterResetLink {
+  color: #a5f3fc;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.filterStatus {
+  flex-basis: 100%;
+  margin: 0;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
 .listToolbar {
   display: flex;
   flex-wrap: nowrap;
@@ -1072,6 +1134,18 @@
   .listToolbar,
   .channelFilters {
     flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 620px) {
+  .filterControls,
+  .tagFilterWrap,
+  .tagFilter {
+    width: 100%;
+  }
+
+  .tagFilter select {
+    flex: 1 1 150px;
   }
 }
 
