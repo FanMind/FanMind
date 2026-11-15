@@ -174,3 +174,72 @@ Kein Build oder nativer PG17-Zieltest in diesem Dokumentationslauf behauptet.
 Unabhängiger Quellreview bestätigte Checkout-/Legacy-/Webhookgrenzen und
 server-owned-ACL-Vertrag; keine Zielmutation durch Gegencheck.
 Recovery: normaler Source-Revert, kein externer Zustand zurückzusetzen.
+
+
+## Sichere Wiederaufnahme — 15. November 2026, 12:29 Wien
+
+Diese Ersatzsitzung übernimmt ausschließlich nachweisbare GitHub-Quellen.
+Ein früherer Work-Zwischenspeicher war nicht verfügbar. PR1518 ist weiterhin
+offen auf `460d31db02339649bfff78678956cdf4b7265679`; alle14 Check-Runs
+dieses gespeicherten Heads sind SUCCESS, einschließlich nativer PG17-Prüfung.
+Die112 Quelltests oben sind übernommene Nachweise, kein erneuter lokaler Lauf.
+Main ist inzwischen `6bc209851b4a54609747099ec34264318dc7f4c4` nach dem
+extern koordinierten Merge von1515. Die Stripe-Katalog-/Webhook-Prüfquellen
+sind gegenüber e65609e2 unverändert. Kein eigener Merge/Deploy.
+
+| Frischer Prüfgegenstand | Status | Beobachtung und Grenze |
+| --- | --- | --- |
+| Stripe-Live-Zugriff | PASS | Bestehender FanMind-Kontext erreichbar, keine erneute Autorisierung |
+| Stripe-Live-Preise | PASS Katalog |13 aktive Preise vollständig, has_more=false;99/199/312 monatlich und vier Datenpakete stimmen; vier Topup-Steuercodes weiterhin leer |
+| Live-Webhook | FAIL | Bestehender Endpoint weiterhin enabled,20/22 Ereignisse; customer.tax_id.created/deleted fehlen |
+| Sandbox-Zugriff | PASS | Bestehende Anmeldung öffnet ausdrücklich FanMind Sandbox, separates Konto acct_1TnMJbPSYMcFG13m und /test/; kein neues Konto/Secret |
+| Sandbox-Produktliste | PASS begrenzt | UI vollständig1–8 von8:99/199/312 pro Monat, Datenpakete14,99/37,49/74,99/149,00EUR und Daily1EUR/Tag; sieben Produkte ohne angezeigten Steuercode |
+| Sandbox-Preis-ID-/Runtimebindung | NOT TESTED | Sichtbare Produktliste beweist nicht gespeicherte Staging-Price-IDs, Webhooksecret, Signaturtransport oder Kauf-Lifecycle |
+| Production-Column-ACL | FAIL bestätigt | Alle sechs oben genannten Billingfelder weiterhin authenticated INSERT=true/UPDATE=true; keine Schreibprobe |
+| Production-Provisioning | BLOCKED | ensure_current_user_workspace fehlt; Capacity-Grants und allgemeiner Billingeventledger fehlen ebenfalls |
+| Production-Transaktionsmomentbild | PASS begrenzt |11:28:51UTC:0 andere idle-in-transaction-Sitzungen; kein Beweis über frühere abgeschlossene Transaktionen |
+| Staging-Column-ACL | PASS begrenzt | Alle sechs geprüften Billingfelder INSERT=false/UPDATE=false |
+| Staging-Capacity | BLOCKED bestätigt |11:23:39UTC:0 Grants,0 Capacity-Ledgerereignisse,4 Billingevents unresolved; nur vier bestehende Policy-/Guard-Funktionen, keine monetären Lifecycle-RPCs |
+| Vollständige Zahlungsabnahme | BLOCKED | Keine Livezahlung, Sandboxzahlung, Refund-, Grant- oder Reconciliation-Mutation ausgeführt |
+
+Sandboxquelle: bestehender Stripe-Dashboard-Produktkatalog, Kontoauswahl und
+sichtbarer Sandboxhinweis. Die frühere pauschale Browser-Zugriffssperre gilt
+für diese Produktliste nicht mehr. Der Connector selbst bietet weiter nur Live.
+UI-Zugriffe waren intermittierend langsam. Lesende Katalog-/Webhookworkflow-
+Anforderungen wurden über die vorhandenen Formulare versucht; nach den
+Klicks war kein neuer Lauf in der Repository-API nachweisbar. Kein Run-ID-
+oder PASS-Nachweis erfunden und kein unklarer Dispatch blind wiederholt.
+Vor erneutem Start jeweils tatsächliche Runliste abgleichen. Keine geschützte
+Schreiboperation aus dieser oder der wiederhergestellten Dokumentation erkennbar;
+ein vollständiges historisches Stripe-Audit ist damit nicht bewiesen.
+
+### Konkrete nächste geschützte Schritte
+
+1. **Separat freizugebende Live-Webhookkorrektur:** ausschließlich beim
+   bestehenden FanMind-Endpoint `we_1TrLMNAOA7p70TO9kfBl29nt` die aktuelle
+  20er Ereignisliste um `customer.tax_id.created` und
+   `customer.tax_id.deleted` auf22 erweitern. Unmittelbar vorher Istzustand
+   lesen und gegen `src/lib/stripeWebhookEventPolicy.mjs` vergleichen;
+   URL, API-Version, Status und Secrets erhalten. Anschließend GET-Nachweis,
+   keine Testzahlung und keine erzwungene Wiederzustellung. Freigabe hier
+   **nicht erteilt**, Änderung **nicht ausgeführt**.
+2. **Production-Workspacegrenze:** keine isolierte GRANT-/REVOKE-Reparatur.
+   Bestehendes Expand-/Contract-Verfahren in WORKSPACE_SERVER_OWNED_FIELDS.md
+   verwenden. Fehlende Provisioning-RPC, Brückenkompatibilität, Vorprüfungen,
+   isolierte JWT-/Parallelitätsabnahme und schriftliches Go sind vor dem
+   geschützten Contract-Apply nachzuweisen. Hier nur Bedarf festgestellt;
+   keine pauschale Production-SQL-Freigabe anfordern oder unterstellen.
+3. **Staging-Abhängigkeit bei Support1350/1500 belassen:** monetäre
+   Lifecycle-/Writer-Installation und exakt freigegebene synthetische
+   Creatorbindungen zuerst durch deren zuständige Sitzung abnehmen.
+   Danach erst Checkout→Webhook→Entitlement→Grant→Verbrauch→Reversal,
+   Concurrent-Replay und Cleanup sinnvoll positiv prüfen.
+4. **Monatsrelease:** vorhandene Bericht-/Receipt-Verknüpfung bleibt bestehen;
+   Gesamtergebnis weiter BLOCKED, keine Gate-Aktivierung. Auth-/Workspace-
+   Positivtests, echte Checkout-Rückkehr/Abbruch, Steuer-/Rechtsfreigabe,
+   persistenter Replay und Recovery bleiben getrennt offen.
+
+Keine zweite Implementierung, keine dritte Datenbank, keine Secrets,
+Kundeninhalte oder privaten Zahlungsdaten im Bericht. Aktuelle Ergänzung
+ändert ausschließlich Dokumentation; die ursprünglichen Messwerte im Receipt
+bleiben als historischer Snapshot erhalten.
