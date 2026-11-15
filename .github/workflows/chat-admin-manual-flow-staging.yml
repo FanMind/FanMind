@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: staging
-    env: &staging_fixture_environment
+    env:
       FANMIND_RUNTIME_ENVIRONMENT: staging
       NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
       FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
@@ -198,12 +198,47 @@ jobs:
       group: fanmind-staging-deploy
       cancel-in-progress: false
     env:
-      <<: *staging_fixture_environment
+      FANMIND_RUNTIME_ENVIRONMENT: staging
+      NEXT_PUBLIC_APP_URL: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_TARGET_API_ORIGIN: ${{ vars.FANMIND_STAGING_APP_URL }}
+      FANMIND_PRODUCTION_API_ORIGIN: https://fanmind.ch
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.FANMIND_STAGING_SUPABASE_URL }}
+      FANMIND_TARGET_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_STAGING_SUPABASE_PROJECT_REF }}
+      FANMIND_PRODUCTION_SUPABASE_PROJECT_REF: ${{ vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF }}
+      FANMIND_CHAT_ADMIN_REVIEWED_COMMIT: ${{ inputs.reviewed_commit }}
+      FANMIND_CHAT_ADMIN_MANUAL_CONFIRM: ${{ inputs.confirmation }}
+      FANMIND_CHAT_ADMIN_TASK_ID: FM-ADMINCHAT-STAGING-HARNESS-20261011-01
+      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ inputs.mode == 'media-acceptance' && 'true' || 'false' }}
+      FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ inputs.mode == 'media-acceptance' && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
+      FANMIND_ADMIN_EMAILS: ${{ vars.FANMIND_STAGING_ADMIN_EMAILS }}
+      FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_STAGING_WORKSPACE_ID }}
+      FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID: ${{ vars.FANMIND_CHAT_ADMIN_SECOND_WORKSPACE_ID }}
+      FANMIND_CHAT_ADMIN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_OWNER_ID }}
+      FANMIND_CHAT_ADMIN_MEMBER_ID: ${{ vars.FANMIND_CHAT_ADMIN_MEMBER_ID }}
+      FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID: ${{ vars.FANMIND_CHAT_ADMIN_FOREIGN_OWNER_ID }}
+      FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID: ${{ vars.FANMIND_CHAT_ADMIN_PLATFORM_ADMIN_ID }}
+      FANMIND_CHAT_ADMIN_CHARACTER_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_A_ID }}
+      FANMIND_CHAT_ADMIN_CHARACTER_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CHARACTER_B_ID }}
+      FANMIND_CHAT_ADMIN_CONVERSATION_A_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_A_ID }}
+      FANMIND_CHAT_ADMIN_CONVERSATION_B_ID: ${{ vars.FANMIND_CHAT_ADMIN_CONVERSATION_B_ID }}
+      PGHOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_TARGET_DB_HOST: ${{ secrets.FANMIND_STAGING_DB_HOST }}
+      FANMIND_PRODUCTION_DB_HOST: ${{ format('db.{0}.supabase.co', vars.FANMIND_PRODUCTION_SUPABASE_PROJECT_REF) }}
+      PGPORT: 5432
+      PGDATABASE: ${{ vars.FANMIND_STAGING_DB_NAME }}
+      PGUSER: ${{ format('postgres.{0}', vars.FANMIND_STAGING_SUPABASE_PROJECT_REF) }}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: ${{ github.workspace }}/config/certificates/supabase-root-2021-ca.crt
+      CI: 1
+      NODE_OPTIONS: ''
+      NODE_EXTRA_CA_CERTS: ''
+      NODE_USE_ENV_PROXY: ''
+      HTTP_PROXY: ''
+      HTTPS_PROXY: ''
+      ALL_PROXY: ''
       FANMIND_CHAT_ADMIN_MEDIA_MODE: ${{ inputs.mode }}
       FANMIND_CHAT_ADMIN_MEDIA_CHARACTER_ID: ${{ vars.FANMIND_CHAT_ADMIN_MEDIA_CHARACTER_ID }}
       FANMIND_CHAT_ADMIN_MEDIA_WRITE_APPROVAL: ${{ inputs.media_write_approval }}
-      FANMIND_ENABLE_NON_PRODUCTION_WRITES: ${{ inputs.mode == 'media-acceptance' && 'true' || 'false' }}
-      FANMIND_NON_PRODUCTION_WRITE_ACK: ${{ inputs.mode == 'media-acceptance' && 'I_UNDERSTAND_NON_PRODUCTION_ONLY' || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -215,7 +250,7 @@ jobs:
       - name: Install existing locked dependencies and Chromium
         run: |
           npm ci --no-audit --no-fund
-          node --test tests/chat-admin-media-acceptance.test.mjs
+          node --test tests/chat-admin-media-acceptance.cases.mjs
           npx playwright install --with-deps chromium
       - name: Prepare dedicated read-only database verification connection
         id: connection
@@ -249,7 +284,10 @@ jobs:
       - name: Exercise real synthetic media through application paths
         if: ${{ inputs.mode == 'media-acceptance' && steps.media_recovery.outcome == 'success' }}
         env:
-          <<: *media_credentials
+          FANMIND_STAGING_E2E_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_EMAIL }}
+          FANMIND_STAGING_E2E_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_PASSWORD }}
+          FANMIND_STAGING_E2E_SECONDARY_EMAIL: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_EMAIL }}
+          FANMIND_STAGING_E2E_SECONDARY_PASSWORD: ${{ secrets.FANMIND_STAGING_E2E_SECONDARY_PASSWORD }}
           FANMIND_CHAT_ADMIN_MEDIA_RECOVERY_ARTIFACT_ID: ${{ steps.media_recovery.outputs.artifact-id }}
           FANMIND_CHAT_ADMIN_MEDIA_RECOVERY_ARTIFACT_DIGEST: ${{ steps.media_recovery.outputs.artifact-digest }}
         run: node scripts/operations/chat-admin-media-acceptance.mjs --run
