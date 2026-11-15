@@ -613,6 +613,12 @@ Keine Rohkonfiguration, kein vollständiges Journal und keine Secret-bearing Art
 
 ## Bounded release-contract diagnostics — 15 November 2026
 
+Historical PR1519 diagnosis record, retained for evidence. Its then-current
+canonical equality rule is superseded in prepared source by the tracking
+provenance contract above; the installed Production validator remains unchanged.
+PR1519 has since merged and observation43721201037 supplied the current tuple.
+The next-step text below records the earlier decision boundary, not a new task.
+
 Audit43711512421 completed its collector with exit0, then its installed validator
 reported production_audit_release_drift. The official log contains no actual
 SERVER_HEAD/ORIGIN_MAIN/LIVE_RELEASE tuple and no installed-file fingerprints;

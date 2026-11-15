@@ -21,4 +21,6 @@ Rollback source-only revert; no target state changed. Status IMPLEMENTED_AWAITIN
 Local17focused runtime/workflow/provenance/resume cases PASS, historical
 installer4/4 and supplychain12/12 PASS. Lint/diff/GodMode preflight PASS.
 One exact-URL cardinality finding fixed with empty-second/newline negatives.
-Final independent source review and exact-head CI remain required.
+Independent final source review PASS at validatorSHA4422b2410502ec51cd03031c967ba7b0a3b6c7a4fb601b673bfc91635c81c882;
+exact published-head full CI remains required. Historical PR1519 runbook text
+is explicitly dated; the prepared contract does not imply target installation.
