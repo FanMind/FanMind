@@ -27,7 +27,7 @@ const ENV={PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C'};
 export function sha(bytes){return createHash('sha256').update(bytes).digest('hex');}
 function fail(code){throw Object.assign(new Error(code),{code});}
 export function input(action,controller,runnerUid){
- if(!['inspect','bootstrap'].includes(action)||!/^[a-f0-9]{40}$/.test(controller??'')||!Number.isSafeInteger(runnerUid)||runnerUid<=0)fail('invocation_invalid');
+ if(!['inspect','bootstrap','prepare-contract-repair'].includes(action)||!/^[a-f0-9]{40}$/.test(controller??'')||!Number.isSafeInteger(runnerUid)||runnerUid<=0)fail('invocation_invalid');
  return {action,controller,runnerUid};
 }
 export function metadata(s,mode){
@@ -181,10 +181,149 @@ async function currentInspection(request){
  console.log(`BACKUP_CURRENT_HOST_INVENTORY=${JSON.stringify(result)}`);
  if(!result.databaseContractVerified)process.exitCode=1;
 }
+// Exact existing controller upgrade; no service/worker/DB mutation in preparation.
+export const REPAIR_CONTROL_HASHES=Object.freeze({
+ 'backup-worker-install-control.mjs':'bb01628bd06d2be5fa2875cfd92e837d93731c1e66b61b3e801fe3c55e513fb0',
+ 'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
+ 'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+});
+export const OBSERVED_CONTROL_HASHES=Object.freeze(Object.fromEntries(FILES.slice(0,3).map(x=>[x[1].split('/').at(-1),x[2]])));
+export function repairInventory(value){
+ if(value.expectedApplicationCommit!==INSPECT_APP||value.databaseContractVerified!==true||
+    value.unitHash!=='ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896'||
+    value.releaseHash!=='93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7'||
+    Object.keys(value.installedWorkerHashes??{}).sort().join('|')!==OLD.slice().sort().join('|')||
+    FILES.slice(3).some(([,dest,hash])=>value.installedWorkerHashes[dest.split('/').at(-1)]!==hash)||
+    Object.entries(OBSERVED_CONTROL_HASHES).some(([key,hash])=>value.controllers?.[key==='backup-worker-install-control.mjs'?'control':key==='backup-worker-install-policy.mjs'?'policy':'wrapper']?.sha256!==hash)||
+    value.lock?.state!=='present'||value.lock.held!==true||
+    Object.keys(value.activeTools??{}).sort().join('|')!==ACTIVE_TOOLS.slice().sort().join('|')||
+    Object.values(value.activeTools).some(x=>x!==0)||
+    Object.keys(value.timers??{}).sort().join('|')!=='database|full|server_config|storage'||
+    Object.values(value.timers).some(x=>x.activeState!=='active'||x.unitFileState!=='enabled'))fail('repair_inventory_changed');
+}
+async function replaceControl(path,data){
+ const temp=`${dirname(path)}/.contract-repair-${randomUUID()}`;
+ try{await create(temp,data,0o750);await rename(temp,path);await flush(dirname(path));}
+ finally{try{await unlink(temp);}catch(e){if(e.code!=='ENOENT')throw e;}}
+}
+export async function repairPreparation(io){
+ await io.preflight();
+ await io.snapshot(); // actual old module/controller/auth bytes, fsynced and read back
+ await io.stage();
+ await io.preflight(); // no controller replaced yet; reject queue/target/config drift
+ await io.persist('PREPARED');
+ try{
+  await io.replaceControllers();
+  await io.verifyControllers();
+  await io.authorize(); // exact new hashes + module-only scope, fresh TTL
+  await io.persist('COMPLETED');
+ }catch{
+  await io.persist('RECONCILIATION_REQUIRED');
+  try{await io.recoverPreparation();await io.persist('ROLLED_BACK');}
+  catch{fail('repair_preparation_reconciliation_required');}
+  // No worker/module/service mutation occurred; preparation is consumed.
+  throw Object.assign(new Error('repair_preparation_failed'),{code:'repair_preparation_failed'});
+ }
+ return 'PREPARED_NOT_INSTALLED';
+}
+async function prepareContractRepair(request){
+ const dir=`${ROOT}/contract-repair/${request.controller}`;
+ const bundle=`${ROOT}/bundles/${INSPECT_SOURCE}`;
+ const controls=FILES.slice(0,3);
+ const replacements=[];
+ for(const [path,dest]of controls){
+  const hash=REPAIR_CONTROL_HASHES[dest.split('/').at(-1)];
+  replacements.push(await download([path,dest,hash,request.controller]));
+ }
+ const moduleBytes=await download(['scripts/operations/database-authorization-contract.mjs','',INSPECT_CONTRACT_SHA256,INSPECT_SOURCE]);
+ const content=[];content[1]=await download(FILES[1]);content[3]=moduleBytes;
+ let measured;
+ const preflight=async()=>{
+  const observed=await inspectCurrent({...request,action:'inspect'},{database:()=>database(content,29),
+   inventory:()=>inventory(request,INSPECT_APP),extra:extraInventory});
+  repairInventory(observed);measured=observed;
+ };
+ const savedPaths=[...controls.map(([,dest])=>dest),`${ROOT}/authorization.json`,`${OPS}/database-authorization-contract.mjs`,RELEASE];
+ let receipt,newAuthorizationHash;
+ const persist=async status=>{
+  const next={...receipt,status,updatedAt:new Date().toISOString()};
+  const target=`${dir}/receipt.json`,temp=`${dir}/.receipt-${randomUUID()}`;
+  try{await create(temp,Buffer.from(JSON.stringify(next)),0o600);await rename(temp,target);await flush(dir);receipt=next;}
+  finally{try{await unlink(temp);}catch(e){if(e.code!=='ENOENT')throw e;}}
+ };
+ const result=await repairPreparation({preflight,
+  snapshot:async()=>{
+   await directory(ROOT);await absent(dir);await absent(bundle);
+   await make(`${ROOT}/contract-repair`);await make(dir);
+   const hashes={};
+   for(const path of savedPaths){
+    const mode=path===RELEASE||path.endsWith('/authorization.json')?0o600:0o750;
+    const data=await bytes(path,mode);const name=path.split('/').at(-1);
+    await create(`${dir}/${name}`,data,0o600);
+    if(sha(await bytes(`${dir}/${name}`,0o600))!==sha(data))fail('repair_snapshot_invalid');
+    hashes[name]=sha(data);
+   }
+   if(hashes['database-authorization-contract.mjs']!==FILES[3][2]||hashes['release.env']!==measured.releaseHash)fail('repair_snapshot_invalid');
+   receipt={schemaVersion:1,operation:'contract_repair_preparation',controllerCommit:request.controller,
+    workerCommit:INSPECT_SOURCE,applicationCommit:INSPECT_APP,previousHashes:hashes,newControllerHashes:REPAIR_CONTROL_HASHES,
+    moduleSha256:INSPECT_CONTRACT_SHA256,unitHash:measured.unitHash,releaseHash:measured.releaseHash,createdAt:new Date().toISOString()};
+   await persist('SNAPSHOT_SAVED');
+  },
+  stage:async()=>{await make(bundle);await create(`${bundle}/database-authorization-contract.mjs`,moduleBytes,0o750);},
+  persist,
+  replaceControllers:async()=>{
+   for(let i=0;i<controls.length;i++){
+    const [,dest,oldHash]=controls[i];
+    if(sha(await bytes(dest,0o750))!==oldHash)fail('repair_inventory_changed');
+    if(sha(replacements[i])!==oldHash)await replaceControl(dest,replacements[i]);
+   }
+  },
+  verifyControllers:async()=>{
+   for(const [,dest]of controls)if(sha(await bytes(dest,0o750))!==REPAIR_CONTROL_HASHES[dest.split('/').at(-1)])fail('repair_controller_invalid');
+   for(const name of OLD)if(sha(await bytes(`${OPS}/${name}`,0o750))!==measured.installedWorkerHashes[name])fail('repair_worker_changed');
+   if(sha(await bytes(RELEASE,0o600))!==measured.releaseHash)fail('repair_worker_changed');
+  },
+  recoverPreparation:async()=>{
+   for(const [,dest,hash]of controls){
+    const name=dest.split('/').at(-1),data=await bytes(`${dir}/${name}`,0o600);
+    if(sha(data)!==hash)fail('repair_snapshot_invalid');
+    const current=sha(await bytes(dest,0o750));
+    if(current!==hash&&current!==REPAIR_CONTROL_HASHES[name])fail('repair_inventory_changed');
+    if(current!==hash)await replaceControl(dest,data);
+   }
+   const target=`${ROOT}/authorization.json`,saved=await bytes(`${dir}/authorization.json`,0o600);
+   if(sha(saved)!==receipt.previousHashes['authorization.json'])fail('repair_snapshot_invalid');
+   const current=sha(await bytes(target,0o600));
+   if(current!==sha(saved)&&current!==newAuthorizationHash)fail('repair_inventory_changed');
+   if(current!==sha(saved)){
+    const temp=`${ROOT}/.repair-recovery-${randomUUID()}`;
+    try{await create(temp,saved,0o600);await rename(temp,target);await flush(ROOT);}
+    finally{try{await unlink(temp);}catch(e){if(e.code!=='ENOENT')throw e;}}
+   }
+   for(const name of OLD)if(sha(await bytes(`${OPS}/${name}`,0o750))!==measured.installedWorkerHashes[name])fail('repair_worker_changed');
+  },
+  authorize:async()=>{
+   const now=new Date();
+   const auth={schemaVersion:1,repository:'FanMind/FanMind',environment:'backup-production-recovery',project:'drqkpdvtbbrrdwmtrodz',
+    controllerCommit:request.controller,workerCommit:INSPECT_SOURCE,applicationCommit:INSPECT_APP,reviewerId:270165082,
+    adminBypassDisabled:true,actions:['verify','install','rollback'],approvedAt:now.toISOString(),expiresAt:new Date(+now+2*3600000).toISOString(),
+    unitHash:measured.unitHash,releaseHash:measured.releaseHash,controllerHashes:REPAIR_CONTROL_HASHES,
+    previousHashes:{'database-authorization-contract.mjs':measured.installedWorkerHashes['database-authorization-contract.mjs']}};
+   // Refuse rotation/unknown authorization between snapshot and replacement.
+   if(sha(await bytes(`${ROOT}/authorization.json`,0o600))!==receipt.previousHashes['authorization.json'])fail('repair_inventory_changed');
+   const target=`${ROOT}/authorization.json`,temp=`${ROOT}/.repair-authorization-${randomUUID()}`;
+   const authBytes=Buffer.from(JSON.stringify(auth));newAuthorizationHash=sha(authBytes);
+   try{await create(temp,authBytes,0o600);await rename(temp,target);await flush(ROOT);}
+   finally{try{await unlink(temp);}catch(e){if(e.code!=='ENOENT')throw e;}}
+  },
+ });
+ console.log(`BACKUP_CONTRACT_REPAIR=${result}`);
+}
 async function main(){
  if(process.getuid?.()!==0||process.argv.length!==5)fail('invocation_invalid');
  const request=input(process.argv[2],process.argv[3],Number(process.argv[4]));
  if(request.action==='inspect'){await currentInspection(request);return;}
+ if(request.action==='prepare-contract-repair'){await prepareContractRepair(request);return;}
  const content=[];for(const item of FILES)content.push(await download(item));await database(content);const before=await inventory(request);
  // No existing authorization, controller, receipt or bundle is overwritten.
  for(const [,dest]of FILES)await absent(dest);await absent(`${ROOT}/authorization.json`);await absent(`${ROOT}/bootstrap-receipt.json`);

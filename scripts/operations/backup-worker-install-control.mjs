@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { APP_COMMIT, WORKER_COMMIT, FILES, request, authorization, connection,
+import { APP_COMMIT, WORKER_COMMIT, FILES, RETAINED_FILES, RELEASE_SHA256, request, authorization, connection,
   parseSelectedEnvironment, digest, fail, transition, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
 
 const OPS = '/usr/local/lib/fanmind-ops';
@@ -60,6 +60,13 @@ async function main() {
   if (process.getuid?.() !== 0 || process.argv.length !== 6) fail('invocation_invalid');
   const input = request(...process.argv.slice(2)); // action, controller, worker, app
   const approved = authorization(JSON.parse((await bytes(`${ROOT}/authorization.json`,0o600,16384)).toString()),input);
+  const preparation = JSON.parse((await bytes(`${ROOT}/contract-repair/${input.controllerCommit}/receipt.json`,0o600,16384)).toString());
+  if (preparation.status !== 'COMPLETED' || preparation.controllerCommit !== input.controllerCommit ||
+      preparation.workerCommit !== WORKER_COMMIT || preparation.applicationCommit !== APP_COMMIT ||
+      preparation.moduleSha256 !== FILES['database-authorization-contract.mjs'] ||
+      preparation.unitHash !== approved.unitHash || preparation.releaseHash !== approved.releaseHash ||
+      JSON.stringify(preparation.newControllerHashes) !== JSON.stringify(approved.controllerHashes) ||
+      preparation.previousHashes?.['database-authorization-contract.mjs'] !== approved.previousHashes['database-authorization-contract.mjs']) fail('repair_preparation_required');
   const controls = {
     'backup-worker-install-control.mjs': `${OPS}/backup-worker-install-control.mjs`,
     'backup-worker-install-policy.mjs': `${OPS}/backup-worker-install-policy.mjs`,
@@ -76,7 +83,7 @@ async function main() {
     command('/usr/bin/node',['--check',join(BUNDLE,name)]);
   }
   const releaseBytes = await bytes(RELEASE,0o600,4096);
-  if (releaseBytes.toString() !== `FANMIND_RELEASE_COMMIT=${APP_COMMIT}\n`) fail('backup_application_binding_invalid');
+  if (digest(releaseBytes) !== RELEASE_SHA256 || releaseBytes.toString() !== `FANMIND_RELEASE_COMMIT=${APP_COMMIT}\n`) fail('backup_application_binding_invalid');
   const configBytes = await bytes('/etc/fanmind-backup/worker.env',0o600,65536);
   const config = parseSelectedEnvironment(configBytes.toString()); configBytes.fill(0);
   const db = connection(config);
@@ -99,7 +106,7 @@ async function main() {
       if (value.schemaVersion !== 1 || value.workerCommit !== WORKER_COMMIT || value.applicationCommit !== APP_COMMIT ||
           value.controllerCommit !== input.controllerCommit || Object.keys(value.previousHashes ?? {}).sort().join('|') !== Object.keys(FILES).sort().join('|') ||
           Object.entries(approved.previousHashes).some(([k,v])=>value.previousHashes[k] !== v) ||
-          value.releaseHash !== digest(releaseBytes) || !['PREPARED','APPLYING','INSTALLED','RECONCILIATION_REQUIRED','ROLLED_BACK'].includes(value.status)) fail('receipt_invalid');
+          JSON.stringify(value.newHashes) !== JSON.stringify(FILES) || value.releaseHash !== digest(releaseBytes) || !['PREPARED','APPLYING','INSTALLED','RECONCILIATION_REQUIRED','ROLLED_BACK'].includes(value.status)) fail('receipt_invalid');
       record = value; return record;
     } catch(e) { if (e.code === 'ENOENT') return null; throw e; }
   }
@@ -109,11 +116,11 @@ async function main() {
       BACKUP_ACTIVE_JOBS_SQL,pgEnv);
     if (n !== '0') fail('backup_jobs_active');
   }
-  async function stableRelease() { if (digest(await bytes(RELEASE,0o600,4096)) !== digest(releaseBytes)) fail('backup_application_binding_changed'); }
+  async function stableRelease() { for (const [name,hash] of Object.entries(RETAINED_FILES)) { if (digest(await bytes(`${OPS}/${name}`,0o750)) !== hash) fail('retained_file_changed'); } if (digest(await bytes(RELEASE,0o600,4096)) !== digest(releaseBytes)) fail('backup_application_binding_changed'); }
   const contractModule = await import(pathToFileURL(`${BUNDLE}/database-authorization-contract.mjs`).href);
   async function contract() {
     const c = await contractModule.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...db,env:pgEnv});
-    if (c.restrictedSecurityDefinerFunctionCount !== 13) fail('current_contract_required');
+    if (c.restrictedSecurityDefinerFunctionCount !== 29) fail('current_contract_required');
   }
   async function persist(status) {
     record = {...record,status,updatedAt:new Date().toISOString()};
@@ -154,7 +161,7 @@ async function main() {
       await exclusive(`${RECORD}/release.env`,releaseBytes);
       record = {schemaVersion:1,controllerCommit:input.controllerCommit,workerCommit:WORKER_COMMIT,applicationCommit:APP_COMMIT,
         previousHashes:approved.previousHashes,newHashes:FILES,releaseHash:digest(releaseBytes),createdAt:new Date().toISOString()};
-      await persist('PREPARED'); await flushDirectory(`${ROOT}/rollback`);
+      await persist('PREPARED'); await flushDirectory(RECORD); await flushDirectory(`${ROOT}/rollback`); await checkSaved();
     },
     stop:async()=>{command('/usr/bin/systemctl',['stop',UNIT]);},
     start:async()=>{command('/usr/bin/systemctl',['start',UNIT]);},
@@ -171,7 +178,7 @@ async function main() {
       // release.env is deliberately never written: App truth is not Worker source.
     },
     postflight:async()=>{await live();await stableRelease();await contract();
-      await service();},
+      await service();await queueEmpty();},
   };
     const result = await transition(input,io);
     console.log(`BACKUP_WORKER_CONTROL=${result}`);

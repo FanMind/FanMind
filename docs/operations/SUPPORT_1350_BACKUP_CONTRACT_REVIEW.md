@@ -1,3 +1,87 @@
+## Minimal current-host contract repair — 15 November 2026
+
+Owner task FM-1350-CONTRACT-REPAIR-20261115, Risk R4. Source preparation only;
+no host preparation, installation, service restart, backup or Restore executed.
+Reuse actual successful inspection43765059155 / job132968283412, not a second
+inventory. The fixed measured old module is b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de;
+the unchanged reviewed replacement from6bc209851b4a54609747099ec34264318dc7f4c4 is
+2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441.
+Actual application remains bb799466d2c235195fedcb4d80568f9f0bd56969. Unit and
+release.env hashes are fixed to the measured inventory in the existing policy.
+
+The existing protected bootstrap workflow gains only
+`prepare-contract-repair`. It uses the same Owner/main/environment gates,
+frozen-byte launcher, exact source hashes and existing nonblocking install lock.
+This separately approved preparation first saves and reads back the ACTUAL old
+module, controls, authorization and release binding in root-only
+`/var/lib/fanmind-backup-install/contract-repair/<reviewed-main>/`.
+It stages exactly the reviewed module and replaces only the two existing
+control/policy programs; unchanged wrapper is verified, not replaced. No worker,
+service, timer, app, DB or secret changes. It writes a two-hour exact
+module-only install/rollback authorization and a COMPLETED preparation receipt.
+The install controller refuses incomplete/failed preparation even if an
+authorization file exists. Known preparation failure restores only hash-matched
+saved control/authorization bytes, without touching the worker. Unknown bytes
+require reconciliation. A consumed preparation/bundle is never blindly retried.
+
+The existing install workflow is rebound to that same current reviewed Main,
+module source6bc20985 and actual appbb799466. Existing wrapper and host lock
+remain canonical; main is rechecked after the Environment wait. Only
+`database-authorization-contract.mjs` is in the replacement allowlist. The
+entry point and verifier are byte-pinned retained files. Install snapshots the
+actual old module and release binding again into the new source-bound rollback
+directory, fsyncs and verifies them BEFORE stopping the backupworker. The old
+historical8e5dcbd rollback directory is untouched. Queue races, expiry, partial
+receipt, changed retained bytes and unknown partial files fail closed.
+
+After installation only this worker is started again; app/PM2/nginx, SQL,
+timers, credentials, retention and archives are not changed. Read-only
+postflight checks exact installed bytes, retained files, unit/process, app,
+release, current39/29 catalog and queue. Existing automatic rollback uses only
+the exact saved module; it does not restore shared DB data. A successful worker
+restart is not itself backup/Restore success.
+
+### Concrete approval boundary through #1512
+
+No Production action is authorized by this PR. Required exact decisions:
+
+1. Regular protected source merge of the final checked PR head. This necessarily
+   changes GitHub Main; application source and runtime are byte-identical to
+   0df81627. Do not claim Main still0df81627 after merge. #1512 must bind the
+   resulting approved common commit for Staging then Production; no silent
+   candidate substitution or second implementation.
+2. Same resulting Main, backup-production-recovery: existing bootstrap workflow
+   action prepare-contract-repair, confirmation
+   backup-worker-prepare-contract-repair. BOOTSTRAP_APPROVAL must be exactly
+   `<main>:prepare-contract-repair:6bc209851b4a54609747099ec34264318dc7f4c4:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled`.
+   Bind the final source SHA and exact new control/launcher hashes, fresh bypass
+   observation, fixed measured old hashes, target and private rollback receipt.
+3. Same resulting Main, existing production-control workflow: action install,
+   reviewed_controller_commit=<main>, worker_source_commit=6bc209851b4a54609747099ec34264318dc7f4c4,
+   expected_application_commit=bb799466d2c235195fedcb4d80568f9f0bd56969,
+   confirmation=backup-worker-install; ACTION_APPROVAL is the exact four-field
+   binding. Owner approval includes only module exchange and this service
+   stop/start plus its bound automatic module rollback. Environment review
+   stays required. No historical bootstrap/install invocation is valid.
+4. After actual success, use existing read-only heartbeat and backup receipts;
+   authorize only necessary new database/full jobs with existing archive,
+   encryption, checksum and offsite procedures. Existing Storage/config and
+   accepted historical DB_POSTCHECKED evidence are retained. Bind the exact
+   actual artifacts and isolated targets to any further necessary Restore
+   completion; no blind repeat of the accepted database restore. No broad
+   restoration/test program or additional host/project is introduced.
+
+The source tests include measured-state mutations, actual module-only policy,
+protected preparation ordering and failure, existing transition rollback and
+queue/expiry negatives. Non-root filesystem case may remain a declared skip;
+no real-host installation/backup result is inferred from local or CI tests.
+Existing FM-CONTRACT boundaries and fail-closed release decision remain intact.
+
+The earlier sections below retain historical context; their old install pins
+are not executable approval for the current repair.
+
+---
+
 # Support #1350: reviewed backup authorization contract
 
 ## Current-host inspection prerequisite — source preparation, 15 November 2026

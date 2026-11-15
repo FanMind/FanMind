@@ -60,8 +60,8 @@ test('current inspection cannot authorize an install or substitute an arbitrary 
   ['inspect','main',INSPECT_SOURCE,INSPECT_APP],['inspect',SOURCE,WORKER,INSPECT_APP],
   ['inspect',SOURCE,INSPECT_SOURCE,APP],['inspect',SOURCE,INSPECT_SOURCE,'0'.repeat(40)]
  ])assert.throws(()=>inspectionRequest(...args));
- assert.throws(()=>request('install',SOURCE,INSPECT_SOURCE,INSPECT_APP));
- assert.equal(request('install',SOURCE,WORKER,APP).workerCommit,WORKER);
+ assert.throws(()=>request('install',SOURCE,WORKER,APP));
+ assert.equal(request('install',SOURCE,INSPECT_SOURCE,INSPECT_APP).workerCommit,INSPECT_SOURCE);
 });
 
 const inspectRequest={action:'inspect',controller:SOURCE,runnerUid:1000};
@@ -120,7 +120,7 @@ test('timer diagnostics reject missing, duplicate, foreign or unknown status and
 test('inspection bypasses only the stale read path; legacy mutation sources remain pinned and unreachable from inspect',async()=>{
  const source=await readFile('scripts/operations/backup-worker-root-bootstrap.mjs','utf8');
  assert.match(source,/if\(request.action==='inspect'\)\{await currentInspection\(request\);return;\}/u);
- const inspect=source.slice(source.indexOf('async function currentInspection'),source.indexOf('async function main'));
+ const inspect=source.slice(source.indexOf('async function currentInspection'),source.indexOf('// Exact existing controller upgrade'));
  assert.match(inspect,/database\(content,29\)/u);assert.match(inspect,/inventory\(request,INSPECT_APP\)/u);
  assert.doesNotMatch(inspect,/create\(|mkdir\(|rename\(|unlink\(|\['(?:start|stop|restart)'/u);
  assert.match(inspect,/if\(!result.databaseContractVerified\)process.exitCode=1/u);
@@ -143,4 +143,44 @@ test('actual GitHub preflight keeps Owner, current-Main and protected-environmen
   const result=run(overrides);assert.equal(result.status,1);assert.match(result.stderr,/BACKUP_WORKER_GITHUB_PREFLIGHT=BLOCK/u);
  }
  for(const api of [{branch:{...branch,protected:false},environment,branches},{branch:{...branch,commit:{sha:'0'.repeat(40)}},environment,branches},{branch,environment:{...environment,can_admins_bypass:true},branches},{branch,environment:{...environment,protection_rules:[]},branches},{branch,environment,branches:{...branches,branch_policies:[{name:'foreign',type:'branch'}]}}])assert.equal(run({},api).status,1);
+});
+
+test('repair inventory accepts only the measured old state under the already held preparation lock',async()=>{
+ const {repairInventory,OBSERVED_CONTROL_HASHES}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ const measured={expectedApplicationCommit:INSPECT_APP,databaseContractVerified:true,
+  unitHash:'ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896',
+  releaseHash:'93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7',
+  installedWorkerHashes:Object.fromEntries(FILES.slice(3).map(([,dest,hash])=>[dest.split('/').at(-1),hash])),
+  controllers:Object.fromEntries(Object.entries(OBSERVED_CONTROL_HASHES).map(([name,hash])=>[name==='backup-worker-install-control.mjs'?'control':name==='backup-worker-install-policy.mjs'?'policy':'wrapper',{state:'present',sha256:hash}])),
+  lock:{state:'present',held:true},activeTools:{pg_dump:0,pg_restore:0,rclone:0,age:0,tar:0},
+  timers:Object.fromEntries(['database','full','storage','server_config'].map(name=>[name,{activeState:'active',unitFileState:'enabled'}]))};
+ repairInventory(measured);
+ for(const mutate of [v=>v.expectedApplicationCommit=APP,v=>v.databaseContractVerified=false,
+  v=>v.installedWorkerHashes['database-authorization-contract.mjs']=INSPECT_CONTRACT_SHA256,
+  v=>v.installedWorkerHashes['backup-worker.mjs']='e'.repeat(64),v=>v.controllers.control.sha256='f'.repeat(64),
+  v=>v.unitHash='f'.repeat(64),v=>v.releaseHash='f'.repeat(64),v=>v.lock.held=false,
+  v=>v.activeTools.pg_dump=1,v=>delete v.activeTools.tar,v=>v.timers.full.activeState='inactive']){
+  const changed=structuredClone(measured);mutate(changed);assert.throws(()=>repairInventory(changed),{code:'repair_inventory_changed'});
+ }
+});
+test('preparation durably saves actual old bytes before control replacement and cannot authorize a failed stage',async()=>{
+ const {repairPreparation}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ function fake(failure){const calls=[];return {calls,...Object.fromEntries(['preflight','snapshot','stage','replaceControllers','verifyControllers','authorize','recoverPreparation'].map(name=>[name,async()=>{calls.push(name);if(name===failure)throw Error('injected');}])),persist:async status=>calls.push(status)};}
+ const good=fake();assert.equal(await repairPreparation(good),'PREPARED_NOT_INSTALLED');
+ assert.deepEqual(good.calls,['preflight','snapshot','stage','preflight','PREPARED','replaceControllers','verifyControllers','authorize','COMPLETED']);
+ for(const failure of ['preflight','snapshot','stage','replaceControllers','verifyControllers','authorize']){
+  const io=fake(failure);await assert.rejects(repairPreparation(io));
+  assert.ok(!io.calls.includes('COMPLETED'));if(['preflight','snapshot','stage'].includes(failure))assert.ok(!io.calls.includes('replaceControllers'));
+ }
+});
+test('new control bytes and root launcher are checksum-pinned; incomplete preparation cannot install',async()=>{
+ const {REPAIR_CONTROL_HASHES}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ for(const name of ['backup-worker-install-control.mjs','backup-worker-install-policy.mjs'])assert.equal(sha(await readFile(`scripts/operations/${name}`)),REPAIR_CONTROL_HASHES[name]);
+ const root=await readFile('scripts/operations/backup-worker-install-control.mjs','utf8');
+ assert.match(root,/preparation.status !== 'COMPLETED'/u);
+ assert.match(root,/await flushDirectory\(RECORD\).*await checkSaved\(\)/u);
+ assert.match(root,/Object.entries\(RETAINED_FILES\)/u);
+ const w=await readFile('.github/workflows/backup-worker-root-bootstrap.yml','utf8');
+ assert.match(w,/prepare-contract-repair/u);assert.match(w,/if\(process.argv\[4\]!=='inspect'\)/u);
+ assert.match(w,/group: fanmind-production-deploy/u);assert.match(w,/cancel-in-progress: false/u);
 });

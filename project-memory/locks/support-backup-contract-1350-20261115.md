@@ -1,3 +1,19 @@
+## Current minimal repair source claim — FM-1350-CONTRACT-REPAIR-20261115
+
+Risk: R4. Branch fix/1350-current-contract-repair, base0df8162700f3521aafb0448a60d2247424d8637a.
+Owner explicitly requests preparation of the existing install/rollback path,
+then a central #1512 decision before any protected correction. Actual inspect
+43765059155 reused; no new host inventory, installation, snapshot, restart,
+backup, DB/IAM/secret/timer or Restore action performed.
+Scope: two existing protected workflows, install policy/controller, existing
+bootstrap preparation, their existing targeted tests and this existing runbook.
+No FanMind application, module implementation, migrations, verifier, entry point
+or registered product contract changed. All existing integration gates remain;
+local/CI evidence cannot mark Production recovery PASS. Source-only rollback is
+revert this PR; target recovery is precisely hash-bound module restoration.
+Detailed approval and candidate/Main consequence in SUPPORT_1350_BACKUP_CONTRACT_REVIEW.md.
+Status: IMPLEMENTED_NOT_VERIFIED until final exact-head remote checks complete.
+
 # Support1350 backup contract — bounded source work
 
 ## Follow-up: existing protected inspection, 15 November 2026
