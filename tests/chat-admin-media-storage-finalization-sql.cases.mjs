@@ -35,7 +35,7 @@ export async function runStorageFinalizationSqlCases(sql){
  for(const [change,restore] of [
   [`update public.chat_characters set status='inactive' where id='${c}';`,`update public.chat_characters set status='active' where id='${c}';`],
   [`update public.chat_character_media set deleted=true where id='${id}';`,`update public.chat_character_media set deleted=false where id='${id}';`],
-  [`update public.workspace_chat_admin_capabilities set chat_admin_multi_character=false where workspace_id='${w}';`,`update public.workspace_chat_admin_capabilities set chat_admin_multi_character=true where workspace_id='${w}';`],
+  [`delete from public.workspace_chat_admin_capabilities where workspace_id='${w}';`,`insert into public.workspace_chat_admin_capabilities(workspace_id,chat_admin_multi_character,granted_to_user_id) values('${w}',true,'${owner}');`],
   [`insert into public.account_deletion_requests values('${owner}','processing');`,`delete from public.account_deletion_requests;`],
  ]){await sql(change);await assert.rejects(()=>internal(insert()),/media_object_binding_invalid/);await sql(restore);}
  await internal(insert());
