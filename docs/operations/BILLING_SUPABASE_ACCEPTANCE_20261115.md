@@ -314,3 +314,44 @@ CI; frühere grüne Checks gelten nicht als dessen Abschluss.
 Der ursprüngliche JSON-Receipt bleibt unveränderter historischer Snapshot;
 die neue tatsächliche Stripe-Konfigurationsmutation ist ausdrücklich hier
 vermerkt. PR1518 bleibt offen und wird ohne eigene Freigabe nicht gemergt.
+
+## Billing-Sicherheit und Capacity-Fortsetzung — 15. November 2026, 13:15 Wien
+
+Main4577f4c338ad19035a16f1cb11aa5a5e57524d14 wurde konfliktfrei in denselben
+PR-Arbeitsstand übernommen; fremde Fachänderungen bleiben erhalten.
+Alle14 Checks auf224442a8ec4235fa3188d271c21780068d01bae7 terminal SUCCESS.
+Vollständiger nativer PostgreSQL17-Nachweis:
+https://github.com/FanMind/FanMind/actions/runs/43711718026/job/132804501140 .
+Dieser vorhandene erfolgreiche Lauf wurde nicht unnötig erneut gestartet.
+
+Konkrete Sicherheitsvorbereitung:
+[Berechtigungen, Schreibpfade, Rückfall und Regressionen](BILLING_WORKSPACE_ACL_PREPARATION_1518.md).
+Unveränderte bestehende kontrollierte SQL wird in neuer isolierter nativer
+PG17-Regression ausgeführt, verpflichtend im vorhandenen CI-Job. Keine zweite
+Produktivimplementierung, kein generischer Migrationsweg und kein DB-Apply.
+Lokal31 Quell-/Workflow-/Suiteprüfungen PASS,1 expliziter Native-SKIP mangels
+Docker/PG17; neuer nativer Ausführungsstatus ist am endgültigen Head zu prüfen.
+
+Production12:10–13UTC: die sechs exakten Billingfelder besitzen direkte
+INSERT/UPDATE-Rechte für anon und authenticated, service_role ebenfalls.
+Keine Rollenvererbung und keine benutzerdefinierten Workspace-Trigger.
+RLS-Owner-/Member-/Admin-CRM-Grenzen bleiben gesondert relevant. Alle sieben
+Step-A-Spalten vorhanden, keine Owner-/Member-Duplikatgruppen, Provisioning-RPC
+fehlt. Ein sofortiger Contract-Apply würde den erlaubten Legacy-JWT-POST-Fallback
+brechen; keine unvollständige Production-Freigabe unterstellen.
+
+Staging12:11:20UTC: monetäre Funktionen und Entitlementwriter fehlen,
+0 Grants/0 monetäre Ledgerevents. Vier unresolved Events sind signaturgeprüft
+und tenant_binding_missing:2 subscription.deleted mit vorhandenen Kandidaten,
+1 checkout.session.completed und1 customer.tax_id.created ohne Kandidatur.
+Keine autoritative Workspacebindung, kein Kandidatenkonflikt. Herkunft nicht
+erfunden, keine privaten Event-/Kundenwerte veröffentlicht, nichts wiederholt,
+gelöscht oder als verarbeitet markiert.
+
+PR1500/Support-Dokumentation auf317493e12e8643d90ceb1917baac6c17e663089d
+abgeglichen. Bestehende Capacity-Installations-/Writer-/Acceptancecontroller
+bleiben zuständig und unverändert. Vollständige Sandboxkette weiter BLOCKED,
+bis diese Voraussetzungen tatsächlich installiert/abgenommen und die
+synthetischen Identitäten sowie Price-/Steuer-/Runtimegates gebunden sind.
+Monatsrelease-Übergabe entsprechend aktualisiert. Keine Production-SQL-,
+Deployment-,Merge-,Zahlungs- oder zusätzliche Secretfreigabe verbraucht.

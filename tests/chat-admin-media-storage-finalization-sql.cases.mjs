@@ -1,3 +1,4 @@
+import {proveMonthlySqlNative} from './monthly-release-sql-native.cases.mjs';
 import {storageGuardTransaction,storageGuardStateSql} from '../scripts/operations/chat-admin-media-storage-control.mjs';
 import assert from 'node:assert/strict';
 import {storageFinalizationCatalogue} from '../scripts/operations/chat-admin-media-storage-finalization.mjs';
@@ -20,6 +21,7 @@ export async function runStorageFinalizationSqlCases(sql){
  await sql(storageGuardTransaction());
  await sql(storageGuardTransaction());
  assert.equal((await sql(storageGuardStateSql())).trim(),'ready');
+ await proveMonthlySqlNative(sql,'media_storage');
  const bundle=loadMediaSchemaProfile('extended');
  assert.deepEqual(JSON.parse((await sql(`select catalogue from (${bundle.catalogue.trim().replace(/;$/u,'')}) native_guard_state;`)).trim()),storageFinalizationCatalogue(bundle.extended.catalogue),'only the exact guard body changes; ACL/RLS/bucket/schema stay identical');
  for(const asset of [id,video])await internal(`begin;${insert(asset)}rollback;`);

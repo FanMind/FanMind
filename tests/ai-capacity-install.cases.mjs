@@ -1,3 +1,4 @@
+import {proveMonthlySqlNative} from './monthly-release-sql-native.cases.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {readFileSync,mkdtempSync,writeFileSync,rmSync} from 'node:fs';
@@ -75,13 +76,14 @@ export async function exerciseCapacityInstall({sql,select,context}){
   sql('alter table public.ai_capacity_admin_policy set unlogged;');assert.throws(()=>sql(install));sql('alter table public.ai_capacity_admin_policy set logged;');
   sql('create table public.ai_capacity_workspace_entitlements(x int);');assert.throws(()=>sql(install));sql('drop table public.ai_capacity_workspace_entitlements;');
  });
- await context.test('real postflight mutation rolls back DDL, ACL and defaults; valid transaction then installs',()=>{
+ await context.test('real postflight mutation rolls back DDL, ACL and defaults; valid transaction then installs',async()=>{
   const before=JSON.parse(select(catalogueSql()));
   assert.throws(()=>sql(install.replace('CREATE TEMP TABLE capacity_after','GRANT SELECT ON public.ai_capacity_workspace_entitlements TO anon;CREATE TEMP TABLE capacity_after')));
   assert.equal(select("select to_regclass('public.ai_capacity_workspace_entitlements') is null;"),'t');
   assert.equal(select("select has_table_privilege('service_role','public.ai_capacity_grants','INSERT');"),'t');
   assert.deepEqual(JSON.parse(select(catalogueSql())),before);assert.equal(select(markerSql()),marker);
   sql(install);assert.deepEqual(JSON.parse(select(catalogueSql())),reference.catalogue);assert.equal(select(markerSql()),marker);
+  await proveMonthlySqlNative(async q=>select(q),'capacity_writer');
  });
  await context.test('browser/private writer privileges deny; canonical receipt, mapping, CAS, replay and revocation execute',()=>{
   assert.equal(select("select not has_function_privilege('anon','public.sync_ai_capacity_entitlement(text,text,bigint)','EXECUTE') and not has_schema_privilege('service_role','fanmind_capacity_private','USAGE') and not has_table_privilege('service_role','public.ai_capacity_workspace_entitlements','INSERT');"),'t');
