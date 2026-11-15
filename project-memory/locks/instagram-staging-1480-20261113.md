@@ -145,3 +145,16 @@ Staging version reports same releaseCommit and runtimeEnvironmentstaging.
 Existing Operator session works through Dashboard/channels/Instagram details;
 stored connection/scopes remain, webhook still inactive. No sync/provider
 button used. Saved reviewer draft was independently reopened successfully.
+
+2026-11-15 latest Owner authorizes complete Meta submission conditionally on
+all actual evidence and protected scope, then integration-only Production after
+Meta approval, full Staging acceptance and all Production/backup/restore gates.
+No general release or automatic legal/process completion. Exoscale unchanged.
+IconPASS already independently recorded privately; prior3cb04a81 all10checksPASS.
+Fresh Main5fc2832b introduces only shared-doc header/baseline conflicts here;
+preserve all parallel Main source and combine documentation fingerprint.
+Staging browser now returns Login, so no fresh comment/media/subscription call
+performed. Current Meta bug reporter for Instagram Graph API/Webhooks states
+advanced technical support unavailable for this product and redirects to the
+Developer Community Forum. No trace/credential/private account data posted.
+These are actual next boundaries;100/33 remains unresolved, not fixed by consent.

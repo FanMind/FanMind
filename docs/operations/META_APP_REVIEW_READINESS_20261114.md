@@ -1,5 +1,12 @@
 # Meta App Review — Vorbereitung #1480 / #1464
 
+**Neue Owner-Freigabe15.11.2026:** vollständige Einreichung nach echten
+Pflichtnachweisen und geschütztem Umfangsabgleich grundsätzlich genehmigt.
+Keine erneute allgemeine Freigabe nötig. Spätere Production ist nur für diese
+Integration nach Meta-Freigabe, vollständiger Staging-Fachabnahme und allen
+Production-/Backup-/Restore-Gates genehmigt; noch nicht durchgeführt.
+IconPASS und alte10CI-PASS sind übernommen, kein Kontoabonnement-PASS.
+
 **Aktualisierung15.11.2026:** Maßgeblicher neuer Fragebogen-/Teilfreigabe-/
 Betriebs-/API-Stand in der [konkreten Antwortmatrix](META_DATA_HANDLING_QUESTION_MATRIX_20261115.md).
 Externe anwaltliche Schlussprüfung vorerst zurückgestellt, kein positives

@@ -4,6 +4,18 @@ Stand15.11.2026, bestehender DraftPR1509 / #1480 / #1464.
 Maßgeblich für den aktuellen Portalstand; frühere Anzeigen bleiben historisch.
 Kein Reviewantrag eingereicht. Genau die drei bisherigen Instagram-Rechte.
 
+**Neuester Owner-Stand15.11.2026:** vollständige Meta-Einreichung grundsätzlich
+freigegeben, sobald alle echten Anforderungen erfüllt sind. Spätere
+Integration-only-Production-Einführung bleibt Meta-, Staging- und allen
+Release-/Backup-/Restore-Gates unterworfen; kein allgemeiner Release.
+Icon der richtigen Review-App ist nach Neuladen und eigener App-Karte **PASS**.
+Alle10Hosted-Prüfungen des bisherigen Heads3cb04a81 waren erfolgreich.
+Der notwendige Dokumentationsabgleich mit Main5fc2832b erhält die parallele
+Media-Storage-Arbeit unverändert und benötigt neue Head-Prüfungen.
+Aktueller praktischer Blocker: Staging-Sitzung leitet erneut auf Login um;
+Kommentar-Lesetest wurde noch nicht neu ausgeführt. Keine Erfolgserfindung.
+Exoscale-/Supabase-/OpenAI-Vertrags-/Fernzugriffslücken bleiben einzeln offen.
+
 ## 1. Tatsächlicher Fragebogen
 
 Der aktuelle App-Review-Entwurf empfiehlt juristische/strategische Expertise

@@ -8,7 +8,7 @@ Bezug: #1509 / #1480 / #1464 · Erklärungsdatum14.11.2026 laut Owner-Mitteilung
 | OPERATIVE ROLLENÜBERNAHME | **vom Owner am14.11.2026 ausdrücklich erklärt, innerhalb der Kompetenzgrenzen** |
 | QUALIFIZIERTE RECHTSPRÜFUNG | **offen, kein positives Ergebnis; externe anwaltliche Schlussprüfung seit Owner-Entscheidung15.11.2026 vorerst zurückgestellt** |
 | BETRIEBLICHE EINFÜHRUNG | **offen** |
-| META-REVIEW-EINREICHUNG | **nicht freigegeben** |
+| META-REVIEW-EINREICHUNG | **grundsätzlich vom Owner am15.11.2026 freigegeben, ausschließlich nach vollständigen tatsächlichen Nachweisen und geschütztem Umfangsabgleich; noch nicht erfolgt** |
 
 Die Zustimmung wurde vom Owner ausdrücklich als Entscheidung der rechtlichen
 Betreiberin übermittelt. Sie betrifft ausschließlich
@@ -53,3 +53,10 @@ praktische menschliche Einweisung. Die bestehenden Controls
 `approvals.legalReview` und `approvals.retentionDecision` bleiben **pending**.
 Kein neues Governance-Control und keine Gesamtfreigabe aus einem Teilnachweis.
 Die historische National-Security-Bestätigung bleibt gesondert erhalten.
+
+Die neue grundsätzliche Einreichungsfreigabe ersetzt die frühere fehlende
+Owner-Erlaubnis. Sie bestätigt keine offenen Tatsachen oder Schutzgates.
+Spätere Production-Einführung ist ausschließlich für die Meta-Integration nach
+erforderlicher Meta-Freigabe, vollständiger Staging-Fachabnahme und bestandenen
+Production-/Backup-/Restore-Gates genehmigt; kein allgemeiner FanMind-Release.
+Exoscale bleibt unverändert, insbesondere keine DPA-v3-Annahme durch die Assistenz.

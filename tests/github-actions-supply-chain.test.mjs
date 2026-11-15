@@ -383,13 +383,24 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.match(capacityInstall.source, /group: fanmind-staging-deploy/u);
   assert.match(capacityInstall.source, /inputs\.reviewed_commit == github\.sha/u);
   assert.doesNotMatch(capacityInstall.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:/u);
-  assert.equal(hostedWorkflows.length, 79);
+  const monthlyPrepare = hostedWorkflows.find(workflow => workflow.file === 'monthly-release-prepare.yml');
+  assert.deepEqual(monthlyPrepare?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(monthlyPrepare.source, /persist-credentials: false/u);
+  assert.doesNotMatch(monthlyPrepare.source.replace(/^\s*#.*$/gmu, ''), /environment:|self-hosted|secrets\.|permissions:\s*write-all|pull_request:|schedule:/u);
+  const mediaStorage = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-media-storage-staging.yml');
+  assert.deepEqual(mediaStorage?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.match(mediaStorage.source, /environment: staging/u);
+  assert.match(mediaStorage.source, /group: fanmind-staging-deploy/u);
+  assert.match(mediaStorage.source, /inputs\.reviewed_commit == github\.sha/u);
+  assert.match(mediaStorage.source, /staging-media-storage-/u);
+  assert.doesNotMatch(mediaStorage.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:|nginx|production:/u);
+  assert.equal(hostedWorkflows.length, 81);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    89, // Includes the protected Capacity prerequisite controller.
+    91, // Includes monthly preparation and the protected media Storage guard workflow.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

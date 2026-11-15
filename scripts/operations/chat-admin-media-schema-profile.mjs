@@ -1,3 +1,4 @@
+import {storageFinalizationCatalogue} from './chat-admin-media-storage-finalization.mjs';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
@@ -36,7 +37,7 @@ export function mediaSchemaStateSql({initial,extended,catalogue}){
  mediaTable.columns=mediaTable.columns.filter(c=>!['original_filename','uploaded_at'].includes(c.name));
  mediaTable.constraints=mediaTable.constraints.filter(c=>c.name!=='chat_media_filename_length');
  const query=catalogue.trim().replace(/;$/u,'');
- return `SELECT CASE WHEN integrity_ok IS NOT TRUE THEN 'block' WHEN catalogue='${literal(initial.catalogue)}'::jsonb THEN 'initial' WHEN catalogue='${literal(extended.catalogue)}'::jsonb THEN 'extended' WHEN catalogue='${literal(legacyExtended)}'::jsonb THEN 'extended_legacy' ELSE 'block' END AS media_schema_state FROM (${query}) media_schema_catalogue`;
+ return `SELECT CASE WHEN integrity_ok IS NOT TRUE THEN 'block' WHEN catalogue='${literal(initial.catalogue)}'::jsonb THEN 'initial' WHEN catalogue='${literal(extended.catalogue)}'::jsonb THEN 'extended' WHEN catalogue='${literal(storageFinalizationCatalogue(extended.catalogue))}'::jsonb THEN 'extended' WHEN catalogue='${literal(legacyExtended)}'::jsonb THEN 'extended_legacy' ELSE 'block' END AS media_schema_state FROM (${query}) media_schema_catalogue`;
 }
 
 export function mediaSchemaProfileSql(bundle){
