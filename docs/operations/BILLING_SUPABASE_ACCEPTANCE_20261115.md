@@ -365,3 +365,34 @@ BLOCKED auch nach einer künftigen RPC-Bereitstellung, bis diese Befunde
 anhand autoritativer Vertrags-/Auditbelege geklärt sind. Eine neue native
 Negativprüfung führt den bestehenden Annahme-Guard tatsächlich aus und weist
 die unveränderten ACLs/Policies nach dessen Abbruch nach.
+
+## Technische Folgevorbereitung nach Merge1518 — 15. November 2026
+
+Main e48eea970e5c0b541ebfe58e8aeb7ccd3dea8ae8 ist unverändert übernommen.
+Die [kontrollierte Struktur-Recovery](WORKSPACE_PROVISIONING_RECOVERY_1518.md)
+ergänzt nun tatsächlich ausführbares, reproduzierbares Source-SQL und native
+Pflichtregressionen. Gleiche vorhandene RPC-Signatur, aber ausschließlich
+lesende SECURITY-INVOKER-Variante unter Caller-RLS: kein Create-Workspace-
+oder Membership-Reparaturpfad, keine neue Definer-Kohorte. Membership-Unique-
+Constraint wird wiederverwendet; nur wirklich fehlende Owner-Eindeutigkeit
+wird angelegt. Original-Billing-Contract unverändert/unapplied.
+
+PASS Quelle: deterministische Pins/Artefakte und vorhandene lokale Quelltests;
+hosted native Ausführung ist an den tatsächlichen Folge-PR-Head zu binden.
+PASS begrenzt: generierte reine Postflight-SELECT auf Production ergab
+owner_unique=false,membership_unique=true,rpc_exact=false; kein Apply.
+BLOCKED: Zielinstallation, echte JWT-/PostgREST-Kompatibilität, vollständige
+Vertragsdaten- und Zahlungsabnahme bleiben getrennte Gates.
+
+Autoritative Nachweissuche fortgesetzt:1 zugehöriger Operations-Auditeintrag
+ohne Annahmeversion/-Zeit/-Actor auch in verschachtelten Metadaten;0 server-
+verwaltete Auth-Metadaten-Kandidaten,1 veränderbarer User-Metadaten-Kandidat
+(nicht als Nachweis verwendet). Für den einen Workspace mit drei NULL-
+Billingfeldern fehlen auch Customer-/Subscription-/Checkout-/PaymentIntent-
+Referenzen. Keine sichere Stripe-Ableitung, kein geratenes Update.
+Externe Originalunterlagen damit nicht ausgeschlossen; geprüfte Bestände
+liefern derzeit keine ausreichende Rekonstruktionsgrundlage.
+
+Support1500 unverändert offener Draft. Keine fremde Capacity-Implementierung,
+keine Production-/Stripe-Live-/Kunden-/Vertragsdatenänderung, keine Zahlung
+oder Guthabenbuchung. Vollständige externe Sandboxkette NOT TESTED/BLOCKED.

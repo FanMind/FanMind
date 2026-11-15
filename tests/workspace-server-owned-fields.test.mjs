@@ -1,4 +1,5 @@
 import "./workspace-billing-acl-pg17.cases.mjs";
+import "./workspace-provisioning-recovery.cases.mjs";
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import test from "node:test";

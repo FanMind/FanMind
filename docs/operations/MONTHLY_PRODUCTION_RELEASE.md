@@ -20,6 +20,15 @@ Spalten; kein isolierter REVOKE. Staging: vier unresolved Events mit
 tenant_binding_missing, keine monetären Capacity-RPCs. Keine automatische
 Zuordnung/Replay und keine doppelte1500-Implementierung.
 
+Folgevorbereitung nach1518:
+[Workspace-Struktur-Recovery](WORKSPACE_PROVISIONING_RECOVERY_1518.md) liefert
+kontrolliertes Source-SQL und Pflicht-PG17-Tests. Keine automatische Installation
+oder Contract-Anwendung durch Webrelease/Monatscontroller. Neue SQL-Datei
+workspace_provisioning_existing_recovery.sql bleibt eigener geschützter Scope;
+keine Aktivierung aus einem allgemeinen SQL-Dateizähler ableiten. Zwei fehlende
+Annahmenachweise und ein Workspace ohne Billing-/Stripe-Referenzgrundlage
+bleiben Datenblocker. Bestehender Billing-Contract ist unverändert.
+
 PR1512, Source-Vorbereitung. Keine Production-Bereitstellung, kein Backup,
 Restore, SQL-Apply oder geschützter Installationsschritt wurde ausgeführt.
 Technische Abnahme erfordert die vollständige native CI-Generalprobe und
