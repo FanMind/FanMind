@@ -286,7 +286,7 @@ validated there. It never replaces the app checkout. Full source imports must
 stay together, with no files cherry-picked from an open parallel PR.
 
 Inputs: `adapter` (one fixed allowlisted name), `reviewed_commit`,
-`expected_live_commit`, `sql_sha256`, `confirmation=verify-monthly-sql-only`.
+`production_base_commit`, `expected_live_commit`, `sql_sha256`, `confirmation=verify-monthly-sql-only`.
 Only invoke after the candidate is merged/reviewed and exact current Main.
 The live base is checked before/after the read; all SQL checks share one
 repeatable-read READ ONLY snapshot, a server read-only default and fixed TLS
@@ -298,12 +298,17 @@ For each SQL the private receipt uses version2 and the existing common fields
 `target=production`, `base`, `candidate`, `path`, `sqlSha256`, `action=verify`,
 `result=PASS`, positive `runId/jobId/runAttempt`, `verifiedAt` (actual successful
 job completion). Additional fields are `project=drqkpdvtbbrrdwmtrodz`,
-`sourceTree` (exact package tree), `state=EXACT`. Bind its actual bytes through
+`sourceTree` (exact package tree), `state=EXACT`, `live` (independently observed
+base or that same candidate). The original package `base` never changes on
+resume. Candidate-live receipts additionally require the separately approved
+`resumeAfterAttempt` UUID; the existing release state machine must still match
+that UUID to its real private previous attempt and later inspection time. Empty
+live values, third SHAs and substituting live for the original base reject. Bind its actual bytes through
 the existing admission generator; never manufacture a receipt from this text.
 The monthly controller independently re-reads the exact completed successful
 Owner/Main/dispatch workflow run/attempt, selected successful collector job and
 step, plus timestamped actual output. It requires one unique matching set of
-adapter/path/hash/target/project/base/candidate/tree/action/state/result lines;
+adapter/path/hash/target/project/base/live/candidate/tree/action/state/result lines;
 echoed shell commands, apply results, duplicates, another target/candidate,
 missing data and stale/future evidence reject. TTL remains15minutes. Repeat
 only read-only verification near the release window if it expires.

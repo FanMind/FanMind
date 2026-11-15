@@ -67,8 +67,10 @@ export function validateSqlReceipt(receipt, item, a, now = Date.now()) {
     && receipt.path === item.path && receipt.sqlSha256 === item.sha256 && receipt.action === 'verify' && receipt.result === 'PASS'
     && Number.isSafeInteger(receipt.runId) && receipt.runId > 0 && Number.isSafeInteger(receipt.jobId) && receipt.jobId > 0 && Number.isSafeInteger(receipt.runAttempt) && receipt.runAttempt > 0, 'sql_receipt_binding');
   if (adapter.evidenceVersion === 2) assert(receipt.version === 2 && receipt.state === 'EXACT'
-    && receipt.project === 'drqkpdvtbbrrdwmtrodz' && receipt.sourceTree === a.source.tree
+    && receipt.project === 'drqkpdvtbbrrdwmtrodz' && [a.source.base,a.source.candidate].includes(receipt.live) && receipt.sourceTree === a.source.tree
     && SHA.test(receipt.sourceTree ?? ''), 'sql_state_not_exact');
+  if (adapter.evidenceVersion === 2 && receipt.live !== a.source.base && receipt.live === a.source.candidate) assert(
+    /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/u.test(a.resumeAfterAttempt ?? ''), 'sql_resume_approval_required');
   assert(now >= Date.parse(receipt.verifiedAt) && now - Date.parse(receipt.verifiedAt) <= 900000, 'sql_receipt_expired');
 }
 
@@ -91,7 +93,7 @@ export async function verifySqlProvenance(a, receipts, get, getLog) {
     const log = await getLog(receipt.jobId);
     if (adapter.evidenceVersion === 2) {
       const expected = { ADAPTER: adapter.id, PATH: item.path, SHA256: item.sha256, TARGET: 'production',
-        PROJECT: receipt.project, BASE: a.source.base, CANDIDATE: a.source.candidate, TREE: a.source.tree,
+        PROJECT: receipt.project, BASE: a.source.base, LIVE: receipt.live, CANDIDATE: a.source.candidate, TREE: a.source.tree,
         ACTION: 'verify', STATE: 'EXACT', RESULT: 'verified' };
       const values = new Map();
       for (const line of log.split(/\r?\n/u)) {

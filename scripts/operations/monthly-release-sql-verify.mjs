@@ -19,7 +19,7 @@ const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Arra
 export function sqlAdapter(id){const entry=Object.entries(SQL_PROOFS).find(([,a])=>a.evidenceVersion===2&&a.id===id);if(!entry)fail();return {path:entry[0],...entry[1]};}
 export function assertMonthlySqlRequest(e){
  const adapter=sqlAdapter(e.MONTHLY_SQL_ADAPTER);
- if(e.MONTHLY_SQL_ACTION!=='verify'||e.MONTHLY_SQL_CONFIRMATION!=='verify-monthly-sql-only'||e.GITHUB_EVENT_NAME!=='workflow_dispatch'||e.GITHUB_ACTOR_ID!=='270165082'||e.GITHUB_REF!=='refs/heads/main'||e.GITHUB_REPOSITORY!=='FanMind/FanMind'||!SHA.test(e.GITHUB_SHA??'')||e.MONTHLY_SQL_CANDIDATE!==e.GITHUB_SHA||!SHA.test(e.MONTHLY_SQL_BASE??'')||!SHA.test(e.MONTHLY_SQL_TREE??'')||e.MONTHLY_SQL_SHA256!==adapter.sqlSha256)fail();
+ if(e.MONTHLY_SQL_ACTION!=='verify'||e.MONTHLY_SQL_CONFIRMATION!=='verify-monthly-sql-only'||e.GITHUB_EVENT_NAME!=='workflow_dispatch'||e.GITHUB_ACTOR_ID!=='270165082'||e.GITHUB_REF!=='refs/heads/main'||e.GITHUB_REPOSITORY!=='FanMind/FanMind'||!SHA.test(e.GITHUB_SHA??'')||e.MONTHLY_SQL_CANDIDATE!==e.GITHUB_SHA||!SHA.test(e.MONTHLY_SQL_BASE??'')||![e.MONTHLY_SQL_BASE,e.MONTHLY_SQL_CANDIDATE].includes(e.MONTHLY_SQL_LIVE)||!SHA.test(e.MONTHLY_SQL_TREE??'')||e.MONTHLY_SQL_SHA256!==adapter.sqlSha256)fail();
  if(adapter.id==='support_consent'&&e.FANMIND_SUPPORT_PERSISTENT_CONSENT_VERSION)fail();
  const owner=(e.FANMIND_ADMIN_EMAILS??'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean)[0];
  const target=targetFor({...e,FANMIND_SUPPORT_REVIEWED_COMMIT:e.GITHUB_SHA,FANMIND_SUPPORT_CONFIRM:'support-production-verify'},'verify',owner);
@@ -84,7 +84,7 @@ export function monthlySqlQueries(id){
 }
 export async function collectMonthlySql(e,deps){
  const {adapter,target}=assertMonthlySqlRequest(e);
- await deps.assertSource();await deps.assertLive(e.MONTHLY_SQL_BASE);
+ await deps.assertSource();await deps.assertLive(e.MONTHLY_SQL_LIVE);
  const checks=monthlySqlQueries(adapter.id);
  if(adapter.id==='support_consent'){
   const quote=s=>"'"+s.replaceAll("'","''")+"'";
@@ -93,8 +93,8 @@ export async function collectMonthlySql(e,deps){
  // One read-only repeatable-read snapshot for all checks; never call a DB RPC.
  const results=await deps.readSnapshot(checks.map(c=>c.query),target);
  if(!Array.isArray(results)||results.length!==checks.length||!checks.every((c,i)=>c.accept(results[i])))fail();
- await deps.assertLive(e.MONTHLY_SQL_BASE);await deps.assertSource();
- return {ADAPTER:adapter.id,PATH:adapter.path,SHA256:adapter.sqlSha256,TARGET:'production',PROJECT:'drqkpdvtbbrrdwmtrodz',BASE:e.MONTHLY_SQL_BASE,CANDIDATE:e.MONTHLY_SQL_CANDIDATE,TREE:e.MONTHLY_SQL_TREE,ACTION:'verify',STATE:'EXACT',RESULT:'verified'};
+ await deps.assertLive(e.MONTHLY_SQL_LIVE);await deps.assertSource();
+ return {ADAPTER:adapter.id,PATH:adapter.path,SHA256:adapter.sqlSha256,TARGET:'production',PROJECT:'drqkpdvtbbrrdwmtrodz',BASE:e.MONTHLY_SQL_BASE,LIVE:e.MONTHLY_SQL_LIVE,CANDIDATE:e.MONTHLY_SQL_CANDIDATE,TREE:e.MONTHLY_SQL_TREE,ACTION:'verify',STATE:'EXACT',RESULT:'verified'};
 }
 function run(){
  const e=process.env;assertMonthlySqlRequest(e);if(process.getuid()!==0)fail();

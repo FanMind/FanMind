@@ -28,3 +28,8 @@ Prior adapter head97cdd951 completed16/16CI records on identical tested tree0f56
 including native all-five schema checks and full monthly rehearsal step10s;
 whole CI43707583007 lasted8m59. Superseded for combined-head acceptance by1515 merge.
 No completed check is represented as final-head evidence before the new CI finishes.
+
+Final recovery audit corrected a source-only receipt renewal gap: original packagebase
+and observedlive are required separately; candidate-live requires inspected prior
+attempt approval, while the existing private state machine still validates identity
+and inspection time. New fresh-proof resume and negative cases; no target action.
