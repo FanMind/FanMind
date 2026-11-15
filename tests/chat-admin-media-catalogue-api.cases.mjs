@@ -10,14 +10,14 @@ import * as mutation from '../src/lib/httpMutationPolicy.mjs';
 import {WorkspaceAuthorizationError} from '../src/lib/workspaceAuthorizationPolicy.mjs';
 const id=n=>`10000000-0000-4000-8000-${String(n).padStart(12,'0')}`,w=id(1),c=id(2),folder=id(3),asset=id(4);
 function harness(options={}){
- const calls={writes:[],objects:[],normalized:0,auth:0};
+ const calls={writes:[],objects:[],normalized:0,auth:0,cleanup:0};
  const character={id:c,workspace_id:w,revision:1,status:'active',sales_playbook:defaultChatAdminSalesPlaybook()};
  const folders=[{id:folder,workspace_id:w,character_id:c,parent_id:null,kind:'image',name:'Wald',offer_id:'',price_rules:{negotiation_allowed:false,special_discounts_allowed:false},revision:1}];
  const assets=[{id:asset,workspace_id:w,character_id:c,revision:1,media_type:'image',folder_id:options.occupied?folder:null,deleted:false,offer_id:''}];
  const deps={
  'next/server':{NextResponse:class extends Response{static json(body,init){return Response.json(body,init);}}},
  '@/lib/chatAdmin':{requireChatAdminCapability:async()=>{calls.auth++;if(options.denied||options.revoke&&calls.auth>1)throw new WorkspaceAuthorizationError('denied','resource_forbidden');return {workspace:{id:w},user:{id:id(5)}};}},
- '@/lib/chatAdminMedia':{requireMediaCatalogue(){if(options.disabled)throw new policy.ChatAdminMediaError('media_catalogue_not_enabled');},mediaVideoEnabled:()=>options.video===true,assertMediaCharacter:async(ws,ch,rev)=>{if(ws!==w||ch!==c)throw new WorkspaceAuthorizationError('denied','resource_forbidden');if(rev!==undefined&&rev!==1)throw new policy.ChatAdminMediaError('stale_media_context');return character;},loadCharacterMedia:async()=>({assets,folders}),getMediaAsset:async(ws,ch,aid)=>{if(aid!==asset)throw new WorkspaceAuthorizationError('denied','resource_forbidden');return assets[0];},mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body)});return path.startsWith('rpc/')?true:[{...assets[0],id:JSON.parse(init.body).id}];},mediaObject:async(...args)=>{calls.objects.push(args);},updateMediaAsset:async()=>{}},
+ '@/lib/chatAdminMedia':{requireMediaCatalogue(){if(options.disabled)throw new policy.ChatAdminMediaError('media_catalogue_not_enabled');},mediaVideoEnabled:()=>options.video===true,assertMediaCharacter:async(ws,ch,rev)=>{if(ws!==w||ch!==c)throw new WorkspaceAuthorizationError('denied','resource_forbidden');if(rev!==undefined&&rev!==1)throw new policy.ChatAdminMediaError('stale_media_context');return character;},loadCharacterMedia:async()=>({assets,folders}),getMediaAsset:async(ws,ch,aid)=>{if(aid!==asset)throw new WorkspaceAuthorizationError('denied','resource_forbidden');return assets[0];},mediaRest:async(path,init)=>{calls.writes.push({path,body:JSON.parse(init.body)});return path.startsWith('rpc/')?true:[{...assets[0],id:JSON.parse(init.body).id}];},cleanupFailedMediaUpload:async()=>{calls.cleanup++;if(options.cleanupFails)throw Error('cleanup failed');},mediaObject:async(...args)=>{calls.objects.push(args);if(options.objectFails)throw Error('upload failed');},updateMediaAsset:async()=>{}},
  '@/lib/chatAdminMediaPolicy.mjs':policy,'@/lib/chatAdminMediaCatalogue.mjs':catalogue,
  '@/lib/chatAdminMediaImage':{normalizeMediaImage:async bytes=>{calls.normalized++;return bytes;}},'@/lib/chatAdminMediaVideo':{normalizeMediaVideo:async bytes=>{calls.normalized++;return {bytes,duration_ms:1000};}},
  '@/lib/httpMutationPolicy.mjs':mutation,'@/lib/workspaceAuthorization':{WorkspaceAuthorizationError},'@/lib/sharedRateLimit':{consumeSharedRateLimit:async()=>({allowed:!options.rateDenied})}};
@@ -63,4 +63,13 @@ test('HTTP failure classification handles proxy HTML without exposing raw respon
  }
  assert.deepEqual(await policy.readMediaMutationResponse(Response.json({error:'media_folder_not_empty'},{status:409})),{error:'media_folder_not_empty'});
  await assert.rejects(policy.readMediaMutationResponse(new Response('unexpected success')),/media_response_invalid/);
+});
+
+test('catalogue upload failure invokes verified cleanup and never reports success or hides uncertain cleanup',async()=>{
+ const upload={media_type:'image',folder_id:null,data:Buffer.from('synthetic').toString('base64'),rights_confirmed:true};
+ for(const cleanupFails of [false,true]){
+  const h=harness({objectFails:true,cleanupFails});const response=await h.route.POST(h.request(upload));
+  assert.equal(response.status,400);assert.equal(h.calls.cleanup,1);
+  assert.equal((await response.json()).error,cleanupFails?'media_cleanup_unverified':'media_upload_incomplete');
+ }
 });

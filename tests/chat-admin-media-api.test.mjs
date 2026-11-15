@@ -22,6 +22,7 @@ function harness(options={}){
   "@/lib/chatAdmin":{requireChatAdminCapability:async()=>{if(options.denied||options.revokeAfterProvider&&calls.providers)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return context;}},
   "@/lib/chatAdminMediaPolicy.mjs":mediaPolicy,
   "@/lib/chatAdminMedia":{
+   cleanupFailedMediaUpload:async()=>{},
    requireMediaEnabled(){if(options.disabled)throw new mediaPolicy.ChatAdminMediaError("media_not_enabled");},
    async assertMediaCharacter(workspaceId,characterId,expected){if(options.revokeAfterStorage&&calls.objects.length||workspaceId!==w||characterId!==c)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");if(expected!==undefined&&expected!==revision)throw new mediaPolicy.ChatAdminMediaError("stale_media_context");return character();},
    async getMediaAsset(workspaceId,characterId,assetId){if(workspaceId!==w||characterId!==c||assetId!==id)throw new WorkspaceAuthorizationError("Denied","resource_forbidden");return {...asset};},
@@ -143,3 +144,5 @@ test("Model portrait read fails closed for changed revision, missing object, inv
 
 test("authority revoked during Storage deletion keeps the metadata tombstone",async()=>{const h=harness({revokeAfterStorage:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,403);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.filter(call=>call.path).length,0);});
 test("metadata cleanup must acknowledge the exact row instead of silently accepting an RLS no-op",async()=>{const h=harness({emptyMetadataDelete:true});assert.equal((await h.route.DELETE(h.request({},"DELETE"))).status,400);assert.ok(h.asset.deleted);assert.equal(h.calls.writes.at(-1).headers.Prefer,"return=representation");});
+
+import "./chat-admin-media-storage-control.cases.mjs";

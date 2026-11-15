@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {storageFinalizationSource,STORAGE_FINALIZATION_SHA,STORAGE_FINALIZATION_PATH} from './chat-admin-media-storage-finalization.mjs';
 import {spawnSync} from 'node:child_process';
 import {readFileSync,rmSync} from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -11,6 +12,7 @@ export const RETENTION_PROOF_PATHS=['supabase/controlled','src/lib/environmentBo
 // catalogue and real retention results unchanged before/after each addition.
 // No existing-file change, unknown SQL, mode change or receipt rewrite is admitted.
 export const RETENTION_INDEPENDENT_ADDITIONS=Object.freeze({
+ [STORAGE_FINALIZATION_PATH]:STORAGE_FINALIZATION_SHA,
  'supabase/controlled/chat_admin_media_catalogue.sql':CATALOGUE_MEDIA_SHA256,
  'supabase/controlled/chat_admin_media_prices.sql':'9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4',
  'supabase/controlled/support_ai_consent.sql':'cd610fc3775b5d6e9f074b6f8af0125effd5bc360367bf992e5809b45c0f8e61',
@@ -45,7 +47,7 @@ export function mediaRuntimePreflightSql(source,commit,owner,retentionSource=com
   definitions.push(...additions);
  }
  const functions=[...new Map(definitions.map(item=>[item[1],item])).values()];
- const bodies=functions.map(([,name,body])=>`EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='${name}' AND md5(p.prosrc)='${createHash('md5').update(body).digest('hex')}' AND p.proconfig=ARRAY['search_path=""'])`).join(' AND ');
+ const bodies=functions.map(([,name,body])=>`EXISTS(SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='${name}' AND md5(p.prosrc) IN ('${createHash('md5').update(body).digest('hex')}'${schema.profile==='extended'&&name==='chat_admin_media_object_guard'?`, '${createHash('md5').update(storageFinalizationSource().body).digest('hex')}'`:''}) AND p.proconfig=ARRAY['search_path=""'])`).join(' AND ');
  return `BEGIN READ ONLY; SET LOCAL statement_timeout='10s';
  SELECT 1/(CASE WHEN
  (SELECT count(*) FROM public.support_centre_owners)=1 AND EXISTS(SELECT 1 FROM public.support_centre_owners WHERE user_id='${owner}')
