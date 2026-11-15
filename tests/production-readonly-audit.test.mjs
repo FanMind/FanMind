@@ -11,7 +11,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import yaml from "js-yaml";
 
-import { verifyProductionAuditOutput, verifyProductionRuntimeOutput } from "../scripts/operations/verify-production-audit-output.mjs";
+import { verifyProductionAuditOutput, verifyProductionRuntimeOutput, readTrackingProvenance, trackingGithubJson, decodeTrackingGithubResponse } from "../scripts/operations/verify-production-audit-output.mjs";
 import {
   BOOT_ROLES, bootNodeMatches, bootReadinessLines, bootSummaryFromValues, parseUnitProperties, readUnit,
   readSavedApp, runnerUnitFromCgroup, savedAppMatches, startupContract, releaseTargetMatches, runnerStartupMatches, runnerConfigurationMatches, runnerEndpointsMatch, loadedExecutableMatches,
@@ -27,6 +27,140 @@ import {completeChecks,REQUIRED_MAIN_CHECKS} from '../scripts/operations/product
 const auditScriptPath = "scripts/operations/read-only-production-audit.sh";
 const execFileAsync = promisify(execFile);
 const expectedCommit = "a".repeat(40);
+
+async function trackingFixture(t) {
+  const root = await mkdtemp(join(tmpdir(), "fanmind-tracking-"));
+  t.after(() => rm(root, {recursive:true,force:true}));
+  const git = async (...args) => (await execFileAsync('/usr/bin/git',['-C',root,...args], {
+    env:{PATH:'/usr/bin:/bin',LANG:'C',GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'},
+  })).stdout.trim();
+  await git('init','-b','main');
+  const commits=[];
+  for(let i=0;i<4;i++) {
+    await writeFile(join(root,'synthetic.txt'),`synthetic tracking fixture ${i}\n`);
+    await git('add','synthetic.txt');
+    await git('-c','user.name=Synthetic Fixture','-c','user.email=fixture@example.invalid','commit','-m',`fixture ${i}`);
+    commits.push(await git('rev-parse','HEAD'));
+  }
+  const [older,live,origin,anchor]=commits;
+  await git('remote','add','origin','https://github.com/FanMind/FanMind.git');
+  await git('update-ref','refs/remotes/origin/main',origin);
+  await git('checkout','--detach',live);
+  const requests=[];
+  const requestJson = endpoint => {
+    requests.push(endpoint);
+    if(endpoint==='/')return {id:1259448985,full_name:'FanMind/FanMind',default_branch:'main',fork:false,archived:false,disabled:false};
+    if(endpoint==='/git/ref/heads/main')return {ref:'refs/heads/main',object:{type:'commit',sha:anchor}};
+    const m=endpoint.match(/^\/compare\/([a-f0-9]{40})\.\.\.([a-f0-9]{40})\?per_page=1$/u);
+    assert.ok(m,'only fixed exact comparison endpoints');
+    const distance=commits.indexOf(m[2])-commits.indexOf(m[1]);
+    assert.ok(commits.includes(m[1])&&commits.includes(m[2])&&distance>=0);
+    return {base_commit:{sha:m[1]},merge_base_commit:{sha:m[1]},behind_by:0,ahead_by:distance,total_commits:distance,status:distance?'ahead':'identical'};
+  };
+  return {root,git,older,live,origin,anchor,requestJson,requests};
+}
+
+test('tracking HTTPS parser rejects redirects, errors, truncation, NUL and oversized responses',()=>{
+  assert.deepEqual(decodeTrackingGithubResponse('{"id":1259448985}\n200'),{id:1259448985});
+  for(const code of ['301','302','307','308','404','403','429','500'])assert.throws(()=>decodeTrackingGithubResponse('{"id":1259448985}\n'+code));
+  for(const value of ['', '{"id":\n200', '{"id":1}\0\n200', ' '.repeat(262144)+'\n200'])assert.throws(()=>decodeTrackingGithubResponse(value));
+});
+
+test('tracking provenance accepts independently bound current and historical Main references without fetching', async t => {
+  const f=await trackingFixture(t);
+  const before=await f.git('status','--porcelain');
+  const proof=readTrackingProvenance(f.live,f.origin,f);
+  assert.equal(proof.classification,'MAIN_ANCESTOR');assert.equal(proof.anchor,f.anchor);
+  assert.equal(f.requests.length,5);
+  await f.git('update-ref','refs/remotes/origin/main',f.anchor);
+  assert.equal(readTrackingProvenance(f.live,f.anchor,f).classification,'MAIN_EXACT');
+  assert.equal(await f.git('status','--porcelain'),before);
+  assert.equal(await f.git('rev-parse','HEAD'),f.live);
+});
+
+test('tracking provenance rejects missing, symbolic, noncommit, unknown and older-than-live references', async t => {
+  const f=await trackingFixture(t);
+  const check=origin=>assert.throws(()=>readTrackingProvenance(f.live,origin,f),/tracking_provenance_invalid/u);
+  for(const value of ['',f.origin.slice(0,12),'f'.repeat(40),f.older])check(value);
+  await f.git('update-ref','-d','refs/remotes/origin/main');check(f.origin);
+  await f.git('symbolic-ref','refs/remotes/origin/main','refs/heads/main');check(f.anchor);
+  await f.git('symbolic-ref','--delete','refs/remotes/origin/main');
+  const tree=await f.git('rev-parse',`${f.origin}^{tree}`);
+  await f.git('update-ref','refs/remotes/origin/main',tree);check(tree);
+  await f.git('-c','user.name=Synthetic Fixture','-c','user.email=fixture@example.invalid','tag','-a','synthetic-tag',f.origin,'-m','synthetic');
+  const tag=await f.git('rev-parse','refs/tags/synthetic-tag');
+  await f.git('update-ref','refs/remotes/origin/main',tag);check(tag);
+});
+
+test('tracking provenance rejects remote/config/object-database bypasses and changed local evidence', async t => {
+  const f=await trackingFixture(t);
+  const check=()=>assert.throws(()=>readTrackingProvenance(f.live,f.origin,f),/tracking_provenance_invalid/u);
+  for(const url of ['https://github.com/foreign/repo.git','https://secret@github.com/FanMind/FanMind.git','file:///tmp/foreign','https://github.com/FanMind/FanMind.git\n']){
+    await f.git('remote','set-url','origin',url);check();
+  }
+  await f.git('remote','set-url','origin','https://github.com/FanMind/FanMind.git');
+  await f.git('config','--add','remote.origin.url','');check();
+  await f.git('config','--replace-all','remote.origin.url','https://github.com/FanMind/FanMind.git');
+  for(const [key,value]of [['url.https://foreign/.insteadOf','https://github.com/'],['include.path','/nonexistent'],['remote.origin.promisor','true'],['extensions.partialClone','origin']]){
+    await f.git('config',key,value);check();await f.git('config','--unset',key);
+  }
+  for(const name of ['shallow','info/grafts','objects/info/alternates','objects/info/http-alternates','objects/pack/synthetic.promisor']){
+    const p=join(f.root,'.git',name);await mkdir(dirname(p),{recursive:true});await writeFile(p,'');check();await rm(p);
+  }
+  await f.git('replace',f.origin,f.anchor);check();await f.git('replace','-d',f.origin);
+  const mutateRef=e=>{
+    const result=f.requestJson(e);
+    if(e==='/')fs.writeFileSync(join(f.root,'.git','refs/remotes/origin/main'),f.anchor+'\n');
+    return result;
+  };
+  assert.throws(()=>readTrackingProvenance(f.live,f.origin,{root:f.root,requestJson:mutateRef}),/tracking_provenance_invalid/u);
+  await f.git('update-ref','refs/remotes/origin/main',f.origin);
+  const requestJson=endpoint=>{
+    const result=f.requestJson(endpoint);
+    if(endpoint==='/')fs.appendFileSync(join(f.root,'.git','config'),'\n[synthetic]\nchanged=true\n');
+    return result;
+  };
+  assert.throws(()=>readTrackingProvenance(f.live,f.origin,{root:f.root,requestJson}),/tracking_provenance_invalid/u);
+});
+
+test('tracking provenance rejects foreign or inconsistent GitHub metadata, unstable Main and unavailable evidence', async t => {
+  const f=await trackingFixture(t);
+  const changes=[
+    ['/',v=>({...v,id:1})],['/',v=>({...v,full_name:'foreign/repo'})],['/',v=>({...v,default_branch:'other'})],['/',v=>({...v,fork:true})],
+    ['/git/ref/heads/main',v=>({...v,ref:'refs/heads/other'})],['/git/ref/heads/main',v=>({...v,object:{type:'tag',sha:f.anchor}})],
+    ['/git/ref/heads/main',v=>({...v,object:{type:'commit',sha:''}})],
+    ['/compare/',v=>({...v,base_commit:{sha:f.older}})],['/compare/',v=>({...v,merge_base_commit:{sha:f.older}})],
+    ['/compare/',v=>({...v,behind_by:1})],['/compare/',v=>({...v,status:'diverged'})],['/compare/',v=>({...v,total_commits:999})],
+  ];
+  for(const [prefix,change]of changes){
+    const requestJson=e=>e.startsWith(prefix)?change(f.requestJson(e)):f.requestJson(e);
+    assert.throws(()=>readTrackingProvenance(f.live,f.origin,{root:f.root,requestJson}),/tracking_provenance_invalid/u);
+  }
+  let calls=0;
+  const unstable=e=>e==='/git/ref/heads/main'&&++calls===2?{ref:'refs/heads/main',object:{type:'commit',sha:f.origin}}:f.requestJson(e);
+  assert.throws(()=>readTrackingProvenance(f.live,f.origin,{root:f.root,requestJson:unstable}),/tracking_provenance_invalid/u);
+  for(const code of ['404','rate_limit','timeout','redirect','truncated_json'])
+    assert.throws(()=>readTrackingProvenance(f.live,f.origin,{root:f.root,requestJson:()=>{throw Error(code+' RAW_SECRET_CANARY');}}),/tracking_provenance_invalid$/u);
+  for(const endpoint of ['https://foreign/','//foreign','/compare/main...other','/git/ref/heads/main?token=secret'])assert.throws(()=>trackingGithubJson(endpoint));
+});
+
+test('historical tracking proof preserves strict live binding, backup gates, raw-claim rejection and candidate resume', async t => {
+  const f=await trackingFixture(t);
+  const raw=validAuditOutput({SERVER_HEAD:f.live,LIVE_RELEASE:f.live,ORIGIN_MAIN:f.origin});
+  const options={trackingReader:(live,origin)=>readTrackingProvenance(live,origin,f)};
+  assert.equal(verifyProductionAuditOutput(raw,f.live,options).tracking.classification,'MAIN_ANCESTOR');
+  for(const key of ['SERVER_HEAD','LIVE_RELEASE'])assert.throws(()=>verifyProductionAuditOutput(raw.replace(`${key}=${f.live}`,`${key}=${f.anchor}`),f.live,options),/release_drift/u);
+  assert.throws(()=>verifyProductionAuditOutput(raw.replace('age_hours=12.50','age_hours=99.00'),f.live,options),/backup_latest_stale_or_empty/u);
+  for(const altered of [raw.replace(`ORIGIN_MAIN=${f.origin}`,'ORIGIN_MAIN='),raw+`ORIGIN_MAIN=${f.origin}\n`,raw.replace(`ORIGIN_MAIN=${f.origin}`,'')])assert.throws(()=>verifyProductionAuditOutput(altered,f.live,options));
+  const unavailable={trackingReader:()=>{throw Error('unavailable');}};
+  assert.throws(()=>verifyProductionAuditOutput(raw+'TRACKING_OK=true\nTRACKING_PROVENANCE_VERSION=1\n',f.live,unavailable));
+  const proof=readTrackingProvenance(f.live,f.origin,f);
+  for(const forged of [{...proof,origin:f.anchor},{...proof,live:f.older},{...proof,repository:'foreign/repo'},{...proof,ref:'refs/heads/other'},{...proof,classification:'LIVE_EXACT'},{...proof,classification:'MAIN_EXACT'}])assert.throws(()=>verifyProductionAuditOutput(raw,f.live,{trackingReader:()=>forged}),/tracking_provenance_invalid/u);
+  const now=Date.now(),monthly=raw.replace(/^AUDIT_UTC=.*$/mu,`AUDIT_UTC=${new Date(now).toISOString().replace(/\.\d{3}Z$/u,'Z')}`);
+  assert.throws(()=>verifyReleaseAudit(monthly,f.live,f.anchor,now),/audit_origin/u,'third historical SHA remains blocked for monthly admission');
+  const exact=validAuditOutput();
+  assert.equal(verifyProductionAuditOutput(exact,expectedCommit,{trackingReader:()=>{throw Error('must not read provenance for exact identity');}}).tracking.classification,'LIVE_EXACT');
+});
 
 async function readAuditScript() {
   return readFile(auditScriptPath, "utf8");
@@ -1678,7 +1812,7 @@ test("release evidence diagnostics retain exact historical Production values and
   for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'])assert.match(stable.stdout,new RegExp('^AUDIT_DIAGNOSTIC_'+key+'='+expectedCommit+'$','mu'));
   const advanced=await runAuditWorkflow(t,validAuditOutput({ORIGIN_MAIN:main}),0,{eventName:'schedule',expected:''});
   assert.equal(advanced.code,1);
-  assert.match(advanced.stdout,/PRODUCTION_AUDIT_FAILURE_CODE=production_audit_release_drift/u);
+  assert.match(advanced.stdout,/PRODUCTION_AUDIT_FAILURE_CODE=production_audit_tracking_provenance_invalid/u);
   assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_SERVER_HEAD='+expectedCommit+'$','mu'));
   assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_ORIGIN_MAIN='+main+'$','mu'));
   assert.match(advanced.stdout,new RegExp('^AUDIT_DIAGNOSTIC_LIVE_RELEASE='+expectedCommit+'$','mu'));
@@ -1690,7 +1824,7 @@ test("release evidence diagnostics preserve real runtime/server drift and never 
   const other='b'.repeat(40);
   for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE']){
     const drift=await runAuditWorkflow(t,validAuditOutput({[key]:other}),0);
-    assert.equal(drift.code,1);assert.match(drift.stdout,/production_audit_release_drift/u);
+    assert.equal(drift.code,1);assert.match(drift.stdout,key==='ORIGIN_MAIN'?/production_audit_tracking_provenance_invalid/u:/production_audit_release_drift/u);
     assert.match(drift.stdout,new RegExp('^AUDIT_DIAGNOSTIC_'+key+'='+other+'$','mu'));
   }
   for(const key of ['SERVER_HEAD','ORIGIN_MAIN','LIVE_RELEASE'])for(const source of [
