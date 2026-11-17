@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { completeChecks, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "./production-release-preflight.mjs";
+import { completeChecks, readCompleteCheckRuns, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "./production-release-preflight.mjs";
 
 // Preparation only. No deploy, migration, provider or privileged subprocess.
 export const BUDGET_SECONDS = Object.freeze({ preflight: 600, deploy: 1200, tests: 900, closeout: 900 });
@@ -78,7 +78,7 @@ export async function collectEvidence(candidate, deploymentId, acceptanceIds, ge
     && acceptanceIds.every(id => Number.isSafeInteger(id) && id > 0)
     && new Set([deploymentId, ...acceptanceIds]).size === acceptanceIds.length + 1);
   const [branch, checks, prs, deployment] = await Promise.all([
-    get("branches/main"), get(`commits/${candidate}/check-runs?per_page=100`),
+    get("branches/main"), readCompleteCheckRuns(get, candidate),
     get(`commits/${candidate}/pulls?per_page=100`), get(`actions/runs/${deploymentId}`),
   ]);
   requireValue(branch.protected === true && branch.commit?.sha === candidate);
@@ -86,7 +86,7 @@ export async function collectEvidence(candidate, deploymentId, acceptanceIds, ge
   const pr = prs.find(value => value.merge_commit_sha === candidate && value.merged_at
     && value.base?.ref === "main" && value.head?.repo?.full_name === REPO && SHA.test(value.head?.sha));
   requireValue(!!pr);
-  requireValue(completeChecks(await get(`commits/${pr.head.sha}/check-runs?per_page=100`), REQUIRED_PR_CHECKS));
+  requireValue(completeChecks(await readCompleteCheckRuns(get, pr.head.sha), REQUIRED_PR_CHECKS));
   const staging = stagingRun(deployment, candidate, [".github/workflows/deploy-staging.yml"]);
   requireValue(deployment.id === deploymentId);
   await requireExecutedJob(deployment, get, "Deploy exact reviewed commit to isolated staging");

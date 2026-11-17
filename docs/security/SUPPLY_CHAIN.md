@@ -4,6 +4,18 @@
 
 FanMind behandelt GitHub Actions, npm-Abhängigkeiten, statische Sicherheitsanalyse und Software-Stücklisten als Teil der Production-Lieferkette. Änderungen werden ausschließlich über nachvollziehbare Pull Requests vorgenommen. Es gibt kein Auto-Merge für Dependency- oder Action-Updates.
 
+## Web-Patch-Prüfung vom 15. November 2026
+
+Der konsolidierte Source-PR #1456 bindet Next.js und eslint-config-next gemeinsam
+an 16.4.6. Die Root-Auditgrenze bleibt null. Eng begrenzte Entwicklerkorrekturen
+für brace-expansion, Zod und die minimatch-Abhängigkeit von typescript-estree
+verhindern neun aktuelle Auditbefunde ohne zusätzliche Ausnahme. Der letzte
+Zweig verwendet explizit minimatch 11.0.1 statt der betroffenen 10.x-Reihe;
+der vollständige ESLint-Lauf und der Next-Build bestätigen lokal die tatsächliche
+Werkzeugkompatibilität. Audit: null Befunde; zehn Policy-/Paketregressionen PASS.
+Dies ist Quellprüfung, keine Deployment- oder Production-Abnahme. Details und
+Grenzen: project-memory/receipts/web-patch-consolidation-20261115.md.
+
 ## Unveränderliche GitHub Actions
 
 Alle externen `uses:`-Referenzen in `.github/workflows` müssen auf einen vollständigen 40-stelligen Commit-SHA zeigen. Mutable Tags wie `@v4`, Branches wie `@main` oder verkürzte SHAs werden durch `scripts/verify-actions-pinned.mjs` fail-closed abgelehnt.
