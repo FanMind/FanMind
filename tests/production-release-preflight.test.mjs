@@ -2,7 +2,7 @@ import "./monthly-release-control.cases.mjs";
 import "./monthly-release-package.cases.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { evaluateProductionRelease, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
+import { evaluateProductionRelease, readCompleteCheckRuns, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
 const sha="a".repeat(40);
 const env={GITHUB_RUN_ID:"42",GITHUB_REPOSITORY:"FanMind/FanMind",GITHUB_REF:"refs/heads/main",GITHUB_EVENT_NAME:"workflow_dispatch",GITHUB_ACTOR_ID:"270165082",REVIEWED_MAIN_COMMIT:sha,GITHUB_SHA:sha,CONFIRMATION:"deploy-reviewed-chatadmin"};
 const run={id:42,head_sha:sha,path:".github/workflows/deploy-fanmind.yml",check_suite_id:420};
@@ -49,4 +49,56 @@ test("only the exact API-bound manual Staging media inspection is independent of
  assert.equal(evaluateProductionRelease(env,branch,missing,run,pr,prChecks,[evidence]),false);
  const sameNamedSource={...diagnostic,check_suite:{id:912}};
  assert.equal(evaluateProductionRelease(env,branch,{total_count:main.total_count+1,check_runs:[...main.check_runs,sameNamedSource]},run,pr,prChecks,[evidence]),false);
+});
+
+function manyChecks(count = 296) {
+ const required = payload(REQUIRED_MAIN_CHECKS).check_runs;
+ return [...required, ...Array.from({length: count - required.length}, (_,i) => ({
+  id: i + 100, name: `additional-${i}`, app:{slug:"github-actions"}, status:"completed", conclusion:"success"
+ }))];
+}
+function pagedGet(all, mutate = value => value) {
+ return async path => {
+  assert.match(path, new RegExp(`^commits/${sha}/check-runs\\?per_page=100&page=[1-9][0-9]*$`));
+  const page = Number(new URLSearchParams(path.split("?")[1]).get("page"));
+  return mutate({total_count: all.length, check_runs: structuredClone(all.slice((page-1)*100,page*100))},page);
+ };
+}
+test("complete multi-page inventories preserve required checks and failures beyond page one", async()=>{
+ const all = manyChecks();
+ const calls=[]; const get=pagedGet(all);
+ const result=await readCompleteCheckRuns(async path=>{calls.push(path);return get(path);},sha);
+ assert.equal(result.total_count,296); assert.equal(result.check_runs.length,296);
+ assert.equal(evaluate({},branch,result),true);
+ assert.deepEqual(calls.map(path=>path.split("page=").at(-1)),["1","2","3","1"]);
+ for(const index of [100,295]) {
+  const broken=structuredClone(all); broken[index].conclusion="failure";
+  assert.equal(evaluate({},branch,await readCompleteCheckRuns(pagedGet(broken),sha)),false);
+ }
+});
+test("incomplete, duplicate, drifting and oversized check inventories fail closed", async()=>{
+ const all=manyChecks();
+ for(const mutate of [
+  (p,n)=>n===2?{...p,check_runs:p.check_runs.slice(1)}:p,
+  (p,n)=>n===2?{...p,total_count:297}:p,
+  (p,n)=>n===2?{...p,check_runs:[all[0],...p.check_runs.slice(1)]}:p,
+  (p,n)=>n===3?{...p,check_runs:[]}:p,
+  (p,n)=>n===2?{...p,check_runs:[{...p.check_runs[0],id:0},...p.check_runs.slice(1)]}:p,
+ ]) await assert.rejects(readCompleteCheckRuns(pagedGet(all,mutate),sha));
+ let firstReads=0;
+ await assert.rejects(readCompleteCheckRuns(pagedGet(all,(p,n)=>{
+  if(n===1 && ++firstReads===2) p.check_runs[0].conclusion="failure";
+  return p;
+ }),sha));
+ for(const count of [0,1001,1.5]) await assert.rejects(readCompleteCheckRuns(async()=>({total_count:count,check_runs:[]}),sha));
+ await assert.rejects(readCompleteCheckRuns(pagedGet(all),"main"));
+ await assert.rejects(readCompleteCheckRuns(async()=>{throw Error("api_unavailable");},sha));
+});
+test("required checks on the last page are mandatory and must succeed", async()=>{
+ const all=manyChecks();
+ const required=all.splice(0,REQUIRED_MAIN_CHECKS.length); all.push(...required);
+ assert.equal(evaluate({},branch,await readCompleteCheckRuns(pagedGet(all),sha)),true);
+ const failed=structuredClone(all); failed.at(-1).conclusion="failure";
+ assert.equal(evaluate({},branch,await readCompleteCheckRuns(pagedGet(failed),sha)),false);
+ assert.equal(evaluate({},branch,await readCompleteCheckRuns(pagedGet(all.slice(0,-1)),sha)),false);
 });
