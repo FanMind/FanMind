@@ -207,7 +207,7 @@ raise SystemExit('unapproved fixture command: '+cmd)
   const repo = {full_name:'FanMind/FanMind'};
   const run = (id,path,begin,end) => ({id,path,repository:repo,head_sha:target,head_branch:'main',event:'workflow_dispatch',status:'completed',conclusion:'success',run_attempt:1,run_started_at:iso(begin),updated_at:iso(end)});
   const api = {
-    'branches/main':{protected:true,commit:{sha:target}}, [`commits/${target}/check-runs?per_page=100`]:checkPayload([...new Set([...REQUIRED_MAIN_CHECKS,...REQUIRED_PR_CHECKS])]),
+    'branches/main':{protected:true,commit:{sha:target}}, [`commits/${target}/check-runs?per_page=100&page=1`]:checkPayload([...new Set([...REQUIRED_MAIN_CHECKS,...REQUIRED_PR_CHECKS])]),
     [`commits/${target}/pulls?per_page=100`]:[{merge_commit_sha:target,merged_at:iso(-600000),base:{ref:'main'},head:{sha:target,repo}}],
     'actions/runs/1':run(1,'.github/workflows/deploy-staging.yml',-500000,-400000),
     'actions/runs/2':run(2,'.github/workflows/browser-e2e-staging.yml',-300000,-200000),
