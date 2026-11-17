@@ -369,15 +369,30 @@ test("setup retains anonymous, existing-workspace and deleted-demo redirects bef
 // historical consent: missing server evidence must still stop provider work.
 test("Checkout denies an incomplete Starter without server consent before any Stripe call", async () => {
   let stripeCalls = 0;
-  const user = { id: "synthetic-owner", user_metadata: { payment_terms_accepted: true, payment_terms_version: revision } };
-  const workspace = { id: "synthetic-workspace", owner_user_id: user.id, plan_id: "starter", commercial_option: "starter_paid_setup", billing_status: null };
+  const user = { id: "10000000-0000-4000-8000-000000000001", user_metadata: { payment_terms_accepted: true, payment_terms_version: revision } };
+  const workspace = { id: "20000000-0000-4000-8000-000000000002", owner_user_id: user.id, plan_id: "starter", commercial_option: "starter_paid_setup", billing_status: null };
+  const evidence = {};
+  runInNewContext(compile("src/lib/paymentTermsServerEvidence.ts"), {
+    exports: evidence, Date, AbortSignal, URLSearchParams,
+    process: { env: { NEXT_PUBLIC_SUPABASE_URL: "https://synthetic.invalid", SUPABASE_SERVICE_ROLE_KEY: "synthetic-not-a-key" } },
+    require(name) {
+      if (name === "server-only") return {};
+      if (name === "@/lib/paymentTermsActivationPolicy.mjs") return termsPolicy;
+      if (name === "@/lib/supabase/config") return { getSupabaseApiKeyHeaders: () => ({}) };
+      throw new Error(`Unexpected evidence dependency: ${name}`);
+    },
+    fetch: async (_url, options) => {
+      assert.equal(options.method, "GET");
+      return Response.json([{ ...workspace, payment_terms_version: null, payment_terms_accepted_at: null, payment_terms_accepted_by_user_id: null }]);
+    },
+  });
   const deps = {
     "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
     "@/lib/demoMode": { isDemoWorkspace: () => false, isTemporaryDemoUser: () => false },
     "@/lib/adminCrmAccessPolicy.mjs": { isAdminCrmAccessWorkspace: () => false },
     "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedMutationRequest: () => true },
     "@/lib/paymentTermsActivationPolicy.mjs": termsPolicy,
-    "@/lib/paymentTermsServerEvidence": { hasCurrentWorkspacePaymentTermsEvidence: async () => false },
+    "@/lib/paymentTermsServerEvidence": evidence,
     "@/lib/stripeBilling": {
       getStripeConfigStatus: () => ({ readyForCheckout: true }),
       resolveCheckoutPlan: () => ({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }),
