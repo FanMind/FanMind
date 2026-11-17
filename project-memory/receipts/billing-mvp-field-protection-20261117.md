@@ -36,3 +36,8 @@ FM-CONTRACT-REG-ENTITLEMENT-001/FM-IGATE-REG-ENTITLEMENT-001 and
 FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001 affected; none set ALLOW.
 Source-only rollback is ordinary revert. Target rollback is documented but
 not exercised here; do not regrant broad browser access after a real Apply.
+
+The actual monthly admission requires every changed SQL to have registered
+verify provenance (sql_not_verified otherwise). Reuse the existing protected
+read-only verifier with workspace_fields; no generic/new Applyworkflow. Its
+actual query participates in native positive and grant-mutation negative tests.

@@ -3,6 +3,8 @@
 R3 source preparation for the existing Owner Billing task #1518/#1524 and
 central #1512. Scope: existing Workspace ACL contract, its active source pin,
 focused existing regression suites and the existing ACL preparation runbook.
+Necessary read-only integration: existing monthly SQL verifier/registration/workflow;
+no Applycontroller. Detected sql_not_verified contract requires that exact adapter.
 No competing Billing PR found; #1500 Capacity work remains separate.
 
 State: SOURCE_PREPARED / DRAFT_PR_1536 / PRODUCTION_NOT_AUTHORIZED.

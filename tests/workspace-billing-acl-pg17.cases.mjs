@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { workspaceFieldProtectionStateSql } from "../scripts/operations/monthly-release-sql-verify.mjs";
 
 // Only the existing disposable CI PostgreSQL service is accepted. No URL,
 // Supabase credential, host database or target write is supported here.
@@ -87,6 +88,7 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
     sql(contract); // Actual reviewed field protection, disposable DB only.
     assert.equal(sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;"), dataBeforeContract);
     const secured = snapshot();
+    assert.equal(sql(workspaceFieldProtectionStateSql()), "t");
     await t.test("Owner and owning Creator retain all ten master-data updates", () => {
       for (const actor of [owner,creator]) for (const field of editable)
         assert.equal(as("authenticated",actor,`with changed as(update public.workspaces set ${field}='Synthetic' where id='${actor}' returning id) select count(*) from changed`),"1");
@@ -116,7 +118,10 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
     });
     await t.test("permission-widening mutation is detected, then original protection restored", () => {
       sql("grant update(billing_status) on public.workspaces to authenticated;");
-      try { assert.throws(() => denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`),assert.AssertionError); }
+      try {
+        assert.equal(sql(workspaceFieldProtectionStateSql()), "f");
+        assert.throws(() => denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`),assert.AssertionError);
+      }
       finally { sql("revoke update(billing_status) on public.workspaces from authenticated;"); }
       denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`);
       assert.equal(snapshot(),secured);

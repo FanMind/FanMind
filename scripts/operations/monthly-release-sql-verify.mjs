@@ -60,9 +60,36 @@ export function monthlyPriceStructureSql(){
  AND NOT EXISTS(SELECT FROM pg_trigger WHERE tgrelid IN(to_regclass('fanmind_media_price_evidence.revisions'),to_regclass('fanmind_media_price_evidence.offers')) AND NOT tgisinternal)
  THEN 1 ELSE 0 END);`;
 }
+// No application rows or RPCs: prove the complete effective field boundary.
+export function workspaceFieldProtectionStateSql(){
+ const editable="ARRAY['name','organization_name','street_address','postal_code','city','country','vat_id','tax_number','company_register_number','company_register_court']::text[]";
+ return `SELECT (
+ EXISTS(SELECT FROM pg_class WHERE oid='public.workspaces'::regclass AND relkind='r' AND relrowsecurity AND relowner='postgres'::regrole)
+ AND NOT has_table_privilege('anon','public.workspaces','INSERT')
+ AND NOT has_table_privilege('authenticated','public.workspaces','INSERT')
+ AND has_table_privilege('service_role','public.workspaces','INSERT')
+ AND has_table_privilege('service_role','public.workspaces','UPDATE')
+ AND (SELECT count(*) FROM pg_attribute WHERE attrelid='public.workspaces'::regclass AND attnum>0 AND NOT attisdropped AND attname::text=ANY(${editable}))=10
+ AND NOT EXISTS(SELECT FROM pg_attribute a WHERE a.attrelid='public.workspaces'::regclass AND a.attnum>0 AND NOT a.attisdropped AND (
+  has_column_privilege('anon','public.workspaces',a.attname,'INSERT') OR has_column_privilege('authenticated','public.workspaces',a.attname,'INSERT')
+  OR has_column_privilege('anon','public.workspaces',a.attname,'UPDATE')
+  OR has_column_privilege('authenticated','public.workspaces',a.attname,'UPDATE') IS DISTINCT FROM (a.attname::text=ANY(${editable}))))
+ AND (SELECT count(*) FROM pg_policy p WHERE p.polrelid='public.workspaces'::regclass
+  AND p.polname IN('workspaces_update_owner','workspaces_update_owner_boundary') AND p.polcmd='w'
+  AND p.polroles=ARRAY['authenticated'::regrole::oid]
+  AND p.polpermissive=(p.polname='workspaces_update_owner')
+  AND pg_get_expr(p.polqual,p.polrelid)='(owner_user_id = auth.uid())'
+  AND pg_get_expr(p.polwithcheck,p.polrelid)='(owner_user_id = auth.uid())')=2
+ AND EXISTS(SELECT FROM pg_policy p WHERE p.polrelid='public.workspaces'::regclass AND p.polname='admin_crm_entitlement_boundary'
+  AND NOT p.polpermissive AND p.polcmd='*' AND p.polroles=ARRAY['authenticated'::regrole::oid]
+  AND pg_get_expr(p.polqual,p.polrelid)='admin_crm_read_allowed(id)'
+  AND pg_get_expr(p.polwithcheck,p.polrelid)='admin_crm_read_allowed(id)')
+ );`;
+}
 export function monthlySqlQueries(id){
  const adapter=sqlAdapter(id);
  if(sha256(readFileSync(adapter.path))!==adapter.sqlSha256)fail();
+ if(id==='workspace_fields')return [{query:workspaceFieldProtectionStateSql(),accept:raw=>raw==='t'}];
  if(id==='capacity_writer'){
   sourcePackage();const ref=JSON.parse(readFileSync(REFERENCE,'utf8'));
   if(sha256(JSON.stringify(ref.catalogue))!==ref.catalogue_sha256)fail();

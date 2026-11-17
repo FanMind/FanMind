@@ -67,6 +67,28 @@ Kein NULL-Wert wird zu aktiv/default/bezahlt umgedeutet. Admin-CRM bleibt
 kostenlos und wird vor Checkout abgewiesen. Keine Provider-/Preis-/Steuer-
 oder Vertragsaktivierung durch diesen Schritt.
 
+### Bestehender geschützter Postflightkanal
+
+Der notwendige `workspace_fields`-Adapter ergänzt ausschließlich den vorhandenen
+monthly-release-sql-verify.yml. Seine Main-/Owner-/Production-Environment-/
+Quell-/Live-/Hash-/Hostlock- und READ ONLY-Snapshotgrenzen bleiben unverändert.
+SQL_PROOFS registriert genau die aktuelle Datei/Hash für die echte Provenienz-
+prüfung und das gemeinsame Releasepaket. Kein Applymodus hinzugefügt.
+Der Katalogprüfer liest keine Workspacezeilen und ruft keine RPC auf: alle
+aktuellen Spaltenrechte,10 erlaubte Ownerfelder,service_role,RLS sowie beide
+Ownerpolicies und die bestehende restrictive CRMpolicy müssen exakt passen.
+Die native ACLsuite prüft den echten Adapter nach Apply und nach mutiertem
+Billinggrant; bloße Successstrings oder manuelle Receipts reichen nicht.
+
+Späterer Verifyinput nach genehmigtem Apply: adapter=workspace_fields,
+reviewed_commit=exakter dann aktueller freigegebener Main,
+production_base_commit=exakt gebundene ursprüngliche Productionbase,
+expected_live_commit=unabhängig gemessene Base oder derselbe Kandidat,
+sql_sha256=a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b,
+confirmation=verify-monthly-sql-only. Keine dieser Variablen wurde gesetzt,
+kein geschützter Workflow dispatcht. Root-/Verifierclosure muss die bestehende
+Monatskoordination zusammen mit ihrer ohnehin nötigen Closurebindung übernehmen.
+
 ### Vorhandener Kanal, genaue Freigabegrenze
 
 Das alte Runbook dokumentiert die kontrollierte Supabase-SQL-Umgebung bzw.
