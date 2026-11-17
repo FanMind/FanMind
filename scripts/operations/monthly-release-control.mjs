@@ -49,6 +49,7 @@ export function extractProductionBody(text) {
 }
 
 export const SQL_PROOFS = Object.freeze({
+  'supabase/controlled/workspace_server_owned_columns_mvp.sql': { sqlSha256: 'a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'workspace_fields' },
   'supabase/controlled/ai_capacity_entitlement_writer.sql': { sqlSha256: '536c15017c53a979d876d3b1174caecfbfb719ff49fc7b0262d174b1bb0128dc', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'capacity_writer' },
   'supabase/controlled/chat_admin_media_catalogue.sql': { sqlSha256: '47220fcf870d70ac6fa9c64c8305c4b9170df374fe0610293d14d274c09a150e', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'media_catalogue' },
   'supabase/controlled/chat_admin_media_prices.sql': { sqlSha256: '9c6a323c27821bf10ef24a96fe1ff318da8375d7352b712cbfe28994c7e444d4', workflow: '.github/workflows/monthly-release-sql-verify.yml', prefix: 'MONTHLY_SQL', evidenceVersion: 2, id: 'media_prices' },

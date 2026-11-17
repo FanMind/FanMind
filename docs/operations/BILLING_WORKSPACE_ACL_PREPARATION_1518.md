@@ -1,5 +1,128 @@
 # Billing #1518: vorhandene Workspace-Berechtigungsgrenze vorbereiten
 
+## MVP-Fortsetzung 17. November 2026 — Feldschutz ohne Vertragsreparatur
+
+**SOURCE PREPARED / TARGET UNCHANGED.** Diese Revision ersetzt für den
+bestehenden kostenlosen/gekündigten MVP-Umfang die historische Forderung,
+vor dem ACL-Schritt alle Starter-Annahmen oder NULL-Billingwerte zu reparieren.
+Sie ist keine Freigabe für bezahlte Neuaufnahme oder Production-SQL.
+
+### Neue autoritative Einordnung
+
+Nur ergänzende READ-ONLY-Belege zur übernommenen Analyse #1512/6948511874:
+Ein erfolgreicher `admin_crm_access_change`-Auditeintrag mit Actor belegt für
+den kostenlosen Workspace `next_access=Dauerhaft kostenlos`. Der unvollständige
+Workspace hat keine eigene Vertrags-/Grant-Auditspur und keine Demo-Session;
+seine bestätigte Owneridentität ist Actor erfolgreicher geschützter Adminaktionen
+(CRM-Zugang und Backupaufträge). Das belegt administrative Nutzung, weder
+Zahlungsannahme noch einen bezahlten Vertrag. Keine Identitäten veröffentlichen.
+Beide Workspacezeilen bleiben unverändert; fehlende Werte bleiben fehlend.
+
+### Exakt notwendige Änderung am bestehenden Verfahren
+
+Die erste DO-Klausel der historischen kontrollierten Contractdatei machte
+Berechtigungsentzug von historischen Zahlungsannahmen abhängig. Sie entfällt
+im reinen Feldschutzschritt. Kein Permission-Postflight, keine RLS-Grenze und
+kein Checkout-Consentguard wird entfernt. Die DDL ab ENABLE ROW LEVEL SECURITY
+ist bytegleich. Ergänzt sind Transaktions-Advisorylock, SHARE ROW EXCLUSIVE
+auf workspaces, lock_timeout5s und statement_timeout60s.
+
+Neue SQL-SHA256: `a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b`.
+Alter historischer Hash: a015aabfa4f7ac778f3159fbd5e2a3126cd56c86571c8def946c5f4998ad8591.
+Die aktive Revision ist `supabase/controlled/workspace_server_owned_columns_mvp.sql`.
+Der Workspace-Recoverygenerator pinnt diese aktuelle Revision. Die historische
+Datei20260726121000 und die akzeptierten Creator-Parentpins bleiben bytegleich:
+CI wies deren unveränderliche parent_profile_contract-Bindung nach. Das ist eine
+versionierte Korrektur desselben ACLverfahrens, kein zweiter aktiver Billingpfad.
+Historische Receipts und Creator-Transitionvertrauenswurzeln bleiben unverändert.
+Recovery-SQL bleibt bytegleich93d1cfd9120c2df8c11a8ef7755a72d5385045056702b5cda771c913d5ddd335.
+
+### Kleinster MVP-Scope und Kompatibilität
+
+Nur die oben benannte aktuelle Contractrevision anwenden, keine automatische Struktur-Recovery/Expand-
+Migration. Aktuelle produktive Aufrufer von ensureUserWorkspace sind genau
+/api/register/workspace und workspace/setup; beide verwenden den gemeinsamen
+Trusted-Parser. Dieser lässt nur Daily zu, dessen Provisionierung getrennt
+service-only erfolgt. Bestehende Ownerworkspaces werden direkt gelesen;
+feste/temporäre Demo verwenden bestehende serverseitige Servicewriter.
+Darum ist die fehlende allgemeine RPC für diesen Scope keine Voraussetzung.
+Neue Legacy-Starter bleiben gesperrt; freie Paketvormerkung startet kein Abo.
+
+Die JWT-Identität, RLS-Lesepolicies und Memberzugriffe werden nicht geändert.
+Browser verlieren direktes Workspace-INSERT und sämtliche kommerziellen
+UPDATEs; genau zehn bestehende Stammdatenfelder bleiben Owner-editierbar.
+service_role behält INSERT/UPDATE für bestehende Stripe-/Admin-/Demopfade.
+Vorhandene Staging- und PG17-Nachweise übernehmen; neue native Prüfung betrifft
+nur die geänderte Contractrevision und ihre Zeilenunverändertheit.
+Keine frische Live-JWT-/Browserabnahme wird aus SET ROLE oder Sourceprüfung
+behauptet. Nach Apply bestehenden Login und vorhandenen Ownerworkspace prüfen;
+keinen neuen Produktionskunden und keine Demo zum Test anlegen.
+
+Der unvollständige Starter darf im UI einen Checkoutknopf erhalten; die
+entscheidende tatsächliche Checkoutroute verlangt trotzdem
+hasCurrentWorkspacePaymentTermsEvidence und antwortet ohne Serverbeleg409,
+bevor Stripe aufgerufen wird. Ein neuer gezielter Test führt diese echte Route
+mit vorhandenem Workspace, fehlendem Beleg und gefälschten Usermetadaten aus.
+Kein NULL-Wert wird zu aktiv/default/bezahlt umgedeutet. Admin-CRM bleibt
+kostenlos und wird vor Checkout abgewiesen. Keine Provider-/Preis-/Steuer-
+oder Vertragsaktivierung durch diesen Schritt.
+
+### Bestehender geschützter Postflightkanal
+
+Der notwendige `workspace_fields`-Adapter ergänzt ausschließlich den vorhandenen
+monthly-release-sql-verify.yml. Seine Main-/Owner-/Production-Environment-/
+Quell-/Live-/Hash-/Hostlock- und READ ONLY-Snapshotgrenzen bleiben unverändert.
+SQL_PROOFS registriert genau die aktuelle Datei/Hash für die echte Provenienz-
+prüfung und das gemeinsame Releasepaket. Kein Applymodus hinzugefügt.
+Der Katalogprüfer liest keine Workspacezeilen und ruft keine RPC auf: alle
+aktuellen Spaltenrechte,10 erlaubte Ownerfelder,service_role,RLS sowie beide
+Ownerpolicies und die bestehende restrictive CRMpolicy müssen exakt passen.
+Die native ACLsuite prüft den echten Adapter nach Apply und nach mutiertem
+Billinggrant; bloße Successstrings oder manuelle Receipts reichen nicht.
+
+Späterer Verifyinput nach genehmigtem Apply: adapter=workspace_fields,
+reviewed_commit=exakter dann aktueller freigegebener Main,
+production_base_commit=exakt gebundene ursprüngliche Productionbase,
+expected_live_commit=unabhängig gemessene Base oder derselbe Kandidat,
+sql_sha256=a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b,
+confirmation=verify-monthly-sql-only. Keine dieser Variablen wurde gesetzt,
+kein geschützter Workflow dispatcht. Root-/Verifierclosure muss die bestehende
+Monatskoordination zusammen mit ihrer ohnehin nötigen Closurebindung übernehmen.
+
+### Vorhandener Kanal, genaue Freigabegrenze
+
+Das alte Runbook dokumentiert die kontrollierte Supabase-SQL-Umgebung bzw.
+psql mit ON_ERROR_STOP, keinen Billing-Production-Workflow. Die bestehende
+Supabase-Verbindung ist lesend auf drqkpdvtbbrrdwmtrodz/PostgreSQL17 als postgres
+nachgewiesen. Eine spätere exakt genehmigte Ausführung über diesen bestehenden
+SQL-Zugang muss die Originaldateibytes in einer Transaktion ausführen; kein
+apply_migration/db push und kein fremder Fachworkflow. Der aktuelle Auftrag
+enthält keine solche Schreibfreigabe. Ein neuer automatischer Applycontroller
+ist nicht Teil dieses Vorschlags; keine zusätzliche Infrastruktur.
+
+Vor Freigabe endgültigen geprüften Commit, SQLhash, tatsächliche Liveversion,
+Backup-/Recoverybelege aus #1350 sowie den konkret ausgewählten bestehenden
+SQL-Zugang in #1512 binden. Vor Ausführung private ACL-/Policy-Istbytes sichern,
+PG17/Principal/Target und Liveversion prüfen; lock/statement timeout sind bereits
+SQLgebunden. Unbekannte Abweichung vor DDL abbrechen. Keine privaten Daten im Git.
+
+Postflight: alle aktuellen Spalten auf effektive INSERT/UPDATE für anon und
+authenticated prüfen (INSERT=false, UPDATE nur die zehn Stammdatenfelder),
+service_role INSERT/UPDATE erhalten, RLS aktiv, Owner-USING/WITH CHECK plus
+restrictive Ownerpolicy und bestehende CRMpolicy erhalten. Zusätzlich den
+privaten Vorher/Nachher-Workspacebestand auf unveränderte Daten prüfen.
+Bei Fehler vor COMMIT volle Transaktionsrückkehr. Bei unklarem COMMIT zuerst
+lesen; nie blind wiederholen. Nach COMMIT kontrollierte Vorwärtsreparatur,
+kein GRANT ALL, kein Datenrestore oder automatisches Wiederöffnen von Billing.
+
+Betroffen: FM-CONTRACT-REG-ENTITLEMENT-001/FM-IGATE-REG-ENTITLEMENT-001 und
+FM-CONTRACT-AI-BILLING-001/FM-IGATE-AI-BILLING-001. Source-PASS ist kein Apply-PASS;
+kein Integrationgate auf ALLOW setzen. Die historischen Abschnitte unten
+beschreiben den vorherigen Stand und erteilen keine aktuelle Ausführungsfreigabe.
+
+---
+
+
 Stand: 15. November 2026. **PREPARED / PRODUCTION APPLY BLOCKED**.
 Keine Production-SQL-Anwendung, Migration, Runtime-/Preis-/Secretänderung.
 Der erfolgreiche Live-Webhook22/22-Nachweis bleibt abgeschlossen.

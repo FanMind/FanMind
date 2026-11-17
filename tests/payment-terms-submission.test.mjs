@@ -364,3 +364,56 @@ test("setup retains anonymous, existing-workspace and deleted-demo redirects bef
     assert.equal(h.calls.length, 0);
   }
 });
+
+// Exercise the actual Checkout route after field protection is decoupled from
+// historical consent: missing server evidence must still stop provider work.
+test("Checkout denies an incomplete Starter without server consent before any Stripe call", async () => {
+  let stripeCalls = 0;
+  const user = { id: "10000000-0000-4000-8000-000000000001", user_metadata: { payment_terms_accepted: true, payment_terms_version: revision } };
+  const workspace = { id: "20000000-0000-4000-8000-000000000002", owner_user_id: user.id, plan_id: "starter", commercial_option: "starter_paid_setup", billing_status: null };
+  const evidence = {};
+  runInNewContext(compile("src/lib/paymentTermsServerEvidence.ts"), {
+    exports: evidence, Date, AbortSignal, URLSearchParams,
+    process: { env: { NEXT_PUBLIC_SUPABASE_URL: "https://synthetic.invalid", SUPABASE_SERVICE_ROLE_KEY: "synthetic-not-a-key" } },
+    require(name) {
+      if (name === "server-only") return {};
+      if (name === "@/lib/paymentTermsActivationPolicy.mjs") return termsPolicy;
+      if (name === "@/lib/supabase/config") return { getSupabaseApiKeyHeaders: () => ({}) };
+      throw new Error(`Unexpected evidence dependency: ${name}`);
+    },
+    fetch: async (_url, options) => {
+      assert.equal(options.method, "GET");
+      return Response.json([{ ...workspace, payment_terms_version: null, payment_terms_accepted_at: null, payment_terms_accepted_by_user_id: null }]);
+    },
+  });
+  const deps = {
+    "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
+    "@/lib/demoMode": { isDemoWorkspace: () => false, isTemporaryDemoUser: () => false },
+    "@/lib/adminCrmAccessPolicy.mjs": { isAdminCrmAccessWorkspace: () => false },
+    "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedMutationRequest: () => true },
+    "@/lib/paymentTermsActivationPolicy.mjs": termsPolicy,
+    "@/lib/paymentTermsServerEvidence": evidence,
+    "@/lib/stripeBilling": {
+      getStripeConfigStatus: () => ({ readyForCheckout: true }),
+      resolveCheckoutPlan: () => ({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }),
+      createStripeCheckoutSession: async () => { stripeCalls++; throw new Error("Unexpected Stripe call"); },
+    },
+    "@/lib/stripeBillingWriteFreeze.mjs": { isStripeBillingWriteFrozen: () => false },
+    "@/lib/internalDailyTestReadinessPolicy.mjs": {},
+    "@/lib/runtimeProductSettings": {},
+    "@/lib/supabase/server": {
+      getSupabaseServerUser: async () => ({ data: { user } }),
+      getUserWorkspaceDashboard: async () => ({ workspace }),
+    },
+  };
+  const exports = {};
+  runInNewContext(compile("src/app/api/billing/checkout/route.ts"), {
+    exports, Response, process: { env: {} },
+    require(name) { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; },
+    fetch() { throw new Error("Unexpected network access"); },
+  });
+  const response = await exports.POST(request({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }));
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).code, termsPolicy.PAYMENT_TERMS_ACTIVATION_BLOCK_CODE);
+  assert.equal(stripeCalls, 0);
+});
