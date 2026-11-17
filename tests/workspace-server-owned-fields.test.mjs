@@ -633,10 +633,10 @@ test("workspace privileges expose exactly ten owner-editable columns", async () 
     migration,
     /workspace_privilege_rls_boundary_failed[\s\S]*has_table_privilege\([\s\S]*workspace_privilege_insert_boundary_failed[\s\S]*has_column_privilege\([\s\S]*'INSERT'[\s\S]*has_column_privilege\([\s\S]*'UPDATE'[\s\S]*workspace_privilege_column_boundary_failed/u,
   );
-  assert.match(
-    migration,
-    /plan_id = 'starter'[\s\S]*starter_paid_setup[\s\S]*starter_no_setup_commitment[\s\S]*payment_terms_version is distinct from '2026-06-v1'[\s\S]*payment_terms_accepted_at is null[\s\S]*2026-06-01 00:00:00\+00[\s\S]*statement_timestamp\(\) \+ interval '5 minutes'[\s\S]*payment_terms_accepted_by_user_id is distinct from owner_user_id[\s\S]*workspace_payment_terms_evidence_missing/u,
-  );
+  assert.doesNotMatch(migration, /workspace_payment_terms_evidence_missing|update public\.workspaces set|insert into public\.workspaces/iu);
+  assert.match(migration, /set local lock_timeout = '5s';/u);
+  assert.match(migration, /set local statement_timeout = '60s';/u);
+  assert.match(migration, /lock table public\.workspaces in share row exclusive mode/u);
 });
 
 test("registration and login provisioning are server-owned and only bridge an exact missing RPC", async () => {

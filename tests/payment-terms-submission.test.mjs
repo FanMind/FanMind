@@ -364,3 +364,41 @@ test("setup retains anonymous, existing-workspace and deleted-demo redirects bef
     assert.equal(h.calls.length, 0);
   }
 });
+
+// Exercise the actual Checkout route after field protection is decoupled from
+// historical consent: missing server evidence must still stop provider work.
+test("Checkout denies an incomplete Starter without server consent before any Stripe call", async () => {
+  let stripeCalls = 0;
+  const user = { id: "synthetic-owner", user_metadata: { payment_terms_accepted: true, payment_terms_version: revision } };
+  const workspace = { id: "synthetic-workspace", owner_user_id: user.id, plan_id: "starter", commercial_option: "starter_paid_setup", billing_status: null };
+  const deps = {
+    "next/server": { NextResponse: { json: (body, init) => Response.json(body, init) } },
+    "@/lib/demoMode": { isDemoWorkspace: () => false, isTemporaryDemoUser: () => false },
+    "@/lib/adminCrmAccessPolicy.mjs": { isAdminCrmAccessWorkspace: () => false },
+    "@/lib/httpMutationPolicy.mjs": { ...mutationPolicy, isTrustedMutationRequest: () => true },
+    "@/lib/paymentTermsActivationPolicy.mjs": termsPolicy,
+    "@/lib/paymentTermsServerEvidence": { hasCurrentWorkspacePaymentTermsEvidence: async () => false },
+    "@/lib/stripeBilling": {
+      getStripeConfigStatus: () => ({ readyForCheckout: true }),
+      resolveCheckoutPlan: () => ({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }),
+      createStripeCheckoutSession: async () => { stripeCalls++; throw new Error("Unexpected Stripe call"); },
+    },
+    "@/lib/stripeBillingWriteFreeze.mjs": { isStripeBillingWriteFrozen: () => false },
+    "@/lib/internalDailyTestReadinessPolicy.mjs": {},
+    "@/lib/runtimeProductSettings": {},
+    "@/lib/supabase/server": {
+      getSupabaseServerUser: async () => ({ data: { user } }),
+      getUserWorkspaceDashboard: async () => ({ workspace }),
+    },
+  };
+  const exports = {};
+  runInNewContext(compile("src/app/api/billing/checkout/route.ts"), {
+    exports, Response, process: { env: {} },
+    require(name) { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; },
+    fetch() { throw new Error("Unexpected network access"); },
+  });
+  const response = await exports.POST(request({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }));
+  assert.equal(response.status, 409);
+  assert.equal((await response.json()).code, termsPolicy.PAYMENT_TERMS_ACTIVATION_BLOCK_CODE);
+  assert.equal(stripeCalls, 0);
+});

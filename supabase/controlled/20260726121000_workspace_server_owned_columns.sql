@@ -2,41 +2,23 @@
 -- fields. This file intentionally lives outside supabase/migrations so a
 -- generic `supabase db push` cannot collapse the two-stage rollout.
 --
--- Apply only after 20260726120000 and the RPC-compatible application release
--- have passed registration, login-backfill and both demo-path verifications.
+-- Apply only with an exactly reviewed compatible application and the existing
+-- protected SQL approval. This field-protection step does not enable admission.
 
 begin;
 
--- A Workspace created by the exact missing-column compatibility fallback can
--- legitimately lack the Step-A payment-terms columns. Never close the direct
--- write path until every productive Starter has trusted acceptance evidence.
-do $$
-begin
-  if exists (
-    select 1
-      from public.workspaces
-     where plan_id = 'starter'
-       and commercial_option in (
-         'starter_paid_setup',
-         'starter_no_setup_commitment'
-       )
-       and (
-         payment_terms_version is distinct from '2026-06-v1'
-         or payment_terms_accepted_at is null
-         or payment_terms_accepted_at <
-           timestamptz '2026-06-01 00:00:00+00'
-         or payment_terms_accepted_at >
-           statement_timestamp() + interval '5 minutes'
-         or payment_terms_accepted_by_user_id is distinct from owner_user_id
-       )
-  ) then
-    raise exception
-      using
-        errcode = '23514',
-        message = 'workspace_payment_terms_evidence_missing';
-  end if;
-end
-$$;
+-- This transaction closes browser privileges only. Historical consent is not
+-- repaired, inferred or required to restrict writes. Free Admin-CRM accounts
+-- and incomplete inactive accounts must not keep writable commercial fields.
+-- Paid activation remains separately guarded by the existing server-side
+-- hasCurrentWorkspacePaymentTermsEvidence check at every public Checkout
+-- entry point. This SQL grants no entitlement and changes no customer row.
+-- Apply only with the reviewed app that rejects new legacy Starter admission;
+-- Daily and both demo paths retain their existing service-only writers.
+set local lock_timeout = '5s';
+set local statement_timeout = '60s';
+select pg_advisory_xact_lock(hashtextextended('fanmind-workspace-field-protection-v1', 0));
+lock table public.workspaces in share row exclusive mode;
 
 alter table public.workspaces enable row level security;
 

@@ -70,20 +70,22 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
       for (const [field,value] of Object.entries(fields)) assert.equal(as("authenticated",owner,`with changed as(update public.workspaces set ${field}=${value} where id='${owner}' returning id) select count(*) from changed`),"1");
     });
     const before = snapshot();
-    await t.test("missing legacy acceptance evidence aborts before any privilege change", () => {
+    await t.test("field protection preserves missing legacy evidence and all customer data", () => {
       sql(`update public.workspaces set plan_id='starter',commercial_option='starter_paid_setup',payment_terms_version=null where id='${owner}';`);
-      try {
-        assert.throws(() => sql(contract), e => /workspace_payment_terms_evidence_missing/u.test(String(e.stderr)));
-        assert.equal(snapshot(),before);
-      } finally {
-        sql(`update public.workspaces set plan_id='capacity_199',commercial_option='capacity_199' where id='${owner}';`);
-      }
+      const rows = () => sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;");
+      const dataBefore = rows();
+      // Actual revised contract, rollback-only: no synthetic consent backfill.
+      sql(`begin;${contractBody}rollback;`);
+      assert.equal(rows(), dataBefore);
+      assert.equal(snapshot(), before);
     });
     await t.test("rollback rehearsal restores exact ACLs, column grants and policies", () => {
       sql(`begin;${contractBody}rollback;`);
       assert.equal(snapshot(), before);
     });
-    sql(contract); // Actual existing controlled SQL, unchanged, disposable DB only.
+    const dataBeforeContract = sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;");
+    sql(contract); // Actual reviewed field protection, disposable DB only.
+    assert.equal(sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;"), dataBeforeContract);
     const secured = snapshot();
     await t.test("Owner and owning Creator retain all ten master-data updates", () => {
       for (const actor of [owner,creator]) for (const field of editable)

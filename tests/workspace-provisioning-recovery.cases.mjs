@@ -116,7 +116,7 @@ test("structural recovery executes against existing contracts in isolated Postgr
       assert.equal(sql("select count(*) from pg_proc where pronamespace='public'::regnamespace and prosecdef;"),"0");
       assert.deepEqual(state(),{owner_unique:true,membership_unique:true,rpc_exact:true});
       denied(() => sql(recovery),"workspace_recovery_rpc_already_present");assert.equal(data(),baseline);
-      denied(() => sql(contract),"workspace_payment_terms_evidence_missing");assert.equal(data(),baseline);
+      sql(contract.replace(/commit;\s*$/u,"rollback;"));assert.equal(data(),baseline);
     });
     await t.test("owning Owner/Creator get only their existing Workspace and no supplied commercial mutation", () => {
       for (const actor of [owner,creator]) {
@@ -155,10 +155,10 @@ test("structural recovery executes against existing contracts in isolated Postgr
       assert.equal(state().rpc_exact,false);
       sql("alter function public.ensure_current_user_workspace(text,text,boolean) set search_path=pg_catalog,public,pg_temp;");assert.equal(state().rpc_exact,true);
     });
-    await t.test("unmodified Billing Contract works only after explicit synthetic evidence; server writes survive", () => {
-      // Isolated synthetic fixture only, never a repair recipe for real consent.
-      sql("update public.workspaces set payment_terms_version='2026-06-v1',payment_terms_accepted_at=statement_timestamp(),payment_terms_accepted_by_user_id=owner_user_id;");
+    await t.test("field protection requires no invented evidence; existing RPC and server writes survive", () => {
+      const dataBeforeContract = data();
       sql(contract);
+      assert.equal(data(), dataBeforeContract);
       assert.deepEqual(JSON.parse(as("authenticated",owner,rpc("capacity_99"))),{workspace_id:owner,created:false});
       denied(() => as("authenticated",owner,"update public.workspaces set billing_status='active'"),"permission denied");
       assert.equal(as("authenticated",owner,`with changed as(update public.workspaces set name='Allowed' where id='${owner}' returning id) select count(*) from changed`),"1");
