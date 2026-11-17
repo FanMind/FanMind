@@ -1,7 +1,7 @@
 # FM-MVP-BILLING-FIELD-PROTECTION-20261117
 
 R3 source preparation for the existing Owner Billing task #1518/#1524 and
-central #1512. Scope: existing Workspace ACL contract, its two source pins,
+central #1512. Scope: existing Workspace ACL contract, its active source pin,
 focused existing regression suites and the existing ACL preparation runbook.
 No competing Billing PR found; #1500 Capacity work remains separate.
 

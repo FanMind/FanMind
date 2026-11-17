@@ -18,7 +18,7 @@ const fields = {
   commercial_option: "'capacity_199'", payment_terms_accepted_at: "statement_timestamp()",
 };
 const editable = ["name", "organization_name", "street_address", "postal_code", "city", "country", "vat_id", "tax_number", "company_register_number", "company_register_court"];
-const contract = readFileSync(new URL("../supabase/controlled/20260726121000_workspace_server_owned_columns.sql", import.meta.url), "utf8");
+const contract = readFileSync(new URL("../supabase/controlled/workspace_server_owned_columns_mvp.sql", import.meta.url), "utf8");
 const contractBody = contract.replace(/^begin;\s*$/mu, "").replace(/^commit;\s*$/mu, "");
 function sql(input, db = database) {
   assert.match(container, /^[a-f0-9]{12,64}$/u);

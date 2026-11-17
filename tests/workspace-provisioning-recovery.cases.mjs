@@ -12,7 +12,7 @@ const creator = "20000000-0000-4000-8000-000000000002";
 const member = "30000000-0000-4000-8000-000000000003";
 const foreign = "40000000-0000-4000-8000-000000000004";
 const q = x => `'${String(x).replaceAll("'", "''")}'`;
-const contract = readFileSync("supabase/controlled/20260726121000_workspace_server_owned_columns.sql", "utf8");
+const contract = readFileSync("supabase/controlled/workspace_server_owned_columns_mvp.sql", "utf8");
 const recovery = buildWorkspaceRecoverySql();
 function sql(input, db = database) {
   assert.match(container, /^[a-f0-9]{12,64}$/u);

@@ -19,6 +19,10 @@ Local evidence:55 focused existing tests PASS/2 explicit Native-PG17-SKIP;
 12 payment terms/provisioning tests PASS, including actual Checkout route
 409 with missing server evidence and0 provider calls.162 governance tests
 PASS, GodMode preflight PASS/Release-BLOCK preserved; ESLint/diffcheck PASS.
+Active artifact: supabase/controlled/workspace_server_owned_columns_mvp.sql.
+Historical July artifact and immutable Creator trust roots retained byte-identical.
+CI exposed parent_profile_contract when the old file was edited in place; the
+versioned revision corrects that source dependency without changing a trust root.
 Existing ACL/RLS/postflight bytes independently compared identical after
 ENABLE ROW LEVEL SECURITY. Native changed-artifact tests remain CI-bound.
 No real JWT, PostgREST, target transaction or rollback execution claimed.

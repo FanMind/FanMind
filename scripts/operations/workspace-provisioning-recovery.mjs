@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 export const RECOVERY_PATH = "supabase/controlled/workspace_provisioning_existing_recovery.sql";
 export const RPC_SOURCE = "supabase/migrations/20260813210000_fix_workspace_provisioning_conflict_ambiguity.sql";
 export const RPC_SOURCE_SHA256 = "874caa0399822e07d6618f502906853c5187021cc7fe4fc2bcfe5389926c03a3";
-export const CONTRACT_PATH = "supabase/controlled/20260726121000_workspace_server_owned_columns.sql";
+export const CONTRACT_PATH = "supabase/controlled/workspace_server_owned_columns_mvp.sql";
 export const CONTRACT_SHA256 = "a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b";
 export const hash = value => createHash("sha256").update(value).digest("hex");
 const literal = value => `'${value.replaceAll("'", "''")}'`;

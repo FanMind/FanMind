@@ -20,7 +20,7 @@ Beide Workspacezeilen bleiben unverändert; fehlende Werte bleiben fehlend.
 
 ### Exakt notwendige Änderung am bestehenden Verfahren
 
-Die erste DO-Klausel der vorhandenen kontrollierten Contractdatei machte
+Die erste DO-Klausel der historischen kontrollierten Contractdatei machte
 Berechtigungsentzug von historischen Zahlungsannahmen abhängig. Sie entfällt
 im reinen Feldschutzschritt. Kein Permission-Postflight, keine RLS-Grenze und
 kein Checkout-Consentguard wird entfernt. Die DDL ab ENABLE ROW LEVEL SECURITY
@@ -29,13 +29,17 @@ auf workspaces, lock_timeout5s und statement_timeout60s.
 
 Neue SQL-SHA256: `a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b`.
 Alter historischer Hash: a015aabfa4f7ac778f3159fbd5e2a3126cd56c86571c8def946c5f4998ad8591.
-Die zwei aktuellen Sourcepins (Workspace-Recoverygenerator und Creator-Foundation-
-Parentreferenz) werden mitgeführt; historische Receipts bleiben unverändert.
+Die aktive Revision ist `supabase/controlled/workspace_server_owned_columns_mvp.sql`.
+Der Workspace-Recoverygenerator pinnt diese aktuelle Revision. Die historische
+Datei20260726121000 und die akzeptierten Creator-Parentpins bleiben bytegleich:
+CI wies deren unveränderliche parent_profile_contract-Bindung nach. Das ist eine
+versionierte Korrektur desselben ACLverfahrens, kein zweiter aktiver Billingpfad.
+Historische Receipts und Creator-Transitionvertrauenswurzeln bleiben unverändert.
 Recovery-SQL bleibt bytegleich93d1cfd9120c2df8c11a8ef7755a72d5385045056702b5cda771c913d5ddd335.
 
 ### Kleinster MVP-Scope und Kompatibilität
 
-Nur die Contractdatei anwenden, keine automatische Struktur-Recovery/Expand-
+Nur die oben benannte aktuelle Contractrevision anwenden, keine automatische Struktur-Recovery/Expand-
 Migration. Aktuelle produktive Aufrufer von ensureUserWorkspace sind genau
 /api/register/workspace und workspace/setup; beide verwenden den gemeinsamen
 Trusted-Parser. Dieser lässt nur Daily zu, dessen Provisionierung getrennt

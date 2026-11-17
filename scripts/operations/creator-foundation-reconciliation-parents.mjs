@@ -22,7 +22,7 @@ export const CREATOR_FOUNDATION_PARENT_PINS = Object.freeze({
   contacts: {path: "../../supabase/migrations/20260609120000_create_contacts.sql", sha256: "802211ddf2ec857af3ea9d3f637255d3e6e11182363ec117aaa45fa84a9310b6"},
   conversations: {path: "../../supabase/migrations/20260613120000_create_conversations_messages.sql", sha256: "fb97836e47da84ba4964cc5cd4e1671155abd4b9f298b18c212172bbd1acb191"},
   profiles: {path: "../../supabase/migrations/20260803120000_meta_content_intelligence_foundation.sql", sha256: "3936aeddf0c6b2ed2e3628c169eb52ed64264a3cf97c53c9c91a2063da7c55af"},
-  workspaceColumns: {path: "../../supabase/controlled/20260726121000_workspace_server_owned_columns.sql", sha256: "a8fcffc7d473f222129c95a581a3dc8a41460c3f0d8df260835a2821163abc1b"},
+  workspaceColumns: {path: "../../supabase/controlled/20260726121000_workspace_server_owned_columns.sql", sha256: "a015aabfa4f7ac778f3159fbd5e2a3126cd56c86571c8def946c5f4998ad8591"},
   boundary: {path: "../../supabase/controlled/20260816120000_workspace_member_data_boundary.sql", sha256: "ca9adfea6db85a48d75998e060f6b345a882a8b1889d20c7d04c438316985c93"},
 });
 export const CREATOR_FOUNDATION_PARENT_TABLES = ["workspaces", "workspace_members", "contacts", "conversations", "contact_ai_profiles", "workspace_analysis_settings"];

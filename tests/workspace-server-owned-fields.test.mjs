@@ -21,7 +21,7 @@ const rpcMigrationPath =
 const dailyControlledMigrationPath =
   "supabase/controlled/20260808230102_internal_daily_test_workspace_provisioning.sql";
 const privilegeMigrationPath =
-  "supabase/controlled/20260726121000_workspace_server_owned_columns.sql";
+  "supabase/controlled/workspace_server_owned_columns_mvp.sql";
 const triggerFunctionSecurityMigrationPath =
   "supabase/controlled/20260806203023_harden_trigger_function_privileges.sql";
 const registerPath = "src/app/register/RegisterClient.tsx";
