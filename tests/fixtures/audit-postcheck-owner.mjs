@@ -82,9 +82,13 @@ export function verifyProductionAuditOutput(raw,expected){
   assert.match(child.stdout, /UNPRIVILEGED_FULL_AUDIT=PASS/u);
   assert.deepEqual(fs.readFileSync(path.join(worktree, ".git/config")), config);
   assert.equal(fs.statSync(worktree).uid, uid); assert.equal(fs.statSync(path.join(worktree, ".git")).uid, uid);
-  assert.equal(fs.statSync(output).uid, 0); assert.equal(fs.statSync(output).mode & 0o777, 0o600);
+  const receiptFd = fs.openSync(output, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+  try {
+    const metadata = fs.fstatSync(receiptFd);
+    assert.equal(metadata.uid, 0); assert.equal(metadata.mode & 0o777, 0o600);
+    assert.equal(fs.readFileSync(receiptFd, "utf8"), raw);
+  } finally { fs.closeSync(receiptFd); }
   assert.equal(fs.statSync(receipt).mode & 0o777, 0o700);
-  assert.equal(fs.readFileSync(output, "utf8"), raw);
   // The corrected identity must not accept a foreign repository either.
   fs.writeFileSync(path.join(worktree, ".git/config"), config.toString().replace("https://github.com/FanMind/FanMind.git", "https://github.com/foreign/repository.git"));
   assert.throws(() => verifyCollectedAudit({ status: 0, stdout: raw }, uid, clean, execute), /audit_postcheck_failed/u);
