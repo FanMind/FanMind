@@ -16,3 +16,12 @@ and AI/Billing, without promoting their evidence/status. Security check reviewed
 no credentials, user rows, secrets, RLS/ACL or product activation changed.
 Existing failed audit/restore/Billing gates remain blocking. Green source CI
 does not establish target acceptance or authorize protected execution.
+
+Follow-up within the same R3 source-preparation task: after authorized PR1538
+merge, one Staging attempt44393080155 failed on an overly broad root-fixture
+requirement and restored its receipt-bound prior release. Scope now only the
+test's self-hosted deployment exclusion, its targeted regression and records.
+No runner permission/configuration change. Root regression remains required
+in GitHub-hosted CI. Approval variable and Production were not changed.
+No second Staging attempt or installer dispatch is authorized for this new
+source; obtain a separately bound Owner decision after reviewed checks.

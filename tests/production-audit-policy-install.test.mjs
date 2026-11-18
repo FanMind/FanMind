@@ -145,6 +145,12 @@ test("collection failures never validate and failed identity/process checks reta
 });
 
 test("real root Git ownership rejection becomes unprivileged full provenance success without exceptions", t => {
+  // Deployment runners must never acquire extra root access for a CI fixture.
+  // The existing GitHub-hosted CI still requires the actual root regression.
+  if (process.env.GITHUB_ACTIONS === "true" && process.env.RUNNER_ENVIRONMENT === "self-hosted") {
+    t.skip("root fixture belongs to GitHub-hosted CI, never a self-hosted deployment");
+    return;
+  }
   const root = process.getuid() === 0;
   const sudo = root ? null : spawnSync("/usr/bin/sudo", ["-n", "/usr/bin/true"]);
   if (!root && (sudo.error || sudo.status !== 0)) {
@@ -157,4 +163,13 @@ test("real root Git ownership rejection becomes unprivileged full provenance suc
     { env: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" }, encoding: "utf8", timeout: 30000, maxBuffer: 131072 });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /AUDIT_OWNER_CONTEXT_REGRESSION=PASS/u);
+});
+
+test("self-hosted deployment skips the root fixture before probing privileged execution", () => {
+  const environment = { ...process.env, GITHUB_ACTIONS: "true", RUNNER_ENVIRONMENT: "self-hosted" };
+  delete environment.NODE_TEST_CONTEXT;
+  const result = spawnSync(process.execPath, ["--test", "--test-name-pattern=^real root Git ownership rejection", "tests/production-audit-policy-install.test.mjs"],
+    { env: environment, encoding: "utf8", timeout: 30000, maxBuffer: 131072 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /root fixture belongs to GitHub-hosted CI, never a self-hosted deployment/u);
 });
