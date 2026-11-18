@@ -1186,3 +1186,18 @@ their actual managed values explicitly before/after reload and rollback, even
 when absent from the file. A dedicated executed helper rejects changed/missing
 flags and unrelated Stripe drift. Do not treat those intended overrides as
 Meta-file conflicts or use file text to reset the running feature switches.
+
+
+## FM-MVP-AUDIT-INSTALL-BINDING-20261118 — source preparation
+
+Owner resumes central1512 MVP closure; no extra Work or agents. Preserve
+Staging44338343424 and source3f74634d. Root/SQL/deploy still require explicit
+approval. The existing installer cannot install the reviewed current audit:
+stale preflight8e5dcbd/707d227 rejects against existing policy6bc20985/bb799466,
+and its frozen935d/e65a1af5 target is the measured outdated installed verifier.
+Rebind only the existing installer/workflow to unchanged reviewed current
+validator4422b241, actual base and measured dependencies. Retain private
+preimages before replacement; failed postcheck restores exact validator bytes.
+No new audit implementation or guard relaxation. Application, SQL, backup,
+restore and canonical verifier code unchanged. Source-only PR requires its own
+CI/merge decision; no current-Main/Staging state changes inferred.
