@@ -1214,3 +1214,17 @@ Targeted stdin/negative/rollback tests and an isolated real root ownership
 regression cover the affected boundary. GitHub CI must execute the root case;
 local cloud lacks sudo. No canonical validator/product/SQL change. Source
 merge, new Staging and a new install require their explicit Owner decision.
+
+### Same task: deployment-runner regression boundary after authorized execution
+
+PR1538 merged regularly as045be972ce22364a2fdcd59aa54c98442174c3f3,
+tree09c5c4b725ae9bda506f70be624d2ee8f565591f after16successful checks.
+Exactly one authorized Staging44393080155/attempt1 failed at the newly added
+root fixture: GITHUB_ACTIONS also identifies the deliberately restricted
+self-hosted deployment runner. Snapshot recovery succeeded; independent
+Staging HTTPS20:40:40UTC returned previousbbc30eb. Audit installation did not
+start; its approval variable was not changed. No retry or new target action.
+Prepare only a test boundary correction: skip the root fixture before any
+privilege probe on a self-hosted deployment; keep it mandatory in hosted CI.
+Installer/workflow/canonical modules and their hashes stay unchanged.
+Fresh exact-head CI and a separate exact-head merge/Staging decision required.
