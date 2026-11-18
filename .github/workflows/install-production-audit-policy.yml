@@ -72,7 +72,7 @@ jobs:
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             https://raw.githubusercontent.com/FanMind/FanMind/3f74634d0c7d6a13abde254bb9f8afb786b95cc1/scripts/operations/verify-production-audit-output.mjs --output "$VERIFIER"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" 0f3ed520bbff391d6716f21220ad598100d0299d8a8bfd7aa5b20261f1b72ca9 "$COLLECTOR" "$VERIFIER" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" a1c3121c4b1ad2313113f46ef666c54319acf0ae5bb4a3350647c67c8cced80e "$COLLECTOR" "$VERIFIER" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {

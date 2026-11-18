@@ -1201,3 +1201,16 @@ preimages before replacement; failed postcheck restores exact validator bytes.
 No new audit implementation or guard relaxation. Application, SQL, backup,
 restore and canonical verifier code unchanged. Source-only PR requires its own
 CI/merge decision; no current-Main/Staging state changes inferred.
+
+## FM-MVP-AUDIT-POSTCHECK-OWNER-20261118 — source preparation
+
+Confirmed Owner evidence1512/6989202425: successful collection, root Git reads
+reject ubuntu-owned repository. Keep failed44374215981 terminal and accepted
+Main/Stagingbbc30eb unchanged. Only the existing installer postcheck changes:
+unchanged full verifier API asubuntu, original bytes over stdin, explicit
+non-root invoking-UID/group checks; root receipts, source/file hashes and
+exact rollback remain. No Git trust exception or ownership/mode adjustment.
+Targeted stdin/negative/rollback tests and an isolated real root ownership
+regression cover the affected boundary. GitHub CI must execute the root case;
+local cloud lacks sudo. No canonical validator/product/SQL change. Source
+merge, new Staging and a new install require their explicit Owner decision.

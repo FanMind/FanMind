@@ -6,8 +6,11 @@ import path from "node:path";
 import crypto from "node:crypto";
 import yaml from "js-yaml";
 import { gunzipSync } from "node:zlib";
+import { spawnSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import { monthlyAuditFixture } from "./fixtures/monthly-audit.mjs";
 import { request } from "../scripts/operations/backup-worker-install-policy.mjs";
-import { AUDIT_FILES, AUDIT_SOURCE, AUDIT_BASE, AUDIT_DEPENDENCIES, frozenFile, validatePair, replacePair, preservePreimages } from "../scripts/operations/install-production-audit-policy.mjs";
+import { AUDIT_FILES, AUDIT_SOURCE, AUDIT_BASE, AUDIT_DEPENDENCIES, frozenFile, validatePair, replacePair, preservePreimages, verifyCollectedAudit } from "../scripts/operations/install-production-audit-policy.mjs";
 
 // The historical frozen verifier is the measured installed preimage. Its bytes
 // remain immutable; the new verifier is reused directly from reviewed Main.
@@ -91,4 +94,67 @@ test("unchanged collector is not rewritten and exact installed dependencies matc
   assert.equal(after.ino,before.ino);assert.equal(after.mtimeNs,before.mtimeNs);
   const sources=["scripts/operations/production-boot-readiness.mjs","scripts/public-health-policy.mjs"];
   for(const [i,file]of AUDIT_DEPENDENCIES.entries())assert.equal(crypto.createHash("sha256").update(fs.readFileSync(sources[i])).digest("hex"),file.sha256);
+});
+
+test("postcheck streams the same audit to the full unchanged verifier as the collector identity", () => {
+  const audit = { status: 0, stdout: monthlyAuditFixture(AUDIT_BASE, AUDIT_BASE) };
+  const environment = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" };
+  const execute = (command, args, options) => {
+    assert.equal(command, "/usr/sbin/runuser");
+    assert.deepEqual(args.slice(0, 6), ["-u", "ubuntu", "--", "/usr/bin/node", "--input-type=module", "-e"]);
+    assert.equal(args[7], "file:///usr/local/lib/fanmind-audit/verify-production-audit-output.mjs");
+    assert.equal(args[8], AUDIT_BASE);
+    assert.equal(args[9], String(process.getuid()));
+    assert.equal(options.input, audit.stdout);
+    assert.deepEqual(options.env, environment);
+    assert.ok(!args.includes(audit.stdout), "private audit bytes never enter argv");
+    // Only redirect the installed module URL to its identical reviewed source.
+    const actual = [...args.slice(4)];
+    actual[3] = pathToFileURL(path.resolve("scripts/operations/verify-production-audit-output.mjs")).href;
+    return spawnSync(process.execPath, actual, options);
+  };
+  verifyCollectedAudit(audit, process.getuid(), environment, execute);
+  for (const mutation of [
+    audit.stdout.replace(`LIVE_RELEASE=${AUDIT_BASE}`, `LIVE_RELEASE=${"f".repeat(40)}`),
+    audit.stdout.replace("BACKUP_VERIFY_OK=true", "BACKUP_VERIFY_OK=false"),
+    audit.stdout.replace("AUDIT_RESULT=success", "AUDIT_RESULT=failed"),
+  ]) {
+    audit.stdout = mutation;
+    assert.throws(() => verifyCollectedAudit(audit, process.getuid(), environment, execute), /audit_postcheck_failed/u);
+  }
+});
+
+test("collection failures never validate and failed identity/process checks retain exact rollback", t => {
+  const good = { status: 0, stdout: monthlyAuditFixture(AUDIT_BASE, AUDIT_BASE) };
+  const mustNotRun = () => { throw Error("unexpected verification"); };
+  for (const bad of [{ ...good, status: 1 }, { ...good, status: null }, { ...good, error: Error("timeout") },
+    { ...good, stdout: "x".repeat(2 * 1024 * 1024 + 1) }])
+    assert.throws(() => verifyCollectedAudit(bad, process.getuid(), {}, mustNotRun), /audit_postcheck_failed/u);
+  assert.throws(() => verifyCollectedAudit(good, 0, {}, mustNotRun), /audit_postcheck_failed/u);
+  for (const result of [{ status: 1 }, { status: null, error: Error("timeout") }])
+    assert.throws(() => verifyCollectedAudit(good, process.getuid(), {}, () => result), /audit_postcheck_failed/u);
+  // Execute the actual bootstrap with a mismatched identity; no verifier import.
+  assert.throws(() => verifyCollectedAudit(good, process.getuid() + 1, {}, (_command, args, options) =>
+    spawnSync(process.execPath, args.slice(4), options)), /audit_postcheck_failed/u);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "fanmind-postcheck-rollback-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  for (const [i, file] of AUDIT_FILES.entries()) fs.writeFileSync(path.join(root, file.name), oldBytes[i], { mode: 0o755 });
+  assert.throws(() => replacePair(root, oldBytes, newBytes, () =>
+    verifyCollectedAudit(good, process.getuid(), {}, () => ({ status: 1 }))), /install_rolled_back/u);
+  assert.deepEqual(AUDIT_FILES.map(file => fs.readFileSync(path.join(root, file.name))), oldBytes);
+});
+
+test("real root Git ownership rejection becomes unprivileged full provenance success without exceptions", t => {
+  const root = process.getuid() === 0;
+  const sudo = root ? null : spawnSync("/usr/bin/sudo", ["-n", "/usr/bin/true"]);
+  if (!root && (sudo.error || sudo.status !== 0)) {
+    assert.notEqual(process.env.GITHUB_ACTIONS, "true", "GitHub CI must execute the real root regression");
+    t.skip("local sudo unavailable; exact-head GitHub CI must execute root regression");
+    return;
+  }
+  const args = [path.resolve("tests/fixtures/audit-postcheck-owner.mjs"), process.cwd()];
+  const result = spawnSync(root ? process.execPath : "/usr/bin/sudo", root ? args : ["-n", process.execPath, ...args],
+    { env: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" }, encoding: "utf8", timeout: 30000, maxBuffer: 131072 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /AUDIT_OWNER_CONTEXT_REGRESSION=PASS/u);
 });

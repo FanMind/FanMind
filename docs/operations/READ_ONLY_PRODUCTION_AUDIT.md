@@ -1,5 +1,42 @@
 # FanMind Read-only Production Operations Audit
 
+## Confirmed postcheck identity failure — 18 November 2026 (SOURCE ONLY)
+
+Owner host evidence1512/6989202425 confirms collection `AUDIT_RESULT=success`
+but root's clean Git context rejects the ubuntu-owned worktree with
+`detected dubious ownership`. Failed installer44374215981 is NOT retried;
+read-only44375244330 confirmed the exact original four root-file hashes.
+
+The smallest correction changes only the installer postcheck invocation:
+`runuser -u ubuntu` executes the unchanged full canonical verifier API on the
+exact collected bytes via stdin. The child requires the real/effective UID to
+equal the positive invoking UID and rejects root primary/supplementary groups.
+A failed/nonterminal collector or verifier still blocks and invokes the exact
+existing rollback. No audit bytes enter argv, no writable input file is reopened,
+and root0700/0600 receipts/preimages remain private and root-owned. The parent
+retains installation/hash/rollback authority. The actual independent Runtime
+audit remains mandatory after any separately approved installation.
+
+Collector, canonical verifier4422b241, boot/health, Git config/object/ancestry/
+independent GitHub checks, root-file pins, source3f74634d and live basebb799466
+remain byte-for-byte unchanged. No safe.directory exception, ownership/mode
+change, service action, SQL, second audit implementation or provider change.
+The workflow changes only the installer digest to
+`a1c3121c4b1ad2313113f46ef666c54319acf0ae5bb4a3350647c67c8cced80e`.
+
+Regression scope: actual canonical validation over stdin, collection/identity/
+timeout/negative full-audit failures and byte-exact rollback. A separate isolated
+Linux fixture proves root Git rejection, full provenance success under an
+unprivileged owner, inaccessible private receipt and unchanged Git config/owners.
+Only synthetic temporary files are owned/removed by that fixture. This cloud
+has no sudo; the root regression must really execute in normal exact-head CI.
+Local green alone is not a Root/Production acceptance.
+
+Main/Staging remainbbc30eb40c94cb9fac6cec961a72c0fe2793f7b9. A new source merge,
+its own Staging binding and a new one-time installation require explicit Owner
+approval; the consumed approval for44374215981 authorizes no retry. No approvals
+or workflow runs are changed by this preparation.
+
 ## MVP installer binding — 18 November 2026 (SOURCE ONLY)
 
 Audit44310571899/job134823316894 measured installed collector664be21a…,
