@@ -85,6 +85,23 @@ export function replacePair(directory, oldBytes, newBytes, postcheck) {
   }
 }
 
+// Keep the root-owned receipt private. Pass the exact collected bytes over
+// stdin to the unchanged full verifier under the collector/worktree identity.
+export function verifyCollectedAudit(audit, invokingUid, environment, spawn = cp.spawnSync) {
+  if (audit.error || audit.status !== 0 || typeof audit.stdout !== "string"
+    || Buffer.byteLength(audit.stdout) > 2 * 1024 * 1024 || !/^[1-9][0-9]*$/u.test(String(invokingUid))) throw Error("audit_postcheck_failed");
+  const program = `import { readFileSync } from 'node:fs';
+const uid = Number(process.argv[3]);
+if (!Number.isSafeInteger(uid) || uid <= 0 || process.getuid() !== uid || process.geteuid() !== uid
+  || process.getgid() === 0 || process.getegid() === 0 || process.getgroups().includes(0)) throw Error('audit_identity_invalid');
+const { verifyProductionAuditOutput } = await import(process.argv[1]);
+verifyProductionAuditOutput(readFileSync(0, 'utf8'), process.argv[2]);`;
+  const verification = spawn("/usr/sbin/runuser", ["-u", "ubuntu", "--", "/usr/bin/node", "--input-type=module", "-e", program,
+    "file:///usr/local/lib/fanmind-audit/verify-production-audit-output.mjs", AUDIT_BASE, String(invokingUid)],
+  { env: environment, input: audit.stdout, encoding: "utf8", timeout: 60000, maxBuffer: 131072 });
+  if (verification.error || verification.status !== 0) throw Error("audit_postcheck_failed");
+}
+
 async function main() {
   let scratch;
   try {
@@ -117,8 +134,7 @@ async function main() {
       const audit = cp.spawnSync("/usr/sbin/runuser", ["-u", "ubuntu", "--", path.join(directory, AUDIT_FILES[0].name)], { env: environment, encoding: "utf8", timeout: 180000, maxBuffer: 2 * 1024 * 1024 });
       const output = path.join(scratch, "audit.txt");
       fs.writeFileSync(output, audit.stdout ?? "", { mode: 0o600, flag: "wx" });
-      const verification = cp.spawnSync("/usr/bin/node", [path.join(directory, AUDIT_FILES[1].name), output, AUDIT_BASE, String(audit.error ? 1 : audit.status ?? 1)], { env: environment, encoding: "utf8", timeout: 60000, maxBuffer: 131072 });
-      if (verification.error || verification.status !== 0) throw Error();
+      verifyCollectedAudit(audit, invokingUid, environment);
       live();
     };
     if (state === "replace") replacePair(directory, oldBytes, newBytes, postcheck);
