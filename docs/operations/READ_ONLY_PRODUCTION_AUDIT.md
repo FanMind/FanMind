@@ -1,5 +1,56 @@
 # FanMind Read-only Production Operations Audit
 
+## MVP installer binding — 18 November 2026 (SOURCE ONLY)
+
+Audit44310571899/job134823316894 measured installed collector664be21a…,
+validator e65a1af5…, boot module fe183af1… and health module357ff62a….
+SERVER_HEAD=LIVE=bb799466 while ORIGIN_MAIN=3f74634d. The old verifier rejects
+that tracking difference; the already reviewed current verifier4422b241…
+independently checks canonical GitHub repository/Main ancestry and local Git
+identity. It does not accept drift of the actual live/server release.
+
+The existing protected installer is rebound to exactly that measured old state,
+source3f74634d0c7d6a13abde254bb9f8afb786b95cc1 and live base
+bb799466d2c235195fedcb4d80568f9f0bd56969. Its former8e5dcbd/707d227
+preflight request is incompatible with the existing6bc20985/bb799466 policy;
+this correction fixes the request rather than relaxing that policy.
+
+The validator and collector themselves have NO changes. Collector and two
+already installed imports must have their measured exact hashes; only the
+validator inode is replaced. Before replacement, private root0700 storage
+retains fsynced/read-back0600 preimages plus a source/base/hash manifest.
+The full existing audit must pass against unchanged live base. A failed
+postcheck restores the changed validator's exact preimage and verifies both
+hashes; collector bytes/inode stay untouched. The private receipt remains for
+inspection after success or failure. An interrupted/unknown operation requires
+actual hash/receipt inspection, never an automatic rerun or boot/DB rollback.
+This is not an atomic total-host rollback or proof of a real backup restore.
+
+After separately approved source merge and exact new-Main review:
+
+```text
+workflow=install-production-audit-policy.yml
+reviewed_main_commit=<actual separately approved new Main>
+confirmation=install-audit-reviewed-policy
+FANMIND_AUDIT_POLICY_INSTALL_APPROVAL=<same Main>:install-audit-reviewed-policy:3f74634d0c7d6a13abde254bb9f8afb786b95cc1:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled
+```
+
+Owner270165082, main, existing backup-production-recovery reviewer boundary,
+Production host/runner, exact installer digest, source hashes and exclusive
+host/deployment locks remain mandatory. No workflow dispatch, variable write,
+root install, restart or deployment is authorized by this source preparation.
+A real subsequent successful audit run must replace the old failed audit
+check; code CI alone is not runtime acceptance.
+
+A source merge changes Main: preserve successful Staging44338343424 for3f74634d;
+never call that the deployment of a later operations-only merge. Any later
+approved release must independently bind its actual new Main and Staging.
+The monthly release branch additionally needs its real private closure,
+artifact-bound restore receipts, exact SQL decisions and acceptance references;
+none may be manufactured to fit this installer. The separate existing release
+branch is not permission to skip necessary backup/restore/Billing evidence.
+
+
 ## Zweck
 
 `scripts/operations/read-only-production-audit.sh` sammelt einen redigierten technischen Zustandsnachweis für FanMind Production. Das Skript darf weder Dienste verändern noch Backups entschlüsseln oder Daten wiederherstellen. Es ergänzt `/api/version`, `/api/health`, den Operations-Monitor und den Backup-Verifier um einen reproduzierbaren Host-Nachweis.
