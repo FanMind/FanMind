@@ -1,0 +1,767 @@
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/20261026_01_create_boerns_agent_claims.sql rc6/boerns-agent-claims-rc6/20261028_01_create_boerns_agent_claims.sql
+similarity index 98%
+rename from boerns-agent-claims-rc5-reconstructed/20261026_01_create_boerns_agent_claims.sql
+rename to boerns-agent-claims-rc6/20261028_01_create_boerns_agent_claims.sql
+index 20a8101..124ed6d 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/20261026_01_create_boerns_agent_claims.sql
++++ rc6/boerns-agent-claims-rc6/20261028_01_create_boerns_agent_claims.sql
+@@ -1,4 +1,4 @@
+--- BOERNS-CLAIM-SUPABASE-001 / Revision 15 / RC5
++-- BOERNS-CLAIM-SUPABASE-001 / Revision 16 / RC6
+ -- Draft only. Target: FanMind Supabase project drqkpdvtbbrrdwmtrodz (PostgreSQL 17).
+ -- This file has not been applied to FanMind. Production execution requires a separate Owner gate.
+ 
+@@ -8,7 +8,7 @@ do $preflight$
+ begin
+   if current_setting('server_version_num')::integer < 170000
+      or current_setting('server_version_num')::integer >= 180000 then
+-    raise exception 'boerns_agent_claims RC5 requires PostgreSQL 17.x';
++    raise exception 'boerns_agent_claims RC6 requires PostgreSQL 17.x';
+   end if;
+ 
+   if to_regnamespace('boerns_agent_claims') is not null then
+@@ -451,7 +451,7 @@ begin
+     from boerns_agent_claims.principals
+    where agent_id = v_actor;
+   if coalesce(v_can_offer, false) is not true then
+-    raise exception 'principal may not offer work' using errcode = 'BC002';
++    raise exception 'principal may not offer work' using errcode = 'BC008';
+   end if;
+ 
+   if p_task_id is null or p_task_id !~ '^[A-Za-z0-9._-]{1,128}$'
+@@ -686,11 +686,15 @@ begin
+    where claim_id = p_claim_id
+    for update;
+   if not found then raise exception 'claim not found' using errcode = 'BC003'; end if;
++  -- Visibility precedes fence validation. A foreign and an unknown claim_id
++  -- therefore have the same externally mapped result and cannot be enumerated.
++  if v_claim.holder_agent_id is distinct from v_actor then
++    raise exception 'claim not found' using errcode = 'BC003';
++  end if;
+   if v_claim.state <> 'CLAIMED'
+-     or v_claim.holder_agent_id <> v_actor
+      or v_claim.fence_epoch is distinct from p_fence_epoch
+      or v_claim.fence_token is distinct from p_fence_token then
+-    raise exception 'stale or unauthorized lease' using errcode = 'BC005';
++    raise exception 'stale lease' using errcode = 'BC005';
+   end if;
+   if v_claim.lease_expires_at <= clock_timestamp() then
+     raise exception 'lease expired; recovery is required' using errcode = 'BC005';
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/20261026_01_drop_boerns_agent_claims.sql rc6/boerns-agent-claims-rc6/20261028_01_drop_boerns_agent_claims.sql
+similarity index 69%
+rename from boerns-agent-claims-rc5-reconstructed/20261026_01_drop_boerns_agent_claims.sql
+rename to boerns-agent-claims-rc6/20261028_01_drop_boerns_agent_claims.sql
+index 400ac69..ec3eb30 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/20261026_01_drop_boerns_agent_claims.sql
++++ rc6/boerns-agent-claims-rc6/20261028_01_drop_boerns_agent_claims.sql
+@@ -1,4 +1,4 @@
+--- BOERNS-CLAIM-SUPABASE-001 / Revision 15 / RC5
++-- BOERNS-CLAIM-SUPABASE-001 / Revision 16 / RC6
+ -- Destructive rollback draft. Not authorized for FanMind execution.
+ -- Prerequisite in the rollback session:
+ --   SET LOCAL boerns_agent_claims.rollback_approved = 'true';
+@@ -6,9 +6,7 @@
+ 
+ begin;
+ 
+-do $rollback_guard$
+-declare
+-  v_operational_rows bigint;
++do $rollback_preflight$
+ begin
+   if coalesce(current_setting('boerns_agent_claims.rollback_approved', true), '') <> 'true' then
+     raise exception 'rollback_approved session guard is missing' using errcode = '42501';
+@@ -18,11 +16,45 @@ begin
+     raise exception 'schema boerns_agent_claims does not exist';
+   end if;
+ 
+-  execute 'select '
+-    || '(select count(*) from boerns_agent_claims.principals) + '
+-    || '(select count(*) from boerns_agent_claims.claims) + '
+-    || '(select count(*) from boerns_agent_claims.request_receipts) + '
+-    || '(select count(*) from boerns_agent_claims.audit_events)'
++end
++$rollback_preflight$;
++
++grant boerns_claims_owner to current_user;
++set local role boerns_claims_owner;
++
++do $rollback_guard$
++declare
++  v_operational_rows bigint;
++begin
++  -- Linearization point: drain all RPCs holding the shared gate and prevent new
++  -- ones from passing it. Do this before inspecting any operational table.
++  perform 1
++    from boerns_agent_claims.control_state
++   where singleton
++   for update;
++  if not found then
++    raise exception 'control_state singleton is missing' using errcode = '55000';
++  end if;
++
++  update boerns_agent_claims.control_state
++     set service_enabled = false,
++         changed_at = clock_timestamp(),
++         change_reason = 'ROLLBACK_PENDING'
++   where singleton;
++
++  -- Freeze direct writers as well as runtime RPCs. The emptiness decision and
++  -- every following RESTRICT drop remain in this transaction under these locks.
++  lock table boerns_agent_claims.control_state,
++             boerns_agent_claims.principals,
++             boerns_agent_claims.claims,
++             boerns_agent_claims.request_receipts,
++             boerns_agent_claims.audit_events
++    in access exclusive mode;
++
++  select (select count(*) from boerns_agent_claims.principals)
++       + (select count(*) from boerns_agent_claims.claims)
++       + (select count(*) from boerns_agent_claims.request_receipts)
++       + (select count(*) from boerns_agent_claims.audit_events)
+     into v_operational_rows;
+ 
+   if v_operational_rows > 0 then
+@@ -32,18 +64,9 @@ begin
+ end
+ $rollback_guard$;
+ 
+-update boerns_agent_claims.control_state
+-   set service_enabled = false,
+-       changed_at = clock_timestamp(),
+-       change_reason = 'ROLLBACK_PENDING'
+- where singleton;
+-
+ revoke all on schema boerns_agent_claims from boerns_claims_runtime;
+ revoke all on all functions in schema boerns_agent_claims from boerns_claims_runtime;
+ 
+-grant boerns_claims_owner to current_user;
+-set local role boerns_claims_owner;
+-
+ -- Every drop is dependency-restricted. An unlisted or external dependency aborts
+ -- this transaction instead of being removed implicitly.
+ drop function boerns_agent_claims.offer(text,text,text,text,bigint,text,uuid) restrict;
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/API_CONTRACT.md rc6/boerns-agent-claims-rc6/API_CONTRACT.md
+index bff2b7c..29e875a 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/API_CONTRACT.md
++++ rc6/boerns-agent-claims-rc6/API_CONTRACT.md
+@@ -2,7 +2,7 @@
+ 
+ Status: `REVIEW_CANDIDATE / PRODUCTION_NOT_AUTHORIZED`  
+ Task: `BOERNS-CLAIM-SUPABASE-001`  
+-Revision: 15 / RC5  
++Revision: 16 / RC6  
+ Target project reference: `drqkpdvtbbrrdwmtrodz`
+ 
+ ## Trust boundary
+@@ -100,8 +100,10 @@ agent as authoritative before epoch rotation and postchecks.
+ 
+ `offer` is not an agent endpoint. A separately protected coordinator path may
+ invoke `boerns_agent_claims.offer` only after the verified principal has
+-`can_offer=true`. The base migration inserts no principals and leaves the whole
+-service disabled.
++`can_offer=true`. A missing, invalid, expired, disabled, or revoked identity is
++an authentication failure (`401`/`BC002`). An authenticated principal without
++`can_offer` is a distinct authorization failure (`403`/`BC008`). The base
++migration inserts no principals and leaves the whole service disabled.
+ 
+ ## Response model
+ 
+@@ -132,6 +134,7 @@ response does not derive identity or idempotency values from an untrusted body.
+ |---|---|---|---|
+ | 400 | `INVALID_REQUEST` | `BC001` | Schema, length, enum, or lease validation failed. |
+ | 401 | `INVALID_IDENTITY` | `BC002` | Token or principal is absent, invalid, expired, disabled, or revoked. |
++| 403 | `FORBIDDEN` | `BC008` | Identity is authenticated but lacks the required capability. |
+ | 404 | `CLAIM_NOT_FOUND` | `BC003` | Claim is unknown or not visible to this principal. |
+ | 409 | `IDEMPOTENCY_KEY_REUSE` | `BC004` | Same key was used with different semantics. |
+ | 412 | `STALE_FENCE` | `BC005` | Lease, epoch, receipt epoch, or fencing token is stale. |
+@@ -144,6 +147,14 @@ the identical idempotency key or perform read-back while the service is healthy.
+ If the service is quarantined or unavailable, it must stop with
+ `CLAIM_STATUS_UNKNOWN` and never assume success.
+ 
++The mapping is closed, not extensible by accident. Every SQLSTATE not listed in
++the table, including PostgreSQL ACL errors such as `42501`, and every driver
++error, connection loss, transport interruption, timeout, malformed database
++response, or missing SQLSTATE MUST map to HTTP `503` with
++`CLAIM_STATUS_UNKNOWN`. The adapter MUST NOT expose SQLSTATE, driver text,
++stack traces, object names, or whether a mutation committed. It MUST NOT map an
++unknown condition to success, `404`, or a retryable authorization result.
++
+ ## Idempotency and side effects
+ 
+ The receipt key is globally `(verified agent_id, request_id)` across all mutating
+@@ -169,9 +180,7 @@ enforce both the idempotency key and the current `(fence_epoch, fence_token)`.
+ - Enumeration-resistant error translation, request limits, rate limits, and
+   security telemetry without tokens or payloads.
+ - Independent negative tests for spoofed identities, replay, stale fences,
+-  disabled principals, foreign claims, API/DB outage, and ambiguous commits.
+-
+-</details>
+-
+-<details><summary>Architecture and production gate</summary>
++  disabled principals, missing capabilities, foreign and unknown claim IDs with
++  indistinguishable responses, unknown SQLSTATEs, driver/transport failures,
++  API/DB outage, and ambiguous commits.
+ 
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/ARCHITECTURE_AND_PRODUCTION_GATE.md rc6/boerns-agent-claims-rc6/ARCHITECTURE_AND_PRODUCTION_GATE.md
+index 5dfe16f..bbdd0b5 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/ARCHITECTURE_AND_PRODUCTION_GATE.md
++++ rc6/boerns-agent-claims-rc6/ARCHITECTURE_AND_PRODUCTION_GATE.md
+@@ -3,7 +3,7 @@
+ Status: `DESIGN_PREPARED / TEST_EXECUTION_BLOCKED / PRODUCTION_NOT_AUTHORIZED`  
+ Task: `BOERNS-CLAIM-SUPABASE-001`  
+ Issue: `Bernds-tech/Boerns-Core#32`  
+-Revision: 15 / RC5  
++Revision: 16 / RC6  
+ Target: FanMind Supabase `drqkpdvtbbrrdwmtrodz`, PostgreSQL 17
+ 
+ ## Decision and isolation boundary
+@@ -61,6 +61,13 @@ before touching any claim, so it waits for in-flight RPC transactions and new
+ RPCs fail closed after the service is disabled. This fixed lock order prevents a
+ restore from creating an authoritative post-rotation write under an old epoch.
+ 
++The empty rollback uses the same singleton as an exclusive linearization gate.
++It takes `FOR UPDATE`, disables service, obtains `ACCESS EXCLUSIVE` locks on all
++five tables, and only then counts operational rows. Existing runtime and direct
++writers finish before the count; later writers remain blocked through the
++`RESTRICT` drops. A committed row therefore aborts rollback instead of being
++deleted after a stale emptiness observation.
++
+ Completion requires the current principal, active lease, epoch, token and a
+ unique completion UUID. The terminal state is immutable through the runtime API.
+ 
+@@ -97,6 +104,7 @@ re-enable old requests. Retention therefore remains a production gate.
+ | Stale worker side effects | epoch plus token | target adapters must enforce the fence |
+ | Ambiguous API timeout | stored response and same-key retry | API integration test |
+ | Database outage | API returns `CLAIM_STATUS_UNKNOWN`; no work starts | outage test |
++| Unknown database/driver result | closed error map returns generic 503 | adapter negative test |
+ | Restore rewind | disabled restore path and epoch rotation | isolated restore rehearsal |
+ | Noisy neighbor impact on FanMind | short transactions and indexed lookups | baseline, connection and load test |
+ | Lock contention | one row lock per task key; no external call in transaction | p95/p99 and timeout limits |
+@@ -114,7 +122,7 @@ Repository instructions identify `docs/database/fanmind_current_schema.md` and
+ `supabase/migrations/` as database truth, with individually approved contract
+ steps under `supabase/controlled/`. The indexed default-branch evidence used in
+ this review is commit `b5a95069b4036d0c250bc4641bc1317f097cc7f3`; it also maps Production to
+-project `drqkpdvtbbrrdwmtrodz`. RC5 is not present in that repository and has no
++project `drqkpdvtbbrrdwmtrodz`. RC6 is not present in that repository and has no
+ FanMind commit, PR or workflow run.
+ 
+ FanMind issue #944 records a real isolated PostgreSQL 17.11 database restore and
+@@ -122,7 +130,7 @@ ACL reconciliation as technically complete, followed by permanent helper fix
+ merge `e3009134f87dc4b197c518cb097ceee867b0c7f8`. The same closeout explicitly
+ keeps aggregate restore program `FM-RST-001` at `PARTIAL`: Storage, server
+ configuration, disposable-target cleanup, countercheck and final aggregate
+-acceptance are not promoted. This is relevant process evidence, not an RC5
++acceptance are not promoted. This is relevant process evidence, not an RC6
+ restore or production-readiness proof.
+ 
+ Current Production backup/PITR state, RPO/RTO, pooler/connection limits,
+@@ -150,9 +158,10 @@ Deployment sequence, once separately authorized:
+ Rollback has three distinct paths:
+ 
+ - SQL error before commit: transaction rollback; no database objects remain.
+-- Empty, disabled installation: guarded drop migration after read-back.
+-- Operational data exists: the RC5 rollback stops unconditionally. Use a
+-  separately reviewed forward fix or restore plan; RC5 has no data-loss override.
++- Empty, disabled installation: exclusive gate plus table locks, then guarded
++  emptiness check and dependency-restricted drop in one transaction.
++- Operational data exists: the RC6 rollback stops unconditionally. Use a
++  separately reviewed forward fix or restore plan; RC6 has no data-loss override.
+ 
+ Restore is not equivalent to rollback. A restored environment remains closed
+ until epoch rotation, lease invalidation, ACL/RLS/function checks, audit checks,
+@@ -173,7 +182,7 @@ blast radius; no zero-cost or zero-impact claim is made.
+ - Native PostgreSQL-17 migration and functional tests: `BLOCKED` because this
+   container has no PostgreSQL engine and the package repository is denied by the
+   environment proxy (`403`).
+-- FanMind repository/process baseline: `PARTIALLY VERIFIED`; RC5 is not versioned there.
++- FanMind repository/process baseline: `PARTIALLY VERIFIED`; RC6 is not versioned there.
+ - Live FanMind object/ACL/nonregression comparison: `BLOCKED`, current catalog unavailable.
+ - Backup/restore: historical PostgreSQL-17 database/ACL drill verified; current
+   Production backup/PITR and aggregate restore acceptance remain `BLOCKED`.
+@@ -187,7 +196,4 @@ the reviewed artifact hashes, migration operator, maintenance window, verified
+ backup/restore evidence, acceptable load limits, exact identity/grant change,
+ pilot agent, rollback trigger, monitoring owner and service activation step.
+ 
+-</details>
+-
+-<details><summary>Synthetic test and rollback plan</summary>
+ 
+diff --git rc5/boerns-agent-claims-rc6/README.md rc6/boerns-agent-claims-rc6/README.md
+new file mode 100644
+index 0000000..240db73
+--- /dev/null
++++ rc6/boerns-agent-claims-rc6/README.md
+@@ -0,0 +1,64 @@
++# Börns Agent Claims RC6
++
++Immutable correction candidate for `BOERNS-CLAIM-SUPABASE-001`.
++
++Status: `REVIEW_PENDING / NATIVE_DB_TEST_NOT_RUN / PRODUCTION_NOT_AUTHORIZED`
++
++## Provenance
++
++- Superseded basis: `boerns-agent-claims-rc5.zip`
++- RC5 archive SHA-256:
++  `c34eff8bf387e3f3806724500610f2514315b26ff532edb6fe6f89844f7c8b8b`
++- Source evidence: Boerns-Core issue 32 comments `6426677669`,
++  `6426679843`, `6426681991`, and `6426684132`.
++- Blocking reviews: issue 32 comments `6426780757` and `6426783707`.
++- RC1 through RC5 remain unchanged. RC6 has no deployment or production effect.
++
++The RC5 archive itself was not exposed by the available connector. The RC5
++forward SQL and rollback were reconstructed byte-for-byte from the append-only
++comments and matched their published SHA-256 values. The RC5 documentation and
++test sources were reconstructed from the same comments; RC6 assigns fresh
++hashes to every resulting file and does not reuse the inconsistent RC5 test
++manifest values.
++
++## Corrections
++
++1. Empty rollback takes the exclusive control-row gate and `ACCESS EXCLUSIVE`
++   locks on all five tables before checking emptiness. Locks remain held through
++   every `RESTRICT` drop in the same transaction.
++2. `renew` checks holder visibility before state or fence details. A foreign and
++   an unknown `claim_id` both raise `BC003`.
++3. Authentication remains `BC002`/401; an authenticated principal lacking
++   `can_offer` now raises `BC008`/403.
++4. The adapter error map is closed. Unknown SQLSTATEs, ACL failures, driver
++   errors, timeouts, malformed results, and transport failures map to a generic
++   503 `CLAIM_STATUS_UNKNOWN` without internal details.
++5. Functional, adapter, and deterministic rollback-race tests cover the four
++   corrections. No PostgreSQL result is claimed in this design-only step.
++
++## Files
++
++- `20261028_01_create_boerns_agent_claims.sql`
++- `20261028_01_drop_boerns_agent_claims.sql`
++- `API_CONTRACT.md`
++- `ARCHITECTURE_AND_PRODUCTION_GATE.md`
++- `TEST_AND_ROLLBACK_PLAN.md`
++- `adapter/error_mapping.mjs`
++- `tests/00_local_database_preflight.sql`
++- `tests/10_functional_smoke.sql`
++- `tests/20_concurrent_acquire.sh`
++- `tests/25_empty_rollback_race.sh`
++- `tests/30_adapter_error_mapping.test.mjs`
++- `RC5_TO_RC6.diff`
++- `MANIFEST.sha256`
++
++`MANIFEST.sha256` binds every file above except itself. Its own digest and the
++archive digest are published separately with the append-only evidence.
++
++## Verification Boundary
++
++Executed locally: manifest read-back, SHA-256 recomputation, `bash -n`, and the
++Node adapter unit tests. PostgreSQL 17 migration, rollback, concurrency, RLS,
++and race tests are `NOT_RUN` by instruction. FanMind was not accessed or
++mutated. No merge, deployment, secret, right, provider, or production change
++was performed.
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/TEST_AND_ROLLBACK_PLAN.md rc6/boerns-agent-claims-rc6/TEST_AND_ROLLBACK_PLAN.md
+index 82cbbab..8a48027 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/TEST_AND_ROLLBACK_PLAN.md
++++ rc6/boerns-agent-claims-rc6/TEST_AND_ROLLBACK_PLAN.md
+@@ -1,23 +1,28 @@
+ # Synthetic Test and Rollback Plan
+ 
+-Status: `RC5 PREPARED / NOT_EXECUTED_ON_POSTGRESQL`  
++Status: `RC6 PREPARED / NOT_EXECUTED_ON_POSTGRESQL`  
+ Scope: disposable PostgreSQL 17 or an explicitly approved isolated Supabase test environment only
+ 
+ ## Candidate files
+ 
+-- `20261026_01_create_boerns_agent_claims.sql`
+-- `20261026_01_drop_boerns_agent_claims.sql`
++- `20261028_01_create_boerns_agent_claims.sql`
++- `20261028_01_drop_boerns_agent_claims.sql`
+ - `tests/00_local_database_preflight.sql`
+ - `tests/10_functional_smoke.sql`
+ - `tests/20_concurrent_acquire.sh`
++- `tests/25_empty_rollback_race.sh`
++- `adapter/error_mapping.mjs`
++- `tests/30_adapter_error_mapping.test.mjs`
+ 
+ ## Required execution sequence
+ 
+ ```bash
+ psql "$DATABASE_URL" -f tests/00_local_database_preflight.sql
+-psql "$DATABASE_URL" -f 20261026_01_create_boerns_agent_claims.sql
++psql "$DATABASE_URL" -f 20261028_01_create_boerns_agent_claims.sql
+ psql "$DATABASE_URL" -f tests/10_functional_smoke.sql
+ DATABASE_URL="$DATABASE_URL" tests/20_concurrent_acquire.sh
++DATABASE_URL="$DATABASE_URL" tests/25_empty_rollback_race.sh
++node --test tests/30_adapter_error_mapping.test.mjs
+ ```
+ 
+ `DATABASE_URL` must point to a disposable environment. It must never point to
+@@ -33,6 +38,8 @@ FanMind production under the current authorization.
+ | Offer | coordinator can create one unique task key |
+ | Request conflict | same UUID plus changed fingerprint is rejected |
+ | Foreign principal | cannot acquire another agent's task |
++| Foreign renew | foreign and unknown claim IDs both yield `BC003` before fence validation |
++| Authorization | authenticated principal without `can_offer` yields `BC008`, not `BC002` |
+ | First acquire | exactly one `ACQUIRED` response and fencing token |
+ | Same-key replay | semantically identical stored JSONB response plus `replayed=true` |
+ | New acquire request | `ALREADY_CLAIMED`; no new token |
+@@ -50,6 +57,9 @@ FanMind production under the current authorization.
+ | Parallel acquire | eight clients yield one `ACQUIRED`, seven `ALREADY_CLAIMED` |
+ | Same request race | eight copies replay one receipt and one `ACQUIRED` audit event |
+ | Restore lock race | epoch rotation waits for an open RPC transaction, then disables and invalidates leases |
++| Empty rollback, writer first | committed concurrent row is counted after locks; rollback aborts without deletion |
++| Empty rollback, rollback first | later writer cannot pass the exclusive locks or recreate a dropped schema |
++| Adapter catch-all | unknown SQLSTATE, ACL, driver, timeout, malformed response, and transport errors all yield generic 503 |
+ 
+ ## Additional independent cases required before production
+ 
+@@ -67,12 +77,15 @@ operator identity and rollback evidence.
+ 2. Before adding principals, execute the drop file without its session guard;
+    expect rejection.
+ 3. Set `boerns_agent_claims.rollback_approved=true` in the rollback transaction
+-   and execute the drop; verify schema and both roles no longer exist.
++   and execute the drop; verify the exclusive gate and all table locks precede
++   the emptiness check, then verify schema and both roles no longer exist.
+ 4. Redeploy, load synthetic operational rows and repeat without
+    any additional flag; expect unconditional rejection.
+ 5. Verify that operational rollback requires a separately approved forward fix
+-   or restore plan; RC5 contains no data-loss override.
++   or restore plan; RC6 contains no data-loss override.
+ 6. Compare full pre/post catalogs for all non-claim objects in the empty case.
++7. Run both deterministic writer-first and rollback-first races; neither may
++   delete a committed operational row or allow a post-check insert.
+ 
+ ## Stop criteria
+ 
+@@ -88,8 +101,8 @@ server/client. Attempting to install the isolated engine failed because the
+ configured Ubuntu snapshot endpoint returned HTTP `403` through the environment
+ proxy. No external or production database was contacted as a workaround.
+ 
+-</details>
+-
+ ### Exact next action
+ 
+-Obtain independent RC5-only reviews from the already assigned architecture, API, security/privacy/IAM, operations, and QA/release roles. Native execution remains blocked until an explicitly authorized disposable PostgreSQL 17 runner or already-approved isolated test environment is available. Production approval is not requested.
+\ No newline at end of file
++Run the immutable RC6 archive once in an explicitly authorized disposable
++PostgreSQL 17 environment and submit native logs plus the archive hash for
++independent review. Production approval is not requested.
+diff --git rc5/boerns-agent-claims-rc6/adapter/error_mapping.mjs rc6/boerns-agent-claims-rc6/adapter/error_mapping.mjs
+new file mode 100644
+index 0000000..923635d
+--- /dev/null
++++ rc6/boerns-agent-claims-rc6/adapter/error_mapping.mjs
+@@ -0,0 +1,28 @@
++const SQLSTATE_MAP = new Map([
++  ["BC001", [400, "INVALID_REQUEST"]],
++  ["BC002", [401, "INVALID_IDENTITY"]],
++  ["BC003", [404, "CLAIM_NOT_FOUND"]],
++  ["BC004", [409, "IDEMPOTENCY_KEY_REUSE"]],
++  ["BC005", [412, "STALE_FENCE"]],
++  ["BC006", [503, "CLAIM_STATUS_UNKNOWN"]],
++  ["BC007", [409, "CLAIM_CONFLICT"]],
++  ["BC008", [403, "FORBIDDEN"]],
++]);
++
++const UNKNOWN = Object.freeze({
++  status: 503,
++  body: Object.freeze({ code: "CLAIM_STATUS_UNKNOWN" }),
++});
++
++export function mapDatabaseError(error) {
++  const mapped = SQLSTATE_MAP.get(error?.code);
++  if (!mapped) return UNKNOWN;
++  return Object.freeze({
++    status: mapped[0],
++    body: Object.freeze({ code: mapped[1] }),
++  });
++}
++
++export function mapTransportError() {
++  return UNKNOWN;
++}
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/tests/00_local_database_preflight.sql rc6/boerns-agent-claims-rc6/tests/00_local_database_preflight.sql
+index ab44d70..e952b22 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/tests/00_local_database_preflight.sql
++++ rc6/boerns-agent-claims-rc6/tests/00_local_database_preflight.sql
+@@ -1,4 +1,4 @@
+--- Revision 15 / RC5 local-only database preflight. Never deploy this file to FanMind.
++-- Revision 16 / RC6 local-only database preflight. Never deploy this file to FanMind.
+ \set ON_ERROR_STOP on
+ 
+ do $preflight$
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/tests/10_functional_smoke.sql rc6/boerns-agent-claims-rc6/tests/10_functional_smoke.sql
+index 3705c59..686be2a 100644
+--- rc5/boerns-agent-claims-rc5-reconstructed/tests/10_functional_smoke.sql
++++ rc6/boerns-agent-claims-rc6/tests/10_functional_smoke.sql
+@@ -1,4 +1,4 @@
+--- Revision 15 / RC5 synthetic functional tests. Run only in a disposable PostgreSQL 17 database.
++-- Revision 16 / RC6 synthetic functional tests. Run only in a disposable PostgreSQL 17 database.
+ \set ON_ERROR_STOP on
+ \pset tuples_only on
+ \pset format unaligned
+@@ -92,6 +92,22 @@ update boerns_agent_claims.control_state
+        change_reason = 'LOCAL_SYNTHETIC_TEST_ONLY'
+  where singleton;
+ 
++-- Authentication succeeded, but BT-006 lacks the coordinator capability.
++set role boerns_claims_runtime;
++do $authorization_class$
++begin
++  perform boerns_agent_claims.offer(
++    'https://claims.test.local', 'subject-bt006',
++    'SYNTH-FORBIDDEN', 'T1', 1, 'BT-006',
++    '10000000-0000-0000-0000-000000000002'
++  );
++  raise exception 'principal without can_offer was accepted';
++exception
++  when sqlstate 'BC008' then null;
++end
++$authorization_class$;
++reset role;
++
+ -- BT-001 offers exactly one task to BT-006.
+ set role boerns_claims_runtime;
+ select boerns_agent_claims.offer(
+@@ -172,6 +188,45 @@ select boerns_agent_claims.renew(
+ ) as renew_response \gset
+ reset role;
+ 
++-- A foreign existing claim and an unknown claim_id must be indistinguishable.
++set role boerns_claims_runtime;
++do $renew_enumeration_resistance$
++declare
++  v_acquire jsonb := :'acquire_response'::jsonb;
++  v_foreign_rejected boolean := false;
++  v_unknown_rejected boolean := false;
++begin
++  begin
++    perform boerns_agent_claims.renew(
++      'https://claims.test.local', 'subject-bt010',
++      (v_acquire ->> 'claim_id')::uuid,
++      (v_acquire ->> 'fence_epoch')::uuid,
++      (v_acquire ->> 'fence_token')::bigint,
++      '10000000-0000-0000-0000-000000000022', 120
++    );
++  exception
++    when sqlstate 'BC003' then v_foreign_rejected := true;
++  end;
++
++  begin
++    perform boerns_agent_claims.renew(
++      'https://claims.test.local', 'subject-bt010',
++      'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid,
++      (v_acquire ->> 'fence_epoch')::uuid,
++      (v_acquire ->> 'fence_token')::bigint,
++      '10000000-0000-0000-0000-000000000023', 120
++    );
++  exception
++    when sqlstate 'BC003' then v_unknown_rejected := true;
++  end;
++
++  if not v_foreign_rejected or not v_unknown_rejected then
++    raise exception 'renew disclosed whether a foreign claim_id exists';
++  end if;
++end
++$renew_enumeration_resistance$;
++reset role;
++
+ insert into test_context values
+   ('acquire', :'acquire_response'::jsonb),
+   ('acquire_replay', :'acquire_replay'::jsonb),
+diff --git rc5/boerns-agent-claims-rc5-reconstructed/tests/20_concurrent_acquire.sh rc6/boerns-agent-claims-rc6/tests/20_concurrent_acquire.sh
+old mode 100644
+new mode 100755
+index c83899d..31f3ff4
+--- rc5/boerns-agent-claims-rc5-reconstructed/tests/20_concurrent_acquire.sh
++++ rc6/boerns-agent-claims-rc6/tests/20_concurrent_acquire.sh
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env bash
+-# Revision 15 / RC5 deterministic concurrency tests.
++# Revision 16 / RC6 deterministic concurrency tests.
+ set -euo pipefail
+ 
+ : "${DATABASE_URL:?DATABASE_URL must point to a disposable PostgreSQL 17 database}"
+diff --git rc5/boerns-agent-claims-rc6/tests/25_empty_rollback_race.sh rc6/boerns-agent-claims-rc6/tests/25_empty_rollback_race.sh
+new file mode 100755
+index 0000000..a12d853
+--- /dev/null
++++ rc6/boerns-agent-claims-rc6/tests/25_empty_rollback_race.sh
+@@ -0,0 +1,130 @@
++#!/usr/bin/env bash
++# RC6 empty-rollback linearization test. Disposable PostgreSQL 17 only.
++set -euo pipefail
++
++: "${ROLLBACK_DATABASE_URL:?must point to a separate disposable PostgreSQL 17 database}"
++
++root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
++forward_sql="$root_dir/20261028_01_create_boerns_agent_claims.sql"
++rollback_sql="$root_dir/20261028_01_drop_boerns_agent_claims.sql"
++tmp_dir="$(mktemp -d)"
++trap 'rm -rf "$tmp_dir"' EXIT
++
++run_rollback() {
++  psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
++set boerns_agent_claims.rollback_approved = 'true';
++\i '$rollback_sql'
++SQL
++}
++
++psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 \
++  -f "$root_dir/tests/00_local_database_preflight.sql"
++psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 -f "$forward_sql"
++
++# Writer-first race: rollback must wait, then count the committed row and abort.
++(
++  psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
++begin;
++insert into boerns_agent_claims.principals
++  (agent_id, auth_issuer, auth_subject, enabled, can_offer)
++values
++  ('BT-006', 'https://claims.test.local', 'rollback-race-writer', false, false);
++\! touch '$tmp_dir/writer.ready'
++\! while [ ! -e '$tmp_dir/writer.go' ]; do sleep 0.01; done
++commit;
++SQL
++) &
++writer_pid=$!
++
++for _ in $(seq 1 500); do
++  [[ -e "$tmp_dir/writer.ready" ]] && break
++  sleep 0.01
++done
++[[ -e "$tmp_dir/writer.ready" ]]
++
++(run_rollback >"$tmp_dir/writer_first.out" 2>&1) &
++rollback_pid=$!
++sleep 0.2
++kill -0 "$rollback_pid" 2>/dev/null
++touch "$tmp_dir/writer.go"
++wait "$writer_pid"
++if wait "$rollback_pid"; then
++  printf 'Rollback deleted a row committed by the writer-first race\n' >&2
++  exit 1
++fi
++
++psql "$ROLLBACK_DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL' |
++select case
++  when to_regnamespace('boerns_agent_claims') is not null
++   and (select count(*) from boerns_agent_claims.principals) = 1
++  then 'WRITER_FIRST_PASS'
++  else 'WRITER_FIRST_FAIL'
++end;
++SQL
++grep -qx WRITER_FIRST_PASS
++
++psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 \
++  -c "delete from boerns_agent_claims.principals where agent_id = 'BT-006'"
++
++# Rollback-first race: hold the last table lock so the rollback owns the gate
++# and earlier table locks before a late direct writer attempts an insert.
++(
++  psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 <<SQL
++begin;
++lock table boerns_agent_claims.audit_events in access share mode;
++\! touch '$tmp_dir/blocker.ready'
++\! while [ ! -e '$tmp_dir/blocker.go' ]; do sleep 0.01; done
++commit;
++SQL
++) &
++blocker_pid=$!
++
++for _ in $(seq 1 500); do
++  [[ -e "$tmp_dir/blocker.ready" ]] && break
++  sleep 0.01
++done
++[[ -e "$tmp_dir/blocker.ready" ]]
++
++(run_rollback >"$tmp_dir/rollback_first.out" 2>&1) &
++rollback_pid=$!
++
++for _ in $(seq 1 500); do
++  lock_count="$(psql "$ROLLBACK_DATABASE_URL" -At -v ON_ERROR_STOP=1 <<'SQL'
++select count(*)
++  from pg_locks l
++  join pg_class c on c.oid = l.relation
++  join pg_namespace n on n.oid = c.relnamespace
++ where n.nspname = 'boerns_agent_claims'
++   and c.relname = 'principals'
++   and l.mode = 'AccessExclusiveLock'
++   and l.granted;
++SQL
++)"
++  [[ "$lock_count" == "1" ]] && break
++  sleep 0.01
++done
++[[ "$lock_count" == "1" ]]
++
++(
++  psql "$ROLLBACK_DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
++insert into boerns_agent_claims.principals
++  (agent_id, auth_issuer, auth_subject, enabled, can_offer)
++values
++  ('BT-006', 'https://claims.test.local', 'rollback-race-late', false, false);
++SQL
++) >"$tmp_dir/late_writer.out" 2>&1 &
++late_writer_pid=$!
++
++sleep 0.2
++kill -0 "$late_writer_pid" 2>/dev/null
++touch "$tmp_dir/blocker.go"
++wait "$blocker_pid"
++wait "$rollback_pid"
++if wait "$late_writer_pid"; then
++  printf 'Late writer passed rollback-owned table locks\n' >&2
++  exit 1
++fi
++
++test "$(psql "$ROLLBACK_DATABASE_URL" -At -v ON_ERROR_STOP=1 \
++  -c "select to_regnamespace('boerns_agent_claims') is null")" = "t"
++printf 'EMPTY_ROLLBACK_RACES_PASS\n'
+diff --git rc5/boerns-agent-claims-rc6/tests/30_adapter_error_mapping.test.mjs rc6/boerns-agent-claims-rc6/tests/30_adapter_error_mapping.test.mjs
+new file mode 100644
+index 0000000..9bc36b4
+--- /dev/null
++++ rc6/boerns-agent-claims-rc6/tests/30_adapter_error_mapping.test.mjs
+@@ -0,0 +1,43 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++
++import {
++  mapDatabaseError,
++  mapTransportError,
++} from "../adapter/error_mapping.mjs";
++
++test("authentication and authorization remain distinct", () => {
++  assert.deepEqual(mapDatabaseError({ code: "BC002" }), {
++    status: 401,
++    body: { code: "INVALID_IDENTITY" },
++  });
++  assert.deepEqual(mapDatabaseError({ code: "BC008" }), {
++    status: 403,
++    body: { code: "FORBIDDEN" },
++  });
++});
++
++test("known foreign and unknown claim responses share the 404 class", () => {
++  assert.deepEqual(mapDatabaseError({ code: "BC003" }), {
++    status: 404,
++    body: { code: "CLAIM_NOT_FOUND" },
++  });
++});
++
++test("unknown SQLSTATE and ACL errors fail closed", () => {
++  for (const code of ["42501", "XX000", "08006", "ZZ999", undefined]) {
++    assert.deepEqual(mapDatabaseError({ code, message: "must not leak" }), {
++      status: 503,
++      body: { code: "CLAIM_STATUS_UNKNOWN" },
++    });
++  }
++});
++
++test("driver, timeout, malformed response, and transport failures fail closed", () => {
++  for (const error of [new Error("driver"), null, { timeout: true }, { row: "bad" }]) {
++    assert.deepEqual(mapTransportError(error), {
++      status: 503,
++      body: { code: "CLAIM_STATUS_UNKNOWN" },
++    });
++  }
++});
