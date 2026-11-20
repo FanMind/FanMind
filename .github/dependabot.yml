@@ -53,3 +53,8 @@ updates:
     open-pull-requests-limit: 3
     commit-message:
       prefix: deps(actions)
+
+    groups:
+      codeql-actions:
+        patterns:
+          - "github/codeql-action/*"
