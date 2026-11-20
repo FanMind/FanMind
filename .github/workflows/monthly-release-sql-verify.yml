@@ -4,7 +4,7 @@ on:
     inputs:
       adapter:
         type: choice
-        options: [capacity_writer, media_catalogue, media_prices, support_consent, media_storage]
+        options: [capacity_writer, media_catalogue, media_prices, support_consent, media_storage, workspace_fields]
         required: true
       reviewed_commit:
         description: Exact reviewed current Main candidate (not an automatic latest-Main selection)
@@ -53,7 +53,7 @@ jobs:
           [[ "$REVIEWED" =~ ^[a-f0-9]{40}$ && "$PRODUCTION_BASE" =~ ^[a-f0-9]{40}$ && "$EXPECTED_LIVE" =~ ^[a-f0-9]{40}$ && "$SQL_SHA" =~ ^[a-f0-9]{64}$ ]]
           [[ "$REVIEWED" == "$GITHUB_SHA" && "$CONFIRMATION" == 'verify-monthly-sql-only' ]]
           [[ "$EXPECTED_LIVE" == "$PRODUCTION_BASE" || "$EXPECTED_LIVE" == "$REVIEWED" ]]
-          case "$SQL_ADAPTER" in capacity_writer|media_catalogue|media_prices|support_consent|media_storage) ;; *) exit 1 ;; esac
+          case "$SQL_ADAPTER" in capacity_writer|media_catalogue|media_prices|support_consent|media_storage|workspace_fields) ;; *) exit 1 ;; esac
           cd /var/www/fanmind
           exec 9>.monthly-release.lock
           flock -n 9

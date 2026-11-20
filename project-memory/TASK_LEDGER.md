@@ -1186,3 +1186,51 @@ their actual managed values explicitly before/after reload and rollback, even
 when absent from the file. A dedicated executed helper rejects changed/missing
 flags and unrelated Stripe drift. Do not treat those intended overrides as
 Meta-file conflicts or use file text to reset the running feature switches.
+
+
+## FM-MVP-AUDIT-INSTALL-BINDING-20261118 — source preparation
+
+Owner resumes central1512 MVP closure; no extra Work or agents. Preserve
+Staging44338343424 and source3f74634d. Root/SQL/deploy still require explicit
+approval. The existing installer cannot install the reviewed current audit:
+stale preflight8e5dcbd/707d227 rejects against existing policy6bc20985/bb799466,
+and its frozen935d/e65a1af5 target is the measured outdated installed verifier.
+Rebind only the existing installer/workflow to unchanged reviewed current
+validator4422b241, actual base and measured dependencies. Retain private
+preimages before replacement; failed postcheck restores exact validator bytes.
+No new audit implementation or guard relaxation. Application, SQL, backup,
+restore and canonical verifier code unchanged. Source-only PR requires its own
+CI/merge decision; no current-Main/Staging state changes inferred.
+
+## FM-MVP-AUDIT-POSTCHECK-OWNER-20261118 — source preparation
+
+Confirmed Owner evidence1512/6989202425: successful collection, root Git reads
+reject ubuntu-owned repository. Keep failed44374215981 terminal and accepted
+Main/Stagingbbc30eb unchanged. Only the existing installer postcheck changes:
+unchanged full verifier API asubuntu, original bytes over stdin, explicit
+non-root invoking-UID/group checks; root receipts, source/file hashes and
+exact rollback remain. No Git trust exception or ownership/mode adjustment.
+Targeted stdin/negative/rollback tests and an isolated real root ownership
+regression cover the affected boundary. GitHub CI must execute the root case;
+local cloud lacks sudo. No canonical validator/product/SQL change. Source
+merge, new Staging and a new install require their explicit Owner decision.
+
+### Same task: deployment-runner regression boundary after authorized execution
+
+PR1538 merged regularly as045be972ce22364a2fdcd59aa54c98442174c3f3,
+tree09c5c4b725ae9bda506f70be624d2ee8f565591f after16successful checks.
+Exactly one authorized Staging44393080155/attempt1 failed at the newly added
+root fixture: GITHUB_ACTIONS also identifies the deliberately restricted
+self-hosted deployment runner. Snapshot recovery succeeded; independent
+Staging HTTPS20:40:40UTC returned previousbbc30eb. Audit installation did not
+start; its approval variable was not changed. No retry or new target action.
+Prepare only a test boundary correction: skip the root fixture before any
+privilege probe on a self-hosted deployment; keep it mandatory in hosted CI.
+Installer/workflow/canonical modules and their hashes stay unchanged.
+Fresh exact-head CI and a separate exact-head merge/Staging decision required.
+
+## FM-MVP-AUDIT-COMPARE-1541-20261120
+- Risk: R3. Scope: source-only continuation of #1512 in draft PR #1541 on the existing branch. Status: IMPLEMENTED_AWAITING_EXACT_HEAD_CI.
+- Preflight: current main `68a466c1b1a1998ace10cbd7108d3beaa6752631`; prior PR head `5f33dd7c9765746b01b7ec835605c03eb5e39d6b`; independent failure evidence [#1512/7044398699](https://github.com/FanMind/FanMind/pull/1512#issuecomment-7044398699). The oversized compare response, stale verifier pin, Root regression endpoint and missing Project Memory are reconciled in this PR.
+- Affected boundary: Operations audit evidence and its protected installer. No FM-CONTRACT or FM-IGATE consumer changes. Existing Staging, Billing ACL, Backup/Restore and MVP acceptance evidence are kept at their actual status.
+- Receipt and rollback: [exact source bindings and bounded closeout](receipts/audit-compare-1541-20261120.md). Source merge, Staging and installation require separate exact approval; failed install 44402627674 cannot be reused.

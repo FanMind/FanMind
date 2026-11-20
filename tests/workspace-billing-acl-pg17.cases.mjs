@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { workspaceFieldProtectionStateSql } from "../scripts/operations/monthly-release-sql-verify.mjs";
 
 // Only the existing disposable CI PostgreSQL service is accepted. No URL,
 // Supabase credential, host database or target write is supported here.
@@ -18,7 +19,7 @@ const fields = {
   commercial_option: "'capacity_199'", payment_terms_accepted_at: "statement_timestamp()",
 };
 const editable = ["name", "organization_name", "street_address", "postal_code", "city", "country", "vat_id", "tax_number", "company_register_number", "company_register_court"];
-const contract = readFileSync(new URL("../supabase/controlled/20260726121000_workspace_server_owned_columns.sql", import.meta.url), "utf8");
+const contract = readFileSync(new URL("../supabase/controlled/workspace_server_owned_columns_mvp.sql", import.meta.url), "utf8");
 const contractBody = contract.replace(/^begin;\s*$/mu, "").replace(/^commit;\s*$/mu, "");
 function sql(input, db = database) {
   assert.match(container, /^[a-f0-9]{12,64}$/u);
@@ -70,21 +71,24 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
       for (const [field,value] of Object.entries(fields)) assert.equal(as("authenticated",owner,`with changed as(update public.workspaces set ${field}=${value} where id='${owner}' returning id) select count(*) from changed`),"1");
     });
     const before = snapshot();
-    await t.test("missing legacy acceptance evidence aborts before any privilege change", () => {
+    await t.test("field protection preserves missing legacy evidence and all customer data", () => {
       sql(`update public.workspaces set plan_id='starter',commercial_option='starter_paid_setup',payment_terms_version=null where id='${owner}';`);
-      try {
-        assert.throws(() => sql(contract), e => /workspace_payment_terms_evidence_missing/u.test(String(e.stderr)));
-        assert.equal(snapshot(),before);
-      } finally {
-        sql(`update public.workspaces set plan_id='capacity_199',commercial_option='capacity_199' where id='${owner}';`);
-      }
+      const rows = () => sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;");
+      const dataBefore = rows();
+      // Actual revised contract, rollback-only: no synthetic consent backfill.
+      sql(`begin;${contractBody}rollback;`);
+      assert.equal(rows(), dataBefore);
+      assert.equal(snapshot(), before);
     });
     await t.test("rollback rehearsal restores exact ACLs, column grants and policies", () => {
       sql(`begin;${contractBody}rollback;`);
       assert.equal(snapshot(), before);
     });
-    sql(contract); // Actual existing controlled SQL, unchanged, disposable DB only.
+    const dataBeforeContract = sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;");
+    sql(contract); // Actual reviewed field protection, disposable DB only.
+    assert.equal(sql("select jsonb_agg(to_jsonb(w) order by id) from public.workspaces w;"), dataBeforeContract);
     const secured = snapshot();
+    assert.equal(sql(workspaceFieldProtectionStateSql()), "t");
     await t.test("Owner and owning Creator retain all ten master-data updates", () => {
       for (const actor of [owner,creator]) for (const field of editable)
         assert.equal(as("authenticated",actor,`with changed as(update public.workspaces set ${field}='Synthetic' where id='${actor}' returning id) select count(*) from changed`),"1");
@@ -114,7 +118,10 @@ test("existing Workspace contract closes Billing ACLs on isolated PostgreSQL 17"
     });
     await t.test("permission-widening mutation is detected, then original protection restored", () => {
       sql("grant update(billing_status) on public.workspaces to authenticated;");
-      try { assert.throws(() => denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`),assert.AssertionError); }
+      try {
+        assert.equal(sql(workspaceFieldProtectionStateSql()), "f");
+        assert.throws(() => denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`),assert.AssertionError);
+      }
       finally { sql("revoke update(billing_status) on public.workspaces from authenticated;"); }
       denied("authenticated",owner,`update public.workspaces set billing_status='mutated' where id='${owner}'`);
       assert.equal(snapshot(),secured);

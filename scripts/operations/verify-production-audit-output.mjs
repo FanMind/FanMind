@@ -301,7 +301,7 @@ const TRACKING_ENV = Object.freeze({ PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "
   GIT_OPTIONAL_LOCKS: "0", GIT_NO_LAZY_FETCH: "1" });
 
 export function trackingGithubJson(endpoint) {
-  if (!/^\/(?:git\/ref\/heads\/main|compare\/[a-f0-9]{40}\.\.\.[a-f0-9]{40}\?per_page=1)?$/u.test(endpoint)) throw Error();
+  if (!/^\/(?:git\/ref\/heads\/main|compare\/[a-f0-9]{40}\.\.\.[a-f0-9]{40}\?per_page=1&page=2)?$/u.test(endpoint)) throw Error();
   const result = spawnSync("/usr/bin/curl", ["--disable", "--fail", "--silent", "--show-error",
     "--proto", "=https", "--tlsv1.2", "--connect-timeout", "5", "--max-time", "10",
     "--max-filesize", "262144", "--max-redirs", "0", "--write-out", "\n%{http_code}", "--header", "Accept: application/vnd.github+json",
@@ -368,8 +368,9 @@ export function readTrackingProvenance(live, origin, { root = "/var/www/fanmind"
       return ref.object.sha;
     };
     const anchor = main();
+    // Page one embeds file patches that can exceed the response limit.
     for (const [base, head] of [[live, origin], [origin, anchor]]) {
-      const c = requestJson(`/compare/${base}...${head}?per_page=1`);
+      const c = requestJson(`/compare/${base}...${head}?per_page=1&page=2`);
       if (c?.base_commit?.sha !== base || c.merge_base_commit?.sha !== base || c.behind_by !== 0
         || !Number.isSafeInteger(c.ahead_by) || c.ahead_by < 0 || c.total_commits !== c.ahead_by
         || c.status !== (base === head ? "identical" : "ahead") || (base === head ? c.ahead_by !== 0 : c.ahead_by < 1)) throw Error();

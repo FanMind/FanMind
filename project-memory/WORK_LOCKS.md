@@ -1595,3 +1595,8 @@ All product workstreams remain tracked in `STARTED_WORK.md`; new locks must be a
 - Preservation: reject disk/runtime encryption or unrelated-field drift before mutation; reject existing other app identity. Preserve valid keys; new key only after bounded read-only empty encrypted-token inventory. No database write, Production deploy, automatic sending or general Meta publication.
 - Recovery: private mode600 fsynced original-config snapshot retained on the Staging host with run ID, no artifact upload; same-process failure restores original configuration, restarts and verifies old effective values. Interrupted-job recovery requires reviewed restoration of the private snapshot; no automatic crash-recovery claim.
 - Validation: 22 focused synthetic tests PASS; full Operations and final-head CI pending. Independent Guardian reproduced prewrite drift risks; added fail-closed regressions. Provider consent, real Page ownership/import/webhooks/two-tenant isolation and App Review/Advanced Access remain separately unproved.
+
+## LOCK-FM-MVP-AUDIT-COMPARE-1541-20261120
+- Task: FM-MVP-AUDIT-COMPARE-1541-20261120. Status: RELEASED_FOR_PR; R3 repository source. Existing branch `fix/1512-audit-compare-response-size`, PR #1541.
+- Confined to the existing read-only audit and installer binding. Main, Staging, Production, environment approval, SQL and Restore are outside this source lock.
+- Handoff: reconcile final-head CI and the independent findings in the existing PR before requesting the exact merge decision. See [receipt](receipts/audit-compare-1541-20261120.md).

@@ -1,5 +1,36 @@
 # FanMind Monatsrelease — bestehender geschützter Controller
 
+## Vollständige GitHub-Prüfinventur — 17. November 2026
+
+Source-Vorbereitung, keine Installation oder Deploymentfreigabe. Am Kandidaten
+`b6a2c44a992ad83bea5d608b6e3a90a3c2718627` meldet GitHub 296 Check-Runs
+auf drei Seiten. Der bisherige Abruf las nur 100; der Vollständigkeitsguard
+lehnte dieses Inventar korrekt ab. Production-Preflight und Monats-Paketgenerator
+verwenden jetzt denselben begrenzten Leser für sämtliche Seiten bis maximal
+1.000 Check-Runs. Fehlende Seiten, wechselnde Gesamtzahl, doppelte/ungültige IDs
+und ein veränderter erster Seitenanker blockieren. Pflichtprüfungen und alle
+bisherigen Fehler-/Suite-Regeln bleiben erhalten; Fehler auf späteren Seiten
+werden niemals ausgeblendet. API-Ausfall oder Überschreitung erfordern Klärung,
+keinen Teilnachweis oder automatischen Retry.
+
+Der vorhandene rote Production-Audit bleibt damit rot. Dieser Quellfix löst
+weder Tracking-Provenienz noch Recovery/Billing und autorisiert keinen Merge.
+Beide geänderten Operationsmodule gehören zur zehnteiligen privaten
+Root-Verifier-Closure; eine spätere Monatsinstallation muss ihre neuen exakten
+Bytes binden. Alte Evidence-Bundles werden nicht umetikettiert.
+
+Der bestehende Deployworkflow enthält außerdem ausdrücklich den separat
+freizugebenden Einzelrelease ohne Monatsparameter und installiert dabei den
+Auditvalidator aus dem Release. Das ist allein kein Nachweis, dass aktuelle
+Audit-, Recovery-, Billing- oder Owner-Gates bestanden sind. Die ältere
+Versiegelungsbeschreibung in AGENTS.md widerspricht der tatsächlichen
+Workflowdatei; daraus wird keine neue Freigabe oder Guardänderung abgeleitet.
+Der Releaseweg ist erst mit vollständigen Voraussetzungen konkret zu binden.
+
+Rückfall dieser Vorbereitung: Quelländerung zurücknehmen. Keine Zielmutation,
+kein Dienstneustart, keine SQL-/Provider-/Rechteänderung. Produktumfang,
+README und SOURCE_OF_TRUTH bleiben unverändert.
+
 ## Separate Billing-Abnahme — 15. November 2026
 
 Die fünfte Work-Sitzung liefert

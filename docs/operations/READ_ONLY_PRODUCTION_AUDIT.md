@@ -1,5 +1,93 @@
 # FanMind Read-only Production Operations Audit
 
+## Confirmed postcheck identity failure — 18 November 2026 (SOURCE ONLY)
+
+Owner host evidence1512/6989202425 confirms collection `AUDIT_RESULT=success`
+but root's clean Git context rejects the ubuntu-owned worktree with
+`detected dubious ownership`. Failed installer44374215981 is NOT retried;
+read-only44375244330 confirmed the exact original four root-file hashes.
+
+The smallest correction changes only the installer postcheck invocation:
+`runuser -u ubuntu` executes the unchanged full canonical verifier API on the
+exact collected bytes via stdin. The child requires the real/effective UID to
+equal the positive invoking UID and rejects root primary/supplementary groups.
+A failed/nonterminal collector or verifier still blocks and invokes the exact
+existing rollback. No audit bytes enter argv, no writable input file is reopened,
+and root0700/0600 receipts/preimages remain private and root-owned. The parent
+retains installation/hash/rollback authority. The actual independent Runtime
+audit remains mandatory after any separately approved installation.
+
+Collector, canonical verifier4422b241, boot/health, Git config/object/ancestry/
+independent GitHub checks, root-file pins, source3f74634d and live basebb799466
+remain byte-for-byte unchanged. No safe.directory exception, ownership/mode
+change, service action, SQL, second audit implementation or provider change.
+The workflow changes only the installer digest to
+`a1c3121c4b1ad2313113f46ef666c54319acf0ae5bb4a3350647c67c8cced80e`.
+
+Regression scope: actual canonical validation over stdin, collection/identity/
+timeout/negative full-audit failures and byte-exact rollback. A separate isolated
+Linux fixture proves root Git rejection, full provenance success under an
+unprivileged owner, inaccessible private receipt and unchanged Git config/owners.
+Only synthetic temporary files are owned/removed by that fixture. This cloud
+has no sudo; the root regression must really execute in normal exact-head CI.
+Local green alone is not a Root/Production acceptance.
+
+Main/Staging remainbbc30eb40c94cb9fac6cec961a72c0fe2793f7b9. A new source merge,
+its own Staging binding and a new one-time installation require explicit Owner
+approval; the consumed approval for44374215981 authorizes no retry. No approvals
+or workflow runs are changed by this preparation.
+
+## MVP installer binding — 18 November 2026 (SOURCE ONLY)
+
+Audit44310571899/job134823316894 measured installed collector664be21a…,
+validator e65a1af5…, boot module fe183af1… and health module357ff62a….
+SERVER_HEAD=LIVE=bb799466 while ORIGIN_MAIN=3f74634d. The old verifier rejects
+that tracking difference; the already reviewed current verifier4422b241…
+independently checks canonical GitHub repository/Main ancestry and local Git
+identity. It does not accept drift of the actual live/server release.
+
+The existing protected installer is rebound to exactly that measured old state,
+source3f74634d0c7d6a13abde254bb9f8afb786b95cc1 and live base
+bb799466d2c235195fedcb4d80568f9f0bd56969. Its former8e5dcbd/707d227
+preflight request is incompatible with the existing6bc20985/bb799466 policy;
+this correction fixes the request rather than relaxing that policy.
+
+The validator and collector themselves have NO changes. Collector and two
+already installed imports must have their measured exact hashes; only the
+validator inode is replaced. Before replacement, private root0700 storage
+retains fsynced/read-back0600 preimages plus a source/base/hash manifest.
+The full existing audit must pass against unchanged live base. A failed
+postcheck restores the changed validator's exact preimage and verifies both
+hashes; collector bytes/inode stay untouched. The private receipt remains for
+inspection after success or failure. An interrupted/unknown operation requires
+actual hash/receipt inspection, never an automatic rerun or boot/DB rollback.
+This is not an atomic total-host rollback or proof of a real backup restore.
+
+After separately approved source merge and exact new-Main review:
+
+```text
+workflow=install-production-audit-policy.yml
+reviewed_main_commit=<actual separately approved new Main>
+confirmation=install-audit-reviewed-policy
+FANMIND_AUDIT_POLICY_INSTALL_APPROVAL=<same Main>:install-audit-reviewed-policy:3f74634d0c7d6a13abde254bb9f8afb786b95cc1:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled
+```
+
+Owner270165082, main, existing backup-production-recovery reviewer boundary,
+Production host/runner, exact installer digest, source hashes and exclusive
+host/deployment locks remain mandatory. No workflow dispatch, variable write,
+root install, restart or deployment is authorized by this source preparation.
+A real subsequent successful audit run must replace the old failed audit
+check; code CI alone is not runtime acceptance.
+
+A source merge changes Main: preserve successful Staging44338343424 for3f74634d;
+never call that the deployment of a later operations-only merge. Any later
+approved release must independently bind its actual new Main and Staging.
+The monthly release branch additionally needs its real private closure,
+artifact-bound restore receipts, exact SQL decisions and acceptance references;
+none may be manufactured to fit this installer. The separate existing release
+branch is not permission to skip necessary backup/restore/Billing evidence.
+
+
 ## Zweck
 
 `scripts/operations/read-only-production-audit.sh` sammelt einen redigierten technischen Zustandsnachweis für FanMind Production. Das Skript darf weder Dienste verändern noch Backups entschlüsseln oder Daten wiederherstellen. Es ergänzt `/api/version`, `/api/health`, den Operations-Monitor und den Backup-Verifier um einen reproduzierbaren Host-Nachweis.

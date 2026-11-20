@@ -1,4 +1,4 @@
-name: FanMind Protected One-Hour Audit Policy Install
+name: FanMind Protected Reviewed Audit Policy Install
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +8,7 @@ on:
       confirmation:
         type: string
         required: true
-        description: install-audit-one-hour
+        description: install-audit-reviewed-policy
 permissions:
   contents: read
   actions: read
@@ -33,8 +33,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           REQUESTED_ACTION: verify
           REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_main_commit }}
-          WORKER_SOURCE_COMMIT: 8e5dcbdca844972fb2f133c188ecfee5d5252273
-          EXPECTED_APPLICATION_COMMIT: 707d22702a784e3b9999d1c9ae9c1e11c096a1bc
+          WORKER_SOURCE_COMMIT: 6bc209851b4a54609747099ec34264318dc7f4c4
+          EXPECTED_APPLICATION_COMMIT: bb799466d2c235195fedcb4d80568f9f0bd56969
           CONFIRMATION: backup-worker-verify
         run: node scripts/operations/backup-worker-install-github-preflight.mjs
   install:
@@ -47,7 +47,7 @@ jobs:
       CONFIRMATION: ${{ inputs.confirmation }}
       APPROVAL: ${{ vars.FANMIND_AUDIT_POLICY_INSTALL_APPROVAL }}
     steps:
-      - name: Install only the frozen reviewed audit pair with rollback and full audit
+      - name: Install only the pinned audit verifier with retained preimages and full audit
         shell: /usr/bin/bash --noprofile --norc -p -euo pipefail {0}
         env:
           BASH_ENV: ''
@@ -56,8 +56,8 @@ jobs:
           [[ "$GITHUB_REPOSITORY" == FanMind/FanMind && "$GITHUB_REPOSITORY_ID" == 1259448985 ]]
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$CURRENT_MAIN" ]]
           [[ "$GITHUB_ACTOR_ID" == 270165082 && "$RUNNER_NAME" == fanmind-prod-01-exoscale ]]
-          [[ "$CONFIRMATION" == install-audit-one-hour ]]
-          [[ "$APPROVAL" == "$CURRENT_MAIN:install-audit-one-hour:935d1d806d09bd7291e89bcffb2250864dcf6739:707d22702a784e3b9999d1c9ae9c1e11c096a1bc:admin-bypass-disabled" ]]
+          [[ "$CONFIRMATION" == install-audit-reviewed-policy ]]
+          [[ "$APPROVAL" == "$CURRENT_MAIN:install-audit-reviewed-policy:5f33dd7c9765746b01b7ec835605c03eb5e39d6b:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled" ]]
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             https://api.github.com/repos/FanMind/FanMind/branches/main | \
             /usr/bin/node -e 'let s="";process.stdin.on("data",b=>{s+=b;if(s.length>65536)process.exit(1)});process.stdin.on("end",()=>{const j=JSON.parse(s);if(j.commit?.sha!==process.argv[1]||j.protected!==true)process.exit(1)})' "$CURRENT_MAIN"
@@ -68,11 +68,11 @@ jobs:
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/install-production-audit-policy.mjs" --output "$INSTALLER"
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
-            https://raw.githubusercontent.com/FanMind/FanMind/935d1d806d09bd7291e89bcffb2250864dcf6739/scripts/operations/read-only-production-audit.sh --output "$COLLECTOR"
+            https://raw.githubusercontent.com/FanMind/FanMind/5f33dd7c9765746b01b7ec835605c03eb5e39d6b/scripts/operations/read-only-production-audit.sh --output "$COLLECTOR"
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
-            https://raw.githubusercontent.com/FanMind/FanMind/935d1d806d09bd7291e89bcffb2250864dcf6739/scripts/operations/verify-production-audit-output.mjs --output "$VERIFIER"
+            https://raw.githubusercontent.com/FanMind/FanMind/5f33dd7c9765746b01b7ec835605c03eb5e39d6b/scripts/operations/verify-production-audit-output.mjs --output "$VERIFIER"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" 4e0fe4762973b20728868081017e04ca9b69174792689798d61c87e264e6e808 "$COLLECTOR" "$VERIFIER" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" 1d80a5b63404405f5c84fd72e011f007ce7c5ade56c19f9dcb82564143afa138 "$COLLECTOR" "$VERIFIER" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {

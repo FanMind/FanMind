@@ -51,7 +51,7 @@ async function trackingFixture(t) {
     requests.push(endpoint);
     if(endpoint==='/')return {id:1259448985,full_name:'FanMind/FanMind',default_branch:'main',fork:false,archived:false,disabled:false};
     if(endpoint==='/git/ref/heads/main')return {ref:'refs/heads/main',object:{type:'commit',sha:anchor}};
-    const m=endpoint.match(/^\/compare\/([a-f0-9]{40})\.\.\.([a-f0-9]{40})\?per_page=1$/u);
+    const m=endpoint.match(/^\/compare\/([a-f0-9]{40})\.\.\.([a-f0-9]{40})\?per_page=1&page=2$/u);
     assert.ok(m,'only fixed exact comparison endpoints');
     const distance=commits.indexOf(m[2])-commits.indexOf(m[1]);
     assert.ok(commits.includes(m[1])&&commits.includes(m[2])&&distance>=0);

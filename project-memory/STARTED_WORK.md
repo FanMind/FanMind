@@ -1609,3 +1609,8 @@ receipts/capacity-v2-safe-block-diagnostics-20261017.md.
 - Preservation: reject disk/runtime encryption or unrelated-field drift before mutation; reject existing other app identity. Preserve valid keys; new key only after bounded read-only empty encrypted-token inventory. No database write, Production deploy, automatic sending or general Meta publication.
 - Recovery: private mode600 fsynced original-config snapshot retained on the Staging host with run ID, no artifact upload; same-process failure restores original configuration, restarts and verifies old effective values. Interrupted-job recovery requires reviewed restoration of the private snapshot; no automatic crash-recovery claim.
 - Validation: 22 focused synthetic tests PASS; full Operations and final-head CI pending. Independent Guardian reproduced prewrite drift risks; added fail-closed regressions. Provider consent, real Page ownership/import/webhooks/two-tenant isolation and App Review/Advanced Access remain separately unproved.
+
+## FM-MVP-AUDIT-COMPARE-1541-20261120
+- Risk: R3. Holder: existing FanMind MVP Work session. Status: SOURCE_SUBMITTED_FOR_CI.
+- Base `68a466c1b1a1998ace10cbd7108d3beaa6752631`, PR #1541, branch `fix/1512-audit-compare-response-size`. Existing task only, limited to the comparator, installer source/hash bindings, corresponding regressions and required Project Memory.
+- Preflight, scope, and handoff are recorded in [the execution receipt](receipts/audit-compare-1541-20261120.md). No protected execution authorized.

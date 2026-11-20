@@ -14,8 +14,8 @@ const checks = names => ({ total_count: names.length, check_runs: names.map((nam
 function responses() {
   return {
     "branches/main": { protected: true, commit: { sha: candidate } },
-    [`commits/${candidate}/check-runs?per_page=100`]: checks(REQUIRED_MAIN_CHECKS),
-    [`commits/${head}/check-runs?per_page=100`]: checks(REQUIRED_PR_CHECKS),
+    [`commits/${candidate}/check-runs?per_page=100&page=1`]: checks(REQUIRED_MAIN_CHECKS),
+    [`commits/${head}/check-runs?per_page=100&page=1`]: checks(REQUIRED_PR_CHECKS),
     [`commits/${candidate}/pulls?per_page=100`]: [{ merge_commit_sha: candidate, merged_at: "2026-11-14T10:00:00Z", base: { ref: "main" }, head: { sha: head, repo } }],
     "actions/runs/1": run(1, ".github/workflows/deploy-staging.yml"),
     "actions/runs/2": run(2, ".github/workflows/browser-e2e-staging.yml", "2026-11-14T11:03:00Z", "2026-11-14T11:04:00Z"),
@@ -70,8 +70,8 @@ test("GitHub evidence is exact-source, protected-main and subsequent-Staging bou
     p => { p["actions/runs/2"].conclusion = "failure"; },
     p => { p["actions/runs/2"].path = ".github/workflows/deploy-fanmind.yml"; },
     p => { p["actions/runs/2"].run_started_at = "2026-11-14T10:00:00Z"; },
-    p => { p[`commits/${candidate}/check-runs?per_page=100`].total_count = 101; },
-    p => { p[`commits/${head}/check-runs?per_page=100`].check_runs[0].conclusion = "failure"; },
+    p => { p[`commits/${candidate}/check-runs?per_page=100&page=1`].total_count = 101; },
+    p => { p[`commits/${head}/check-runs?per_page=100&page=1`].check_runs[0].conclusion = "failure"; },
     p => { p[`commits/${candidate}/pulls?per_page=100`] = []; },
     p => { p["actions/runs/1/attempts/1/jobs?per_page=100"].jobs[0].conclusion = "skipped"; },
     p => { p["actions/runs/2/attempts/1/jobs?per_page=100"].jobs[0].conclusion = "skipped"; },

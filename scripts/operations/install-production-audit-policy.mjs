@@ -4,9 +4,15 @@ import crypto from "node:crypto";
 import cp from "node:child_process";
 import { pathToFileURL } from "node:url";
 
+export const AUDIT_SOURCE = "5f33dd7c9765746b01b7ec835605c03eb5e39d6b";
+export const AUDIT_BASE = "bb799466d2c235195fedcb4d80568f9f0bd56969";
 export const AUDIT_FILES = [
-  { name: "read-only-production-audit.sh", old: "5b0e80d7f5ff2498be70a5ab6f3030fa866e0ac28995b1554b20face1908f024", next: "664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27" },
-  { name: "verify-production-audit-output.mjs", old: "0f5e171046e0f3eb1fe81f3718c2fe7ff4b6a2392b967aff67df59236fc33bcd", next: "e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218" },
+  { name: "read-only-production-audit.sh", old: "664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27", next: "664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27" },
+  { name: "verify-production-audit-output.mjs", old: "e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218", next: "e71cb648985ff2aac55e7652b01328037b636847cd171b5c5d9ed1fcaa6f6e96" },
+];
+export const AUDIT_DEPENDENCIES = [
+  { path: "/usr/local/lib/fanmind-audit/production-boot-readiness.mjs", sha256: "fe183af14219860c9772a7d3fd659b6896e819f52b83423316ec94c9cff8d7c0" },
+  { path: "/usr/local/lib/public-health-policy.mjs", sha256: "357ff62a00c309f2b479243808a9ff108cba8b3e78906018e949b714f2470d8b" },
 ];
 const digest = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
 export function frozenFile(file, uid, mode) {
@@ -30,6 +36,24 @@ export function validatePair(oldBytes, newBytes) {
   return "replace";
 }
 
+export function preservePreimages(directory, bytes) {
+  const files = {};
+  for (const [i, file] of AUDIT_FILES.entries()) {
+    const target = path.join(directory, file.name);
+    const fd = fs.openSync(target, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o600);
+    try { fs.writeFileSync(fd, bytes[i]); fs.fchmodSync(fd, 0o600); fs.fsyncSync(fd); }
+    finally { fs.closeSync(fd); }
+    if (digest(frozenFile(target, process.getuid(), 0o600)) !== digest(bytes[i])) throw Error("preimage_invalid");
+    files[file.name] = { sha256: digest(bytes[i]), mode: "0755" };
+  }
+  const manifest = path.join(directory, "preimages.json");
+  const fd = fs.openSync(manifest, fs.constants.O_WRONLY | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o600);
+  try { fs.writeFileSync(fd, JSON.stringify({ version: 1, source: AUDIT_SOURCE, base: AUDIT_BASE, files }) + "\n"); fs.fchmodSync(fd, 0o600); fs.fsyncSync(fd); }
+  finally { fs.closeSync(fd); }
+  const dir = fs.openSync(directory, "r");
+  try { fs.fsyncSync(dir); } finally { fs.closeSync(dir); }
+}
+
 // Both files are prevalidated before the first rename. Callers must hold the host lock.
 // On any failed postcheck, restore both original files and verify their bytes.
 export function replacePair(directory, oldBytes, newBytes, postcheck) {
@@ -44,16 +68,38 @@ export function replacePair(directory, oldBytes, newBytes, postcheck) {
   };
   let changed = false;
   try {
-    for (let i = 0; i < names.length; i++) { changed = true; stage(names[i], newBytes[i]); }
+    for (let i = 0; i < names.length; i++) {
+      if (digest(oldBytes[i]) === digest(newBytes[i])) continue;
+      changed = true; stage(names[i], newBytes[i]);
+    }
     for (let i = 0; i < names.length; i++) if (digest(fs.readFileSync(names[i])) !== AUDIT_FILES[i].next) throw Error("post_hash_invalid");
     postcheck();
   } catch {
     if (changed) {
-      for (let i = 0; i < names.length; i++) stage(names[i], oldBytes[i]);
+      for (let i = 0; i < names.length; i++) {
+        if (digest(oldBytes[i]) !== digest(newBytes[i])) stage(names[i], oldBytes[i]);
+      }
       for (let i = 0; i < names.length; i++) if (digest(fs.readFileSync(names[i])) !== digest(oldBytes[i])) throw Error("rollback_failed");
     }
     throw Error("install_rolled_back");
   }
+}
+
+// Keep the root-owned receipt private. Pass the exact collected bytes over
+// stdin to the unchanged full verifier under the collector/worktree identity.
+export function verifyCollectedAudit(audit, invokingUid, environment, spawn = cp.spawnSync) {
+  if (audit.error || audit.status !== 0 || typeof audit.stdout !== "string"
+    || Buffer.byteLength(audit.stdout) > 2 * 1024 * 1024 || !/^[1-9][0-9]*$/u.test(String(invokingUid))) throw Error("audit_postcheck_failed");
+  const program = `import { readFileSync } from 'node:fs';
+const uid = Number(process.argv[3]);
+if (!Number.isSafeInteger(uid) || uid <= 0 || process.getuid() !== uid || process.geteuid() !== uid
+  || process.getgid() === 0 || process.getegid() === 0 || process.getgroups().includes(0)) throw Error('audit_identity_invalid');
+const { verifyProductionAuditOutput } = await import(process.argv[1]);
+verifyProductionAuditOutput(readFileSync(0, 'utf8'), process.argv[2]);`;
+  const verification = spawn("/usr/sbin/runuser", ["-u", "ubuntu", "--", "/usr/bin/node", "--input-type=module", "-e", program,
+    "file:///usr/local/lib/fanmind-audit/verify-production-audit-output.mjs", AUDIT_BASE, String(invokingUid)],
+  { env: environment, input: audit.stdout, encoding: "utf8", timeout: 60000, maxBuffer: 131072 });
+  if (verification.error || verification.status !== 0) throw Error("audit_postcheck_failed");
 }
 
 async function main() {
@@ -67,6 +113,9 @@ async function main() {
       const st = fs.lstatSync(parent);
       if (!st.isDirectory() || st.isSymbolicLink() || st.uid !== 0 || (st.mode & 0o022)) throw Error();
     }
+    for (const file of AUDIT_DEPENDENCIES) {
+      if (digest(frozenFile(file.path, 0, 0o644)) !== file.sha256) throw Error("dependency_hash_invalid");
+    }
     const newBytes = [collector, verifier].map(file => frozenFile(file, Number(invokingUid), 0o600));
     const oldBytes = AUDIT_FILES.map(file => frozenFile(path.join(directory, file.name), 0, 0o755));
     const state = validatePair(oldBytes, newBytes);
@@ -75,23 +124,25 @@ async function main() {
       const response = cp.spawnSync("/usr/bin/curl", ["--fail", "--silent", "--show-error", "--proto", "=https", "--tlsv1.2", "--max-time", "30", "https://fanmind.ch/api/version"], { env: environment, encoding: "utf8", timeout: 35000, maxBuffer: 65536 });
       if (response.error || response.status !== 0) throw Error();
       const value = JSON.parse(response.stdout);
-      if (value.application !== "fanmind" || value.runtimeEnvironment !== "production" || value.releaseCommit !== "707d22702a784e3b9999d1c9ae9c1e11c096a1bc") throw Error();
+      if (value.application !== "fanmind" || value.runtimeEnvironment !== "production" || value.releaseCommit !== AUDIT_BASE) throw Error();
     };
     live();
     scratch = fs.mkdtempSync("/var/lib/fanmind-audit-policy-"); fs.chmodSync(scratch, 0o700);
+    if (state === "replace") preservePreimages(scratch, oldBytes);
     const postcheck = () => {
       live();
       const audit = cp.spawnSync("/usr/sbin/runuser", ["-u", "ubuntu", "--", path.join(directory, AUDIT_FILES[0].name)], { env: environment, encoding: "utf8", timeout: 180000, maxBuffer: 2 * 1024 * 1024 });
       const output = path.join(scratch, "audit.txt");
       fs.writeFileSync(output, audit.stdout ?? "", { mode: 0o600, flag: "wx" });
-      const verification = cp.spawnSync("/usr/bin/node", [path.join(directory, AUDIT_FILES[1].name), output, "707d22702a784e3b9999d1c9ae9c1e11c096a1bc", String(audit.error ? 1 : audit.status ?? 1)], { env: environment, encoding: "utf8", timeout: 30000, maxBuffer: 131072 });
-      if (verification.error || verification.status !== 0) throw Error();
+      verifyCollectedAudit(audit, invokingUid, environment);
       live();
     };
     if (state === "replace") replacePair(directory, oldBytes, newBytes, postcheck);
     else postcheck();
     process.stdout.write("PRODUCTION_AUDIT_POLICY=INSTALLED_AND_VERIFIED\nPRODUCTION_AUDIT_FAILURE_WINDOW_HOURS=1\n");
   } catch { process.stderr.write("PRODUCTION_AUDIT_POLICY=BLOCK\n"); process.exitCode = 1; }
-  finally { if (scratch) fs.rmSync(scratch, { recursive: true, force: true }); }
+  // Keep the private exact preimages and audit after success, failure or an
+  // interrupted install. An unknown outcome requires inspection, never a retry.
+  finally { if (scratch) process.stdout.write(`PRODUCTION_AUDIT_PRIVATE_RECEIPT=${path.basename(scratch)}\n`); }
 }
 if (process.argv[1] === "-" || (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)) await main();
