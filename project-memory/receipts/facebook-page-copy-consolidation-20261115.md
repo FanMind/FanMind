@@ -1,0 +1,7 @@
+# PR #1479: Seiten-/Profilgrenze erhalten
+
+Basis main b6a2c44a992ad83bea5d608b6e3a90a3c2718627. Vorhandene Copy-Implementierung von 13e7393c40f242c635711c873a6eeba7eefa461f übernommen: Facebook-Seiten versus persönliche Profile/private Messenger-Postfächer, Professional Mode ändert diese API-Grenze nicht, private Profile können an eine Seite schreiben bzw. verwaltete Seiten autorisieren. Gleiche Leitlinie in öffentlichen Informationschat und vorhandener Supportantwort; keine Provider-/OAuth-/Webhookänderung.
+
+Aktuelle Arbeitsakte1464 einschließlich 6896094861, 6896282079, 6896630811 und Owner-Handoff6901668401 gelesen: Staging-Evidence bleibt vorhanden, öffentliche App-/Kundenfreigabe und reale Production-Abnahme bleiben getrennt. Keine erneuten Meta-Aktionen, keine persönliche Verifikation. Öffentliche Copy enthält bewusst keine internen Staging-Run-/Mehrseiten-Abnahmeclaims; bestehender Beta-Status und Roadmap bleiben gleich. Allgemeine Verantwortlichkeiten/Kontaktangaben werden nicht aus dem historischen Branch übernommen.
+
+Typdeklaration der bereits eingeführten MJS-Funktion ergänzt (der historische Branch hatte sie nicht). Lokal 17/17 bestehende Website-/Produkt-/Sprachregressionen PASS; fokussiertes ESLint, next typegen und tsc --noEmit PASS. Kein neuer Account-/Provider-/Productiontest; GitHub prüft den endgültigen Head. Kein Merge, Deployment oder neues Facebook-Implementierungsprojekt. #1531 und Backupworker unberührt.

@@ -8,3 +8,5 @@ export function publicSupportPricingReply(language?: "de"|"en"):string;
 export function isPublicSupportPricingQuestion(question:string):boolean;
 
 export function publicSupportReplyWorkflow(language?: "de"|"en"):string;
+
+export function publicSupportFacebookGuidance(language?: string): string;

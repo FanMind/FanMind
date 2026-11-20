@@ -100,6 +100,11 @@ export const fanmindCopy = {
 } as const;
 
 const englishCopy: Record<string, string> = {
+  "Facebook-Seiten": "Facebook Pages",
+  "Für Facebook-Seiten vorgesehen. Persönliche Profile und private Messenger-Postfächer werden nicht unterstützt; allgemeine Freigabe noch offen.": "Intended for Facebook Pages. Personal profiles and private Messenger inboxes are not supported; general availability remains pending.",
+  "Facebook ist für Seiten vorgesehen, nicht für persönliche Profile. Facebook und Instagram werden nur als vorbereitete Beta-Workflows gezeigt; keine produktive Vollintegration.": "Facebook is intended for Pages, not personal profiles. Facebook and Instagram are shown only as prepared beta workflows; there is no full production integration.",
+  "Kann ich mein privates Facebook-Profil mit FanMind verbinden?": "Can I connect my personal Facebook profile to FanMind?",
+  "Die Anbindung ist für Facebook-Seiten vorgesehen, nicht für persönliche Profile oder deren private Messenger-Postfächer. Auch der Professional Mode ändert diese Grenze der verwendeten offiziellen Meta-Schnittstelle nicht. Fans können von ihrem privaten Profil an eine verbundene Seite schreiben. Allgemeiner Kundenzugriff ist noch nicht freigegeben. Andere Verbindungsfehler müssen einzeln geprüft werden.": "The integration is intended for Facebook Pages, not personal profiles or their private Messenger inboxes. Professional Mode does not change this limitation of the official Meta interface used here. Fans can message a connected Page from their personal profile. General customer access has not been released. Other connection failures must be checked individually.",
   "Produkt": "Product",
   "Funktionen": "Features",
   "CSV-Import & Kontaktwissen": "CSV import & contact knowledge",
