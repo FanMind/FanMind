@@ -1228,3 +1228,9 @@ Prepare only a test boundary correction: skip the root fixture before any
 privilege probe on a self-hosted deployment; keep it mandatory in hosted CI.
 Installer/workflow/canonical modules and their hashes stay unchanged.
 Fresh exact-head CI and a separate exact-head merge/Staging decision required.
+
+## FM-MVP-AUDIT-COMPARE-1541-20261120
+- Risk: R3. Scope: source-only continuation of #1512 in draft PR #1541 on the existing branch. Status: IMPLEMENTED_AWAITING_EXACT_HEAD_CI.
+- Preflight: current main `68a466c1b1a1998ace10cbd7108d3beaa6752631`; prior PR head `5f33dd7c9765746b01b7ec835605c03eb5e39d6b`; independent failure evidence [#1512/7044398699](https://github.com/FanMind/FanMind/pull/1512#issuecomment-7044398699). The oversized compare response, stale verifier pin, Root regression endpoint and missing Project Memory are reconciled in this PR.
+- Affected boundary: Operations audit evidence and its protected installer. No FM-CONTRACT or FM-IGATE consumer changes. Existing Staging, Billing ACL, Backup/Restore and MVP acceptance evidence are kept at their actual status.
+- Receipt and rollback: [exact source bindings and bounded closeout](receipts/audit-compare-1541-20261120.md). Source merge, Staging and installation require separate exact approval; failed install 44402627674 cannot be reused.

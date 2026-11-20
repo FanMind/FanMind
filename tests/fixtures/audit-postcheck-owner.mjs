@@ -60,8 +60,8 @@ const live=${JSON.stringify(live)}, origin=${JSON.stringify(origin)};
 const requestJson=endpoint=>{
  if(endpoint==='/')return {id:1259448985,full_name:'FanMind/FanMind',default_branch:'main',fork:false,archived:false,disabled:false};
  if(endpoint==='/git/ref/heads/main')return {ref:'refs/heads/main',object:{type:'commit',sha:origin}};
- if(endpoint==='/compare/'+live+'...'+origin+'?per_page=1')return {base_commit:{sha:live},merge_base_commit:{sha:live},behind_by:0,ahead_by:1,total_commits:1,status:'ahead'};
- if(endpoint==='/compare/'+origin+'...'+origin+'?per_page=1')return {base_commit:{sha:origin},merge_base_commit:{sha:origin},behind_by:0,ahead_by:0,total_commits:0,status:'identical'};
+ if(endpoint==='/compare/'+live+'...'+origin+'?per_page=1&page=2')return {base_commit:{sha:live},merge_base_commit:{sha:live},behind_by:0,ahead_by:1,total_commits:1,status:'ahead'};
+ if(endpoint==='/compare/'+origin+'...'+origin+'?per_page=1&page=2')return {base_commit:{sha:origin},merge_base_commit:{sha:origin},behind_by:0,ahead_by:0,total_commits:0,status:'identical'};
  throw Error('unexpected endpoint');
 };
 export function verifyProductionAuditOutput(raw,expected){

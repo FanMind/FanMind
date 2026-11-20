@@ -4,11 +4,11 @@ import crypto from "node:crypto";
 import cp from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-export const AUDIT_SOURCE = "3f74634d0c7d6a13abde254bb9f8afb786b95cc1";
+export const AUDIT_SOURCE = "5f33dd7c9765746b01b7ec835605c03eb5e39d6b";
 export const AUDIT_BASE = "bb799466d2c235195fedcb4d80568f9f0bd56969";
 export const AUDIT_FILES = [
   { name: "read-only-production-audit.sh", old: "664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27", next: "664be21a67ad06dd7f26d7d1dca6ca63e9b441dd58e0f26eab8a403a22c4af27" },
-  { name: "verify-production-audit-output.mjs", old: "e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218", next: "4422b2410502ec51cd03031c967ba7b0a3b6c7a4fb601b673bfc91635c81c882" },
+  { name: "verify-production-audit-output.mjs", old: "e65a1af5169c3843dcb04bf3283a1e013928c26f2357c25f52847391145ca218", next: "e71cb648985ff2aac55e7652b01328037b636847cd171b5c5d9ed1fcaa6f6e96" },
 ];
 export const AUDIT_DEPENDENCIES = [
   { path: "/usr/local/lib/fanmind-audit/production-boot-readiness.mjs", sha256: "fe183af14219860c9772a7d3fd659b6896e819f52b83423316ec94c9cff8d7c0" },

@@ -57,7 +57,7 @@ jobs:
           [[ "$GITHUB_REF" == refs/heads/main && "$GITHUB_SHA" == "$CURRENT_MAIN" ]]
           [[ "$GITHUB_ACTOR_ID" == 270165082 && "$RUNNER_NAME" == fanmind-prod-01-exoscale ]]
           [[ "$CONFIRMATION" == install-audit-reviewed-policy ]]
-          [[ "$APPROVAL" == "$CURRENT_MAIN:install-audit-reviewed-policy:3f74634d0c7d6a13abde254bb9f8afb786b95cc1:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled" ]]
+          [[ "$APPROVAL" == "$CURRENT_MAIN:install-audit-reviewed-policy:5f33dd7c9765746b01b7ec835605c03eb5e39d6b:bb799466d2c235195fedcb4d80568f9f0bd56969:admin-bypass-disabled" ]]
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             https://api.github.com/repos/FanMind/FanMind/branches/main | \
             /usr/bin/node -e 'let s="";process.stdin.on("data",b=>{s+=b;if(s.length>65536)process.exit(1)});process.stdin.on("end",()=>{const j=JSON.parse(s);if(j.commit?.sha!==process.argv[1]||j.protected!==true)process.exit(1)})' "$CURRENT_MAIN"
@@ -68,11 +68,11 @@ jobs:
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/install-production-audit-policy.mjs" --output "$INSTALLER"
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
-            https://raw.githubusercontent.com/FanMind/FanMind/3f74634d0c7d6a13abde254bb9f8afb786b95cc1/scripts/operations/read-only-production-audit.sh --output "$COLLECTOR"
+            https://raw.githubusercontent.com/FanMind/FanMind/5f33dd7c9765746b01b7ec835605c03eb5e39d6b/scripts/operations/read-only-production-audit.sh --output "$COLLECTOR"
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
-            https://raw.githubusercontent.com/FanMind/FanMind/3f74634d0c7d6a13abde254bb9f8afb786b95cc1/scripts/operations/verify-production-audit-output.mjs --output "$VERIFIER"
+            https://raw.githubusercontent.com/FanMind/FanMind/5f33dd7c9765746b01b7ec835605c03eb5e39d6b/scripts/operations/verify-production-audit-output.mjs --output "$VERIFIER"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" a1c3121c4b1ad2313113f46ef666c54319acf0ae5bb4a3350647c67c8cced80e "$COLLECTOR" "$VERIFIER" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$INSTALLER" 1d80a5b63404405f5c84fd72e011f007ce7c5ade56c19f9dcb82564143afa138 "$COLLECTOR" "$VERIFIER" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {
