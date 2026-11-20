@@ -65,8 +65,13 @@ test("protected manual workflow binds Owner, exact main, environment, host, appr
   for (const binding of ["270165082", "1259448985", "fanmind-prod-01-exoscale", "FANMIND_AUDIT_POLICY_INSTALL_APPROVAL", "admin-bypass-disabled", AUDIT_BASE, AUDIT_SOURCE, "install-audit-reviewed-policy", "6bc209851b4a54609747099ec34264318dc7f4c4", "backup-worker-install-github-preflight.mjs", "--nonblock", "O_NOFOLLOW"])
     assert.ok(source.includes(binding), binding);
   const hash = crypto.createHash("sha256").update(fs.readFileSync("scripts/operations/install-production-audit-policy.mjs")).digest("hex");
-  assert.ok(source.includes(hash));
-  assert.doesNotMatch(workflow.jobs.install.steps[0].run, /git reset|systemctl restart|pm2|db push|age --decrypt/u);
+  const install = workflow.jobs.install.steps[0].run;
+  const sourceBase = `https://raw.githubusercontent.com/FanMind/FanMind/${AUDIT_SOURCE}/scripts/operations`;
+  assert.ok(install.includes(`"$CURRENT_MAIN:install-audit-reviewed-policy:${AUDIT_SOURCE}:${AUDIT_BASE}:admin-bypass-disabled"`));
+  assert.ok(install.includes(`${sourceBase}/read-only-production-audit.sh --output "$COLLECTOR"`));
+  assert.ok(install.includes(`${sourceBase}/verify-production-audit-output.mjs --output "$VERIFIER"`));
+  assert.ok(install.includes(`"$INSTALLER" ${hash} "$COLLECTOR" "$VERIFIER"`));
+  assert.doesNotMatch(install, /git reset|systemctl restart|pm2|db push|age --decrypt/u);
 });
 
 test("private preimages retain exact bytes before replacement and reject overwrite", t => {
