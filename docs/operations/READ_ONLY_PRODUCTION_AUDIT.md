@@ -551,10 +551,13 @@ Runner-Update v2.337.0 das offizielle versionierte Layout. Der
 [offizielle Updater](https://github.com/actions/runner/blob/v2.337.0/src/Misc/layoutbin/update.sh.template)
 legt die beiden absoluten Verknüpfungen `bin -> bin.2.337.0` und
 `externals -> externals.2.337.0` innerhalb desselben Runner-Verzeichnisses an.
-Der Collector akzeptiert entweder beide direkten Verzeichnisse oder genau
-diese beiden absoluten Ziele. Eine gemischte Update-Phase, relative Ziele,
-andere Versionen, fremde Ziele und weitere Verknüpfungen innerhalb der
-Zielverzeichnisse bleiben gesperrt. Das Runner-Verzeichnis und seine Artefakte
+Der Collector akzeptiert für v2.337.0 beide direkten Verzeichnisse oder dieses
+versionierte Paar mit Node 20. Für v2.338.2 akzeptiert er das beobachtete
+versionierte Paar mit Node 24 und dem exakt gepinnten
+[offiziellen Startskript](https://github.com/actions/runner/blob/v2.338.2/src/Misc/layoutbin/runsvc.sh).
+Gemischte Versionen oder Update-Phasen, relative oder fremde Ziele und weitere
+Verknüpfungen innerhalb der Zielverzeichnisse bleiben gesperrt.
+Das Runner-Verzeichnis und seine Artefakte
 müssen dem Runner-Benutzer gehören; alle Elternverzeichnisse müssen direkt,
 gegen Gruppen-/Fremdschreiben geschützt und root- oder benutzereigen sein.
 

@@ -563,7 +563,7 @@ test("next-boot release rejects a repointed symlink, wrong deployment ID and mis
   assert.equal(releaseTargetMatches(expectedCommit, release, releases), false);
 });
 
-async function runnerConfigurationFixture(t, overrides = {}) {
+async function runnerConfigurationFixture(t, overrides = {}, version = "2.337.0") {
   // The startup path must have protected ancestors too; /tmp is deliberately
   // not a valid runner installation parent, even for an owner-only leaf.
   const parent = await mkdtemp(join(realpathSync(homedir()), "fanmind-boot-runner-"));
@@ -571,7 +571,8 @@ async function runnerConfigurationFixture(t, overrides = {}) {
   const root = join(parent, "runner");
   await mkdir(root);
   await mkdir(join(root, "bin"));
-  await mkdir(join(root, "externals/node20/bin"), { recursive: true });
+  const node = version === "2.338.2" ? "node24" : "node20";
+  await mkdir(join(root, `externals/${node}/bin`), { recursive: true });
   const unitName = "actions.runner.FanMind-FanMind.production.service";
   const context = { name: "synthetic-runner", workspace: join(root, "_work/FanMind"), repository: "FanMind/FanMind" };
   const settings = { agentId: 1, poolId: 1, agentName: context.name, gitHubUrl: "https://github.com/FanMind/FanMind", workFolder: "_work", serverUrl: "https://pipelines.actions.githubusercontent.com/11111111-1111-4111-8111-111111111111/", useV2Flow: true, serverUrlV2: "https://broker.actions.githubusercontent.com/", ...overrides };
@@ -583,8 +584,8 @@ async function runnerConfigurationFixture(t, overrides = {}) {
   await writeFile(join(root, ".path"), "/usr/bin:/bin", { mode: 0o600 });
   await writeFile(join(root, ".env"), "LANG=C.UTF-8\n", { mode: 0o600 });
   for (const relative of [".credentials", ".credentials_rsaparams"]) await writeFile(join(root, relative), "synthetic-not-a-credential", { mode: 0o600 });
-  for (const relative of ["bin/Runner.Listener", "externals/node20/bin/node"]) await writeFile(join(root, relative), "synthetic-not-executed", { mode: 0o700 });
-  const runsvc = await readFile("tests/fixtures/runner-startup-v2.337.0/runsvc.sh.txt", "utf8");
+  for (const relative of ["bin/Runner.Listener", `externals/${node}/bin/node`]) await writeFile(join(root, relative), "synthetic-not-executed", { mode: 0o700 });
+  const runsvc = await readFile(`tests/fixtures/runner-startup-v${version}/runsvc.sh.txt`, "utf8");
   await writeFile(join(root, "runsvc.sh"), runsvc, { mode: 0o700 });
   await writeFile(join(root, "bin/RunnerService.js"), await readFile("tests/fixtures/runner-startup-v2.337.0/RunnerService.js.txt"));
   const unit = {
@@ -595,9 +596,9 @@ async function runnerConfigurationFixture(t, overrides = {}) {
   return { root, unitName, context, settings, unit, runsvc };
 }
 
-async function useVersionedRunnerLayout(root) {
+async function useVersionedRunnerLayout(root, version = "2.337.0") {
   for (const directory of ["bin", "externals"]) {
-    const target = join(root, `${directory}.2.337.0`);
+    const target = join(root, `${directory}.${version}`);
     await rename(join(root, directory), target);
     await symlink(target, join(root, directory));
   }
@@ -621,6 +622,31 @@ test("official runner versioned layout retains complete registration and artifac
   }
   await writeFile(join(root, "bin.2.337.0/RunnerService.js"), "RAW_SECRET_CANARY");
   assert.equal(check(), false, "approved layout cannot replace the complete script pin");
+});
+
+test("Node 24 requires the matching reviewed launcher and both versioned siblings", async t => {
+  const version = "2.338.2";
+  const { root, unitName, context, unit } = await runnerConfigurationFixture(t, {}, version);
+  const check = () => runnerConfigurationMatches(unit, unitName, context);
+  assert.equal(check(), false, "the reviewed Node 24 layout uses versioned siblings");
+  await useVersionedRunnerLayout(root, version);
+  assert.equal(check(), true);
+  assert.equal(runnerConfigurationMatches(unit, unitName, { ...context, name: "different-runner" }), false);
+  const launcher = join(root, "runsvc.sh");
+  const approvedLauncher = await readFile(launcher);
+  await writeFile(launcher, await readFile("tests/fixtures/runner-startup-v2.337.0/runsvc.sh.txt"));
+  assert.equal(check(), false, "the legacy launcher cannot authorize Node 24");
+  await writeFile(launcher, approvedLauncher);
+  const node24 = join(root, `externals.${version}/node24`);
+  await rename(node24, join(root, `externals.${version}/node20`));
+  assert.equal(check(), false, "the layout cannot fall back to Node 20");
+  await rename(join(root, `externals.${version}/node20`), node24);
+  const alias = join(root, "externals");
+  const approvedExternals = `${alias}.${version}`;
+  await rename(approvedExternals, `${alias}.2.337.0`);
+  await rm(alias);
+  await symlink(`${alias}.2.337.0`, alias);
+  assert.equal(check(), false, "cross-version updater aliases are rejected");
 });
 
 test("runner layout rejects unknown targets, mixed updates, nested links and unprotected parents", async (t) => {
@@ -973,13 +999,13 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   assert.equal(loadedExecutableMatches(candidate, child.pid), false);
   assert.equal(loadedExecutableMatches(candidate, 0), false);
 
-  const fixture = await runnerConfigurationFixture(t);
-  await useVersionedRunnerLayout(fixture.root);
+  const fixture = await runnerConfigurationFixture(t, {}, "2.338.2");
+  await useVersionedRunnerLayout(fixture.root, "2.338.2");
   // Only known installed Node copies execute, inside a synthetic installation.
   // The pinned official service script launches our inert local 'run' file;
   // there is no GitHub client, credential read or network request in that file.
-  const listenerFile = join(fixture.root, "bin.2.337.0/Runner.Listener");
-  const nodeFile = join(fixture.root, "externals.2.337.0/node20/bin/node");
+  const listenerFile = join(fixture.root, "bin.2.338.2/Runner.Listener");
+  const nodeFile = join(fixture.root, "externals.2.338.2/node24/bin/node");
   for (const file of [listenerFile, nodeFile]) {
     await copyFile(realpathSync(process.execPath), file);
     // Privileged copies can preserve the installed binary's foreign owner.
@@ -989,7 +1015,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   }
   await writeFile(join(fixture.root, "package.json"), '{"type":"commonjs"}');
   await writeFile(join(fixture.root, "run"), 'console.log("SYNTHETIC_RUNNER_READY"); setInterval(() => {}, 1000);');
-  const service = spawn(join(fixture.root, "externals/node20/bin/node"), ["./bin/RunnerService.js"], {
+  const service = spawn(join(fixture.root, "externals/node24/bin/node"), ["./bin/RunnerService.js"], {
     cwd: fixture.root, env: { PATH: "/usr/bin:/bin" }, stdio: ["ignore", "pipe", "pipe"],
   });
   let listenerPid;
@@ -1034,7 +1060,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
     if (replaceAlias && !aliasReplaced && file === `/proc/${listenerPid}/exe`) {
       aliasReplaced = true;
       fs.unlinkSync(join(fixture.root, "bin"));
-      fs.symlinkSync(join(fixture.root, "bin.2.337.0"), join(fixture.root, "bin"));
+      fs.symlinkSync(join(fixture.root, "bin.2.338.2"), join(fixture.root, "bin"));
     }
     return fd;
   });
@@ -1046,7 +1072,7 @@ test("Linux kernel image and versioned runner startup proofs reject replaced fil
   await writeFile(membership, `0::${group}\n`);
   for (const [pid, args] of [
     [listenerPid, [join(fixture.root, "bin/Runner.Listener"), "run", "--startuptype", "interactive"]],
-    [service.pid, ["./externals/node20/bin/node", "./bin/other.js"]],
+    [service.pid, ["./externals/node24/bin/node", "./bin/other.js"]],
   ]) {
     await writeFile(badArguments, args.join("\0") + "\0");
     redirects.set(`/proc/${pid}/cmdline`, badArguments);
