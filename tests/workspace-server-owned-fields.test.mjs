@@ -198,7 +198,7 @@ test("Stripe webhook verifies the target before PATCH and referral sync", async 
     /isStripeBillingTargetAllowed[\s\S]*id,owner_user_id[\s\S]*demo_start_sessions[\s\S]*getSupabaseAuthUrl\([\s\S]*stripeBillingWorkspaceDecision/u,
   );
   assert.doesNotMatch(
-    billing,
+    billing.slice(billing.indexOf("export async function expireOpenInternalDailyTestCheckoutSessions")),
     /workspace\.billing_status|workspace\.commercial_option|workspace\.test_access_flags/u,
   );
   assert.match(

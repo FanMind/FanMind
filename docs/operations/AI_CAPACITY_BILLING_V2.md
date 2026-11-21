@@ -317,3 +317,36 @@ The customer-facing balance is shown as **remaining AI capacity in percent**. Fa
 - The user's selected quality mode determines how quickly the percentage falls because actual provider cost is charged.
 
 **There is no free or throttled reserve.** At 0%, new Capacity-v2 AI reservations are denied. The user must either obtain additional paid capacity or wait for the next authoritative billing-period grant. FanMind does not silently downgrade Premium/Ausgewogen to Schnell at exhaustion and does not continue AI work for free.
+
+## Monthly Checkout source boundary
+
+The authenticated Checkout resolves the workspace owner and commercial terms on
+the server. Capacity 99/199/312 reuse the existing Stripe session creator,
+canonical package prices, and the protected Capacity writer's Price mapping.
+The separate, unapplied `supabase/controlled/ai_capacity_checkout_contracts.sql`
+defines a private pre-payment assignment and a service-only read RPC. It
+neither provisions nor converts workspaces, writes entitlements, nor inserts
+Price mappings. The controlled Capacity installation and its pinned catalogue
+are unchanged. The initial test admission is for an explicitly provisioned,
+unpaid workspace with the no-sale `pilot_only` placeholder and no Stripe
+references. Public signup remains a package preference until protected
+provisioning and contract acceptance are ready.
+
+The new session requires the exact Staging origin and Supabase project, a
+Stripe test key, the existing canonical billing ledger gate, current owner
+terms, an enabled Capacity package and both existing spend/billing freeze
+checks. `FANMIND_STAGING_CAPACITY_CHECKOUT_READY` stays unset until the
+canonical post-payment path and target setup have been accepted. The
+workspace assignment and `STRIPE_PRICE_CAPACITY_99/199/312` must agree with the
+canonical active Price mapping. Stripe's test Price must independently match
+the expected EUR recurring amount and tax behavior. Initial Checkout retries
+use the same workspace key within the one-time admission window. Reissuing
+an expired or abandoned admission needs explicit reconciliation of Stripe
+sessions before any new workflow for that case.
+
+The four one-time data packages (10/25/50/100) remain a separate activation
+scope. Reuse the existing top-up catalogue and PaymentIntent-keyed signed-event
+grant/reversal pipeline. The Live Price/Product tax setup, live/test
+isolation, paid event reconciliation, tax completion, invoice handling,
+and paid/refund/dispute acceptance must be confirmed for that scope before
+changing its existing sandbox boundary.

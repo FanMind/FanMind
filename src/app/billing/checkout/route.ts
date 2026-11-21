@@ -5,8 +5,9 @@ import { isAdminCrmAccessWorkspace } from "@/lib/adminCrmAccessPolicy.mjs";
 import { isDemoWorkspace, isTemporaryDemoUser } from "@/lib/demoMode";
 import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
+import { isTrustedFanMindMutationRequest } from "@/lib/httpMutationPolicy.mjs";
 import { getPreActivationRedirect } from "@/lib/preActivation";
-import { createStripeCheckoutSession, getAppUrl, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
+import { createStripeCheckoutSession, getAppUrl, getStripeConfigStatus, resolveWorkspaceCheckoutPlan } from "@/lib/stripeBilling";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import { STRIPE_BILLING_WRITE_FREEZE_CODE } from "@/lib/stripeBillingWriteFreeze.mjs";
@@ -36,7 +37,7 @@ function redirectTo(path: string) {
   return NextResponse.redirect(getInternalRedirectUrl(path), { status: 303 });
 }
 
-async function startCheckout() {
+async function startCheckout(request: Request, method: "GET" | "POST") {
   const { data } = await getSupabaseServerUser();
   if (!data.user) return redirectTo("/login?returnTo=/billing/start");
   if (isPlatformAdminEmail(data.user.email)) return redirectTo("/dashboard");
@@ -59,7 +60,6 @@ async function startCheckout() {
 
   const isDemo = isDemoWorkspace(workspace);
   if (isDemo) return redirectTo("/dashboard");
-  if (!shouldShowBillingCheckoutAction(workspace)) return redirectTo("/billing/start");
 
   if (!(await hasCurrentWorkspacePaymentTermsEvidence(workspace.id, data.user.id))) {
     return redirectTo(
@@ -67,8 +67,13 @@ async function startCheckout() {
     );
   }
 
-  const plan = resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option);
+  const plan = await resolveWorkspaceCheckoutPlan(workspace, data.user.id);
   if (!plan) return redirectTo("/billing/start?error=payment-option");
+  if (plan.billingContract === "capacity_v2") {
+    if (method !== "POST" || !isTrustedFanMindMutationRequest(request)) return redirectTo("/billing/start");
+  } else if (!shouldShowBillingCheckoutAction(workspace)) {
+    return redirectTo("/billing/start");
+  }
 
   if (
     workspace.commercial_option === "internal_daily_test" &&
@@ -78,7 +83,9 @@ async function startCheckout() {
   const config = getStripeConfigStatus();
   const checkoutReady = workspace.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(config)
-    : config.readyForCheckout;
+    : plan.billingContract === "capacity_v2"
+      ? config.readyForWebhook && config.readyForTax && config.hasAppUrl
+      : config.readyForCheckout;
   if (!checkoutReady) return redirectTo("/billing/start?error=payment-start");
 
   const session = await createStripeCheckoutSession({ plan, userId: data.user.id, workspaceId: workspace.id, userEmail: data.user.email });
@@ -90,10 +97,10 @@ async function startCheckout() {
   return NextResponse.redirect(session.url, { status: 303 });
 }
 
-export async function GET() {
-  return startCheckout();
+export async function GET(request: Request) {
+  return startCheckout(request, "GET");
 }
 
-export async function POST() {
-  return startCheckout();
+export async function POST(request: Request) {
+  return startCheckout(request, "POST");
 }

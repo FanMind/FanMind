@@ -395,7 +395,7 @@ test("Checkout denies an incomplete Starter without server consent before any St
     "@/lib/paymentTermsServerEvidence": evidence,
     "@/lib/stripeBilling": {
       getStripeConfigStatus: () => ({ readyForCheckout: true }),
-      resolveCheckoutPlan: () => ({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }),
+      resolveWorkspaceCheckoutPlan: async () => ({ planId: workspace.plan_id, commercialOption: workspace.commercial_option }),
       createStripeCheckoutSession: async () => { stripeCalls++; throw new Error("Unexpected Stripe call"); },
     },
     "@/lib/stripeBillingWriteFreeze.mjs": { isStripeBillingWriteFrozen: () => false },
@@ -416,4 +416,162 @@ test("Checkout denies an incomplete Starter without server consent before any St
   assert.equal(response.status, 409);
   assert.equal((await response.json()).code, termsPolicy.PAYMENT_TERMS_ACTIVATION_BLOCK_CODE);
   assert.equal(stripeCalls, 0);
+});
+
+test("Capacity Checkout reads the server-owned package and requires the exact sandbox Price", async () => {
+  const env = {
+    FANMIND_RUNTIME_ENVIRONMENT: "staging",
+    NEXT_PUBLIC_APP_URL: "https://staging.fanmind.ch",
+    NEXT_PUBLIC_SUPABASE_URL: "https://vshyhvgcmrlagvfnvomc.supabase.co",
+    FANMIND_STAGING_CAPACITY_CHECKOUT_READY: "true",
+    STRIPE_SECRET_KEY: "sk_test_Synthetic",
+    SUPABASE_SERVICE_ROLE_KEY: "synthetic-service-key",
+    STRIPE_PRICE_CAPACITY_99: "price_Package99",
+    STRIPE_PRICE_CAPACITY_199: "price_Package199",
+    STRIPE_PRICE_CAPACITY_312: "price_Package312",
+  };
+  const { STAGING_CAPACITY_PRICE_CONTRACTS } = await import("../src/lib/stagingStripeCatalogPolicy.mjs");
+  const exports = {};
+  const ownerId = "11111111-1111-4111-8111-111111111111";
+  const workspaceId = "22222222-2222-4222-8222-222222222222";
+  let rows = [];
+  let frozen = false;
+  let queries = 0;
+  const deps = {
+    "server-only": {},
+    "@/config/aiCapacityPackages.mjs": await import("../src/config/aiCapacityPackages.mjs"),
+    "@/lib/aiCapacityAdmin": {
+      getAiCapacityAdminState: async () => ({
+        installed: true,
+        policy: {
+          globalCapacityEnabled: true,
+          emergencySpendFreeze: frozen,
+          packageSalesEnabled: Object.fromEntries(STAGING_CAPACITY_PRICE_CONTRACTS.map(c => [c.slot, true])),
+        },
+      }),
+    },
+    "@/lib/stagingStripeCatalogPolicy.mjs": { STAGING_CAPACITY_PRICE_CONTRACTS },
+    "@/lib/stripeBillingEventLedger.mjs": { isStripeBillingEventLedgerEnabled: () => true },
+    "@/lib/stripeKeyPolicy.mjs": await import("../src/lib/stripeKeyPolicy.mjs"),
+    "@/lib/supabase/config": { getSupabaseRestUrl: path => path, getSupabaseApiKeyHeaders: () => ({}) },
+  };
+  runInNewContext(compile("src/lib/stripeCapacityCheckout.ts"), {
+    exports, AbortSignal, process: { env },
+    require(name) { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; },
+    fetch: async (path, request) => {
+      queries++;
+      assert.equal(path, "rpc/read_ai_capacity_checkout_contract");
+      assert.deepEqual(JSON.parse(request.body), { p_workspace_id: workspaceId, p_owner_user_id: ownerId });
+      return Response.json(rows);
+    },
+  });
+  const resolve = () => exports.readCapacityCheckoutPlan(workspaceId, ownerId);
+  assert.equal((await resolve()).kind, "legacy");
+  for (const [packageId, priceId, cents] of [
+    ["capacity_99", "price_Package99", 9900],
+    ["capacity_199", "price_Package199", 19900],
+    ["capacity_312", "price_Package312", 31200],
+  ]) {
+    rows = [{ package_id: packageId, price_id: priceId, eligible: true }];
+    const { kind, plan } = await resolve();
+    assert.equal(kind, "capacity");
+    assert.equal(plan.planId, packageId);
+    assert.equal(plan.priceIds[0], priceId);
+    assert.equal(plan.monthlyFeeCents, cents);
+    assert.equal(plan.setupFeeCents, 0);
+    assert.equal(plan.commitmentMonths, 0);
+  }
+  rows = [{ package_id: "capacity_312", price_id: "price_Package199", eligible: true }];
+  assert.equal((await resolve()).kind, "blocked");
+  rows = [{ ...rows[0], price_id: "price_Package312", eligible: false }];
+  assert.equal((await resolve()).kind, "blocked");
+  rows = [{ ...rows[0], eligible: true }];
+  frozen = true;
+  assert.equal((await resolve()).kind, "blocked");
+  const previousQueries = queries;
+  env.STRIPE_SECRET_KEY = "sk_live_Synthetic";
+  assert.equal((await resolve()).kind, "legacy");
+  assert.equal(queries, previousQueries);
+});
+
+test("the shared Stripe session uses only the fresh Capacity contract and stable initial idempotency key", async () => {
+  const catalog = await import("../src/lib/stagingStripeCatalogPolicy.mjs");
+  const plan = {
+    billingContract: "capacity_v2", planId: "capacity_199", commercialOption: "capacity_v2",
+    mode: "subscription", priceIds: ["price_Package199"], setupFeeCents: 0,
+    monthlyFeeCents: 19900, commitmentMonths: 0, paymentCollectionMethod: "card",
+  };
+  const workspaceId = "22222222-2222-4222-8222-222222222222";
+  const userId = "11111111-1111-4111-8111-111111111111";
+  const price = {
+    object: "price", id: plan.priceIds[0], livemode: false, active: true,
+    type: "recurring", currency: "eur", unit_amount: 19900, tax_behavior: "exclusive",
+    billing_scheme: "per_unit", recurring: { interval: "month", interval_count: 1, usage_type: "licensed" },
+    product: { object: "product", active: true, livemode: false },
+  };
+  let mapping = { kind: "capacity", plan };
+  let termsReady = true;
+  const created = [];
+  const deps = {
+    "@/lib/supabase/config": {},
+    "@/lib/stripeClient": {
+      createStripeIntegrationIdentifier: () => "synthetic",
+      getStripeClient: () => ({
+        prices: { retrieve: async id => { assert.equal(id, price.id); return price; } },
+        checkout: { sessions: {
+          create: async (params, options) => {
+            created.push({ params: JSON.parse(JSON.stringify(params)), key: options.idempotencyKey });
+            return { id: "cs_test_Example", status: "open", livemode: false, url: "https://checkout.stripe.com/c/pay/example" };
+          },
+        } },
+      }),
+    },
+    "@/lib/workspaceProvisioning": {},
+    "@/lib/stripeBillingWriteFreeze.mjs": { isStripeBillingWriteFrozen: () => false },
+    "@/lib/internalDailyTestReadinessPolicy.mjs": {},
+    "@/lib/runtimeProductSettings": {},
+    "@/lib/stripeWorkspacePolicy.mjs": {},
+    "@/lib/stripeTaxPolicy.mjs": { evaluateStripeTaxConfiguration: () => ({ ready: true }) },
+    "@/lib/stripeCapacityCheckout": {
+      readCapacityCheckoutPlan: async (workspace, user) => {
+        assert.equal(workspace, workspaceId);
+        assert.equal(user, userId);
+        return mapping;
+      },
+    },
+    "@/lib/paymentTermsServerEvidence": { hasCurrentWorkspacePaymentTermsEvidence: async () => termsReady },
+    "@/lib/stagingStripeCatalogPolicy.mjs": catalog,
+    "@/lib/stripeIntegrationIdentifierPolicy.mjs": await import("../src/lib/stripeIntegrationIdentifierPolicy.mjs"),
+    "@/lib/stripeWebhookSignaturePolicy.mjs": {},
+  };
+  const exports = {};
+  runInNewContext(compile("src/lib/stripeBilling.ts"), {
+    exports, URL,
+    process: { env: { STRIPE_SECRET_KEY: "sk_test_Example", STRIPE_WEBHOOK_SECRET: "whsec_Example", NEXT_PUBLIC_APP_URL: "https://staging.fanmind.ch" } },
+    require(name) { assert.ok(Object.hasOwn(deps, name), name); return deps[name]; },
+  });
+  const start = (selection = plan, userEmail) => exports.createStripeCheckoutSession({ plan: selection, workspaceId, userId, userEmail });
+  assert.equal((await start({ ...plan, priceIds: ["price_Unbound"] })).url, undefined);
+  termsReady = false;
+  assert.equal((await start()).url, undefined);
+  termsReady = true;
+  price.unit_amount = 9900;
+  assert.equal((await start()).url, undefined);
+  price.unit_amount = 19900;
+  mapping = { kind: "blocked" };
+  assert.equal((await start()).url, undefined);
+  assert.equal(created.length, 0);
+  mapping = { kind: "capacity", plan };
+  assert.equal((await start(plan, "first@example.invalid")).id, "cs_test_Example");
+  assert.equal((await start(plan, "second@example.invalid")).id, "cs_test_Example");
+  assert.deepEqual(created[0], created[1]);
+  const { params, key } = created[0];
+  assert.equal(key, `fanmind:capacity-v2:initial:${workspaceId}`);
+  assert.match(params.integration_identifier, /^fanmind_checkout_[A-Za-z]{8}$/u);
+  assert.equal(params.client_reference_id, workspaceId);
+  assert.deepEqual(params.line_items, [{ price: price.id, quantity: 1 }]);
+  assert.equal(params.mode, "subscription");
+  assert.equal(params.metadata.fanmind_capacity_package, "capacity_199");
+  assert.equal(params.metadata.fanmind_billing_contract, "capacity_v2");
+  assert.deepEqual(params.subscription_data.metadata, params.metadata);
 });

@@ -34,6 +34,14 @@ import {
   type StripeBillingWorkspaceDecision,
 } from "@/lib/stripeWorkspacePolicy.mjs";
 import { evaluateStripeTaxConfiguration } from "@/lib/stripeTaxPolicy.mjs";
+import {
+  capacityCheckoutSandboxEnabled,
+  readCapacityCheckoutPlan,
+  type CapacityCheckoutPlan,
+} from "@/lib/stripeCapacityCheckout";
+import { createStripeRetryableIntegrationIdentifier } from "@/lib/stripeIntegrationIdentifierPolicy.mjs";
+import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
+import { STAGING_CAPACITY_PRICE_CONTRACTS, validateStripeTestPrice } from "@/lib/stagingStripeCatalogPolicy.mjs";
 import { verifyStripeWebhookSignature } from "@/lib/stripeWebhookSignaturePolicy.mjs";
 
 export type CheckoutCommercialOption =
@@ -66,7 +74,8 @@ export type StripeConfigStatus = {
   readyForWebhook: boolean;
 };
 
-export type CheckoutPlan = {
+type LegacyCheckoutPlan = {
+  billingContract?: never;
   planId: Extract<PlanId, "pilot" | "starter">;
   commercialOption: CheckoutCommercialOption;
   mode: "payment" | "subscription";
@@ -76,6 +85,8 @@ export type CheckoutPlan = {
   commitmentMonths: 0 | 12;
   paymentCollectionMethod: "sepa_direct_debit" | "card";
 };
+
+export type CheckoutPlan = LegacyCheckoutPlan | CapacityCheckoutPlan;
 
 export type StripeWorkspaceReferences = {
   customerId?: string;
@@ -153,14 +164,14 @@ export function getAppUrl(): string {
 export function resolveCheckoutPlan(
   planId: unknown,
   commercialOption: unknown,
-): CheckoutPlan | null {
+): LegacyCheckoutPlan | null {
   // Legacy-Workspaces mit dem früheren entgeltlichen Pilot-Paket dürfen keinen
   // neuen Checkout mehr erhalten. Kostenlose Demo und interne Tests bleiben getrennt.
   if (planId === "pilot" && commercialOption === "pilot_only") return null;
 
   if (planId === "starter" && commercialOption === "starter_paid_setup") {
     const monthlyPrice =
-      process.env.STRIPE_PRICE_CAPACITY_312 ||
+      (!capacityCheckoutSandboxEnabled() && process.env.STRIPE_PRICE_CAPACITY_312) ||
       process.env.STRIPE_PRICE_STARTER_MONTHLY;
     return monthlyPrice
       ? {
@@ -181,7 +192,7 @@ export function resolveCheckoutPlan(
     commercialOption === "starter_no_setup_commitment"
   ) {
     const monthlyPrice =
-      process.env.STRIPE_PRICE_CAPACITY_312 ||
+      (!capacityCheckoutSandboxEnabled() && process.env.STRIPE_PRICE_CAPACITY_312) ||
       process.env.STRIPE_PRICE_STARTER_MONTHLY;
     return monthlyPrice
       ? {
@@ -214,6 +225,17 @@ export function resolveCheckoutPlan(
   }
 
   return null;
+}
+
+export async function resolveWorkspaceCheckoutPlan(
+  workspace: { id: string; owner_user_id: string; plan_id: unknown; commercial_option: unknown },
+  userId: string,
+): Promise<CheckoutPlan | null> {
+  if (workspace.owner_user_id !== userId) return null;
+  const decision = await readCapacityCheckoutPlan(workspace.id, userId);
+  if (decision.kind === "capacity") return decision.plan;
+  if (decision.kind === "blocked") return null;
+  return resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option);
 }
 
 export async function createStripeCheckoutSession(input: {
@@ -251,38 +273,73 @@ export async function createStripeCheckoutSession(input: {
     };
   }
 
-  const metadata = {
-    user_id: input.userId,
-    workspace_id: input.workspaceId,
-    plan_id: input.plan.planId,
-    commercial_option: input.plan.commercialOption,
-    setup_fee_cents: String(input.plan.setupFeeCents),
-    monthly_fee_cents: String(input.plan.monthlyFeeCents),
-    commitment_months: String(input.plan.commitmentMonths),
-    internal_live_test:
-      input.plan.commercialOption === "internal_daily_test" ? "true" : "false",
-  };
-  const params: Stripe.Checkout.SessionCreateParams = {
-    mode: input.plan.mode,
-    success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/billing/cancel`,
-    client_reference_id: input.workspaceId,
-    ...(input.userEmail ? { customer_email: input.userEmail } : {}),
-    billing_address_collection: "required",
-    tax_id_collection: { enabled: true },
-    automatic_tax: { enabled: true },
-    line_items: input.plan.priceIds.map((price) => ({ price, quantity: 1 })),
-    metadata,
-    integration_identifier: createStripeIntegrationIdentifier(),
-    ...(input.plan.mode === "payment"
-      ? { payment_intent_data: { metadata } }
-      : { subscription_data: { metadata } }),
-  };
-
   try {
-    const session = await stripe.checkout.sessions.create(params);
+    let plan = input.plan;
+    let idempotencyKey: string | undefined;
+    if (plan.billingContract === "capacity_v2") {
+      const decision = await readCapacityCheckoutPlan(input.workspaceId, input.userId);
+      if (decision.kind !== "capacity" || decision.plan.planId !== plan.planId ||
+        decision.plan.priceIds[0] !== plan.priceIds[0] ||
+        !(await hasCurrentWorkspacePaymentTermsEvidence(input.workspaceId, input.userId))) {
+        return { error: "Die Paketzuordnung ist nicht mehr gültig." };
+      }
+      plan = decision.plan;
+      const priceId = plan.priceIds[0];
+      const contract = STAGING_CAPACITY_PRICE_CONTRACTS.find(item => item.slot === plan.planId);
+      if (!contract) return { error: "Das Paket ist derzeit nicht buchbar." };
+      const price = await stripe.prices.retrieve(priceId, { expand: ["product"] });
+      if (!validateStripeTestPrice(price, { ...contract, id: priceId }) ||
+        isStripeBillingWriteFrozen()) {
+        return { error: "Das Paket ist derzeit nicht buchbar." };
+      }
+      idempotencyKey = `fanmind:capacity-v2:initial:${input.workspaceId}`;
+    }
+
+    const metadata = {
+      user_id: input.userId,
+      workspace_id: input.workspaceId,
+      plan_id: plan.planId,
+      commercial_option: plan.commercialOption,
+      setup_fee_cents: String(plan.setupFeeCents),
+      monthly_fee_cents: String(plan.monthlyFeeCents),
+      commitment_months: String(plan.commitmentMonths),
+      ...(plan.billingContract === "capacity_v2" ? {
+        fanmind_billing_contract: plan.billingContract,
+        fanmind_capacity_package: plan.planId,
+      } : {}),
+      internal_live_test:
+        plan.commercialOption === "internal_daily_test" ? "true" : "false",
+    };
+    const params: Stripe.Checkout.SessionCreateParams = {
+      mode: plan.mode,
+      success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/billing/cancel`,
+      client_reference_id: input.workspaceId,
+      ...(!idempotencyKey && input.userEmail ? { customer_email: input.userEmail } : {}),
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      automatic_tax: { enabled: true },
+      line_items: plan.priceIds.map((price) => ({ price, quantity: 1 })),
+      metadata,
+      integration_identifier: idempotencyKey
+        ? createStripeRetryableIntegrationIdentifier(idempotencyKey)
+        : createStripeIntegrationIdentifier(),
+      ...(plan.mode === "payment"
+        ? { payment_intent_data: { metadata } }
+        : { subscription_data: { metadata } }),
+    };
+
+
+    const session = idempotencyKey
+      ? await stripe.checkout.sessions.create(params, { idempotencyKey })
+      : await stripe.checkout.sessions.create(params);
     if (!session.id || !session.url) {
       return { error: "Stripe Checkout konnte nicht gestartet werden." };
+    }
+    if (input.plan.billingContract === "capacity_v2" &&
+      (session.livemode !== false || session.status !== "open" ||
+        !session.id.startsWith("cs_test_") || new URL(session.url).origin !== "https://checkout.stripe.com")) {
+      return { error: "Stripe Checkout konnte nicht verifiziert werden." };
     }
     if (
       input.plan.commercialOption === "internal_daily_test" &&

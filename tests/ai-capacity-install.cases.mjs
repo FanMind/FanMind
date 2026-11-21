@@ -106,6 +106,33 @@ export async function exerciseCapacityInstall({sql,select,context}){
    sql(`begin;${setup} set local \"request.jwt.claim.role\"='service_role';select ${call};${mutation};DO $$begin if exists(select from public.ai_capacity_workspace_entitlements where active) then raise exception 'writer_invalidation_failed';end if;end$$;rollback;`);
   }
  });
+ await context.test("Capacity checkout binding is owner-bound, private and uses the canonical Price mapping", () => {
+  const owner = "11111111-1111-4111-8111-111111111111";
+  const foreignOwner = "22222222-2222-4222-8222-222222222222";
+  const lookup = userId => `select coalesce(string_agg(eligible::text,','),'missing')
+    from public.read_ai_capacity_checkout_contract('${wA}','${userId}');`;
+  const service = query => `begin; set local role service_role;
+    set local "request.jwt.claim.role"='service_role'; ${query} rollback;`;
+  sql("alter table public.workspaces add column plan_id text, add column commercial_option text, add column stripe_checkout_session_id text;");
+  sql(readFileSync("supabase/controlled/ai_capacity_checkout_contracts.sql","utf8"));
+  assert.equal(select("select not has_function_privilege('authenticated','public.read_ai_capacity_checkout_contract(uuid,uuid)','EXECUTE') and not has_table_privilege('service_role','public.workspace_capacity_checkout_contracts','INSERT');"), "t");
+  assert.equal(select(service(lookup(owner))), "missing");
+  const binding = `insert into fanmind_capacity_private.package_prices values('price_Approved','capacity_199',1,true);
+    update public.workspaces set plan_id='pilot', commercial_option='pilot_only', billing_status='pending_payment_setup' where id='${wA}';
+    insert into public.workspace_capacity_checkout_contracts(workspace_id,owner_user_id,billing_contract_version,package_id,price_id,admitted_until)
+    values('${wA}','${owner}','capacity_v2','capacity_199','price_Approved',now()+interval '1 hour');`;
+  const runBound = (query, change = "") => select(`begin; ${binding} ${change}
+    set local role service_role; set local "request.jwt.claim.role"='service_role'; ${query} rollback;`);
+  assert.equal(runBound(lookup(owner)), "true");
+  assert.equal(runBound(lookup(foreignOwner)), "missing");
+  for (const change of [
+    "update fanmind_capacity_private.package_prices set active=false;",
+    "update fanmind_capacity_private.package_prices set package_id='capacity_99';",
+    "update public.workspaces set stripe_checkout_session_id='cs_test_Existing';",
+    "update public.workspaces set commercial_option='starter_paid_setup';",
+    "update public.workspace_capacity_checkout_contracts set admitted_at=now()-interval '2 hours', admitted_until=now()-interval '1 hour';",
+  ]) assert.equal(runBound(lookup(owner), change), "false");
+ });
  await context.test('authorized two-Creator grant, reserve, exact settlement, duplicate, empty balance, hold and withdrawal fully roll back',()=>{
   const fx={eurPerUsdNanos:900000000,version:'synthetic-local-fx',validFrom:new Date(Date.now()-1000).toISOString(),validUntil:new Date(Date.now()+60000).toISOString()};
   sql(syntheticAcceptanceSql({workspaceA:wA,workspaceB:wB,runId:'1350',fx}));
