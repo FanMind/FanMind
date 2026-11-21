@@ -10,7 +10,7 @@ import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivatio
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
 import { getPreActivationRedirect } from "@/lib/preActivation";
 import { getSupabaseServerUser, getUserWorkspaceDashboard } from "@/lib/supabase/server";
-import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
+import { createStripeCheckoutSession, getStripeConfigStatus, resolveWorkspaceCheckoutPlan } from "@/lib/stripeBilling";
 import { isInternalDailyTestBillingRuntimeReady, isInternalDailyTestStripeReady } from "@/lib/internalDailyTestReadinessPolicy.mjs";
 import { getPublicDailyTestPlanEnabled } from "@/lib/runtimeProductSettings";
 import {
@@ -105,7 +105,7 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   const paymentTermsReady = workspace
     ? await hasCurrentWorkspacePaymentTermsEvidence(workspace.id, data.user.id)
     : false;
-  const resolvedCheckoutPlan = workspace ? resolveCheckoutPlan(workspace.plan_id, workspace.commercial_option) : null;
+  const resolvedCheckoutPlan = workspace ? await resolveWorkspaceCheckoutPlan(workspace, data.user.id) : null;
   const checkoutPaymentMethodText =
     "Stripe zeigt die für diese Zahlung verfügbaren Zahlarten";
 
@@ -113,15 +113,18 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   let checkoutFrozen = isStripeBillingWriteFrozen();
   const dailyAdmissionReady = workspace?.commercial_option !== "internal_daily_test" ||
     ((await getPublicDailyTestPlanEnabled()) && isInternalDailyTestBillingRuntimeReady());
+  const capacityPlan = resolvedCheckoutPlan?.billingContract === "capacity_v2" ? resolvedCheckoutPlan : null;
   const checkoutReady = workspace?.commercial_option === "internal_daily_test"
     ? isInternalDailyTestStripeReady(stripe)
-    : stripe.readyForCheckout;
+    : capacityPlan
+      ? stripe.readyForWebhook && stripe.readyForTax && stripe.hasAppUrl
+      : stripe.readyForCheckout;
   const canStartCheckout = Boolean(
     workspace &&
       !checkoutFrozen &&
       dailyAdmissionReady &&
       paymentTermsReady &&
-      shouldShowBillingCheckoutAction(workspace) &&
+      (capacityPlan || shouldShowBillingCheckoutAction(workspace)) &&
       checkoutReady &&
       !isDemo &&
       resolvedCheckoutPlan,
@@ -129,7 +132,7 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
   let checkoutUrl: string | undefined;
   let checkoutPreparationFailed = false;
 
-  if (canStartCheckout && workspace && resolvedCheckoutPlan) {
+  if (canStartCheckout && workspace && resolvedCheckoutPlan && !capacityPlan) {
     try {
       const session = await createStripeCheckoutSession({
         plan: resolvedCheckoutPlan,
@@ -146,7 +149,16 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
     }
   }
 
-  const plan = workspace ? getBillingPlanSummary(workspace.plan_id, workspace.commercial_option) : null;
+  const packageAmount = capacityPlan
+    ? new Intl.NumberFormat("de-AT", { style: "currency", currency: "EUR" }).format(capacityPlan.monthlyFeeCents / 100)
+    : null;
+  const plan = capacityPlan ? {
+    name: `FanMind ${capacityPlan.planId.slice("capacity_".length)}`,
+    dueToday: `${packageAmount} netto`,
+    monthly: `${packageAmount} netto`,
+    term: "Monatliche Abrechnung",
+    status: "Zahlung offen",
+  } : workspace ? getBillingPlanSummary(workspace.plan_id, workspace.commercial_option) : null;
   const paymentTermsBlocked =
     !paymentTermsReady || params?.error === PAYMENT_TERMS_ACTIVATION_BLOCK_CODE;
 
@@ -221,6 +233,10 @@ export default async function BillingStartPage({ searchParams }: { searchParams?
               <div className={styles.infoBox}>Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind.</div>
             ) : checkoutPreparationFailed || params?.error === "payment-start" ? (
               <div className={styles.infoBox}>Die Zahlung konnte aktuell nicht vorbereitet werden. Bitte versuche es erneut oder kontaktiere FanMind.</div>
+            ) : capacityPlan && canStartCheckout ? (
+              <form action="/billing/checkout" method="post">
+                <button className={buttonStyles.button} type="submit">Weiter zur Zahlung</button>
+              </form>
             ) : checkoutUrl ? (
               <div className={buttonStyles.wrap}>
                 <a className={buttonStyles.button} href={checkoutUrl}>Weiter zur Zahlung</a>

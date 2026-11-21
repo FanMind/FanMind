@@ -7,7 +7,7 @@ import {
 } from "@/lib/httpMutationPolicy.mjs";
 import { PAYMENT_TERMS_ACTIVATION_BLOCK_CODE } from "@/lib/paymentTermsActivationPolicy.mjs";
 import { hasCurrentWorkspacePaymentTermsEvidence } from "@/lib/paymentTermsServerEvidence";
-import { createStripeCheckoutSession, getStripeConfigStatus, resolveCheckoutPlan } from "@/lib/stripeBilling";
+import { createStripeCheckoutSession, getStripeConfigStatus, resolveWorkspaceCheckoutPlan } from "@/lib/stripeBilling";
 import {
   isStripeBillingWriteFrozen,
   STRIPE_BILLING_WRITE_FREEZE_CODE,
@@ -77,15 +77,17 @@ export async function POST(request: NextRequest) {
   }
 
   const config = getStripeConfigStatus();
-  const plan = resolveCheckoutPlan(payload.planId, payload.commercialOption);
+  const plan = await resolveWorkspaceCheckoutPlan(workspaceResult.workspace, data.user.id);
   const checkoutReady = payload.commercialOption === "internal_daily_test"
     ? isInternalDailyTestStripeReady(config)
-    : config.readyForCheckout;
+    : plan?.billingContract === "capacity_v2"
+      ? config.readyForWebhook && config.readyForTax && config.hasAppUrl
+      : config.readyForCheckout;
   if (!checkoutReady) return NextResponse.json({ error: "Die Zahlung ist aktuell noch nicht vollständig konfiguriert. Bitte kontaktiere FanMind." }, { status: 503 });
 
   if (!plan) return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
 
-  if (workspaceResult.workspace.plan_id !== plan.planId || workspaceResult.workspace.commercial_option !== plan.commercialOption) {
+  if (payload.planId !== plan.planId || payload.commercialOption !== plan.commercialOption) {
     return NextResponse.json({ error: "Deine Zahlungsoption konnte nicht eindeutig zugeordnet werden. Bitte kontaktiere FanMind." }, { status: 400 });
   }
 

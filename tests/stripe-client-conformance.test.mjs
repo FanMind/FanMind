@@ -38,7 +38,7 @@ test("Checkout uses dynamic methods and a random eight-letter identifier suffix"
   );
   assert.match(
     stripeBillingSource,
-    /integration_identifier: createStripeIntegrationIdentifier\(\)/u,
+    /integration_identifier:[^,]*: createStripeIntegrationIdentifier\(\)/u,
   );
   assert.match(identifierPolicySource, /fanmind_checkout_/u);
   assert.match(identifierPolicySource, /\{ length: 8 \}/u);

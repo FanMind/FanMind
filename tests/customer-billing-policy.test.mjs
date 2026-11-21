@@ -61,7 +61,7 @@ test("all Checkout sessions delegate eligible payment methods to Stripe", () => 
   assert.match(stripeBillingSource, /automatic_tax: \{ enabled: true \}/u);
   assert.match(
     stripeBillingSource,
-    /integration_identifier: createStripeIntegrationIdentifier\(\)/u,
+    /integration_identifier:[^,]*: createStripeIntegrationIdentifier\(\)/u,
   );
   assert.match(identifierPolicySource, /fanmind_checkout_/u);
   assert.match(
