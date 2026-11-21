@@ -362,18 +362,14 @@ export function releaseTargetMatches(expectedCommit, current = CURRENT, releaseR
   } catch { return false; }
 }
 
-// Script fingerprints are from the official actions/runner v2.337.0 observed
-// on this host. Unknown changed startup scripts require review, never execution.
-export const RUNNER_SCRIPT_HASHES = Object.freeze({
-  "runsvc.sh": "7de309192686094b552130bd836320086142bf36840482204aca5a1fea1f63ba",
-  "bin/RunnerService.js": "843c5d27f4e92ce2b11d3ae0ba974f200e705eb762475c06fe0d732cb585331d",
-});
+// Fingerprints are from the official actions/runner release scripts. Each
+// reviewed version binds its launcher to the same version's Node layout.
+const RUNNER_LAYOUTS = Object.freeze([
+  { version: "2.337.0", node: "node20", runsvcSha256: "7de309192686094b552130bd836320086142bf36840482204aca5a1fea1f63ba" },
+  { version: "2.338.2", node: "node24", runsvcSha256: "ee4b86d321069855b60f7806a6f7979da8ed29d737c255125da905a331451c56" },
+]);
+const RUNNER_SERVICE_SHA256 = "843c5d27f4e92ce2b11d3ae0ba974f200e705eb762475c06fe0d732cb585331d";
 
-// The official v2.337.0 updater replaces both top-level directories with
-// absolute links to versioned siblings. This is a narrow artifact exception;
-// registration, environment, credentials and unit reads still reject links.
-const RUNNER_LAYOUT_VERSION = "2.337.0";
-const RUNNER_ARTIFACTS = ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", "externals/node20/bin/node"];
 function readRunnerLayout(root) {
   try {
     if (!/^\/[A-Za-z0-9_./-]+$/u.test(root ?? "") || path.normalize(root) !== root || fs.realpathSync(root) !== root) return null;
@@ -396,22 +392,23 @@ function readRunnerLayout(root) {
       inspect(current, "directory", current !== root);
       if (current === "/") break;
     }
-    const kinds = [];
-    for (const name of ["bin", "externals"]) {
-      const alias = path.join(root, name), linked = fs.lstatSync(alias).isSymbolicLink();
-      kinds.push(linked);
-      if (linked) {
-        const expected = path.join(root, `${name}.${RUNNER_LAYOUT_VERSION}`);
-        if (inspect(alias, "link").link !== expected || fs.realpathSync(alias) !== expected) return null;
-        inspect(expected, "directory");
-        directories[name] = expected;
-      } else {
-        inspect(alias, "directory");
-        directories[name] = alias;
-      }
+    // The updater uses two absolute links to siblings from one reviewed
+    // release. Direct directories retain the previously reviewed Node 20 layout.
+    const bin = path.join(root, "bin"), externals = path.join(root, "externals");
+    const linked = fs.lstatSync(bin).isSymbolicLink();
+    if (linked !== fs.lstatSync(externals).isSymbolicLink()) return null;
+    const binTarget = linked ? inspect(bin, "link").link : bin;
+    const contract = linked ?
+      RUNNER_LAYOUTS.find(({ version }) => binTarget === `${bin}.${version}`) : RUNNER_LAYOUTS[0];
+    if (!contract) return null;
+    for (const [name, alias] of [["bin", bin], ["externals", externals]]) {
+      const expected = linked ? `${alias}.${contract.version}` : alias;
+      if (linked && (inspect(alias, "link").link !== expected || fs.realpathSync(alias) !== expected)) return null;
+      inspect(expected, "directory");
+      directories[name] = expected;
     }
-    if (kinds[0] !== kinds[1]) return null; // An update in progress is not a stable layout.
-    for (const relative of RUNNER_ARTIFACTS) {
+    const node = `externals/${contract.node}/bin/node`;
+    for (const relative of ["runsvc.sh", "bin/RunnerService.js", "bin/Runner.Listener", node]) {
       const parts = relative.split("/");
       let current = root;
       for (const part of parts.slice(0, -1)) {
@@ -423,7 +420,7 @@ function readRunnerLayout(root) {
           (relative !== "bin/RunnerService.js" && (stat.mode & 0o100n) === 0n)) return null;
       files[relative] = file;
     }
-    return { files, stamp: JSON.stringify([...observed]) };
+    return { files, node, runsvcSha256: contract.runsvcSha256, stamp: JSON.stringify([...observed]) };
   } catch { return null; }
 }
 
@@ -492,7 +489,9 @@ export function runnerConfigurationMatches(unit, unitName, context) {
       const match = line.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/u);
       if (!match || (LAUNCH_ENV.includes(match[1]) && match[2] !== "")) return false;
     }
-    for (const [relative, expected] of Object.entries(RUNNER_SCRIPT_HASHES)) {
+    for (const [relative, expected] of [
+      ["runsvc.sh", layout.runsvcSha256], ["bin/RunnerService.js", RUNNER_SERVICE_SHA256],
+    ]) {
       if (createHash("sha256").update(readOwnedFile(layout.files[relative], 64 * 1024)).digest("hex") !== expected) return false;
     }
     // Credentials are not read or returned. Missing, linked, empty or exposed
@@ -561,7 +560,7 @@ export function runnerStartupMatches(unit, unitName, context) {
     const source = boundedKernelRead(`/sys/fs/cgroup${unit.ControlGroup}/cgroup.procs`);
     if (!/^(?:[1-9][0-9]{0,9}\n)+$/u.test(source)) return false;
     const pids = [...new Set(source.trim().split("\n").map(Number))];
-    const verified = ["bin/Runner.Listener", "externals/node20/bin/node"].every(relative => {
+    const verified = ["bin/Runner.Listener", layout.node].every(relative => {
       const file = layout.files[relative];
       const spellingMatches = (value, artifact) => value === path.join(root, artifact) || value === layout.files[artifact];
       const matches = pids.filter(pid => {

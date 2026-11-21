@@ -89,7 +89,7 @@ test("private preimages retain exact bytes before replacement and reject overwri
   assert.throws(()=>preservePreimages(root,newBytes),/EEXIST/u);
   assert.deepEqual(fs.readFileSync(path.join(root,AUDIT_FILES[1].name)),oldBytes[1]);
 });
-test("unchanged collector is not rewritten and exact installed dependencies match reviewed Source",t=>{
+test("unchanged collector is not rewritten and the historical install keeps its dependency pins",t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),"fanmind-audit-retained-"));
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   for(const [i,file]of AUDIT_FILES.entries())fs.writeFileSync(path.join(root,file.name),oldBytes[i],{mode:0o755});
@@ -97,8 +97,14 @@ test("unchanged collector is not rewritten and exact installed dependencies matc
   replacePair(root,oldBytes,newBytes,()=>{});
   const after=fs.statSync(collector,{bigint:true});
   assert.equal(after.ino,before.ino);assert.equal(after.mtimeNs,before.mtimeNs);
-  const sources=["scripts/operations/production-boot-readiness.mjs","scripts/public-health-policy.mjs"];
-  for(const [i,file]of AUDIT_DEPENDENCIES.entries())assert.equal(crypto.createHash("sha256").update(fs.readFileSync(sources[i])).digest("hex"),file.sha256);
+  // This one-shot installer verified already installed boot bytes on AUDIT_BASE.
+  // Later boot sources belong to a separate reviewed installation.
+  assert.deepEqual(AUDIT_DEPENDENCIES, [
+    { path: "/usr/local/lib/fanmind-audit/production-boot-readiness.mjs",
+      sha256: "fe183af14219860c9772a7d3fd659b6896e819f52b83423316ec94c9cff8d7c0" },
+    { path: "/usr/local/lib/public-health-policy.mjs",
+      sha256: crypto.createHash("sha256").update(fs.readFileSync("scripts/public-health-policy.mjs")).digest("hex") },
+  ]);
 });
 
 test("postcheck streams the same audit to the full unchanged verifier as the collector identity", () => {
