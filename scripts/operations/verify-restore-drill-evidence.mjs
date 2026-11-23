@@ -252,7 +252,7 @@ function parseRunnerReceipt(bytes) {
     receipt.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
-    receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
+    ![116, 120].includes(receipt.databaseCoreTableAppGrantTupleCount) ||
     ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError("runner_receipt_authorization_counts_invalid");
@@ -350,7 +350,7 @@ function parseDatabasePostcheckReceipt(bytes) {
     receipt.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
-    receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
+    ![116, 120].includes(receipt.databaseCoreTableAppGrantTupleCount) ||
     ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError(
@@ -431,7 +431,7 @@ function validateEvidence(evidence) {
     evidence.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(evidence.databaseAuthorizationExtensionRecordCount) ||
     evidence.databaseAuthorizationExtensionRecordCount <= 0 ||
-    evidence.databaseCoreTableAppGrantTupleCount !== 120 ||
+    ![116, 120].includes(evidence.databaseCoreTableAppGrantTupleCount) ||
     ![12, 13, 29].includes(evidence.databaseRestrictedSecurityDefinerFunctionCount)
   ) {
     throw fixedError("evidence_authorization_counts_invalid");
