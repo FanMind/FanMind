@@ -1213,6 +1213,11 @@ const MAX_PROCESS_OUTPUT_BYTES = 256 * 1024;
 const INITIAL_QUERY_TIMEOUT_MS = 60_000;
 const CLOSE_TIMEOUT_MS = 10_000;
 const CORE_TABLE_APP_GRANT_TUPLE_COUNT = 120;
+const HARDENED_CORE_TABLE_APP_GRANT_TUPLE_COUNT = 116;
+const ACCEPTED_CORE_TABLE_APP_GRANT_TUPLE_COUNTS = new Set([
+  CORE_TABLE_APP_GRANT_TUPLE_COUNT,
+  HARDENED_CORE_TABLE_APP_GRANT_TUPLE_COUNT,
+]);
 const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13, 29]);
 const MAX_RECEIPT_BYTES = 16 * 1024;
 const COMMIT = /^[0-9a-f]{40}$/u;
@@ -3576,6 +3581,101 @@ core_table_app_grant_stats as (
       select privilege_name from core_privilege_names
     )
 ),
+hardened_workspace_owner_columns(column_name) as (
+  values
+    ('name'),
+    ('organization_name'),
+    ('street_address'),
+    ('postal_code'),
+    ('city'),
+    ('country'),
+    ('vat_id'),
+    ('tax_number'),
+    ('company_register_number'),
+    ('company_register_court')
+),
+hardened_workspace_profile as (
+  select exists (
+    select 1
+    from pg_catalog.pg_class as relation
+    join pg_catalog.pg_namespace as namespace
+      on namespace.oid = relation.relnamespace
+    where namespace.nspname = 'public'
+      and relation.relname = 'workspaces'
+      and relation.relkind in ('r', 'p')
+      and relation.relrowsecurity
+      and not pg_catalog.has_table_privilege(
+        'anon', relation.oid, 'INSERT'
+      )
+      and not pg_catalog.has_table_privilege(
+        'anon', relation.oid, 'UPDATE'
+      )
+      and not pg_catalog.has_table_privilege(
+        'authenticated', relation.oid, 'INSERT'
+      )
+      and not pg_catalog.has_table_privilege(
+        'authenticated', relation.oid, 'UPDATE'
+      )
+      and pg_catalog.has_table_privilege(
+        'service_role', relation.oid, 'INSERT'
+      )
+      and pg_catalog.has_table_privilege(
+        'service_role', relation.oid, 'UPDATE'
+      )
+      and (
+        select count(*)
+        from pg_catalog.pg_attribute as attribute
+        join hardened_workspace_owner_columns as allowed
+          on allowed.column_name = attribute.attname
+        where attribute.attrelid = relation.oid
+          and attribute.attnum > 0
+          and not attribute.attisdropped
+      ) = 10
+      and not exists (
+        select 1
+        from pg_catalog.pg_attribute as attribute
+        where attribute.attrelid = relation.oid
+          and attribute.attnum > 0
+          and not attribute.attisdropped
+          and (
+            pg_catalog.has_column_privilege(
+              'anon', relation.oid, attribute.attname, 'INSERT'
+            )
+            or pg_catalog.has_column_privilege(
+              'authenticated', relation.oid, attribute.attname, 'INSERT'
+            )
+            or pg_catalog.has_column_privilege(
+              'anon', relation.oid, attribute.attname, 'UPDATE'
+            )
+            or (
+              pg_catalog.has_column_privilege(
+                'authenticated', relation.oid, attribute.attname, 'UPDATE'
+              ) is distinct from exists (
+                select 1
+                from hardened_workspace_owner_columns as allowed
+                where allowed.column_name = attribute.attname
+              )
+            )
+          )
+      )
+      and exists (
+        select 1
+        from pg_catalog.pg_policy as policy
+        join app_roles as authenticated_role
+          on authenticated_role.rolname = 'authenticated'
+        where policy.polrelid = relation.oid
+          and policy.polname = 'workspaces_update_owner_boundary'
+          and policy.polpermissive is false
+          and policy.polcmd = 'w'
+          and pg_catalog.cardinality(policy.polroles) = 1
+          and authenticated_role.oid = any(policy.polroles)
+          and pg_catalog.pg_get_expr(policy.polqual, policy.polrelid)
+            in ('(owner_user_id = auth.uid())', 'owner_user_id = auth.uid()')
+          and pg_catalog.pg_get_expr(policy.polwithcheck, policy.polrelid)
+            in ('(owner_user_id = auth.uid())', 'owner_user_id = auth.uid()')
+      )
+  ) as valid
+),
 expected_recovery_extensions(
   extname,
   extversion,
@@ -4214,6 +4314,7 @@ authorization_result as (
     'core_table_app_grant_option_count',
       core_grant_stats.grant_option_count,
     'core_table_app_grant_row_count', core_grant_stats.row_count,
+    'core_workspace_hardened_valid', hardened_workspace.valid,
     'container_recovery_invariant_violation_count',
       container_invariants.violation_count,
     'extension_recovery_invariant_violation_count',
@@ -4245,6 +4346,7 @@ authorization_result as (
   cross join required_roles as required
   cross join core_table_app_grants as core_grants
   cross join core_table_app_grant_stats as core_grant_stats
+  cross join hardened_workspace_profile as hardened_workspace
   cross join container_recovery_invariants as container_invariants
   cross join extension_recovery_invariants as extension_invariants
   cross join reviewed_recovery_cohort as reviewed_cohort
@@ -4814,7 +4916,7 @@ export function validateAuthorizationContract(value) {
     MAX_EXTENSION_RECORD_COUNT,
     "authorization_contract_extension_record_count_invalid",
   );
-  if (coreTableAppGrantTupleCount !== CORE_TABLE_APP_GRANT_TUPLE_COUNT) {
+  if (!ACCEPTED_CORE_TABLE_APP_GRANT_TUPLE_COUNTS.has(coreTableAppGrantTupleCount)) {
     throw fixedError("authorization_contract_core_grants_invalid");
   }
   if (
@@ -4864,7 +4966,15 @@ function contractFromDatabasePayload(value) {
   if (value.core_table_app_grant_option_count !== 0) {
     throw fixedError("authorization_core_grant_option_unsupported");
   }
-  if (value.core_table_app_grant_row_count !== CORE_TABLE_APP_GRANT_TUPLE_COUNT) {
+  const legacyCoreGrantProfile =
+    value.core_table_app_grant_tuple_count === CORE_TABLE_APP_GRANT_TUPLE_COUNT &&
+    value.core_table_app_grant_row_count === CORE_TABLE_APP_GRANT_TUPLE_COUNT &&
+    value.core_workspace_hardened_valid === false;
+  const hardenedCoreGrantProfile =
+    value.core_table_app_grant_tuple_count === HARDENED_CORE_TABLE_APP_GRANT_TUPLE_COUNT &&
+    value.core_table_app_grant_row_count === HARDENED_CORE_TABLE_APP_GRANT_TUPLE_COUNT &&
+    value.core_workspace_hardened_valid === true;
+  if (!legacyCoreGrantProfile && !hardenedCoreGrantProfile) {
     throw fixedError("authorization_core_grant_matrix_invalid");
   }
   if (value.container_recovery_invariant_violation_count !== 0) {
