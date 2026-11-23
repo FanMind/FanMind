@@ -183,7 +183,7 @@ async function currentInspection(request){
 }
 // Exact existing controller upgrade; no service/worker/DB mutation in preparation.
 export const REPAIR_CONTROL_HASHES=Object.freeze({
- 'backup-worker-install-control.mjs':'0a6e78430ad353136c1091f7160f05c9b5208f89dca55a2843e2987a922437db',
+ 'backup-worker-install-control.mjs':'aca8951b2a4751fdc9dfa58254814eb5feeeaf30b8dd99b9f436fd0695d80f8a',
  'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
 });
