@@ -2550,11 +2550,10 @@ test("runbook and package scripts require the gated runner for pg_restore", asyn
   assert.match(runner, /membership grantors/u);
   assert.match(runner, /bootstrap-principal boundary/u);
   assert.match(runner, /snapshot-target/u);
-  assert.match(
-    runner,
-    /authorization\\\|\[0-9a-f\]\{64\}[\s\S]+?120\\\|\(12\|13\)\\\|\[0-9a-f\]\{64\}[\s\S]+?\[0-9a-f\]\{64\}/u,
-  );
-  assert.match(runner, /fanmind_required_restore_tables/u);
+  assert.ok(
+    runner.includes("\\|(120\\|(12|13|29)|116\\|29)\\|"),
+    "protected shell postcheck binds historical and hardened grant/function pairs",
+  );  assert.match(runner, /fanmind_required_restore_tables/u);
   assert.match(runner, /pg_catalog\.pg_policy/u);
   assert.match(runner, /FANMIND_RESTORE_DATABASE_POSTCHECK_RECEIPT_PATH/u);
   assert.match(runner, /restore_target_not_empty/);
