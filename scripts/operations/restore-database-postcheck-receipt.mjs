@@ -178,7 +178,9 @@ function parseRunnerReceipt(bytes) {
     ) ||
     !RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS.has(
       receipt.databaseRestrictedSecurityDefinerFunctionCount,
-    )
+    ) ||
+    (receipt.databaseCoreTableAppGrantTupleCount === 116 &&
+      receipt.databaseRestrictedSecurityDefinerFunctionCount !== 29)
   ) {
     fail("runner_receipt_authorization_counts_invalid");
   }
