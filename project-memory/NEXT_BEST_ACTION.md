@@ -8,11 +8,11 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNE
 - Task: `FM-OPS-001`
 - Gate: `production_ops` (`PARTIAL`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Überfälliges Production-DB-Backup im bestehenden Operations-Kanal eingrenzen
+- Title: Backup-Berechtigungsvertrag an bestätigten Workspace-Feldschutz anpassen
 
 ## Instruction
 
-Continue in the existing #1512 Operations session. Read the latest existing database-backup job result and the sanitized backup-worker/timer evidence for the exact live release. Audit 45197669139 found the DB backup at 61.26h against a 36h limit. Identify the first failing stage before attempting a repair. A successful Full backup and a passing boot preflight do not close the separate DB-backup gate. Reuse any later valid verified receipt. Any repair, re-run that creates a backup, reboot or deploy uses its existing protected authorization and target checks.
+Production DB and Full backup jobs were enqueued and claimed, then failed with authorization_core_grant_matrix_invalid. The current catalog has 116 direct core grants with no grant options. The four differences from the installed 120-grant profile are the intentional removal of table-level INSERT/UPDATE on workspaces for anon and authenticated. Keep the verified Workspace protection. Continue in the existing #1512 Operations scope: prepare and review an exact hardened authorization profile and protected module install. Reuse prior receipts and confirm current installed bytes/lock before seeking one action-specific approval. After installation, accept one fresh database backup by local artifact and checksum, and confirm the matching Offsite pair independently.
 
 ## Why this action
 

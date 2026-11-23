@@ -17,7 +17,7 @@
       "risk": "R3",
       "state": "PARTIAL",
       "required_for_sales": true,
-      "evidence": "Audit 45197669139 on 2026-11-23: runtime and boot/runner checks passed, but Database backup was stale (61.26h vs 36h) and the overall audit failed."
+      "evidence": "Audit 45197669139 failed database freshness (61.26h vs 36h). Production read-only job/catalog evidence on 2026-11-23 confirms the 120-grant backup authorization contract rejects the approved 116-grant Workspace field-protection profile. Latest validated database backup: 2026-11-21 01:30:28 UTC. Repair and fresh local/offsite acceptance pending."
     },
     "staging": {
       "task": "FM-STG-001",

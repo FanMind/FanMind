@@ -7,7 +7,7 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Phase 8 started: `true`
 - Next action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`
 - Next action status: `OWNER_ACTION_REQUIRED`
-- Next action title: Überfälliges Production-DB-Backup im bestehenden Operations-Kanal eingrenzen
+- Next action title: Backup-Berechtigungsvertrag an bestätigten Workspace-Feldschutz anpassen
 
 ## Finishline gates
 

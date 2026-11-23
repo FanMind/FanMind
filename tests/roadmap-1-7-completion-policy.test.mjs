@@ -832,15 +832,19 @@ test("Creator selection stays bounded and the consumed parent cannot reopen", ()
       assert.match(pausedLiveRepairLock, /- Status: PAUSED/u);
       assert.match(nextAction, /- Worker slots reserved by active\/ready work: `0`/u);
       assert.match(nextAction, /- Active task continuations reserving slots: `NONE`/u);
-      assert.match(nextAction, /- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`/u);
+      const backupTriage = actionCatalog.actions.find((action) => action.id === "NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE");
+      assert.ok(backupTriage);
+      assert.equal(backupTriage.gate, "production_ops");
+      assert.ok(backupTriage.priority < targetRuntime.priority);
+      assert.match(nextAction, /- Selected action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`/u);
       assert.match(nextAction, /- Selection status: `OWNER_ACTION_REQUIRED`/u);
-      assert.match(nextAction, /run-creator-target-drift-diagnosis <then-current-main-sha>/u);
+      assert.match(autoHandoff, /- Next action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`/u);
       assert.match(autoHandoff, /- Next action status: `OWNER_ACTION_REQUIRED`/u);
-      assert.match(autoHandoff, /- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt/u);
-      assert.doesNotMatch(startedWork, /diagnosis is bound to exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
-      assert.doesNotMatch(dependencies, /diagnosis on exact main `bc85493f8fc25ff90c965208bd20c7dc64641158`/u);
-      assert.match(startedWork, /diagnosis is bound to the exact then-current `main` after this reconciliation merges/u);
-      assert.match(dependencies, /diagnosis on the exact then-current `main` via `run-creator-target-drift-diagnosis <then-current-main-sha>`/u);
+      assert.match(targetRuntime.instruction, /41300503008/u);
+      assert.match(targetRuntime.instruction, /private PG17 reference/u);
+      assert.match(startedWork, /fresh protected diagnosis must bind exact main and a valid reference/u);
+      assert.match(dependencies, /prior protected diagnosis consumed/u);
+      assert.doesNotMatch(nextAction, /run-creator-target-drift-diagnosis <then-current-main-sha>/u);
     } else {
       assert.match(nextAction, /- SAFE READY SET: `NONE`/u);
     }
