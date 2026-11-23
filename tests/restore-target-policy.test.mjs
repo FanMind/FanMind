@@ -435,6 +435,7 @@ async function restoreRunnerEnvironment(root, dumpPath, overrides = {}) {
       core_table_app_grant_tuple_count: 120,
       core_table_app_grant_option_count: 0,
       core_table_app_grant_row_count: 120,
+      core_workspace_hardened_valid: false,
       container_recovery_invariant_violation_count: 0,
       extension_recovery_invariant_violation_count: 0,
       extension_fingerprint_sha256:
