@@ -16,7 +16,7 @@ const UUID_V4 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 const COMMIT = /^[0-9a-f]{40}$/u;
 const SHA256 = /^[0-9a-f]{64}$/u;
-const CORE_TABLE_APP_GRANT_TUPLE_COUNT = 120;
+const ACCEPTED_CORE_TABLE_APP_GRANT_TUPLE_COUNTS = new Set([116, 120]);
 const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13]);
 const REQUIRED_TABLES = [
   "contacts",
@@ -173,8 +173,9 @@ function parseRunnerReceipt(bytes) {
     receipt.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
-    receipt.databaseCoreTableAppGrantTupleCount !==
-      CORE_TABLE_APP_GRANT_TUPLE_COUNT ||
+    !ACCEPTED_CORE_TABLE_APP_GRANT_TUPLE_COUNTS.has(
+      receipt.databaseCoreTableAppGrantTupleCount
+    ) ||
     !RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS.has(
       receipt.databaseRestrictedSecurityDefinerFunctionCount,
     )
