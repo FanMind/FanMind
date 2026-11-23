@@ -327,12 +327,19 @@ async function readPrivateRegularFile(path, encoding) {
   }
 }
 
-async function withReceiptSet(callback, restrictedCount = 12) {
+async function withReceiptSet(
+  callback,
+  restrictedCount = 12,
+  coreGrantCount = CORE_TABLE_APP_GRANT_TUPLE_COUNT,
+) {
   const root = await mkdtemp(join(tmpdir(), "fanmind-restore-evidence-"));
   try {
     await chmod(root, 0o700);
     const targetId = randomUUID();
-    const fullBytes = `${JSON.stringify(fullReceipt({databaseRestrictedSecurityDefinerFunctionCount:restrictedCount}))}\n`;
+    const fullBytes = `${JSON.stringify(fullReceipt({
+      databaseRestrictedSecurityDefinerFunctionCount: restrictedCount,
+      databaseCoreTableAppGrantTupleCount: coreGrantCount,
+    }))}\n`;
     const runnerBytes = `${JSON.stringify(
       runnerReceipt(fullBytes, targetId),
     )}\n`;
@@ -713,6 +720,19 @@ test("valid schema v6 binds all receipts without echoing identifiers", async () 
       /fanmind-full|restore-001|a{20}|b{20}|d{20}/u,
     );
   });
+});
+
+test("hardened 116-grant full, restore and postcheck receipts remain bindable", async () => {
+  await withReceiptSet(async ({ paths }) => {
+    const { stdout } = await execFileAsync(process.execPath, verifierArguments(paths));
+    assert.match(stdout, /RESTORE_DRILL_EVIDENCE=PASS/u);
+  }, 12, 116);
+  await withReceiptSet(async ({ paths }) => {
+    await assert.rejects(
+      execFileAsync(process.execPath, verifierArguments(paths)),
+      /authorization|grant|count|receipt/u,
+    );
+  }, 12, 115);
 });
 
 test("runner and database postcheck receipts are mandatory at the evidence CLI boundary", async () => {
