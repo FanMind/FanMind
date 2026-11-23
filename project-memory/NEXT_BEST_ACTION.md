@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNE
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
+- Selected action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`
+- Task: `FM-OPS-001`
+- Gate: `production_ops` (`PARTIAL`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
+- Title: Überfälliges Production-DB-Backup im bestehenden Operations-Kanal eingrenzen
 
 ## Instruction
 
-PR #1214 source/recovery correction remains ACCEPTED on merge bc85493f8fc25ff90c965208bd20c7dc64641158. Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step remains owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874 using the then-current protected main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
+Continue in the existing #1512 Operations session. Read the latest existing database-backup job result and the sanitized backup-worker/timer evidence for the exact live release. Audit 45197669139 found the DB backup at 61.26h against a 36h limit. Identify the first failing stage before attempting a repair. A successful Full backup and a passing boot preflight do not close the separate DB-backup gate. Reuse any later valid verified receipt. Any repair, re-run that creates a backup, reboot or deploy uses its existing protected authorization and target checks.
 
 ## Why this action
 
@@ -33,6 +33,7 @@ owner/platform action required
 
 ## Candidate evaluation
 
+- `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE` priority -2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED

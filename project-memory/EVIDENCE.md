@@ -1,3 +1,7 @@
+## EV-PRODUCTION-DATABASE-BACKUP-20261123
+- Status: PARTIAL. [Read-only audit 45197669139 / job 137772374685](https://github.com/FanMind/FanMind/actions/runs/45197669139/job/137772374685) ran at 14:45 UTC against live app `bb799466d2c235195fedcb4d80568f9f0bd56969`. Database 61.26h exceeded 36h. Storage, server config and Full were within their separate thresholds. Runtime login and calculated boot/runner checks passed. The overall verifier failed.
+- This observation identifies backup freshness as a release blocker. Worker root cause and repair success need their own evidence.
+
 ## EV-CREATOR-FOUNDATION-PROFILE-TRANSITION-PR1207
 - Status: ACCEPTED; immutable repository source package, consumed.
 - Evidence: PR #1207 final head `3cd67cedbcdc051be855d09de8d5ea3225179217`, source tree `8b06776701f45000aa6acb27fd7fc3c590ea7f37`, verified squash merge `08a4bfc82f080d58cbea5bde59e92244506c3e4e` at `2026-09-26T21:38:04Z`; all eight exact-head workflows passed, including FanMind CI run `36273161074` / native PG17 job `108490997482` on tested checkout `b323361cafc3829e470f6da611c7ab7d8c8664f6`. Reference artifact `10916053961`, archive SHA256 `c570ffde509a3c90f7a451aec06a2463c84ac84a82bdfceaaae3a1f4aef6776c`, manifest SHA256 `f21e3fbdb01fe136e3a1b3924e86f6982423cfca57f3e845baf037e89a6d87bb`; independent exact-head review reported no P0/P1/P2/P3. Receipt: `project-memory/receipts/creator-foundation-profile-transition-pr1207-source.json`.

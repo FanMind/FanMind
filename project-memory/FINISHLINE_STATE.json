@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-29",
+  "updated": "2026-11-23",
   "repository": "FanMind/FanMind",
   "master_issue": 874,
   "phase8_started": true,
@@ -15,20 +15,23 @@
     "production_ops": {
       "task": "FM-OPS-001",
       "risk": "R3",
-      "state": "VERIFIED",
-      "required_for_sales": true
+      "state": "PARTIAL",
+      "required_for_sales": true,
+      "evidence": "Audit 45197669139 on 2026-11-23: runtime and boot/runner checks passed, but Database backup was stale (61.26h vs 36h) and the overall audit failed."
     },
     "staging": {
       "task": "FM-STG-001",
       "risk": "R3",
       "state": "ACCEPTED",
-      "required_for_sales": true
+      "required_for_sales": true,
+      "evidence": "Retained base-environment acceptance. Live release dd1729de6f067d82bee5ca61f9832453d1194697 was re-read on 2026-11-23 and matches deploy 44909472331. Current source 8e9f3f6721b36575b228983c180f5e581a3c0d36 is ahead and lacks release acceptance."
     },
     "restore": {
       "task": "FM-RST-001",
       "risk": "R4",
       "state": "PARTIAL",
-      "required_for_sales": true
+      "required_for_sales": true,
+      "evidence": "Existing #1512 Recovery scope / Exoscale #1205176. Latest linked console observation remained at the UEFI boot menu. No qualifying isolated Restore PASS or current private Staging backup receipt is established for Capacity installation."
     },
     "mobile": {
       "task": "FM-MOB-001",
@@ -47,7 +50,8 @@
       "task": "FM-AI-001",
       "risk": "R3",
       "state": "PARTIAL",
-      "required_for_sales": true
+      "required_for_sales": true,
+      "evidence": "Capacity 99/199/312 Checkout source merged in #1543 with ten green exact-head PR workflows. Staging still serves the prior release and the November 21 read-only catalog found both Capacity and prepayment-contract objects absent. Resume the existing #1512 Recovery and Billing scopes: isolated Restore PASS within 30 days, private Staging DB/roles backup within 24 hours, exact-main controller binding, then separate controlled install and prepayment contract apply. Prove Sandbox Checkout, signature/webhook, workspace and entitlement, tax and invoice end to end before activation. The four existing Live top-up prices use a separate paid/refund/dispute evidence scope. Production workspace field protection was confirmed catalog-exact in the prior readback, with original run/data-integrity provenance still open. Do not reapply that ACL."
     },
     "meta_security": {
       "task": "FM-META-001",
@@ -77,7 +81,8 @@
       "task": "FM-LEGAL-001",
       "risk": "R3",
       "state": "BLOCKED",
-      "required_for_sales": false
+      "required_for_sales": false,
+      "evidence": "GISA and UID are confirmed in the external register. The applicable paid-core terms, signable AVV, provider DPA/data location/transfer and tax/invoice approvals remain pending. The required_for_sales flag describes the historical technical finishline and does not grant commercial or legal release."
     },
     "creator_intelligence": {
       "task": "FM-CREATOR-001",
@@ -172,7 +177,7 @@
       "risk": "R4",
       "state": "IN_PROGRESS",
       "required_for_sales": false,
-      "evidence": "PR #1214 final head 9ad10f2600d9b0b829f052287f81a202ef933383 merged normally as current main bc85493f8fc25ff90c965208bd20c7dc64641158, accepting the bounded drift-diagnostics/recovery source correction. Protected attempt 1 run 36321009852 on prior main deployed Staging, classified DRIFT, requested no APPLY and skipped runtime; SQL APPLY/runtime/Production mutation counts remain zero. The next step is owner-gated read-only diagnosis command run-creator-target-drift-diagnosis <then-current-main-sha>; reviewed remediation and a distinct fresh transition/runtime authorization are required before any later target mutation."
+      "evidence": "The Owner-authorized read-only diagnosis was consumed in run 41300503008. It reported DRIFT in authUidFunctions, functions, memberships, policies and roles, with no APPLY or runtime activation. PR #1397 merged the bounded per-section diagnostics. The pin still references the artifact documented to expire on 2026-11-08. Review the existing reference-refresh path and validate a supported private PG17 reference before any new exact-main diagnosis. Limit remediation to evidenced sections. A new protected target observation or transition/runtime requires its own authorization."
     }
   },
   "sales_required_states": [

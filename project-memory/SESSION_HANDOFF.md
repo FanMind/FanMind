@@ -1,4 +1,10 @@
-## Current handoff — Project Memory reconciled — 2026-10-31
+## Current handoff — Paid Web core and protected release — 2026-11-23
+- Continue via the existing release and Operations scopes in [#1512](https://github.com/FanMind/FanMind/pull/1512), Recovery ticket [#1205176](https://portal.exoscale.com/u/fanmind/tickets/1205176), Support [#1350](https://github.com/FanMind/FanMind/issues/1350), ChatAdmin [#1425](https://github.com/FanMind/FanMind/issues/1425) and Creator [#874](https://github.com/FanMind/FanMind/issues/874).
+- First obtain the bounded DB-backup worker evidence behind [audit 45197669139](https://github.com/FanMind/FanMind/actions/runs/45197669139) from the existing Production operator. The main/staging/prod snapshot and remaining conditions are recorded in [CURRENT_STATE.md](CURRENT_STATE.md).
+- The one-time #1543 source merge, #1542 Staging deployment and boot-module installation were consumed. Retain the confirmed Catalog ACL postflight and reconcile its provenance without a second Apply. For a subsequent Staging release, rebind exact main/current Staging, current checks, Billing preserve and any already-enabled Operator session under its own exact authorization.
+- This handoff records evidence and continuation. It carries no new mutation or dispatch authorization.
+
+## Historical handoff — Project Memory reconciled — 2026-10-31
 - Exact source baseline: `main@890c9889f05fcc6aa3bb1f0562e54b582f252964`; issue #1048 reviewed against current GitHub, active ruleset and read-only Production evidence.
 - Governance: ruleset `24945113` is active on the default branch with strict PR/check enforcement and no bypass for the connected actor. The historical owner activation action is complete.
 - Runtime truth: Production audit passed on release `dc269fd80407bfa2a3e1885e19e432b0ebaed68e`; main is 231 commits ahead. Reboot-required, boot-runner binding and Full-backup age remain Operations/pilot-readiness follow-ups, with no protected action authorized here.
