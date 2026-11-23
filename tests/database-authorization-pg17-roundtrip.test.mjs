@@ -16,6 +16,7 @@ import { BACKUP_ACTIVE_JOBS_SQL } from "../scripts/operations/backup-worker-inst
 import { createDatabase } from "../scripts/operations/backup-worker.mjs";
 import {
   analyzeAuthorizationToc,
+  DATABASE_AUTHORIZATION_CONTRACT_SQL,
   assertDatabaseAuthorizationRoles,
   captureDatabaseAuthorizationContract,
   snapshotTargetDatabaseAuthorization,
@@ -754,7 +755,7 @@ function runCommand(command, args, { input, env } = {}) {
 }
 
 async function dockerPsql(containerId, password, sql, database = "postgres") {
-  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore", "fanmind_workspace116_restore"].includes(database));
   await runCommand(
     "docker",
     [
@@ -785,7 +786,7 @@ async function dockerPsqlScalar(
   sql,
   { readOnly = false, database = "postgres" } = {},
 ) {
-  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore", "fanmind_workspace116_restore"].includes(database));
   const result = await runCommand(
     "docker",
     [
@@ -2341,6 +2342,24 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         with check (owner_user_id = auth.uid());
       commit;
     `);
+    const nativeFrame = await dockerPsqlScalar(
+      SOURCE_CONTAINER_ID, password,
+      DATABASE_AUTHORIZATION_CONTRACT_SQL,
+      { readOnly: true },
+    );
+    assert.match(nativeFrame, /^FANMIND_AUTHORIZATION\|[0-9a-f]+$/u);
+    const nativePayload = JSON.parse(
+      Buffer.from(nativeFrame.slice("FANMIND_AUTHORIZATION|".length), "hex").toString("utf8"),
+    );
+    context.diagnostic(
+      "Native synthetic 116 profile counters (no customer data): " +
+      JSON.stringify({
+        tupleCount: nativePayload.core_table_app_grant_tuple_count,
+        rowCount: nativePayload.core_table_app_grant_row_count,
+        grantOptionCount: nativePayload.core_table_app_grant_option_count,
+        hardenedValid: nativePayload.core_workspace_hardened_valid,
+      }),
+    );
     const workspace116 = await captureContract(sourcePsql, pgpassFile);
     assert.equal(workspace116.coreTableAppGrantTupleCount, 116);
     assert.notEqual(workspace116.fingerprintSha256, reviewedContract.fingerprintSha256);
