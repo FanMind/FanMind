@@ -250,7 +250,7 @@ export function parseFullBackupRestoreReceipt(bytes) {
   if (!isPositiveInteger(receipt.databaseAuthorizationContainerRecordCount)) {
     throw fixedError("receipt_authorization_container_count_invalid");
   }
-  if (receipt.databaseCoreTableAppGrantTupleCount !== 120) {
+  if (![116, 120].includes(receipt.databaseCoreTableAppGrantTupleCount)) {
     throw fixedError("receipt_core_table_grant_count_invalid");
   }
   if (![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)) {
