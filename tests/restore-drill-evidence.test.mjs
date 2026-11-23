@@ -726,13 +726,85 @@ test("hardened 116-grant full, restore and postcheck receipts remain bindable", 
   await withReceiptSet(async ({ paths }) => {
     const { stdout } = await execFileAsync(process.execPath, verifierArguments(paths));
     assert.match(stdout, /RESTORE_DRILL_EVIDENCE=PASS/u);
-  }, 12, 116);
+  }, 29, 116);
   await withReceiptSet(async ({ paths }) => {
     await assert.rejects(
       execFileAsync(process.execPath, verifierArguments(paths)),
       /authorization|grant|count|receipt/u,
     );
   }, 12, 115);
+});
+
+test("protected restore postcheck accepts reviewed pairs and rejects unbound receipts", async () => {
+  const shell = await readFile("scripts/operations/run-database-restore-drill.sh", "utf8");
+  const boundary = '[[ "$authorization_postcheck_result" =~ ';
+  const line = shell.split("\n").find(value => value.startsWith(boundary));
+  assert.ok(line, "protected shell-postcheck boundary exists");
+  const matcher = line.slice(boundary.length).split(" ]]")[0];
+  assert.ok(matcher.startsWith("^authorization\\|"));
+  const frame = (core, functions, hash = AUTHORIZATION_FINGERPRINT) =>
+    ["authorization", hash, AUTHORIZATION_RECORD_COUNT, AUTHORIZATION_GRANT_TUPLE_COUNT,
+      core, functions, AUTHORIZATION_REQUIRED_EXTENSIONS_SHA256,
+      AUTHORIZATION_REQUIRED_EXTENSIONS.length, AUTHORIZATION_EXTENSION_FINGERPRINT,
+      AUTHORIZATION_EXTENSION_RECORD_COUNT].join("|");
+  const shellAccepts = async value => {
+    try {
+      await execFileAsync("bash", ["-c", '[[ "$1" =~ ' + matcher + ' ]]', "--", value]);
+      return true;
+    } catch { return false; }
+  };
+  for (const [core, functions] of [[120, 12], [120, 13], [120, 29], [116, 29]]) {
+    assert.equal(await shellAccepts(frame(core, functions)), true, core + "/" + functions);
+  }
+  for (const [core, functions] of [[115, 29], [116, 12], [116, 13], [116, 30], [120, 30]]) {
+    assert.equal(await shellAccepts(frame(core, functions)), false, core + "/" + functions);
+  }
+  assert.equal(await shellAccepts(frame(116, 29) + "|extra"), false);
+  for (const [core, functions] of [[120, 13], [116, 29]]) {
+    await withReceiptSet(async ({ paths, targetId, runnerBytes }) => {
+      const environment = {
+        ...process.env,
+        FANMIND_RESTORE_DRILL_ID: "2026-07-30-restore-001",
+        FANMIND_RESTORE_DISPOSABLE_TARGET_ID: targetId,
+        FANMIND_RESTORE_PRODUCTION_COMMIT: "b".repeat(40),
+        FANMIND_RESTORE_POSTCHECKED_AT: "2026-07-30T08:25:00Z",
+      };
+      const rows = [
+        "contacts|1|1|4", "followups|1|1|3", "memories|1|1|3",
+        "workspace_members|1|1|2", "workspaces|1|1|2",
+      ];
+      const postcheckInput = value => rows.concat(value, "").join("\n");
+      const outputPath = join(paths.root, "reviewed-postcheck-receipt.json");
+      const { stdout } = await execFileWithInput(process.execPath, [
+        databasePostcheckWriterPath, "--runner-receipt", paths.runner, "--output", outputPath,
+      ], { env: environment }, postcheckInput(frame(core, functions)));
+      assert.match(stdout, /RESTORE_DATABASE_POSTCHECK_RECEIPT=PASS/u);
+      const saved = JSON.parse((await readPrivateRegularFile(outputPath, "utf8")).content);
+      assert.equal(saved.databaseCoreTableAppGrantTupleCount, core);
+      assert.equal(saved.databaseRestrictedSecurityDefinerFunctionCount, functions);
+      assert.equal(saved.restoreRunnerReceiptSha256, sha(runnerBytes));
+      for (const wrong of [
+        frame(core === 116 ? 120 : 116, functions),
+        frame(core, functions, "0".repeat(64)),
+      ]) {
+        await assert.rejects(
+          execFileWithInput(process.execPath, [
+            databasePostcheckWriterPath, "--runner-receipt", paths.runner,
+            "--output", join(paths.root, "mismatched-postcheck-receipt.json"),
+          ], { env: environment }, postcheckInput(wrong)),
+          /postcheck_authorization_mismatch/u,
+        );
+      }
+      const { stdout: result } = await execFileAsync(process.execPath, verifierArguments(paths));
+      assert.match(result, /RESTORE_DRILL_EVIDENCE=PASS/u);
+    }, functions, core);
+  }
+  await withReceiptSet(async ({ paths }) => {
+    await assert.rejects(
+      execFileAsync(process.execPath, verifierArguments(paths)),
+      /receipt_security_definer_count_invalid/u,
+    );
+  }, 13, 116);
 });
 
 test("runner and database postcheck receipts are mandatory at the evidence CLI boundary", async () => {
