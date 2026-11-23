@@ -88,6 +88,8 @@ test('privileged path is preinstalled, keeps release.env untouched and never enq
   const root=await readFile('scripts/operations/backup-worker-install-control.mjs','utf8');
   const workflow=await readFile('.github/workflows/backup-worker-production-control.yml','utf8');
   assert.match(root,/O_NOFOLLOW/);assert.match(root,/fd\.sync\(\)/);
+  assert.match(root,/c\.coreTableAppGrantTupleCount !== 116/);
+  assert.match(root,/c\.restrictedSecurityDefinerFunctionCount !== 29/);
   assert.doesNotMatch(root,/atomic\(RELEASE|grant execute|supabase db push|enqueue-backup/);
   assert.doesNotMatch(workflow,/sudo.*install|pm2|daemon-reload/);
   assert.match(workflow,/needs: validate-protection/);assert.match(workflow,/environment: backup-production-recovery/);
