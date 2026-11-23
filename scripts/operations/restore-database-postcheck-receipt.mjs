@@ -17,7 +17,7 @@ const UUID_V4 =
 const COMMIT = /^[0-9a-f]{40}$/u;
 const SHA256 = /^[0-9a-f]{64}$/u;
 const ACCEPTED_CORE_TABLE_APP_GRANT_TUPLE_COUNTS = new Set([116, 120]);
-const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13]);
+const RESTRICTED_SECURITY_DEFINER_FUNCTION_COUNTS = new Set([12, 13, 29]);
 const REQUIRED_TABLES = [
   "contacts",
   "followups",
