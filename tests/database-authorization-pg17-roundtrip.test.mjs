@@ -2364,7 +2364,7 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     assert.equal(workspace116.coreTableAppGrantTupleCount, 116);
     assert.notEqual(workspace116.fingerprintSha256, reviewedContract.fingerprintSha256);
 
-    for (const [mutation, repair, failure] of [
+    for (const [mutationIndex, [mutation, repair, failure]] of [
       [
         "grant update (owner_user_id) on public.workspaces to authenticated;",
         "revoke update (owner_user_id) on public.workspaces from authenticated;",
@@ -2390,7 +2390,8 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         "grant delete on public.contacts to anon;",
         /authorization_core_grant_matrix_invalid/u,
       ],
-    ]) {
+    ].entries()) {
+      context.diagnostic(`Native 116 negative mutation ${mutationIndex}: executing`);
       await dockerPsql(SOURCE_CONTAINER_ID, password, mutation);
       try {
         await assert.rejects(captureContract(sourcePsql, pgpassFile), failure);
@@ -2401,6 +2402,7 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
         await captureContract(sourcePsql, pgpassFile), workspace116,
         "native hardened ACL fully restored after rejected mutation",
       );
+      context.diagnostic(`Native 116 negative mutation ${mutationIndex}: restored`);
     }
 
     const workspace116Directory = join(temporaryRoot, "workspace116-backup");
