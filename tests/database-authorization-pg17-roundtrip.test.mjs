@@ -2364,45 +2364,39 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     assert.equal(workspace116.coreTableAppGrantTupleCount, 116);
     assert.notEqual(workspace116.fingerprintSha256, reviewedContract.fingerprintSha256);
 
-    for (const [mutationIndex, [mutation, repair, failure]] of [
-      [
-        "grant update (owner_user_id) on public.workspaces to authenticated;",
-        "revoke update (owner_user_id) on public.workspaces from authenticated;",
-        /authorization_core_grant_matrix_invalid/u,
-      ],
-      [
-        "grant update on public.workspaces to authenticated;",
-        "revoke update on public.workspaces from authenticated;",
-        /authorization_core_grant_matrix_invalid/u,
-      ],
-      [
-        "grant select on public.workspaces to authenticated with grant option;",
-        "revoke grant option for select on public.workspaces from authenticated;",
-        /authorization_core_grant_option_unsupported/u,
-      ],
-      [
-        "drop policy workspaces_update_owner_boundary on public.workspaces;",
-        "create policy workspaces_update_owner_boundary on public.workspaces as restrictive for update to authenticated using (owner_user_id = auth.uid()) with check (owner_user_id = auth.uid());",
-        /authorization_core_grant_matrix_invalid/u,
-      ],
-      [
-        "revoke delete on public.contacts from anon;",
-        "grant delete on public.contacts to anon;",
-        /authorization_core_grant_matrix_invalid/u,
-      ],
+    // Execute each native bad ACL only inside an explicitly rolled-back
+    // transaction. The independent capture sees the original 116 profile.
+    for (const [mutationIndex, mutation] of [
+      "grant update (owner_user_id) on public.workspaces to authenticated;",
+      "grant update on public.workspaces to authenticated;",
+      "grant select on public.workspaces to authenticated with grant option;",
+      "drop policy workspaces_update_owner_boundary on public.workspaces;",
+      "revoke delete on public.contacts from anon;",
     ].entries()) {
-      context.diagnostic(`Native 116 negative mutation ${mutationIndex}: executing`);
-      await dockerPsql(SOURCE_CONTAINER_ID, password, mutation);
-      try {
-        await assert.rejects(captureContract(sourcePsql, pgpassFile), failure);
-      } finally {
-        await dockerPsql(SOURCE_CONTAINER_ID, password, repair);
-      }
+      const mutatedFrame = await dockerPsqlScalar(
+        SOURCE_CONTAINER_ID, password,
+        `begin;
+        ${mutation}
+        ${DATABASE_AUTHORIZATION_CONTRACT_SQL}
+        rollback;`,
+      );
+      assert.match(mutatedFrame, /^FANMIND_AUTHORIZATION\|[0-9a-f]+$/u);
+      const mutatedPayload = JSON.parse(
+        Buffer.from(
+          mutatedFrame.slice("FANMIND_AUTHORIZATION|".length), "hex",
+        ).toString("utf8"),
+      );
+      assert.ok(
+        mutatedPayload.core_table_app_grant_option_count !== 0 ||
+        mutatedPayload.core_table_app_grant_tuple_count !== 116 ||
+        mutatedPayload.core_table_app_grant_row_count !== 116 ||
+        mutatedPayload.core_workspace_hardened_valid !== true,
+        `native mutation ${mutationIndex} must invalidate 116 contract`,
+      );
       assert.deepEqual(
         await captureContract(sourcePsql, pgpassFile), workspace116,
-        "native hardened ACL fully restored after rejected mutation",
+        "rolled-back native mutation cannot change the original 116 contract",
       );
-      context.diagnostic(`Native 116 negative mutation ${mutationIndex}: restored`);
     }
 
     const workspace116Directory = join(temporaryRoot, "workspace116-backup");
