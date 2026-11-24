@@ -5,7 +5,14 @@ Mandatory default for substantive FanMind agent/Codex/automation work.
 ## Core principle
 Process cost must be proportional to actual risk. FanMind uses adaptive execution paths instead of one maximum-governance path for every change.
 
-Every autonomous Builder run handles exactly one bounded task assigned by the FanMind Orchestrator and then stops. A later independent task requires a new Orchestrator decision and a new run. The Builder never selects the next independent roadmap task.
+One accountable executor owns the bounded outcome, including related repairs, verification and authorized follow-through. An explicit Owner assignment is sufficient for direct work; no duplicate Planner or Orchestrator assignment is needed. Automated Builder transport retains its existing one-task admission contract and may not self-select independent roadmap work.
+
+## Three operational lanes (Lean Execution)
+- **Autonomous (R1/R2):** implement, verify relevant scope, merge when existing conditions allow; no additional agent or routine owner approval.
+- **Controlled (R3 and standard R4 operations):** use existing automated gates, scoped evidence, target binding and valid prior authorization; do not request a second approval for the same authorized action. Group related steps into one bounded authorization where existing protected workflows permit. R4 controls still apply to R4 operations.
+- **Exceptional protected (remaining R4):** require existing protected authorization and independent evidence before irreversible, financial, authority-changing or exceptional production/recovery actions.
+
+R1–R4 identifiers remain unchanged for compatibility with existing records, selectors and executable checks. This consolidation does not relax an executable security gate or create standing Production authority. Only material changes invalidate relevant prior evidence; reuse immutable evidence and revalidate mutable evidence when required. A blocked step never blocks unrelated authorized work.
 
 ## Risk routing
 
@@ -122,9 +129,9 @@ Never bypass a real red security/governance/integration gate that applies to the
 Unrelated gates do not become blockers merely because they exist elsewhere in FanMind.
 
 ## Autonomy
-The FanMind Orchestrator is the sole task-selection and prioritization authority. It reads current repository/Project Memory/roadmap/evidence, selects the next bounded safe task, assigns a unique task_id, waits for a matching terminal result, verifies it, reconciles state, and only then selects another independent task.
+For governed automated Builder dispatch, the FanMind Orchestrator is the sole task-selection and prioritization authority. Direct Owner-assigned work does not require a second dispatch. It reads current repository/Project Memory/roadmap/evidence, selects the next bounded safe task, assigns a unique task_id, waits for a matching terminal result, verifies it, reconciles state, and only then selects another independent task.
 
-The Builder continues autonomously only inside the one bounded task it received, without unnecessary owner confirmation while that scope remains clear, risk does not cross a protected boundary, no contradictory evidence appears and no new owner decision is required. It may repair blockers that are part of that same task. If blocked, it reports BLOCKED and stops; it must not select substitute or unrelated work.
+The Builder continues autonomously only inside the one bounded task it received, without unnecessary owner confirmation while that scope remains clear, risk does not cross a protected boundary, no contradictory evidence appears and no new owner decision is required. It may repair blockers that are part of that same task. If blocked, it parks only the affected step and completes other authorized non-overlapping steps within its assignment; it must not self-select unrelated roadmap work.
 
 Risk escalation:
 - R1 -> R2 when scope becomes non-trivial.

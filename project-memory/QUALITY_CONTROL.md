@@ -1,6 +1,6 @@
 # Project Memory Quality Control v6
 
-Mandatory controls and countercontrols for FanMind product, infrastructure and operations work.
+Verification reference for FanMind. `EXECUTION_POLICY.md` controls process depth; this document adds no universal preflight or bookkeeping requirement. Apply only relevant controls; preserve existing protected and executable security requirements.
 
 ## Risk levels
 - R1: documentation/housekeeping with no runtime effect.
@@ -8,7 +8,7 @@ Mandatory controls and countercontrols for FanMind product, infrastructure and o
 - R3: auth, data model, API/backend authority, external integrations, mobile signing/build, infrastructure configuration, privacy-sensitive or cross-domain changes.
 - R4: Production, billing/Stripe, security controls, destructive data operations, backup/restore, database migrations, secrets, release/publishing, legal/compliance activation or irreversible operational boundaries.
 
-Every substantive task records `Risk: R1|R2|R3|R4` before implementation. Unknown risk defaults upward.
+Classify every substantive task before implementation. Record `Risk: R1|R2|R3|R4` in the existing PR/task when a durable record is needed; no separate memory entry for ordinary R1/R2. Unknown risk defaults upward.
 
 ## Completion quorum
 - R1: scope/diff check + one evidence class.

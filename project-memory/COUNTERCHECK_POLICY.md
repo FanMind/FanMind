@@ -8,7 +8,7 @@ Use at least one evidence source different from the one used to claim success. T
 Examples: implementation claim -> final diff + CI; workflow code -> current workflow run; restore step -> receipt-bound target verification; mobile build -> exact-build device evidence; billing/AI/security change -> current target-bound verification plus fail-closed/negative path.
 
 ## Freshness
-Final evidence must match the current reviewed commit, PR/branch and target environment/build/runtime where applicable. Older workflow runs, previous deployments, older backups, previous mobile builds or stale screenshots are `STALE` and cannot close a task.
+Final evidence must match the current reviewed commit, PR/branch and target environment/build/runtime where applicable. Evidence for a different affected scope or changed target cannot close a task. Immutable evidence remains reusable when relevant inputs are unchanged and its binding remains valid; mutable evidence must meet applicable freshness rules.
 
 ## Negative/regression check
 Verify the relevant failure/fail-closed path and previously failing case, not only the happy path.
@@ -17,7 +17,7 @@ Verify the relevant failure/fail-closed path and previously failing case, not on
 High-impact restore, production, billing, AI entitlement, security, mobile signing/device and social-connector work requires at least two independent evidence classes before `ACCEPTED` or `PRODUCTION_CONFIRMED`.
 
 ## Separation
-Execution receipts must record implementation evidence and countercheck evidence separately.
+When a receipt is required by Execution Policy, record implementation evidence and countercheck evidence separately; otherwise the PR and existing CI evidence suffice.
 
 ## Contradictions
 Any disagreement between project memory, Git/PR, CI, runtime, protected environment or device evidence becomes `RECONCILIATION_REQUIRED`; do not guess or average. Resolve from current verified evidence.
