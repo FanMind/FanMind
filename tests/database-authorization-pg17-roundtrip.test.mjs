@@ -16,6 +16,7 @@ import { BACKUP_ACTIVE_JOBS_SQL } from "../scripts/operations/backup-worker-inst
 import { createDatabase } from "../scripts/operations/backup-worker.mjs";
 import {
   analyzeAuthorizationToc,
+  DATABASE_AUTHORIZATION_CONTRACT_SQL,
   assertDatabaseAuthorizationRoles,
   captureDatabaseAuthorizationContract,
   snapshotTargetDatabaseAuthorization,
@@ -754,7 +755,7 @@ function runCommand(command, args, { input, env } = {}) {
 }
 
 async function dockerPsql(containerId, password, sql, database = "postgres") {
-  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore", "fanmind_workspace116_restore"].includes(database));
   await runCommand(
     "docker",
     [
@@ -785,7 +786,7 @@ async function dockerPsqlScalar(
   sql,
   { readOnly = false, database = "postgres" } = {},
 ) {
-  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore"].includes(database));
+  assert.ok(["postgres", "fanmind_current_restore", "fanmind_reviewed39_restore", "fanmind_workspace116_restore"].includes(database));
   const result = await runCommand(
     "docker",
     [
@@ -2316,6 +2317,157 @@ grant execute on function public.persist_chat_admin_confirmed_reply(uuid,uuid,uu
     assert.equal(restoredReviewed.restrictedSecurityDefinerFunctionCount,29);
     assert.equal(restoredReviewed.fingerprintSha256,reviewedContract.fingerprintSha256);
     context.diagnostic('Reviewed39/29: exact source body/metadata/ACL negatives and actual dump/restore PASS.');
+
+    // Native, isolated PG17 proof for the hardened 116-grant Workspace profile.
+    const hardenedWorkspaceColumns = [
+      "name", "organization_name", "street_address", "postal_code",
+      "city", "country", "vat_id", "tax_number",
+      "company_register_number", "company_register_court",
+    ];
+    await dockerPsql(SOURCE_CONTAINER_ID, password, `
+      begin;
+      create schema auth;
+      create function auth.uid() returns uuid
+        language sql stable as 'select null::uuid';
+      alter table public.workspaces add column owner_user_id uuid;
+      ${hardenedWorkspaceColumns.map(name =>
+        `alter table public.workspaces add column ${name} text;`
+      ).join("\n")}
+      revoke insert, update on public.workspaces from anon, authenticated;
+      grant update (${hardenedWorkspaceColumns.join(", ")})
+        on public.workspaces to authenticated;
+      create policy workspaces_update_owner_boundary on public.workspaces
+        as restrictive for update to authenticated
+        using (owner_user_id = auth.uid())
+        with check (owner_user_id = auth.uid());
+      commit;
+    `);
+    const nativeFrame = await dockerPsqlScalar(
+      SOURCE_CONTAINER_ID, password,
+      DATABASE_AUTHORIZATION_CONTRACT_SQL,
+      { readOnly: true },
+    );
+    assert.match(nativeFrame, /^FANMIND_AUTHORIZATION\|[0-9a-f]+$/u);
+    const nativePayload = JSON.parse(
+      Buffer.from(nativeFrame.slice("FANMIND_AUTHORIZATION|".length), "hex").toString("utf8"),
+    );
+    context.diagnostic(
+      "Native synthetic 116 profile counters (no customer data): " +
+      JSON.stringify({
+        tupleCount: nativePayload.core_table_app_grant_tuple_count,
+        rowCount: nativePayload.core_table_app_grant_row_count,
+        grantOptionCount: nativePayload.core_table_app_grant_option_count,
+        hardenedValid: nativePayload.core_workspace_hardened_valid,
+      }),
+    );
+    const workspace116 = await captureContract(sourcePsql, pgpassFile);
+    assert.equal(workspace116.coreTableAppGrantTupleCount, 116);
+    assert.notEqual(workspace116.fingerprintSha256, reviewedContract.fingerprintSha256);
+
+    // Execute each native bad ACL only inside an explicitly rolled-back
+    // transaction. The independent capture sees the original 116 profile.
+    for (const [mutationIndex, mutation] of [
+      "grant update (owner_user_id) on public.workspaces to authenticated;",
+      "grant update on public.workspaces to authenticated;",
+      "grant select on public.workspaces to authenticated with grant option;",
+      "drop policy workspaces_update_owner_boundary on public.workspaces;",
+      "revoke delete on public.contacts from anon;",
+    ].entries()) {
+      const mutatedFrame = await dockerPsqlScalar(
+        SOURCE_CONTAINER_ID, password,
+        `begin;
+        ${mutation}
+        ${DATABASE_AUTHORIZATION_CONTRACT_SQL}
+        rollback;`,
+      );
+      assert.match(mutatedFrame, /^FANMIND_AUTHORIZATION\|[0-9a-f]+$/u);
+      const mutatedPayload = JSON.parse(
+        Buffer.from(
+          mutatedFrame.slice("FANMIND_AUTHORIZATION|".length), "hex",
+        ).toString("utf8"),
+      );
+      assert.ok(
+        mutatedPayload.core_table_app_grant_option_count !== 0 ||
+        mutatedPayload.core_table_app_grant_tuple_count !== 116 ||
+        mutatedPayload.core_table_app_grant_row_count !== 116 ||
+        mutatedPayload.core_workspace_hardened_valid !== true,
+        `native mutation ${mutationIndex} must invalidate 116 contract`,
+      );
+      assert.deepEqual(
+        await captureContract(sourcePsql, pgpassFile), workspace116,
+        "rolled-back native mutation cannot change the original 116 contract",
+      );
+    }
+
+    const workspace116Directory = join(temporaryRoot, "workspace116-backup");
+    await mkdir(workspace116Directory, { mode: 0o700 });
+    const workspace116Backup = await createDatabase(workspace116Directory);
+    assert.deepEqual(
+      validateAuthorizationContract(workspace116Backup.manifest.authorization_contract),
+      workspace116,
+      "frozen-snapshot backup preserves the 116-grant fingerprint",
+    );
+    const workspace116ReceiptPath = join(temporaryRoot, "workspace116-full-receipt.json");
+    await writeFile(
+      workspace116ReceiptPath,
+      `${JSON.stringify(authorizationReceipt(workspace116Backup))}\n`,
+      { flag: "wx", mode: 0o600 },
+    );
+    const workspace116Database = "fanmind_workspace116_restore";
+    await dockerPsql(
+      TARGET_CONTAINER_ID, password,
+      `create database ${workspace116Database} template template0;`,
+    );
+    await dockerPsql(
+      TARGET_CONTAINER_ID, password,
+      baseline.replaceAll("database postgres", `database ${workspace116Database}`),
+      workspace116Database,
+    );
+    const workspace116Options = {
+      ...currentOptions,
+      receiptPath: workspace116ReceiptPath,
+      database: workspace116Database,
+    };
+    await assertDatabaseAuthorizationRoles(workspace116Options);
+    const workspace116Toc = await runCommand(
+      sourcePgRestore, ["--list", workspace116Backup.path],
+    );
+    const workspace116TocPath = join(temporaryRoot, "workspace116-restore.toc");
+    await writeFile(
+      workspace116TocPath, filterExtensionsSchemaToc(workspace116Toc.stdout),
+      { flag: "wx", mode: 0o600 },
+    );
+    const workspace116ContainerDump = "/tmp/fanmind-workspace116-contract.dump";
+    const workspace116ContainerToc = "/tmp/fanmind-workspace116-contract.toc";
+    context.after(async () => {
+      await runCommand("docker", [
+        "exec", "--user", "0", TARGET_CONTAINER_ID, "rm", "-f", "--",
+        workspace116ContainerDump, workspace116ContainerToc,
+      ]).catch(() => {});
+    });
+    await runCommand("docker", [
+      "cp", workspace116Backup.path,
+      `${TARGET_CONTAINER_ID}:${workspace116ContainerDump}`,
+    ]);
+    await runCommand("docker", [
+      "cp", workspace116TocPath,
+      `${TARGET_CONTAINER_ID}:${workspace116ContainerToc}`,
+    ]);
+    await runCommand("docker", [
+      "exec", "--user", "0", "-e",
+      `PGPASSWORD=${RESTORE_OPERATOR_PASSWORD}`, TARGET_CONTAINER_ID,
+      `${POSTGRES_BIN}/pg_restore`,
+      "--exit-on-error", "--single-transaction",
+      "--use-list", workspace116ContainerToc, "--no-password",
+      "--host", "127.0.0.1", "--port", "5432",
+      "--username", RESTORE_OPERATOR_ROLE,
+      "--dbname", workspace116Database, workspace116ContainerDump,
+    ]);
+    const restored116 = await snapshotTargetDatabaseAuthorization(workspace116Options);
+    assert.equal(restored116.coreTableAppGrantTupleCount, 116);
+    assert.equal(restored116.fingerprintSha256, workspace116.fingerprintSha256);
+    context.diagnostic("PG17 Workspace116: ACL negatives, backup, restore and fingerprint PASS.");
+
 
   },
 );

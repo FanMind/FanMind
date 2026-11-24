@@ -38,7 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           REQUESTED_ACTION: ${{ inputs.action != 'bootstrap' && 'inspect' || 'verify' }}
           REVIEWED_CONTROLLER_COMMIT: ${{ inputs.reviewed_main_commit }}
-          WORKER_SOURCE_COMMIT: ${{ inputs.action != 'bootstrap' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+          WORKER_SOURCE_COMMIT: ${{ inputs.action != 'bootstrap' && '690ab046d537d6cb910496302208e722054e0d80' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
           EXPECTED_APPLICATION_COMMIT: ${{ inputs.action != 'bootstrap' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
           CONFIRMATION: ${{ inputs.action != 'bootstrap' && 'backup-worker-inspect' || 'backup-worker-verify' }}
         run: node scripts/operations/backup-worker-install-github-preflight.mjs
@@ -51,7 +51,7 @@ jobs:
       ACTION: ${{ inputs.action }}
       CURRENT_MAIN: ${{ inputs.reviewed_main_commit }}
       CONFIRMATION: ${{ inputs.confirmation }}
-      WORKER_BINDING: ${{ inputs.action != 'bootstrap' && '6bc209851b4a54609747099ec34264318dc7f4c4' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
+      WORKER_BINDING: ${{ inputs.action != 'bootstrap' && '690ab046d537d6cb910496302208e722054e0d80' || '8e5dcbdca844972fb2f133c188ecfee5d5252273' }}
       APP_BINDING: ${{ inputs.action != 'bootstrap' && 'bb799466d2c235195fedcb4d80568f9f0bd56969' || '707d22702a784e3b9999d1c9ae9c1e11c096a1bc' }}
       APPROVAL: ${{ vars.FANMIND_BACKUP_WORKER_BOOTSTRAP_APPROVAL }}
     steps:
@@ -77,7 +77,7 @@ jobs:
             "https://raw.githubusercontent.com/FanMind/FanMind/$CURRENT_MAIN/scripts/operations/backup-worker-root-bootstrap.mjs" \
             --output "$SOURCE_FILE"
           /usr/bin/env -i PATH=/usr/bin:/bin LANG=C LC_ALL=C \
-            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" bfb5d40e9511ae81d7233018ff0a51503eb855a2a487edd6562c440a41f0eddc "$ACTION" "$CURRENT_MAIN" <<'NODE'
+            /usr/bin/sudo -n /usr/bin/node - "$SOURCE_FILE" 776e48f26bbbd5f9f6e723355780a51e669e68e9c1232277f9477547d4b46ff0 "$ACTION" "$CURRENT_MAIN" <<'NODE'
           const fs=require('node:fs'),crypto=require('node:crypto'),cp=require('node:child_process');
           let fd;
           try {

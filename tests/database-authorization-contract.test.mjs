@@ -69,6 +69,7 @@ const AUTHORIZATION_PAYLOAD = Object.freeze({
   core_table_app_grant_tuple_count: 120,
   core_table_app_grant_option_count: 0,
   core_table_app_grant_row_count: 120,
+  core_workspace_hardened_valid: false,
   container_recovery_invariant_violation_count: 0,
   extension_recovery_invariant_violation_count: 0,
   reviewed_recovery_cohort_count: 0,
@@ -298,6 +299,61 @@ test("validates nested snake_case contracts and exact role hashing", () => {
     }),
     /authorization_contract_roles_sha_invalid/u,
   );
+});
+
+test("accepts only the exact hardened Workspace grant profile, retaining legacy receipts", async () => {
+  const hardened = {
+    ...AUTHORIZATION_PAYLOAD,
+    core_table_app_grant_tuple_count: 116,
+    core_table_app_grant_row_count: 116,
+    core_workspace_hardened_valid: true,
+  };
+  const options = connectionOptions();
+  options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify(hardened);
+  const contract = await captureDatabaseAuthorizationContract(options);
+  assert.equal(contract.coreTableAppGrantTupleCount, 116);
+  assert.equal(
+    validateAuthorizationContract({
+      ...fullReceipt(),
+      databaseCoreTableAppGrantTupleCount: 116,
+    }).coreTableAppGrantTupleCount,
+    116,
+  );
+  assert.equal(validateAuthorizationContract(fullReceipt()).coreTableAppGrantTupleCount, 120);
+  for (const changes of [
+    { core_workspace_hardened_valid: false },
+    { core_workspace_hardened_valid: "true" },
+    { core_workspace_hardened_valid: undefined },
+    { core_table_app_grant_tuple_count: 115 },
+    { core_table_app_grant_row_count: 115 },
+    { core_table_app_grant_row_count: 120 },
+    { core_table_app_grant_option_count: 1 },
+  ]) {
+    options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({ ...hardened, ...changes });
+    await assert.rejects(
+      captureDatabaseAuthorizationContract(options),
+      /authorization_core_grant_matrix_invalid|authorization_core_grant_option_unsupported/u,
+    );
+  }
+  options.env.FAKE_AUTHORIZATION_PAYLOAD = JSON.stringify({
+    ...AUTHORIZATION_PAYLOAD,
+    core_workspace_hardened_valid: true,
+  });
+  await assert.rejects(
+    captureDatabaseAuthorizationContract(options),
+    /authorization_core_grant_matrix_invalid/u,
+  );
+  assert.throws(
+    () => validateAuthorizationContract({
+      ...fullReceipt(),
+      databaseCoreTableAppGrantTupleCount: 115,
+    }),
+    /authorization_contract_core_grants_invalid/u,
+  );
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /hardened_workspace_owner_columns/u);
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /hardened_workspace_profile/u);
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /workspaces_update_owner_boundary/u);
+  assert.match(DATABASE_AUTHORIZATION_CONTRACT_SQL, /pg_catalog\.has_column_privilege/u);
 });
 
 test("captures and holds one repeatable-read exported snapshot", async () => {

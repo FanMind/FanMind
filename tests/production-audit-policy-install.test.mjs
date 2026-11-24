@@ -9,7 +9,7 @@ import { gunzipSync } from "node:zlib";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { monthlyAuditFixture } from "./fixtures/monthly-audit.mjs";
-import { request } from "../scripts/operations/backup-worker-install-policy.mjs";
+import { request, WORKER_COMMIT } from "../scripts/operations/backup-worker-install-policy.mjs";
 import { AUDIT_FILES, AUDIT_SOURCE, AUDIT_BASE, AUDIT_DEPENDENCIES, frozenFile, validatePair, replacePair, preservePreimages, verifyCollectedAudit } from "../scripts/operations/install-production-audit-policy.mjs";
 
 // The historical frozen verifier is the measured installed preimage. Its bytes
@@ -61,7 +61,11 @@ test("protected manual workflow binds Owner, exact main, environment, host, appr
   assert.equal(workflow.concurrency.group, "fanmind-production-deploy");
   assert.equal(workflow.concurrency["cancel-in-progress"], false);
   const preflight = workflow.jobs.validate.steps.at(-1).env;
-  assert.doesNotThrow(() => request("verify", AUDIT_SOURCE, preflight.WORKER_SOURCE_COMMIT, preflight.EXPECTED_APPLICATION_COMMIT));
+  // The historical audit-install workflow remains frozen. Its pre-existing
+  // old worker pin is not a valid current backup-worker installation authority.
+  assert.notEqual(preflight.WORKER_SOURCE_COMMIT, WORKER_COMMIT);
+  assert.throws(() => request("verify", AUDIT_SOURCE, preflight.WORKER_SOURCE_COMMIT, preflight.EXPECTED_APPLICATION_COMMIT), {code:"release_binding_invalid"});
+  assert.doesNotThrow(() => request("verify", AUDIT_SOURCE, WORKER_COMMIT, preflight.EXPECTED_APPLICATION_COMMIT));
   for (const binding of ["270165082", "1259448985", "fanmind-prod-01-exoscale", "FANMIND_AUDIT_POLICY_INSTALL_APPROVAL", "admin-bypass-disabled", AUDIT_BASE, AUDIT_SOURCE, "install-audit-reviewed-policy", "6bc209851b4a54609747099ec34264318dc7f4c4", "backup-worker-install-github-preflight.mjs", "--nonblock", "O_NOFOLLOW"])
     assert.ok(source.includes(binding), binding);
   const hash = crypto.createHash("sha256").update(fs.readFileSync("scripts/operations/install-production-audit-policy.mjs")).digest("hex");

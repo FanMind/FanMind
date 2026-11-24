@@ -14,7 +14,7 @@ on:
         required: true
       worker_source_commit:
         description: Exact reviewed module source from PR1515
-        default: 6bc209851b4a54609747099ec34264318dc7f4c4
+        default: 690ab046d537d6cb910496302208e722054e0d80
         type: string
         required: true
       expected_application_commit:
@@ -80,7 +80,7 @@ jobs:
           [[ "$GITHUB_REF" == refs/heads/main && "$CONTROLLER_COMMIT" == "$GITHUB_SHA" ]]
           [[ "$GITHUB_ACTOR_ID" == 270165082 ]]
           [[ "$ACTION" == verify || "$ACTION" == install || "$ACTION" == rollback ]]
-          [[ "$WORKER_COMMIT" == 6bc209851b4a54609747099ec34264318dc7f4c4 ]]
+          [[ "$WORKER_COMMIT" == 690ab046d537d6cb910496302208e722054e0d80 ]]
           [[ "$APP_COMMIT" == bb799466d2c235195fedcb4d80568f9f0bd56969 ]]
           [[ "$ACTION_APPROVAL" == "$CONTROLLER_COMMIT:$ACTION:$WORKER_COMMIT:$APP_COMMIT" ]]
           /usr/bin/curl --fail --silent --show-error --proto '=https' --tlsv1.2 --max-time 30 \
