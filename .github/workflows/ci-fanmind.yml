@@ -4,12 +4,9 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - "fix/**"
-      - "feat/**"
-      - "chore/**"
-      - "p0/**"
+  # PR CI is canonical; open a draft PR for early feedback.
+  # Explicit diagnostic runs remain available without duplicate push runs.
+  workflow_dispatch:
 
 concurrency:
   group: fanmind-ci-${{ github.ref }}

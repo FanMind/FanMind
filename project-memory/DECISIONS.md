@@ -234,3 +234,8 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Decision: Public FanMind landing roadmap contains only FanMind product features. ChatAdmin development status belongs to a separate internal roadmap. The two workstreams retain their shared repository, existing authorized code access, interfaces and reusable components; this is planning/documentation separation, not technical isolation.
 - Evidence: PR #1349 changes `AGENTS.md` and `docs/roadmaps/PRODUCT_ROADMAP_SEPARATION_2026-10-21.md`. Track completion independently as implemented, tested, live and sales-ready; do not infer public FanMind completion from ChatAdmin changes.
 - Boundary: No Production activation, schema, permissions, provider, billing, deployment or customer-data change authorized by this decision.
+
+## FM-DEC-LEAN-CI-20261124
+- Date: 2026-11-24; Status: CONFIRMED; Source: Owner request for Lean Execution reform.
+- Decision: PR-triggered FanMind CI and ChatAdmin media acceptance are the canonical automatic checks; manual diagnostics remain available. Remove redundant branch-push triggers, not test coverage or required check identities.
+- Scope: PR #1550; source only. No Production, Staging, database, provider, payment or permission changes. Runtime and release acceptance requirements remain unchanged.

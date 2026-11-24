@@ -41,23 +41,26 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
-          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
-          printf '%s\n' "$changed"
-
+          # NUL-delimited paths, including both sides of renames (no rename detection).
+          # Only narrowly scoped non-executable reader changes are exempt.
+          # Unknown paths, executable changes, contracts and security stay conservative.
+          changed_file="$(mktemp)"
+          trap 'rm -f "$changed_file"' EXIT
+          git diff --no-renames --name-only -z "$BASE_SHA...$HEAD_SHA" > "$changed_file"
           meaningful=0
           memory_changed=0
-          while IFS= read -r file; do
-            test -n "$file" || continue
+          while IFS= read -r -d '' file; do
+            printf '%q\n' "$file"
             case "$file" in
               project-memory/*) memory_changed=1 ;;
-              .github/workflows/project-memory-guard.yml) ;;
+              docs/operations/FANMIND_WORKSPACE_BUILDER.md) ;;
               *) meaningful=1 ;;
             esac
-          done <<< "$changed"
+          done < "$changed_file"
 
           if [[ "$meaningful" -eq 1 && "$memory_changed" -ne 1 ]]; then
             echo "Meaningful repository changes require a project-memory update."
-            echo "Run the mandatory preflight and record the resulting task/state/decision/failed-attempt/change-request update."
+            echo "Record the durable change once; ordinary exempt reader edits need no duplicate memory entry."
             exit 1
           fi
 
