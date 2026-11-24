@@ -532,3 +532,16 @@ test("required supply-chain check runs for every main PR merge candidate", async
   assert.doesNotMatch(pullRequest, /\bpaths(?:-ignore)?:/u);
   assert.match(source, /name: Immutable Actions, dependency audit and CycloneDX SBOM/u);
 });
+
+
+test("required CI and media acceptance avoid duplicate branch-push runs", async () => {
+  for (const file of ["ci-fanmind.yml", "chat-admin-media-tests.yml"]) {
+    const source = await readFile(`.github/workflows/${file}`, "utf8");
+    const triggers = source.split("\non:\n")[1]?.split(/\n\S/u)[0] ?? "";
+    assert.match(triggers, /^  pull_request:/mu);
+    assert.match(triggers, /main/u);
+    assert.match(triggers, /^  workflow_dispatch:/mu);
+    assert.doesNotMatch(triggers, /^  push:/mu);
+    assert.match(source, /cancel-in-progress: true/u);
+  }
+});
