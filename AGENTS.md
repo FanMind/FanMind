@@ -6,6 +6,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # FanMind production, product truth and Codex guardrails
 
+**Execution routing:** `project-memory/EXECUTION_POLICY.md` governs agent ceremony, verification depth and reusable authorizations. Read only relevant domain contracts. This file preserves product/security/target constraints, not an additional universal checklist. Direct Owner assignments need no duplicate Orchestrator handoff; governed automated transport retains its admission contract.
+
 ## Product boundaries: FanMind vs. ChatAdmin (Owner decision 2026-10-21)
 
 - **Planning and presentation are separate, not code or access.** FanMind is the public product; its public Landing/roadmap must show only FanMind product features. ChatAdmin is tracked in a separate **internal** development roadmap; do not surface its feature progress or completion checks on the public FanMind roadmap.
@@ -27,14 +29,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - GitHub deployment workflow: `.github/workflows/deploy-fanmind.yml`
 - Deployment runner: self-hosted GitHub Actions runner on Exoscale with labels `fanmind-prod`, `exoscale`, `linux`, `x64`
 - Pushes and merges to `main` do not trigger Production deployment.
-- The remaining manual workflow is intentionally sealed: its only reachable GitHub-hosted job fails, while the preserved Production job has a literal `if: false`.
-- No usable Production release or rollback controller exists in this transition.
+- The canonical protected release controller and optional monthly release path are documented in `docs/operations/MONTHLY_PRODUCTION_RELEASE.md`. Consult current workflow and live evidence; source availability does not establish operational readiness.
 
 The old Cloudzy path `/srv/www/fanmind` and `systemctl restart fanmind` are no longer the production deployment path. Do not reintroduce Cloudzy-specific deployment commands.
 
 ## Production deploy command sequence
 
-The preserved, currently unreachable Production job contains the prior Exoscale deployment sequence:
+Historical Exoscale deployment sequence for context only; execute releases through the current protected controller:
 
 ```bash
 cd /var/www/fanmind
@@ -459,7 +460,7 @@ After changing code:
 
 The canonical God Mode v1 control plane is under `project-memory/GOD_MODE_POLICY.md`, `SYSTEM_INVARIANTS.json`, `CONTRACT_REGISTRY.json`, `INTEGRATION_GATES.json`, `IMPACT_MAP.json` and `RELEASE_DECISION.json`.
 
-For substantive R2+ work:
+For R2+ work affecting registered contracts or a release decision:
 - identify affected `FM-CONTRACT-*` consumers and `FM-IGATE-*` boundaries;
 - treat missing/stale/contradictory evidence as blocking;
 - never infer integration success from a local/module green result;
