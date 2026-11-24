@@ -147,6 +147,15 @@ test('actual GitHub preflight keeps Owner, current-Main and protected-environmen
 
 test('repair inventory accepts only the measured old state under the already held preparation lock',async()=>{
  const {repairInventory,OBSERVED_CONTROL_HASHES}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ // The initial bootstrap hashes remain historical and MUST NOT qualify as the
+ // current post-#1515 controller preimage for the protected repair.
+ assert.deepEqual(OBSERVED_CONTROL_HASHES,{
+  'backup-worker-install-control.mjs':'0a6e78430ad353136c1091f7160f05c9b5208f89dca55a2843e2987a922437db',
+  'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
+  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+ });
+ assert.notEqual(OBSERVED_CONTROL_HASHES['backup-worker-install-control.mjs'],FILES[0][2]);
+ assert.notEqual(OBSERVED_CONTROL_HASHES['backup-worker-install-policy.mjs'],FILES[1][2]);
  const measured={expectedApplicationCommit:INSPECT_APP,databaseContractVerified:true,
   unitHash:'ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896',
   releaseHash:'93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7',
@@ -157,11 +166,27 @@ test('repair inventory accepts only the measured old state under the already hel
  repairInventory(measured);
  for(const mutate of [v=>v.expectedApplicationCommit=APP,v=>v.databaseContractVerified=false,
   v=>v.installedWorkerHashes['database-authorization-contract.mjs']=INSPECT_CONTRACT_SHA256,
-  v=>v.installedWorkerHashes['backup-worker.mjs']='e'.repeat(64),v=>v.controllers.control.sha256='f'.repeat(64),
+  v=>v.installedWorkerHashes['backup-worker.mjs']='e'.repeat(64),
+  v=>v.controllers.control.sha256=FILES[0][2],
+  v=>v.controllers.policy.sha256=FILES[1][2],
+  v=>v.controllers.control.sha256='f'.repeat(64),
   v=>v.unitHash='f'.repeat(64),v=>v.releaseHash='f'.repeat(64),v=>v.lock.held=false,
   v=>v.activeTools.pg_dump=1,v=>delete v.activeTools.tar,v=>v.timers.full.activeState='inactive']){
   const changed=structuredClone(measured);mutate(changed);assert.throws(()=>repairInventory(changed),{code:'repair_inventory_changed'});
  }
+});
+test('repair controller operations use independently checked post-bootstrap preimages, not the original FILES pins',async()=>{
+ const source=await readFile('scripts/operations/backup-worker-root-bootstrap.mjs','utf8');
+ const prepare=source.slice(source.indexOf('async function prepareContractRepair'),source.indexOf('async function main'));
+ assert.match(prepare,/const controls=FILES\.slice\(0,3\)\.map/u);
+ assert.match(prepare,/OBSERVED_CONTROL_HASHES\[dest\.split\('\/'\)\.at\(-1\)\]/u);
+ assert.match(prepare,/controls\.some\(\(\[,dest,hash\]\)=>hashes\[dest\.split\('\/'\)\.at\(-1\)\]!==hash\)/u);
+ assert.match(prepare,/for\(let i=0;i<controls\.length;i\+\+\)/u);
+ assert.match(prepare,/const \[,dest,oldHash\]=controls\[i\]/u);
+ assert.match(prepare,/for\(const \[,dest,hash\]of controls\)/u);
+ assert.match(prepare,/if\(sha\(data\)!==hash\)fail\('repair_snapshot_invalid'\)/u);
+ assert.match(prepare,/if\(current!==hash&&current!==REPAIR_CONTROL_HASHES\[name\]\)fail\('repair_inventory_changed'\)/u);
+ assert.match(prepare,/if\(current!==hash\)await replaceControl\(dest,data\)/u);
 });
 test('preparation durably saves actual old bytes before control replacement and cannot authorize a failed stage',async()=>{
  const {repairPreparation}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
