@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
-import { WORKER_COMMIT, APP_COMMIT, FILES, RETAINED_FILES, OLD_CONTRACT_SHA256, UNIT_SHA256, RELEASE_SHA256, OWNER_ID, ENVIRONMENT, PROJECT,
+import { WORKER_COMMIT, APP_COMMIT, FILES, RETAINED_FILES, OLD_CONTRACT_SHA256, EXPECTED_INSTALLED_CONTRACT_SHA256, UNIT_SHA256, RELEASE_SHA256, OWNER_ID, ENVIRONMENT, PROJECT,
   request, authorization, connection, parseSelectedEnvironment, environmentPolicy, transition } from '../scripts/operations/backup-worker-install-policy.mjs';
 const controller = 'a'.repeat(40);
 const input = request('install',controller,WORKER_COMMIT,APP_COMMIT);
 function auth() { return {schemaVersion:1,repository:'FanMind/FanMind',environment:ENVIRONMENT,project:PROJECT,
   controllerCommit:controller,workerCommit:WORKER_COMMIT,applicationCommit:APP_COMMIT,adminBypassDisabled:true,
   reviewerId:OWNER_ID,actions:['verify','install','rollback'],approvedAt:'2026-10-13T19:00:00Z',expiresAt:'2026-10-13T20:00:00Z',
-  controllerHashes:Object.fromEntries(['backup-worker-install-control.mjs','backup-worker-install-policy.mjs','fanmind-backup-worker-control'].map(k=>[k,'b'.repeat(64)])),unitHash:UNIT_SHA256,releaseHash:RELEASE_SHA256,previousHashes:{'database-authorization-contract.mjs':OLD_CONTRACT_SHA256}}; }
+  controllerHashes:Object.fromEntries(['backup-worker-install-control.mjs','backup-worker-install-policy.mjs','fanmind-backup-worker-control'].map(k=>[k,'b'.repeat(64)])),unitHash:UNIT_SHA256,releaseHash:RELEASE_SHA256,previousHashes:{'database-authorization-contract.mjs':EXPECTED_INSTALLED_CONTRACT_SHA256}}; }
 test('approval binds exact action, controller, worker, application, target and expiry',()=>{
   assert.equal(authorization(auth(),input,Date.parse('2026-10-13T19:30:00Z')).applicationCommit,APP_COMMIT);
   for (const change of [{actions:['verify']},{adminBypassDisabled:false},{project:'vshyhvgcmrlagvfnvomc'},
@@ -107,12 +107,16 @@ test('expiry is rechecked before mutation; approved recovery remains possible af
 
 test('repair authority is module-only and rejects historic or invented old bytes',()=>{
   assert.deepEqual(Object.keys(FILES),['database-authorization-contract.mjs']);
-  assert.equal(FILES['database-authorization-contract.mjs'],'2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441');
+  assert.equal(FILES['database-authorization-contract.mjs'],'2a3203b46dd72d114c73ed006bbf637bffd2c9dcc46657493273fd62b90478bc');
+  assert.equal(EXPECTED_INSTALLED_CONTRACT_SHA256,'2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441');
+  assert.equal(OLD_CONTRACT_SHA256,'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de');
+  assert.notEqual(FILES['database-authorization-contract.mjs'], EXPECTED_INSTALLED_CONTRACT_SHA256);
   assert.deepEqual(Object.keys(RETAINED_FILES).sort(),['backup-worker.mjs','verify-backup-artifact.mjs']);
   for(const change of [
     {previousHashes:{...auth().previousHashes,'backup-worker.mjs':RETAINED_FILES['backup-worker.mjs']}},
     {previousHashes:{'database-authorization-contract.mjs':FILES['database-authorization-contract.mjs']}},
     {previousHashes:{'database-authorization-contract.mjs':'f'.repeat(64)}},
+    {previousHashes:{'database-authorization-contract.mjs':OLD_CONTRACT_SHA256}},
     {unitHash:'e'.repeat(64)},{releaseHash:'e'.repeat(64)},
   ])assert.throws(()=>authorization({...auth(),...change},input,Date.parse('2026-10-13T19:30:00Z')),{code:'authorization_invalid'});
   assert.throws(()=>request('install',controller,'8e5dcbdca844972fb2f133c188ecfee5d5252273','707d22702a784e3b9999d1c9ae9c1e11c096a1bc'));
