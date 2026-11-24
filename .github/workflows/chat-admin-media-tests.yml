@@ -3,8 +3,9 @@ name: ChatAdmin media acceptance
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: ["feat/**"]
+  # PR CI is canonical; open a draft PR for early feedback.
+  # Explicit diagnostic runs remain available without duplicate push runs.
+  workflow_dispatch:
 
 permissions:
   contents: read
