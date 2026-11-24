@@ -193,7 +193,15 @@ export const REPAIR_CONTROL_HASHES=Object.freeze({
  'backup-worker-install-policy.mjs':'5623572e5433a121c692e45d9dc2d757bf66688557ab9d984ed35b9e4dda66e6',
  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
 });
-export const OBSERVED_CONTROL_HASHES=Object.freeze(Object.fromEntries(FILES.slice(0,3).map(x=>[x[1].split('/').at(-1),x[2]])));
+// Separately evidenced post-bootstrap, pre-repair controller generation. The
+// immutable FILES manifest retains original bootstrap provenance only.
+// All actual root-owned controller bytes must be re-read and compared to these
+// exact candidates before any snapshot, replacement or rollback.
+export const OBSERVED_CONTROL_HASHES=Object.freeze({
+ 'backup-worker-install-control.mjs':'0a6e78430ad353136c1091f7160f05c9b5208f89dca55a2843e2987a922437db',
+ 'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
+ 'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+});
 export function repairInventory(value){
  if(value.expectedApplicationCommit!==INSPECT_APP||value.databaseContractVerified!==true||
     value.unitHash!=='ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896'||
@@ -235,7 +243,8 @@ export async function repairPreparation(io){
 async function prepareContractRepair(request){
  const dir=`${ROOT}/contract-repair/${request.controller}`;
  const bundle=`${ROOT}/bundles/${INSPECT_SOURCE}`;
- const controls=FILES.slice(0,3);
+ const controls=FILES.slice(0,3).map(([path,dest])=>
+  [path,dest,OBSERVED_CONTROL_HASHES[dest.split('/').at(-1)]]);
  const replacements=[];
  for(const [path,dest]of controls){
   const hash=REPAIR_CONTROL_HASHES[dest.split('/').at(-1)];
@@ -269,7 +278,9 @@ async function prepareContractRepair(request){
     if(sha(await bytes(`${dir}/${name}`,0o600))!==sha(data))fail('repair_snapshot_invalid');
     hashes[name]=sha(data);
    }
-   if(hashes['database-authorization-contract.mjs']!==EXPECTED_INSTALLED_PREIMAGE_SHA256||
+   if(controls.some(([,dest,hash])=>hashes[dest.split('/').at(-1)]!==hash)||
+      controls.some(([,dest,hash])=>hashes[dest.split('/').at(-1)]!==measured.controllers[dest.endsWith('/fanmind-backup-worker-control')?'wrapper':dest.endsWith('/backup-worker-install-control.mjs')?'control':'policy'].sha256)||
+      hashes['database-authorization-contract.mjs']!==EXPECTED_INSTALLED_PREIMAGE_SHA256||
        hashes['database-authorization-contract.mjs']!==measured.installedWorkerHashes['database-authorization-contract.mjs']||
        hashes['release.env']!==measured.releaseHash)fail('repair_snapshot_invalid');
    receipt={schemaVersion:1,operation:'contract_repair_preparation',controllerCommit:request.controller,
