@@ -239,3 +239,6 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 - Date: 2026-11-24; Status: CONFIRMED; Source: Owner request for Lean Execution reform.
 - Decision: PR-triggered FanMind CI and ChatAdmin media acceptance are the canonical automatic checks; manual diagnostics remain available. Remove redundant branch-push triggers, not test coverage or required check identities.
 - Scope: PR #1550; source only. No Production, Staging, database, provider, payment or permission changes. Runtime and release acceptance requirements remain unchanged.
+
+## FM-DEC-LEAN-CI-LEGACY-20261124
+- Date: 2026-11-24; Decision: legacy reconciliation regression tests run once in required FanMind CI on PRs, and remain in Project Memory Quality on scheduled/manual runs. Live reconciliation validation remains mandatory in both paths where currently defined. No change to protected admission, package manifest, required check names or test assertions.
