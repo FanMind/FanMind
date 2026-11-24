@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
-export const WORKER_COMMIT = '6bc209851b4a54609747099ec34264318dc7f4c4';
+export const WORKER_COMMIT = '690ab046d537d6cb910496302208e722054e0d80';
 export const APP_COMMIT = 'bb799466d2c235195fedcb4d80568f9f0bd56969';
 // Read-only inspection is separate from the historical installation approval.
-export const INSPECT_WORKER_COMMIT = '6bc209851b4a54609747099ec34264318dc7f4c4';
+export const INSPECT_WORKER_COMMIT = WORKER_COMMIT;
 export const INSPECT_APP_COMMIT = 'bb799466d2c235195fedcb4d80568f9f0bd56969';
 export function inspectionRequest(action, controller, worker, app) {
   if (action !== 'inspect' || !/^[a-f0-9]{40}$/.test(controller ?? '') ||
@@ -13,12 +13,17 @@ export const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 export const ENVIRONMENT = 'backup-production-recovery';
 export const OWNER_ID = 270165082;
 export const BACKUP_ACTIVE_JOBS_SQL = "begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running');rollback;";
-// Only this reviewed module may be replaced. Entry point and verifier stay byte-identical.
+// Historical, pre-#1515 contract hash; not evidence of what is installed today.
 export const OLD_CONTRACT_SHA256 = 'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de';
+// #1515 reported an INSTALLED worker with the 39/29 contract. Require an
+// actual root-owned readback matching this exact candidate before preparing
+// any private rollback or Owner-scoped authorization. Never infer it from PRs.
+export const EXPECTED_INSTALLED_CONTRACT_SHA256 = '2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441';
+// Only the reviewed replacement module may change. Worker/verifier stay fixed.
 export const UNIT_SHA256 = 'ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896';
 export const RELEASE_SHA256 = '93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7';
 export const FILES = Object.freeze({
-  'database-authorization-contract.mjs': '2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441',
+  'database-authorization-contract.mjs': '2a3203b46dd72d114c73ed006bbf637bffd2c9dcc46657493273fd62b90478bc',
 });
 export const RETAINED_FILES = Object.freeze({
   'verify-backup-artifact.mjs': 'ded9bf771c8111056c9fbb1b0e4d1dbc81b467b0f233031687dcade05f5b44af',
@@ -46,7 +51,7 @@ export function authorization(value, input, now = Date.now()) {
       Object.values(value.controllerHashes).some(x => !/^[a-f0-9]{64}$/.test(x)) ||
       value.unitHash !== UNIT_SHA256 || value.releaseHash !== RELEASE_SHA256 ||
       !value.previousHashes || Object.keys(value.previousHashes).sort().join('|') !== Object.keys(FILES).sort().join('|') ||
-      value.previousHashes['database-authorization-contract.mjs'] !== OLD_CONTRACT_SHA256 ||
+      value.previousHashes['database-authorization-contract.mjs'] !== EXPECTED_INSTALLED_CONTRACT_SHA256 ||
       (input.action === 'install' && !value.actions.includes('rollback'))) fail('authorization_invalid');
   return value;
 }
