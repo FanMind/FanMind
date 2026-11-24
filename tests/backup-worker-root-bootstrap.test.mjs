@@ -3,8 +3,8 @@ import {test} from 'node:test';
 import {readFile,mkdtemp,lstat,rm,open} from 'node:fs/promises';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {FILES,SOURCE,WORKER,APP,input,metadata,sha,create,INSPECT_SOURCE,INSPECT_APP,INSPECT_CONTRACT_SHA256,inspectCurrent,lockHeld,lockDirectoryMetadata,timerState} from '../scripts/operations/backup-worker-root-bootstrap.mjs';
-import {inspectionRequest,request,INSPECT_WORKER_COMMIT,INSPECT_APP_COMMIT} from '../scripts/operations/backup-worker-install-policy.mjs';
+import {FILES,SOURCE,WORKER,APP,input,metadata,sha,create,INSPECT_SOURCE,INSPECT_APP,INSPECT_CONTRACT_SHA256,EXPECTED_INSTALLED_PREIMAGE_SHA256,inspectCurrent,lockHeld,lockDirectoryMetadata,timerState} from '../scripts/operations/backup-worker-root-bootstrap.mjs';
+import {inspectionRequest,request,INSPECT_WORKER_COMMIT,INSPECT_APP_COMMIT,WORKER_COMMIT,FILES as INSTALL_FILES,EXPECTED_INSTALLED_CONTRACT_SHA256} from '../scripts/operations/backup-worker-install-policy.mjs';
 test('bootstrap allows only inspect/bootstrap for exact main-shaped commit and nonroot sudo invoker',()=>{
  assert.equal(input('inspect',SOURCE,1000).action,'inspect');
  for(const args of [['install',SOURCE,1000],['bootstrap','main',1000],['bootstrap',SOURCE,0],['inspect',SOURCE,NaN]])assert.throws(()=>input(...args));
@@ -147,21 +147,46 @@ test('actual GitHub preflight keeps Owner, current-Main and protected-environmen
 
 test('repair inventory accepts only the measured old state under the already held preparation lock',async()=>{
  const {repairInventory,OBSERVED_CONTROL_HASHES}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ // The initial bootstrap hashes remain historical and MUST NOT qualify as the
+ // current post-#1515 controller preimage for the protected repair.
+ assert.deepEqual(OBSERVED_CONTROL_HASHES,{
+  'backup-worker-install-control.mjs':'0a6e78430ad353136c1091f7160f05c9b5208f89dca55a2843e2987a922437db',
+  'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
+  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+ });
+ assert.notEqual(OBSERVED_CONTROL_HASHES['backup-worker-install-control.mjs'],FILES[0][2]);
+ assert.notEqual(OBSERVED_CONTROL_HASHES['backup-worker-install-policy.mjs'],FILES[1][2]);
  const measured={expectedApplicationCommit:INSPECT_APP,databaseContractVerified:true,
   unitHash:'ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896',
   releaseHash:'93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7',
-  installedWorkerHashes:Object.fromEntries(FILES.slice(3).map(([,dest,hash])=>[dest.split('/').at(-1),hash])),
+  installedWorkerHashes:Object.fromEntries(FILES.slice(3).map(([,dest,hash],index)=>[dest.split('/').at(-1),index===0?EXPECTED_INSTALLED_PREIMAGE_SHA256:hash])),
   controllers:Object.fromEntries(Object.entries(OBSERVED_CONTROL_HASHES).map(([name,hash])=>[name==='backup-worker-install-control.mjs'?'control':name==='backup-worker-install-policy.mjs'?'policy':'wrapper',{state:'present',sha256:hash}])),
   lock:{state:'present',held:true},activeTools:{pg_dump:0,pg_restore:0,rclone:0,age:0,tar:0},
   timers:Object.fromEntries(['database','full','storage','server_config'].map(name=>[name,{activeState:'active',unitFileState:'enabled'}]))};
  repairInventory(measured);
  for(const mutate of [v=>v.expectedApplicationCommit=APP,v=>v.databaseContractVerified=false,
   v=>v.installedWorkerHashes['database-authorization-contract.mjs']=INSPECT_CONTRACT_SHA256,
-  v=>v.installedWorkerHashes['backup-worker.mjs']='e'.repeat(64),v=>v.controllers.control.sha256='f'.repeat(64),
+  v=>v.installedWorkerHashes['backup-worker.mjs']='e'.repeat(64),
+  v=>v.controllers.control.sha256=FILES[0][2],
+  v=>v.controllers.policy.sha256=FILES[1][2],
+  v=>v.controllers.control.sha256='f'.repeat(64),
   v=>v.unitHash='f'.repeat(64),v=>v.releaseHash='f'.repeat(64),v=>v.lock.held=false,
   v=>v.activeTools.pg_dump=1,v=>delete v.activeTools.tar,v=>v.timers.full.activeState='inactive']){
   const changed=structuredClone(measured);mutate(changed);assert.throws(()=>repairInventory(changed),{code:'repair_inventory_changed'});
  }
+});
+test('repair controller operations use independently checked post-bootstrap preimages, not the original FILES pins',async()=>{
+ const source=await readFile('scripts/operations/backup-worker-root-bootstrap.mjs','utf8');
+ const prepare=source.slice(source.indexOf('async function prepareContractRepair'),source.indexOf('async function main'));
+ assert.match(prepare,/const controls=FILES\.slice\(0,3\)\.map/u);
+ assert.match(prepare,/OBSERVED_CONTROL_HASHES\[dest\.split\('\/'\)\.at\(-1\)\]/u);
+ assert.match(prepare,/controls\.some\(\(\[,dest,hash\]\)=>hashes\[dest\.split\('\/'\)\.at\(-1\)\]!==hash\)/u);
+ assert.match(prepare,/for\(let i=0;i<controls\.length;i\+\+\)/u);
+ assert.match(prepare,/const \[,dest,oldHash\]=controls\[i\]/u);
+ assert.match(prepare,/for\(const \[,dest,hash\]of controls\)/u);
+ assert.match(prepare,/if\(sha\(data\)!==hash\)fail\('repair_snapshot_invalid'\)/u);
+ assert.match(prepare,/if\(current!==hash&&current!==REPAIR_CONTROL_HASHES\[name\]\)fail\('repair_inventory_changed'\)/u);
+ assert.match(prepare,/if\(current!==hash\)await replaceControl\(dest,data\)/u);
 });
 test('preparation durably saves actual old bytes before control replacement and cannot authorize a failed stage',async()=>{
  const {repairPreparation}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
@@ -172,6 +197,38 @@ test('preparation durably saves actual old bytes before control replacement and 
   const io=fake(failure);await assert.rejects(repairPreparation(io));
   assert.ok(!io.calls.includes('COMPLETED'));if(['preflight','snapshot','stage'].includes(failure))assert.ok(!io.calls.includes('replaceControllers'));
  }
+});
+test('immutable hardened module passes exact bootstrap-to-installer source and preimage binding',async()=>{
+ const moduleBytes=await readFile('scripts/operations/database-authorization-contract.mjs');
+ const root=await readFile('scripts/operations/backup-worker-root-bootstrap.mjs','utf8');
+ const control=await readFile('scripts/operations/backup-worker-install-control.mjs','utf8');
+ const bootstrapWorkflow=await readFile('.github/workflows/backup-worker-root-bootstrap.yml','utf8');
+ const installWorkflow=await readFile('.github/workflows/backup-worker-production-control.yml','utf8');
+ const historical=FILES[3][2];
+ const newHash=sha(moduleBytes);
+ assert.equal(INSPECT_SOURCE,'690ab046d537d6cb910496302208e722054e0d80');
+ assert.equal(WORKER_COMMIT,INSPECT_SOURCE);
+ assert.equal(newHash,INSPECT_CONTRACT_SHA256);
+ assert.equal(INSTALL_FILES['database-authorization-contract.mjs'],newHash);
+ assert.equal(EXPECTED_INSTALLED_CONTRACT_SHA256,EXPECTED_INSTALLED_PREIMAGE_SHA256);
+ assert.equal(EXPECTED_INSTALLED_PREIMAGE_SHA256,'2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441');
+ assert.equal(historical,'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de');
+ assert.notEqual(newHash,historical);
+ assert.notEqual(newHash,EXPECTED_INSTALLED_PREIMAGE_SHA256);
+ assert.match(root,/const moduleBytes=await download\(\['scripts\/operations\/database-authorization-contract\.mjs','',INSPECT_CONTRACT_SHA256,INSPECT_SOURCE\]\)/u);
+ assert.match(root,/const bundle=\x60\$\{ROOT\}\/bundles\/\$\{INSPECT_SOURCE\}\x60/u);
+ assert.match(root,/workerCommit:INSPECT_SOURCE/u);
+ assert.match(root,/hashes\['database-authorization-contract\.mjs'\]!==EXPECTED_INSTALLED_PREIMAGE_SHA256/u);
+ assert.match(control,/preparation\.workerCommit !== WORKER_COMMIT/u);
+ assert.match(control,/preparation\.moduleSha256 !== FILES\['database-authorization-contract\.mjs'\]/u);
+ assert.match(control,/if \(digest\(newBytes\[name\]\) !== hash\) fail\('bundle_hash_mismatch'\)/u);
+ assert.match(control,/c\.coreTableAppGrantTupleCount !== 116/u);
+ assert.match(control,/c\.restrictedSecurityDefinerFunctionCount !== 29/u);
+ assert.ok(bootstrapWorkflow.includes(INSPECT_SOURCE));
+ assert.ok(installWorkflow.includes(WORKER_COMMIT));
+ assert.ok(!installWorkflow.includes('[[ "$WORKER_COMMIT" == 6bc209851b4a54609747099ec34264318dc7f4c4 ]]'));
+ // A historical or made-up bundle cannot satisfy the exact new install pin.
+ for(const wrong of [historical,EXPECTED_INSTALLED_PREIMAGE_SHA256,'f'.repeat(64)])assert.notEqual(wrong,newHash);
 });
 test('new control bytes and root launcher are checksum-pinned; incomplete preparation cannot install',async()=>{
  const {REPAIR_CONTROL_HASHES}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');

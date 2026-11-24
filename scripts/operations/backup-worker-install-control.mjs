@@ -120,7 +120,8 @@ async function main() {
   const contractModule = await import(pathToFileURL(`${BUNDLE}/database-authorization-contract.mjs`).href);
   async function contract() {
     const c = await contractModule.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...db,env:pgEnv});
-    if (c.restrictedSecurityDefinerFunctionCount !== 29) fail('current_contract_required');
+    if (c.restrictedSecurityDefinerFunctionCount !== 29 ||
+        c.coreTableAppGrantTupleCount !== 116) fail('current_contract_required');
   }
   async function persist(status) {
     record = {...record,status,updatedAt:new Date().toISOString()};

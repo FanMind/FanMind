@@ -8,9 +8,14 @@ import {spawnSync} from 'node:child_process';
 export const SOURCE='e3cfbf73d2ed30b5a6ecd5ccfd3bff6aded0169f';
 export const WORKER='8e5dcbdca844972fb2f133c188ecfee5d5252273';
 export const APP='707d22702a784e3b9999d1c9ae9c1e11c096a1bc';
-export const INSPECT_SOURCE='6bc209851b4a54609747099ec34264318dc7f4c4';
+// Immutable source containing the independently tested 116/29 contract; the
+// historical worker provenance remains in FILES and host inventory receipts.
+export const INSPECT_SOURCE='690ab046d537d6cb910496302208e722054e0d80';
 export const INSPECT_APP='bb799466d2c235195fedcb4d80568f9f0bd56969';
-export const INSPECT_CONTRACT_SHA256='2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441';
+export const INSPECT_CONTRACT_SHA256='2a3203b46dd72d114c73ed006bbf637bffd2c9dcc46657493273fd62b90478bc';
+// Historical #1515 INSTALLED receipt is a candidate, not a substitute for an
+// actual root-owned preimage readback before a protected preparation.
+export const EXPECTED_INSTALLED_PREIMAGE_SHA256='2f8e2d82f5f0eb2c070f22a7c035feaf1e4112a918853bea76b9fa769be8b441';
 const ROOT='/var/lib/fanmind-backup-install',OPS='/usr/local/lib/fanmind-ops';
 export const FILES=Object.freeze([
  ['scripts/operations/backup-worker-install-control.mjs',`${OPS}/backup-worker-install-control.mjs`,'db47a5bc6ccbba8bde7c6b9148596dbe4a33dfb58ff05545f749402f1a21021d',SOURCE],
@@ -71,7 +76,8 @@ async function database(content,restrictedCount=13){
   pass.fill(0);ca.fill(0);
   const env={...ENV,PGPASSFILE:`${privatePath}/pgpass`,PGSSLROOTCERT:`${privatePath}/ca.pem`,PGSSLMODE:'verify-full',PGGSSENCMODE:'disable',PGCONNECT_TIMEOUT:'10'};
   const c=await contract.captureDatabaseAuthorizationContract({psqlBin:'/usr/lib/postgresql/17/bin/psql',...connection,env});
-  if(c.restrictedSecurityDefinerFunctionCount!==restrictedCount)fail('current_contract_required');
+  if(c.restrictedSecurityDefinerFunctionCount!==restrictedCount||
+      (restrictedCount===29&&c.coreTableAppGrantTupleCount!==116))fail('current_contract_required');
   const r=spawnSync('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--host',connection.host,'--port',connection.port,'--username',connection.username,'--dbname',connection.database],{env,input:policy.BACKUP_ACTIVE_JOBS_SQL,encoding:'utf8',timeout:30000,maxBuffer:4096});
   if(r.error||r.status!==0||r.stdout.trim()!=='0')fail('backup_jobs_active');
   const afterPass=await bytes(config.FANMIND_BACKUP_PGPASSFILE,0o600);try{if(sha(afterPass)!==passHash||sha(await bytes(config.FANMIND_BACKUP_DB_CA_CERT_PATH,0o644))!==caHash)fail('connection_changed');}finally{afterPass.fill(0);}
@@ -183,17 +189,25 @@ async function currentInspection(request){
 }
 // Exact existing controller upgrade; no service/worker/DB mutation in preparation.
 export const REPAIR_CONTROL_HASHES=Object.freeze({
+ 'backup-worker-install-control.mjs':'aca8951b2a4751fdc9dfa58254814eb5feeeaf30b8dd99b9f436fd0695d80f8a',
+ 'backup-worker-install-policy.mjs':'5623572e5433a121c692e45d9dc2d757bf66688557ab9d984ed35b9e4dda66e6',
+ 'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+});
+// Separately evidenced post-bootstrap, pre-repair controller generation. The
+// immutable FILES manifest retains original bootstrap provenance only.
+// All actual root-owned controller bytes must be re-read and compared to these
+// exact candidates before any snapshot, replacement or rollback.
+export const OBSERVED_CONTROL_HASHES=Object.freeze({
  'backup-worker-install-control.mjs':'0a6e78430ad353136c1091f7160f05c9b5208f89dca55a2843e2987a922437db',
  'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
 });
-export const OBSERVED_CONTROL_HASHES=Object.freeze(Object.fromEntries(FILES.slice(0,3).map(x=>[x[1].split('/').at(-1),x[2]])));
 export function repairInventory(value){
  if(value.expectedApplicationCommit!==INSPECT_APP||value.databaseContractVerified!==true||
     value.unitHash!=='ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896'||
     value.releaseHash!=='93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7'||
     Object.keys(value.installedWorkerHashes??{}).sort().join('|')!==OLD.slice().sort().join('|')||
-    FILES.slice(3).some(([,dest,hash])=>value.installedWorkerHashes[dest.split('/').at(-1)]!==hash)||
+    FILES.slice(3).some(([,dest,hash],index)=>value.installedWorkerHashes[dest.split('/').at(-1)]!==(index===0?EXPECTED_INSTALLED_PREIMAGE_SHA256:hash))||
     Object.entries(OBSERVED_CONTROL_HASHES).some(([key,hash])=>value.controllers?.[key==='backup-worker-install-control.mjs'?'control':key==='backup-worker-install-policy.mjs'?'policy':'wrapper']?.sha256!==hash)||
     value.lock?.state!=='present'||value.lock.held!==true||
     Object.keys(value.activeTools??{}).sort().join('|')!==ACTIVE_TOOLS.slice().sort().join('|')||
@@ -229,7 +243,8 @@ export async function repairPreparation(io){
 async function prepareContractRepair(request){
  const dir=`${ROOT}/contract-repair/${request.controller}`;
  const bundle=`${ROOT}/bundles/${INSPECT_SOURCE}`;
- const controls=FILES.slice(0,3);
+ const controls=FILES.slice(0,3).map(([path,dest])=>
+  [path,dest,OBSERVED_CONTROL_HASHES[dest.split('/').at(-1)]]);
  const replacements=[];
  for(const [path,dest]of controls){
   const hash=REPAIR_CONTROL_HASHES[dest.split('/').at(-1)];
@@ -263,7 +278,11 @@ async function prepareContractRepair(request){
     if(sha(await bytes(`${dir}/${name}`,0o600))!==sha(data))fail('repair_snapshot_invalid');
     hashes[name]=sha(data);
    }
-   if(hashes['database-authorization-contract.mjs']!==FILES[3][2]||hashes['release.env']!==measured.releaseHash)fail('repair_snapshot_invalid');
+   if(controls.some(([,dest,hash])=>hashes[dest.split('/').at(-1)]!==hash)||
+      controls.some(([,dest,hash])=>hashes[dest.split('/').at(-1)]!==measured.controllers[dest.endsWith('/fanmind-backup-worker-control')?'wrapper':dest.endsWith('/backup-worker-install-control.mjs')?'control':'policy'].sha256)||
+      hashes['database-authorization-contract.mjs']!==EXPECTED_INSTALLED_PREIMAGE_SHA256||
+       hashes['database-authorization-contract.mjs']!==measured.installedWorkerHashes['database-authorization-contract.mjs']||
+       hashes['release.env']!==measured.releaseHash)fail('repair_snapshot_invalid');
    receipt={schemaVersion:1,operation:'contract_repair_preparation',controllerCommit:request.controller,
     workerCommit:INSPECT_SOURCE,applicationCommit:INSPECT_APP,previousHashes:hashes,newControllerHashes:REPAIR_CONTROL_HASHES,
     moduleSha256:INSPECT_CONTRACT_SHA256,unitHash:measured.unitHash,releaseHash:measured.releaseHash,createdAt:new Date().toISOString()};

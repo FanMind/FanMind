@@ -252,8 +252,10 @@ function parseRunnerReceipt(bytes) {
     receipt.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
-    receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
-    ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
+    ![116, 120].includes(receipt.databaseCoreTableAppGrantTupleCount) ||
+    ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount) ||
+    (receipt.databaseCoreTableAppGrantTupleCount === 116 &&
+      receipt.databaseRestrictedSecurityDefinerFunctionCount !== 29)
   ) {
     throw fixedError("runner_receipt_authorization_counts_invalid");
   }
@@ -350,8 +352,10 @@ function parseDatabasePostcheckReceipt(bytes) {
     receipt.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(receipt.databaseAuthorizationExtensionRecordCount) ||
     receipt.databaseAuthorizationExtensionRecordCount <= 0 ||
-    receipt.databaseCoreTableAppGrantTupleCount !== 120 ||
-    ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount)
+    ![116, 120].includes(receipt.databaseCoreTableAppGrantTupleCount) ||
+    ![12, 13, 29].includes(receipt.databaseRestrictedSecurityDefinerFunctionCount) ||
+    (receipt.databaseCoreTableAppGrantTupleCount === 116 &&
+      receipt.databaseRestrictedSecurityDefinerFunctionCount !== 29)
   ) {
     throw fixedError(
       "database_postcheck_receipt_authorization_counts_invalid",
@@ -431,8 +435,10 @@ function validateEvidence(evidence) {
     evidence.databaseAuthorizationRequiredExtensionCount <= 0 ||
     !Number.isSafeInteger(evidence.databaseAuthorizationExtensionRecordCount) ||
     evidence.databaseAuthorizationExtensionRecordCount <= 0 ||
-    evidence.databaseCoreTableAppGrantTupleCount !== 120 ||
-    ![12, 13, 29].includes(evidence.databaseRestrictedSecurityDefinerFunctionCount)
+    ![116, 120].includes(evidence.databaseCoreTableAppGrantTupleCount) ||
+    ![12, 13, 29].includes(evidence.databaseRestrictedSecurityDefinerFunctionCount) ||
+    (evidence.databaseCoreTableAppGrantTupleCount === 116 &&
+      evidence.databaseRestrictedSecurityDefinerFunctionCount !== 29)
   ) {
     throw fixedError("evidence_authorization_counts_invalid");
   }

@@ -35,6 +35,7 @@ const authorizationContractFrame = Buffer.from(JSON.stringify({
   core_table_app_grant_tuple_count: 120,
   core_table_app_grant_option_count: 0,
   core_table_app_grant_row_count: 120,
+  core_workspace_hardened_valid: false,
   container_recovery_invariant_violation_count: 0,
   extension_recovery_invariant_violation_count: 0,
   reviewed_recovery_cohort_count: 0,
