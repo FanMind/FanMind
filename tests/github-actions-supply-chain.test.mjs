@@ -545,3 +545,12 @@ test("required CI and media acceptance avoid duplicate branch-push runs", async 
     assert.match(source, /cancel-in-progress: true/u);
   }
 });
+
+
+test("memory guard uses a narrow reader-only exception and conservative fallback", async () => {
+  const source = await readFile(".github/workflows/project-memory-guard.yml", "utf8");
+  assert.match(source, /git diff --no-renames --name-only -z/);
+  assert.match(source, /docs\/operations\/FANMIND_WORKSPACE_BUILDER\.md\) ;;/);
+  assert.match(source, /\*\) meaningful=1 ;;/);
+  assert.match(source, /meaningful.*-eq 1.*memory_changed.*-ne 1/);
+});
