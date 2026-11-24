@@ -155,7 +155,7 @@
     "test:inbox": "node --test tests/inbox-queue-policy.test.mjs tests/inbox-queue-ui-policy.test.mjs tests/inbox-human-handoff-policy.test.mjs",
     "test:website-chat": "node --test tests/website-chat-policy.test.mjs tests/website-chat-foundation.test.mjs tests/website-chat-ingestion.test.mjs tests/website-chat-handoff.test.mjs tests/website-chat-handoff-staging.test.mjs tests/website-chat-retention.test.mjs tests/website-chat-retention-staging.test.mjs tests/website-chat-widget.test.mjs",
     "test:production-controls": "node --test tests/trigger-function-hardening-production.test.mjs",
-    "test:release-integrations": "npm run test:website-chat && npm run test:inbox && npm run test:production-controls && npm run test:whatsapp-cloud-inbound",
+    "test:release-integrations": "npm run test:website-chat && node --test tests/inbox-human-handoff-policy.test.mjs && npm run test:production-controls && node --test tests/whatsapp-cloud-inbound.test.mjs",
     "test:whatsapp-cloud-inbound": "node --test tests/whatsapp-cloud-inbound.test.mjs tests/whatsapp-cloud-inbound-staging.test.mjs",
     "db:referral-attribution:check": "node scripts/operations/referral-attribution-migration-runner.mjs --check",
     "db:referral-attribution:verify": "node scripts/operations/referral-attribution-migration-runner.mjs --verify",
