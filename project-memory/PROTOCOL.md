@@ -108,7 +108,9 @@ The purpose of FINISHLINE_FREEZE is to prevent accepted scope from expanding thr
 **Do not return to:** build -> verify -> invent another control -> harden again -> add another review/control layer -> repeat without a concrete failing acceptance criterion or invalidated required evidence.
 
 ## Mandatory countercheck
-Before completion, merge or a success report:
+Apply the risk routing in `EXECUTION_POLICY.md`. For R1/R2, use only relevant checks: goal, diff, current evidence and relevant regression/countercheck. The list below is for applicable controlled/protected work, not an additional universal checklist. Reconcile only affected records; receipts and locks are required only under the risk/coordination rule above.
+
+Before completion, merge or a success report for applicable controlled/protected work:
 1. Re-read the goal and acceptance criteria.
 2. Inspect the final diff and compare actual vs expected scope.
 3. Verify evidence freshness against the current commit/PR/build/runtime/device/provider/target.
@@ -154,7 +156,7 @@ Verified current repository/runtime/provider evidence wins over conversational r
 Reuse permissions documented in `AUTHORIZATIONS.md` without asking again where technically and safely permitted. This does not override platform confirmations, missing credentials, protected Production/billing/destructive/compliance boundaries or red governance/security gates.
 
 ## Core invariant
-**Project memory -> canonical/live truth -> finishline/external/deferred state -> evidence freshness/drift -> next-best-action selection -> previous attempts -> risk/assumptions -> started-work/lock -> dependencies/evidence plan -> action -> independent countercheck -> reconciliation -> execution receipt -> milestone snapshot/memory update.**
+**Use Execution Policy risk routing first; the full protected sequence applies only where required. For ordinary repository work, current scope -> implement -> relevant evidence -> merge when permitted -> verify. Git records code history; Project Memory records durable changes.**
 
 Never store passwords, API keys, private tokens, plaintext backup material, secret values or private credentials here.
 
@@ -187,7 +189,7 @@ FanMind orchestration is state-driven, never clock-order-driven. Scheduled Build
 
 
 ## FanMind Orchestrator single-authority contract
-- The FanMind Orchestrator is the single decision point for new independent work. It owns roadmap/state inspection, prioritization, SAFE READY SET selection, task scoping, task_id assignment, result verification and the next-task decision.
+- For governed automated dispatch, the FanMind Orchestrator is the single decision point for new independent work; explicit direct Owner assignments do not require duplicate dispatch. It owns roadmap/state inspection, prioritization, SAFE READY SET selection, task scoping, task_id assignment, result verification and the next-task decision.
 - The FanMind Builder is an execution worker. It executes exactly the bounded task_id it receives. It may diagnose and repair problems inside that task, but it does not choose another roadmap task, continue unrelated work, or replace a blocked task with a different one.
 - Repository merge events are evidence for reconciliation only; they never dispatch or authorize Builder work. The workflow accepts one exact prepared envelope and rejects free task prose; the command-line manual check remains non-consuming preparation only.
 - HTTP/API trigger acceptance is only a transport receipt. Completion requires a typed terminal result with the exact handoff ID, payload digest and task ID, verified against the independent prior handoff identity and current GitHub truth.
