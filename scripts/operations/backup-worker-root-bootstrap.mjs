@@ -370,7 +370,7 @@ export async function restoreControllerUpdate(items,read,replace){
   if(!(await read(item)).equals(item.old))fail('update_readback_invalid');
  }
 }
-export async function applyControllerUpdate(items,read,replace,complete){
+export async function applyControllerUpdate(items,read,replace,rolledBack){
  try{
   for(const item of items){
    if(!(await read(item)).equals(item.old))fail('update_unknown_bytes');
@@ -378,11 +378,20 @@ export async function applyControllerUpdate(items,read,replace,complete){
    if(!(await read(item)).equals(item.next))fail('update_readback_invalid');
   }
   for(const item of items)if(!(await read(item)).equals(item.next))fail('update_readback_invalid');
-  await complete();
  }catch(e){
-  await restoreControllerUpdate(items,read,replace);
+  await restoreControllerUpdate(items,read,replace);await rolledBack();
   throw e;
  }
+}
+
+export async function recoverControllerUpdate(items,read,replace,commit,rolledBack){
+ const auth=items.at(-1);
+ if((await read(auth)).equals(auth.next)){
+  for(const item of items)if(!(await read(item)).equals(item.next))fail('update_unknown_bytes');
+  await commit();return 'ALREADY_COMPLETED';
+ }
+ await restoreControllerUpdate(items,read,replace);await rolledBack();
+ fail('update_rolled_back');
 }
 
 async function updatePreparedControllers(request){
@@ -424,9 +433,9 @@ async function updatePreparedControllers(request){
  const recovering=prior.state==='present';
  if(recovering){
   if(prior.sha256!==sha(Buffer.from(request.controller)))fail('update_journal_invalid');
-  await absent(`${dir}/COMPLETED`);await absent(`${dir}/ROLLED_BACK`);
+  await absent(`${dir}/ROLLED_BACK`);
  }else{
-  await make(updateParent);await mkdir(dir,{mode:0o700});await flush(updateParent);
+  await make(updateParent);await absent(dir);
  }
  const items=[];
  for(const [i,[,dest]]of controls.entries()){
@@ -443,20 +452,26 @@ async function updatePreparedControllers(request){
  items.push({name:'authorization.json',dest:authPath,mode:0o600,old,next});
  const read=item=>bytes(item.dest,item.mode);
  const replace=(item,data)=>replaceControl(item.dest,data,item.mode);
- const mark=name=>create(`${dir}/${name}`,Buffer.from(request.controller),0o600);
+ const markRolledBack=()=>replaceControl(`${dir}/ROLLED_BACK`,Buffer.from(request.controller),0o600);
  if(recovering){
   if(!(await bytes(`${dir}/next-authorization.json`,0o600)).equals(next))fail('update_journal_invalid');
-  await restoreControllerUpdate(items,read,replace);await mark('ROLLED_BACK');
-  fail('update_rolled_back');
+  // Authorization is the last atomic rename and is the transaction commit point.
+  // A crash after publication must not manufacture a second authorization.
+  const result=await recoverControllerUpdate(items,read,replace,()=>flush(ROOT),markRolledBack);
+  console.log(`BACKUP_CONTROLLER_UPDATE=${result}`);return;
  }
+ // Incomplete staging directories cannot be mistaken for a published journal.
+ const staging=`${updateParent}/.staging-${randomUUID()}`;
+ await mkdir(staging,{mode:0o700});
  for(const item of items){
-  await create(`${dir}/${item.name}`,item.old,0o600);
-  if(!(await bytes(`${dir}/${item.name}`,0o600)).equals(item.old))fail('update_snapshot_invalid');
+  await create(`${staging}/${item.name}`,item.old,0o600);
+  if(!(await bytes(`${staging}/${item.name}`,0o600)).equals(item.old))fail('update_snapshot_invalid');
  }
- await create(`${dir}/next-authorization.json`,next,0o600);
- if(!(await bytes(`${dir}/next-authorization.json`,0o600)).equals(next))fail('update_snapshot_invalid');
- await preflight();await mark('READY');
- await applyControllerUpdate(items,read,replace,()=>mark('COMPLETED'));
+ await create(`${staging}/next-authorization.json`,next,0o600);
+ if(!(await bytes(`${staging}/next-authorization.json`,0o600)).equals(next))fail('update_snapshot_invalid');
+ await preflight();await create(`${staging}/READY`,Buffer.from(request.controller),0o600);
+ await flush(staging);await absent(dir);await rename(staging,dir);await flush(updateParent);
+ await applyControllerUpdate(items,read,replace,markRolledBack);
  console.log('BACKUP_CONTROLLER_UPDATE=COMPLETED');
 }
 
