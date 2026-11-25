@@ -87,7 +87,11 @@ Danach ist der monatliche Bedienablauf:
    festhalten. Der bestehende Controller verlangt weiterhin aktuellen Main;
    während Vorbereitung/Freigabe/Ausführung nicht unbemerkt Main ersetzen.
 2. `Prepare FanMind monthly release (no deployment)` auf genau diesem Main
-   ausführen und den frisch verifizierten Production-Base-SHA angeben. Der
+   ausführen. Ohne expliziten Base-SHA liest der Generator einmalig
+   `https://fanmind.ch/api/version` ohne Zugangsdaten oder Weiterleitung.
+   Nur eine frische Production-Antwort von FanMind mit exakter Commit-ID gilt.
+   Bei Ausfall kann ein separat verifizierter Base-SHA angegeben werden.
+   Git-Abstammung und spätere geschützte Live-Prüfung gelten für beide Wege. Der
    Generator sucht vorhandene Staging-Läufe für genau diesen Main. Bei mehreren
    Deployments oder mehrdeutigen nachfolgenden Abnahmen beide Referenzen
    angeben (`staging_deployment_run` und JSON-Liste `staging_acceptance_runs`).

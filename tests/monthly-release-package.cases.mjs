@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { sourcePlan, providerReviewSummary, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
+import { observeProductionBase, sourcePlan, providerReviewSummary, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
 import { REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
 
 const candidate = "b".repeat(40), head = "c".repeat(40);
@@ -173,4 +173,32 @@ test("provider review uses canonical changed paths including deletions without g
   }
   assert.doesNotMatch(summary, /unclassified-sensitive-name|PASS/u);
   assert.match(providerReviewSummary({ base: head, candidate, changes: changes.slice(-1) }), /No direct provider matches/u);
+});
+
+test("public Production base observation is fresh, scoped, size-limited and credential-free", async () => {
+  const now = Date.UTC(2026, 10, 25, 12);
+  const version = { application: "fanmind", runtimeEnvironment: "production", releaseCommit: candidate,
+    checkedAt: new Date(now).toISOString() };
+  const observe = (data, status = 200, contentType = "application/json") =>
+    observeProductionBase(async (url, options) => {
+      assert.equal(url, "https://fanmind.ch/api/version");
+      assert.equal(options.method, "GET");
+      assert.equal(options.redirect, "error");
+      assert.equal(options.credentials, "omit");
+      assert.equal(options.cache, "no-store");
+      assert.deepEqual(options.headers, { Accept: "application/json" });
+      assert.ok(options.signal instanceof AbortSignal);
+      return new Response(typeof data === "string" ? data : JSON.stringify(data), {
+        status, headers: { "content-type": contentType },
+      });
+    }, () => now);
+  assert.equal(await observe(version), candidate);
+  for (const modifications of [
+    { application: "other" }, { runtimeEnvironment: "staging" }, { releaseCommit: "main" },
+    { releaseCommit: [candidate] }, { checkedAt: null },
+    { checkedAt: new Date(now - 120001).toISOString() }, { checkedAt: new Date(now + 30001).toISOString() },
+  ]) await assert.rejects(observe({ ...version, ...modifications }));
+  await assert.rejects(observe(version, 302));
+  await assert.rejects(observe(version, 200, "text/html"));
+  await assert.rejects(observe(" ".repeat(4096) + JSON.stringify(version)));
 });

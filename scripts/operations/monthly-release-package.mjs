@@ -15,6 +15,30 @@ function git(root, ...args) {
   return execFileSync("git", ["-C", root, ...args], { maxBuffer: 128 * 1024 * 1024, stdio: ["ignore", "pipe", "pipe"] });
 }
 
+export async function observeProductionBase(fetchImpl = fetch, clock = Date.now) {
+  const response = await fetchImpl("https://fanmind.ch/api/version", {
+    method: "GET", redirect: "error", credentials: "omit", cache: "no-store",
+    headers: { Accept: "application/json" }, signal: AbortSignal.timeout(10_000),
+  });
+  requireValue(response.status === 200 && !response.redirected && response.body
+    && /^application\/json(?:\s*;|$)/iu.test(response.headers.get("content-type") ?? ""));
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of response.body) {
+    size += chunk.byteLength;
+    requireValue(size <= 4096);
+    chunks.push(chunk);
+  }
+  const data = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  const checkedAt = Date.parse(data.checkedAt);
+  const age = clock() - checkedAt;
+  requireValue(data.application === "fanmind" && data.runtimeEnvironment === "production"
+    && typeof data.releaseCommit === "string" && SHA.test(data.releaseCommit)
+    && Number.isFinite(checkedAt) && new Date(checkedAt).toISOString() === data.checkedAt
+    && age >= -30_000 && age <= 120_000);
+  return data.releaseCommit;
+}
+
 export function sourcePlan(root, base, candidate) {
   requireValue(SHA.test(base) && SHA.test(candidate) && base !== candidate);
   requireValue(git(root, "rev-parse", `${base}^{commit}`).toString().trim() === base);
@@ -199,11 +223,14 @@ async function main() {
       return;
     }
     requireValue(["plan", "prepare"].includes(command) && args.length === (command === "plan" ? 3 : 5));
-    const [base, candidate, output, deployment, acceptance] = args;
-    const manifest = sourcePlan(process.cwd(), base, candidate);
+    const [inputBase, candidate, output, deployment, acceptance] = args;
     if (command === "prepare") {
       requireValue(process.env.GITHUB_REPOSITORY === REPO && process.env.GITHUB_REF === "refs/heads/main"
         && process.env.GITHUB_SHA === candidate && process.env.GITHUB_EVENT_NAME === "workflow_dispatch");
+    }
+    const base = command === "prepare" && inputBase === "" ? await observeProductionBase() : inputBase;
+    const manifest = sourcePlan(process.cwd(), base, candidate);
+    if (command === "prepare") {
       if (process.env.GITHUB_STEP_SUMMARY) {
         appendFileSync(process.env.GITHUB_STEP_SUMMARY, providerReviewSummary(manifest));
       }

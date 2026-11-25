@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       production_base:
-        description: Exact previously verified Production commit (40 lowercase hex)
-        required: true
+        description: Optional separately verified Production commit (default reads the public version endpoint)
+        required: false
         type: string
       staging_deployment_run:
         description: Optional exact deploy-staging run (supply both run inputs or leave both empty)
