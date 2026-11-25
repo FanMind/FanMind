@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { WORKER_COMMIT, APP_COMMIT, FILES, RETAINED_FILES, OLD_CONTRACT_SHA256, EXPECTED_INSTALLED_CONTRACT_SHA256, UNIT_SHA256, RELEASE_SHA256, OWNER_ID, ENVIRONMENT, PROJECT,
-  request, authorization, connection, parseSelectedEnvironment, environmentPolicy, transition, withEmptyBackupQueue } from '../scripts/operations/backup-worker-install-policy.mjs';
+  request, authorization, connection, parseSelectedEnvironment, environmentPolicy, transition, backupQueueFence } from '../scripts/operations/backup-worker-install-policy.mjs';
 const controller = 'a'.repeat(40);
 const input = request('install',controller,WORKER_COMMIT,APP_COMMIT);
 function auth() { return {schemaVersion:1,repository:'FanMind/FanMind',environment:ENVIRONMENT,project:PROJECT,
@@ -43,7 +43,7 @@ test('connection rejects hidden libpq routing and mismatched Supabase identity',
 });
 function fake(state=null,failAt=null) {
   const calls=[];let current=state;let failed=false;
-  const io = {calls,withEmptyQueue: mutate => mutate(),authorize:async()=>{},preflight:async()=>calls.push('preflight'),state:async()=>current,
+  const io = {calls,checkUnfenced:async()=>{},acquireFence:async()=>{},releaseFence:async()=>{},authorize:async()=>{},preflight:async()=>calls.push('preflight'),state:async()=>current,
     persist:async status=>{calls.push(status);current={status};},
     snapshot:async()=>{calls.push('snapshot');current={status:'PREPARED'};},
     checkFiles:async v=>calls.push(`check:${v}`),checkSaved:async()=>calls.push('saved'),
@@ -148,33 +148,56 @@ test('install fences independent queue writers through swap and releases on comp
   const data = join(root, 'data');
   run('initdb', ['-D', data, '-U', 'postgres', '-A', 'scram-sha-256', '--pwfile', passwordFile, '--no-locale']);
   run('pg_ctl', ['-D',data,'-l',join(root,'server.log'),'-w','-o',
-    `-c listen_addresses=127.0.0.1 -p ${port} -c unix_socket_directories='' -c max_prepared_transactions=2`, 'start']);
+    `-c listen_addresses=127.0.0.1 -p ${port} -c unix_socket_directories='' -c max_prepared_transactions=0`, 'start']);
   try {
     const sql = statement => run('psql', ['-XAtq','-v','ON_ERROR_STOP=1','-h','127.0.0.1','-p',port,'-U','postgres','-d','postgres'], statement, {PGPASSWORD:password});
     sql('CREATE TABLE public.admin_operation_jobs(job_type text, status text)');
     const insert = "INSERT INTO public.admin_operation_jobs VALUES ('backup_full','queued')";
-    const io = fake();
-    io.withEmptyQueue = mutate => withEmptyBackupQueue(sql, mutate);
-    const checkWriter = () => assert.throws(
-      () => sql("SET lock_timeout='150ms'; " + insert),
-      error => error.stderr.includes('lock timeout'),
-    );
+    assert.equal(sql("select current_setting('server_version_num')::int / 10000"),'17');
+    const fence = backupQueueFence(sql, controller);
+    const io = {...fake(), acquireFence:fence.acquire, releaseFence:fence.release};
+    const checkWriter = () => assert.throws(() => sql(insert),
+      error => error.stderr.includes('fm_backup_install_' + controller));
     let swapped = false;
     io.replace = async version => {
       assert.equal(version, 'new');
-      checkWriter(); // separate backend, after acquisition connection has exited
+      checkWriter();
+      sql("INSERT INTO public.admin_operation_jobs VALUES ('unrelated','queued')");
       swapped = true;
     };
     io.checkFiles = async version => { if (version === 'new') checkWriter(); };
     assert.equal(await transition(input, io), 'INSTALLED');
     assert.ok(swapped);
     sql(insert);
-    const busy = fake();
-    busy.withEmptyQueue = io.withEmptyQueue;
-    await assert.rejects(transition(input,busy), error => error.stderr.includes('backup_jobs_active'));
-    assert.deepEqual(busy.calls, ['preflight']);
+    assert.throws(fence.acquire, error => error.stderr.includes('backup_jobs_active'));
     sql('DELETE FROM public.admin_operation_jobs');
-    await assert.rejects(withEmptyBackupQueue(sql, async () => { throw Error('mutation failed'); }), /mutation failed/);
+
+    // Kill the installing process during the replacement callback. No finally
+    // handler runs; an independent backend must still reject a backup writer.
+    const child = `
+      import { execFileSync } from 'node:child_process';
+      import { backupQueueFence,transition } from './scripts/operations/backup-worker-install-policy.mjs';
+      const sql = stmt => execFileSync(process.env.TEST_PSQL,
+        ['-XAtq','-v','ON_ERROR_STOP=1','-h','127.0.0.1','-p',process.env.TEST_PORT,'-U','postgres'],{input:stmt});
+      const guard = backupQueueFence(sql,'${controller}');
+      const noOp = async () => {};
+      await transition({action:'install'}, {preflight:noOp,state:()=>null,authorize:noOp,checkFiles:noOp,
+        snapshot:noOp,acquireFence:guard.acquire,stop:noOp,queueEmpty:noOp,persist:noOp,
+        replace:()=>process.kill(process.pid,'SIGKILL')});
+    `;
+    assert.throws(() => execFileSync(process.execPath,['--input-type=module','-e',child],{
+      env:{TEST_PSQL:join(bin,'psql'),TEST_PORT:port,PGPASSWORD:password},
+    }), error => error.signal === 'SIGKILL');
+    checkWriter();
+    assert.throws(fence.checkAbsent,/queue_fence_requires_reconciliation/);
+    const recover = {...fake({status:'APPLYING'}),acquireFence:fence.acquire,releaseFence:fence.release};
+    recover.checkKnownFiles = async () => { throw Error('unknown_partial_state'); };
+    await assert.rejects(transition({...input,action:'rollback'},recover),/unknown_partial_state/);
+    checkWriter();
+    recover.checkKnownFiles = async () => {};
+    recover.replace = async version => { assert.equal(version,'old'); checkWriter(); };
+    assert.equal(await transition({...input,action:'rollback'},recover),'ROLLED_BACK');
+    fence.checkAbsent();
     sql(insert);
   } finally {
     run('pg_ctl', ['-D',data,'-m','immediate','-w','stop']);
