@@ -32,7 +32,7 @@ const ENV={PATH:'/usr/bin:/bin',LANG:'C',LC_ALL:'C'};
 export function sha(bytes){return createHash('sha256').update(bytes).digest('hex');}
 function fail(code){throw Object.assign(new Error(code),{code});}
 export function input(action,controller,runnerUid){
- if(!['inspect','bootstrap','prepare-contract-repair'].includes(action)||!/^[a-f0-9]{40}$/.test(controller??'')||!Number.isSafeInteger(runnerUid)||runnerUid<=0)fail('invocation_invalid');
+ if(!['inspect','bootstrap','prepare-contract-repair','update-prepared-controllers'].includes(action)||!/^[a-f0-9]{40}$/.test(controller??'')||!Number.isSafeInteger(runnerUid)||runnerUid<=0)fail('invocation_invalid');
  return {action,controller,runnerUid};
 }
 export function metadata(s,mode){
@@ -209,22 +209,22 @@ export const OBSERVED_CONTROL_HASHES=Object.freeze({
  'backup-worker-install-policy.mjs':'5f8eacb558f45bad8901b30cfb58ee50de39d2311decef6da71dd3b180ade416',
  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
 });
-export function repairInventory(value){
+export function repairInventory(value,expectedControllers=OBSERVED_CONTROL_HASHES){
  if(value.expectedApplicationCommit!==INSPECT_APP||value.databaseContractVerified!==true||
     value.unitHash!=='ae4a16dea717bc407274c1623e9dc5fd1aa9f67c0dcd41465bffa9dba3a50896'||
     value.releaseHash!=='93cf1b697a3140e286c40ea8b020b44955cb9978518de00f958deea6aec214a7'||
     Object.keys(value.installedWorkerHashes??{}).sort().join('|')!==OLD.slice().sort().join('|')||
     FILES.slice(3).some(([,dest,hash],index)=>value.installedWorkerHashes[dest.split('/').at(-1)]!==(index===0?EXPECTED_INSTALLED_PREIMAGE_SHA256:hash))||
-    Object.entries(OBSERVED_CONTROL_HASHES).some(([key,hash])=>value.controllers?.[key==='backup-worker-install-control.mjs'?'control':key==='backup-worker-install-policy.mjs'?'policy':'wrapper']?.sha256!==hash)||
+    Object.entries(expectedControllers).some(([key,hash])=>value.controllers?.[key==='backup-worker-install-control.mjs'?'control':key==='backup-worker-install-policy.mjs'?'policy':'wrapper']?.sha256!==hash)||
     value.lock?.state!=='present'||value.lock.held!==true||
     Object.keys(value.activeTools??{}).sort().join('|')!==ACTIVE_TOOLS.slice().sort().join('|')||
     Object.values(value.activeTools).some(x=>x!==0)||
     Object.keys(value.timers??{}).sort().join('|')!=='database|full|server_config|storage'||
     Object.values(value.timers).some(x=>x.activeState!=='active'||x.unitFileState!=='enabled'))fail('repair_inventory_changed');
 }
-async function replaceControl(path,data){
+async function replaceControl(path,data,mode=0o750){
  const temp=`${dirname(path)}/.contract-repair-${randomUUID()}`;
- try{await create(temp,data,0o750);await rename(temp,path);await flush(dirname(path));}
+ try{await create(temp,data,mode);await rename(temp,path);await flush(dirname(path));}
  finally{try{await unlink(temp);}catch(e){if(e.code!=='ENOENT')throw e;}}
 }
 export async function repairPreparation(io){
@@ -345,10 +345,141 @@ async function prepareContractRepair(request){
  });
  console.log(`BACKUP_CONTRACT_REPAIR=${result}`);
 }
+const ORIGINAL_PREPARATION='c58cf0fc95deccfac60a78dad3805ed049e7d94f';
+const PREPARED_AUTH_HASH='3a3b8741477b60659b3f4379398edf0c1c9384f05a70053c325b016830dfa338';
+const PREPARED_CONTROL_HASHES=Object.freeze({
+ 'backup-worker-install-control.mjs':'aca8951b2a4751fdc9dfa58254814eb5feeeaf30b8dd99b9f436fd0695d80f8a',
+ 'backup-worker-install-policy.mjs':'5623572e5433a121c692e45d9dc2d757bf66688557ab9d984ed35b9e4dda66e6',
+ 'fanmind-backup-worker-control':REPAIR_CONTROL_HASHES['fanmind-backup-worker-control'],
+});
+
+// Reconcile only from the completed, private snapshot of this exact update.
+// Check every participant before writing any old bytes. Restore authorization
+// first so the new installer cannot run against a partially restored policy.
+export async function restoreControllerUpdate(items,read,replace){
+ const states=[];
+ for(const item of items){
+  const data=await read(item);
+  if(!data.equals(item.old)&&!data.equals(item.next))fail('update_unknown_bytes');
+  states.push(data);
+ }
+ for(let i=items.length-1;i>=0;i--){
+  const item=items[i];
+  if(!(await read(item)).equals(states[i]))fail('update_unknown_bytes');
+  if(!states[i].equals(item.old))await replace(item,item.old);
+  if(!(await read(item)).equals(item.old))fail('update_readback_invalid');
+ }
+}
+export async function applyControllerUpdate(items,read,replace,rolledBack){
+ try{
+  for(const item of items){
+   if(!(await read(item)).equals(item.old))fail('update_unknown_bytes');
+   await replace(item,item.next);
+   if(!(await read(item)).equals(item.next))fail('update_readback_invalid');
+  }
+  for(const item of items)if(!(await read(item)).equals(item.next))fail('update_readback_invalid');
+ }catch(e){
+  await restoreControllerUpdate(items,read,replace);await rolledBack();
+  throw e;
+ }
+}
+
+export async function recoverControllerUpdate(items,read,replace,commit,rolledBack){
+ const auth=items.at(-1);
+ if((await read(auth)).equals(auth.next)){
+  for(const item of items)if(!(await read(item)).equals(item.next))fail('update_unknown_bytes');
+  await commit();return 'ALREADY_COMPLETED';
+ }
+ await restoreControllerUpdate(items,read,replace);await rolledBack();
+ fail('update_rolled_back');
+}
+
+async function updatePreparedControllers(request){
+ const controls=FILES.slice(0,2);
+ const preparedDir=`${ROOT}/contract-repair/${ORIGINAL_PREPARATION}`;
+ const updateParent=`${ROOT}/controller-update`,dir=`${updateParent}/${request.controller}`;
+ const authPath=`${ROOT}/authorization.json`;
+ const receipt=JSON.parse(await bytes(`${preparedDir}/receipt.json`,0o600));
+ const modulePath='database-authorization-contract.mjs';
+ const oldModule=await bytes(`${preparedDir}/${modulePath}`,0o600);
+ if(receipt.status!=='COMPLETED'||receipt.operation!=='contract_repair_preparation'||
+    receipt.controllerCommit!==ORIGINAL_PREPARATION||receipt.workerCommit!==INSPECT_SOURCE||
+    receipt.applicationCommit!==INSPECT_APP||receipt.moduleSha256!==INSPECT_CONTRACT_SHA256||
+    receipt.previousHashes?.[modulePath]!==EXPECTED_INSTALLED_PREIMAGE_SHA256||
+    sha(oldModule)!==EXPECTED_INSTALLED_PREIMAGE_SHA256||
+    Object.entries(PREPARED_CONTROL_HASHES).some(([k,v])=>receipt.newControllerHashes?.[k]!==v))fail('update_preparation_invalid');
+ const staged=await Promise.all(controls.map(([path,dest])=>
+  download([path,dest,REPAIR_CONTROL_HASHES[dest.split('/').at(-1)],request.controller])));
+ const bundle=await bytes(`${ROOT}/bundles/${INSPECT_SOURCE}/${modulePath}`,0o750);
+ if(sha(bundle)!==INSPECT_CONTRACT_SHA256)fail('update_bundle_invalid');
+ const policy=await download(FILES[1]);
+ const preflight=async()=>{
+  await absent(`${ROOT}/rollback/${INSPECT_SOURCE}`);
+  const state=await inspectCurrent({...request,action:'inspect'},{database:()=>database([null,policy,null,bundle],29),
+   inventory:()=>inventory(request,INSPECT_APP),extra:extraInventory});
+  if(!state.preparedCopy?.matchesInstalledBytes||!oldModule.equals(await bytes(`${OPS}/${modulePath}`,0o750)))fail('update_preimage_invalid');
+  // On recovery each of the two replaceable controllers is checked against
+  // the individually journalled old/new bytes before any restoration.
+  const measured={...PREPARED_CONTROL_HASHES};
+  for(const [i,[,dest]]of controls.entries()){
+   const name=dest.split('/').at(-1),hash=state.controllers[i===0?'control':'policy']?.sha256;
+   if(hash!==PREPARED_CONTROL_HASHES[name]&&hash!==REPAIR_CONTROL_HASHES[name])fail('update_unknown_bytes');
+   measured[name]=hash;
+  }
+  repairInventory(state,measured);
+ };
+ await preflight();
+ const prior=await optionalHash(`${dir}/READY`,0o600);
+ const recovering=prior.state==='present';
+ if(recovering){
+  if(prior.sha256!==sha(Buffer.from(request.controller)))fail('update_journal_invalid');
+  await absent(`${dir}/ROLLED_BACK`);
+ }else{
+  await make(updateParent);await absent(dir);
+ }
+ const items=[];
+ for(const [i,[,dest]]of controls.entries()){
+  const name=dest.split('/').at(-1),old=await bytes(recovering?`${dir}/${name}`:dest,recovering?0o600:0o750);
+  if(sha(old)!==PREPARED_CONTROL_HASHES[name])fail('update_preimage_invalid');
+  items.push({name,dest,mode:0o750,old,next:staged[i]});
+ }
+ const old=await bytes(recovering?`${dir}/authorization.json`:authPath,0o600);
+ if(sha(old)!==PREPARED_AUTH_HASH)fail('update_authorization_changed');
+ const auth=JSON.parse(old);
+ const now=recovering?JSON.parse(await bytes(`${dir}/next-authorization.json`,0o600)).approvedAt:new Date().toISOString();
+ const next=Buffer.from(JSON.stringify({...auth,controllerCommit:request.controller,preparationCommit:ORIGINAL_PREPARATION,
+  controllerHashes:REPAIR_CONTROL_HASHES,approvedAt:now,expiresAt:new Date(Date.parse(now)+7200000).toISOString()}));
+ items.push({name:'authorization.json',dest:authPath,mode:0o600,old,next});
+ const read=item=>bytes(item.dest,item.mode);
+ const replace=(item,data)=>replaceControl(item.dest,data,item.mode);
+ const markRolledBack=()=>replaceControl(`${dir}/ROLLED_BACK`,Buffer.from(request.controller),0o600);
+ if(recovering){
+  if(!(await bytes(`${dir}/next-authorization.json`,0o600)).equals(next))fail('update_journal_invalid');
+  // Authorization is the last atomic rename and is the transaction commit point.
+  // A crash after publication must not manufacture a second authorization.
+  const result=await recoverControllerUpdate(items,read,replace,()=>flush(ROOT),markRolledBack);
+  console.log(`BACKUP_CONTROLLER_UPDATE=${result}`);return;
+ }
+ // Incomplete staging directories cannot be mistaken for a published journal.
+ const staging=`${updateParent}/.staging-${randomUUID()}`;
+ await mkdir(staging,{mode:0o700});
+ for(const item of items){
+  await create(`${staging}/${item.name}`,item.old,0o600);
+  if(!(await bytes(`${staging}/${item.name}`,0o600)).equals(item.old))fail('update_snapshot_invalid');
+ }
+ await create(`${staging}/next-authorization.json`,next,0o600);
+ if(!(await bytes(`${staging}/next-authorization.json`,0o600)).equals(next))fail('update_snapshot_invalid');
+ await preflight();await create(`${staging}/READY`,Buffer.from(request.controller),0o600);
+ await flush(staging);await absent(dir);await rename(staging,dir);await flush(updateParent);
+ await applyControllerUpdate(items,read,replace,markRolledBack);
+ console.log('BACKUP_CONTROLLER_UPDATE=COMPLETED');
+}
+
 async function main(){
  if(process.getuid?.()!==0||process.argv.length!==5)fail('invocation_invalid');
  const request=input(process.argv[2],process.argv[3],Number(process.argv[4]));
  if(request.action==='inspect'){await currentInspection(request);return;}
+ if(request.action==='update-prepared-controllers'){await updatePreparedControllers(request);return;}
  if(request.action==='prepare-contract-repair'){await prepareContractRepair(request);return;}
  const content=[];for(const item of FILES)content.push(await download(item));await database(content);const before=await inventory(request);
  // No existing authorization, controller, receipt or bundle is overwritten.
