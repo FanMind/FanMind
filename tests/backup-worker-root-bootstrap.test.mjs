@@ -241,3 +241,25 @@ test('new control bytes and root launcher are checksum-pinned; incomplete prepar
  assert.match(w,/prepare-contract-repair/u);assert.match(w,/if\(process.argv\[4\]!=='inspect'\)/u);
  assert.match(w,/group: fanmind-production-deploy/u);assert.match(w,/cancel-in-progress: false/u);
 });
+
+test('prepared update reads back both controllers before activating authority and restores a partial update',async()=>{
+ const {applyControllerUpdate,restoreControllerUpdate}=await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+ const items=['control','policy','authorization'].map(name=>({name,old:Buffer.from('old-'+name),next:Buffer.from('new-'+name)}));
+ const live=new Map(items.map(i=>[i.name,i.old]));
+ const read=i=>live.get(i.name);
+ const write=(i,data)=>live.set(i.name,data);
+ await assert.rejects(applyControllerUpdate(items,read,(i,data)=>{
+  write(i,data);
+  if(i.name==='policy'&&data.equals(i.next))throw Error('after rename');
+ },()=>assert.fail('unexpected completion')),/after rename/);
+ for(const i of items)assert.deepEqual(read(i),i.old);
+ await applyControllerUpdate(items,read,write,()=>{for(const i of items)assert.deepEqual(read(i),i.next);});
+ write(items[1],Buffer.from('unknown'));
+ let writes=0;
+ await assert.rejects(restoreControllerUpdate(items,read,()=>{writes++;}),/update_unknown_bytes/);
+ assert.equal(writes,0);
+ write(items[1],items[1].old);
+ const order=[];
+ await restoreControllerUpdate(items,read,(i,data)=>{order.push(i.name);write(i,data);});
+ assert.deepEqual(order,['authorization','control']);
+});
