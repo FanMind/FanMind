@@ -139,6 +139,13 @@ async function extraInventory(){
   ['control',`${OPS}/backup-worker-install-control.mjs`],['policy',`${OPS}/backup-worker-install-policy.mjs`],
   ['wrapper','/usr/local/sbin/fanmind-backup-worker-control']])controllers[name]=await optionalHash(path,0o750);
  const authorization=await optionalHash(`${ROOT}/authorization.json`,0o600);
+ const copyPath=`${ROOT}/contract-repair/c58cf0fc95deccfac60a78dad3805ed049e7d94f/database-authorization-contract.mjs`;
+ let preparedCopy;
+ try {
+  const saved=await bytes(copyPath,0o600);
+  const current=await bytes(`${OPS}/database-authorization-contract.mjs`,0o750);
+  preparedCopy={state:'present',sha256:sha(saved),matchesInstalledBytes:saved.equals(current)};
+ } catch(e) {if(e.code!=='ENOENT')throw e;preparedCopy={state:'absent'};}
  const bootstrapReceipt=await optionalHash(`${ROOT}/bootstrap-receipt.json`,0o600);
  const rollback=[];
  const root=`${ROOT}/rollback`;let rollbackPresent=true;
@@ -158,7 +165,7 @@ async function extraInventory(){
  }
  const workerBytes=await bytes(`${OPS}/backup-worker.mjs`,0o750);
  const workerVersion=workerBytes.toString().match(/const VERSION = '(phase5-backup-worker-[1-9][0-9]{0,2})';/u)?.[1]??'unverified';
- return {controllers,authorization,bootstrapReceipt,rollbackDirectoryPresent:rollbackPresent,rollback,timers,installedWorkerVersion:workerVersion,lock:await lockState(),activeTools:await processCounts()};
+ return {controllers,authorization,bootstrapReceipt,preparedCopy,rollbackDirectoryPresent:rollbackPresent,rollback,timers,installedWorkerVersion:workerVersion,lock:await lockState(),activeTools:await processCounts()};
 }
 export async function inspectCurrent(request,io){
  // No historical install permission is inferred from a successful inspection.
@@ -168,7 +175,7 @@ export async function inspectCurrent(request,io){
  const before=await io.inventory();const extra=await io.extra();const after=await io.inventory();const extraAfter=await io.extra();
  if(before.unitHash!==after.unitHash||before.releaseHash!==after.releaseHash||before.workerPid!==after.workerPid||before.workerArgvHash!==after.workerArgvHash||
     JSON.stringify(before.previousHashes)!==JSON.stringify(after.previousHashes))fail('inventory_changed');
- for(const key of ['controllers','authorization','bootstrapReceipt','rollbackDirectoryPresent','rollback','installedWorkerVersion'])
+ for(const key of ['controllers','authorization','bootstrapReceipt','preparedCopy','rollbackDirectoryPresent','rollback','installedWorkerVersion'])
   if(JSON.stringify(extra[key])!==JSON.stringify(extraAfter[key]))fail('inventory_changed');
  return {schemaVersion:1,operation:'inspection_only',controllerCommit:request.controller,
   reviewedContractSource:INSPECT_SOURCE,reviewedContractSha256:INSPECT_CONTRACT_SHA256,
@@ -189,8 +196,8 @@ async function currentInspection(request){
 }
 // Exact existing controller upgrade; no service/worker/DB mutation in preparation.
 export const REPAIR_CONTROL_HASHES=Object.freeze({
- 'backup-worker-install-control.mjs':'aca8951b2a4751fdc9dfa58254814eb5feeeaf30b8dd99b9f436fd0695d80f8a',
- 'backup-worker-install-policy.mjs':'5623572e5433a121c692e45d9dc2d757bf66688557ab9d984ed35b9e4dda66e6',
+ 'backup-worker-install-control.mjs':'a37e7304be60702e59fb251824dbdd9eded52e516908a0904d3a4062f131d25d',
+ 'backup-worker-install-policy.mjs':'d6cb694b920bbbc60d4ebd1f6f1ea10985a2ae1c18f9809a9c0d28ad8170d46b',
  'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
 });
 // Separately evidenced post-bootstrap, pre-repair controller generation. The
