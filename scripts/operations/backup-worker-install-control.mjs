@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { APP_COMMIT, WORKER_COMMIT, FILES, RETAINED_FILES, RELEASE_SHA256, request, authorization, connection,
-  parseSelectedEnvironment, digest, fail, transition, withEmptyBackupQueue, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
+  parseSelectedEnvironment, digest, fail, transition, backupQueueFence, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
 
 const OPS = '/usr/local/lib/fanmind-ops';
 const ROOT = '/var/lib/fanmind-backup-install';
@@ -60,12 +60,22 @@ async function main() {
   if (process.getuid?.() !== 0 || process.argv.length !== 6) fail('invocation_invalid');
   const input = request(...process.argv.slice(2)); // action, controller, worker, app
   const approved = authorization(JSON.parse((await bytes(`${ROOT}/authorization.json`,0o600,16384)).toString()),input);
-  const preparation = JSON.parse((await bytes(`${ROOT}/contract-repair/${input.controllerCommit}/receipt.json`,0o600,16384)).toString());
-  if (preparation.status !== 'COMPLETED' || preparation.controllerCommit !== input.controllerCommit ||
+  const originalPreparation = 'c58cf0fc95deccfac60a78dad3805ed049e7d94f';
+  const preparedCommit = approved.preparationCommit ?? input.controllerCommit;
+  if (preparedCommit !== input.controllerCommit && preparedCommit !== originalPreparation) fail('repair_preparation_required');
+  const preparedDir = `${ROOT}/contract-repair/${preparedCommit}`;
+  const preparation = JSON.parse((await bytes(`${preparedDir}/receipt.json`,0o600,16384)).toString());
+  const preparedControllers = preparedCommit !== originalPreparation ? approved.controllerHashes : {
+    'backup-worker-install-control.mjs':'aca8951b2a4751fdc9dfa58254814eb5feeeaf30b8dd99b9f436fd0695d80f8a',
+    'backup-worker-install-policy.mjs':'5623572e5433a121c692e45d9dc2d757bf66688557ab9d984ed35b9e4dda66e6',
+    'fanmind-backup-worker-control':'cd3d53e02f8997e8e9fa7dd89d182bb18a75f28cd5d1387e338a7e9455c41306',
+  };
+  if (preparation.status !== 'COMPLETED' || preparation.controllerCommit !== preparedCommit ||
       preparation.workerCommit !== WORKER_COMMIT || preparation.applicationCommit !== APP_COMMIT ||
+      Object.entries(preparedControllers).some(([name,hash]) => preparation.newControllerHashes?.[name] !== hash) ||
       preparation.moduleSha256 !== FILES['database-authorization-contract.mjs'] ||
       preparation.unitHash !== approved.unitHash || preparation.releaseHash !== approved.releaseHash ||
-      JSON.stringify(preparation.newControllerHashes) !== JSON.stringify(approved.controllerHashes) ||
+      digest(await bytes(`${preparedDir}/database-authorization-contract.mjs`,0o600)) !== approved.previousHashes['database-authorization-contract.mjs'] ||
       preparation.previousHashes?.['database-authorization-contract.mjs'] !== approved.previousHashes['database-authorization-contract.mjs']) fail('repair_preparation_required');
   const controls = {
     'backup-worker-install-control.mjs': `${OPS}/backup-worker-install-control.mjs`,
@@ -155,9 +165,10 @@ async function main() {
     try { if ((await cmd.readFile()).toString() !== `/usr/bin/node\0${OPS}/backup-worker.mjs\0`) fail('worker_process_invalid'); }
     finally { await cmd.close(); }
   }
+  const fence = backupQueueFence(queueSql, input.controllerCommit);
   const io = {
     state, persist, checkSaved, queueEmpty, checkFiles,
-    withEmptyQueue: mutate => withEmptyBackupQueue(queueSql, mutate),
+    acquireFence: fence.acquire, releaseFence: fence.release, checkUnfenced: fence.checkAbsent,
     authorize:async()=>{authorization(approved,input);},
     preflight:async()=>{ await live(); await contract(); await queueEmpty(); await service(input.action === 'rollback'); },
     snapshot:async()=>{
