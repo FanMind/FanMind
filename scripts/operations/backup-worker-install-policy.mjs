@@ -12,7 +12,60 @@ export function inspectionRequest(action, controller, worker, app) {
 export const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 export const ENVIRONMENT = 'backup-production-recovery';
 export const OWNER_ID = 270165082;
-export const BACKUP_ACTIVE_JOBS_SQL = "begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running');rollback;";
+const activePredicate = "job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running')";
+const activeBackupJobs = `from public.admin_operation_jobs where ${activePredicate}`;
+export const BACKUP_ACTIVE_JOBS_SQL = `begin read only;set local statement_timeout='15s';select count(*) ${activeBackupJobs};rollback;`;
+
+// A committed NOT VALID check applies to every subsequent INSERT/UPDATE. It
+// survives backend and controller death without holding a long-lived table lock.
+export function backupQueueFence(sql, controller) {
+  if (!/^[a-f0-9]{40}$/.test(controller)) fail('controller_commit_invalid');
+  const table = 'public.admin_operation_jobs';
+  const name = 'fm_backup_install_' + controller;
+  const constraint = `CHECK (NOT (${activePredicate})) NOT VALID`;
+  const begin = `BEGIN ISOLATION LEVEL READ COMMITTED;
+    SET LOCAL search_path = pg_catalog;
+    SET LOCAL statement_timeout = '15s';
+    LOCK TABLE ${table} IN ACCESS EXCLUSIVE MODE NOWAIT;`;
+  // Build an exemplar with the same column types so PG's own deparser can
+  // verify a surviving guard, including casts and NOT VALID, before adoption.
+  const inspect = `CREATE TEMP TABLE fm_install_exemplar ON COMMIT DROP AS
+      SELECT job_type,status FROM ${table} WITH NO DATA;
+    ALTER TABLE pg_temp.fm_install_exemplar ADD CONSTRAINT expected ${constraint};
+    DO $guard$ BEGIN
+      IF EXISTS (SELECT FROM pg_constraint WHERE conrelid='${table}'::regclass
+        AND starts_with(conname::text,'fm_backup_install_')
+        AND (conname <> '${name}' OR pg_get_constraintdef(oid) IS DISTINCT FROM
+          (SELECT pg_get_constraintdef(oid) FROM pg_constraint
+           WHERE conrelid='pg_temp.fm_install_exemplar'::regclass AND conname='expected'))) THEN
+        RAISE EXCEPTION 'queue_fence_mismatch';
+      END IF;
+    END $guard$;`;
+  return {
+    checkAbsent() {
+      const count = sql(`SELECT count(*) FROM pg_catalog.pg_constraint
+        WHERE conrelid='${table}'::regclass AND starts_with(conname::text,'fm_backup_install_');`);
+      if (count !== '0') fail('queue_fence_requires_reconciliation');
+    },
+    acquire() {
+      sql(`${begin}
+        ${inspect}
+        DO $guard$ BEGIN
+          IF EXISTS (SELECT 1 ${activeBackupJobs}) THEN RAISE EXCEPTION 'backup_jobs_active'; END IF;
+          IF NOT EXISTS (SELECT FROM pg_constraint WHERE conrelid='${table}'::regclass AND conname='${name}') THEN
+            ALTER TABLE ${table} ADD CONSTRAINT ${name} ${constraint};
+          END IF;
+        END $guard$;
+        COMMIT;`);
+    },
+    release() {
+      sql(`${begin}
+        ${inspect}
+        ALTER TABLE ${table} DROP CONSTRAINT IF EXISTS ${name};
+        COMMIT;`);
+    },
+  };
+}
 // Historical, pre-#1515 contract hash; not evidence of what is installed today.
 export const OLD_CONTRACT_SHA256 = 'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de';
 // #1515 reported an INSTALLED worker with the 39/29 contract. Require an
@@ -102,17 +155,21 @@ export async function transition(input, io) {
   if (input.action === 'verify') {
     if (state && state.status !== 'INSTALLED' && state.status !== 'ROLLED_BACK') fail('reconciliation_required');
     await io.checkFiles(state?.status === 'INSTALLED' ? 'new' : 'old');
+    await io.checkUnfenced();
     return 'VERIFIED';
   }
   if (input.action === 'install' && state) {
     if (state.status !== 'INSTALLED') fail('receipt_already_exists');
     await io.checkFiles('new');
+    await io.checkSaved(); await io.postflight(); await io.authorize(); await io.releaseFence();
     return 'ALREADY_INSTALLED';
   }
   if (input.action === 'rollback' && !state) fail('rollback_receipt_missing');
   if (input.action === 'rollback' && state.status === 'ROLLED_BACK') {
-    await io.checkFiles('old'); return 'ALREADY_ROLLED_BACK';
+    await io.checkFiles('old'); await io.checkSaved(); await io.postflight();
+    await io.authorize(); await io.releaseFence(); return 'ALREADY_ROLLED_BACK';
   }
+
   await io.authorize(); // fresh TTL before any persistent preparation/write
   if (input.action === 'install') {
     await io.checkFiles('old');
@@ -122,6 +179,7 @@ export async function transition(input, io) {
     await io.checkKnownFiles(); // only exactly saved-old or exactly pinned-new
   }
   await io.authorize(); // fresh TTL before controlled service mutation
+  await io.acquireFence();
   await io.stop();
   // A timer can enqueue/claim after the initial read. Do not resume or mutate
   // program files on an indeterminate/active job; operator reconciliation first.
@@ -134,7 +192,6 @@ export async function transition(input, io) {
     await io.start();
     await io.postflight();
     await io.persist(input.action === 'install' ? 'INSTALLED' : 'ROLLED_BACK');
-    return input.action === 'install' ? 'INSTALLED' : 'ROLLED_BACK';
   } catch {
     await io.persist('RECONCILIATION_REQUIRED');
     try {
@@ -143,6 +200,9 @@ export async function transition(input, io) {
       await io.checkFiles('old'); await io.start(); await io.postflight();
       await io.persist('ROLLED_BACK');
     } catch { fail('reconciliation_required'); }
+    await io.releaseFence();
     fail('installation_failed_rolled_back');
   }
+  await io.releaseFence();
+  return input.action === 'install' ? 'INSTALLED' : 'ROLLED_BACK';
 }
