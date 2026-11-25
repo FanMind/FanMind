@@ -251,9 +251,10 @@ test('prepared update reads back both controllers before activating authority an
  await assert.rejects(applyControllerUpdate(items,read,(i,data)=>{
   write(i,data);
   if(i.name==='policy'&&data.equals(i.next))throw Error('after rename');
- },()=>assert.fail('unexpected completion')),/after rename/);
+ },()=>{}),/after rename/);
  for(const i of items)assert.deepEqual(read(i),i.old);
- await applyControllerUpdate(items,read,write,()=>{for(const i of items)assert.deepEqual(read(i),i.next);});
+ await applyControllerUpdate(items,read,write,()=>assert.fail('unexpected rollback'));
+ for(const i of items)assert.deepEqual(read(i),i.next);
  write(items[1],Buffer.from('unknown'));
  let writes=0;
  await assert.rejects(restoreControllerUpdate(items,read,()=>{writes++;}),/update_unknown_bytes/);
@@ -262,4 +263,77 @@ test('prepared update reads back both controllers before activating authority an
  const order=[];
  await restoreControllerUpdate(items,read,(i,data)=>{order.push(i.name);write(i,data);});
  assert.deepEqual(order,['authorization','control']);
+});
+
+test('controller update recovers after SIGKILL on either side of authorization publication', async t => {
+  const {writeFile, rename} = await import('node:fs/promises');
+  const {tmpdir} = await import('node:os');
+  const {recoverControllerUpdate} = await import('../scripts/operations/backup-worker-root-bootstrap.mjs');
+  const moduleUrl = new URL('../scripts/operations/backup-worker-root-bootstrap.mjs', import.meta.url).href;
+  const dir = await mkdtemp(join(tmpdir(), 'fanmind-controller-crash-'));
+  t.after(() => rm(dir, {recursive:true, force:true}));
+  const journalPath = join(dir, 'journal.json');
+  const recorded = [
+    {name:'control', old:'control old', next:'control new'},
+    {name:'policy', old:'policy old', next:'policy new'},
+    {name:'authorization', old:'previous authority', next:'{"expiresAt":"2026-11-25T20:00:00.000Z"}'},
+  ];
+  await writeFile(journalPath, JSON.stringify(recorded), {mode:0o600});
+  const loadJournal = async () => JSON.parse(await readFile(journalPath, 'utf8')).map(item => ({
+    ...item, old:Buffer.from(item.old), next:Buffer.from(item.next),
+  }));
+  const read = item => readFile(join(dir,item.name));
+  const replace = async (item, data) => {
+    await writeFile(join(dir,'replacement'), data);
+    await rename(join(dir,'replacement'), join(dir,item.name));
+  };
+  const child = `
+    import {applyControllerUpdate} from ${JSON.stringify(moduleUrl)};
+    import {readFile,writeFile,rename} from 'node:fs/promises';
+    import {join} from 'node:path';
+    const [dir,killAfter] = process.argv.slice(1);
+    const rows = JSON.parse(await readFile(join(dir,'journal.json'),'utf8')).map(item => ({
+      ...item, old:Buffer.from(item.old), next:Buffer.from(item.next),
+    }));
+    await applyControllerUpdate(rows, item => readFile(join(dir,item.name)), async (item,data) => {
+      await writeFile(join(dir,'replacement'),data);
+      await rename(join(dir,'replacement'),join(dir,item.name));
+      if (item.name === killAfter) process.kill(process.pid,'SIGKILL');
+    }, () => { throw new Error('unexpected controlled rollback'); });
+  `;
+  for (const killAfter of ['policy','authorization']) {
+    const items = await loadJournal();
+    for (const item of items) await writeFile(join(dir,item.name),item.old);
+    const killed = spawnSync(process.execPath, ['--input-type=module','-e',child,dir,killAfter], {timeout:10000});
+    assert.equal(killed.signal, 'SIGKILL', killed.stderr?.toString());
+    const restarted = await loadJournal();
+    for (const item of restarted) {
+      const expected = item.name === 'authorization' && killAfter === 'policy' ? item.old : item.next;
+      assert.deepEqual(await read(item), expected);
+    }
+    const writes = [];
+    const replay = (item,data) => { writes.push(item.name); return replace(item,data); };
+    let committed = false, rolledBack = false;
+    const recovery = () => recoverControllerUpdate(restarted, read, replay,
+      () => { committed = true; }, () => { rolledBack = true; });
+    if (killAfter === 'policy') {
+      await assert.rejects(recovery(), /update_rolled_back/);
+      assert.deepEqual(writes,['policy','control']);
+      assert.equal(rolledBack,true);
+      assert.equal(committed,false);
+      for (const item of restarted) assert.deepEqual(await read(item), item.old);
+    } else {
+      await recovery();
+      assert.deepEqual(writes,[]);
+      assert.equal(committed,true);
+      assert.equal(rolledBack,false);
+      for (const item of restarted) assert.deepEqual(await read(item), item.next);
+      await writeFile(join(dir,'policy'),'unknown');
+      committed = false;
+      await assert.rejects(recovery(), /update_unknown_bytes/);
+      assert.deepEqual(writes,[]);
+      assert.equal(committed,false);
+      assert.equal(rolledBack,false);
+    }
+  }
 });
