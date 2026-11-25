@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { sourcePlan, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
+import { sourcePlan, providerReviewSummary, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
 import { REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
 
 const candidate = "b".repeat(40), head = "c".repeat(40);
@@ -121,4 +121,27 @@ test("discover unambiguous existing Staging evidence and reject incomplete or co
     [deployment, { ...acceptance, run_started_at: deployment.run_started_at }],
   ]) await assert.rejects(discover(rows));
   await assert.rejects(discover([deployment, acceptance], true));
+});
+
+test("provider review uses canonical changed paths including deletions without granting or disclosing data", () => {
+  const changes = [
+    { status: "D", path: "src/app/api/stripe/webhook/route.ts" },
+    { status: "A", path: "src/lib/stripeClient.ts" },
+    { status: "M", path: "src/app/api/webhooks/meta/route.ts" },
+    { status: "M", path: "src/lib/socialProviderPolicy.mjs" },
+    { status: "M", path: "src/app/api/webhooks/whatsapp/route.ts" },
+    { status: "M", path: "src/lib/telegramWebhook.ts" },
+    { status: "M", path: "src/lib/stagingEmailProviderAcceptancePolicy.mjs" },
+    { status: "M", path: "shared/unclassified-sensitive-name" },
+  ];
+  const summary = providerReviewSummary({ base: head, candidate, changes });
+  assert.match(summary, /Stripe\*\* \(2 changed paths\)/u);
+  for (const label of ["Facebook / Instagram", "TikTok / X", "WhatsApp", "Telegram", "Staging email"]) {
+    assert.ok(summary.includes(label));
+  }
+  for (const [, contract] of summary.matchAll(/blob\/[a-f0-9]{40}\/(docs\/[^)]+)\)/gu)) {
+    assert.ok(readFileSync(contract, "utf8").length > 0);
+  }
+  assert.doesNotMatch(summary, /unclassified-sensitive-name|PASS/u);
+  assert.match(providerReviewSummary({ base: head, candidate, changes: changes.slice(-1) }), /No direct provider matches/u);
 });

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { completeChecks, readCompleteCheckRuns, REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "./production-release-preflight.mjs";
 
@@ -47,6 +47,40 @@ export function sourcePlan(root, base, candidate) {
     state: "PREPARED_NOT_AUTHORIZED",
     requiredBeforeRelease: ["FRESH_PRODUCTION_BASE_AND_CONFIGURATION", "CURRENT_BACKUP_AND_RESTORE_PROOF", "CONTROLLED_SQL_DECISIONS", "OWNER_AND_PRODUCTION_ENVIRONMENT_APPROVAL", "FULL_NONPRODUCTION_TIMED_REHEARSAL"],
   };
+}
+
+// Review pointers for directly identifiable provider surfaces. They never
+// participate in the admission decision or alter an existing package digest.
+const PROVIDER_REVIEWS = [
+  [/^(?:src\/app\/api\/(?:stripe|billing)\/|src\/lib\/(?:stripe|aiTierStripe|referralStripe)|scripts\/operations\/(?:staging-stripe-|stripe-billing-))/u,
+    "Stripe", "Verify applicable price mapping, tax configuration and signed webhook/lifecycle evidence.", "docs/operations/STRIPE_RUNTIME_CONFORMANCE.md"],
+  [/^(?:src\/app\/api\/(?:integrations\/(?:facebook|instagram)|webhooks\/meta)\/|src\/lib\/(?:facebook|instagram|meta)(?=[A-Z.])|scripts\/operations\/(?:production-meta-|staging-meta-))/u,
+    "Facebook / Instagram", "Verify required permissions, app review and account-level subscription evidence.", "docs/operations/META_APP_REVIEW_READINESS_20261114.md"],
+  [/^(?:src\/app\/api\/integrations\/social\/|src\/lib\/socialProvider|scripts\/operations\/social-provider-)/u,
+    "TikTok / X", "Verify permitted OAuth scopes and the target-specific pilot boundaries.", "docs/integrations/TIKTOK_X_CONNECTIONS.md"],
+  [/^(?:src\/app\/api\/webhooks\/whatsapp\/|src\/lib\/whatsapp)/u,
+    "WhatsApp", "Check the inbound-only Staging contract and its Production prohibition.", "docs/integrations/WHATSAPP_CLOUD_INBOUND.md"],
+  [/^(?:src\/app\/api\/integrations\/telegram\/|src\/lib\/telegram)/u,
+    "Telegram", "Check server-side webhook authentication and workspace binding.", "docs/telegram-webhook.md"],
+  [/^(?:src\/lib\/stagingEmailProviderAcceptancePolicy|scripts\/operations\/staging-email-provider-)/u,
+    "Staging email", "Verify the isolated sender, recipient and delivery evidence for the synthetic scope.", "docs/operations/STAGING_EMAIL_PROVIDER_ACCEPTANCE.md"],
+];
+
+export function providerReviewSummary({ base, candidate, changes }) {
+  requireValue(SHA.test(base) && SHA.test(candidate));
+  const lines = [
+    "### Provider prerequisites for review",
+    `Candidate \`${candidate}\` against Production base \`${base}\`.`,
+    "Direct path matches only. Shared dependencies and other providers require release-scope review. No provider state has been verified or authorized.",
+    "",
+  ];
+  const matches = [];
+  for (const [pattern, name, prerequisite, contract] of PROVIDER_REVIEWS) {
+    const count = changes.filter(change => pattern.test(change.path)).length;
+    if (count) matches.push(`- **${name}** (${count} changed ${count === 1 ? "path" : "paths"}). ${prerequisite} [Repository contract](https://github.com/FanMind/FanMind/blob/${candidate}/${contract})`);
+  }
+  lines.push(...(matches.length ? matches : ["No direct provider matches."]));
+  return lines.join("\n") + "\n";
 }
 
 export function verifySource(root, manifest) {
@@ -170,6 +204,9 @@ async function main() {
     if (command === "prepare") {
       requireValue(process.env.GITHUB_REPOSITORY === REPO && process.env.GITHUB_REF === "refs/heads/main"
         && process.env.GITHUB_SHA === candidate && process.env.GITHUB_EVENT_NAME === "workflow_dispatch");
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        appendFileSync(process.env.GITHUB_STEP_SUMMARY, providerReviewSummary(manifest));
+      }
       const get = async path => {
         const response = await fetch(`https://api.github.com/repos/${REPO}/${path}`, {
           headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: "application/vnd.github+json" },

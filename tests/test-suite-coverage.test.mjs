@@ -11,12 +11,10 @@ const testsDirectory = path.join(repoRoot, "tests");
 
 const requiredCiRoots = [
   "test:operations",
-  "test:release-integrations",
   "test:staging-stripe-catalog",
   "test:staging-stripe-webhook",
   "test:database-authorization:pg17",
   "test:creator-foundation-transition",
-  "test:ai-capacity",
 ];
 
 function referencedScripts(command) {
@@ -66,6 +64,29 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
     for (const testPath of collectReachableTests(scripts, rootScript)) {
       ciOwnedTests.add(testPath);
     }
+  }
+
+  // The integration step runs only tests not already covered by Operations.
+  // Check actual workflow command, not a comment or the unused package alias.
+  const integrationStep = workflow.split("      - name: Website Chat and Inbox integration policies\n")[1]?.split("\n      - name:")[0];
+  assert.ok(integrationStep, "missing integration step");
+  const integrationCommand = integrationStep.split("\n").find(line => line.trim().startsWith("{ npm run "));
+  assert.ok(integrationCommand, "missing integration command");
+  const actual = new Set(referencedTests(integrationCommand));
+  for (const match of integrationCommand.matchAll(/npm run ([A-Za-z0-9:_-]+)/gu)) {
+    for (const file of collectReachableTests(scripts, match[1])) actual.add(file);
+  }
+  const operations = collectReachableTests(scripts, "test:operations");
+  const expected = [...collectReachableTests(scripts, "test:release-integrations")].filter(file => !operations.has(file)).sort();
+  assert.deepEqual([...actual].sort(), expected, "integration step must execute exactly the tests not covered by Operations");
+  for (const file of actual) ciOwnedTests.add(file);
+
+  const capacityStep = workflow.split("      - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17\n")[1]?.split("\n      - name:")[0];
+  const nativeCommand = capacityStep?.split("\n").find(line => line.trim().startsWith("run: node --test "));
+  assert.ok(nativeCommand, "required native Capacity command");
+  for (const file of referencedTests(nativeCommand)) ciOwnedTests.add(file);
+  for (const file of collectReachableTests(scripts, "test:ai-capacity")) {
+    assert.ok(ciOwnedTests.has(file), `Capacity suite lost CI coverage for ${file}`);
   }
 
   const trackedTests = entries

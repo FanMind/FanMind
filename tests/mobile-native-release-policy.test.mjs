@@ -206,7 +206,7 @@ function completedBuild(overrides = {}) {
 }
 
 test("Mobile has an explicit SDK-compatible development-client workflow", () => {
-  assert.equal(packageJson.dependencies["expo-dev-client"], "~58.0.20");
+  assert.equal(packageJson.dependencies["expo-dev-client"], "~58.0.21");
   assert.equal(packageJson.dependencies["expo-system-ui"], "~58.0.7");
   assert.ok(appConfig.expo.plugins.includes("expo-dev-client"));
   assert.ok(appConfig.expo.plugins.includes("expo-system-ui"));

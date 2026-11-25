@@ -106,7 +106,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm run test:release-integrations 2>&1 | tee release-integration-report.txt
+          { npm run test:website-chat && node --test tests/inbox-human-handoff-policy.test.mjs && npm run test:production-controls && node --test tests/whatsapp-cloud-inbound.test.mjs; } 2>&1 | tee release-integration-report.txt
 
       - name: Upload release integration report
         if: always()

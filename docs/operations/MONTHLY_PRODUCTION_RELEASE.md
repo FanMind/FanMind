@@ -92,6 +92,10 @@ Danach ist der monatliche Bedienablauf:
    Deployments oder mehrdeutigen nachfolgenden Abnahmen beide Referenzen
    angeben (`staging_deployment_run` und JSON-Liste `staging_acceptance_runs`).
    Beide Wege prüfen Run, Attempt und tatsächlich ausgeführten Job erneut gegen GitHub.
+   Die Jobzusammenfassung nennt anhand des vollständigen Dateidiffs direkt erkennbare
+   Providerbereiche und verlinkt deren Prüfvoraussetzungen am Kandidaten. Sie steht
+   schon vor der Staging-Nachweisprüfung bereit. Gemeinsame Abhängigkeiten und
+   weitere Anbieter sind im Releaseumfang gesondert zu prüfen.
 3. Das unveränderte Quellpaket samt SHA256, vollständiger Dateidifferenz,
    einzelnen Feature-/Abnahmezuordnungen und SQL-Entscheidungen freigabefertig
    vorbereiten. Root-Evidence-Bundle aus bereits vorhandenen offiziellen
