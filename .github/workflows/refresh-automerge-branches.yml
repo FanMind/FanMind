@@ -1,0 +1,35 @@
+name: Refresh opted-in PR branches
+
+on:
+  push:
+    branches: [main]
+  pull_request_target:
+    branches: [main]
+    types: [auto_merge_enabled]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    if: github.repository == 'FanMind/FanMind' && github.ref == 'refs/heads/main' && vars.FANMIND_AUTO_REFRESH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: fanmind-pr-refresh
+    concurrency:
+      group: refresh-automerge-${{ github.event.pull_request.number || 'all' }}
+      cancel-in-progress: false
+    steps:
+      - name: Check out trusted event base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Refresh opted-in branches
+        env:
+          GH_TOKEN: ${{ secrets.FANMIND_PR_REFRESH_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          test -n "$GH_TOKEN" || { echo "::error::Missing PR refresh credential"; exit 1; }
+          node scripts/orchestration/refresh-automerge-candidates.mjs "$PR_NUMBER"

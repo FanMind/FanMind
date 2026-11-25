@@ -18,6 +18,13 @@ class ComponentScopeTest(unittest.TestCase):
                       [b"package-lock.json"], [b"scripts/ci/chatadmin_media_scope.py"]):
             self.assertTrue(video_required(paths), paths)
 
+    def test_unrelated_product_routes_and_mobile_docs(self):
+        route = b"src/app/api/stripe/webhook/route.ts"
+        self.assertFalse(video_required([route, b"docs/mobile/STORE_LISTING.md"]))
+        for path in (b"src/app/api/chatadmin/media/route.ts", b"package-lock.json",
+                     b"scripts/ci/pr_component_scope.py", b"src/lib/shared.ts"):
+            self.assertTrue(video_required([route, path]))
+
     def test_mobile_store_documents_only(self):
         self.assertFalse(mobile_build_required([b"docs/mobile/STORE_LISTING.md"]))
         for paths in ([], [b"docs/mobile/unknown.md"], [b"docs/mobile/STORE_LISTING.md", b"apps/mobile/app.json"]):

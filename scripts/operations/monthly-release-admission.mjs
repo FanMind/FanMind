@@ -3,15 +3,53 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, realpathSync } from 'no
 import { execFileSync } from 'node:child_process';
 import { resolve, join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sha256, validateAdmission, validateSqlReceipt } from './monthly-release-control.mjs';
+import { sha256, SQL_PROOFS, validateAdmission, validateSqlReceipt } from './monthly-release-control.mjs';
 import { verifySource } from './monthly-release-package.mjs';
+function writePlanDraft(sourcePath, output) {
+  const raw = readFileSync(sourcePath);
+  const source = JSON.parse(raw);
+  verifySource(process.cwd(), source);
+  if (source.evidence?.sourceChecks !== 'PASS_AT_PREPARATION_ONLY' ||
+      !Array.isArray(source.evidence.acceptances) || source.evidence.acceptances.length === 0 ||
+      !raw.equals(Buffer.from(JSON.stringify(source, null, 2) + '\n'))) throw Error('prepared_source_required');
+  const references = [source.evidence.staging, ...source.evidence.acceptances];
+  if (references.some(ref => ref?.candidate !== source.candidate || !Number.isSafeInteger(ref.id) || ref.id <= 0 ||
+      !Number.isSafeInteger(ref.attempt) || ref.attempt <= 0 || typeof ref.path !== 'string') ||
+      new Set(references.map(ref => ref.id)).size !== references.length) throw Error('staging_reference_binding');
+  const draft = {
+    sourcePackageSha256: sha256(raw),
+    base: source.base, candidate: source.candidate, target: 'production', controller: source.controller,
+    availableStagingRuns: source.evidence.acceptances.map(({ id, attempt, path }) => ({ id, attempt, path })),
+    coverage: source.changes.map(({ path }) => ({
+      path, kind: /^(?:docs|tests)\//u.test(path) ? 'source_ci' : null,
+    })),
+    configuration: { supportDisabled: null, supportHelp: null },
+    restoreFiles: { evidence: null, full: null, runner: null, postcheck: null },
+    rehearsalFile: null,
+    sql: source.sql.map(({ path, sha256: digest }) => ({
+      path, controller: digest && Object.hasOwn(SQL_PROOFS, path) && SQL_PROOFS[path].sqlSha256 === digest
+        ? SQL_PROOFS[path].workflow : null,
+      backwardCompatible: null, receiptFile: null,
+    })),
+  };
+  writeFileSync(output, JSON.stringify(draft, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+}
+
 let directory, created = false;
-try {
+function main() {
   const [sourcePath, planPath, out] = process.argv.slice(2);
-  if (!sourcePath || !planPath || !out || process.getuid() === 0) throw Error('usage');
+  if (!sourcePath || !planPath || !out || process.getuid() === 0 || process.argv.length !== 5) throw Error('usage');
+  if (sourcePath === '--draft') {
+    writePlanDraft(planPath, out);
+    process.stdout.write('MONTHLY_RELEASE_PLAN=DRAFT_REQUIRES_REVIEW\n');
+    return;
+  }
   const source = JSON.parse(readFileSync(sourcePath)), plan = JSON.parse(readFileSync(planPath));
   verifySource(process.cwd(), source);
   const hash = sha256(JSON.stringify(source, null, 2) + '\n');
+  if (Object.hasOwn(plan, 'sourcePackageSha256') && (plan.sourcePackageSha256 !== hash ||
+      plan.base !== source.base || plan.candidate !== source.candidate || plan.target !== 'production' ||
+      plan.controller !== source.controller)) throw Error('draft_source_binding');
   const names = ['evidence', 'full', 'runner', 'postcheck'];
   const bytes = names.map(name => readFileSync(plan.restoreFiles[name]));
   const evidence = JSON.parse(bytes[0]), rehearsalBytes = readFileSync(plan.rehearsalFile), rehearsal = JSON.parse(rehearsalBytes);
@@ -40,6 +78,9 @@ try {
   if (!result.includes('RESTORE_DRILL_EVIDENCE=PASS\n')) throw Error('restore');
   writeFileSync(join(directory, `${hash}.json`), JSON.stringify(a, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
   process.stdout.write(`MONTHLY_ADMISSION=PROPOSED_NOT_AUTHORIZED\nPACKAGE_SHA256=${hash}\n`);
+}
+try {
+  main();
 } catch {
   if (created) rmSync(directory, { force: true, recursive: true });
   process.stderr.write('MONTHLY_ADMISSION=BLOCK\n'); process.exitCode = 1;

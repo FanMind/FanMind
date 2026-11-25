@@ -27,9 +27,13 @@ test("request one guarded update for the selected behind PR", () => {
 test("leave other branches, states, heads and opt-outs alone", () => {
   for (const change of [{ state: "MERGED" }, { isDraft: true }, { baseRefName: "release" },
     { headRefOid: "b".repeat(40) }, { headRepository: null }, { autoMergeRequest: null },
-    { mergeStateStatus: "CLEAN" }, { mergeStateStatus: "DIRTY" }, { mergeStateStatus: "UNKNOWN" }]) {
+    { mergeStateStatus: "CLEAN" }]) {
     assert.equal(exercise(change, 0), "NO_UPDATE");
   }
+});
+test("report conflicts and uncomputed merge states without writing", () => {
+  assert.equal(exercise({ mergeStateStatus: "DIRTY" }, 0), "CONFLICT");
+  assert.equal(exercise({ mergeStateStatus: "UNKNOWN" }, 0), "MERGE_STATE_UNKNOWN");
 });
 test("API and validation failures never authorize a write", () => {
   assert.throws(() => refreshAutomergePr("42", head, () => "{}"), /pr_metadata_unavailable/);

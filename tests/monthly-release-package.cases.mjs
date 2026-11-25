@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -24,7 +25,7 @@ function responses() {
   };
 }
 
-test("actual Git/CLI preparation, tamper rejection, abort and repeat preparation", t => {
+test("actual Git/CLI preparation, tamper rejection, abort and repeat preparation", async t => {
   const root = mkdtempSync(join(tmpdir(), "fanmind-monthly-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const git = (...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -33,6 +34,8 @@ test("actual Git/CLI preparation, tamper rejection, abort and repeat preparation
   const base = git("rev-parse", "HEAD");
   mkdirSync(join(root, "supabase", "controlled"), { recursive: true });
   writeFileSync(join(root, "supabase", "controlled", "fixture.sql"), "select 1;\n");
+  mkdirSync(join(root, "docs"));
+  writeFileSync(join(root, "docs", "guide.md"), "source-only\n");
   writeFileSync(join(root, "feature.txt"), "synthetic source\n"); git("add", "."); git("commit", "-qm", "candidate");
   const sha = git("rev-parse", "HEAD");
   const manifest = sourcePlan(root, base, sha);
@@ -56,6 +59,32 @@ test("actual Git/CLI preparation, tamper rejection, abort and repeat preparation
   assert.equal(invoke("plan", base, sha, output).status, 0);
   assert.equal(readFileSync(output, "utf8"), frozen);
   assert.equal(git("rev-parse", "HEAD"), sha);
+
+  // Use the same admission entry point and artifact bytes as the preparation workflow.
+  const generator = resolve("scripts/operations/monthly-release-admission.mjs");
+  const draftPath = join(root, "draft.json");
+  const propose = (...args) => spawnSync(process.execPath, [generator, ...args], { cwd: root, encoding: "utf8" });
+  assert.equal(propose("--draft", output, draftPath).status, 1);
+  const fixture = responses();
+  manifest.evidence = await collectEvidence(candidate, 1, [2], async path => fixture[path]);
+  writeFileSync(output, JSON.stringify(manifest, null, 2) + "\n");
+  assert.equal(propose("--draft", output, draftPath).status, 1);
+  for (const ref of [manifest.evidence.staging, ...manifest.evidence.acceptances]) ref.candidate = sha;
+  const bytes = JSON.stringify(manifest, null, 2) + "\n";
+  writeFileSync(output, bytes);
+  assert.equal(propose("--draft", output, draftPath).status, 0);
+  const draft = JSON.parse(readFileSync(draftPath));
+  assert.equal(draft.sourcePackageSha256, createHash("sha256").update(bytes).digest("hex"));
+  assert.equal(draft.candidate, sha);
+  assert.equal(draft.base, base);
+  assert.deepEqual(draft.availableStagingRuns, [{ id: 2, attempt: 1, path: ".github/workflows/browser-e2e-staging.yml" }]);
+  assert.equal(draft.coverage.find(row => row.path === "feature.txt").kind, null);
+  assert.equal(draft.coverage.find(row => row.path === "docs/guide.md").kind, "source_ci");
+  assert.equal(draft.sql[0].controller, null);
+  assert.equal(draft.configuration.supportDisabled, null);
+  assert.equal(propose("--draft", output, draftPath).status, 1);
+  assert.equal(propose(output, draftPath, join(root, "admission")).status, 1);
+
 });
 
 test("GitHub evidence is exact-source, protected-main and subsequent-Staging bound", async () => {

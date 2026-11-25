@@ -24,7 +24,10 @@ export function refreshAutomergePr(number, head, gh) {
       !["CLOSED", "MERGED", "OPEN"].includes(pr.state)) throw new Error("pr_metadata_unavailable");
   if (pr.state !== "OPEN" || pr.isDraft || pr.baseRefName !== "main" ||
       pr.headRepository?.nameWithOwner !== repository || pr.headRefOid !== head ||
-      !pr.autoMergeRequest?.enabledAt || pr.mergeStateStatus !== "BEHIND") return "NO_UPDATE";
+      !pr.autoMergeRequest?.enabledAt) return "NO_UPDATE";
+  if (pr.mergeStateStatus === "DIRTY") return "CONFLICT";
+  if (!pr.mergeStateStatus || pr.mergeStateStatus === "UNKNOWN") return "MERGE_STATE_UNKNOWN";
+  if (pr.mergeStateStatus !== "BEHIND") return "NO_UPDATE";
 
   gh(["api", "--method", "PUT", `repos/${repository}/pulls/${number}/update-branch`,
     "-f", `expected_head_sha=${head}`]);

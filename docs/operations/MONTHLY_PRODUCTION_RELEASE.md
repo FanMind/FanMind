@@ -143,14 +143,25 @@ und den tatsächlich bestandenen Schritt
 
 ### Evidence-Vorschlag ohne manuelle Prüfsummenarbeit
 
+Die Vorbereitung liefert neben `monthly-release.json` einen an Paket-Hash,
+Base und Kandidat gebundenen `monthly-release-plan.json`. Der Entwurf übernimmt
+Dateipfade, bestätigte Staging-Run-Referenzen und bekannte SQL-Controller bei
+exaktem SQL-Hash. Nur Dokumentations- und Testpfade erhalten einen
+Quell-CI-Vorschlag. Fachliche Abnahmen sind je Laufzeitdatei gezielt zuzuordnen
+(`kind: "staging"`, `runId` aus `availableStagingRuns`). Offene Felder bleiben
+`null`. Unbekannte oder veränderte SQL-Adapter benötigen eigenständige Klärung.
+Die privaten Nachweispfade und die beiden Konfigurationsentscheidungen werden
+ausschließlich in der lokalen Arbeitskopie des Plans ergänzt. Eine Recovery-
+Freigabe bleibt an die beobachtete vorherige Attempt-ID gebunden.
+
 Vor dem Release kann der Operator lokal aus dem Quellpaket, einem geprüften
 Plan und den bereits vorhandenen privaten Nachweisen einen Vorschlag erzeugen:
 
 ```bash
-node scripts/operations/monthly-release-admission.mjs monthly-release.json plan.json .monthly-release-prepared
+node scripts/operations/monthly-release-admission.mjs monthly-release.json monthly-release-plan.json .monthly-release-prepared
 ```
 
-`plan.json` enthält `coverage`, `configuration` (die beiden bestehenden Support-
+Der ausgefüllte Plan enthält `coverage`, `configuration` (die beiden bestehenden Support-
 Optionen), `restoreFiles` mit `evidence/full/runner/postcheck`-Dateipfaden,
 `rehearsalFile` und `sql` mit `path`, `controller`, `backwardCompatible` sowie
 `receiptFile`. Bei einer bestätigten Recovery kommt `resumeAfterAttempt` hinzu.
