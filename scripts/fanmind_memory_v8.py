@@ -57,7 +57,7 @@ def render_handoff() -> str:
         "",
         "## Mandatory new-chat / project-entry rule",
         "",
-        "Before answering project-state questions or proposing/executing work, read Project Memory first: `PROTOCOL.md`, `CURRENT_STATE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTION.md`, `AUTO_HANDOFF.md`, `OWNER_ACTION_INBOX.md`, `SESSION_HANDOFF.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `TASK_LEDGER.md`, `DEPENDENCIES.md`, `DECISIONS.md`, `FAILED_ATTEMPTS.md` and relevant canonical Source-of-Truth documents. Then reconcile current GitHub/main/PR/CI plus relevant runtime/provider evidence and run the Next Best Action selector. Do not repeat completed, failed, superseded or owner-deferred work. If Project Memory and current evidence disagree, record/reconcile the contradiction before continuing.",
+        "Use the lane in `EXECUTION_POLICY.md` to select relevant readers. For status or next-task selection, reconcile current GitHub, relevant memory, locks and target evidence before relying on prior chat. Explicit bounded work needs only the preflight for its lane. Refresh the selector when its inputs change.",
         "",
     ]
     return "\n".join(lines)
@@ -75,13 +75,13 @@ def validate() -> list[str]:
             errors.append("cross-chat-state-invalid")
         rules = cross.get("rules", {})
         for key in [
-            "require_project_memory_preflight_before_project_answer_or_action",
+            "require_execution_policy_scoped_preflight",
             "chat_memory_is_navigation_only",
             "chat_claim_is_not_evidence",
             "github_and_project_memory_win_on_conflict",
             "require_current_evidence_reconciliation",
-            "require_memory_refresh_after_external_chat_completion",
-            "require_next_best_action_refresh",
+            "require_memory_refresh_for_durable_external_changes",
+            "require_next_best_action_refresh_on_input_change",
             "do_not_repeat_if_verified_elsewhere",
         ]:
             if rules.get(key) is not True:

@@ -130,7 +130,11 @@ else:
                 errors.append(f"legacy-issue-freshness-revision-invalid:{issue_number}")
 
 quality = (PM / "QUALITY_CONTROL.md").read_text(encoding="utf-8") if (PM / "QUALITY_CONTROL.md").exists() else ""
-for token in ["R1", "R2", "R3", "R4", "COUNTERCHECKED", "PRODUCTION_CONFIRMED", "What observation would prove our conclusion wrong?"]:
+execution = (PM / "EXECUTION_POLICY.md").read_text(encoding="utf-8") if (PM / "EXECUTION_POLICY.md").exists() else ""
+for token in ["Autonomous", "Controlled", "Exceptional protected", "R1", "R2", "R3", "R4"]:
+    if token not in execution:
+        errors.append(f"execution-policy-missing:{token}")
+for token in ["EXECUTION_POLICY.md", "COUNTERCHECKED", "PRODUCTION_CONFIRMED", "What observation would prove our conclusion wrong?"]:
     if token not in quality:
         errors.append(f"quality-contract-missing:{token}")
 

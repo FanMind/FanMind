@@ -87,8 +87,11 @@ Danach ist der monatliche Bedienablauf:
    festhalten. Der bestehende Controller verlangt weiterhin aktuellen Main;
    während Vorbereitung/Freigabe/Ausführung nicht unbemerkt Main ersetzen.
 2. `Prepare FanMind monthly release (no deployment)` auf genau diesem Main
-   ausführen. Eingaben: frisch verifizierter Production-Base-SHA,
-   `staging_deployment_run`, JSON-Liste `staging_acceptance_runs`.
+   ausführen und den frisch verifizierten Production-Base-SHA angeben. Der
+   Generator sucht vorhandene Staging-Läufe für genau diesen Main. Bei mehreren
+   Deployments oder mehrdeutigen nachfolgenden Abnahmen beide Referenzen
+   angeben (`staging_deployment_run` und JSON-Liste `staging_acceptance_runs`).
+   Beide Wege prüfen Run, Attempt und tatsächlich ausgeführten Job erneut gegen GitHub.
 3. Das unveränderte Quellpaket samt SHA256, vollständiger Dateidifferenz,
    einzelnen Feature-/Abnahmezuordnungen und SQL-Entscheidungen freigabefertig
    vorbereiten. Root-Evidence-Bundle aus bereits vorhandenen offiziellen

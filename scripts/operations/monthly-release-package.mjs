@@ -72,6 +72,43 @@ async function requireExecutedJob(run, get, name) {
   requireValue(jobs.length === 1 && jobs[0].status === "completed" && jobs[0].conclusion === "success");
 }
 
+const ACCEPTANCE_JOBS = Object.freeze({
+  ".github/workflows/browser-e2e-staging.yml": "Synthetic login and contact read-only flow",
+  ".github/workflows/browser-e2e-staging-write.yml": "Synthetic owner and member core flow with cleanup",
+  ".github/workflows/admin-e2e-staging.yml": "Prove positive and negative Staging admin boundaries without writes",
+  ".github/workflows/chat-admin-manual-flow-staging.yml": "acceptance",
+});
+
+// Discovery proposes existing run IDs only. collectEvidence independently checks
+// the actual attempt, executed job, ordering, source and protected branch.
+export async function discoverStaging(candidate, get) {
+  requireValue(SHA.test(candidate));
+  const deploymentPath = ".github/workflows/deploy-staging.yml";
+  const paths = [deploymentPath, ...Object.keys(ACCEPTANCE_JOBS)];
+  const groups = await Promise.all(paths.map(async path => {
+    const workflow = path.split("/").at(-1);
+    const data = await get(`actions/workflows/${workflow}/runs?head_sha=${candidate}&branch=main&event=workflow_dispatch&per_page=100`);
+    requireValue(Array.isArray(data?.workflow_runs) && data.total_count === data.workflow_runs.length
+      && data.total_count <= 100 && data.workflow_runs.every(run => run.path === path && run.head_sha === candidate
+        && run.head_branch === "main" && run.event === "workflow_dispatch" && run.repository?.full_name === REPO));
+    return data.workflow_runs;
+  }));
+  // Multiple deployments (including restore attempts) require explicit selection.
+  requireValue(groups[0].length === 1);
+  const deployment = groups[0][0];
+  stagingRun(deployment, candidate, [deploymentPath]);
+  const acceptanceIds = [];
+  for (const [i, runs] of groups.slice(1).entries()) {
+    // An ongoing run may lack a start time. Never silently discard it.
+    requireValue(runs.every(run => Number.isFinite(Date.parse(run.run_started_at))));
+    const subsequent = runs.filter(run => Date.parse(run.run_started_at) >= Date.parse(deployment.updated_at));
+    requireValue(subsequent.length <= 1);
+    if (subsequent.length) acceptanceIds.push(stagingRun(subsequent[0], candidate, [paths[i + 1]]).id);
+  }
+  requireValue(acceptanceIds.length > 0);
+  return { deploymentId: deployment.id, acceptanceIds };
+}
+
 export async function collectEvidence(candidate, deploymentId, acceptanceIds, get, excludedSuite) {
   requireValue(SHA.test(candidate) && Number.isSafeInteger(deploymentId) && deploymentId > 0);
   requireValue(Array.isArray(acceptanceIds) && acceptanceIds.length > 0 && acceptanceIds.length <= 20
@@ -92,18 +129,12 @@ export async function collectEvidence(candidate, deploymentId, acceptanceIds, ge
   await requireExecutedJob(deployment, get, "Deploy exact reviewed commit to isolated staging");
   // This records selected evidence, never asserts that every feature is accepted.
   const acceptances = [];
-  const allowed = {
-    ".github/workflows/browser-e2e-staging.yml": "Synthetic login and contact read-only flow",
-    ".github/workflows/browser-e2e-staging-write.yml": "Synthetic owner and member core flow with cleanup",
-    ".github/workflows/admin-e2e-staging.yml": "Prove positive and negative Staging admin boundaries without writes",
-    ".github/workflows/chat-admin-manual-flow-staging.yml": "acceptance",
-  };
   for (const id of acceptanceIds) {
     const run = await get(`actions/runs/${id}`);
     requireValue(Date.parse(run.run_started_at) >= Date.parse(deployment.updated_at));
-    const evidence = stagingRun(run, candidate, Object.keys(allowed));
+    const evidence = stagingRun(run, candidate, Object.keys(ACCEPTANCE_JOBS));
     requireValue(run.id === id);
-    await requireExecutedJob(run, get, allowed[run.path]);
+    await requireExecutedJob(run, get, ACCEPTANCE_JOBS[run.path]);
     acceptances.push(evidence);
   }
   return { staging, acceptances, sourceChecks: "PASS_AT_PREPARATION_ONLY", completeFeatureAcceptance: false };
@@ -150,7 +181,11 @@ async function main() {
       const run = await get(`actions/runs/${process.env.GITHUB_RUN_ID}`);
       requireValue(run.path === ".github/workflows/monthly-release-prepare.yml" && run.head_sha === candidate
         && run.event === "workflow_dispatch" && Number.isSafeInteger(run.check_suite_id));
-      manifest.evidence = await collectEvidence(candidate, Number(deployment), JSON.parse(acceptance), get, run.check_suite_id);
+      requireValue(Boolean(deployment) === Boolean(acceptance));
+      const refs = deployment
+        ? { deploymentId: Number(deployment), acceptanceIds: JSON.parse(acceptance) }
+        : await discoverStaging(candidate, get);
+      manifest.evidence = await collectEvidence(candidate, refs.deploymentId, refs.acceptanceIds, get, run.check_suite_id);
     }
     // Exclusive create prevents accidentally replacing an approved package.
     const contents = json(manifest);

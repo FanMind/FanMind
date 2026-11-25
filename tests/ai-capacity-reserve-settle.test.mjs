@@ -170,11 +170,20 @@ test("required PostgreSQL CI owns Capacity execution with no optional native ste
   assert.ok(step, "required native step must exist");
   assert.match(step, /FANMIND_CAPACITY_PG17_REQUIRED: "true"/u);
   assert.match(step, /FANMIND_CREATOR_PG17_CONTAINER_ID: \$\{\{ job\.services\.pg17_source\.id \}\}/u);
-  assert.match(step, /run: npm run test:ai-capacity/u);
   assert.doesNotMatch(step, /continue-on-error:|\n\s+if:/u);
   const scripts = JSON.parse(fs.readFileSync("package.json", "utf8")).scripts;
-  for (const path of ["tests/ai-capacity-policy.test.mjs", "tests/ai-capacity-reserve-settle.test.mjs", "tests/ai-capacity-lifecycle-pg17.test.mjs"]) {
-    assert.ok(scripts["test:ai-capacity"].includes(path));
-    assert.ok(scripts["test:operations"].includes(path));
-  }
+  const nativeFiles = step.match(/run: node --test --test-concurrency=1 ([^\n]+)/u)?.[1].trim().split(/\s+/u);
+  assert.deepEqual(nativeFiles, [
+    "tests/ai-capacity-lifecycle-pg17.test.mjs",
+    "tests/ai-capacity-staging-preflight.test.mjs",
+  ]);
+  const portableFiles = [
+    "tests/ai-capacity-policy.test.mjs",
+    "tests/ai-capacity-reserve-settle.test.mjs",
+    "tests/ai-capacity-staging-integration.test.mjs",
+  ];
+  const fullSuite = scripts["test:ai-capacity"].split(/\s+/u).filter(arg => arg.endsWith(".mjs"));
+  assert.deepEqual(fullSuite.sort(), [...portableFiles, ...nativeFiles].sort());
+  const operations = scripts["test:operations"].split(/\s+/u);
+  for (const path of portableFiles) assert.ok(operations.includes(path), path);
 });

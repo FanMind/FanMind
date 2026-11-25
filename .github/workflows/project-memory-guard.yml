@@ -42,8 +42,8 @@ jobs:
         run: |
           set -euo pipefail
           # NUL-delimited paths, including both sides of renames (no rename detection).
-          # Only narrowly scoped non-executable reader changes are exempt.
-          # Unknown paths, executable changes, contracts and security stay conservative.
+          # Routine presentation work uses its PR and Git history. Changes to protected
+          # disclosures, consent, billing and other unclassified paths retain memory review.
           changed_file="$(mktemp)"
           trap 'rm -f "$changed_file"' EXIT
           git diff --no-renames --name-only -z "$BASE_SHA...$HEAD_SHA" > "$changed_file"
@@ -54,13 +54,20 @@ jobs:
             case "$file" in
               project-memory/*) memory_changed=1 ;;
               docs/operations/FANMIND_WORKSPACE_BUILDER.md) ;;
+              src/components/landing/ProductShowcaseSection.tsx|src/components/landing/ProductShowcaseSection.module.css) ;;
+              src/components/FanMindLogo.tsx|src/components/FanMindLogo.module.css|src/components/PlatformLogo.tsx|src/components/PlatformLogo.module.css|src/components/FanMindFunctionIcon.tsx) ;;
+              src/app/page.module.css|src/app/landing-header-visibility.css|src/app/landing-v2-six-steps-refine.css) ;;
+              src/components/WorkspaceSidebar.module.css|src/components/WorkspaceSidebarResponsive.module.css) ;;
+              src/lib/inboxMetricFormatting.mjs|src/lib/inboxMetricFormatting.d.mts) ;;
+              tests/channels-scroll-layout.test.mjs|tests/chat-admin-crm-layout.test.mjs|tests/workspace-sidebar-icons.test.mjs) ;;
+              tests/landing-v2-cross-browser-layout.test.mjs|tests/fan-detail-layout-policy.test.mjs) ;;
               *) meaningful=1 ;;
             esac
           done < "$changed_file"
 
           if [[ "$meaningful" -eq 1 && "$memory_changed" -ne 1 ]]; then
             echo "Meaningful repository changes require a project-memory update."
-            echo "Record the durable change once; ordinary exempt reader edits need no duplicate memory entry."
+            echo "Record the durable change once; routine presentation edits need no duplicate memory entry."
             exit 1
           fi
 

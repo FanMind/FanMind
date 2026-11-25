@@ -1,6 +1,6 @@
 # Countercheck Policy
 
-Countercheck depth and separation follow Execution Policy v6. R1/R2 require a distinct second-pass verification; the same Builder may perform it unless the affected contract, security boundary or architecture risk requires a separate reviewer. R3/R4 require an independent reviewer/evidence path.
+Apply the review depth and reviewer independence in [Execution Policy](EXECUTION_POLICY.md). Use this reference for applicable evidence requirements.
 
 ## Independent evidence
 Use at least one evidence source different from the one used to claim success. Task text or PR description alone is never sufficient.

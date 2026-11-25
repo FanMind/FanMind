@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "updated": "2026-08-20",
+  "updated": "2026-11-25",
   "repository": "FanMind/FanMind",
   "purpose": "Reconcile work completed in other chats/sessions against GitHub and Project Memory before answering project-state questions or continuing work.",
   "rules": {
-    "require_project_memory_preflight_before_project_answer_or_action": true,
+    "require_execution_policy_scoped_preflight": true,
     "chat_memory_is_navigation_only": true,
     "chat_claim_is_not_evidence": true,
     "github_and_project_memory_win_on_conflict": true,
     "require_current_evidence_reconciliation": true,
-    "require_memory_refresh_after_external_chat_completion": true,
-    "require_next_best_action_refresh": true,
+    "require_memory_refresh_for_durable_external_changes": true,
+    "require_next_best_action_refresh_on_input_change": true,
     "do_not_repeat_if_verified_elsewhere": true
   },
   "reconciliation_checks": [

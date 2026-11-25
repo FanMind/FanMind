@@ -8,12 +8,12 @@ on:
         required: true
         type: string
       staging_deployment_run:
-        description: Successful deploy-staging run for this exact current Main
-        required: true
+        description: Optional exact deploy-staging run (supply both run inputs or leave both empty)
+        required: false
         type: string
       staging_acceptance_runs:
-        description: JSON array of successful subsequent Staging acceptance run IDs
-        required: true
+        description: Optional JSON array of subsequent acceptance run IDs
+        required: false
         type: string
 
 permissions:

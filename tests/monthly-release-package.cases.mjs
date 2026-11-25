@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { sourcePlan, verifySource, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
+import { sourcePlan, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
 import { REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
 
 const candidate = "b".repeat(40), head = "c".repeat(40);
@@ -98,4 +98,25 @@ test("budget, incomplete and interrupted writes never assert release acceptance"
   // Recovery of preparation restarts from the same exact immutable inputs;
   // this function cannot resume an actual migration or attest a live rollback.
   assert.equal(evaluateTimeline(events).releaseAccepted, false);
+});
+
+test("discover unambiguous existing Staging evidence and reject incomplete or conflicting inventories", async () => {
+  const payload = responses();
+  const deployment = { ...payload["actions/runs/1"], head_branch: "main" };
+  const acceptance = { ...payload["actions/runs/2"], head_branch: "main" };
+  const discover = (rows, partial = false) => discoverStaging(candidate, async path => {
+    assert.ok(path.endsWith(`?head_sha=${candidate}&branch=main&event=workflow_dispatch&per_page=100`));
+    const workflow_runs = rows.filter(run => path.startsWith(`actions/workflows/${run.path.split("/").at(-1)}/runs?`));
+    return { total_count: workflow_runs.length + Number(partial), workflow_runs };
+  });
+  assert.deepEqual(await discover([deployment, acceptance]), { deploymentId: 1, acceptanceIds: [2] });
+  for (const rows of [
+    [deployment], [acceptance], [deployment, deployment, acceptance],
+    [deployment, acceptance, { ...acceptance, id: 3 }],
+    [deployment, { ...acceptance, run_started_at: null }],
+    [deployment, { ...acceptance, conclusion: "failure" }],
+    [deployment, { ...acceptance, head_sha: head }],
+    [deployment, { ...acceptance, run_started_at: deployment.run_started_at }],
+  ]) await assert.rejects(discover(rows));
+  await assert.rejects(discover([deployment, acceptance], true));
 });

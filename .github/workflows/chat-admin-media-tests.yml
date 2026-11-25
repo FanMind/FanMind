@@ -15,7 +15,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scope:
+    name: Select media acceptance jobs
+    runs-on: ubuntu-latest
+    outputs:
+      video: ${{ steps.scope.outputs.video }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - run: python3 scripts/ci/test_chatadmin_media_scope.py
+      - id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/ci/chatadmin_media_scope.py
+
   chatadmin_media_catalogue_pg17:
+    # FanMind CI runs this exact suite in the required native PR roundtrip.
+    if: github.event_name == 'workflow_dispatch'
     name: ChatAdmin media catalogue PostgreSQL 17
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -46,6 +63,8 @@ jobs:
         run: node --test tests/chat-admin-media-pg17.test.mjs
 
   media_video_processing:
+    needs: scope
+    if: always() && !cancelled() && needs.scope.outputs.video != 'false'
     name: ChatAdmin real synthetic video processing
     runs-on: ubuntu-latest
     timeout-minutes: 10

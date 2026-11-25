@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { access, readdir, readFile } from "node:fs/promises";
 import test from "node:test";
+import { spawnSync } from "node:child_process";
 
 import { scanWorkflowPolicy } from "../scripts/verify-actions-pinned.mjs";
 
@@ -402,7 +403,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    92, // Includes the second Hosted checkout in the existing Staging media job.
+    93, // Includes the read-only media scope checkout of the tested PR merge.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
@@ -547,10 +548,27 @@ test("required CI and media acceptance avoid duplicate branch-push runs", async 
 });
 
 
-test("memory guard uses a narrow reader-only exception and conservative fallback", async () => {
+test("memory guard exempts routine presentation work and requires durable records for protected or unknown paths", async () => {
   const source = await readFile(".github/workflows/project-memory-guard.yml", "utf8");
   assert.match(source, /git diff --no-renames --name-only -z/);
-  assert.match(source, /docs\/operations\/FANMIND_WORKSPACE_BUILDER\.md\) ;;/);
-  assert.match(source, /\*\) meaningful=1 ;;/);
+  const cases = source.slice(source.indexOf('case "$file" in'), source.indexOf("esac") + 4);
+  for (const [file, expected] of [
+    ["src/components/FanMindLogo.tsx", "0 0"],
+    ["src/components/landing/ProductShowcaseSection.module.css", "0 0"],
+    ["docs/operations/FANMIND_WORKSPACE_BUILDER.md", "0 0"],
+    ["tests/workspace-sidebar-icons.test.mjs", "0 0"],
+    ["src/lib/inboxMetricFormatting.mjs", "0 0"],
+    ["project-memory/DECISIONS.md", "0 1"],
+    ["src/components/marketing/marketing-consent.module.css", "1 0"],
+    ["src/components/FanMindLogo.secret.tsx", "1 0"],
+    ["supabase/migrations/controlled.sql", "1 0"],
+    ["src/app/api/unknown/route.ts", "1 0"],
+  ]) {
+    const script = 'meaningful=0; memory_changed=0; file=$1; ' + cases
+      + '; echo "$meaningful $memory_changed"';
+    const result = spawnSync("bash", ["-c", script, "_", file], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), expected, file);
+  }
   assert.match(source, /meaningful.*-eq 1.*memory_changed.*-ne 1/);
 });
