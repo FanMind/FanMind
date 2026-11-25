@@ -12,7 +12,29 @@ export function inspectionRequest(action, controller, worker, app) {
 export const PROJECT = 'drqkpdvtbbrrdwmtrodz';
 export const ENVIRONMENT = 'backup-production-recovery';
 export const OWNER_ID = 270165082;
-export const BACKUP_ACTIVE_JOBS_SQL = "begin read only;set local statement_timeout='15s';select count(*) from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running');rollback;";
+const activeBackupJobs = "from public.admin_operation_jobs where job_type in ('backup_database','backup_full','backup_storage','backup_server_config','verify_backup') and status in ('queued','claimed','running')";
+export const BACKUP_ACTIVE_JOBS_SQL = `begin read only;set local statement_timeout='15s';select count(*) ${activeBackupJobs};rollback;`;
+
+// A session lock disappears on disconnect while a host-side rename may still run.
+// A prepared transaction retains its table lock until this controller releases it.
+// A crashed owner leaves the queue fenced for explicit operational reconciliation.
+const fenceId = 'fanmind-backup-worker-install-queue';
+export async function withEmptyBackupQueue(sql, mutate) {
+  sql(`BEGIN ISOLATION LEVEL READ COMMITTED;
+    SET LOCAL statement_timeout = '15s';
+    LOCK TABLE public.admin_operation_jobs IN SHARE ROW EXCLUSIVE MODE NOWAIT;
+    DO $queue$ BEGIN
+      IF EXISTS (SELECT 1 ${activeBackupJobs}) THEN
+        RAISE EXCEPTION 'backup_jobs_active';
+      END IF;
+    END $queue$;
+    PREPARE TRANSACTION '${fenceId}';`);
+  try {
+    return await mutate();
+  } finally {
+    sql(`ROLLBACK PREPARED '${fenceId}';`);
+  }
+}
 // Historical, pre-#1515 contract hash; not evidence of what is installed today.
 export const OLD_CONTRACT_SHA256 = 'b80490c17270a830dc409fc4d3755224e23facdc23a6f4ee34fb28189f7544de';
 // #1515 reported an INSTALLED worker with the 39/29 contract. Require an
@@ -113,6 +135,10 @@ export async function transition(input, io) {
   if (input.action === 'rollback' && state.status === 'ROLLED_BACK') {
     await io.checkFiles('old'); return 'ALREADY_ROLLED_BACK';
   }
+  return io.withEmptyQueue(() => applyTransition(input, io));
+}
+
+async function applyTransition(input, io) {
   await io.authorize(); // fresh TTL before any persistent preparation/write
   if (input.action === 'install') {
     await io.checkFiles('old');
