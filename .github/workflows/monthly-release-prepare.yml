@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       production_base:
-        description: Exact previously verified Production commit (40 lowercase hex)
-        required: true
+        description: Optional separately verified Production commit (default reads the public version endpoint)
+        required: false
         type: string
       staging_deployment_run:
         description: Optional exact deploy-staging run (supply both run inputs or leave both empty)
@@ -51,12 +51,14 @@ jobs:
           node scripts/operations/monthly-release-package.mjs prepare \
             "$PRODUCTION_BASE" "$GITHUB_SHA" monthly-release.json \
             "$STAGING_DEPLOYMENT" "$STAGING_ACCEPTANCES"
-          node scripts/operations/monthly-release-package.mjs verify monthly-release.json
+          node scripts/operations/monthly-release-admission.mjs --draft monthly-release.json monthly-release-plan.json
       - name: Retain immutable preparation artifact (never a deployment approval)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: monthly-release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: monthly-release.json
+          path: |
+            monthly-release.json
+            monthly-release-plan.json
           if-no-files-found: error
           overwrite: false
           retention-days: 35

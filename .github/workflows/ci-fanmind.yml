@@ -90,6 +90,9 @@ jobs:
           set -o pipefail
           { npm run test:operations && node --test src/lib/supportOwnerAcceptance.test.mjs; } 2>&1 | tee operations-test-report.txt
 
+      - name: Test PR refresh and merge readiness
+        run: node --test scripts/orchestration/*.test.mjs
+
       - name: Staging Stripe catalog policy tests
         id: staging_stripe_catalog
         continue-on-error: true

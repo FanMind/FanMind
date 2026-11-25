@@ -397,13 +397,15 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.doesNotMatch(mediaStorage.source, /SERVICE_ROLE|permissions:\s*write-all|pull_request:|nginx|production:/u);
   const mediaFlow = hostedWorkflows.find(workflow => workflow.file === 'chat-admin-manual-flow-staging.yml');
   assert.deepEqual(mediaFlow?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
-  assert.equal(hostedWorkflows.length, 81);
+  const refresh = hostedWorkflows.find(workflow => workflow.file === "refresh-automerge-branches.yml");
+  assert.deepEqual(refresh?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.equal(hostedWorkflows.length, 82);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    94, // Includes read-only mobile and media scope checkouts of the tested PR merge.
+    95, // Includes the additional trusted-base checkout for opted-in branch refresh.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

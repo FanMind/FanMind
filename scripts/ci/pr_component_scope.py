@@ -4,14 +4,6 @@ import re
 import subprocess
 
 
-def video_required(paths):
-    for path in paths:
-        if re.fullmatch(rb"docs/(sales|roadmaps)/[A-Za-z0-9_.-]+\.md|src/app/(?:[A-Za-z0-9_/-]+/)?[A-Za-z0-9_.-]+\.css", path):
-            continue
-        if path != b"tests/chat-admin-media-pg17.test.mjs":
-            return True
-    return not paths
-
 
 MOBILE_STORE_DOCUMENTS = {
     b"docs/mobile/STORE_LISTING.md",
@@ -21,6 +13,28 @@ MOBILE_STORE_DOCUMENTS = {
     b"docs/mobile/STORE_REVIEW_ACCESS.md",
     b"docs/mobile/STORE_TESTER_PROGRAM.md",
 }
+
+
+# App-facing request handlers for other products do not participate in codec
+# normalization or host-readiness probes. Shared libraries are always tested.
+UNRELATED_API_ROUTE = re.compile(
+    rb"src/app/api/(?:stripe/webhook|public-support|"
+    rb"integrations/(?:facebook|instagram)/(?:start|callback|disconnect))/route\.ts"
+)
+PRESENTATION_PATH = re.compile(
+    rb"docs/(sales|roadmaps)/[A-Za-z0-9_.-]+\.md|"
+    rb"src/app/(?:[A-Za-z0-9_/-]+/)?[A-Za-z0-9_.-]+\.css"
+)
+
+
+def video_required(paths):
+    return not paths or any(
+        path not in MOBILE_STORE_DOCUMENTS
+        and path != b"tests/chat-admin-media-pg17.test.mjs"
+        and not UNRELATED_API_ROUTE.fullmatch(path)
+        and not PRESENTATION_PATH.fullmatch(path)
+        for path in paths
+    )
 
 
 def mobile_build_required(paths):
