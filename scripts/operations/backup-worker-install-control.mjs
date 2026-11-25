@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { APP_COMMIT, WORKER_COMMIT, FILES, RETAINED_FILES, RELEASE_SHA256, request, authorization, connection,
-  parseSelectedEnvironment, digest, fail, transition, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
+  parseSelectedEnvironment, digest, fail, transition, withEmptyBackupQueue, BACKUP_ACTIVE_JOBS_SQL } from './backup-worker-install-policy.mjs';
 
 const OPS = '/usr/local/lib/fanmind-ops';
 const ROOT = '/var/lib/fanmind-backup-install';
@@ -110,10 +110,13 @@ async function main() {
       record = value; return record;
     } catch(e) { if (e.code === 'ENOENT') return null; throw e; }
   }
-  async function queueEmpty() {
-    const n = command('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align',
+  function queueSql(statement) {
+    return command('/usr/lib/postgresql/17/bin/psql',['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align',
       '--set=ON_ERROR_STOP=1','--host',db.host,'--port',db.port,'--username',db.username,'--dbname',db.database],
-      BACKUP_ACTIVE_JOBS_SQL,pgEnv);
+      statement,pgEnv);
+  }
+  async function queueEmpty() {
+    const n = queueSql(BACKUP_ACTIVE_JOBS_SQL);
     if (n !== '0') fail('backup_jobs_active');
   }
   async function stableRelease() { for (const [name,hash] of Object.entries(RETAINED_FILES)) { if (digest(await bytes(`${OPS}/${name}`,0o750)) !== hash) fail('retained_file_changed'); } if (digest(await bytes(RELEASE,0o600,4096)) !== digest(releaseBytes)) fail('backup_application_binding_changed'); }
@@ -154,6 +157,7 @@ async function main() {
   }
   const io = {
     state, persist, checkSaved, queueEmpty, checkFiles,
+    withEmptyQueue: mutate => withEmptyBackupQueue(queueSql, mutate),
     authorize:async()=>{authorization(approved,input);},
     preflight:async()=>{ await live(); await contract(); await queueEmpty(); await service(input.action === 'rollback'); },
     snapshot:async()=>{
