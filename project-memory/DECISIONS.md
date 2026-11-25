@@ -242,3 +242,6 @@ Decisions are append-only. If a decision changes, add a new entry that explicitl
 
 ## FM-DEC-LEAN-CI-LEGACY-20261124
 - Date: 2026-11-24; Decision: legacy reconciliation regression tests run once in required FanMind CI on PRs, and remain in Project Memory Quality on scheduled/manual runs. Live reconciliation validation remains mandatory in both paths where currently defined. No change to protected admission, package manifest, required check names or test assertions.
+
+## FM-DEC-LEAN-CI-INTEGRATIONS-20261125
+- Date: 2026-11-25; Decision: required PR CI executes the release integration suite minus the three tests already owned by Operations; coverage regression binds actual workflow command to the complete manifest suite. Standalone integration and deployment commands, native PostgreSQL execution, package bytes and protected admission remain unchanged.
