@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { WORKER_COMMIT, APP_COMMIT, FILES, RETAINED_FILES, OLD_CONTRACT_SHA256, EXPECTED_INSTALLED_CONTRACT_SHA256, UNIT_SHA256, RELEASE_SHA256, OWNER_ID, ENVIRONMENT, PROJECT,
-  request, authorization, connection, parseSelectedEnvironment, environmentPolicy, transition } from '../scripts/operations/backup-worker-install-policy.mjs';
+  request, authorization, connection, parseSelectedEnvironment, environmentPolicy, transition, withEmptyBackupQueue } from '../scripts/operations/backup-worker-install-policy.mjs';
 const controller = 'a'.repeat(40);
 const input = request('install',controller,WORKER_COMMIT,APP_COMMIT);
 function auth() { return {schemaVersion:1,repository:'FanMind/FanMind',environment:ENVIRONMENT,project:PROJECT,
@@ -43,7 +43,7 @@ test('connection rejects hidden libpq routing and mismatched Supabase identity',
 });
 function fake(state=null,failAt=null) {
   const calls=[];let current=state;let failed=false;
-  const io = {calls,authorize:async()=>{},preflight:async()=>calls.push('preflight'),state:async()=>current,
+  const io = {calls,withEmptyQueue: mutate => mutate(),authorize:async()=>{},preflight:async()=>calls.push('preflight'),state:async()=>current,
     persist:async status=>{calls.push(status);current={status};},
     snapshot:async()=>{calls.push('snapshot');current={status:'PREPARED'};},
     checkFiles:async v=>calls.push(`check:${v}`),checkSaved:async()=>calls.push('saved'),
@@ -120,4 +120,63 @@ test('repair authority is module-only and rejects historic or invented old bytes
     {unitHash:'e'.repeat(64)},{releaseHash:'e'.repeat(64)},
   ])assert.throws(()=>authorization({...auth(),...change},input,Date.parse('2026-10-13T19:30:00Z')),{code:'authorization_invalid'});
   assert.throws(()=>request('install',controller,'8e5dcbdca844972fb2f133c188ecfee5d5252273','707d22702a784e3b9999d1c9ae9c1e11c096a1bc'));
+});
+
+test('install fences independent queue writers through swap and releases on completion', {
+  skip: !process.env.FANMIND_QUEUE_TEST_PG_BIN && 'set FANMIND_QUEUE_TEST_PG_BIN to the local PostgreSQL bin directory',
+}, async t => {
+  const { execFileSync } = await import('node:child_process');
+  const { mkdtemp, rm, writeFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const root = await mkdtemp(join(tmpdir(), 'fanmind-queue-'));
+  t.after(() => rm(root, {recursive:true, force:true}));
+  const bin = process.env.FANMIND_QUEUE_TEST_PG_BIN;
+  const run = (name, args, input, env = {}) => execFileSync(join(bin, name), args, {
+    input, encoding:'utf8', timeout:30000, stdio:['pipe','pipe','pipe'],
+    env:{PATH:process.env.PATH, LANG:'C', LC_ALL:'C', ...env},
+  }).trim();
+  const { createServer } = await import('node:net');
+  const { randomBytes } = await import('node:crypto');
+  const password = randomBytes(32).toString('hex');
+  const passwordFile = join(root, 'password');
+  await writeFile(passwordFile, password + '\n', {mode:0o600});
+  const probe = createServer();
+  await new Promise((resolve,reject) => probe.once('error',reject).listen(0,'127.0.0.1',resolve));
+  const port = String(probe.address().port);
+  await new Promise(resolve => probe.close(resolve));
+  const data = join(root, 'data');
+  run('initdb', ['-D', data, '-U', 'postgres', '-A', 'scram-sha-256', '--pwfile', passwordFile, '--no-locale']);
+  run('pg_ctl', ['-D',data,'-l',join(root,'server.log'),'-w','-o',
+    `-c listen_addresses=127.0.0.1 -p ${port} -c unix_socket_directories='' -c max_prepared_transactions=2`, 'start']);
+  try {
+    const sql = statement => run('psql', ['-XAtq','-v','ON_ERROR_STOP=1','-h','127.0.0.1','-p',port,'-U','postgres','-d','postgres'], statement, {PGPASSWORD:password});
+    sql('CREATE TABLE public.admin_operation_jobs(job_type text, status text)');
+    const insert = "INSERT INTO public.admin_operation_jobs VALUES ('backup_full','queued')";
+    const io = fake();
+    io.withEmptyQueue = mutate => withEmptyBackupQueue(sql, mutate);
+    const checkWriter = () => assert.throws(
+      () => sql("SET lock_timeout='150ms'; " + insert),
+      error => error.stderr.includes('lock timeout'),
+    );
+    let swapped = false;
+    io.replace = async version => {
+      assert.equal(version, 'new');
+      checkWriter(); // separate backend, after acquisition connection has exited
+      swapped = true;
+    };
+    io.checkFiles = async version => { if (version === 'new') checkWriter(); };
+    assert.equal(await transition(input, io), 'INSTALLED');
+    assert.ok(swapped);
+    sql(insert);
+    const busy = fake();
+    busy.withEmptyQueue = io.withEmptyQueue;
+    await assert.rejects(transition(input,busy), error => error.stderr.includes('backup_jobs_active'));
+    assert.deepEqual(busy.calls, ['preflight']);
+    sql('DELETE FROM public.admin_operation_jobs');
+    await assert.rejects(withEmptyBackupQueue(sql, async () => { throw Error('mutation failed'); }), /mutation failed/);
+    sql(insert);
+  } finally {
+    run('pg_ctl', ['-D',data,'-m','immediate','-w','stop']);
+  }
 });
