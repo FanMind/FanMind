@@ -1,4 +1,4 @@
-"""Select native video acceptance for the tested PR merge tree."""
+"""Select component checks from the tested PR merge tree."""
 import os
 import re
 import subprocess
@@ -13,25 +13,44 @@ def video_required(paths):
     return not paths
 
 
-def select(event, base, head):
+MOBILE_STORE_DOCUMENTS = {
+    b"docs/mobile/STORE_LISTING.md",
+    b"docs/mobile/STORE_PRIVACY_DECLARATIONS.md",
+    b"docs/mobile/APP_STORE_HANDOFF.md",
+    b"docs/mobile/APP_STORE_CONNECT_WORKSHEET.md",
+    b"docs/mobile/STORE_REVIEW_ACCESS.md",
+    b"docs/mobile/STORE_TESTER_PROGRAM.md",
+}
+
+
+def mobile_build_required(paths):
+    return not paths or not set(paths).issubset(MOBILE_STORE_DOCUMENTS)
+
+
+def changed_paths(event, base, head):
     if event != "pull_request":
-        return True
+        return []
     if not all(re.fullmatch(r"[a-f0-9]{40}", sha) for sha in (base, head)):
-        return True
+        return []
     try:
         parents = subprocess.check_output(["git", "show", "-s", "--format=%P", head]).decode().split()
         if len(parents) != 2 or parents[0] != base:
-            return True
+            return []
         diff = subprocess.check_output(["git", "diff", "--no-ext-diff", "--no-renames",
                                        "--name-only", "-z", base, head, "--"])
     except subprocess.CalledProcessError:
-        return True
-    return video_required(diff.rstrip(b"\0").split(b"\0") if diff else [])
+        return []
+    return diff.rstrip(b"\0").split(b"\0") if diff else []
 
 
 if __name__ == "__main__":
-    required = select(os.environ["GITHUB_EVENT_NAME"], os.environ["BASE_SHA"], os.environ["GITHUB_SHA"])
+    import sys
+
+    component = sys.argv[1]
+    classifier = {"video": video_required, "mobile_build": mobile_build_required}[component]
+    paths = changed_paths(os.environ["GITHUB_EVENT_NAME"], os.environ["BASE_SHA"], os.environ["GITHUB_SHA"])
+    required = classifier(paths)
     with open(os.environ["GITHUB_OUTPUT"], "a") as output, open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
-        print(f"video={str(required).lower()}", file=output)
+        print(f"{component}={str(required).lower()}", file=output)
         status = "selected" if required else "out of scope (not executed)"
-        print(f"Native synthetic video acceptance: {status}", file=summary)
+        print(f"{component}: {status}", file=summary)

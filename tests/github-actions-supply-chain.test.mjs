@@ -403,7 +403,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    93, // Includes the read-only media scope checkout of the tested PR merge.
+    94, // Includes read-only mobile and media scope checkouts of the tested PR merge.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

@@ -24,11 +24,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
-      - run: python3 scripts/ci/test_chatadmin_media_scope.py
+      - run: python3 scripts/ci/test_pr_component_scope.py
       - id: scope
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: python3 scripts/ci/chatadmin_media_scope.py
+        run: python3 scripts/ci/pr_component_scope.py video
 
   chatadmin_media_catalogue_pg17:
     # FanMind CI runs this exact suite in the required native PR roundtrip.

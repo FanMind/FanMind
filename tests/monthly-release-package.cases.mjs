@@ -9,7 +9,7 @@ import { REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/
 
 const candidate = "b".repeat(40), head = "c".repeat(40);
 const repo = { full_name: "FanMind/FanMind" };
-const run = (id, path, start = "2026-11-14T11:00:00Z", end = "2026-11-14T11:02:00Z") => ({ id, path, repository: repo, head_sha: candidate, run_attempt: 1, event: "workflow_dispatch", status: "completed", conclusion: "success", run_started_at: start, updated_at: end });
+const run = (id, path, start = "2026-11-14T11:00:00Z", end = "2026-11-14T11:02:00Z") => ({ id, path, repository: repo, head_sha: candidate, head_branch: "main", run_attempt: 1, event: "workflow_dispatch", status: "completed", conclusion: "success", run_started_at: start, updated_at: end });
 const checks = names => ({ total_count: names.length, check_runs: names.map((name, i) => ({ id: i + 1, name, status: "completed", conclusion: "success", app: { slug: "github-actions" } })) });
 function responses() {
   return {
@@ -67,6 +67,8 @@ test("GitHub evidence is exact-source, protected-main and subsequent-Staging bou
     p => { p["branches/main"].protected = false; },
     p => { p["branches/main"].commit.sha = head; },
     p => { p["actions/runs/1"].head_sha = head; },
+    p => { p["actions/runs/1"].head_branch = "other"; },
+    p => { p["actions/runs/2"].head_branch = "other"; },
     p => { p["actions/runs/2"].conclusion = "failure"; },
     p => { p["actions/runs/2"].path = ".github/workflows/deploy-fanmind.yml"; },
     p => { p["actions/runs/2"].run_started_at = "2026-11-14T10:00:00Z"; },

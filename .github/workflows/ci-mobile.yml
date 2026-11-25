@@ -8,6 +8,11 @@ on:
       - "apps/mobile/**"
       - "docs/mobile/STORE_LISTING.md"
       - "docs/mobile/STORE_PRIVACY_DECLARATIONS.md"
+      - "docs/mobile/APP_STORE_HANDOFF.md"
+      - "docs/mobile/APP_STORE_CONNECT_WORKSHEET.md"
+      - "docs/mobile/STORE_REVIEW_ACCESS.md"
+      - "docs/mobile/STORE_TESTER_PROGRAM.md"
+      - "scripts/ci/pr_component_scope.py"
       - "src/lib/requestAccessToken.ts"
       - "src/lib/workspaceAuthorization.ts"
       - "src/lib/supabase/server.ts"
@@ -21,6 +26,11 @@ on:
       - "apps/mobile/**"
       - "docs/mobile/STORE_LISTING.md"
       - "docs/mobile/STORE_PRIVACY_DECLARATIONS.md"
+      - "docs/mobile/APP_STORE_HANDOFF.md"
+      - "docs/mobile/APP_STORE_CONNECT_WORKSHEET.md"
+      - "docs/mobile/STORE_REVIEW_ACCESS.md"
+      - "docs/mobile/STORE_TESTER_PROGRAM.md"
+      - "scripts/ci/pr_component_scope.py"
       - "src/lib/requestAccessToken.ts"
       - "src/lib/workspaceAuthorization.ts"
       - "src/lib/supabase/server.ts"
@@ -35,7 +45,28 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    name: Select mobile checks and verify metadata-only changes
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.scope.outputs.mobile_build }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - run: python3 scripts/ci/test_pr_component_scope.py
+      - id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: python3 scripts/ci/pr_component_scope.py mobile_build
+      - name: Verify store metadata, assets and EAS profiles
+        if: steps.scope.outputs.mobile_build == 'false'
+        run: node apps/mobile/scripts/check-store-readiness.mjs
+
   validate-mobile:
+    needs: scope
+    if: always() && !cancelled() && needs.scope.outputs.build != 'false'
     name: Typecheck, doctor, native prebuild and JS bundles
     runs-on: ubuntu-latest
     timeout-minutes: 25

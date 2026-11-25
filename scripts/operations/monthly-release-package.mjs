@@ -56,7 +56,7 @@ export function verifySource(root, manifest) {
 }
 
 export function stagingRun(run, candidate, allowedPaths) {
-  requireValue(run?.repository?.full_name === REPO && run.head_sha === candidate
+  requireValue(run?.repository?.full_name === REPO && run.head_sha === candidate && run.head_branch === "main"
     && run.status === "completed" && run.conclusion === "success"
     && Number.isSafeInteger(run.id) && Number.isSafeInteger(run.run_attempt) && run.run_attempt >= 1
     && run.event === "workflow_dispatch" && allowedPaths.includes(run.path));
