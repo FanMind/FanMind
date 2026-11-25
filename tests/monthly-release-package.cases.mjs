@@ -4,12 +4,12 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { sourcePlan, verifySource, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
+import { sourcePlan, providerReviewSummary, verifySource, discoverStaging, collectEvidence, stagingRun, evaluateTimeline, BUDGET_SECONDS } from "../scripts/operations/monthly-release-package.mjs";
 import { REQUIRED_MAIN_CHECKS, REQUIRED_PR_CHECKS } from "../scripts/operations/production-release-preflight.mjs";
 
 const candidate = "b".repeat(40), head = "c".repeat(40);
 const repo = { full_name: "FanMind/FanMind" };
-const run = (id, path, start = "2026-11-14T11:00:00Z", end = "2026-11-14T11:02:00Z") => ({ id, path, repository: repo, head_sha: candidate, run_attempt: 1, event: "workflow_dispatch", status: "completed", conclusion: "success", run_started_at: start, updated_at: end });
+const run = (id, path, start = "2026-11-14T11:00:00Z", end = "2026-11-14T11:02:00Z") => ({ id, path, repository: repo, head_sha: candidate, head_branch: "main", run_attempt: 1, event: "workflow_dispatch", status: "completed", conclusion: "success", run_started_at: start, updated_at: end });
 const checks = names => ({ total_count: names.length, check_runs: names.map((name, i) => ({ id: i + 1, name, status: "completed", conclusion: "success", app: { slug: "github-actions" } })) });
 function responses() {
   return {
@@ -67,6 +67,8 @@ test("GitHub evidence is exact-source, protected-main and subsequent-Staging bou
     p => { p["branches/main"].protected = false; },
     p => { p["branches/main"].commit.sha = head; },
     p => { p["actions/runs/1"].head_sha = head; },
+    p => { p["actions/runs/1"].head_branch = "other"; },
+    p => { p["actions/runs/2"].head_branch = "other"; },
     p => { p["actions/runs/2"].conclusion = "failure"; },
     p => { p["actions/runs/2"].path = ".github/workflows/deploy-fanmind.yml"; },
     p => { p["actions/runs/2"].run_started_at = "2026-11-14T10:00:00Z"; },
@@ -98,4 +100,48 @@ test("budget, incomplete and interrupted writes never assert release acceptance"
   // Recovery of preparation restarts from the same exact immutable inputs;
   // this function cannot resume an actual migration or attest a live rollback.
   assert.equal(evaluateTimeline(events).releaseAccepted, false);
+});
+
+test("discover unambiguous existing Staging evidence and reject incomplete or conflicting inventories", async () => {
+  const payload = responses();
+  const deployment = { ...payload["actions/runs/1"], head_branch: "main" };
+  const acceptance = { ...payload["actions/runs/2"], head_branch: "main" };
+  const discover = (rows, partial = false) => discoverStaging(candidate, async path => {
+    assert.ok(path.endsWith(`?head_sha=${candidate}&branch=main&event=workflow_dispatch&per_page=100`));
+    const workflow_runs = rows.filter(run => path.startsWith(`actions/workflows/${run.path.split("/").at(-1)}/runs?`));
+    return { total_count: workflow_runs.length + Number(partial), workflow_runs };
+  });
+  assert.deepEqual(await discover([deployment, acceptance]), { deploymentId: 1, acceptanceIds: [2] });
+  for (const rows of [
+    [deployment], [acceptance], [deployment, deployment, acceptance],
+    [deployment, acceptance, { ...acceptance, id: 3 }],
+    [deployment, { ...acceptance, run_started_at: null }],
+    [deployment, { ...acceptance, conclusion: "failure" }],
+    [deployment, { ...acceptance, head_sha: head }],
+    [deployment, { ...acceptance, run_started_at: deployment.run_started_at }],
+  ]) await assert.rejects(discover(rows));
+  await assert.rejects(discover([deployment, acceptance], true));
+});
+
+test("provider review uses canonical changed paths including deletions without granting or disclosing data", () => {
+  const changes = [
+    { status: "D", path: "src/app/api/stripe/webhook/route.ts" },
+    { status: "A", path: "src/lib/stripeClient.ts" },
+    { status: "M", path: "src/app/api/webhooks/meta/route.ts" },
+    { status: "M", path: "src/lib/socialProviderPolicy.mjs" },
+    { status: "M", path: "src/app/api/webhooks/whatsapp/route.ts" },
+    { status: "M", path: "src/lib/telegramWebhook.ts" },
+    { status: "M", path: "src/lib/stagingEmailProviderAcceptancePolicy.mjs" },
+    { status: "M", path: "shared/unclassified-sensitive-name" },
+  ];
+  const summary = providerReviewSummary({ base: head, candidate, changes });
+  assert.match(summary, /Stripe\*\* \(2 changed paths\)/u);
+  for (const label of ["Facebook / Instagram", "TikTok / X", "WhatsApp", "Telegram", "Staging email"]) {
+    assert.ok(summary.includes(label));
+  }
+  for (const [, contract] of summary.matchAll(/blob\/[a-f0-9]{40}\/(docs\/[^)]+)\)/gu)) {
+    assert.ok(readFileSync(contract, "utf8").length > 0);
+  }
+  assert.doesNotMatch(summary, /unclassified-sensitive-name|PASS/u);
+  assert.match(providerReviewSummary({ base: head, candidate, changes: changes.slice(-1) }), /No direct provider matches/u);
 });

@@ -43,4 +43,4 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 
 ## Mandatory new-chat / project-entry rule
 
-Before answering project-state questions or proposing/executing work, read Project Memory first: `PROTOCOL.md`, `CURRENT_STATE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTION.md`, `AUTO_HANDOFF.md`, `OWNER_ACTION_INBOX.md`, `SESSION_HANDOFF.md`, `STARTED_WORK.md`, `WORK_LOCKS.md`, `OPEN_LOOPS.md`, `TASK_LEDGER.md`, `DEPENDENCIES.md`, `DECISIONS.md`, `FAILED_ATTEMPTS.md` and relevant canonical Source-of-Truth documents. Then reconcile current GitHub/main/PR/CI plus relevant runtime/provider evidence and run the Next Best Action selector. Do not repeat completed, failed, superseded or owner-deferred work. If Project Memory and current evidence disagree, record/reconcile the contradiction before continuing.
+Use the lane in `EXECUTION_POLICY.md` to select relevant readers. For status or next-task selection, reconcile current GitHub, relevant memory, locks and target evidence before relying on prior chat. Explicit bounded work needs only the preflight for its lane. Refresh the selector when its inputs change.

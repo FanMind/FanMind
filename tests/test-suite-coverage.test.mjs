@@ -15,7 +15,6 @@ const requiredCiRoots = [
   "test:staging-stripe-webhook",
   "test:database-authorization:pg17",
   "test:creator-foundation-transition",
-  "test:ai-capacity",
 ];
 
 function referencedScripts(command) {
@@ -81,6 +80,14 @@ test("every tracked Node policy test is owned by the required FanMind CI", async
   const expected = [...collectReachableTests(scripts, "test:release-integrations")].filter(file => !operations.has(file)).sort();
   assert.deepEqual([...actual].sort(), expected, "integration step must execute exactly the tests not covered by Operations");
   for (const file of actual) ciOwnedTests.add(file);
+
+  const capacityStep = workflow.split("      - name: Prove Capacity grant reserve settle release reconciliation in PostgreSQL 17\n")[1]?.split("\n      - name:")[0];
+  const nativeCommand = capacityStep?.split("\n").find(line => line.trim().startsWith("run: node --test "));
+  assert.ok(nativeCommand, "required native Capacity command");
+  for (const file of referencedTests(nativeCommand)) ciOwnedTests.add(file);
+  for (const file of collectReachableTests(scripts, "test:ai-capacity")) {
+    assert.ok(ciOwnedTests.has(file), `Capacity suite lost CI coverage for ${file}`);
+  }
 
   const trackedTests = entries
     .filter((entry) => entry.isFile() && entry.name.endsWith(".test.mjs"))

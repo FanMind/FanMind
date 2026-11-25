@@ -5,17 +5,9 @@ This directory is the operational memory for FanMind. It complements code, tests
 ## Mandatory execution policy
 `EXECUTION_POLICY.md`, `COUNTERCHECK_POLICY.md`, `QUALITY_CONTROL.md`, `FANMIND_FINISHLINE.md`, `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `NEXT_BEST_ACTION.md`, `DEFERRED_OWNER_ACTIONS.md`, `RESTORE_STATE_MACHINE.md`, `EXTERNAL_ACCEPTANCE.md`, `LEGACY_ISSUE_RECONCILIATION.json`, `BRANCH_PROTECTION_CONTRACT.json`, `EVIDENCE_TTL_POLICY.json`, `EVIDENCE_FRESHNESS.json`, `DRIFT_BASELINE.json` and `MILESTONE_POLICY.json` are mandatory operational readers where relevant.
 
-## Adaptive preflight
-`EXECUTION_POLICY.md` defines the required preflight by risk.
+## Preflight
 
-- R1 reads only the current scope/head and directly relevant source needed to make the bounded change safely.
-- R2 reads current main plus relevant decisions, dependencies and project-state sources for the affected area.
-- R3/R4 retain the full project-state, failed-attempt, evidence, target, authorization and external-acceptance preflight appropriate to the protected boundary.
-- Restore/provider/Mobile/Billing/legal/protected Production work keeps its domain-specific mandatory readers and target checks.
-- Historical legacy-issue reconciliation remains required when work derives from #642/#643/#644.
-- Always assign Risk R1-R4 before implementation; if scope expands, escalate rather than continuing under an undersized path.
-
-Do not require the complete legacy preflight merely because a task is substantive if the task is an R1/R2 repository-only change with no protected boundary.
+Use the lane in [Execution Policy](EXECUTION_POLICY.md). Restore, provider, Mobile, Billing, legal and protected Production work retain domain-specific readers and target checks. Work derived from #642/#643/#644 also requires historical legacy-issue reconciliation.
 
 ## Owner-declared merge evidence
 - If Bernd explicitly states that he personally merged a specific FanMind pull request, that statement is authoritative Owner evidence for the actor, intent and deliberate acceptance of that manual merge.
@@ -107,32 +99,14 @@ The purpose of FINISHLINE_FREEZE is to prevent accepted scope from expanding thr
 
 **Do not return to:** build -> verify -> invent another control -> harden again -> add another review/control layer -> repeat without a concrete failing acceptance criterion or invalidated required evidence.
 
-## Mandatory countercheck
-Apply the risk routing in `EXECUTION_POLICY.md`. For R1/R2, use only relevant checks: goal, diff, current evidence and relevant regression/countercheck. The list below is for applicable controlled/protected work, not an additional universal checklist. Reconcile only affected records; receipts and locks are required only under the risk/coordination rule above.
+## Countercheck
 
-Before completion, merge or a success report for applicable controlled/protected work:
-1. Re-read the goal and acceptance criteria.
-2. Inspect the final diff and compare actual vs expected scope.
-3. Verify evidence freshness against the current commit/PR/build/runtime/device/provider/target.
-4. Run accepted-state drift preflight for affected watched files.
-5. Use countercheck evidence independent from the implementation self-report.
-6. Verify the relevant negative, regression, proof-of-absence or fail-closed path.
-7. For R3/R4 work, require at least two evidence classes; state-changing work also requires rollback/recovery proof.
-8. Ask: **What observation would prove this conclusion wrong?** Check it where feasible.
-9. Reconcile tasks, started work, locks, loops, dependencies, evidence, assumptions, contradictions, external acceptance, finishline, next-best-action, deferred owner actions and CI/runtime state.
-10. Any unresolved mismatch becomes `RECONCILIATION_REQUIRED` and prevents a clean completion claim.
-11. Write/update the execution receipt and release/refresh the work lock.
+Apply [Execution Policy](EXECUTION_POLICY.md) and its [evidence reference](COUNTERCHECK_POLICY.md). For controlled and protected work, run accepted-state drift preflight on affected watched files, reconcile contradictions and close the required lock and receipt.
 
 ## Completion state machine
 `TODO -> IN_PROGRESS -> IMPLEMENTED -> VERIFIED -> COUNTERCHECKED -> ACCEPTED -> PRODUCTION_CONFIRMED` where applicable.
 
 `BLOCKED`, `PARTIAL`, `IMPLEMENTED_NOT_VERIFIED`, `RECONCILIATION_REQUIRED`, `REJECTED`, `SUPERSEDED`, `DEFERRED` and `DUPLICATE` remain valid side states.
-
-## Completion quorum
-- R1: scope/diff + relevant evidence.
-- R2: implementation evidence + relevant automated/manual verification + countercheck.
-- R3: at least two independent evidence classes + negative/regression path + rollback/recovery where state changes.
-- R4: R3 plus all applicable security/governance/target acceptance controls and explicit protected-boundary confirmation where required.
 
 ## Restore-specific R4 progression
 The real Restore follows `RESTORE_STATE_MACHINE.md`; states cannot be skipped. `BACKUP_ACCEPTED` does not equal a completed Restore. Material host/policy/artifact/target drift can invalidate later evidence and force revalidation.
@@ -151,12 +125,6 @@ Update the applicable task/state/evidence/handoff files, regenerate `NEXT_BEST_A
 
 ## Source-of-truth precedence
 Verified current repository/runtime/provider evidence wins over conversational recollection when they conflict. Existing FanMind source-of-truth and security/operations documents remain authoritative for their domains. Record contradictions rather than silently reconciling them.
-
-## Standing authorization
-Reuse permissions documented in `AUTHORIZATIONS.md` without asking again where technically and safely permitted. This does not override platform confirmations, missing credentials, protected Production/billing/destructive/compliance boundaries or red governance/security gates.
-
-## Core invariant
-**Use Execution Policy risk routing first; the full protected sequence applies only where required. For ordinary repository work, current scope -> implement -> relevant evidence -> merge when permitted -> verify. Git records code history; Project Memory records durable changes.**
 
 Never store passwords, API keys, private tokens, plaintext backup material, secret values or private credentials here.
 
@@ -177,7 +145,7 @@ Contract/schema/API/AI-context/Billing/disclosure/Social changes require consume
 FanMind orchestration is state-driven, never clock-order-driven. Scheduled Builder, Supervisor, Navigator and Owner Manager runs are fallback/reconciliation opportunities, not ordering guarantees.
 
 - Automated Builder transport may be dispatched only by the manual Orchestrator workflow. The digest-bound command-line path returns `PREPARED_ONLY`/`send_authorized=false`; an already explicitly authorized Parent may use that exact content through the existing manual Builder path and must serialize/reconcile it procedurally because read-only validation cannot atomically reserve the out-of-workflow send.
-- Every wake-up must classify the bounded task first and then run the minimum sufficient R1/R2 preflight or the full R3/R4 preflight defined by Execution Policy v6.
+- Every wake-up must classify the bounded task first and then run the minimum sufficient R1/R2 preflight or the full R3/R4 preflight defined by the Execution Policy.
 - Trigger payloads are navigation hints only and never Source of Truth or acceptance evidence.
 - Cross-run coordination uses canonical Project Memory only when the task changes durable state or requires coordination; GitHub remains the detailed history for ordinary R1/R2 code changes.
 - `.github/workflows/fanmind-manager-event-dispatch.yml` is manual `workflow_dispatch` only. No merge, receipt publication or schedule wakes it, and the Builder never self-selects from a repository event.

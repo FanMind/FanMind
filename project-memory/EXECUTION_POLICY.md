@@ -1,158 +1,29 @@
-# Execution Policy v6 — Zero-Friction Development
+# FanMind Execution Policy
 
-Mandatory default for substantive FanMind agent/Codex/automation work.
+This is the operational policy for the Builder, Planner, Guardian, Orchestrator, Manager and directly assigned executors. Domain contracts specify their technical prerequisites. Apply the following rules once per bounded assignment.
 
-## Core principle
-Process cost must be proportional to actual risk. FanMind uses adaptive execution paths instead of one maximum-governance path for every change.
+## Select the lane before acting
 
-One accountable executor owns the bounded outcome, including related repairs, verification and authorized follow-through. An explicit Owner assignment is sufficient for direct work; no duplicate Planner or Orchestrator assignment is needed. Automated Builder transport retains its existing one-task admission contract and may not self-select independent roadmap work.
+| Lane | Scope and existing risk identifier | Required evidence and review |
+| --- | --- | --- |
+| Autonomous | R1 covers small repository changes. R2 covers bounded features, bug fixes and refactors outside protected boundaries. | Inspect scope, relevant decisions, final diff and focused verification. For R2 perform a second-pass regression countercheck. Use independent review for a sensitive boundary, complex architecture or contract that requires it. |
+| Controlled | R3 covers Auth/RLS, sensitive data, schema, Staging, integrations and significant billing logic. A standard protected operation uses this lane only when its existing R4 contract and exact authorization cover it. | Check current state, prior failures, dependencies and rollback. Maintain started-work, lock and receipt. Obtain independent countercheck, at least two independent evidence classes and relevant negative/regression proof. Standard R4 operations also require all R4 controls below. |
+| Exceptional protected | R4 covers Production, real payments, provider activation, credentials, authority changes, destructive actions, Restore writes, signing and legally significant activation. | Complete current protected preflight and applicable security, governance and operations gates. Bind authorization and evidence to the exact target, commit, actions and prerequisites. Require independent review, fail-closed proof, recovery and closeout receipts. |
 
-## Three operational lanes (Lean Execution)
-- **Autonomous (R1/R2):** implement, verify relevant scope, merge when existing conditions allow; no additional agent or routine owner approval.
-- **Controlled (R3 and standard R4 operations):** use existing automated gates, scoped evidence, target binding and valid prior authorization; do not request a second approval for the same authorized action. Group related steps into one bounded authorization where existing protected workflows permit. R4 controls still apply to R4 operations.
-- **Exceptional protected (remaining R4):** require existing protected authorization and independent evidence before irreversible, financial, authority-changing or exceptional production/recovery actions.
+Escalate when scope expands. Prepare safe repository work up to an uncertain or protected boundary. Park a blocked step and finish independent authorized steps in the same assignment.
 
-R1–R4 identifiers remain unchanged for compatibility with existing records, selectors and executable checks. This consolidation does not relax an executable security gate or create standing Production authority. Only material changes invalidate relevant prior evidence; reuse immutable evidence and revalidate mutable evidence when required. A blocked step never blocks unrelated authorized work.
+## Own the outcome
 
-## Risk routing
+One executor carries the bounded task through implementation, verification and authorized follow-through. Use a Planner only for unresolved scope, priorities or dependencies. An explicit Owner assignment supplies the task directly. For automated dispatch the Orchestrator alone selects one task, assigns its unique task_id, waits for its matching terminal result, verifies and reconciles before selecting another. The Builder can fix related failures within that assignment.
 
-### R1 — MICRO / ZERO-FRICTION
-Use for small, clearly bounded repository-only work such as UI/CSS/copy changes, focused tests/docs, small React fixes, CI/lint fixes and local refactors that do not change architecture, contracts, protected data flows or runtime state.
+Compare the final diff with the assignment. Run applicable CI and investigate failures or contradictory evidence. Reuse evidence only when its relevant inputs, dependencies and target still match and mutable evidence is fresh under the affected contract. Report skipped checks and reused evidence accurately. The technical evidence reference is [Quality Control](QUALITY_CONTROL.md).
 
-Required path:
-1. verify current scope and relevant file/current head;
-2. implement;
-3. run focused relevant test/lint/build when useful;
-4. inspect the diff;
-5. create commit/PR;
-6. let relevant CI decide.
+## Merge and protected execution
 
-R1 does not require a separate Planner, separate Guardian, full Project-Memory preflight, work lock, execution receipt, broad Operations/Restore/Billing/provider checks or an independent evidence chain.
+Use regular merge or auto-merge when the current PR is mergeable, required checks and reviews have passed, the bounded diff is correct, blockers are resolved and the authorization covers the merge. Verify the resulting main commit. Report implementation, verification, merge, deployment and target acceptance separately.
 
-Project Memory is not updated for ordinary R1 code history unless the change alters project state, architecture, product truth, a decision, blocker, open loop, authorization boundary or next action.
+A bounded authorization may group related operations. Bind it to the approved systems, exact actions, prerequisites, limits, validity and target evidence. Reuse it within those terms. For a new target, material drift, exhausted allowance or action outside the grant, stop that action at its boundary. Follow the protected controller, environment approvals and [authorization register](AUTHORIZATIONS.md). A merge grants no authority over a deployment, payment, database or provider.
 
-### R2 — STANDARD DEVELOPMENT
-Use for normal features and non-trivial bug fixes, new API/library behavior, multi-component product changes, larger refactors and other repository work that remains outside protected state-changing boundaries.
+## Record durable changes once
 
-Required path:
-1. verify scope and current main;
-2. read only relevant decisions/dependencies/project-state sources;
-3. implement;
-4. run targeted tests;
-5. inspect diff and relevant regressions;
-6. create PR;
-7. run relevant CI;
-8. perform a short countercheck/review.
-
-A separate Planner is not required when the task is already explicit from an issue, PR finding, CI failure, owner request or defined next action. A separate Guardian is not required for ordinary R2; the Builder may perform the countercheck unless independence is required by the affected contract/security boundary.
-
-Project Memory is updated only when the task changes durable project state, architecture, product truth, decisions, blockers, important failed approaches, lasting dependencies, runtime/provider facts, authorization boundaries or next action.
-
-### R3 — CONTROLLED
-Use for Staging/schema/controlled-SQL work, Auth/RLS changes, provider integration, important Billing logic, migrations, runtime-affecting feature flags, sensitive data flows, Staging activation or external provider E2E.
-
-R3 requires relevant current Project Memory, duplicate/failed-attempt checks, task lock, recovery/rollback thinking, meaningful negative/regression tests, a targeted Guardian/countercheck and Project-Memory reconciliation after completion. State-changing R3 requires at least two suitable independent evidence classes.
-
-### R4 — PROTECTED
-Use for Production DB/runtime/ENV changes, real payments/Billing activation, Legacy-customer migration, Restore writes, destructive data actions, secrets/credentials, provider activation, capability/permission grants, signing/store actions or legally significant activation.
-
-R4 requires the full current preflight, exact commit and target binding, current prerequisite evidence, negative proof, rollback/recovery, independent Guardian/countercheck, all applicable Security/Governance/Operations gates, current protected authorization and complete closeout/receipt evidence. R4 remains fail-closed.
-
-## Protected-boundary detection
-Before acting, determine whether the task reaches a protected boundary.
-
-Protected boundaries include Production, customer-data mutation outside ordinary product behavior, database applies, Stripe/payments, secrets, provider accounts/permissions, Auth/capability grants, Restore, irreversible/destructive actions, signing/store actions and legally significant activation.
-
-If no protected boundary is involved, route to R1 or R2.
-If one is involved, route to R3 or R4.
-If uncertain, work may continue safely up to the boundary, but the boundary itself must not be crossed until the higher-risk requirements are satisfied.
-
-## Build until boundary
-Do not stop ordinary engineering prematurely because a later protected action exists.
-
-Repository work may be analyzed, implemented, tested, reviewed and prepared as a PR up to the protected boundary. Staging APPLY, Production APPLY, Billing activation, provider activation, destructive execution and equivalent state changes remain separate protected actions.
-
-## Project Memory role
-Git is the detailed code-change history.
-Project Memory is the durable state/decision/blocker/authorization/open-loop/handoff register.
-
-Do not duplicate ordinary commit history in Project Memory.
-
-## Planner rule
-Use a Planner when the next task is unclear, several tasks compete, dependencies must first be resolved, Project Memory materially conflicts, or scope is not yet bounded.
-
-Do not require a Planner for a clear issue, bug, PR finding, CI failure, explicit owner task or already-defined next action.
-
-## Guardian rule
-Use a separate Guardian for R3/R4, security-sensitive R2, complex architecture changes, Auth/RLS/Billing/data-boundary work or unclear regression risk.
-
-Do not require a separate Guardian for normal R1. For ordinary R2, the Builder may perform the countercheck.
-
-## CI and merge rule
-CI is risk-adaptive.
-
-- R1: focused relevant checks only (for example affected tests, typecheck/lint/build where useful).
-- R2: normal relevant product/regression CI.
-- R3/R4: full applicable security, governance, integration and operations gates.
-
-Do not run unrelated Mobile/Restore/Billing/provider suites merely because an R1 repository file changed.
-
-For R1/R2 repository work, the Builder may autonomously merge its PR when every check required for the affected scope is green, the PR is mergeable, the final diff matches the bounded task, no unresolved review/countercheck blocker remains, and no protected boundary is crossed. Green required CI is the default merge signal; unrelated or non-applicable suites must not be invented as extra blockers.
-
-Do not infer deployment, provider acceptance, billing activation, Production state or any protected authorization from a merge. R3/R4 retain their explicit higher-risk authorization and evidence rules.
-
-## Started-work / locks / receipts
-R1 does not require STARTED_WORK, WORK_LOCKS or execution receipts unless the task unexpectedly escalates or changes durable project state.
-
-R2 uses those records only when coordination, concurrency, durable state or a meaningful handoff requires them.
-
-R3/R4 retain explicit started-work, lock and receipt handling.
-
-## Countercheck
-- R1: inspect scope/diff and relevant evidence.
-- R2: implementation evidence + relevant verification + short countercheck.
-- R3: targeted independent countercheck, negative/regression proof and recovery where state changes.
-- R4: R3 plus all applicable protected-boundary controls.
-
-## Completion state
-Use only as much state ceremony as the task needs.
-
-For R1/R2 repository tasks, IMPLEMENTED/VERIFIED or MERGED may be sufficient when no runtime/acceptance claim is being made.
-Protected/runtime work retains the full state progression:
-`TODO -> IN_PROGRESS -> IMPLEMENTED -> VERIFIED -> COUNTERCHECKED -> ACCEPTED -> PRODUCTION_CONFIRMED`.
-
-Side states remain `BLOCKED`, `PARTIAL`, `IMPLEMENTED_NOT_VERIFIED`, `RECONCILIATION_REQUIRED`, `REJECTED`, `SUPERSEDED`, `DEFERRED`, `DUPLICATE`.
-
-## Stop conditions
-Never bypass a real red security/governance/integration gate that applies to the affected scope, a protected authorization boundary, contradictory verified evidence, missing required dependency/secret, wrong target, destructive boundary or previous failed approach without new evidence.
-
-Unrelated gates do not become blockers merely because they exist elsewhere in FanMind.
-
-## Autonomy
-For governed automated Builder dispatch, the FanMind Orchestrator is the sole task-selection and prioritization authority. Direct Owner-assigned work does not require a second dispatch. It reads current repository/Project Memory/roadmap/evidence, selects the next bounded safe task, assigns a unique task_id, waits for a matching terminal result, verifies it, reconciles state, and only then selects another independent task.
-
-The Builder continues autonomously only inside the one bounded task it received, without unnecessary owner confirmation while that scope remains clear, risk does not cross a protected boundary, no contradictory evidence appears and no new owner decision is required. It may repair blockers that are part of that same task. If blocked, it parks only the affected step and completes other authorized non-overlapping steps within its assignment; it must not self-select unrelated roadmap work.
-
-Risk escalation:
-- R1 -> R2 when scope becomes non-trivial.
-- R2 -> R3 when Auth, RLS, schema, provider or sensitive state boundaries are reached.
-- R3 -> R4 when Production, payments, irreversible mutation, Restore, secrets or equivalent protected boundaries are reached.
-
-## Target execution shapes
-R1:
-`Trigger -> Builder -> focused test -> diff -> PR -> required CI -> merge when green -> verify main -> end`
-
-R2:
-`Trigger -> Builder -> tests -> PR -> required CI -> countercheck -> merge when green -> verify main -> end`
-
-Unclear work:
-`Trigger -> Planner -> Builder -> verification -> end`
-
-Protected work:
-`Trigger -> Planner/Builder -> complete preparation -> Guardian -> READY_FOR_PROTECTED_ACTION -> stop`
-
-## Standing permissions
-Reuse permissions documented in AUTHORIZATIONS and explicit current Owner instructions where technically and safely permitted. This never overrides platform confirmations, missing credentials, protected Production/Billing/destructive/compliance boundaries or target-specific authorization requirements.
-
-## Invariant
-**Risk first. Minimum sufficient process. Build until the real boundary. Git records code history; Project Memory records durable project truth.**
+Git and PRs record ordinary fixes, UI edits and test runs. Update the relevant memory record when a decision, architecture, product or operational state, enduring dependency, blocker, open loop, significant failed approach or protected authorization changes. Link existing evidence. For R1, use an extra coordination record only upon escalation or a durable change. For R2, use locks and receipts only when coordination, concurrency, durable state or handoff requires them. Protected work retains mandatory records, freshness, milestone and recovery evidence under the [Project Memory Protocol](PROTOCOL.md).

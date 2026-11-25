@@ -248,7 +248,7 @@ jobs:
         env:
           FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
           FANMIND_CAPACITY_PG17_REQUIRED: "true"
-        run: npm run test:ai-capacity
+        run: node --test --test-concurrency=1 tests/ai-capacity-lifecycle-pg17.test.mjs tests/ai-capacity-staging-preflight.test.mjs
 
       - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
         id: creator_pg17

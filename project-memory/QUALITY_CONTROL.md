@@ -2,19 +2,9 @@
 
 Verification reference for FanMind. `EXECUTION_POLICY.md` controls process depth; this document adds no universal preflight or bookkeeping requirement. Apply only relevant controls; preserve existing protected and executable security requirements.
 
-## Risk levels
-- R1: documentation/housekeeping with no runtime effect.
-- R2: normal bounded product/UI/application changes.
-- R3: auth, data model, API/backend authority, external integrations, mobile signing/build, infrastructure configuration, privacy-sensitive or cross-domain changes.
-- R4: Production, billing/Stripe, security controls, destructive data operations, backup/restore, database migrations, secrets, release/publishing, legal/compliance activation or irreversible operational boundaries.
+## Evidence classes
 
-Classify every substantive task before implementation. Record `Risk: R1|R2|R3|R4` in the existing PR/task when a durable record is needed; no separate memory entry for ordinary R1/R2. Unknown risk defaults upward.
-
-## Completion quorum
-- R1: scope/diff check + one evidence class.
-- R2: implementation evidence + relevant verification + a distinct second-pass countercheck and regression/negative-path check. A separate reviewer is required only when the affected contract, security boundary or architecture risk requires true independence.
-- R3: at least two independent evidence classes, current CI/test evidence, dependency/assumption reconciliation and rollback/recovery plan for state-changing work.
-- R4: all applicable FanMind CI/security/supply-chain/operations gates green, at least two independent evidence classes, exact commit/target-bound runtime or staging evidence, rollback/recovery plan, negative/fail-closed proof, and any protected-boundary approval still required by existing FanMind policy.
+Use the risk lane and review quorum defined in [Execution Policy](EXECUTION_POLICY.md).
 
 Evidence classes include diff review, automated tests, CI/security checks, staging/runtime evidence, read-only database verification, restore receipts, real-device evidence, external-resource acceptance and owner/operator acceptance. Duplicate self-reports count once.
 
