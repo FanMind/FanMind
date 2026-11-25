@@ -49,7 +49,7 @@ test('exclusive root create restores exact mode under umask0077 and preserves ex
 
 test('bootstrap and install share the claimed-aware fixed queue guard',async()=>{
  const [bootstrap,control,policy]=await Promise.all(['scripts/operations/backup-worker-root-bootstrap.mjs','scripts/operations/backup-worker-install-control.mjs','scripts/operations/backup-worker-install-policy.mjs'].map(x=>readFile(x,'utf8')));
- assert.match(bootstrap,/input:policy\.BACKUP_ACTIVE_JOBS_SQL/u);assert.match(control,/BACKUP_ACTIVE_JOBS_SQL,pgEnv/u);assert.match(policy,/status in \('queued','claimed','running'\)/u);
+ assert.match(bootstrap,/input:policy\.BACKUP_ACTIVE_JOBS_SQL/u);assert.match(control,/queueSql\(BACKUP_ACTIVE_JOBS_SQL\)/u);assert.match(control,/statement,pgEnv/u);assert.match(policy,/status in \('queued','claimed','running'\)/u);
 });
 
 test('current inspection cannot authorize an install or substitute an arbitrary source/application',()=>{
