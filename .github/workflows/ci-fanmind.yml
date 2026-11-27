@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload truth report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-truth-report
           path: truth-report.txt
@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload lint report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-lint-report
           path: lint-report.txt
@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload release integration report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-release-integration-report
           path: release-integration-report.txt
@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload operations test report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-operations-test-report
           path: operations-test-report.txt
@@ -139,7 +139,7 @@ jobs:
 
       - name: Upload build report
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-build-report
           path: build-report.txt
@@ -262,7 +262,7 @@ jobs:
         run: node --test tests/monthly-release-control.cases.mjs
 
       - name: Retain full monthly nonproductive rehearsal result
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: monthly-rehearsal-${{ github.sha }}
           path: /tmp/fanmind-monthly-rehearsal.json
@@ -309,7 +309,7 @@ jobs:
 
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: fanmind-creator-foundation-reference-${{ github.sha }}
           path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
