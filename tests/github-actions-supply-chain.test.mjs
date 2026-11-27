@@ -407,7 +407,7 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    95, // Includes the additional trusted-base checkout for opted-in branch refresh.
+    96, // Includes the trusted branch-refresh and dispatch-pilot checkouts.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>
