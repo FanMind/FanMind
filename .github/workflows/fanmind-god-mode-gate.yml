@@ -36,7 +36,8 @@ jobs:
           path: /tmp/fanmind-god-mode-tests.log
           if-no-files-found: error
           retention-days: 1
-      - name: Revalidate Project Memory
+      - name: Revalidate Project Memory outside PRs
+        if: github.event_name != 'pull_request'
         run: |
           python3 scripts/project_memory_quality_check.py
           python3 scripts/fanmind_next_best_action.py --check

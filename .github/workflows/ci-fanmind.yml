@@ -195,7 +195,7 @@ jobs:
           exit 1
 
   pg17_authorization_roundtrip:
-    name: PostgreSQL 17 authorization roundtrip
+    name: PostgreSQL backup, ACL, capacity and release rehearsal
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -253,17 +253,6 @@ jobs:
           FANMIND_CAPACITY_PG17_REQUIRED: "true"
         run: node --test --test-concurrency=1 tests/ai-capacity-lifecycle-pg17.test.mjs tests/ai-capacity-staging-preflight.test.mjs
 
-      - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
-        id: creator_pg17
-        env:
-          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
-          FANMIND_CREATOR_PG17_REQUIRED: "true"
-          FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
-          FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs tests/chat-admin-media-pg17.test.mjs
-          npm run test:creator-foundation-transition
-
       - name: Prove full monthly release rehearsal with PostgreSQL 17
         env:
           FANMIND_MONTHLY_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
@@ -280,6 +269,44 @@ jobs:
           if-no-files-found: error
           retention-days: 35
 
+  creator_isolation:
+    name: PostgreSQL Creator and provider isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      pg17_source:
+        image: postgres:17.11-trixie@sha256:e38411452a464af89e5adadb8d223bf53b898d47d6ef918b2d58c08707350449
+        env:
+          POSTGRES_PASSWORD: fanmind-ci-only-pg17
+          POSTGRES_INITDB_ARGS: >-
+            --encoding=UTF8 --locale-provider=icu
+            --icu-locale=en-US --locale=en_US.UTF-8
+        options: >-
+          --health-cmd "pg_isready --username=postgres --dbname=postgres"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22.13.1
+
+      - name: Prove Creator workspace isolation and rollback in PostgreSQL 17
+        id: creator_pg17
+        env:
+          FANMIND_CREATOR_PG17_CONTAINER_ID: ${{ job.services.pg17_source.id }}
+          FANMIND_CREATOR_PG17_REQUIRED: "true"
+          FANMIND_CREATOR_RECONCILIATION_EXPORT: "true"
+          FANMIND_CREATOR_RECONCILIATION_REVIEWED_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          node --test --test-concurrency=1 tests/creator-intelligence-pg17.test.mjs tests/creator-foundation-reconciliation-pg17.test.mjs tests/social-provider-pg17.test.mjs tests/social-provider-schema-pg17.test.mjs tests/chat-admin-manual-flow-pg17.test.mjs tests/chat-admin-media-pg17.test.mjs
+          npm run test:creator-foundation-transition
+
       - name: Upload verified isolated Creator foundation references
         if: ${{ success() && steps.creator_pg17.outcome == 'success' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -288,3 +315,15 @@ jobs:
           path: ${{ runner.temp }}/fanmind-creator-foundation-reference-${{ github.run_id }}-${{ github.run_attempt }}/*.json
           if-no-files-found: error
           retention-days: 90
+
+  pg17_result:
+    name: PostgreSQL 17 authorization roundtrip
+    needs: [pg17_authorization_roundtrip, creator_isolation]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both isolated database suites
+        env:
+          BACKUP_RESULT: ${{ needs.pg17_authorization_roundtrip.result }}
+          CREATOR_RESULT: ${{ needs.creator_isolation.result }}
+        run: test "$BACKUP_RESULT" = success && test "$CREATOR_RESULT" = success
