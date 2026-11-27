@@ -1,0 +1,35 @@
+name: FanMind harmless dispatch probe
+run-name: ${{ inputs.order }}
+on:
+  workflow_dispatch:
+    inputs:
+      order:
+        type: string
+        required: true
+      commit:
+        type: string
+        required: true
+permissions: {}
+concurrency:
+  group: fanmind-dispatch-probe
+  cancel-in-progress: false
+jobs:
+  probe:
+    if: >-
+      github.repository_id == '1259448985' && github.event.repository.private == false &&
+      github.ref == 'refs/heads/main' && github.run_attempt == '1' &&
+      github.actor_id == vars.FANMIND_PILOT_BOT_ID &&
+      vars.FANMIND_PILOT_ENABLED == 'true' && github.sha == vars.FANMIND_PILOT_COMMIT &&
+      inputs.commit == github.sha
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Verify bounded order
+        env:
+          ORDER: ${{ inputs.order }}
+          ISSUE: '1559'
+          ACTIVATED_AT: ${{ vars.FANMIND_PILOT_ACTIVATED_AT }}
+        run: |
+          [[ "$ISSUE" =~ ^[1-9][0-9]*$ ]]
+          [[ "$ORDER" =~ ^fm-pilot-${ISSUE}-(10|[1-9])$ ]]
+          node -e 'const t=Date.parse(process.env.ACTIVATED_AT), n=Date.now(); if (!(t<=n && n<t+7*86400000)) process.exit(1)'
