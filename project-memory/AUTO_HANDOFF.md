@@ -5,14 +5,14 @@ Generated from current Project Memory. Chat memory is a navigation hint only; ch
 - Repository: `FanMind/FanMind`
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Next action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
+- Next action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`
 - Next action status: `OWNER_ACTION_REQUIRED`
-- Next action title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
+- Next action title: Backup-Berechtigungsvertrag an bestätigten Workspace-Feldschutz anpassen
 
 ## Finishline gates
 
 - `memory_v6`: `ACCEPTED`
-- `production_ops`: `VERIFIED`
+- `production_ops`: `PARTIAL`
 - `staging`: `ACCEPTED`
 - `restore`: `PARTIAL`
 - `mobile`: `IMPLEMENTED_NOT_VERIFIED`

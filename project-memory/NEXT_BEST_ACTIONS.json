@@ -1,8 +1,26 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-31",
+  "updated": "2026-11-23",
   "selection_rule": "Choose the lowest-priority-number unresolved action whose prerequisites are satisfied and that is safe under current standing authorization. If an earlier unresolved action is owner-required or DEFERRED_BY_OWNER, only later actions explicitly marked parallel_safe=true may be selected. Deferral never closes or downgrades the earlier gate.",
   "actions": [
+    {
+      "id": "NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE",
+      "priority": -2,
+      "task": "FM-OPS-001",
+      "gate": "production_ops",
+      "title": "Backup-Berechtigungsvertrag an bestätigten Workspace-Feldschutz anpassen",
+      "requires_owner": true,
+      "parallel_safe": false,
+      "prerequisite_gates": [
+        "memory_v6"
+      ],
+      "done_states": [
+        "VERIFIED",
+        "ACCEPTED",
+        "PRODUCTION_CONFIRMED"
+      ],
+      "instruction": "Production DB and Full backup jobs were enqueued and claimed, then failed with authorization_core_grant_matrix_invalid. The current catalog has 116 direct core grants with no grant options. The four differences from the installed 120-grant profile are the intentional removal of table-level INSERT/UPDATE on workspaces for anon and authenticated. Keep the verified Workspace protection. Continue in the existing #1512 Operations scope: prepare and review an exact hardened authorization profile and protected module install. Reuse prior receipts and confirm current installed bytes/lock before seeking one action-specific approval. After installation, accept one fresh database backup by local artifact and checksum, and confirm the matching Offsite pair independently."
+    },
     {
       "id": "NBA-CHATADMIN-STAGING-VERIFY",
       "priority": 0,
@@ -131,7 +149,7 @@
       "roadmap_items": [
         { "phase": 5, "label": "KI-/Billing-Gesamtabnahme" }
       ],
-      "instruction": "Owner resumed KI/Billing and confirmed existing prices complete on 2026-09-08. Staging deploy 34267819029 and Stripe Test webhook readiness 34268317761 passed. AI acceptance 34268214078 failed before DB access because two API-origin bindings were missing; review the bounded workflow fix, then merge/deploy exact new main and obtain a fresh rollback-only acceptance. Historical general Billing Apply/capture/canonical acceptance remains complete. Continue only remaining product/private/provider/Legal/Production gates; no live payment, repricing or paid-tier activation."
+      "instruction": "Capacity 99/199/312 Checkout source merged in #1543 with ten green exact-head PR workflows. Staging still serves the prior release and the November 21 read-only catalog found both Capacity and prepayment-contract objects absent. Resume the existing #1512 Recovery and Billing scopes: isolated Restore PASS within 30 days, private Staging DB/roles backup within 24 hours, exact-main controller binding, then separate controlled install and prepayment contract apply. Prove Sandbox Checkout, signature/webhook, workspace and entitlement, tax and invoice end to end before activation. The four existing Live top-up prices use a separate paid/refund/dispute evidence scope. Production workspace field protection was confirmed catalog-exact in the prior readback, with original run/data-integrity provenance still open. Do not reapply that ACL."
     },
     {
       "id": "NBA-META-TECHNICAL-RECONCILE",
@@ -449,7 +467,7 @@
       "priority": -1,
       "task": "FM-CREATOR-001",
       "gate": "creator_foundation_target_transition_runtime",
-      "title": "Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt",
+      "title": "Creator-PG17-Referenz nach belegtem Drift erneuern",
       "requires_owner": true,
       "parallel_safe": false,
       "prerequisite_gates": [
@@ -468,7 +486,7 @@
         { "phase": 7, "label": "Creator-Profile & getrenntes Fanwissen" },
         { "phase": 7, "label": "Kaufdaten & Lernen aus bestätigten Chats" }
       ],
-      "instruction": "PR #1214 source/recovery correction remains ACCEPTED on merge bc85493f8fc25ff90c965208bd20c7dc64641158. Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step remains owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874 using the then-current protected main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.",
+      "instruction": "The Owner-authorized read-only diagnosis was consumed in run 41300503008. It reported DRIFT in authUidFunctions, functions, memberships, policies and roles, with no APPLY or runtime activation. PR #1397 merged the bounded per-section diagnostics. The pin still references the artifact documented to expire on 2026-11-08. Review the existing reference-refresh path and validate a supported private PG17 reference before any new exact-main diagnosis. Limit remediation to evidenced sections. A new protected target observation or transition/runtime requires its own authorization.",
       "owner_action_id": "FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927"
     }
   ],

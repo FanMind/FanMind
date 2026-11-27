@@ -1,14 +1,14 @@
 # FanMind Owner Action Inbox
 
 ## FM-CREATOR-OWNER-TARGET-DRIFT-DIAGNOSIS-20260927 — Creator-Drift exakt und nur lesend diagnostizieren
-- Status: OWNER_ACTION_REQUIRED
+- Status: RECONCILED_CONSUMED
 - Task: FM-CREATOR-001
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk: R3 protected read-only Staging diagnosis.
 - Current evidence: protected run `36321009852` consumed the prior transition command, deployed main `8bf23be6af739086354c58548ea43c3910c17ee1`, classified the target as DRIFT, requested no APPLY, skipped runtime and then failed recovery on disallowed sudo file operations. No SQL APPLY, runtime activation or Production mutation occurred.
 - Technical source prerequisite: SATISFIED by PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, normal merge `bc85493f8fc25ff90c965208bd20c7dc64641158`, exact-head CI/review with zero open P0/P1/P2, and the merged bounded diagnostics/recovery correction.
-- Owner action after this reconciliation merges: on GitHub issue #874, Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once, using the then-current main SHA.
-- Unlocks: one bounded read-only classification with validated differing-section/blocker tokens, followed by Builder-owned reviewed remediation planning. It does not unlock APPLY or runtime activation directly.
+- Consumed: Owner command on #874 completed in run 41300503008. Refresh and verify the pinned private PG17 reference through the existing #1396 path before requesting any fresh exact-main diagnosis. Reuse the documented differing sections and request separate authorization for any later target observation, transition or runtime activation.
+- Result: authUidFunctions, functions, memberships, policies and roles differed from the pinned reference. PR #1397 merged bounded section diagnostics.
 - Boundaries: no deploy, SQL APPLY, runtime/config change, Production access, raw/private catalog output or automatic transition retry. A later transition command requires completed reviewed drift remediation and a distinct fresh authorization.
 
 ## FM-CREATOR-OWNER-FOUNDATION-STAGING-CATALOG-20260926 — Bounded Creator Staging catalog observation

@@ -230,11 +230,11 @@ Owner-authorized remaining Support1350 preparation. Preserve1491 acceptance. Pro
 - Action: NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME
 - Risk/Status: R4 / IN_PROGRESS
 - Source correction: ACCEPTED by PR #1214 final head `9ad10f2600d9b0b829f052287f81a202ef933383`, merge/current main `bc85493f8fc25ff90c965208bd20c7dc64641158`.
-- Authorization: transition FM-AUTH-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 is CONSUMED_FAIL_CLOSED; diagnosis FM-AUTH-CREATOR-TARGET-DRIFT-DIAGNOSIS-20260927 is OWNER_ACTION_REQUIRED.
+- Authorization: transition consumed fail-closed (36321009852). Diagnosis consumed read-only (41300503008).
 - Lock: LOCK-FM-CREATOR-TARGET-TRANSITION-RUNTIME-20260927 (PAUSED; zero Builder worker slots while owner-gated).
 - Attempt-1 target result: run `36321009852` deployed prior main, classified DRIFT, requested no APPLY and skipped runtime; SQL APPLY/runtime/Production mutation counts are zero.
-- Remaining deliverable: one exact-main read-only drift diagnosis, reviewed remediation of only proven differing sections, then a distinct fresh R4 transition/runtime authorization and target acceptance.
-- Exact next: owner comment `run-creator-target-drift-diagnosis <then-current-main-sha>` on issue #874 after this reconciliation merges. Builder resumes after its bounded result.
+- Remaining deliverable: reviewed remediation limited to the five evidenced differing sections, then distinct fresh transition/runtime authorization and target acceptance.
+- Exact next: Refresh and verify the pinned private PG17 reference through the existing #1396 path before requesting any fresh exact-main diagnosis. Reuse the documented differing sections and request separate authorization for any later target observation, transition or runtime activation.
 - Boundary: no Production, real customer/fan data, provider/model send, Billing/Restore/Mobile mutation or secret publication.
 
 ## FM-CREATOR-001 — bounded profile reconciliation and transition design

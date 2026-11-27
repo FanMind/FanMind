@@ -4,15 +4,15 @@ Generated from `FINISHLINE_STATE.json`, `NEXT_BEST_ACTIONS.json`, `DEFERRED_OWNE
 
 - Sales ready: `false`
 - Phase 8 started: `true`
-- Selected action: `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME`
-- Task: `FM-CREATOR-001`
-- Gate: `creator_foundation_target_transition_runtime` (`IN_PROGRESS`)
+- Selected action: `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE`
+- Task: `FM-OPS-001`
+- Gate: `production_ops` (`PARTIAL`)
 - Selection status: `OWNER_ACTION_REQUIRED`
-- Title: Creator-Drift nur lesend diagnostizieren; Transition bleibt gesperrt
+- Title: Backup-Berechtigungsvertrag an bestätigten Workspace-Feldschutz anpassen
 
 ## Instruction
 
-PR #1214 source/recovery correction remains ACCEPTED on merge bc85493f8fc25ff90c965208bd20c7dc64641158. Protected attempt 1 run 36321009852 remains RECONCILED_FAIL_CLOSED: exact Staging deploy passed, target classified DRIFT, APPLY was not requested, runtime was skipped and no Production mutation occurred. The next permitted step remains owner/platform-gated: Bernd posts exactly `run-creator-target-drift-diagnosis <then-current-main-sha>` once on issue #874 using the then-current protected main SHA. That command authorizes only one bounded read-only Staging classification with validated differing-section/blocker tokens. Consume the diagnosis, implement and review only the proven drift remediation, and require a distinct fresh transition/runtime authorization before any later APPLY or runtime activation.
+Production DB and Full backup jobs were enqueued and claimed, then failed with authorization_core_grant_matrix_invalid. The current catalog has 116 direct core grants with no grant options. The four differences from the installed 120-grant profile are the intentional removal of table-level INSERT/UPDATE on workspaces for anon and authenticated. Keep the verified Workspace protection. Continue in the existing #1512 Operations scope: prepare and review an exact hardened authorization profile and protected module install. Reuse prior receipts and confirm current installed bytes/lock before seeking one action-specific approval. After installation, accept one fresh database backup by local artifact and checksum, and confirm the matching Offsite pair independently.
 
 ## Why this action
 
@@ -33,6 +33,7 @@ owner/platform action required
 
 ## Candidate evaluation
 
+- `NBA-PRODUCTION-DATABASE-BACKUP-TRIAGE` priority -2: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CREATOR-FOUNDATION-TARGET-TRANSITION-RUNTIME` priority -1: **OWNER_ACTION_REQUIRED** — owner/platform action required
 - `NBA-CHATADMIN-STAGING-VERIFY` priority 0: **DONE** — gate chatadmin_staging_verify is VERIFIED
 - `NBA-CHATADMIN-MANUAL-FLOW` priority 1: **DONE** — gate chatadmin_manual_flow is ACCEPTED
