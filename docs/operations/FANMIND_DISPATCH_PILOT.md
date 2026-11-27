@@ -10,6 +10,21 @@ PR #1558 owns the implementation. Issue #1559 is its only order inbox. The exist
 4. Work or Codex submits /fanmind-pilot 1 as a new standalone comment on #1559 via the same authorized GitHub account. Wait for the claim and final result on ops/pilot-receipts. Repeat the same slot from a fresh session and verify that the result refers to the same run and contains the same GitHub job evidence. Then test slot 2. The caller rejects out-of-order slots and caps the sequence at 10. End as soon as accepted. A failed or reserved slot without a visible run stops new orders. Reissue the same comment for readback. Never delete a claim to retry. Investigate with the immutable order and Actions history. No host operations or paid runners are part of this pilot.
 5. The GitHub connector must create a qualifying issue_comment event under the authorized numeric account. Verify this live, including event delivery. If the connector suppresses the event or uses a different actor, stop activation and inspect its identity before changing any policy.
 
+
+### Einmalige Einrichtung und Abnahme für den Owner
+
+| Wo | Konkrete Eingabe und Nachweis |
+|---|---|
+| [App registrieren](https://github.com/organizations/FanMind/settings/apps/new) | Name gemäß Manifest `FanMind Dispatch Pilot`, Homepage `https://github.com/FanMind/FanMind`, Webhook aus, Installation nur für das eigene Konto. Repository Actions **Read and write**, Metadata automatisch lesend. Alle optionalen übrigen Rechte aus. |
+| [Eigene Apps](https://github.com/organizations/FanMind/settings/apps) | App öffnen, **Install App**, **Only select repositories**, ausschließlich `FanMind/FanMind`. Numerische App-ID und tatsächlichen Bot-Benutzer der Installation getrennt verifizieren. |
+| [Environment](https://github.com/FanMind/FanMind/settings/environments) | `fanmind-dispatch-pilot` auf Branch `main` beschränken. Privaten Schlüssel direkt als Environment-Secret `FANMIND_PILOT_PRIVATE_KEY` ablegen. Environment-Variable `FANMIND_PILOT_APP_ID` auf die numerische App-ID setzen. |
+| [Rulesets](https://github.com/FanMind/FanMind/settings/rules) | Schutz von main, Workflow-Änderungen und Nachweisbranch prüfen. Überschreiben und Löschen des Nachweisbranches sperren. Zulässigen Ersteller und tatsächlichen Schreibzugriff prüfen. |
+| [Actions-Variablen](https://github.com/FanMind/FanMind/settings/variables/actions) | `FANMIND_PILOT_BOT_ID` auf die numerische Bot-User-ID setzen. `FANMIND_PILOT_COMMIT` auf den nach Merge geprüften vollständigen Main-SHA setzen. Erst bei tatsächlicher Aktivierung `FANMIND_PILOT_ACTIVATED_AT` in UTC mit Z und zuletzt `FANMIND_PILOT_ENABLED=true` setzen. |
+| [Auftragseingang](https://github.com/FanMind/FanMind/issues/1559) und [Belege](https://github.com/FanMind/FanMind/tree/ops/pilot-receipts) | Work/Codex stellt Slot 1 ein. Claim, Run-ID, Bot-ID, SHA, Job und Prüfschritt abgleichen. Gleichen Slot aus zweiter Sitzung lesen, identische Run-ID und Abschlussdatei prüfen. Doppelanfrage und verlorene Antwort ohne zweiten Dispatch nachweisen. Maximal zehn Slots, nur einer gleichzeitig und ausschließlich kostenlose Probes. |
+| [Abschalten](https://github.com/FanMind/FanMind/settings/variables/actions) und [Installation widerrufen](https://github.com/organizations/FanMind/settings/installations) | Bei Abnahme oder Fristablauf `FANMIND_PILOT_ENABLED=false`; offene Jobs und angenommene Läufe abgleichen. Für sofortigen Entzug Installation suspendieren, aktive Jobs abbrechen, anschließend Schlüssel widerrufen. Vorhandene Belege erhalten. |
+
+Für Production ist eine separate technische Bindung mit Repository-ID, App-Installation, Bot-ID, zulässigem Workflow und unabhängig bestätigtem Auftrag erforderlich. Der persönliche Recovery-Pfad behält seine bestehende Actor-Prüfung. Produktion, Provider, Workspace-Veröffentlichung und neue Credentials werden durch dieses Dokument nicht freigeschaltet.
+
 ## Separate future operational grants
 
 Operation | Proposed scope | Acceptance required before granting
