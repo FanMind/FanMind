@@ -1,0 +1,9 @@
+{
+  "name": "FanMind Dispatch Pilot",
+  "url": "https://github.com/FanMind/FanMind",
+  "description": "Dispatch and observe the bounded FanMind probe workflow",
+  "public": false,
+  "default_permissions": { "actions": "write" },
+  "default_events": [],
+  "hook_attributes": { "active": false }
+}

@@ -1,0 +1,44 @@
+name: FanMind dispatch pilot
+on:
+  issue_comment:
+    types: [created]
+permissions: {}
+jobs:
+  caller:
+    if: >-
+      github.repository_id == '1259448985' && github.event.repository.private == false &&
+      github.ref == 'refs/heads/main' && vars.FANMIND_PILOT_ENABLED == 'true' &&
+      github.sha == vars.FANMIND_PILOT_COMMIT &&
+      github.event.issue.number == 1559 &&
+      !github.event.issue.pull_request && github.event.issue.state == 'open' &&
+      github.event.comment.user.id == 270165082 &&
+      startsWith(github.event.comment.body, '/fanmind-pilot ')
+    concurrency:
+      group: fanmind-dispatch-pilot
+      cancel-in-progress: false
+    runs-on: ubuntu-24.04
+    environment: fanmind-dispatch-pilot
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - id: token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ vars.FANMIND_PILOT_APP_ID }}
+          private-key: ${{ secrets.FANMIND_PILOT_PRIVATE_KEY }}
+          repositories: FanMind
+          permission-actions: write
+      - name: Reserve dispatch and reconcile receipt
+        env:
+          COMMAND: ${{ github.event.comment.body }}
+          ISSUE: ${{ github.event.issue.number }}
+          ACTIVATED_AT: ${{ vars.FANMIND_PILOT_ACTIVATED_AT }}
+          BOT_ID: ${{ vars.FANMIND_PILOT_BOT_ID }}
+          LEDGER_TOKEN: ${{ github.token }}
+          APP_TOKEN: ${{ steps.token.outputs.token }}
+        run: node scripts/operations/fanmind-dispatch-pilot.mjs

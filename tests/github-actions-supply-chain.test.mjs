@@ -399,13 +399,15 @@ test("hosted checkout uses v7 while the isolated restore runner stays on v4", as
   assert.deepEqual(mediaFlow?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA, HOSTED_CHECKOUT_V7_0_1_SHA]);
   const refresh = hostedWorkflows.find(workflow => workflow.file === "refresh-automerge-branches.yml");
   assert.deepEqual(refresh?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
-  assert.equal(hostedWorkflows.length, 82);
+  const pilotCaller = hostedWorkflows.find(workflow => workflow.file === "fanmind-dispatch-pilot.yml");
+  assert.deepEqual(pilotCaller?.checkoutShas, [HOSTED_CHECKOUT_V7_0_1_SHA]);
+  assert.equal(hostedWorkflows.length, 83);
   assert.equal(
     hostedWorkflows.reduce(
       (count, workflow) => count + workflow.checkoutShas.length,
       0,
     ),
-    95, // Includes the additional trusted-base checkout for opted-in branch refresh.
+    96, // Includes the trusted branch-refresh and dispatch-pilot checkouts.
   );
   assert.equal(
     hostedWorkflows.every((workflow) =>

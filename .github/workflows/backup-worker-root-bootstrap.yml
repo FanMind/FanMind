@@ -1,4 +1,5 @@
 name: FanMind Protected Backup Worker Bootstrap
+run-name: Recovery ${{ inputs.action }} · ${{ inputs.reviewed_main_commit }} · run ${{ github.run_number }}
 on:
   workflow_dispatch:
     inputs:

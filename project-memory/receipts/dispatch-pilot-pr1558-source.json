@@ -1,0 +1,10 @@
+{
+  "pr": 1558,
+  "inbox": 1559,
+  "tested_commit": "f821394aaff60810a199afd6d218e06c57044158",
+  "test": "node --test scripts/operations/fanmind-dispatch-pilot.test.mjs",
+  "passed": 3,
+  "scope": "Local simulated GitHub transport only",
+  "live_pilot": "awaiting reviewed merge and protected installation",
+  "production_install": "no matching workflow run observed on 2026-11-27"
+}
