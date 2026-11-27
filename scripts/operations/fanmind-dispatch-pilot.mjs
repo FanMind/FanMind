@@ -60,7 +60,12 @@ export async function operate({ issue, slot, activation, commit, bot, now, api }
   const reserved = await save('claim', { key, commit, issue, slot });
   if (!reserved) return { status: 'reserved-awaiting-reconciliation' };
   if (now() >= start + 7 * day) throw Error('Pilot expired');
-  await api('POST', '/actions/workflows/' + workflow + '/dispatches', {ref:'main',inputs:{order:key,commit}});
+  try {
+    await api('POST', '/actions/workflows/' + workflow + '/dispatches', { ref: 'main', inputs: { order: key, commit } });
+  } catch {
+    // A transport error may follow acceptance. Only GET reconciliation is safe.
+    return { status: 'reserved-awaiting-reconciliation' };
+  }
   return { status: 'accepted-awaiting-run' };
 }
 

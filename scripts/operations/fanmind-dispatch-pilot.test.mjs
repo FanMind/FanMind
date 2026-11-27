@@ -24,7 +24,7 @@ function fixture() {
 }
 test('lost response survives a fresh invocation and a later receipt', async()=>{
   const f=fixture();
-  await assert.rejects(f.call(),/Lost response/);
+  assert.equal((await f.call()).status,'reserved-awaiting-reconciliation');
   assert.equal((await f.call()).status,'reserved-awaiting-reconciliation');
   f.runs.push(f.row);
   assert.equal((await f.call()).id,42);
